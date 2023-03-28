@@ -146,6 +146,14 @@ const config = {
     }),
 
   plugins: ["docusaurus-plugin-sass"],
+
+  scripts: [
+    // Baidu Analytics
+    {
+      src: "https://hm.baidu.com/hm.js?16a7c8bfcfe44d006b8ad19c5273a286",
+      async: true,
+    },
+  ],
 };
 
 module.exports = config;
