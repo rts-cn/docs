@@ -7,6 +7,7 @@ const darkCodeTheme = require("prism-react-renderer/themes/dracula");
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: "FreeSWITCH Documentation",
+  tagline: "This is a MIRROR",
   url: "https://developer.signalwire.com",
   baseUrl: "/freeswitch/",
   onBrokenLinks: "warn",
@@ -64,7 +65,7 @@ const config = {
             label: "Variables",
           },
           {
-            href: "pathname:///../guides",
+            href: "https://developer.signalwire.com/guides",
             label: "SignalWire",
             position: "left",
             target: "_self",
@@ -87,6 +88,10 @@ const config = {
                 label: "Youtube",
                 href: "https://www.youtube.com/freeswitch",
               },
+              {
+                label: "Official Docs",
+                to: "https://developer.signalwire.com/freeswitch/",
+              },
             ],
           },
           {
@@ -100,6 +105,10 @@ const config = {
                 label: "Twitter",
                 href: "https://twitter.com/freeswitch",
               },
+              {
+                label: "FreeSWITCH中文",
+                href: "https://freeswitch.org.cn/",
+              },
             ],
           },
           {
@@ -112,6 +121,10 @@ const config = {
               {
                 label: "GitHub",
                 href: "https://github.com/signalwire/freeswitch",
+              },
+              {
+                label: "RTS Home",
+                href: "http://rts.cn/",
               },
             ],
           },
