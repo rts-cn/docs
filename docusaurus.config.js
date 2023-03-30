@@ -89,6 +89,14 @@ const config = {
                 href: "https://www.youtube.com/freeswitch",
               },
               {
+                label: "About",
+                to: "/about/mirror",
+              },
+              {
+                label: "Tutorial",
+                to: "/docs/intro",
+              },
+              {
                 label: "Official Docs",
                 to: "https://developer.signalwire.com/freeswitch/",
               },
