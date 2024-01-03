@@ -134,6 +134,10 @@ const config = {
                 label: "RTS Home",
                 href: "http://rts.cn/",
               },
+              {
+                label: "《大道至简》",
+                href: "https://book.dujinfang.com/2023/12/07/dead-simple.html?f=rts-wiki",
+              },
             ],
           },
         ],
