@@ -1,8 +1,9 @@
-# FreeSWITCH Documentation
+# RTS 文档
 
-This repository contains the documentation for FreeSWITCH, published at https://developer.signalwire.com/freeswitch.
+This repository contains the documentation for RTS - Real-Time Server, published at http://rts.cn/docs/.
 
 ## Instructions for contributors
+
 ### Installation
 
 ```
@@ -28,8 +29,8 @@ This command generates static content into the `build` directory and can be serv
 ### Building the Docker image
 
 ```
-$ docker build -t freeswitch-docs .
-$ docker run --rm -it -p 8080:80 freeswitch-docs
+$ docker build -t rts-docs .
+$ docker run --rm -it -p 8080:80 rts-docs
 ```
 
 The site will be available on port 8080 on your local machine.

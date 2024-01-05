@@ -6,13 +6,13 @@ const darkCodeTheme = require("prism-react-renderer/themes/dracula");
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: "FreeSWITCH Documentation",
-  tagline: "This is a MIRROR",
-  url: "https://developer.signalwire.com",
-  baseUrl: "/freeswitch/",
+  title: "RTS 文档",
+  tagline: "Real-Time SIP Server",
+  url: "http://rts.cn",
+  baseUrl: "/docs/",
   onBrokenLinks: "warn",
   onBrokenMarkdownLinks: "warn",
-  favicon: "img/favicon.webp",
+  favicon: "img/favicon.ico",
 
   // Even if you don't use internalization, you can use this field to set useful
   // metadata like html lang. For example, if your site is Chinese, you may want
@@ -32,7 +32,7 @@ const config = {
           routeBasePath: "/",
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
-          editUrl: "https://github.com/signalwire/freeswitch-docs/tree/main/",
+          editUrl: "https://github.com/rts-cn/docs/tree/main/",
         },
         blog: false,
         theme: {
@@ -48,30 +48,34 @@ const config = {
       navbar: {
         //title: "FreeSWITCH Documentation",
         logo: {
-          alt: "FreeSWITCH Documentation",
-          src: "img/logo.svg",
+          alt: "RTS 文档",
+          src: "img/rts.svg",
         },
         items: [
+          {
+            href: "/docs/rts",
+            label: "RTS文档",
+          },
           {
             type: "doc",
             docId: "FreeSWITCH-Explained/index",
             position: "left",
-            label: "FreeSWITCH Explained",
+            label: "FreeSWITCH文档",
           },
           {
             type: "doc",
             docId: "Channel-Variables-Catalog/index",
             position: "left",
-            label: "Variables",
+            label: "通道变量",
           },
+          // {
+          //   href: "https://developer.signalwire.com/guides",
+          //   label: "SignalWire",
+          //   position: "left",
+          //   target: "_self",
+          // },
           {
-            href: "https://developer.signalwire.com/guides",
-            label: "SignalWire",
-            position: "left",
-            target: "_self",
-          },
-          {
-            href: "https://github.com/signalwire/freeswitch",
+            href: "https://github.com/rts-cn/rts",
             label: "GitHub",
             position: "right",
           },
@@ -82,36 +86,24 @@ const config = {
         style: "dark",
         links: [
           {
-            title: "Video",
+            title: "关于",
             items: [
               {
-                label: "Youtube",
-                href: "https://www.youtube.com/freeswitch",
+                label: "关于",
+                to: "/about/rts",
               },
-              {
-                label: "About",
-                to: "/about/mirror",
-              },
-              {
-                label: "Tutorial",
-                to: "/docs/intro",
-              },
-              {
-                label: "Official Docs",
-                to: "https://developer.signalwire.com/freeswitch/",
-              },
+              // {
+              //   label: "Tutorial",
+              //   to: "/docs/intro",
+              // },
             ],
           },
           {
-            title: "Community",
+            title: "社区",
             items: [
               {
-                label: "Forums",
-                href: "https://forum.signalwire.community/",
-              },
-              {
-                label: "Twitter",
-                href: "https://twitter.com/freeswitch",
+                label: "讨论",
+                href: "https://github.com/rts-cn/rts/discussions",
               },
               {
                 label: "FreeSWITCH中文",
@@ -120,15 +112,11 @@ const config = {
             ],
           },
           {
-            title: "More",
+            title: "更多",
             items: [
               {
-                label: "Cluecon",
-                href: "https://www.cluecon.com/",
-              },
-              {
                 label: "GitHub",
-                href: "https://github.com/signalwire/freeswitch",
+                href: "https://github.com/rts-cn/rts",
               },
               {
                 label: "RTS Home",
@@ -147,10 +135,10 @@ const config = {
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
       },
-      algolia: {
-        appId: "2NBPM6ETKJ",
-        apiKey: "4489aa468117b5bfbcb83f7b0addddc9",
-        indexName: "freeswitch-docs",
+      xalgolia: {
+        appId: "xxxxxx",
+        apiKey: "xxxxxx",
+        indexName: "rts-docs",
         externalUrlRegex: `.*`,
         /**
          * We need to set this to false, otherwise the query is done with
