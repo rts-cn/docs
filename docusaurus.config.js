@@ -53,6 +53,10 @@ const config = {
         },
         items: [
           {
+            href: "/",
+            label: "首页",
+          },
+          {
             href: "/docs/rts",
             label: "RTS文档",
           },
