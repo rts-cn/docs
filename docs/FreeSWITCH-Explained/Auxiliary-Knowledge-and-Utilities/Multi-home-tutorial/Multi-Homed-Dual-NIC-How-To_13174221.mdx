@@ -1,25 +1,22 @@
+# 多网卡双网络接口的配置指南
 
-# Multi Homed Dual NIC How To 
+## 关于
 
- 
+本教程是基于Freeswitch 1.0.6在Centos 5.5上使用示例配置文件创建的。系统上的eth0使用dhcp连接公共网络，而eth1使用静态ip地址连接私有网络。根据您的设置，可能需要对此配置进行一些更改。本教程假设您在系统上连接了一个SIP电话，并使用1000作为内外拨号的分机号。配置文件的默认安装位置为/usr/local/freeswitch/conf。
 
-## About
+点击此处展开目录
 
-This tutorial was created from an install of Freeswitch 1.0.6 on Centos 5.5 using the sample configuration files. The system has eth0 on the public network using dhcp and eth1 was on the private network using a static ip address. Depending on your setup some changes to this configuration may be necessary. This tutorial assumes you have a sip phone connected to the system and using extension number 1000 for inbound and outbound dialing. The default install location for conf directory was used, /usr/local/freeswitch/conf.
+1. [多网卡双网络接口的配置指南](#多网卡双网络接口的配置指南)
 
-Click here to expand Table of Contents
+## 多网卡双网络接口的配置指南
 
-* 1 [Multi Homed Dual NIC How To](#multi-homed-dual-nic-how-to)
-
-## Multi Homed Dual NIC How To
-
-1\. Open vars.xml with your favorite text editor located in the conf directory and make the following changes and additions to the file.
+1. 使用您喜欢的文本编辑器打开位于conf目录下的vars.xml文件，然后对文件进行以下更改和添加。
 
 ```bash
- Look for the domain veriable and change this to your public ip address or public dns name.
+在文件中查找域变量，并将其更改为您的公共IP地址或公共DNS名称。
 <X-PRE-PROCESS cmd="set" data="domain=(YOUR PUBLIC IP OR DNS)"/>
 
-Down at the bottom of vars.xml add these variables in the external and internal sections of the configuration flie. In this example $${local_ip_v4} is the public ip address of the system, in your case it may or may not be, 192.168.100.1 is the private ip address being used for the internal network.
+在vars.xml的底部，将以下变量添加到配置文件的external和internal部分。在此示例中，$${local_ip_v4}是系统的公共IP地址，根据您的情况，它可能是或者不是此地址。而192.168.100.1是内部网络使用的私有IP地址。
 
 <X-PRE-PROCESS cmd="set" data="external_sip_ip=$${local_ip_v4}"/>
 <X-PRE-PROCESS cmd="set" data="external_rtp_ip=$${local_ip_v4}"/>
@@ -28,8 +25,7 @@ Down at the bottom of vars.xml add these variables in the external and internal 
 <X-PRE-PROCESS cmd="set" data="internal_rtp_ip=192.168.100.1"/>
 ```
 
-  
-2\. Next the external and internal sip configurations need to be edited so open sip\_profile/external.xml first and uncomment the following lines.
+2. 接下来，需要编辑外部和内部SIP配置，首先打开sip_profile/external.xml文件，并取消以下行的注释。
 
 ```bash
 <param name="force-register-domain" value="$${domain}"/>
@@ -38,7 +34,7 @@ Down at the bottom of vars.xml add these variables in the external and internal 
 <param name="presence-hosts" value="$${domain}"/>
 ```
 
-Then open sip\_profile/internal.xml and uncomment the same lines.
+然后打开sip\_profile/internal.xml并取消同样的行的注释。
 
 ```bash
 <param name="force-register-domain" value="$${domain}"/>
@@ -47,51 +43,44 @@ Then open sip\_profile/internal.xml and uncomment the same lines.
 <param name="presence-hosts" value="$${domain}"/>
 ```
 
-  
-3\. Now a sip provider needs to be added to your external sip profiles, so open sip\_proflie/external/example.xml in here make the necessary changes to this file to connect to a sip providor. There are many tutorials on how to add a sip provider to freeswitch that will not be covered in this tutorial. Change the gateway name to “multi-example" to match the setup of this tutorial.
+3. 现在需要添加一个SIP供应商到外部SIP配置文件中，所以在sip\_proflie/external/example.xml中，对此文件做出必要的更改以连接到一个SIP供应商。有很多关于如何将SIP供应商添加到freeswitch的教程，此教程不会涵盖这些内容。将网关名称更改为“multi-example”，以匹配本教程的设置。
 
 ```bash
 <gateway name="multi-example">
 ```
 
-  
-4\. The next step will be routing the inbound DID from the sip provider setup in step 3\. In order for the system to route the DID properly it needs to be specified in the following dialplan configuration file: dialplan/public/00\_inbound\_did.xml. Change the expression value in the destination\_number variable to match what the sip provider is passing, this typically will be the 10 digit number in the US.
+4. 下一步将是从第3步设置的SIP供应商中路由传入的DID。为了系统能够正确地路由DID，需要在以下拨号计划配置文件中指定：dialplan/public/00\_inbound\_did.xml。将destination\_number变量中的表达式值更改为SIP供应商传递的值，通常这是美国的10位数字。
 
 ```bash
-Before:  <condition field="destination_number" expression="^(phonenumber)$">
-After:  <condition field="destination_number" expression="^(4075551234)$">
+之前:  <condition field="destination_number" expression="^(phonenumber)$">
+之后:  <condition field="destination_number" expression="^(4075551234)$">
 ```
 
-  
-5\. In your dial plan you have to specify your outbound route to use the gateway you setup edit this block in dialplan/default/[01\_example.com](http://01%5Fexample.com).exml. The final configuration change to get the system up and running will be to add the sip provider added in step 3 to the default outbound route. Open the file dialplan/default/[01\_example.com](http://01%5Fexample.com).xml and make the following change to the domestic outbound route.
+5\. 在您的拨号计划中，您需要指定出站路由以使用您设置的网关，请编辑拨号计划中的`dialplan/default/[01\_example.com](http://01%5Fexample.com).exml`区块。要使系统启动并运行，最后的配置更改是将在步骤 3 中添加的 SIP 供应商添加到默认的出站路由中。打开文件`dialplan/default/[01\_example.com](http://01%5Fexample.com).xml`，并对国内出站路由做出以下更改。
 
-Edit the &lt;extension name="[domestic.example.com](http://domestic.example.com)"> xml block.
+编辑 `<extension name="[domestic.example.com](http://domestic.example.com)">` 区块。
 
 ```bash
-Before: <action application="bridge" data="sofia/gateway/${default_gateway}/$1"/>
-After: <action application="bridge" data="sofia/gateway/multi-example /$1"/>
+之前: <action application="bridge" data="sofia/gateway/${default_gateway}/$1"/>
+之后: <action application="bridge" data="sofia/gateway/multi-example /$1"/>
 ```
 
-6\. In your directory you have to change the param dial-string in directory/default.xml.
+6\. 在您的目录中，您需要在`directory/default.xml`文件中更改`dial-string`参数。
 
 ```bash
-Before: <param name="dial-string" value="{sip_invite_domain=${dialed_domain},presence_id=${dialed_user}@${dialed_domain}}${sofia_contact(${dialed_user}@${dialed_domain})}"/>
-After: <param name="dial-string" value="{ignore_early_media=true,presence_id=${dialed_user}@${dialed_domain}}${sofia_contact(*/${dialed_user}@${dialed_domain})}${db(select/${domain_name}-call_forward/${dialed_user})}"/>
+之前: <param name="dial-string" value="{sip_invite_domain=${dialed_domain},presence_id=${dialed_user}@${dialed_domain}}${sofia_contact(${dialed_user}@${dialed_domain})}"/>
+之后: <param name="dial-string" value="{ignore_early_media=true,presence_id=${dialed_user}@${dialed_domain}}${sofia_contact(*/${dialed_user}@${dialed_domain})}${db(select/${domain_name}-call_forward/${dialed_user})}"/>
 ```
 
-7\. The last step is to do a full reload and a sip reload with the following commands in the freeswitch cli, fs\_cli.
+7\. 最后一步是在freeswitch cli（fs\_cli）中执行以下命令进行完全重新加载和sip重新加载。
 
 ```bash
 > reloadxml
 > reload mod_sofia
 ```
 
-  
-Or just do a full restart of freeSWITCH.
+或者只需完全重新启动freeSWITCH即可。
 
-Now all of these changes have been made you should be able to call your DID number and it will ring into your sip phone with extension number 1000 and that phone should also be able to dial out through the sip provider using 11 digit dialing 1+10 digit US number.
+现在已经进行了所有这些更改，您应该能够拨打您的DID号码，它将会呼叫到您的分机号为1000的SIP电话，该电话也能够通过SIP供应商拨打11位拨号（1+10位美国号码）。
 
-This tutorial was provided by [http://www.jonathanmanning.com](http://www.jonathanmanning.com/)
-
-  
-
+本教程由[http://www.jonathanmanning.com](http://www.jonathanmanning.com/)提供。

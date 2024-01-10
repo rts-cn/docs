@@ -1,47 +1,38 @@
+# 用Systemd启动脚本的示例
 
-# Example Starting A Script With Systemd 
+## 关于
 
- 
+2017.01.19，由[John Boteler](https://freeswitch.org/confluence/display/~boteman)修改
 
-## About
+我修改了一个最初由[Anthony Minessale II](https://freeswitch.org/confluence/display/~anthm)编写的脚本，该脚本响应FreeSWITCH会议模块发出的特定事件。在开发过程中，当我需要编辑脚本时，手动停止和启动脚本是很自然的。但当我需要将其安装为连续使用时，我意识到我不知道如何自动启动脚本。
 
-2017.01.19 by [John Boteler](https://freeswitch.org/confluence/display/~boteman)
+单击此处展开目录
 
-I modified a script originally written by [Anthony Minessale II](https://freeswitch.org/confluence/display/~anthm) that responds to particular events emitted by the FreeSWITCH conference module. During development it was natural to stop and start the script manually whenever I needed to edit it. But when it came time to install it for continuous use I realized that I didn't know how to start the script automatically.
+* 1 [背景](#-freeswitch--example-starting-a-script-with-systemd-)
+* 2 [单元文件](#-freeswitch--example-starting-a-script-with-systemd-)
+* 3 [结果](#-freeswitch--example-starting-a-script-with-systemd-)
 
-Click here to expand Table of Contents
+## 背景
 
-* 1 [Background](#-freeswitch--example-starting-a-script-with-systemd-)
-* 2 [Unit File](#-freeswitch--example-starting-a-script-with-systemd-)
-* 3 [Results](#-freeswitch--example-starting-a-script-with-systemd-)
+这是一个Perl脚本，但我发现在autoload\_configs/perl.conf.xml中不能使用`param name="startup-script"`这一行，因为它只适用于在FreeSWITCH mod\_perl实例中运行的嵌入式脚本；我的脚本完全独立于FreeSWITCH运行，使用Perl解释器等待事件套接字，并根据需要做出响应。
 
-## Background
+[Ken Rice](https://freeswitch.org/confluence/display/~krice)建议使用Systemd，因为它不仅易于配置，还可以处理stdout的日志记录。它运行得很好！
 
-It's a perl script, but I discovered that you can't use that `param name="startup-script"` line in autoload\_configs/perl.conf.xml since that only works with embedded scripts running in the FreeSWITCH mod\_perl instance; my script runs totally external to FreeSWITCH using the perl interpreter and simply awaits events over the Event Socket and responds to them as needed.
+## 单元文件
 
-[Ken Rice](https://freeswitch.org/confluence/display/~krice) suggested systemd since that not only is easy to configure, but handles logging of stdout as well. It worked great!
+您可以在`/etc/systemd/system`中存储一个“单元文件”，告诉Systemd要做什么。这是存储本地变体的位置，以免被安装包的更新覆盖。
 
-## Unit File
-
-You tell systemd what to do in a "unit file" stored in /etc/systemd/system which is where local variants go so that they won't be overwritten by updates to installed packages.
-
-The `[Unit]` section indicates that the script requires freeswitch.service, and moreover FreeSWITCH must be running before the script can be invoked. Without the `After` directive systemd would start FreeSWITCH and the script in parallel. In this case it is not mandatory to have FreeSWITCH running first, but it is pointless for the script to try to connect to the event socket when it can't possibly be there yet.
-
-The `[Service]` section of the unit file tells systemd exactly how to run the script, including the user and group under which to start it and what to do if it fails. I chose `Type=simple` because this perl script is long-running, never forks, and never exits under normal circumstances. I chose `Restart=on-failure` to restart the script if it does not start properly, but not if I simply kill it for maintenance. If I had chosen `Restart=always` then systemd would restart the script behind my back while I'm trying to work on it and we don't want that!
-
-Finally, the `[Install]` section connects this script to the boot sequence of events by tying it to FreeSWITCH. This section is necessary to invoke the `systemd enable` command which creates a symbolic link to this unit file from a sub-directory created for FreeSWITCH targets.
-
-**systemd unit file**
+**systemd 单元文件**
 
 ```xml
 [Unit]
-Description=relate script
+Description=关联脚本
 Requires=freeswitch.service
 After=network.target freeswitch.service
 
 [Service]
 Type=simple
-# I doubt the WorkingDirectory is actually needed for this trivial example, but I used it just in case
+# 我怀疑在这种简单的例子中实际上并不需要 WorkingDirectory，但是为了保险起见我还是使用了它
 WorkingDirectory=/usr/local/freeswitch/scripts
 User=freeswitch
 Group=freeswitch
@@ -55,8 +46,14 @@ WantedBy=freeswitch.service
 
 ```
 
-## Results
+## 结果
 
-I was amazed at how quickly and cleanly everything started when I rebooted the machine to observe how it all worked. I gather that there is a faction of die-hards who loathe systemd, but times change so I am happy to report that systemd makes the job of starting services and scripts much simpler. I know I struggled enough times with SysV init scripts that I welcome this new systemd of doing things.
+`[Unit]` 部分说明脚本需要 `freeswitch.service`，而且在脚本调用之前必须先启动 FreeSWITCH。如果没有 `After` 指令，系统会同时启动 FreeSWITCH 和脚本。在这种情况下，没有必要先启动 FreeSWITCH，但是脚本在事件套接字还不存在的情况下试图连接到它是没有意义的。
 
+单元文件的 `[Service]` 部分告诉 systemd 如何运行该脚本，包括以何种用户和组身份启动它，以及如果脚本运行失败该怎么做。我选择了 `Type=simple`，因为这个 Perl 脚本是长期运行的，在正常情况下不会分叉，也不会退出。我选择了 `Restart=on-failure`，如果脚本启动失败，则重新启动它，但是如果我只是为了维护而杀掉它，不会重新启动。如果我选择了 `Restart=always`，则 systemd 会在我工作时在后台重新启动脚本，而我们不希望出现这种情况！
 
+最后，`[Install]` 部分通过将脚本与 FreeSWITCH 关联，将该脚本连接到引导事件序列。这个部分是为了调用 `systemd enable` 命令，该命令会在为 FreeSWITCH 目标创建的子目录中为该单元文件创建一个符号链接。
+
+十分感谢这位客户的合作。
+
+我对重新启动机器后一切迅速而干净地开始运行感到惊讶，我只是为了观察一切是如何工作的。我听说有一群顽固派痛恨systemd，但时代在变，所以我很高兴地报告，systemd让启动服务和脚本的工作变得更简单。我知道我曾多次与SysV init脚本纠结，所以我欢迎这种以systemd为基础的新方法。

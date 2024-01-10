@@ -1,60 +1,51 @@
+# mod_tone_stream
 
-# mod_tone_stream 
-
- 
-
-## About
+## 关于
 
 tone\_stream://\[L=x;\]\[v=y;\]%(&lt;on-duration>, &lt;off-duration>, &lt;freq-1> \[, freq-2\] \[, freq-3\] \[, freq-n\] \[;loops=x\])
 
-* Durations are specified in milliseconds
-* Frequencies are specified in Hz
+* 时长以毫秒为单位进行指定
+* 频率以赫兹为单位进行指定
 
-**L=x;** create x copies of the specified tone stream in memory before playing. Note that L=-1 is not valid, use loops=-1 to loop continuously. Specify L= at the beginning of the tone definition string.
+**L=x;** 在播放之前，在内存中创建 x 个指定的音调流的副本。请注意，L=-1 是无效的，使用 loops=-1 进行连续循环。在音调定义字符串的开头指定 L=。
 
-**;loops=x** Loop x times, use ;loops=-1 for endless loop. This generates the tone, then repeats the generation process so it presumably consumers less cpu and memory than the L= parameter. Note that ;loops=x is postfix notation so it should appear at the end of the tone definition string.
+**;loops=x** 循环 x 次，使用 ;loops=-1 进行无限循环。这会生成音调，然后重复生成过程，因此假定消耗的 CPU 和内存比 L= 参数要少。请注意，;loops=x 是后缀表示法，因此应该出现在音调定义字符串的末尾。
 
-**v=y** Volume of tones expressed as the equivalent in dB (deciBels) in a PCM waveform. 0 = maximum volume, negative integers represent softer volume (loudness). Do not enter positive values greater than zero! Note that non-linear formats such as G.711 and G.723 will offer slightly lower amplitudes as an artifact of their algorithms.
+**v=y** 音调的音量，以 PCM 波形中的分贝（dB）表示。0 = 最大音量，负整数表示较低音量（响度）。请不要输入大于零的正值！请注意，非线性格式（如 G.711 和 G.723）由于其算法的特性，会产生稍低的振幅。
 
-Click here to expand Table of Contents
+单击此处展开目录
 
 * 1 [](#--)
-* 2 [Examples](#examples)
-* 3 [Worldwide Frequencies and Cadences Listed by ITU-T](#worldwide-frequencies-and-cadences-listed-by-itu-t)
-* 4 [See Also](#see-also)
+* 2 [示例](#examples)
+* 3 [ITU-T 列出的全球频率和节奏](#worldwide-frequencies-and-cadences-listed-by-itu-t)
+* 4 [参考](#see-also)
 
-###   
+###  
 
-### Examples
+### 示例
 
-Adds a repeating (loop) 800Hz tone with a duration of 100ms and a 15 second intervening silence to a session:
+向会话添加间隔为 15 秒的重复（循环）800Hz音调，持续时间为 100 毫秒：
 
 ```xml
  <action application="displace_session" data="tone_stream://%(100,15000,800);loops=-1" />
 ```
 
-  
-Plays a stutter-like tone 100 times:
+播放类似口吃的音调 100 次：
 
 ```xml
  <action application="playback" data="tone_stream://L=100;%(100,100,350,440)" />
 ```
 
-  
-The frequencies specified are all additive. For example, %(4000,0,350,440) will simply play four seconds of 350 Hz with 440 Hz overlaid. To mimic frequency modulation, ring modulation theory can be used. Ring modulation works by taking the frequencies output by two oscillators, and both adding and subtracting them, producing "sum and difference" frequencies.
-
-For example, the ringback tone of Romania is 450 Hz modulated by 25 Hz, for 1.85s on and 4.15s off. So frequency 1 should be 450 + 25 = 475 Hz, and frequency 2 should be 450 - 25 = 425 Hz:
+指定的频率都是累加的。例如，%(4000,0,350,440) 将只简单地播放 350Hz 和 440Hz 交叠的声音。要模拟频率调制，可以使用环绕调制理论。环绕调制通过获取两个振荡器输出的频率，并对它们进行加减运算，产生"和与差"频率。例如，罗马尼亚的回铃音是由450Hz的基频以25Hz的调频进行调制的，持续1.85秒后静音4.15秒。所以，频率1应该是450 + 25 = 475 Hz，频率2应该是450 - 25 = 425 Hz：
 
 ```xml
 <action application="playback" data="tone_stream://%(1850,4150,475,425);loops=-1" />
 ```
 
-### Worldwide Frequencies and Cadences Listed by ITU-T
+### ITU-T 列出的世界各地频率和节奏
 
-[Various tones used in national networks (According to ITU-T Recommendation E.180)](http://www.itu.int/dms%5Fpub/itu-t/opb/sp/T-SP-E.180-2010-PDF-E.pdf) Updated 1st May 2010.
+[各国国家网络中使用的各种音调 (按照 ITU-T 建议 E.180)](http://www.itu.int/dms%5Fpub/itu-t/opb/sp/T-SP-E.180-2010-PDF-E.pdf) 更新日期：2010年5月1日。
 
-### See Also
+### 另请参阅
 
-[TGML](./mod-dptools/mod-dptools:-gentones/TGML_6586573.mdx#lua) complete listing of capabilities and syntax
-
-
+[TGML](./mod-dptools/mod-dptools:-gentones/TGML_6586573.mdx#lua) 功能和语法的完整列表

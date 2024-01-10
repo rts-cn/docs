@@ -1,144 +1,138 @@
+# mod_spandsp
 
-# mod_spandsp 
+## 关于
 
- 
+FreeSWITCH™的一系列模块，包括`mod_fax`、`mod_t38gateway`和`mod_voipcodecs`现在被合并为一个模块，名为`mod_spandsp`。该模块充分利用了[spandsp](http://soft-switch.org)库中的所有DSP功能，包括T.38终端和网关功能。
 
-## About
+单击此处展开目录表格
 
-The family of FreeSWITCH™ modules including `mod_fax`, `mod_t38gateway`, and the `mod_voipcodecs` have now been merged into one module called `mod_spandsp` which takes advantage of all the DSP features found in the [spandsp](http://soft-switch.org) library including T.38 endpoint and gateway functionality.
-
-Click here to expand Table of Contents
-
-* 1 [Installation](#installation)
-* 2 [Fax](#fax)  
-   * 2.1 [Status](#status)  
-   * 2.2 [Invoking the app from the XML dialplan](#invoking-the-app-from-the-xml-dialplan)  
-      * 2.2.1 [For receiving a fax](#for-receiving-a-fax)  
-         * 2.2.2 [For transmitting a fax](#for-transmitting-a-fax)  
-         * 2.2.3 [Manual fax transmission](#manual-fax-transmission)  
-         * 2.2.4 [Execute based on fax session outcome](#execute-based-on-fax-session-outcome)  
-   * 2.3 [Invoking the app from the CLI](#invoking-the-app-from-the-cli)  
-      * 2.3.1 [For transmitting a fax](#for-transmitting-a-fax)  
-         * 2.3.2 [For transmitting a fax over ulaw from a SIP T.38 source](#for-transmitting-a-fax-over-ulaw-from-a-sip-t38-source)  
-   * 2.4 [fax2mail: Emailing the fax upon receipt](#fax2mail-emailing-the-fax-upon-receipt)  
-   * 2.5 [mail2fax: Faxing a received mail](#mail2fax-faxing-a-received-mail)  
-   * 2.6 [Configuring the app](#configuring-the-app)  
-   * 2.7 [Controlling the app](#controlling-the-app)  
-   * 2.8 [Checking the results](#checking-the-results)  
-      * 2.8.1 [Fax result code](#spandsptxfaxresult)  
-   * 2.9 [t38\_gateway App](#t38_gateway-app)  
-      * 2.9.1 [T.38 Reinvite](#t38-reinvite)  
-         * 2.9.2 [T.38 Transcode](#spandsptxfaxresult)  
-   * 2.10 [Receive Faxes](#receive-faxes)  
-   * 2.11 [Transmit Faxes](#transmit-faxes)  
-   * 2.12 [Fax Tone Detection](#stop-fax-tone-detection)  
-      * 2.12.1 [Full Example](#full-example)  
-   * 2.13 [Stop Fax Tone Detection](#stop-fax-tone-detection)
-* 3 [Examples](#examples)  
-   * 3.1 [Outbound Fax T.38 to TDM](#outbound-fax-t38-to-tdm)  
-   * 3.2 [Inbound Fax TDM to T.38](#inbound-fax-tdm-to-t38)  
-   * 3.3 [Internal T.38 to T.38](#internal-t38-to-t38)
-* 4 [Results](#spandsptxfaxresult)  
-   * 4.1 [Questions I got during testing](#questions-i-got-during-testing)
-* 5 [Events](#events)  
-   * 5.1 [spandsp::rxfaxpageresult](#spandsprxfaxpageresult)  
-   * 5.2 [spandsp::txfaxpageresult](#spandsptxfaxpageresult)  
-   * 5.3 [spandsp::rxfaxnegociateresult](#spandsprxfaxnegociateresult)  
-   * 5.4 [spandsp::txfaxnegociateresult](#spandsptxfaxnegociateresult)  
-   * 5.5 [spandsp::txfaxresult](#spandsptxfaxresult)  
+* 1 [安装](#installation)
+* 2 [传真](#fax)
+   * 2.1 [状态](#status)
+   * 2.2 [从XML拨号计划中调用应用](#invoking-the-app-from-the-xml-dialplan)
+      * 2.2.1 [用于接收传真](#for-receiving-a-fax)
+         * 2.2.2 [用于发送传真](#for-transmitting-a-fax)
+         * 2.2.3 [手动传真发送](#manual-fax-transmission)
+         * 2.2.4 [基于传真会话结果执行](#execute-based-on-fax-session-outcome)
+   * 2.3 [从CLI中调用应用](#invoking-the-app-from-the-cli)
+      * 2.3.1 [用于发送传真](#for-transmitting-a-fax)
+         * 2.3.2 [从SIP T.38源以ulaw格式发送传真](#for-transmitting-a-fax-over-ulaw-from-a-sip-t38-source)
+   * 2.4 [fax2mail：传真接收后发送邮件](#fax2mail-emailing-the-fax-upon-receipt)
+   * 2.5 [mail2fax：传真发送收到的邮件](#mail2fax-faxing-a-received-mail)
+   * 2.6 [配置应用](#configuring-the-app)
+   * 2.7 [控制应用](#controlling-the-app)
+   * 2.8 [检查结果](#checking-the-results)
+      * 2.8.1 [传真结果代码](#spandsptxfaxresult)
+   * 2.9 [t38_gateway应用](#t38_gateway-app)
+      * 2.9.1 [T.38重新邀请](#t38-reinvite)
+         * 2.9.2 [T.38转码](#spandsptxfaxresult)
+   * 2.10 [接收传真](#receive-faxes)
+   * 2.11 [发送传真](#transmit-faxes)
+   * 2.12 [传真音调检测](#stop-fax-tone-detection)
+      * 2.12.1 [完整示例](#full-example)
+   * 2.13 [停止传真音调检测](#stop-fax-tone-detection)
+* 3 [示例](#examples)
+   * 3.1 [T.38对TDM的传出传真](#outbound-fax-t38-to-tdm)
+   * 3.2 [TDM对T.38的传入传真](#inbound-fax-tdm-to-t38)
+   * 3.3 [内部T.38到T.38](#internal-t38-to-t38)
+* 4 [结果](#spandsptxfaxresult)
+   * 4.1 [测试中收到的问题](#questions-i-got-during-testing)
+* 5 [事件](#events)
+   * 5.1 [spandsp::rxfaxpageresult](#spandsprxfaxpageresult)
+   * 5.2 [spandsp::txfaxpageresult](#spandsptxfaxpageresult)
+   * 5.3 [spandsp::rxfaxnegociateresult](#spandsprxfaxnegociateresult)
+   * 5.4 [spandsp::txfaxnegociateresult](#spandsptxfaxnegociateresult)
+   * 5.5 [spandsp::txfaxresult](#spandsptxfaxresult)
    * 5.6 [spandsp::rxfaxresult](#spandsprxfaxresult)
-* 6 [Troubleshooting](#troubleshooting)  
-   * 6.1 [Common Issues](#common-issues)  
-   * 6.2 [Suggested Process](#suggested-process)  
-   * 6.3 [Example](#example)  
-   * 6.4 [Further debugging](#further-debugging)
-* 7 [Tone Detection](#fax-tone-detection)  
-   * 7.1 [DTMF](#dtmf)  
-      * 7.1.1 [Related Tone Channel Variables](#related-tone-channel-variables)  
-         * 7.1.2 [Dialplan Applications](#dialplan-applications)  
-   * 7.2 [Call Progress](#call-progress)  
-      * 7.2.1 [Configuration](#configuration)  
-         * 7.2.2 [Dialplan Applications](#dialplan-applications)  
-         * 7.2.3 [APIs](#apis)  
-         * 7.2.4 [Events](#events)
-* 8 [Codecs](#codecs)
-* 9 [Software Modem](#software-modem)  
-   * 9.1 [COM Port Setting for Windows](#com-port-setting-for-windows)
-* 10 [See also](#see-also)
+* 6 [故障排除](#troubleshooting)
+   * 6.1 [常见问题](#common-issues)
+   * 6.2 [建议的处理流程](#suggested-process)
+   * 6.3 [示例](#example)
+   * 6.4 [进一步调试](#further-debugging)
+* 7 [音调检测](#fax-tone-detection)
+   * 7.1 [DTMF](#dtmf)
+      * 7.1.1 [相关的音调通道变量](#related-tone-channel-variables)
+         * 7.1.2 [拨号计划应用](#dialplan-applications)
+   * 7.2 [呼叫进度](#call-progress)
+      * 7.2.1 [配置](#configuration)
+         * 7.2.2 [拨号计划应用](#dialplan-applications)
+         * 7.2.3 [API](#apis)
+         * 7.2.4 [事件](#events)
+* 8 [编解码器](#codecs)
+* 9 [软调制解调器](#software-modem)
+   * 9.1 [Windows的COM端口设置](#com-port-setting-for-windows)
+* 10 [参见](#see-also)
 
-## Installation
+## 安装
 
-Much of this document was written when spandsp was new. Many notes and references are horribly outdated, but are left here for now in the interest of consistency.
+这份文档的大部分是在 spandsp 刚刚发布时编写的。很多笔记和参考资料都已经非常过时了，但是为了保持一致性，暂时保留在这里。
 
-`mod_spandsp` is enabled by default in `modules.conf` and therefore compiled automatically. Its also enabled by default in `modules.conf.xml`
+`mod_spandsp` 默认在 `modules.conf` 中启用，并且会自动编译。它还默认在 `modules.conf.xml` 中启用。
 
-Ensure that you have libtiff development files installed. See the dependencies on the installation pages.
+请确保已安装了 libtiff 的开发文件。请参考安装页面上的依赖项。
 
-For Debian/Ubuntu you can type
+对于 Debian/Ubuntu，您可以输入以下命令：
 
 ```xml
 apt-get install libtiff4-dev
 ```
 
-For CentOS 5.x
+对于 CentOS 5.x：
 
 ```xml
 yum install libtiff-devel libjpeg-devel
 ```
 
-  
-If you get a complaint about TIFF library, try the following:
+如果收到有关 TIFF 库的错误，请尝试以下操作：
 
 ```xml
 make tiff-reconf
 ```
 
-\* For FreeBSD
+\* 对于 FreeBSD
 
 ```xml
 cd /usr/ports/graphics/tiff
 make install clean
 ```
 
-\* Compile Errors/Problems  
-If you get an error about "`/usr/bin/ld: cannot find -ljpeg`" (FreeBSD) or something similar, then double check to see if you have the tiff library installed, look above for how to install for your OS.
+\* 编译错误/问题
+如果收到类似 "`/usr/bin/ld: cannot find -ljpeg`" （FreeBSD）的错误，请仔细检查是否已安装了 tiff 库，上面有关如何在您的操作系统上进行安装的说明。
 
-  
-\* For SUSE
+\* 对于 SUSE
 
 ```xml
 zypper install libtiff-devel libjpeg-devel
 ```
 
-\* General Build Errors
+\* 一般构建错误
 
-If you get errors loading mod\_spandsp try:
+如果加载 mod\_spandsp 时出错，请尝试：
 
 ```xml
 make spandsp-reconf && make install
 ```
 
-to rebuild the spandsp library.
+重新构建 spandsp 库。
 
-## Fax
+## 传真
 
-### Status
+### 状态
 
-It's important that you create the config XML file since the spool directory for faxes can be configured only there.
+请务必创建配置 XML 文件，因为只能在那里配置传真的 spool 目录。
 
-Things to be done:
+需要完成的事项：
 
-\* Fire out an event on every fax received/sent.  
-\* Fire out an event on every fax page received/sent.
+\* 在每次收发传真时触发事件。  
+\* 在每次收发传真页面时触发事件。
 
-Also, `mod_spandsp` requires that you use a G.711 (PCMA/PCMU) codec for T.30 fax or it won't work. If you are using `txfax` for sending and `rxfax` for receiving, remember to use the same codec at both ends.
+另外，`mod_spandsp` 要求您在 T.30 传真中使用 G.711（PCMA/PCMU）编解码器，否则将无法正常工作。如果您在发送时使用 `txfax`，在接收时使用 `rxfax`，请记得两端使用相同的编解码器。
 
-### Invoking the app from the XML dialplan
+### 从 XML 拨号计划调用应用程序
 
-You can invoke the rxfax application and use the data option to pass it the TIFF file name. If you do not pass any  
-information in the data option mod\_spandsp will create the file name for you and place the received fax into your spool directory.
+你可以调用 rxfax 应用程序，并使用数据选项将 TIFF 文件名传递给它。如果你不在数据选项中传递任何信息，mod_spandsp将为你创建文件名，并将接收到的传真放入你的传真队列目录中。
 
-#### For receiving a fax
+#### 接收传真
 
 ```xml
 <extension name="test_rxfax_stream">
@@ -151,7 +145,7 @@ information in the data option mod\_spandsp will create the file name for you an
 </extension>
 ```
 
-If you want each fax have a unique name you can use this variation:
+如果你想要每个传真都有唯一的名称，你可以使用以下变体：
 
 ```xml
 <extension name="fax_receive">
@@ -164,7 +158,7 @@ If you want each fax have a unique name you can use this variation:
 </extension>
 ```
 
-If you want mod\_spandsp to send the re-INVITE for T.38 (per the standard) use this:
+如果你希望 mod_spandsp 发送 T.38 的重新 INVITE （符合标准），请使用以下示例：
 
 ```xml
 <extension name="fax_receive">
@@ -179,35 +173,35 @@ If you want mod\_spandsp to send the re-INVITE for T.38 (per the standard) use t
 </extension>
 ```
 
-#### For transmitting a fax
+#### 发送传真
 
-A PDF file can be converted to TIFF format using ImageMagick, here is an example:
+可以使用 ImageMagick 将 PDF 文件转换为 TIFF 格式，这是一个示例：
 
 ```xml
 convert -density 204x98 -units PixelsPerInch -resize 1728x1186\! -monochrome -compress Fax txfax.pdf txfax.tiff
 ```
 
-Be explicit about the units (on my machine it defaulted to the metric system). Also, the exclamation mark forces a specific ratio. You may consider using graphicsmagick, since it's generally faster and supports Group4 compression. Keep in mind that these tools still rely on ghostscript to do conversion from pdf using gs's pnm device. The quality of gm was actually better than that produced by ghostscript which does too much dithering. I was able to successfully use width 2156 with graphicsmagick, even though there are different widths specified here for imagemagick and ghostscript.
+明确单位（在我的机器上，默认为公制系统）。另外，叹号强制使用特定的比例。你可以考虑使用`graphicsmagick`，因为它通常更快并支持群组4压缩。请记住，这些工具仍然依赖于Ghostscript来使用gs的pnm设备进行pdf转换。GM的质量实际上比Ghostscript产生的质量要好，Ghostscript太过于使用抖动技术。我成功地使用graphicsmagick的宽度2156，尽管这里为imagemagick和Ghostscript指定了不同的宽度。
 
-You can use Ghostscript for PDF/PS files. Here is an example, producing a standard resolution TIFF file:
+对于PDF/PS文件，你可以使用Ghostscript。以下是一个示例，生成一个标准分辨率的TIFF文件：
 
 ```xml
 gs -q -r204x98 -g1728x1078 -dNOPAUSE -dBATCH -dSAFER -dPDFFitPage -sDEVICE=tiffg3 -sOutputFile=txfax.tiff -- txfax.pdf
 ```
 
-Here is an example producing a fine resolution TIFF file:
+以下是一个示例，生成一个精细分辨率的TIFF文件：
 
 ```xml
 gs -q -r204x196 -g1728x2156 -dNOPAUSE -dBATCH -dSAFER -dPDFFitPage -sDEVICE=tiffg3 -sOutputFile=txfax.tiff -- txfax.pdf
 ```
 
-[PDF to TIFF conversions using ghostscript](https://soft-switch.org/spandsp%5Ffaq/ar01s14.html)
+[使用ghostscript进行PDF转TIFF](https://soft-switch.org/spandsp%5Ffaq/ar01s14.html)
 
-Ghostscript won't put your document in the correct orientation. This is not really a problem when sending to a remote paper machine, but can be a nuisance when receiving a fax on a computer.
+Ghostscript无法将您的文档放置在正确的方向上。这对于发送到远程纸质机器来说并不是一个真正的问题，但在电脑上接收传真时可能会让人心烦。
 
-The use of -g1728x1078 and -g1728x2156 ensures that the resulting TIFF file contains pages of a size compatible with FAX machines. If the PDF file contains bit images, rather than scalable content, the images in resulting TIFF file may not fit the pages.
+使用`-g1728x1078`和`-g1728x2156`确保生成的TIFF文件包含与传真机兼容的页面大小。如果PDF文件包含位图图像而不是可伸缩内容，则生成的TIFF文件中的图像可能不适合页面。
 
-You can transmit a Fax using the following dialplan:
+你可以使用以下拨号计划来传输传真：
 
 ```xml
 <extension name="test_txfax_stream">
@@ -218,9 +212,9 @@ You can transmit a Fax using the following dialplan:
 </extension>
 ```
 
-#### Manual fax transmission
+#### 手动传真传输
 
-when sending to a telefax, where a live operator gives you a fax tone, bind\_meta\_app comes handy.
+当发送到传真机时，一个实时的操作员会给你一个传真信号，bind\_meta\_app非常方便。
 
 ```xml
 <extension name="pstn-fxo-dialout">
@@ -238,56 +232,56 @@ when sending to a telefax, where a live operator gives you a fax tone, bind\_met
 </extension>
 ```
 
-#### Execute based on fax session outcome
+#### 根据传真会话结果执行
 
-Channel variables that allow you to take action based on the success or failure of a fax transmission.
+通道变量允许您根据传真传输的成功或失败采取操作。
 
-Variables available are: `execute_on_fax_success`, `execute_on_fax_result`, `execute_on_fax_failure`, `execute_on_fax_detect`. Insert as required before your `rxfax` application call.
+可用变量：`execute_on_fax_success`，`execute_on_fax_result`，`execute_on_fax_failure`，`execute_on_fax_detect`。在您的`rxfax`应用调用之前根据需要插入。
 
-Example: run an lua script when `mod_spandsp` reports a successful transmission.
+示例：当`mod_spandsp`报告传输成功时运行一个lua脚本。
 
 ```xml
 <action application="set" data="execute_on_fax_success=lua process_fax.lua"/>
 ```
 
-Example: run a shell command when `mod_spandsp` reports a failed transmission.
+示例：当`mod_spandsp`报告传输失败时运行一个shell命令。
 
 ```xml
 <action application="set" data="execute_on_fax_failure=system /bin/rm tmp/FAX-${uuid}.tif"/>
 ```
 
-### Invoking the app from the CLI
+### 从 CLI 调用应用程序
 
-#### For transmitting a fax
+#### 传真传输
 
-In the CLI, for sending a fax via profile external using gateway 10.10.10.10 and fax machine number 100, you'll have to use this.
+在 CLI 中，使用外部配置文件通过网关 10.10.10.10 发送传真到传真机号码 100，你需要使用以下命令：
 
 ```xml
 originate sofia/external/100@10.10.10.10 &txfax(/path_to_fax_file)
 ```
 
-Or to specify the gateway to use:
+如果需要指定要使用的网关：
 
 ```xml
 originate sofia/gateway/<gateway name>/<phone number> &txfax(/path_to_fax_file)
 ```
 
-#### For transmitting a fax over ulaw from a SIP T.38 source
+#### 从 SIP T.38 源传输 ulaw 格式的传真
 
-* Make sure you have at least FreeSWITCH Git dating after 25 May 2010.
-* You also need mod\_spandsp loaded.
-* Add param enable-t38 to true in conf/autoload\_configs/spandsp.conf.xml.
-* NOTE: older versions of FreeSWITCH used fax.conf.xml instead. Newer versions only use fax.conf.xml if they don't find spandsp.conf.xml.
-* Just before executing bridge, execute: t38\_gateway with argument equal 'self'. This will monitor for the FAX tone generated so it can switch to T.38 if needed.
+* 确保你至少有 FreeSWITCH Git 在 2010 年 5 月 25 日之后的版本。
+* 你还需要加载 mod\_spandsp。
+* 在 conf/autoload\_configs/spandsp.conf.xml 文件中将 enable-t38 参数设置为 true。
+* 注意：较旧的 FreeSWITCH 版本使用的是 fax.conf.xml。如果找不到 spandsp.conf.xml，则较新的版本只使用 fax.conf.xml。
+* 在执行 bridge 前，执行 t38\_gateway 并将参数设置为 'self'。这将监视传真信号音以便在需要时切换到 T.38。
 
-I tested it using a Linksys SPA3102, You need to have T.38 mode to be in ReInvite.
+我使用 Linksys SPA3102 进行了测试，你需要将 T.38 模式设置为 ReInvite。
 
-### fax2mail: Emailing the fax upon receipt
+### fax2mail：接收传真后通过电子邮件发送传真
 
-In recent versions of FreeSWITCH, the dialplan ends once rxfax completes, api\_hangup\_hook executes the script in this case. It is of utmost importance to set api\_hangup\_hook before rxfax in dialplan. Also, if you use any fax vars for the system script, you have to escape them with \\\\\\  
-(example: \\\\\\${fax\_image\_size})
+在最新版本的 FreeSWITCH 中，一旦 rxfax 完成，拨号计划就会结束，api\_hangup\_hook 将执行脚本。在拨号计划中，将 api\_hangup\_hook 设置在 rxfax 之前非常重要。此外，如果你在系统脚本中使用任何传真变量，你需要用 \\\\\\ 进行转义  
+（例如：\\\\\\${fax\_image\_size}）。
 
-This dialplan also illustrates some possible regex's for specific UAs that only have dedicated fax's attached so they send the fax as an e-mail attachment to the online fax service.
+此拨号计划还演示了一些针对仅具有专用传真机附件的特定 UA 的可能正则表达式，这样它们就会将传真作为电子邮件附件发送到在线传真服务。
 
 ```xml
 <include>
@@ -304,70 +298,70 @@ This dialplan also illustrates some possible regex's for specific UAs that only 
 </include>
 ```
 
-\* Uuencode is no longer well supported or as good a format as mime. Using mutt to send the attachments solves this but presents some configuration hurdles to format the email. This solution presents a way to deal with every such case. Edit the paths and domain to match your fax service. Create the ${base\_dir}/scripts/emailfax.sh file as follows:
+\* Uuencode被认为是一种不再得到良好支持且不如mime格式好的传输格式。使用mutt发送附件可以解决这个问题，但要格式化电子邮件需要进行一些配置设置。这个解决方案提供了处理此类情况的方法。编辑路径和域名以匹配您的传真服务。创建${base\_dir}/scripts/emailfax.sh文件如下所示：
 
 ```xml
 #!/bin/bash
 #
-# $1 is email alias (The dialed #)
-# $2 is filename
+# $1是邮箱别名（拨打的号码）
+# $2是文件名
 
-mutt -n -f /dev/null -F /opt/freeswitch/scripts/muttrc -s "Fax to $1@myfax.com" $1@myfax.com -a $2 < /dev/null
+mutt -n -f /dev/null -F /opt/freeswitch/scripts/muttrc -s "向 $1@myfax.com发传真" $1@myfax.com -a $2 < /dev/null
 ```
 
-\* Now create the muttrc file. This configuration allows the sending of mail without a local mailbox which the user running FreeSWITCH probably doesn't have (you can add more config to tune the headers of your email as needed):
+\* 现在创建muttrc文件。该配置允许发送没有本地邮箱的邮件，而在运行FreeSWITCH的用户可能没有这样的邮箱（您可以添加更多配置以调整电子邮件的头部）：
 
 ```xml
-set from = 'alias@DOMAIN'
-set realname = 'YOUR ORG NAME'
+set from = 'alias@域名'
+set realname = '您的组织名'
 set folder = /dev/null
 ```
 
-Here is another example, using a python script called \[<http://steffler.info/wp-content/uploads/2009/06/process-rxfax.py> process-rxfax.py\], via Dialplan XML:
+以下是另一个示例，使用一个名为\[<http://steffler.info/wp-content/uploads/2009/06/process-rxfax.py> process-rxfax.py\]的Python脚本，通过Dialplan XML使用：
 
 ```xml
-<extension name="test_rxfax_python">
-  <condition field="destination_number" expression="^\*90012$">
-    <action application="set" data="recipient=YOU@YOURDOMAINHERE.com"/> <!-- Change to receiver's email address -->
-    <action application="python" data="process-rxfax"/> 
-    <action application="hangup"/>
-  </condition>
-</extension>
+<扩展名 name="test_rxfax_python">
+  <条件 field="destination_number" expression="^\*90012$">
+    <操作 应用="set" 数据="recipient=YOU@YOURDOMAINHERE.com"/> <!--更改为收件人的电子邮件地址 -->
+    <操作 应用="python" 数据="process-rxfax"/> 
+    <操作 应用="hangup"/>
+  </条件>
+</扩展名>
 ```
 
-[This python script](http://steffler.info/wp-content/uploads/2009/06/process-rxfax.py) gets put into your FreeSWITCH's mod\_python path, and will launch mod\_spandsp to receive the fax and then convert it to a PDF and email it. The script requires that you have the ps2pdf utility (from Ghostscript) and tiff2ps installed. In FreeBSD these are in Ports and are also available under most Linux distributions via package management (apt-get, yum, rpm etc). This python script also requires a working mod\_python and mod\_spandsp installation. More information \[<http://steffler.info/my-first-python-script-receive-a-fax-via-freeswitch-spandsp/> here\].
+[这个python脚本](http://steffler.info/wp-content/uploads/2009/06/process-rxfax.py)将放在您的FreeSWITCH的mod_python路径中，并将启动mod_spandsp来接收传真，然后将其转换为PDF并通过电子邮件发送。该脚本需要安装ps2pdf实用程序（来自Ghostscript）和tiff2ps。在FreeBSD中，这些在Ports中，并且在大多数Linux发行版中也可以通过软件包管理（apt-get、yum、rpm等）获得。这个python脚本还需要一个正常工作的mod_python和mod_spandsp安装。更多信息请参考\[这里](http://steffler.info/my-first-python-script-receive-a-fax-via-freeswitch-spandsp)。
 
-### mail2fax: Faxing a received mail
+### mail2fax:传真接收电子邮件
 
-There are several pieces:  
-\* Tell the MTA to run a script when a mail is received to special addresses (example [faxnumber@fax.domain.org](mailto:faxnumber@fax.domain.org)) :  
-\*\* examples at <http://hylafax.sourceforge.net/howto/faxing.php#ss5.4>   
-\* Create a script email2fax:  
-\*\* guess From: fax number from the email  
-\*\* run \[<https://freeswitch.org/fisheye/changelog/freeswitch-contrib/sathieu/email2pdf> email2pdf\]  
-\*\* convert PDF to tiff  
-\*\* call txfax within FS
+有几个部分：  
+\* 告诉MTA在收到特殊地址的邮件时运行脚本（示例[faxnumber@fax.domain.org](mailto:faxnumber@fax.domain.org)）：  
+\*\* 示例请查看<http://hylafax.sourceforge.net/howto/faxing.php#ss5.4>  
+\* 创建一个名为email2fax的脚本：  
+\*\* 从电子邮件中猜测传真号码  
+\*\* 运行\[<https://freeswitch.org/fisheye/changelog/freeswitch-contrib/sathieu/email2pdf> email2pdf\]  
+\*\* 将PDF转换为tiff格式  
+\*\* 在FS中调用txfax
 
-Install email2pdf into /usr/local/email2pdf. Link the main script into the path of the email user (/usr/local/bin is used in the script below). Edit header.html to be however you want it.
+将email2pdf安装到/usr/local/email2pdf中。将主要脚本链接到电子邮件用户的路径（在下面的脚本中使用了/usr/local/bin）。根据需要编辑header.html。
 
-Create the file /usr/local/email2pdf/emails and put the authorized originating emails you want into it.
+创建文件`/usr/local/email2pdf/emails`，并将您希望授权的发件人邮箱放入其中。
 
-If using postfix, you can setup the fax delivery agent by adding these lines into /etc/postfix/[master.cf](http://master.cf):
+如果使用postfix，您可以通过将以下内容添加到`/etc/postfix/[master.cf](http://master.cf)`来设置传真发送代理：
 
 ```xml
 email2fax unix - n n - - pipe
 flags= user=nobody argv=/usr/local/bin/email2fax $mailbox $sender
 ```
 
-Then add this line to /etc/aliases and run postalias:
+然后将以下内容添加到`/etc/aliases`并运行`postalias`：
 
 ```xml
 mail2fax: |/usr/local/bin/email2fax
 ```
 
-Then configure your email server to forward a new domain ([fax.mydomain.com](http://fax.mydomain.com), for example) to the mail2fax alias. In postfix this will probably involve adding a transport map (transport\_maps) as well as a relay recipient (relay\_recipient\_maps). How you do it will depend on your mail server configuration.
+然后配置您的电子邮件服务器将一个新的域名（例如[fax.mydomain.com](http://fax.mydomain.com)）转发到`mail2fax`别名。在postfix中，这可能涉及添加传输映射（transport\_maps）以及中继接收方（relay\_recipient\_maps）。如何处理将取决于您的邮件服务器配置。
 
-The script email2fax may look like this:
+`email2fax`脚本可能如下所示：
 
 ```xml
 #!/bin/sh
@@ -378,13 +372,13 @@ TMPPDF=/tmp/email2fax.$$.pdf
 TMPFAX=/tmp/email2fax.$$.tiff
 TMPLOG=/tmp/email2fax.$$.log
 DEST='sofia/external/100@10.10.10.10'
-#or
-#DEST="sofia/gateway/sip.provider.com/$1"
-#check a file for the originating email address
-#and abort if it isn't in that file
+＃或
+＃DEST="sofia/gateway/sip.provider.com/$1"
+＃检查文件中的原始电子邮件地址
+＃如果不在该文件中，则中止
 grep -i "$2" "/usr/local/email2pdf/emails" >/dev/null
 if [ $? -ne 0]; then
-echo "User not allowed!"
+echo "用户不允许！"
 exit 1;
 fi
 cat > $TMPMAIL
@@ -395,25 +389,25 @@ gs -q -r204x98 -g1728x1078 -dNOPAUSE -dBATCH -dSAFER -dPDFFitPage -sDEVICE=tiffg
 chmod o+r $TMPFAX
 /opt/freeswitch/bin/fs_cli \
 --execute="originate {fax_verbose=true}$DEST &txfax($TMPFAX)" >> $TMPLOG
-#This sends the log to the sender along with a copy of the fax as translated
-#change .tiff to .tif for fusionpbx, remove if you don't use that
+＃这将将日志与已翻译的传真副本一起发送给发件人
+＃更改扩展名.tiff为.tif适用于fusionpbx，如果不使用可以删除
 FAXBASE=$(basename "$TMPFAX")
 NEWFAX=${FAXBASE/tiff/tif}
-#This sends an email with the status result
-#use it if you don't have mpack
-#sendmail -v $2 -f fax@mydomain.com -r fax@mydomain.com <$TMPLOG
-#This sends an email with the fax as an attachment, requires mpack
-mpack -s "Successful Fax to $1" -d $TMPLOG $TMPFAX $2
-#puts the fax file into the outbound folder - change "1010" to your fax extension
-#this is the default location for fusionpbx, YMMV
+＃这将通过电子邮件发送带有状态结果的邮件
+＃如果没有安装mpack，则使用该方法
+＃sendmail -v $2 -f fax@mydomain.com -r fax@mydomain.com <$TMPLOG
+＃这将通过电子邮件发送传真作为附件，需要安装mpack
+mpack -s "成功传真给 $1" -d $TMPLOG $TMPFAX $2
+＃将传真文件放入发出文件夹 - 将“1010”更改为您的传真分机号码
+＃这是fusionpbx的默认位置，YMMV
 cp $TMPFAX "/usr/local/freeswitch/storage/fax/1010/sent/$NEWFAX"
-#delete the fax
+＃删除传真
 rm $TMPFAX
 ```
 
-### Configuring the app
+### 配置应用程序
 
-App can be controlled globally using `spandsp.conf.xml`:
+可以使用 `spandsp.conf.xml` 全局控制该应用程序：
 
 ```xml
 <configuration name="spandsp.conf" description="FAX application configuration">
@@ -429,72 +423,72 @@ App can be controlled globally using `spandsp.conf.xml`:
 </configuration>
 ```
 
-### Controlling the app
+### 控制应用程序
 
-You can set the following channel's variables to control the behavior of the mod application:
+您可以设置以下通道变量来控制mod应用程序的行为：
 
-| Variable                      | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| t38\_gateway\_detect\_timeout |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| FAX\_DISABLE\_ECM             | Disabling ECM                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| fax\_disable\_v17             | Disable V17 modem that is: use lower speed modems (lower speeds are auto-negotiated with the remote party and cannot be forced. That's a work that the spandsp modem handles on its own.)                                                                                                                                                                                                                                                                                                                                                                                      |
-| fax\_enable\_t38              | Enable T.38 on a per call basis                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| fax\_enable\_t38\_insist      |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| fax\_enable\_t38\_request     | Send a T.38-ReINVITE when a fax was detected by tone detection                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| fax\_end\_page                | A sent or receives document will end at specified page                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| fax\_force\_caller            | Force to act as caller or receiver; Mode: Tx=1 or Rx=0''                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| fax\_ident                    | The FAX identity should be set to the telephone number to be used within the FAX exchange. This will typically appear on an LCD display at the far end. In theory it should be limited to digits, spaces, + and one or two other characters appropriate to telephone numbers. In practice FAX machines are usually happy with any text, up to 20 characters long. This string may also play a part in page headers. To disable this header showing at all, put this to "\_undef\_" NB the underscores                                                                          |
-| fax\_header                   | If fax\_header is set to a non-null string, a header line will be inserted at the start of each page, just like a typical FAX machine does. The fax\_ident, fax\_header and the page number will be used to form the text of this line. If you are forwarding FAXes, you probably don't want to add a header line, as there will already be one that was inserted by the original source. If you are sending a locally generated FAX, you probably do want to add header lines to each page. To disable this header showing at all, put this to "\_undef\_" NB the underscores |
-| fax\_prefix                   | Prefix added to the file name for received faxes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| fax\_start\_page              | A sent document will start at the specified page                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| fax\_use\_ecm                 | Forces the use of ECM if globally disabled, on a per call basis                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| ~~fax\_v17\_disabled~~        | ~~Same as fax\_disable\_v17??? This seems to be for T.30 fax mode~~                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| fax\_verbose                  | Be verbose when printing logs (per call basis)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| t38\_peer                     |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| t38\_trace                    |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| 变量                          | 描述                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| t38\_gateway\_detect\_timeout |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| FAX\_DISABLE\_ECM            | 禁用ECM（错误校正模式）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| fax\_disable\_v17            | 禁用V17调制解调器,即使用较低速度调制解调器（较低速度是与远程方自动协商的，无法强制。这是spandsp调制解调器自己处理的工作。）                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| fax\_enable\_t38             | 按呼叫启用T.38                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| fax\_enable\_t38\_insist     |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| fax\_enable\_t38\_request    | 在通过音调检测检测到传真时发送T.38-ReINVITE                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| fax\_end\_page               | 指定传送或接收文档的结束页                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| fax\_force\_caller           | 强制作为呼叫方或接收方操作; 模式：Tx=1或Rx=0                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| fax\_ident                   | FAX标识应设置为FAX交换中要使用的电话号码。这通常会出现在远程端的液晶显示屏上。理论上，它应该限制为数字、空格、+和其他符合电话号码要求的一个或两个字符。实际上，传真机通常可以接受任何文本，最长为20个字符。这个字符串也可能在页头中起作用。要完全禁用此标题的显示，请将其设置为"\_undef\_"（注意下划线）。                                                                                                                                         |
+| fax\_header                  | 如果将fax\_header设置为非空字符串，则会在每个页面的开头插入一个标题行，就像一个典型的传真机那样。fax\_ident、fax\_header和页码将用于形成此行的文本。如果您正在转发传真，则可能不希望添加标题行，因为原始源已经插入了一个标题行。如果您正在发送一个本地生成的传真，则可能确实希望为每个页面添加标题行。要完全禁用此标题的显示，请将其设置为"\_undef\_"（注意下划线）。                                                                                                                        |
+| fax\_prefix                  | 为接收到的传真文件名添加前缀。                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| fax\_start\_page             | 指定发送的文档将从指定页开始                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| fax\_use\_ecm                | 在全局禁用的情况下，按呼叫启用ECM（错误校正模式）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ~~fax\_v17\_disabled~~       | ~~与fax\_disable\_v17相同吗？看起来是T.30传真模式~~                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| fax\_verbose                 | 打印日志时显示详细信息（按呼叫启用）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| t38\_peer                    |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| t38\_trace                   |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 
-### Checking the results
+### 检查结果
 
-Rx/Tx fax will set the following channel variables when it terminates:
+当Rx/Tx传真终止时，将设置以下通道变量：
 
-**By mod\_spandsp.c**
+**通过mod\_spandsp.c**
 
 ```xml
 t38_leg
 ```
 
-**By mod\_spandsp\_fax.c**
+**通过mod\_spandsp\_fax.c**
 
 ```xml
 fax_bad_rows
 fax_document_total_pages
 fax_document_transferred_pages
 fax_ecm_requested - 0/1
-fax_ecm_used - "on" or "off";
-fax_filename - File name of the received fax
+fax_ecm_used - "on" 或 "off";
+fax_filename - 收到的传真文件名
 fax_image_resolution - XxY
 fax_image_size
 fax_local_station_id
-fax_result_code - 0 on error otherwise >= 1;
-fax_result_text - fax error string, provide info where an error has happened;
+fax_result_code - 如果发生错误则为0，否则大于等于1;
+fax_result_text - 传真错误字符串，提供出现错误的信息;
 fax_remote_station_id
-fax_success - 0 on error, 1 on success;
-fax_transfer_rate - speed expressed in bauds (bit per seconds) like 14.400, 9.600, etc.;
-fax_v17_disabled - 0/1 for T.30 mode?
-jitterbuffer_msec - Always 0
+fax_success - 如果发生错误则为0，成功则为1;
+fax_transfer_rate - 以波特率（比特每秒）表示的速度，如14.400、9.600等;
+fax_v17_disabled - 是否为T.30模式的0/1?
+jitterbuffer_msec - 总是为0
 rtp_autoflush_during_bridge
-t38_gateway_format - "audio" or "udptl"
-t38_peer - "self" or "peer"
+t38_gateway_format - "audio" 或 "udptl"
+t38_peer - "self" 或 "peer"
 t38_trace_read
 ```
 
-#### Fax result code
+#### 传真结果代码
 
-[Fax Result Codes](../Introduction/Variables/index.mdx#2-show-variables) listed on Variables page.
+[传真结果代码](../Introduction/Variables/index.mdx#2-show-variables)详见变量页面。
 
-### t38_gateway App
+### t38_gateway 应用
 
-t38\_gateway dialplan app will allow FreeSWITCH to transcode audio&lt;->t.38\. It converts to T38 Gateway if tones are heard.
+t38\_gateway 拨号计划应用允许FreeSWITCH进行音频&lt;->t.38的转码。如果听到音调，它将转为T38网关。
 
 ```xml
 <extension name="audio_aleg_t38_bleg">
@@ -506,60 +500,55 @@ t38\_gateway dialplan app will allow FreeSWITCH to transcode audio&lt;->t.38\. I
 </extension>
 ```
 
-#### T.38 Reinvite
+#### T.38 重新邀请
 
-You can also make FreeSWITCH listen in and send a reinvite back to the a-leg or forward to the b-leg with the t38\_gateway app. For example, this will transcode incoming T.38 on A-leg to ULAW on b-leg. (e.g. send incoming T.38 fax to Hylafax on Asterisk)
+您还可以使用t38\_gateway应用让FreeSWITCH监听并发送重新邀请给a-leg或将其转发到b-leg。例如，这将将A-leg上的传入T.38转码为b-leg上的ULAW。（例如，将传入的T.38传真发送到Asterisk上的Hylafax）
 
-**T.38 re-invite**
-
-```xml
-<extension name="t38_reinvite">
-  <condition>
-    <action application="set" data="fax_enable_t38=true"/> <!-- Enable t.38 for this call -->
-    <action application="set" data="fax_enable_t38_request=true"/> <!-- Enable t38_gateway to send a t.38 reinvite when a fax tone is detected. If using t38_gateway peer then you need to export this variable instead of set -->
-    <action application="set" data="execute_on_answer=t38_gateway self"/> <!--Execute t38_gateway on answer. self or peer. self: send a reinvite back to the a-leg. peer reinvite forward to the b-leg -->
-    <action application="bridge" data="sofia/external/1234@host"/>
-  </condition>
-</extension>
-```
-
-####   
-T.38 Transcode
-
-If you want to transcode T.38 on the A-leg to T.30 audio on the B-leg, but you want to react to an incoming T.38 invite/re-invite on A-leg instead of detecting CNG tones.
-
-Note: you may have to increase FaxT2Timer on hylafax to make this reliable
-
-**T.38 transcode**
+**T.38 重新邀请**
 
 ```xml
 <extension name="t38_transcode">
   <condition field="destination_number" expression="^(fax_transcode)$">	
     <action application="set" data="fax_enable_t38=true"/>
-    <action application="set" data="sip_execute_on_image=t38_gateway peer nocng"/> <!--Execute t38_gateway on t.38 invite on A-leg. "nocng" means don't detect the CNG tones. Just start transcoding to the b-leg -->
+    <action application="set" data="fax_enable_t38_request=true"/> <!-- Enable t38_gateway to send a t.38 reinvite when a fax tone is detected. -->
+    <action application="set" data="execute_on_answer=t38_gateway peer"/> <!--Execute t38_gateway on answer. peer: send a reinvite forward to the b-leg. -->
     <action application="bridge" data="sofia/external/1234@host"/>
   </condition>
 </extension>
 ```
 
-  
-If you want to transcode audio on the A-leg to T.38 on the B-leg, from a T.38 invite on the B-leg:
+如果你想在A-leg上将T.38转码为B-leg上的T.30音频，并且你想要在A-leg上响应一个传入的T.38邀请/重新邀请，而不是检测CNG音调。
 
-**T.38 transcode**
+注意:您可能需要在hylafax上增加FaxT2Timer以增加可靠性。
+
+**T.38转码**
+
+```xml
+<extension name="t38_transcode">
+  <condition field="destination_number" expression="^(fax_transcode)$">	
+    <action application="set" data="fax_enable_t38=true"/>
+    <action application="set" data="sip_execute_on_image=t38_gateway peer nocng"/> <!--在A-leg上执行t38_gateway，当A-leg上有t.38邀请时，"nocng"意味着不检测CNG音调，直接开始转码到b-leg -->
+    <action application="bridge" data="sofia/external/1234@host"/>
+  </condition>
+</extension>
+```
+
+如果你想在A-leg上将音频转码为B-leg上的T.38，从B-leg上的T.38邀请： 
+
+**T.38转码**
 
 ```xml
 <extension name="t38_transcode">
   <condition field="destination_number" expression="^(fax_transcode)$">
     <action application="set" data="fax_enable_t38=true"/>
-    <action application="bridge" data="{sip_execute_on_image='t38_gateway self nocng'}sofia/internal/ext@host"/> <!-- "nocng" means don't detect the CNG tones. Just start transcoding -->
+    <action application="bridge" data="{sip_execute_on_image='t38_gateway self nocng'}sofia/internal/ext@host"/> <!-- "nocng"意味着不检测CNG音调。只需开始转码 -->
   </condition>
 </extension>
 ```
 
-  
-If you want to transcode t.38 on leg A to audio on leg B when leg A invites t.38, but refuse all t.38 offers from leg B :
+如果希望在A端对t.38进行转码至B端的音频，当A端邀请t.38时，并且拒绝B端的所有t.38邀请:
 
-**T.38 transcode**
+**T.38转码**
 
 ```xml
 <extension name="t38_test" continue="true">
@@ -570,74 +559,76 @@ If you want to transcode t.38 on leg A to audio on leg B when leg A invites t.38
 </extension>
 ```
 
-Allow t.38 between leg A and leg B, but only if the t.38 re-invite comes from leg a
+允许A端和B端之间的t.38，但仅当t.38的重邀请来自A端时才允许：
 
 ```xml
 <extension name="passthrough">
   <condition field="destination_number" expression="^(fax_transcode)$">
-    <!-- Allow T.38 reinvites from Leg A -->
+    <!-- 允许来自Leg A的T.38重邀请 -->
     <action application="set" data="t38_passthru=true"/>
-    <!-- but not from leg B -->
+    <!-- 但是拒绝来自Leg B的重邀请 -->
     <action application="bridge" data="{refuse_t38=true},sofia/gateway/external/$1"/>
   </condition>
 </extension>
 ```
 
-### Receive Faxes
+### 接收传真
 
-Fax receive application
+传真接收应用程序
 
-rxfax [filename]
+rxfax [文件名]
 
-If filename is missing, a default name is created in this form:
+如果文件名为空，则默认创建以下形式的名称：
 
 spool/prefix-number-timestamp.tif
 
-where:
+其中：
 
-* spool is set by the "spool-dir" configuration
-* prefix is set by the "fax\_prefix" channel variable or the "file-prefix" configuration
-* number is a count of number of received faxes
-* timestamp is the current time in microseconds
+* spool由“spool-dir”配置设置
+* prefix由“fax_prefix”通道变量或“file-prefix”配置设置
+* number是接收传真数量的计数
+* timestamp是当前时间的微秒数
 
-Example usage:
+示例用法：
 
-&lt;action application="set" data="fax_prefix=${uuid}"/>  
+```xml
+&lt;action application="set" data="fax_prefix=${uuid}"/>
 &lt;action application="rxfax" data=""/>
 
-### Transmit Faxes
+### 传真发送
 
-Fax transmit application. It is recommended to set `ignore_early_media` to true to avoid some packet reordering issues.
+传真发送应用程序。建议将 `ignore_early_media` 设置为 true，以避免一些数据包重排序问题。
 
-txfax &lt;filename>
+txfax &lt;文件名>
 
-Example usage:
+用法示例：
 
 &lt;action application="txfax" data="/tmp/YouAreFired.tif"/>
 
-### Fax Tone Detection
+### 传真音调检测
 
-&lt;action application="spandsp_start_fax_detect" data="&lt;app> '[&lt;app_args>]' [&lt;timeout>] [&lt;tone_type>]"/>
+&lt;action application="spandsp_start_fax_detect" data="&lt;应用程序> '[&lt;应用程序参数>]' [&lt;超时>] [&lt;音调类型>]"/>
 
-Uses the spandsp code to detect fax tones which should be more reliable than using `tone_detect`. By default, the application detects CNG tones (sending side).
+使用 spandsp 代码来检测传真音调，相比使用 `tone_detect` 更可靠。默认情况下，该应用程序检测 CNG 音调（发送方）。
 
-`tone_type` can be set to "ced" to detect CED tones (receiving side).
+`音调类型` 可设置为 "ced" 以检测 CED 音调（接收方）。
 
-Example usage:
+用法示例：
 
 &lt;action application="spandsp_start_fax_detect" data="transfer 'fax XML default' 3"/>
 
-This will listen for 3 seconds after the application is invoked and if heard, will transfer the call to the "fax" extension found in the "XML" dial plan in the "default" context. (see the Samples section below for an example dialplan for the "fax" extension). Note the use of single quotes to enclose the arguments to the dialplan app that is the target of spandsp\_start\_fax\_detect.
+该应用程序被调用后将监听 3 秒钟，如果检测到传真音调，将会将呼叫转接到 "default" 上下文的 "XML" 拨号计划中的 "fax" 分机。注意使用单引号将 spandsp\_start\_fax\_detect 目标拨号计划应用的参数括起来。
 
-Example usage:
+用法示例：
 
 &lt;action application="set" data="execute_on_answer=spandsp_start_fax_detect transfer 'fax XML default' 3"/>
 
-This will listen for 3 seconds after extension is answered (by user or by other application such as voicemail) and if tones are detected, will transfer the call to the "fax" extension found in the "XML" dial plan in the "default" context. This is closest in setup to "fax machine on same analog line as regular phone".
+该应用程序被接听后（由用户或其他应用程序如语音邮件接听），将监听 3 秒钟，如果检测到音调，则将呼叫转接到 "default" 上下文的 "XML" 拨号计划中的 "fax" 分机。这种设置最接近 "传真机与常规电话在同一模拟线上" 的情况。
 
-#### Full Example
+#### 完整示例
+```
 
-We need to answer the call to let FreeSWITCH receive the audio to start detecting FAX tones. Because a bridge after an answer is actually a transfer, the Ringback sent to the caller is now defined by `transfer_ringback`.
+我们需要应答电话，让FreeSWITCH接收音频以开始检测传真音调。因为应答后的桥接实际上是转接，所以现在称为转接的振铃由`transfer_ringback`定义。
 
 ```xml
 <extension name="group_dial_sales">
@@ -650,37 +641,37 @@ We need to answer the call to let FreeSWITCH receive the audio to start detectin
 </extension>
 ```
 
-### Stop Fax Tone Detection
+### 停止传真音调检测
 
 &lt;action application="spandsp_stop_fax_detect"/>
 
-## Examples
+## 示例
 
-Here is a working example using FreeSWITCH as a T.38-gateway.
+这是一个使用FreeSWITCH作为T.38网关的工作示例。
 
-I used the following software and devices:
+我使用了以下软件和设备：
 
 * FAX\_B: Infotec IF2100e
 * ATA\_B: Cisco 186 v3.2.1
 * FAX\_A: RICOH FAX2000L (Super G3, 14.400 Baud)
 * ATA\_A: Grandstream HandyTone 502  
-   * Product model: HT-502 V1.2A  
-   * Firmware: Program-- 1.0.3.10 Bootloader-- 1.0.0.9 Core-- 1.0.3.6 Base-- 1.0.3.8
-* FreeSWITCH: git head of 2010-11-19
+   * 产品型号: HT-502 V1.2A  
+   * 固件版本: Program-- 1.0.3.10 Bootloader-- 1.0.0.9 Core-- 1.0.3.6 Base-- 1.0.3.8
+* FreeSWITCH: 2010-11-19的git head版本
 * PRI E1-Stack: openzap
-* Sangoma-Wanpipe: version 3.5.17
+* Sangoma-Wanpipe: 版本3.5.17
 * TDM-Card: Sangoma A104d
 
 Grandstream
 
-**FXS-Port 1**
+**FXS端口1**
 
-* Fax Mode: T.38 (Auto Detect)
-* Fax tone detection mode: "Callee or Caller"
-* Preferred Vocoder: PCMA
-* Disable Line Echo Canceller (LEC): Yes
-* Jitter Buffer: High
-* Gain: Tx=0dB, Rx=0dB
+* 传真模式: T.38 (自动检测)
+* 传真音调检测模式: "被叫或主叫"
+* 首选编解码器: PCMA
+* 禁用回声抵消器 (LEC): 是
+* 抖动缓冲区: 高
+* 增益: 发送=0dB, 接收=0dB
 
 **spandsp.conf.xml**
 
@@ -692,8 +683,8 @@ Grandstream
     <param name="disable-v17" value="false"/>
     <param name="enable-t38" value="false"/>
     <param name="enable-t38-request" value="false"/>
-    <param name="ident" value="SpanDSP Fax Ident"/>
-    <param name="header" value="SpanDSP Fax Header"/>
+    <param name="ident" value="SpanDSP传真标识"/>
+    <param name="header" value="SpanDSP传真头"/>
     <param name="spool-dir" value="/tmp"/>
     <param name="file-prefix" value="faxrx"/>
   </fax-settings>
@@ -702,11 +693,11 @@ Grandstream
 
 ### Outbound Fax T.38 to TDM
 
-Sequence of this arrangement:
+这个排列的顺序如下：
 
 Fax\_A- > ATA\_B -> SIP -> t38\_gateway -> FreeSWITCH -> mod\_openzap -> ISDN/PRI E1 -> Fax
 
-I used an XML dialplan here. In opposite to the documentation above I have to answer the call and then starting calling the t38\_gateway app in dialplan instead of putting it into "execute\_on\_answer" didn't worked for me. - [Helmut Kuper](https://freeswitch.org/confluence/display/~hekuper)
+我在这里使用了一个XML拨号计划。与上面的文档相反，我必须先应答电话，然后在拨号计划中开始呼叫t38\_gateway应用，而不是将其放在"execute\_on\_answer"中，对我而言这无法正常工作。 - [Helmut Kuper](https://freeswitch.org/confluence/display/~hekuper)
 
 ```xml
 <extension name="Fax_test2">
@@ -725,11 +716,11 @@ I used an XML dialplan here. In opposite to the documentation above I have to an
 
 ### Inbound Fax TDM to T.38
 
-I used a Lua dialplan here. In opposite to the documentation above "peer" mode doesn't work. - [Helmut Kuper](https://freeswitch.org/confluence/display/~hekuper)   
-  
-Fax\_B -> ISDN/PRI E1 -> mod\_openzap -> FreeSWITCH -> t38\_gateway -> SIP -> ATA\_A -> Fax\_A (4919)
+我在这里使用了Lua拨号计划。与上述文档相反，"同伴"模式无法正常工作。- [Helmut Kuper](https://freeswitch.org/confluence/display/~hekuper)
 
-**Lua inbound fax dialplan**
+传真_B -> ISDN/PRI E1 -> mod_openzap -> FreeSWITCH -> T38_gateway -> SIP -> ATA_A -> 传真_A（4919）
+
+**Lua传入传真拨号计划**
 
 ```py
 if (dialed_ext == "4919") then
@@ -743,20 +734,20 @@ if (dialed_ext == "4919") then
 end
 ```
 
-"dialed\_ext" contains the destination number of the ATA resp Fax.  
-"sip\_domain" contains the FreeSWITCH SIP-Domain.
+"dialed_ext"包含ATA或传真的目标号码。
+"sip_domain"包含FreeSWITCH SIP域名。
 
-### Internal T.38 to T.38
+### 内部 T.38 to T.38
 
-I used T.38 pass-through here. So FS has only to act as a proxy for the RTP and UDPTL data.
+我在这里使用了T.38直通模式。因此，FS只需充当RTP和UDPTL数据的代理。
 
-Fax\_A (4919) -> ATA\_A -> SIP -> FreeSWITCH -> SIP -> ATA (same as ATA\_A) -> Fax\_B (2799)
+传真_A（4919）-> ATA_A -> SIP -> FreeSWITCH -> SIP -> ATA（与ATA_A相同） -> 传真_B（2799）
 
-**Internal T.38 to T.38**
+**内部 T.38 to T.38**
 
 ```xml
 <extension name="Fax_test t.38 to t.38 via t38-passthru">
-  <condition field="caller_id_number" expression="^(4919)$"/ break="on-true"/>
+  <condition field="caller_id_number" expression="^(4919)$" break="on-true"/>
   <condition field="destination_number" expression="^(2799)$">
     <action application="set" data="absolute_codec_string=PCMA"/>
     <action application="set" data="proxy_media=true"/>
@@ -767,11 +758,11 @@ Fax\_A (4919) -> ATA\_A -> SIP -> FreeSWITCH -> SIP -> ATA (same as ATA\_A) -> F
 </extension>
 ```
 
-## Results
+## 结果
 
-by [Stavros Patiniotis](https://freeswitch.org/confluence/display/~stavros)
+由[Stavros Patiniotis](https://freeswitch.org/confluence/display/~stavros)提供
 
-I've sent an 8-page fax successfully in both directions. The complete transport way was this:
+我成功地通过传真发送了8页纸。完整的传输路径如下：
 
 ```xml
 Fax_A <-> ATA_A <-> SIP/UDP <-> t38_gateway <-> FreeSWITCH <-> mod_openzap <----> ISDN/PRI E1 --|
@@ -781,13 +772,13 @@ Fax_A <-> ATA_A <-> SIP/UDP <-> t38_gateway <-> FreeSWITCH <-> mod_openzap <----
 Fax_B <-> ATA_B <-> SIP/UDP/G711a     <-----/                                \<-> ISDN/PRI E1 --|
 ```
 
-### Questions I got during testing
+### 测试时遇到的问题
 
-\*Where is the difference between "peer" and "self" mode and why does "peer" not work?
+\* "peer"模式和"self"模式之间有什么区别，为什么"peer"模式不起作用？
 
-\*Why does in T.38->TDM direction calling "t38\_gateway self" via execute\_on\_answer not work? t38\_gateway is called, it sets a media BUG but seems to hang listening for a tone and aborting after a 20 seconds timeout.
+\* 为什么在T.38->TDM方向的呼叫中，通过execute\_on\_answer调用"t38\_gateway self"不起作用？t38\_gateway被调用，它设置了一个媒体BUG，但是似乎一直在等待一个音调，并在20秒的超时后中断。
 
-## Events
+## 事件
 
 ### spandsp::rxfaxpageresult
 
@@ -799,9 +790,9 @@ Fax_B <-> ATA_B <-> SIP/UDP/G711a     <-----/                                \<-
 
 ### spandsp::txfaxresult
 
-This event is fired when a fax finishes sending (either when it succeeds or when it fails). A header indicates whether the fax was successful.
+完成传真发送后触发此事件（无论成功还是失败）。一个标题指示传真是否成功。
 
-In addition to the session's usual headers it contains:
+除了会话的常规标题外，它还包括：
 
 fax-document-transferred-pages  
 fax-document-total-pages  
@@ -815,138 +806,149 @@ fax-ecm-used
 fax-local-station-id  
 fax-remote-station-id
 
-These are undocumented above.
+这些在上面没有列出。
 
 ### spandsp::rxfaxresult
 
-This event is fired when a fax finishes being received (either when it succeeds or when it fails). A header indicates whether the fax was successful.
+完成传真接收后触发此事件（无论成功还是失败）。一个标题指示传真是否成功。
 
-In addition to the session's headers it contains:
+除了会话的标题外，它还包括：
 
-fax-document-transferred-pages  
-fax-document-total-pages  
-fax-image-resolution  
-fax-image-size  
-fax-bad-rows  
-fax-transfer-rate  
-fax-result-code  
-fax-result-text  
-fax-ecm-used  
-fax-local-station-id  
-fax-remote-station-id
+## 传真文档传输页数
+`[to_be_replace[0]]`
+## 传真文档总页数
+`> 原文地址: <https://wiki-power.com/>`
+## 传真图像分辨率
+`> 本篇文章受 [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by/4.0/deed.zh) 协议保护，转载请注明出处。`
+## 传真图像大小
+`](https://wiki-power.com/ar/`
+## 传真错误行数
+`[to_be_replace[4]]`
+## 传真传输速率
+`[to_be_replace[5]]`
+## 传真结果代码
+`[to_be_replace[6]]`
+## 传真结果文本
+`[to_be_replace[7]]`
+## 使用的传真ECM
+`[to_be_replace[8]]`
+## 本地传真站点ID
+`[to_be_replace[9]]`
+## 远程传真站点ID
+`[to_be_replace[10]]`
 
-These are undocumented above.
+以上是未记录的。
 
-## Troubleshooting
+## 故障排除
 
-Faxing can be a big pain over VOIP and despite FreeSWITCH's great attempt it's hard to match the reliability of a PSTN line (for transmitting analog-encoded data, that is). Using the methods outlined below with a decent provider that supports T.38 I can get somewhere in the 90-95% range with a bit higher with multiple retries. If the remote fax machine supports T.38 there is a better chance it will work fine.
+在VOIP上传真可能非常麻烦，尽管FreeSWITCH做出了巨大的努力，但要匹配公共交换电话网的可靠性（对于传输模拟编码数据而言）仍然很难。使用下面概述的方法并配以一个支持T.38协议的良好供应商，我可以达到90-95%的成功率，多次尝试可能会稍微提高。如果远程传真机支持T.38协议，则其正常工作的机会较大。
 
-### Common Issues
+### 常见问题
 
-* Remote machine doesn't support T.38 properly (or at all), this is going to make things worse and is obviously common with PSTN machines
-* A T.38 gateway (or multiple) in between each transcode is going to hurt the chances of success
-* Carrier/Provider doesn't support T.38 well or is poor quality for standard codecs. Some carriers end up using several other carriers and the more carriers a call goes through or the lower the quality of carrier/route the harder faxing can be. A quality carrier is extremely important!
-* Some remote fax machines and PSTN lines can also be of low quality so while you may eventually be able to get good success overall some machines may prove always to be a challenge
-* Make sure your tiff is at the right size. There are many sizes supported by fax machines but 1728x1078 is probably the most common (and is at standard resolution). It's roughly 204x98dpi; "super fine" faxes are at higher resolutions. Ensuring the proper resolution and size is an important step to working with many remote fax machines
-* Ensure you have ignore\_early\_media enabled, without it random/out of order media can screw things up
-* For your codecs you generally want to force PCMU/PCMA (unless you know of success with something else better); that's generally going to give you the best results
-* Requesting T.38 can sometimes hurt your chances by things that don't properly handle or understand T.38 causing it to drop
-* Many "analog" PSTN lines are actually now transported by VoIP back to the central office, so you can't even count on those lines to transmit data modem signals any more.
+* 远程机器不正常（或根本不支持）T.38，这将使问题变得更糟，而且在PSTN机器中很常见。
+* 在每次转码之间加入T.38网关（或多个网关）会降低成功的机会。
+* 运营商/供应商对T.38支持不好，或者标准编解码器的质量较差。一些运营商最终会使用其他几家运营商，通话经过的运营商越多或者路由质量越低，传真的困难就会增加。选择质量好的运营商非常重要！
+* 一些远程传真机和PSTN线路的质量也可能较低，所以尽管总体上可能会取得好的成功率，但某些机器可能始终是一个挑战。
+* 确保你的tiff文件大小正确。传真机支持多种尺寸，但1728x1078可能是最常见的尺寸（且为标准分辨率）。大约是204x98dpi; "super fine" 传真使用更高的分辨率。确保正确的分辨率和尺寸是与许多远程传真机无缝工作的重要一步。
+* 确保启用ignore_early_media，否则随机/乱序的媒体可能会引发问题。
+* 对于编解码器，通常应强制使用PCMU/PCMA（除非你使用其他更好的编解码器有成功经验）；那通常会给你最好的结果。
+* 请求T.38有时会因为一些不正确处理或理解T.38的因素导致失败。
+* 许多“模拟”PSTN线路现在实际上是通过VoIP传输回中央办公室，因此您甚至不能再依赖这些线路传输数据调制解调器信号。
 
-### Suggested Process
+### 建议的流程
 
-* First try the optimal methods, t38 enabled and requested, ECM on
-* Second if that fails lets turn t38 requests off and ecm off and try again
-* If that still fails lets leave T38 and ecm off and just try again, if still failing chance of future success is low.
+* 首先尝试最佳方法，启用并请求t38，打开ECM。
+* 其次，如果失败了，我们关闭t38请求和ECM，然后再次尝试。
+* 如果仍然失败，我们保持t38和ECM关闭，并再次尝试，如果仍然失败，未来成功的机会很低。
 
-### Example
+### 示例
 
-An example to start a fax from the command line:
+使用命令行启动传真的示例：
 
 originate {ignore_early_media=true,absolute_codec_string='PCMU,PCMA',fax_enable_t38=true,fax_verbose=true,fax_use_ecm=true,fax_enable_t38_request=true}sofia/gateway/default/1231231234 &txfax('test_fax.tif')
 
-And if this fails further retries with:
+如果这仍然失败，可以使用以下配置再次尝试：
 
 originate {ignore_early_media=true,absolute_codec_string='PCMU,PCMA',fax_enable_t38=true,fax_verbose=true,fax_use_ecm=false,fax_enable_t38_request=false}sofia/gateway/default/1231231234 &txfax('test_fax.tif')
 
-### Further debugging
+### 进一步调试
 
-Setting fax\_verbose to true will dump a lot of data about faxes, make sure to go through it carefully as there can always be just one line that reveals the problem. Console debug logging can also be helpful as usual.
+将fax_verbose设置为true会输出大量有关传真的数据，请仔细查看，因为可能只有一行代码揭示了问题。通常情况下，控制台调试日志也会很有帮助。
 
-## Tone Detection
+## 声音检测
 
-mod\_spandsp offers better tone detection than what is provided by default in the FreeSWITCH core.
+mod_spandsp提供了比FreeSWITCH核心默认提供的更好的音调检测功能。
 
 ### DTMF
 
-Inband DTMF detectors in mod\_spandsp can detect duration in addition to frequency. The Teletone detector in the FreeSWITCH core is based on an old version of spandsp and should be replaced with this detector.
+mod_spandsp中的内部DTMF检测器可以检测音调的持续时间和频率。FreeSWITCH核心中的Teletone检测器基于较旧版本的spandsp，应该使用这个检测器来替代。
 
-#### Related Tone Channel Variables
+#### 相关音调通道变量
 
-Definitions for these are found on the [Variables page](../Dialplan/Variables-Archive/x__Variables_6587314.mdx).
+这些变量的定义可以在[变量页面](../Dialplan/Variables-Archive/x__Variables_6587314.mdx)上找到。
 
-dtmf\_verbose
+dtmf_verbose（音调详细模式）
 
-min\_dup\_digit\_spacing\_ms
+min_dup_digit_spacing_ms（最小重复数字间隔时间）
 
-spandsp\_dtmf\_rx\_threshold
+spandsp_dtmf_rx_threshold（spandsp接收音调的阈值）
 
-spandsp\_dtmf\_rx\_twist
+spandsp_dtmf_rx_twist（spandsp接收音调的扭曲度）
 
-spandsp\_dtmf\_rx\_reverse\_twist
+spandsp_dtmf_rx_reverse_twist（spandsp接收音调的反向扭曲度）
 
-spandsp\_dtmf\_rx\_filter\_dialtone
+spandsp_dtmf_rx_filter_dialtone（spandsp接收音调时的拨号音过滤）
 
-#### Dialplan Applications
+#### 拨号计划应用程序
 
-spandsp\_start\_dtmf
+spandsp_start_dtmf
 
-Starts detection of baseband audio containing DTMF TouchTones. Note that this is not RFC2833 RTP detection, this counts the zero-crossings of the DTMF tones sent by analog phones.
+开始检测包含DTMF TouchTones的基带音频。请注意，这不是RFC2833 RTP检测，它是通过模拟电话发送的DTMF音调的零交叉计数。
 
 &lt;action application="spandsp_start_dtmf"/>
 
 spandsp\_stop\_dtmf
 
-Stop detecting DTMF in the baseband audio on this session. It saves some computing power to stop DTMF detection when you are certain that there will be none present.
+停止在此会话中检测基带音频中的DTMF。当您确信不会出现DTMF时，停止DTMF检测可以节省一些计算资源。
 
 &lt;action application="spandsp_stop_dtmf"/>
 
-### Call Progress
+### 通话进程
 
-mod\_spandsp provides the tools to create a call progress tone detector. By accounting for cadence in addition to frequency, this call progress detector can distinguish between North American BUSY and REORDER, which only differ in cadence.
+mod\_spandsp提供了创建通话进程音调检测器的工具。通过考虑时序和频率，这个通话进程检测器可以区分北美的BUSY和REORDER两种音调，它们的区别仅在于时序。
 
-#### Configuration
+#### 配置
 
-conf/autoload\_configs/spandsp.conf.xml defines the tone detector descriptors. Each descriptor defines a named group of tones to detect. When starting the tone detector, you specify the group of tones you wish to detect.
+conf/autoload\_configs/spandsp.conf.xml定义了音调检测器描述符。每个描述符定义了要检测的音调的命名组。在启动音调检测器时，您需要指定要检测的音调组。
 
-This is a sample configuration for detecting some call progress tones in North America:
+以下是在北美检测一些通话进程音调的示例配置：
 
-**Call progress tone detection**
+**通话进程音调检测**
 
 ```xml
-	<configuration name="spandsp.conf" description="Tone detector descriptors">
+<configuration name="spandsp.conf" description="音调侦测描述">
   <descriptors debug-level="0">
-  <!-- These tones are defined in Annex to ITU Operational Bulletin No. 781 - 1.II.2003 -->
-  <!-- Various Tones Used in National Networks (According to ITU-T Recommendation E.180)(03/1998) -->
-  <!-- North America -->
+  <!-- 这些音调定义在ITU运营公告781附件-2003年1月2日 -->
+  <!-- 根据ITU-T建议E.180使用的各种国家网络音调（1998年3月） -->
+  <!-- 北美洲 -->
     <descriptor name="1">
       <tone name="CED_TONE" description="ANS / ANSam">
         <element freq1="2100" freq2="0" min="700" max="0"/>
       </tone>
-      <tone name="SIT" description="Special Information Tone">
+      <tone name="SIT" description="特殊信息音调">
         <element freq1="950" freq2="0" min="256" max="400"/>
         <element freq1="1400" freq2="0" min="256" max="400"/>
         <element freq1="1800" freq2="0" min="256" max="400"/>
       </tone>
-      <tone name="RING_TONE" description="North America ring">
+      <tone name="RING_TONE" description="北美洲铃声">
         <element freq1="440" freq2="480" min="1200" max="0"/>
       </tone>
-      <tone name="REORDER_TONE" description="North America reorder">
+      <tone name="REORDER_TONE" description="北美洲订单">
         <element freq1="480" freq2="620" min="224" max="316"/>
         <element freq1="0" freq2="0" min="168" max="352"/>
         <element freq1="480" freq2="620" min="224" max="316"/>
       </tone>
-      <tone name="BUSY_TONE" description="North America busy">
+      <tone name="BUSY_TONE" description="北美洲占线">
         <element freq1="480" freq2="620" min="464" max="536"/>
         <element freq1="0" freq2="0" min="464" max="572"/>
         <element freq1="480" freq2="620" min="464" max="536"/>
@@ -956,64 +958,64 @@ This is a sample configuration for detecting some call progress tones in North A
 </configuration>
 ```
 
-Each descriptor defines the tones to detect. Each tone is composed of elements defining the frequencies and cadence of the tone. The tone name will be reported in the DETECTED\_TONE event. Each element can be composed of 0 (silence), 1, or 2 frequencies. min and max define the minimum and maximum element durations in milliseconds.
+每个描述符定义要检测的音调。每个音调由定义音调频率和节奏的元素组成。音调名称将在DETECTED_TONE事件中报告。每个元素可以由0（静音）、1或2个频率组成。min和max定义了元素持续时间的最小和最大值（以毫秒为单位）。
 
-##### Tuning the detector
+##### 调整检测器
 
-It takes much trial and error to figure out the tone configuration that works well without introducing talk-off. Debug level can be increased by changing the debug-level parameter in the descriptors tag of spandsp.conf.xml. Set the level to 2 to report additional detection information to assist in the tuning process.
+需要经过多次尝试才能找到不会引入举（talk-off）问题、工作良好的音调配置。可以通过更改spandsp.conf.xml文件中描述符标记中的debug-level参数来增加调试级别。将级别设置为2，以报告额外的检测信息，以帮助调整过程。
 
-The "Tone report" log will tell you when a tone was detected.
+“音调报告”日志会告诉您何时检测到音调。
 
-The "Tone segment" log will tell you each segment that is detected. The f1 and f2 values identify which frequencies were matched in that segment.
+“音调分段”日志将告诉您检测到的每个分段。f1和f2的值标识该分段中匹配的频率。
 
-#### Dialplan Applications
+#### 拨号计划应用
 
-start\_tone\_detect
+start_tone_detect
 
-Start background tone detection with cadence.
+以节奏开始背景音调检测。
 
-  &lt;!-- start detection for North American call progress tones -->  
-  &lt;action application="start_tone_detect" data="1"/>
+&lt;!-- 开始对北美呼叫进展音调进行检测 -->
+&lt;action application="start_tone_detect" data="1"/>
 
-stop\_tone\_detect
+stop_tone_detect
 
-Stop background tone detection with cadence
+停止背景音调检测。
 
 &lt;action application="stop_tone_detect"/>
 
-#### APIs
+#### API
 
-start\_tone\_detect
+start_tone_detect
 
-Start background tone detection with cadence
+以节奏开始背景音调检测。
 
-start_tone_detect &lt;uuid> &lt;descriptor name>
+start_tone_detect &lt;uuid> &lt;描述符名称>
 
-stop\_tone\_detect
+stop_tone_detect
 
-Stop background tone detection with cadence
+停止背景音调检测。
 
 stop_tone_detect &lt;uuid>
 
-#### Events
+#### 事件
 
-DETECTED\_TONE
+DETECTED_TONE
 
-This event is fired when the tone detector detects a tone.
+当音调检测器检测到音调时，会触发此事件。
 
-The following headers are set:
+设置以下标头：
 
-  Detected-Tone
+Detected-Tone
 
-  Unique-ID
+Unique-ID
 
-The Detected-Tone header will contain the name of the tone, as specified in the configuration file.
+Detected-Tone标头将包含配置文件中指定的音调名称。
 
-The Unique-ID will contain the session UUID.
+Unique-ID将包含会话UUID。
 
-## Codecs
+## 编解码器
 
-Spandsp implements the following codecs:
+Spandsp实现了以下编解码器：
 
 * ADPCM (IMA)
 * G.726
@@ -1022,27 +1024,94 @@ Spandsp implements the following codecs:
 * GSM
 * LPC-10
 
-## Software Modem
+## 软件调制解调器
 
-SpanDSP can also act as a softmodem. To enable the softmodem feature, see the [HylaFax](../Auxiliary-Knowledge-and-Utilities/HylaFax_13173342.mdx#esl) integration page. Setup should be identical, but you can send commands to it as if it were a regular dial-up modem.
+SpanDSP 还可以充当软调制解调器。要启用软调制解调器功能，请参阅 [HylaFax](../Auxiliary-Knowledge-and-Utilities/HylaFax_13173342.mdx#esl) 集成页面。设置应该是相同的，但您可以像对待常规的拨号调制解调器一样向其发送命令。
 
-### COM Port Setting for Windows
+### Windows 的 COM 端口设置
 
-SpanDSP uses COM ports starting from COM4\. To loopback the COM ports to an application, an external piece of software such as [com0com](http://com0com.sourceforge.net/) may be required.
+SpanDSP 使用从 COM4 开始的 COM 端口。要将 COM 端口回环到应用程序，可能需要使用外部软件（例如 [com0com](http://com0com.sourceforge.net/)）。
 
-## See also
+## 另请参阅
 
-<http://www.soft-switch.org/t38/index.html> — Here are some more informations about T.38
+<http://www.soft-switch.org/t38/index.html> — 这里有关于 T.38 的更多信息
 
-<http://www.itu.int/pub/T-SP-OB.781-2003> — Various Tones Used in National Networks
+<http://www.itu.int/pub/T-SP-OB.781-2003> — 国家网络中使用的各种音调
 
-<https://www.soft-switch.org/spandsp%5Ffaq/ar01s14.html> — How to generate a FAX compatible multi-page TIFF
+<https://www.soft-switch.org/spandsp%5Ffaq/ar01s14.html> — 如何生成与传真兼容的多页 TIFF
 
 [Fax on AudioCodes Mediant](../Interoperability/Gateways/AudioCodes-Gateways/Fax-on-AudioCodes-Mediant_6586678.mdx#about) 
 
-### Comments:
+### 评论：
 
-| \# wget <http://fisheye.freeswitch.org/browse/freeswitch-contrib.git/sathieu/email2pdf>\--2015-11-09 13:11:50-- <http://fisheye.freeswitch.org/browse/freeswitch-contrib.git/sathieu/email2pdf>Resolving [fisheye.freeswitch.org](http://fisheye.freeswitch.org)... 209.105.235.6, 2607:f348:1021::6Connecting to [fisheye.freeswitch.org](http://fisheye.freeswitch.org)\|209.105.235.6|:80... connected.HTTP request sent, awaiting response... 301 Moved PermanentlyLocation: <https://freeswitch.org/fisheye/browse/freeswitch-contrib.git/sathieu/email2pdf> \[following\]\--2015-11-09 13:11:51-- <https://freeswitch.org/fisheye/browse/freeswitch-contrib.git/sathieu/email2pdf>Resolving [freeswitch.org](http://freeswitch.org)... 209.105.235.6, 2607:f348:1021::6Connecting to [freeswitch.org](http://freeswitch.org)|209.105.235.6|:443... connected.HTTP request sent, awaiting response... 404 No such repository: freeswitch-contrib.git2015-11-09 13:11:51 ERROR 404: No such repository: freeswitch-contrib.git. ![](/images/icons/contenttypes/comment_16.png) Posted by denis at Nov 09, 2015 05:12 |
+| \# wget <http://fisheye.freeswitch.org/browse/freeswitch-contrib.git/sathieu/email2pdf>\--2015-11-09 13:11:50-- <http://fisheye.freeswitch.org/browse/freeswitch-contrib.git/sathieu/email2pdf>正在解析 [fisheye.freeswitch.org](http://fisheye.freeswitch.org)... 209.105.235.6, 2607:f348:1021::6连接到 [fisheye.freeswitch.org](http://fisheye.freeswitch.org)\|209.105.235.6|:80... 已连接发送 HTTP 请求，等待响应... 301 Moved Permanently定向到 <https://freeswitch.org/fisheye/browse/freeswitch-contrib.git/sathieu/email2pdf> \[跟随至\]\--2015-11-09 13:11:51-- <https://freeswitch.org/fisheye/browse/freeswitch-contrib.git/sathieu/email2pdf>正在解析 [freeswitch.org](http://freeswitch.org)... 209.105.235.6, 2607:f348:1021::6连接到 [freeswitch.org](http://freeswitch.org)|209.105.235.6|:443... 已连接发送 HTTP 请求，等待响应... 404 找不到该存储库：freeswitch-contrib.git2015-11-09 13:11:51 错误 404: 找不到该存储库：freeswitch-contrib.git。 ![](/images/icons/contenttypes/comment_16.png) 由denis发布于Nov 09, 2015 05:12 |
 | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 
+# Markdown Elements
 
+这是一个示例Markdown文档，用于演示各种Markdown元素的使用。
+
+## 标题
+
+这是一级标题
+====================
+
+这是二级标题
+--------------------
+
+### 这是三级标题
+
+#### 这是四级标题
+
+##### 这是五级标题
+
+###### 这是六级标题
+
+## 强调和斜体
+
+这是一个**粗体**的文本。
+
+这是一个*斜体*的文本。
+
+## 列表
+
+### 无序列表
+
+- 列表项1
+- 列表项2
+- 列表项3
+
+### 有序列表
+
+1. 列表项1
+2. 列表项2
+3. 列表项3
+
+## 链接
+
+这是一个[链接到谷歌](https://www.google.com)的示例。
+
+## 图片
+
+这是一个图片：
+
+![示例图片](https://example.com/image.jpg)
+
+## 引用
+
+> 这是一个引用的文本示例。
+
+## 代码块
+
+下面是一段代码的示例：
+
+```python
+print("Hello, world!")
+```
+
+## 表格
+
+| 列1      | 列2  |
+| ----------- | ----------- |
+| 单元格1      | 单元格2       |
+| 单元格3   | 单元格4        |

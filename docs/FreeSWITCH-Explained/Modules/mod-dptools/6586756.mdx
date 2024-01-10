@@ -1,22 +1,21 @@
-
 # mod_dptools: detect_speech 
 
  
 
-## About
+## 关于
 
-Implements speech recognition.
+实现语音识别功能。
 
-Click here to expand Table of Contents
+单击此处展开目录
 
-* 1 [Usage](#-freeswitch--mod_dptools-detect_speech-)
-* 2 [Examples](#-freeswitch--mod_dptools-detect_speech-)  
-   * 2.1 [Speech Recognition Via the Event Socket](#speech-recognition-via-the-event-socket)  
-   * 2.2 [Playing Prompts](#playing-prompts)  
-   * 2.3 [Detecting Multiple Phrases](#detecting-multiple-phrases)
-* 3 [See Also](#-freeswitch--mod_dptools-detect_speech-)
+* 1 [使用方法](#-freeswitch--mod_dptools-detect_speech-)
+* 2 [示例](#-freeswitch--mod_dptools-detect_speech-)  
+   * 2.1 [通过事件套接字进行语音识别](#speech-recognition-via-the-event-socket)  
+   * 2.2 [播放提示音](#playing-prompts)  
+   * 2.3 [检测多个短语](#detecting-multiple-phrases)
+* 3 [参见](#-freeswitch--mod_dptools-detect_speech-)
 
-## Usage
+## 使用方法
 
 ```xml
 detect_speech <mod_name> <gram_name> <gram_path> [<addr>]
@@ -32,11 +31,11 @@ detect_speech start_input_timers
 detect_speech stop
 ```
 
-## Examples
+## 示例
 
-### Speech Recognition Via the Event Socket
+### 通过事件套接字进行语音识别
 
-Start the recognizer and select a grammar in one shot:
+一次性启动识别器并选择语法：
 
 ```xml
 SendMsg e2d1c628-f32c-4497-b813-7474ce406317
@@ -45,7 +44,7 @@ execute-app-name: detect_speech
 execute-app-arg:pocketsphinx yesno yesno
 ```
 
-You should see DETECTED\_SPEECH events with "Speech-Type: begin-speaking" when the recognizer notices the start of speech. For example: (using "plain" events)
+当识别器注意到语音开始时，您应该看到带有 "Speech-Type: begin-speaking" 的 DETECTED\_SPEECH 事件。例如：（使用 "plain" 事件）
 
 ```xml
 Content-Length: 1605
@@ -99,7 +98,7 @@ Caller-Privacy-Hide-Name: false
 Caller-Privacy-Hide-Number: false
 ```
 
-If recognition is successful, you should also see a DETECTED\_SPEECH event with "Speech-Type: detected-speech" and some XML describing what was detected. For example:
+如果识别成功，您还应该看到一个带有 "Speech-Type: detected-speech" 的 DETECTED\_SPEECH 事件，并附带一些描述被检测到的内容的 XML。例如：
 
 ```xml
 Content-Length: 1791
@@ -111,7 +110,7 @@ FreeSWITCH-Hostname: vm1
 FreeSWITCH-IPv4: 192.168.1.241
 FreeSWITCH-IPv6: %3A%3A1
 Event-Date-Local: 2010-03-09%2010%3A39%3A49
-Event-Date-GMT: Tue,%2009%20Mar%202010%2015%3A39%3A49%20GMT
+Event-Date-GMT: 星期二,%2009%20三月%202010%2015%3A39%3A49%20格林尼治标准时间
 Event-Date-Timestamp: 1268149189731224
 Event-Calling-File: switch_ivr_async.c
 Event-Calling-Function: speech_thread
@@ -131,7 +130,7 @@ Channel-Write-Codec-Name: PCMU
 Channel-Write-Codec-Rate: 8000
 Caller-Username: 1001
 Caller-Dialplan: inline
-Caller-Caller-ID-Name: Extension%201001
+Caller-Caller-ID-Name: 分机%201001
 Caller-Caller-ID-Number: 1001
 Caller-Network-Addr: 192.168.1.104
 Caller-ANI: 1001
@@ -156,16 +155,16 @@ Content-Length: 165
 <?xml version="1.0"?>
 <result grammar="holdr">
 <interpretation grammar="yesno" confidence="98">
-<input mode="speech">YES</input>
+<input mode="speech">是</input>
 </interpretation>
 </result>
 ```
 
-Note: The XML body at the end there with our result has a Content-Length of 165\. That is included as part of the overall count of 1791 at the beginning.
+注意：最后一个XML主体带有长度为165的Content-Length。这个长度包括在开始时的总计数为1791中。
 
-### Playing Prompts
+### 播放提示
 
-It is common to play prompts while detecting speech. Making a change like this to the media will pause the recognizer. For example, if you start to play a file:
+在检测语音时播放提示是常见的。像这样改变媒体的操作会暂停语音识别器。例如，如果你开始播放一个文件：
 
 ```xml
 SendMsg ad375c14-ba41-46c8-b800-4aa2ef295bba
@@ -174,7 +173,7 @@ execute-app-name: playback
 execute-app-arg: say-yes-or-no.wav
 ```
 
-you should immediately resume the recognizer:
+你应该立即恢复识别器：
 
 ```xml
 SendMsg e2d1c628-f32c-4497-b813-7474ce406317
@@ -183,13 +182,13 @@ execute-app-name: detect_speech
 execute-app-arg: resume
 ```
 
-Recognition will happen while the file is playing. You will need to have \[\[Mod\_event\_socket#divert\_events|divert\_events\]\] on to receive the ASR events while the file is being played.
+在文件播放的同时，识别操作将继续进行。你需要打开\[Mod\_event\_socket#divert\_events|divert\_events\]以接收在文件播放时的ASR事件。
 
-### Detecting Multiple Phrases
+### 检测多个短语
 
-Each start of the recognizer detects only one phrase so if you want a somewhat continuous recognition, you will need to resume the recognizer after each successful recognition as well.
+每个识别器的开始只会检测一个短语，所以如果你想要连续识别，你需要在每次成功识别后恢复识别器。
 
-When you are done, you'll want to stop the recognizer to save precious CPU cycles:
+当你完成时，你会想要停止识别器以节省宝贵的CPU周期：
 
 ```xml
 SendMsg e2d1c628-f32c-4497-b813-7474ce406317
@@ -198,9 +197,7 @@ execute-app-name: detect_speech
 execute-app-arg: stop
 ```
 
-## See Also
+## 参见
 
 * [Dialplan](../../Dialplan/index.mdx#0-about)
 * [mod\_dptools: play\_and\_detect\_speech](./6586714.mdx#lua)
-
-

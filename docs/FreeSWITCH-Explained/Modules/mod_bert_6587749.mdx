@@ -1,37 +1,33 @@
+# mod_bert
 
-# mod_bert 
+## 关于
 
- 
+**mod\_bert** 提供了一个名为 **bert\_test** 的应用程序，它会生成和捕获一个毫瓦音，并在最后打印出错误率。它还提供了可以用来对设备进行负载测试并检测某些会话中是否存在音频间隔的 ESL 事件。它仅适用于 PCMU 编解码器。
 
-## About
+## 描述
 
-**mod\_bert** provides **bert\_test**, an application that generates and captures a milliwatt tone and prints an error rate at the end. It also provides ESL events that can be used to load-test equipment and detect if there are audio gaps in some of the sessions. It only works with the PCMU codec.
+请注意，**mod\_bert** 相对比较简单：在验证每个端点是否收到配置的错误容限的毫瓦 PCMU 序列之外，没有进行真正的音频分析。这意味着任何一种增益控制、回声消除等等的功能很可能都会破坏结果。
 
-## Description
+通常情况下，您希望在通话的两端都调用 **bert\_test** 应用程序。您也可以在通话的一端调用 bert，并在另一端使用 **echo** 或 **delay\_echo**。
 
-Note that **mod\_bert** is pretty naive: no real audio analysis is done beyond verifying the milliwatt PCMU sequence is received on each end (with the configured error tolerance). This means any kind of gain control, echo cancellation, etc. most likely will break the results.
+FreeSWITCH mod\_bert &lt;-----------> DUT &lt;-------------> FreeSWITCH mod\_bert 或 echo
 
-You typically want to call the **bert\_test** application on both ends of the call. You can also call bert on one end of the call and **echo** or **delay\_echo** on the other end.
+FreeSWITCH mod\_bert &lt;-----------> (DUT 以回声模式运行)
 
-FreeSWITCH mod\_bert &lt;-----------> DUT &lt;-------------> FreeSWITCH mod\_bert or echo
+(DUT: 测试设备)
 
-FreeSWITCH mod\_bert &lt;-----------> (DUT in echo mode)
+DUT 可以是另一个 FreeSWITCH 实例，也可以是任何其他 VoIP 设备（请记住，在该系统中不能启用回声消除或自动增益控制）。
 
-(DUT: Device under test)
+下面的大多数变量都是可选的。
 
-The DUT can be either another FreeSWITCH instance or any other VoIP equipment (remember, no echo cancellation or AGC must be enabled in that system)
+* **bert\_timeout\_ms** 是应用程序在尝试寻找传输的位模式时超时的毫秒数（毫瓦）。
+* **bert\_window\_ms** 是音频分析窗口的毫秒数（每个x毫秒验证发生了多少错误等）。
+* **bert\_max\_err** 是一旦音频流处于“同步”状态后允许的最大错误数。
+* **bert\_timer=soft** 告诉应用程序使用FreeSWITCH核心软定时器，而不是基于接收到的数据包来计时传输（这可能是默认设置）。
+* **bert\_hangup\_on\_error** 在发生音频错误时挂断通话。
+* **bert\_debug\_io\_file** 用于调试rx/tx音频。
 
-Most of the variables you see below are optional.
-
-* **bert\_timeout\_ms** is number of milliseconds before timing out trying to find the bit pattern that the application transmits (milliwatt).
-* **bert\_window\_ms** is number of milliseconds of the audio analysis window (each x milliseconds verifies how many errors have occurred, etc).
-* **bert\_max\_err** is the max number of allowed errors once the audio stream is in "sync".
-* **bert\_timer=soft** tells the application to use FreeSWITCH core soft timer instead of timing transmission based on reception of packets (this should probably be default).
-* **bert\_hangup\_on\_error** will hangup the call when audio errors occur.
-* **bert\_debug\_io\_file** is for debugging the rx/tx audio.
-
-  
-Usage Example
+使用示例
 
 ```xml
 <extension name="bert_test">
@@ -48,5 +44,3 @@ Usage Example
   </condition>
 </extension>
 ```
-
-

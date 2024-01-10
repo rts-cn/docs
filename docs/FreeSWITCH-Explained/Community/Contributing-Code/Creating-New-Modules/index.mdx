@@ -1,110 +1,108 @@
+# 创建新模块
 
-# Creating New Modules 
+## 关于
 
- 
+本页面介绍了构建新的 FreeSWITCH™ 模块可用的一些结构。
 
-## About
+点击展开目录
 
-This page outlines some of the structure available to build a new FreeSWITCH™ module.
-
-Click to expand Table of Contents
-
-* 1 [Before You Begin...](#before-you-begin)  
-   * 1.1 [Building Modules](#building-modules)  
-      * 1.1.1 [Within Git checkout](#within-git-checkout)  
-         * 1.1.2 [Using development headers (libfreeswitch-dev)](#using-development-headers-libfreeswitch-dev)  
-   * 1.2 [Module Interface](#module-interface)  
+* 1 [开始之前...](#before-you-begin)  
+   * 1.1 [构建模块](#building-modules)  
+      * 1.1.1 [在 Git checkout 内](#within-git-checkout)  
+         * 1.1.2 [使用开发头文件 (libfreeswitch-dev)](#using-development-headers-libfreeswitch-dev)  
+   * 1.2 [模块接口](#module-interface)  
       * 1.2.1 [SWITCH\_MODULE\_LOAD\_FUNCTION](#switch_module_load_function)  
          * 1.2.2 [SWITCH\_MODULE\_RUNTIME\_FUNCTION](#switch_module_runtime_function)  
          * 1.2.3 [SWITCH\_MODULE\_SHUTDOWN\_FUNCTION](#switch_module_shutdown_function)  
-   * 1.3 [Iterative Development](#iterative-development)  
-      * 1.3.1 [Building Your Module](#creating-your-module)  
-         * 1.3.2 [Installing Your Module](#reloading-your-module)  
-         * 1.3.3 [Reloading Your Module](#creating-your-module)  
+   * 1.3 [迭代开发](#iterative-development)  
+      * 1.3.1 [构建您的模块](#creating-your-module)  
+         * 1.3.2 [安装您的模块](#reloading-your-module)  
+         * 1.3.3 [重新加载您的模块](#creating-your-module)  
    * 1.4 [XML API](#creating-your-module)  
-      * 1.4.1 [Domains](#creating-your-module)  
-         * 1.4.2 [Users](#creating-your-module)  
-         * 1.4.3 [Module Configuration](#module-configuration)  
-         * 1.4.4 [Gathering data from XML objects](#gathering-data-from-xml-objects)  
-   * 1.5 [Reacting](#creating-your-module)  
-      * 1.5.1 [Subscribing to events](#subscribing-to-events)  
-         * 1.5.2 [Handling events](#handling-events)  
-   * 1.6 [Setting hooks](#setting-hooks)  
-      * 1.6.1 [Channel States](#channel-states)  
-         * 1.6.2 [State handlers](#channel-states)  
-   * 1.7 [Making calls](#making-calls)  
-      * 1.7.1 [Analysis of a FreeSWITCH call](#analysis-of-a-freeswitch-call)  
-         * 1.7.2 [Making calls from within your module](#making-calls-from-within-your-module)  
-         * 1.7.3 [Session Objects](#session-objects)  
-   * 1.8 [Memory Management](#memory-management)  
-   * 1.9 [Useful Macros](#useful-macros)  
+      * 1.4.1 [域名](#creating-your-module)  
+         * 1.4.2 [用户](#creating-your-module)  
+         * 1.4.3 [模块配置](#module-configuration)  
+         * 1.4.4 [从 XML 对象中获取数据](#gathering-data-from-xml-objects)  
+   * 1.5 [响应](#creating-your-module)  
+      * 1.5.1 [订阅事件](#subscribing-to-events)  
+         * 1.5.2 [处理事件](#handling-events)  
+   * 1.6 [设置钩子](#setting-hooks)  
+      * 1.6.1 [通道状态](#channel-states)  
+         * 1.6.2 [状态处理程序](#channel-states)  
+   * 1.7 [发起呼叫](#making-calls)  
+      * 1.7.1 [FreeSWITCH 呼叫分析](#analysis-of-a-freeswitch-call)  
+         * 1.7.2 [从模块内部发起呼叫](#making-calls-from-within-your-module)  
+         * 1.7.3 [会话对象](#session-objects)  
+   * 1.8 [内存管理](#memory-management)  
+   * 1.9 [有用宏](#useful-macros)  
       * 1.9.1 [SWITCH\_DECLARE\_GLOBAL\_STRING\_FUNC](#switch_declare_global_string_func)  
          * 1.9.2 [switch\_malloc](#switch_malloc)  
          * 1.9.3 [switch\_zmalloc](#switch_zmalloc)  
          * 1.9.4 [switch\_strdup](#switch_strdup)  
          * 1.9.5 [switch\_safe\_free](#switch_safe_free)
-* 2 [New Module Checklist](#new-module-checklist)
-* 3 [See Also:](#creating-your-module)
+* 2 [新模块核查清单](#new-module-checklist)
+* 3 [参见：](#creating-your-module)
 
-## Before You Begin...
+## 在开始之前...
 
-* Ensure that the functionality you're looking for has not already been implemented [somewhere else](../../../Modules/index.mdx#about).  
-   * Collaborate with the original authors if there is something very close that just needs a minor change to accommodate what you need.
-* Review the bundled modules in freeswitch/src/mod/applications (particularly [mod\_skel](../../../Modules/mod_skel_3965522.mdx#about)) to get an understanding of how modules interface with FreeSWITCH and function.
+* 请确认你所寻找的功能在其他地方尚未实现. [在这里](../../../Modules/index.mdx#about) 查看其他地方的实现情况.
+  * 如果有与你所需功能接近的功能，只需要做一些小改变就能适应你的需求，可以与原作者合作。
+* 在 `freeswitch/src/mod/applications` 目录中查看捆绑的模块 (尤其是 [mod_skel](../../../Modules/mod_skel_3965522.mdx#about))，以了解模块如何与 FreeSWITCH 进行接口和功能交互。
 
-### Building Modules
+### 构建模块
 
-#### Within Git checkout
+#### 在 Git checkout 内
 
-It is possible to build your modules at the same time as FreeSWITCH.
+你可以在构建 FreeSWITCH 的同时构建你的模块。
 
-##### Creating Your Module
+##### 创建你的模块
 
-* Start with a fresh git clone
-* Create your own module directory under freeswitch/src/mod/applications
-* Copy the skeleton from [freeswitch/src/mod/applications/mod\_skel/mod\_skel](../../../Modules/mod_skel_3965522.mdx#about) to mod\_yourmodule
-* Edit as appropriate
-* Add your module to the list of modules to build in freeswitch/modules.conf
+- 从头开始克隆 Git
+- 在 `freeswitch/src/mod/applications` 目录下创建你自己的模块目录
+- 将 [freeswitch/src/mod/applications/mod_skel/mod_skel](../../../Modules/mod_skel_3965522.mdx#about) 中的示例文件复制到 `mod_yourmodule` 文件夹下面
+- 根据需求编辑文件
+- 将你的模块添加到 `freeswitch/modules.conf` 配置文件的模块列表中
 
-##### Customizing Include/Library Flags
+##### 自定义 Include/Library 标志
 
-The first time you perform a 'make' from freeswitch, a Makefile will be generated for your module
+第一次使用 `make` 命令构建 FreeSWITCH 时，你的模块会自动生成一个 Makefile。
 
-If you wish to use functionality from the libraries bundled with FreeSWITCH, you might add something like this to your module's Makefile:
+如果你想使用 FreeSWITCH 捆绑的库中的功能，可以在你的模块的 Makefile 中添加类似以下的内容：
 
 LOCAL_CFLAGS=-I$(switch_srcdir)/libs/libteletone/src
 LOCAL_LDFLAGS=$(switch_srcdir)/libs/libteletone/libteletone.la
 
-##### Working with multiple source files
+##### 使用多个源文件
 
-If you want to work with multiple C or C++ files, you might add something like this to your module's Makefile:
+如果你想使用多个 C 或 C++ 文件，可以在你的模块的 Makefile 中添加类似以下的内容：
 
 LOCAL_OBJS=file.o file2.o file3.o
 local_depend: $(LOCAL_OBJS)
 
-Please note that the file list should not contain the source file which has the same name as the module.
+请注意，文件列表中不应包含与模块同名的源文件。
 
-#### Using development headers (libfreeswitch-dev)
+#### 使用开发头文件 (libfreeswitch-dev)
 
-It is also possible to build your module using only the libfreeswitch-dev development header package from the [Debian repository](http://files-sync.freeswitch.org/repo/deb/debian/).
+同样也可以仅使用从[Debian软件源](http://files-sync.freeswitch.org/repo/deb/debian/)获取的libfreeswitch-dev开发头文件包来构建您的模块。
 
-This means you do not need to recompile FreeSWITCH, only your module(s). This means a much faster build.
+这意味着您不需要重新编译FreeSWITCH，只需编译您的模块。这将大大提高构建速度。
 
-* Create a directory for storing your module
-* Copy the skeleton from freeswitch/src/mod/applications/mod\_skel/mod\_skel.c to mod\_yourmodule.c
-* Edit as appropriate
-* Create this Makefile (more complex ones may be required as your project demands it):
+* 创建一个用于存储模块的目录
+* 将freeswitch/src/mod/applications/mod_skel/mod_skel.c中的模板复制到mod_yourmodule.c
+* 根据需要进行编辑
+* 创建以下Makefile（如果项目需要，可能需要更复杂的Makefile）：
 
 **Makefile**
 
 ```bash
-# Customise these as appropriate
+# 根据需要自定义这些变量
 MODNAME = mod_yourmodule.so
 MODOBJ = mod_yourmodule.o file.o file2.o file3.o
 MODCFLAGS = -Wall -Werror
 MODLDFLAGS = -lssl
 
 CC = gcc
+# CFLAGS和LDFLAGS根据需要自定义
 CFLAGS = -fPIC -g -ggdb `pkg-config --cflags freeswitch` $(MODCFLAGS)
 LDFLAGS = `pkg-config --libs freeswitch` $(MODLDFLAGS)
 
@@ -127,353 +125,380 @@ install: $(MODNAME)
     install $(MODNAME) $(DESTDIR)/usr/lib/freeswitch/mod
 ```
 
-* You can now create your own Debian package (more information to be added later - Steven Ayre)
+* 现在，您可以创建自己的Debian软件包（稍后将提供更多信息-Steven Ayre）
 
-### Module Interface
+### 模块接口
 
-A module is expected to define the following "hooks":
+一个模块应该定义以下“hooks”：
 
 #### SWITCH_MODULE_LOAD_FUNCTION
 
-Using this macro defines the load function for the module, in this function you should initialize any global structures, hook up any event or state handlers, etc. If you return anything other than SWITCH\_STATUS\_SUCCESS, the module will not continue to be loaded.
+使用此宏定义模块的加载函数，在该函数中，您应该初始化任何全局结构、连接任何事件或状态处理程序等。如果返回值不是SWITCH_STATUS_SUCCESS，模块将不会继续加载。
 
 #### SWITCH_MODULE_RUNTIME_FUNCTION
 
-This is the runtime loop of the module, from here you can listen on sockets, spawn new threads to handle requests. etc.
+这是模块的运行时循环，在这里你可以监听套接字，生成新线程来处理请求等等。
 
 #### SWITCH_MODULE_SHUTDOWN_FUNCTION
 
-This is where you do any cleanup for unloading or reloading the module, you should release state handlers, event reservations, etc. You should also synchronize with shutting down the runtime thread (usually using something like a shared 'running' variable that the shutdown function sets to some value that the runtime function notices, sets to a third value and then exits).
+这是你在卸载或重新加载模块时做清理工作的地方，你应该释放状态处理程序、事件预约等。你还应该与关闭运行时线程进行同步（通常使用诸如共享的'running'变量这样的东西，关闭函数将其设置为某个值，运行时函数检测到后，将其设置为第三个值，然后退出）。
 
-### Iterative Development
+### 迭代开发
 
-The build system is set up to conveniently support rapidly iterative development of your module. Lets look at how you can make changes to your module source, build those changes, and then install and reload your library in a running instance of FreeSWITCH; all with 3 quick and easy commands.
+构建系统设置了方便支持模块的快速迭代开发。让我们看看如何修改模块源码，构建这些更改，然后在 FreeSWITCH 的运行实例中安装和重新加载库；所有这些只需3个快速简单的命令。
 
-In these examples the FS source will be in a directory called **freeswitch** under our home directory. The module we'll use in our examples will be **mod\_event\_zmq** which would be located at **\~/freeswitch/src/mod/event\_handlers/mod\_event\_zmq**.
+在这些示例中，FS源码将位于称为**freeswitch**的目录下。我们示例中要使用的模块是**mod\_event\_zmq**，其位于**\~/freeswitch/src/mod/event\_handlers/mod\_event\_zmq**。
 
-#### Building Your Module
+#### 构建你的模块
 
-The build system automatically generates a target for each module which happens to be the module's full name.
+构建系统会自动生成一个目标，每个模块都有一个对应的目标，而目标的名称正好是模块的全称。
 
-You've just made a change to the source code and now want to build just the module and not the whole of the switch:
+你刚刚对源代码进行了更改，现在只想构建模块而不是整个switch：
 
  josh@overt ~/freeswitch $ make mod_event_zmq
 
-#### Installing Your Module
+#### 安装你的模块
 
-Once the build is done there should be an updated library file located in the module source directory. The library could be manually copied to the FS installation directory, but there are a number of other ancillary tasks that need to be done such as setting permissions and updating the runtime linker. The build system will handle all of this with an autogenerated target; each module has a distinct install target which is it's name appended with **\-install**.
+一旦构建完成，模块源目录中将有一个更新的库文件。这个库可以手动复制到FS安装目录中，但是还需要进行其他一些附属任务，比如设置权限和更新运行时链接器。构建系统将通过自动生成的目标处理所有这些操作；每个模块都有一个独特的安装目标，其名称是添加了 **\-install** 的模块名称。
 
-You've now built the module library and are ready to install the new library to the FS installation directory (on \*nix platforms this does not require shutting down a running switch instance):
+现在，你已经构建了模块库，并准备将新库安装到FS安装目录中（在 *nix 平台上，这不需要关闭正在运行的交换机实例）:
 
  josh@overt ~/freeswitch $ sudo make mod_event_zmq-install
 
-#### Reloading Your Module
+#### 重新加载模块
 
-FS has the capability to reload modules which will cause the newly installed library to get loaded. N.B. your module's **Shutdown** function must accomplish a complete reversion of any setup that happens in it's **Load** function for a reload to work properly.
+FS有能力重新加载模块，这将导致新安装的库被加载。注意，你的模块的 **Shutdown** 函数必须完成在 **Load** 函数中发生的任何设置的完整还原，以使重新加载正常工作。
 
-You've now built the module, installed it and now want to see how the new changes work; the module can be reloaded using the FreeSWITCH console:
+现在，你已经构建了该模块，安装了它，现在想要看看新变化如何工作；可以使用FreeSWITCH控制台重新加载模块:
 
  freeswitch@overt> reload mod_event_zmq
 
 ### XML API
 
-XML is used a lot, every module gets its configuration from XML objects and some (e.g. directory) expose functions for modules to query information. This is how you query users, domains, etc. to get specific information.
+XML被广泛使用，每个模块都从XML对象中获取其配置，而一些模块（例如目录）还公开了供模块查询信息的函数。这是你查询用户、域等以获取特定信息的方式。
 
-Those function will take a pointer to a switch\_xml\_t structure, you need to pass a preallocated pointer so that the functions can write the proper XML object in there.
+这些函数将接受一个指向 switch\_xml\_t 结构的指针，你需要传递一个预分配的指针，以便函数可以将正确的XML对象写入其中。
 
-Here are a few ways to open a configuration section.
+以下是打开配置部分的几种方法。
 
-Note: XML objects that come from a locate or open function MUST be freed. To do so, call the switch\_xml\_free function. (note it doesn't take a pointer as argument)
+注意：来自locate或open函数的XML对象必须释放。要实现这一点，请调用switch_xml_free函数（请注意，它不需要指针作为参数）。
 
- void switch_xml_free(switch_xml_t xml)
+```c
+void switch_xml_free(switch_xml_t xml)
+```
 
-#### Domains
+#### 域
 
+```c
 switch_status_t switch_xml_locate_domain (const char *domain_name, switch_event_t *params, switch_xml_t *root, switch_xml_t *domain)
+```
 
-#### Users
+#### 用户
 
+```c
 switch_status_t switch_xml_locate_user (const char *key, const char *user_name, const char *domain_name, 
     const char *ip, switch_xml_t *root, switch_xml_t *domain, switch_xml_t *user, switch_event_t *params)
+```
 
-#### Module Configuration
+#### 模块配置
 
- switch_xml_t switch_xml_open_cfg (const char *file_path, switch_xml_t *node, switch_event_t *params)  
+```c
+ switch_xml_t switch_xml_open_cfg (const char *file_path, switch_xml_t *node, switch_event_t *params)
+```
 
-**file\_path** the name of the config section e.g. modules.conf  
-**node** a pointer to point to the node if it is found  
-**params** optional URL formatted params to pass to external gateways 
+**file\_path** 配置部分的名称，例如modules.conf  
+**node** 如果找到，指向节点的指针  
+**params** 可选的格式化URL参数，用于传递给外部网关
 
-Your module configuration file should resemble the following:
+您的模块配置文件应与以下示例类似：
 
- &lt;configuration name="mymodule.conf" description="MyModule configuration">
+```xml
+<configuration name="mymodule.conf" description="MyModule configuration">
  ...
- &lt;/configuration>
+ </configuration>
+```
 
-You can then use freeswitch's XML functions to access your configuration data. **Note:** Don't forget to call switch\_xml\_free(&node) after you are done!
+然后，您可以使用freeswitch的XML函数访问您的配置数据。**注意：**在完成后不要忘记调用switch_xml_free(&node)函数！
 
-#### Gathering data from XML objects
+#### 从XML对象中获取数据
 
-Now that you have your favorite configuration element opened, let's get some data out of it.
+现在您已经打开了您最喜欢的配置元素，请从中获取一些数据。
 
-The switch\_xml\_child(switch\_xml\_t xml, const char \*name) function will return you the first node with the name passed as argument. You can then use the switch\_xml\_attr or function to get the value of an attribute.
+```c
+switch_xml_t switch_xml_child(switch_xml_t xml, const char *name)
+```
 
-For example, to parse the following structure
+此函数将返回名称与作为参数传递的名称相匹配的第一个节点。然后，您可以使用switch_xml_attr函数获取属性的值。
 
- &lt;configuration name="mymodule.conf" description="MyModule configuration">
-   &lt;settings>
-    &lt;param name="key" value="value"/>
+例如，要解析以下结构：
+
+```xml
+<configuration name="mymodule.conf" description="MyModule 配置">
+   <settings>
+    <param name="key" value="value"/>
     ...
-   &lt;/settings>
- &lt;/configuration>
+   </settings>
+</configuration>
+```
 
-You could do the following:
+你可以按照以下方式进行操作：
 
- switch_xml_t xml = NULL, x_lists = NULL, x_list = NULL, cfg = NULL;
- if ((xml = switch_xml_open_cfg("mymodule.conf", &cfg, NULL))) {
-   if ((x_lists = switch_xml_child(cfg, "settings"))) {
-     for (x_list = switch_xml_child(x_lists, "param"); x_list; x_list = x_list->next) {
-       const char *name = switch_xml_attr(x_list, "name"); // This needs to be const 
-       const char *value = switch_xml_attr(x_list, "value");
- 
-       // Ignore empty/missing attributes
-       if (switch_strlen_zero(name)) {
-         continue;
-       }
-       
-       if (switch_strlen_zero(value)) {
-         continue;
-       }
- 
-       if (!strcmp(name, "myattribute")) {
-         // Do something with value
-       } else if (!strcmp(name, "myotherattribute")) {
-         // ...
-       } else {
-         switch_log_printf(SWITCH_CHANNEL_LOG, SWITCH_LOG_ERROR, "Unknown attribute %s\n", name);
-       }
-     }
-   }
- } else {
-   switch_log_printf(SWITCH_CHANNEL_LOG, SWITCH_LOG_ERROR, "Failed to load MyModule's config!\n");
- }
+```c
+switch_xml_t xml = NULL, x_lists = NULL, x_list = NULL, cfg = NULL;
+if ((xml = switch_xml_open_cfg("mymodule.conf", &cfg, NULL))) {
+  if ((x_lists = switch_xml_child(cfg, "settings"))) {
+    for (x_list = switch_xml_child(x_lists, "param"); x_list; x_list = x_list->next) {
+      const char *name = switch_xml_attr(x_list, "name"); // 这个需要声明为const
+      const char *value = switch_xml_attr(x_list, "value");
 
-### Reacting
+      // 忽略为空/缺失的属性
+      if (switch_strlen_zero(name)) {
+        continue;
+      }
 
-Once your module is loaded, you want to react to whats happening, here is a few way to do so:
+      if (switch_strlen_zero(value)) {
+        continue;
+      }
 
-#### Subscribing to events
+      if (!strcmp(name, "myattribute")) {
+        // 使用value做某些操作
+      } else if (!strcmp(name, "myotherattribute")) {
+        // ...
+      } else {
+        switch_log_printf(SWITCH_CHANNEL_LOG, SWITCH_LOG_ERROR, "未知属性 %s\n", name);
+      }
+    }
+  }
+} else {
+  switch_log_printf(SWITCH_CHANNEL_LOG, SWITCH_LOG_ERROR, "加载 MyModule 的配置文件失败！\n");
+}
+```
 
-Since we have an event based architecture, you can subscribe to various events to get notified whenever something happens in the switch. The event system is going to call a callback function every time an event occurs.
+### 反应
 
- switch_event_bind(const char *id, switch_event_types_t event, const char *subclass_name, switch_event_callback_t callback, void *user_data);
+一旦你的模块被加载，你希望能够对发生的事件作出反应，以下是几种方法：
 
-id is an identifier token of the binder, use your module's name  
-event is which event you would like to receive, see the [list](https://wiki.freeswitch.org/wiki/Event%5Flist "Event list")   
-subclass\_name is obviously the name of the subclass  
-user\_data is a pointer which is going to be passed back to you whenever the callback is called.
+#### 订阅事件
 
-If you want to receive all events, you can use the SWITCH\_EVENT\_ALL event type and the SWITCH\_EVENT\_SUBCLASS\_ANY subclass.
+由于我们具有基于事件的架构，你可以订阅各种事件，以便在交换机中发生某些事情时得到通知。事件系统将在每次发生事件时调用一个回调函数。
 
- if (switch_event_bind("mod_mymodule", SWITCH_EVENT_ALL, SWITCH_EVENT_SUBCLASS_ANY, mymodule_event_handler, NULL) != SWITCH_STATUS_SUCCESS) {
-   switch_log_printf(SWITCH_CHANNEL_LOG, SWITCH_LOG_ERROR, "Cannot bind to event handler!\n");
- }
+```c
+switch_event_bind(const char *id, switch_event_types_t event, const char *subclass_name, switch_event_callback_t callback, void *user_data);
+```
 
-#### Handling events
+`id`是绑定器的标识令牌，使用您模块的名称  
+`event`是您想要接收的事件，参见[列表](https://wiki.freeswitch.org/wiki/Event%5Flist "事件列表")  
+`subclass_name`显然是子类的名称  
+`user_data`是在每次调用回调函数时将返回给您的指针。
 
-Now that you registered a callback, here's how it works. Your callback procedure must have the following prototype:
+如果您想要接收所有事件，可以使用`SWITCH_EVENT_ALL`事件类型和`SWITCH_EVENT_SUBCLASS_ANY`子类。
 
- void mymodule_event_handler(switch_event_t *event);
+```
+if (switch_event_bind("mod_mymodule", SWITCH_EVENT_ALL, SWITCH_EVENT_SUBCLASS_ANY, mymodule_event_handler, NULL) != SWITCH_STATUS_SUCCESS) {
+    switch_log_printf(SWITCH_CHANNEL_LOG, SWITCH_LOG_ERROR, "无法绑定事件处理程序！\n");
+}
+```
 
-Let's take a look at switch\_event\_t
+#### 处理事件
 
- /*! \brief Representation of an event */
- struct switch_event {
- 	/*! the event id (descriptor) */
- 	switch_event_types_t event_id;
- 	/*! the priority of the event */
- 	switch_priority_t priority;
- 	/*! the owner of the event */
- 	char *owner;
- 	/*! the subclass of the event */
- 	char *subclass_name;
- 	/*! the event headers */
- 	switch_event_header_t *headers;
- 	/*! the event headers tail pointer */
- 	switch_event_header_t *last_header;
- 	/*! the body of the event */
- 	char *body;
- 	/*! user data from the subclass provider */
- 	void *bind_user_data;
- 	/*! user data from the event sender */
- 	void *event_user_data;
- 	/*! unique key */
- 	unsigned long key;
- 	struct switch_event *next;
- }; 
+现在您已经注册了回调函数，以下是它的工作原理。您的回调函数必须具有以下原型：
 
-Now most of you will need to filter on the event type, and do something with the headers the event contains. Here is an example
+```
+void mymodule_event_handler(switch_event_t *event);
+```
+让我们来看一下`switch_event_t`。
 
- void mymodule_event_handler(switch_event_t *event) 
- {
- 	switch_assert(event); // Just a sanity check
- 	
- 	switch(event->event_id) {
- 		case SWITCH_EVENT_CHANNEL_CREATE:
- 			switch_log_printf(SWITCH_CHANNEL_LOG, SWITCH_LOG_ERROR, "A new channel is born, its called \"%s\"\n", 
- 				switch_event_get_header_nil(event, "channel-name")); // This function isnt case-sensitive 
- 			break;
- 		case SWITCH_EVENT_CHANNEL_DESTROY:
- 			switch_log_printf(SWITCH_CHANNEL_LOG, SWITCH_LOG_ERROR, "A channel named \"%s\" has been destroyed\n"
- 				switch_event_get_header_nil(event, "channel-name"));
- 			break;
- 	}
- }
+```c
+/*! \brief 事件的表示 */
+struct switch_event {
+    /*! 事件ID（描述符） */
+    switch_event_types_t event_id;
+    /*! 事件的优先级 */
+    switch_priority_t priority;
+    /*! 事件的所有者 */
+    char *owner;
+    /*! 事件的子类 */
+    char *subclass_name;
+    /*! 事件的头部 */
+    switch_event_header_t *headers;
+    /*! 事件头部的尾指针 */
+    switch_event_header_t *last_header;
+    /*! 事件的主体 */
+    char *body;
+    /*! 子类提供的用户数据 */
+    void *bind_user_data;
+    /*! 事件发送者的用户数据 */
+    void *event_user_data;
+    /*! 唯一键 */
+    unsigned long key;
+    struct switch_event *next;
+};
+```
 
-### Setting hooks
+现在，大多数人都需要根据事件类型进行过滤，并对事件中包含的头部执行某些操作。这是一个例子。
 
-#### Channel States
+```c
+void mymodule_event_handler(switch_event_t *event) 
+{
+	switch_assert(event); // 只是个健全性检查
 
-A description and explanation of [Channel States](https://wiki.freeswitch.org/wiki/Channel%5FStates "Channel States") is on a separate page.
+	switch(event->event_id) {
+		case SWITCH_EVENT_CHANNEL_CREATE:
+			switch_log_printf(SWITCH_CHANNEL_LOG, SWITCH_LOG_ERROR, "一个新的通道被创建，它叫做\"%s\"\n", 
+				switch_event_get_header_nil(event, "channel-name")); // 这个函数不区分大小写
+			break;
+		case SWITCH_EVENT_CHANNEL_DESTROY:
+			switch_log_printf(SWITCH_CHANNEL_LOG, SWITCH_LOG_ERROR, "通道\"%s\"已被销毁\n"
+				switch_event_get_header_nil(event, "channel-name"));
+			break;
+	}
+}
 
-#### State handlers
+### 设置 Hooks
 
-You have the option of getting a callback whenever your channel changes state. Your function signature should be:
+#### 通道状态
+
+有关 [通道状态](https://wiki.freeswitch.org/wiki/Channel%5FStates "通道状态") 的描述和解释可在一个单独的页面中找到。
+
+#### 状态处理器
+
+您可以选择在通道更改状态时获取回调。您的函数签名应为：
 
    switch_status_t my_callback(switch_core_session_t *);
 
-The way you expose state handlers is by passing a switch\_state\_handler\_table\_t structure containing functions pointers to your handlers. Here is the structure:
+通过传递一个包含指向处理器的函数指针的 switch\_state\_handler\_table\_t 结构来公开状态处理器。下面是这个结构：
 
    struct switch_state_handler_table {
-       switch_state_handler_t on_init;
-       switch_state_handler_t on_routing;
-       switch_state_handler_t on_execute;
-       switch_state_handler_t on_hangup;
-       switch_state_handler_t on_exchange_media;
-       switch_state_handler_t on_soft_execute;
-       switch_state_handler_t on_consume_media;
-       switch_state_handler_t on_hibernate;
-       switch_state_handler_t on_reset;
-       switch_state_handler_t on_park;
-       switch_state_handler_t on_reporting;
-       switch_state_handler_t on_destroy;
-       int flags;
-       void *padding[10];
+	   switch_state_handler_t on_init;
+	   switch_state_handler_t on_routing;
+	   switch_state_handler_t on_execute;
+	   switch_state_handler_t on_hangup;
+	   switch_state_handler_t on_exchange_media;
+	   switch_state_handler_t on_soft_execute;
+	   switch_state_handler_t on_consume_media;
+	   switch_state_handler_t on_hibernate;
+	   switch_state_handler_t on_reset;
+	   switch_state_handler_t on_park;
+	   switch_state_handler_t on_reporting;
+	   switch_state_handler_t on_destroy;
+	   int flags;
+	   void *padding[10];
    };
+```
 
-The ones you do not want can be safely set to NULL, all others are going to be called when the state changes.
+你不想要的那些可以安全地设置为NULL，其他所有的将在状态改变时调用。
 
-There is a few way to register state handlers, all using this structure.
+有几种方式可以注册状态处理程序，都使用这个结构。
 
-Globally
+全局注册
 
    int switch_core_add_state_handler(const switch_state_handler_table_t *state_handler)
    void switch_core_remove_state_handler(const switch_state_handler_table_t *state_handler)
 
-On a specific channel
+在特定通道上注册
 
    int switch_channel_add_state_handler(switch_channel_t *channel, const switch_state_handler_table_t *state_handler)
    void switch_channel_clear_state_handler(switch_channel_t *channel, const switch_state_handler_table_t *state_handler)
 
-You can also set them when calling switch\_ivr\_originate() (more later)
+你也可以在调用switch_ivr_originate()时设置它们（稍后详细介绍）
 
-PS: Callbacks will occur on the session's thread itself.  
-Note: If you register state handlers and support module unloading, make sure you unbind them to avoid segfaults.
+PS：回调将在会话的线程本身上发生。
+注意：如果你注册了状态处理程序并支持模块卸载，请确保解绑它们以避免段错误。
 
-### Making calls
+### 进行呼叫
 
-#### Analysis of a FreeSWITCH call
+#### 对FreeSWITCH呼叫的分析
 
-(talk about call states, session, channels, private data, etc)
+（讨论呼叫状态、会话、通道、私有数据等）
 
-#### Making calls from within your module
+#### 在模块内发起呼叫
 
-Below is my current understanding. I'm not core developer, so all is guessed --[Sathieu](https://wiki.freeswitch.org/index.php?title=User:Sathieu&action=edit&redlink=1 "User:Sathieu (page does not exist)") 11:14, 18 February 2010 (UTC)
+以下是我的当前理解。我不是核心开发者，所以一切都是猜测的 --[Sathieu](https://wiki.freeswitch.org/index.php?title=User:Sathieu&action=edit&redlink=1 "User:Sathieu (page does not exist)") 11:14, 18 February 2010 (UTC)
 
-When _originate your\_module/dest vmain_ is called from the console:
+在控制台上调用```_originate your\_module/dest vmain_```：
 
-* [your\_io\_routines.outgoing\_channel](http://docs.freeswitch.org/structswitch%5F%5Fio%5F%5Froutines.html#2fac41d9629ee59aea0739d14b195e69) is called  
-   * create a new session (with [switch\_core\_session\_request()](http://docs.freeswitch.org/group%5F%5Fsessm.html#g642a67bfa960aaa9221cf893e2b1afd4))  
-   * parse _outbound\_profile_\->_destination\_number_ to get called number  
-   * qualify the _session_, attached _channel_ and attached _private data_  
-   * The channel is currently in [CS\_NEW](https://wiki.freeswitch.org/wiki/Channel%5FStates "Channel States")  
-   * Change channel state to [CS\_INIT](https://wiki.freeswitch.org/wiki/Channel%5FStates "Channel States")  
-   * Make the phone ring (and call [switch\_channel\_mark\_ring\_ready()](http://docs.freeswitch.org/group%5F%5Fswitch%5F%5Fchannel.html#gf6eaad035aa712b44a9d1567b316bb02))
-* [your\_state\_handler.on\_init](http://docs.freeswitch.org/structswitch%5F%5Fstate%5F%5Fhandler%5F%5Ftable.html#d6a3c2d2ffd282587da2b0e2d6be781a) is called  
-   * Change channel state to [CS\_ROUTING](https://wiki.freeswitch.org/wiki/Channel%5FStates "Channel States")
-* [your\_state\_handler.on\_routing](http://docs.freeswitch.org/structswitch%5F%5Fstate%5F%5Fhandler%5F%5Ftable.html#ae354ef505041f2e731f8cdd41231d85) is called  
-   * What to do here?
-* The call is answered  
-   * switch\_channel\_mark\_answered(channel)
+* 被称为 [your\_io\_routines.outgoing\_channel](http://docs.freeswitch.org/structswitch%5F%5Fio%5F%5Froutines.html#2fac41d9629ee59aea0739d14b195e69)  
+   * 创建一个新会话（使用 [switch\_core\_session\_request()](http://docs.freeswitch.org/group%5F%5Fsessm.html#g642a67bfa960aaa9221cf893e2b1afd4))  
+   * 解析 _outbound\_profile_\->_destination\_number_ ，以获取被叫号码  
+   * 对 _session_ 进行验证，附加上 _channel_ 和 _private data_  
+   * 通道当前处于 [CS\_NEW](https://wiki.freeswitch.org/wiki/Channel%5FStates "Channel States") 状态  
+   * 将通道状态更改为 [CS\_INIT](https://wiki.freeswitch.org/wiki/Channel%5FStates "Channel States")  
+   * 使电话响起（并调用 [switch\_channel\_mark\_ring\_ready()](http://docs.freeswitch.org/group%5F%5Fswitch%5F%5Fchannel.html#gf6eaad035aa712b44a9d1567b316bb02))
+* 被称为 [your\_state\_handler.on\_init](http://docs.freeswitch.org/structswitch%5F%5Fstate%5F%5Fhandler%5F%5Ftable.html#d6a3c2d2ffd282587da2b0e2d6be781a)  
+   * 将通道状态更改为 [CS\_ROUTING](https://wiki.freeswitch.org/wiki/Channel%5FStates "Channel States")
+* 被称为 [your\_state\_handler.on\_routing](http://docs.freeswitch.org/structswitch%5F%5Fstate%5F%5Fhandler%5F%5Ftable.html#ae354ef505041f2e731f8cdd41231d85)  
+   * 在这里要做些什么？
+* 电话已接听  
+   * 调用 switch\_channel\_mark\_answered(channel)
 
-#### Session Objects
+#### 会话对象
 
-You can get the session object of a session if you know the uuid. Consider:
+如果你知道 UUID，你可以通过它获取一个会话对象。如下所示：
 
   switch_core_session_t *session;
   if ((session = switch_core_session_locate(uuid_here))) {
-          /* do stuff with session */
+          /* 在会话中进行操作 */
           switch_core_session_rwunlock(session);
   }
 
-**NOTE:** _switch\_core\_session\_locate()_ will automatically lock the session. When you are done with the session object it is MANDATORY to call _switch\_core\_session\_rwunlock()_ or bad things will happen.
+**注意：** _switch_core_session_locate()_ 将自动锁定会话。当您完成会话对象后，*必须*调用 _switch_core_session_rwunlock()_，否则会发生糟糕的情况。
 
-### Memory Management
+### 内存管理
 
-In addition to the normal ways of managing memory in C, freeswitch provides an interface to APR memory pools. You can allocate from a memory pool using switch\_core\_alloc() or allocate from a session's memory pool using switch\_core\_session\_alloc(). You _cannot_ free memory from a pool, all the memory allocated from a pool is freed when the pool is destroyed.
+除了使用 C 语言常规方式管理内存外，freeswitch 还提供了一个 APR 内存池接口。您可以使用 switch_core_alloc() 从内存池中分配内存，或者使用 switch_core_session_alloc() 从会话的内存池中分配内存。但是您*不能*从内存池中释放内存，所有从内存池中分配的内存将在销毁内存池时释放。
 
-Memory pools are also hierarchical, in FreeSWITCH™ all the pools are a child of the core's master pool. You can create your own child pools using switch\_core\_new\_memory\_pool() or you can use a session's memory pool (not recommended).
+内存池还具有层次结构，在 FreeSWITCH™ 中，所有的内存池都是核心主池的子池。您可以使用 switch_core_new_memory_pool() 创建自己的子池，或者使用会话的内存池（不推荐）。
 
-However, since you can't free memory from a pool without destroying the entire pool, there's still times when using traditional C memory management is a better plan.
+然而，由于无法只释放内存池中的内存而不销毁整个内存池，因此在某些情况下，仍然使用传统的 C 内存管理方式更为合适。
 
-### Useful Macros
+### 有用的宏
 
-FreeSWITCH™ provides a number of very helpful macros to aid development.
+FreeSWITCH™ 提供了许多非常有用的宏来辅助开发。
 
 #### SWITCH_DECLARE_GLOBAL_STRING_FUNC
 
-This macro lets you define a dynamic global string (which is actually static to your module) setting function. The macro will free the previous value (if any) and then strdup the new value into it. The first value is the name of the function to be defined and the second parameter is the char \* pointer to store the pointer to the allocated string.
+该宏允许您定义一个动态全局字符串（实际上对于您的模块来说是静态字符串）设置函数。该宏将释放先前的值（如果存在），然后将新值使用 strdup 复制到其中。第一个值是要定义的函数的名称，第二个参数是 char * 指针，用于存储分配的字符串的指针。
 
 #### switch_malloc
 
-Macro to attempt a regular malloc(), which will abort() the process (eg. exit with SIGABRT), printing an error message to stderr containing the filename and line number where the error occurred.
+该宏用于尝试常规的 malloc()，如果失败会中止进程（例如使用 SIGABRT 退出），并在 stderr 中打印包含错误发生位置的文件名和行号的错误消息。
 
- #define switch_malloc(ptr, len) (void)( (!!(ptr = malloc(len))) || (fprintf(stderr,"ABORT! Malloc failure at: %s:%s", __FILE__, __LINE__),abort(), 0), ptr )
+```cpp
+#define switch_malloc(ptr, len) (void)( (!!(ptr = malloc(len))) || (fprintf(stderr,"ABORT! Malloc failure at: %s:%s", __FILE__, __LINE__),abort(), 0), ptr )
 
 #### switch_zmalloc
 
-As per [#switch\_malloc](https://wiki.freeswitch.org/wiki/Authoring%5FFreeswitch%5FModules#switch%5Fmalloc), but uses calloc() so that the contents of the buffer are filled with byte value zero before use.
+根据[#switch\_malloc](https://wiki.freeswitch.org/wiki/Authoring%5FFreeswitch%5FModules#switch%5Fmalloc)，但使用calloc()函数，以便在使用之前将缓冲区的内容填充为零值。
 
- #define switch_zmalloc(ptr, len) (void)( (!!(ptr = calloc(1, (len)))) || (fprintf(stderr,"ABORT! Malloc failure at: %s:%s", __FILE__, __LINE__),abort(), 0), ptr)
+#define switch_zmalloc(ptr, len) (void)( (!!(ptr = calloc(1, (len)))) || (fprintf(stderr,"ABORT! Malloc failure at: %s:%s", __FILE__, __LINE__),abort(), 0), ptr)
 
 #### switch_strdup
 
-Similarly to [#switch\_malloc](https://wiki.freeswitch.org/wiki/Authoring%5FFreeswitch%5FModules#switch%5Fmalloc), the macro will abort() if strdup() returns a null pointer (since strdup() is internally little more than a malloc() and a strcpy()).
+类似于[#switch\_malloc](https://wiki.freeswitch.org/wiki/Authoring%5FFreeswitch%5FModules#switch%5Fmalloc)，如果strdup()返回空指针，则宏将中止程序（因为strdup()实际上也只是malloc()和strcpy()的结合）。
 
- #define switch_strdup(ptr, s) (void)( (!!(ptr = strdup(s))) || (fprintf(stderr,"ABORT! Malloc failure at: %s:%s", __FILE__, __LINE__),abort(), 0), ptr)
+#define switch_strdup(ptr, s) (void)( (!!(ptr = strdup(s))) || (fprintf(stderr,"ABORT! Malloc failure at: %s:%s", __FILE__, __LINE__),abort(), 0), ptr)
 
 #### switch_safe_free
 
-Macro to avoid freeing a null pointer. Pointer is set to null after free()'ing to avoid pointing to a stale buffer.
+用于避免释放空指针的宏。在释放内存后，将指针设置为null，以避免指向陈旧的缓冲区。
 
- #define switch_safe_free(it) if (it) {free(it);it=NULL;}
+#define switch_safe_free(it) if (it) {free(it);it=NULL;}
 
-## New Module Checklist
+## 新模块清单
 
-When proposing a new module:
+在提议新模块时：
+```
 
-* Add a `Makefile.am` for the module
-* Add the module to the FS `configure.ac`
-* Add the module to `build/modules.conf.in` (commented out)
-* Describe the module in as much detail as possible in the comments at the top of the module
-* Add our whitespace footer to the module files; ensure the \\\*.\[ch\] module files use tabs for indentation and are free of trailing whitespace (eg. in Emacs, run \` `M-x whitespace-mode`\`, then \` `M-x whitespace-cleanup`\`)
-* Remove any unused code left over from debugging
-* Ensure symbols not meant to be exported are declared `static`
-* Don't add any files to `conf/vanilla`
-* Write a commit message body describing the module, why it's useful, what it does, how it works, and any parts not yet implemented
+* 为模块添加一个 `Makefile.am`
+* 将模块添加到FS的 `configure.ac` 中
+* 在 `build/modules.conf.in` 中添加模块（注释掉）
+* 在模块顶部的注释中尽可能详细地描述模块
+* 向模块文件添加我们的空白页脚；确保 \\\*.\[ch\] 模块文件使用制表符进行缩进，并且没有行尾空白（例如，在Emacs中运行 \` `M-x whitespace-mode`\`，然后运行 \` `M-x whitespace-cleanup`\`）
+* 移除调试时遗留的未使用代码
+* 确保未被导出的符号被声明为 `static`
+* 不要将任何文件添加到 `conf/vanilla` 中
+* 写一个提交信息正文，描述模块的作用、用途、工作原理以及尚未实现的部分
 
-## See Also:
+## 另请参阅:
 
-* [Developer Potpourri](https://wiki.freeswitch.org/wiki/Developer%5FPotpourri "Developer Potpourri")
-
-
+* [开发人员混杂](https://wiki.freeswitch.org/wiki/Developer%5FPotpourri "Developer Potpourri")

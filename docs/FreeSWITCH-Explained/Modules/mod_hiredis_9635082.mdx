@@ -1,35 +1,32 @@
+# mod_hiredis
 
-# mod_hiredis 
+## 关于
 
- 
+mod_hiredis 实现了在配置的服务器上运行基本的 Redis 命令的接口，同时还废弃了旧的 mod_redis，实现了限制后端。
 
-## About
+单击此处展开目录
 
-mod\_hiredis implements an interface for running basic redis commands on configured servers and also deprecated old mod\_redis implementing the limit backend.
+* 1 [加载](#loading)
+* 2 [配置](#configuration)
+* 3 [使用方法](#usage)  
+   * 3.1 [限制接口](#limit-interface)  
+   * 3.2 [拨号计划应用程序](#dialplan-application)  
+   * 3.3 [API 函数](#api-function)
+* 4 [通道变量](#channel-variables)
 
-Click here to expand Table of Contents
+## 加载
 
-* 1 [Loading](#loading)
-* 2 [Configuration](#configuration)
-* 3 [Usage](#usage)  
-   * 3.1 [Limit interface](#limit-interface)  
-   * 3.2 [Dialplan application](#dialplan-application)  
-   * 3.3 [API function](#api-function)
-* 4 [Channel variables](#channel-variables)
-
-## Loading
-
-Once you have installed FreeSWITCH from packages, configure FreeSWITCH to load mod\_hiredis in autoload\_configs/modules.conf.xml by uncommenting the line:
+安装了 FreeSWITCH 软件包后，通过取消注释下面的行来配置 FreeSWITCH 加载 mod_hiredis。
 
 ```xml
 <load module="mod_hiredis"/>
 ```
 
-## Configuration
+## 配置
 
-Edit the redis server connection configuration in `autoload_configs/hiredis.conf.xml` and set the hostname, password, and port as applicable.
+在 `autoload_configs/hiredis.conf.xml` 中编辑 Redis 服务器连接配置，并根据实际情况设置主机名、密码和端口号。
 
-Configuration example:
+配置示例：
 
 ```xml
 <configuration name="hiredis.conf" description="mod_hiredis">
@@ -57,53 +54,51 @@ Configuration example:
 </configuration>
 ```
 
-Connection parameters:
+连接参数：
 
-* `hostname`: DNS hostname or IP address of the server (default: `localhost`)
-* `port`: TCP port where Redis server is listening (default: `6379`)
-* `password`: if set, the AUTH command is sent to the server (default: no authentication)
-* `timeout_ms`: timeout waiting for the server connection, in milliseconds (default: `500`)
-* `max-connections`: the module keeps a pool of simultaneously open connections, and this sets their limit (default: `3`)
+* `hostname`: 服务器的 DNS 主机名或 IP 地址（默认：`localhost`）
+* `port`: Redis 服务器监听的 TCP 端口（默认：`6379`）
+* `password`: 如果设置了，将发送 AUTH 命令给服务器（默认：无身份验证）
+* `timeout_ms`: 等待服务器连接的超时时间，以毫秒为单位（默认：`500`）
+* `max-connections`: 模块维护一个同时打开的连接池，此参数设置其上限（默认：`3`）
 
-Profile parameters:
+配置文件参数：
 
-* `ignore-connect-fail`: if set to `true`, a socket connection error is ignored and the call processing continues; otherwise the call is set to error status (default: `false`)
-* `ignore_error`: if set to true, Redis command execution error is ignored, and the call processing continues; otherwise the call is set to error status (default: `false`)
+* `ignore-connect-fail`: 如果设置为 `true`，则忽略套接字连接错误，继续处理调用；否则将调用设置为错误状态（默认：`false`）
+* `ignore_error`: 如果设置为 `true`，则忽略 Redis 命令执行错误，继续处理调用；否则将调用设置为错误状态（默认：`false`）
 
-After configuring the module. apply the changes in `fs_cli`:
+配置完模块后，在 `fs_cli` 中应用更改：
 
 ```xml
- reloadxml
- reload mod_hiredis
+reloadxml
+reload mod_hiredis
 ```
 
-## Usage
+## 使用方法
 
-### Limit interface
+### 限制接口
 
 ```xml
 <action application="limit" data="hiredis realm id 10 limit_exceeded" />
 ```
 
-See also: [Limit](./mod-dptools/3375201.mdx#db).
+参见：[限制](./mod-dptools/3375201.mdx#db)。
 
-### Dialplan application
+### 拨号计划应用
 
-In both the dialplan application and the API function, the Redis command is preceded with the profile name. See also: [Redis command reference](https://redis.io/commands).
+无论是在拨号计划应用还是API函数中，Redis 命令都是在配置文件名之前。参见：[Redis 命令参考](https://redis.io/commands)。
 
 ```xml
 <action application="hiredis_raw" data="default LPUSH Callers ${effective_caller_id_number}" />
 ```
 
-### API function
+### API函数
 
 ```xml
 hiredis_raw default set test 01
 hiredis_raw default get test
 ```
 
-## Channel variables
+## 通道变量
 
-`hiredis_raw_response` is set after the Redis command execution.
-
-
+Redis 命令执行后会设置 `hiredis_raw_response`。

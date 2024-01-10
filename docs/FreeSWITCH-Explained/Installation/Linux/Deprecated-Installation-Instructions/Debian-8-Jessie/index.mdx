@@ -1,50 +1,43 @@
+# Debian 8 Jessie
 
-# Debian 8 Jessie 
+## 关于
 
- 
+我们不再支持Debian 8 "Jessie"版本的FreeSWITCH™软件包。
 
-## About
+Debian 8 "Jessie"是FreeSWITCH™ 1.6版本的参考平台。
 
-We no longer support Debian 8 "Jessie" packages for FreeSWITCH™ .
+Debian 9 "Stretch"适用于FreeSWITCH™ 1.8发布版本。
 
-Debian 8 "Jessie" was the reference platform for FreeSWITCH™ as of version 1.6.
+Debian 10 "Buster"现在推荐使用于FreeSWITCH™ 1.10发布版本。
 
-Debian 9 "Stretch" was suitable for the FreeSWITCH™ 1.8 release.
-
-Debian 10 "Buster" is now recommended for the FreeSWITCH™ 1.10 release.
-
-Click here to expand Table of Contents
+点击此处展开目录
 
 echo "deb <http://ftp.debian.org/debian> jessie-backports main" >> /etc/apt/sources.list
 
-  
-* 1 [Commit Log](#commit-log)
-* 2 [Building From Source](#building-from-source)  
-   * 2.1 [Compiling Release Branch (production)](#compiling-release-branch-production)  
-   * 2.2 [Compiling Latest Master (for testing)](#compiling-latest-master-for-testing)  
-   * 2.3 [Before Starting FreeSWITCH](#before-starting-freeswitch)
-* 3 [Quick Start FreeSWITCH Demo With Verto Communicator](#quick-start-freeswitch-demo-with-verto-communicator)
+* 1 [提交日志](#commit-log)
+* 2 [从源代码构建](#building-from-source)  
+   * 2.1 [编译发布分支（生产环境）](#compiling-release-branch-production)  
+   * 2.2 [编译最新主干（用于测试）](#compiling-latest-master-for-testing)  
+   * 2.3 [开始使用FreeSWITCH之前](#before-starting-freeswitch)
+* 3 [使用Verto Communicator快速启动FreeSWITCH演示](#quick-start-freeswitch-demo-with-verto-communicator)
 
-  
-2016.02.14 — Please note this important change that went into Master today. As of today, we are no longer using system versions of libyuv and libvpx due to major conflicts with system versions of these libraries. These are now built static into the freeswitch core. Also note, mod\_vpx no longer exists, it is automatically loaded as part of the core and you will no longer have `mod_vpx.so` nor have to load it manually. I'll have more details coming, but let me know if you have any questions. 
+2016.02.14 - 请注意今天发布到主分支的这一重要更改。自今天起，我们不再使用系统版本的libyuv和libvpx，因为这些库的系统版本之间存在严重冲突。这些库现在已经静态构建进freeswitch核心中。还请注意，mod_vpx不再存在，它将自动作为核心的一部分加载，您将不再拥有mod_vpx.so，也无需手动加载它。我将提供更多详细信息，如果您有任何问题，请告诉我。
 
-Please note for anyone doing cross compiling, this probably means a bit more work for you, I'll be working on fixing that this week.
+请注意，如果您进行交叉编译，这可能意味着更多的工作，我将在本周内解决这个问题。
 
-\- Mike Jerris
+- Mike Jerris
 
-  
-## Commit Log
+## 提交日志
 
-See all FreeSWITCH commits here: <https://github.com/signalwire/freeswitch/commits/master>
+在此处查看所有FreeSWITCH提交记录：<https://github.com/signalwire/freeswitch/commits/master>
 
-  
-**Compiling from source code**
+**从源代码编译**
 
-## Building From Source
+## 从源代码构建
 
-### Compiling Release Branch (production)
+### 编译发布分支（生产环境）
 
-**Release source build**
+**发布源代码构建**
 
 ```bash
 wget -O - https://files.freeswitch.org/repo/deb/freeswitch-1.8/fsstretch-archive-keyring.asc | apt-key add -
@@ -54,31 +47,29 @@ echo "deb-src http://files.freeswitch.org/repo/deb/freeswitch-1.8/ jessie main" 
 
 apt-get update
 
-# Install dependencies required for the build
+# 安装构建所需的依赖项
 apt-get build-dep freeswitch
  
-# then let's get the source. Use the -b flag to get a specific branch
+# 然后我们获取源代码。使用 -b 参数来获取特定的分支
 cd /usr/src/
 git clone https://github.com/signalwire/freeswitch.git -bv1.8 freeswitch
 cd freeswitch
  
-# Because we're in a branch that will go through many rebases, it's
-# better to set this one, or you'll get CONFLICTS when pulling (update).
+# 由于我们在将发生许多变基的分支上，最好设置该选项，否则在拉取（更新）时会出现冲突。
 git config pull.rebase true
  
-# ... and do the build
+# ...并进行构建
 ./bootstrap.sh -j
 ./configure
 make
 make install
 ```
 
-  
-### Compiling Latest Master (for testing)
+### 编译最新主版本（用于测试）
 
-WARNING not suitable for production
+警告：不适用于生产环境
 
-**Master source build**
+**主版本源代码构建**
 
 ```bash
 wget -O - https://files.freeswitch.org/repo/deb/debian-unstable/freeswitch_archive_g0.pub | apt-key add -
@@ -88,62 +79,61 @@ echo "deb-src http://files.freeswitch.org/repo/deb/debian-unstable/ jessie main"
 
 apt-get update
 
-# Install dependencies required for the build
+# 安装构建所需的依赖项
 apt-get build-dep freeswitch
 
-# Then let's get the source. Use the -b flag to get a specific branch
+# 然后我们获取源代码。使用 -b 参数来获取特定的分支
 cd /usr/src/
 git clone https://github.com/signalwire/freeswitch.git freeswitch
 cd freeswitch
 
-# Because we're in a branch that will go through many rebases, it's
-# better to set this one, or you'll get CONFLICTS when pulling (update).
+# 由于我们在将发生许多变基的分支上，最好设置该选项，否则在拉取（更新）时会出现冲突。
 git config pull.rebase true
 
-# ... and do the build
+# ...并进行构建
+```
 
-# The -j argument spawns multiple threads to speed the build process, but causes trouble on some systems
+# 使用 -j 参数可以启动多个线程加速构建过程，但在某些系统上可能会出现问题
 ./bootstrap.sh -j
 
-# if you want to add or remove modules from the build, edit modules.conf
+# 如果想要在构建过程中添加或删除模块，请编辑 modules.conf 文件
 vi modules.conf
 
-# add a module by removing '#' comment character at the beginning of the line
-# remove a module by adding the '#' comment character at the beginning of the line 
-# containing the name of the module to be skipped in the build process
+# 添加一个模块，只需删除行首的 '#' 注释字符
+# 删除一个模块，只需在要跳过构建过程的模块名称所在行首添加 '#' 注释字符
 
 ./configure
 make
 make install
 
-# Install audio files:
+# 安装音频文件：
 make cd-sounds-install cd-moh-install
 
-# To update an installed build:
+# 更新已安装的构建：
 cd /usr/src/freeswitch
 make current
 ```
 
-### Before Starting FreeSWITCH
+### 在开始使用FreeSWITCH之前
 
-If you built FreeSWITCH™ from source code you should set file permissions and ownership before starting FreeSWITCH. Follow the [post-installation instructions](../Debian-Post-Install-Tasks_13172868.mdx#about).
+如果你是从源代码构建的FreeSWITCH™，那么在启动FreeSWITCH之前，你应该设置文件权限和所有权。请按照 [安装后的说明](../Debian-Post-Install-Tasks_13172868.mdx#about) 进行操作。
   
   
-## Quick Start FreeSWITCH Demo With Verto Communicator
+## 使用Verto Communicator快速开始FreeSWITCH演示
 
-WARNING not suitable for production
+警告：不适用于生产环境
 
-**Script FreeSWITCH demo install**
+**脚本：FreeSWITCH演示安装**
 
 ```bash
 #!/bin/sh
-# Simple script to setup a webrtc enabled lab with freeswitch, nginx, letsencrypt certificates and verto_communicator.
-# Adapt the DOMAIN & IP variables below and launch as root on on a freshly minimal installed debian 8 ( jessie ) server.
-# DO NOT USE IN PRODUCTION, it's for proof-of-concept purposes.
-# FreeSWITCH config is the default vanilla demo config, you SHOULD CHANGE the DEFAULT PASSWORDS ( extensions, event_socket, etc ... )
-# At the end of the script, you can navigate to https://$DOMAIN/vc and enjoy Verto Communicator in your web browser!
-# Author: "Tristan Mahe" <gled@remote-shell.net>
-# License: WTFPL
+# 这个简单的脚本用于在FreeSWITCH, Nginx, Letsencrypt证书和Verto Communicator组件上设置支持webrtc的实验室。
+# 请根据实际情况修改下面的 DOMAIN 和 IP 变量，并以 root 用户身份在刚刚安装好的 Debian 8 ( jessie ) 服务器上运行。
+# 不要在生产环境中使用此脚本，它仅适用于概念验证。
+# FreeSWITCH的配置是默认的纯净演示配置，您应该更改默认密码（extensions, event_socket等…）
+# 在脚本的最后，您可以在您的网络浏览器中导航到 https://$DOMAIN/vc 并享受Verto Communicator的使用！
+# 作者："Tristan Mahe" <gled@remote-shell.net>
+# 许可证：WTFPL
 
 DOMAIN="your.domain.here"
 IP="1.2.3.4"
@@ -152,6 +142,7 @@ apt-get clean && apt-get update && apt-get -y upgrade && apt-get -y dist-upgrade
 
 apt-get install -y wget git
 
+```
 wget -O - https://files.freeswitch.org/repo/deb/freeswitch-1.8/fsstretch-archive-keyring.asc | apt-key add -
 
 echo "deb http://files.freeswitch.org/repo/deb/freeswitch-1.8/ jessie main" > /etc/apt/sources.list.d/freeswitch.list
@@ -179,7 +170,7 @@ perl -i -pe 's/<!--  <param name="ext-rtp-ip" value=""\/> -->/<param name="ext-r
 echo "ssl_certificate /etc/letsencrypt/live/$DOMAIN/fullchain.pem;" >> /etc/nginx/snippets/letsencrypt.conf
 echo "ssl_certificate_key /etc/letsencrypt/live/$DOMAIN/privkey.pem;" >> /etc/nginx/snippets/letsencrypt.conf
 
-# Attention with this, it may break other software you want to get through Git
+# 注意，此操作可能会影响您想通过Git获取的其他软件
 git config --global url."https://".insteadOf git://
 
 cd /usr/src/freeswitch/html5/verto/verto_communicator/
@@ -191,19 +182,37 @@ service nginx restart
 service freeswitch restart
 ```
 
-### Comments:
+### 评论：
 
-| What's the different between **freeswitch-meta-all** and **freeswitch-all** package ? ![](/images/icons/contenttypes/comment_16.png) Posted by livem at Nov 23, 2016 23:51                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| **freeswitch-meta-all**和**freeswitch-all**软件包有什么区别吗？ ![](/images/icons/contenttypes/comment_16.png) 发表者：livem 于2016年11月23日23:51                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| nothing really, -meta-all points is effectively an alias for -all\-all installs pretty much everything ![](/images/icons/contenttypes/comment_16.png) Posted by silik0n at Dec 05, 2016 17:20                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| echo "deb <http://files.freeswitch.org/repo/deb/freeswitch-1.6/> jessie main" > /etc/apt/sources.list.d/freeswitch.listAbove line is breaking my **"apt-get update"** functionality with below errors, as its using SHA1 algo, instead of SHA256.**Error -1:** W: GPG error: <http://files.freeswitch.org/repo/ubuntu-1604/freeswitch-unstable> xenial InRelease: The following signatures couldn't be verified because the public key is not available: NO\_PUBKEY 018DDB2EF14D5181W: The repository '<http://files.freeswitch.org/repo/ubuntu-1604/freeswitch-unstable> xenial InRelease' is not signed.N: Data from such a repository can't be authenticated and is therefore potentially dangerous to use.N: See apt-secure(8) manpage for repository creation and user configuration details. Then i added the key into gpg with below commandapt-key adv --keyserver [keyserver.ubuntu.com](http://keyserver.ubuntu.com) \--recv-keys D76EDC7725E010CF **Error-2: After adding the key got below error**W: <http://files.freeswitch.org/repo/deb/freeswitch-1.6/dists/jessie/InRelease>: Signature by key 20B06EE621AB150D40F6079FD76EDC7725E010CF uses weak digest algorithm (SHA1)**Error-3:**apt-get install -y freeswitch-meta-all nginx-extras freeswitch-mod-verto freeswitch-mod-rtcThe following packages have unmet dependencies: freeswitch-meta-all : Depends: freeswitch-meta-codecs (= 1.6.15\~32\~bec4538-1\~jessie+1) but it is not going to be installed Depends: freeswitch-mod-av (= 1.6.15\~32\~bec4538-1\~jessie+1) but it is not going to be installed Depends: freeswitch-mod-soundtouch (= 1.6.15\~32\~bec4538-1\~jessie+1) but it is not going to be installed Depends: freeswitch-mod-spandsp (= 1.6.15\~32\~bec4538-1\~jessie+1) but it is not going to be installed Depends: freeswitch-mod-perl (= 1.6.15\~32\~bec4538-1\~jessie+1) but it is not going to be installedE: Unable to correct problems, you have held broken packages. ![](/images/icons/contenttypes/comment_16.png) Posted by ajaychoudary at Mar 17, 2017 10:01 |
-| So I installed verto with no errors, and it's running on my secure site. Can anyone please tell me how to get a secure web socket (wss) connection? Netstat shows my server is listening on wss port 8082 but connection is rfefused both firefox & chrome, and I did restart fs many times, nginx too.The port is open in my firewall so i am stuck on what to try next.<http://prntscr.com/ev5ywx><http://prntscr.com/ev5zdi><http://prntscr.com/ev60h9>Going to research on using SIP TLS and not use wss to see if I can connect ![](/images/icons/contenttypes/comment_16.png) Posted by simbahmso at Apr 11, 2017 11:36                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| Looks like you are trying to connect Verto Communicator to mod\_sofia's WSS.... you need to setup mod\_verto.... ![](/images/icons/contenttypes/comment_16.png) Posted by silik0n at Jun 01, 2017 12:46                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| I think these parts in the Master and Release source build sections are over the top! \# Because we're in a branch that will go through many rebases, it's# better to set this one, or you'll get CONFLICTS when pulling (update). git config --global pull.rebase true You really shouldn't tell people to change their global config...I'd put it like that ... cd freeswitch \# Because we're in a branch that will go through many rebases, it's \# better to set this one, or you'll get CONFLICTS when pulling (update). git config pull.rebase true ... ![](/images/icons/contenttypes/comment_16.png) Posted by jaeckel at Oct 20, 2017 06:47                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| Hi Folks,i have install free switch successfully and i'm trying to implement HA as well, but i want to know how to stop free-switch being automatically start. ![](/images/icons/contenttypes/comment_16.png) Posted by frodood at Oct 20, 2017 07:45                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| thanks\~ ![](/images/icons/contenttypes/comment_16.png) Posted by livem at Jan 26, 2018 04:23                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| hi,after install, the default wss.pem gives error, so to test verto communicator with a custom certificate (i think this info is around here) if testing in local without a public domain to use lets encrypt:mkdir /root/sslcd /root/sslopenssl req -newkey rsa:2048 -nodes -keyout key.pem -x509 -days 365 -out certificate.pem#TIP: put in common name the ip address, so when testing you only have the warning for invalidcat key.pem certificate.pem > /usr/local/freeswitch/certs/wss.pem #enable or replace in nginx ssl options for /etc/nginx/sites-enabled/defaultssl\_certificate /root/ssl/certificate.pem;ssl\_certificate\_key /root/ssl/key.pem; #vc into www,cp -a /usr/src/freeswitch/html5/verto/verto\_communicator/dist/\* /var/www/html/ hope it helps others ![(smile)](/images/icons/emoticons/smile.svg) ![](/images/icons/contenttypes/comment_16.png) Posted by antonio at Feb 07, 2018 06:39                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| I wanted to do video conferencing using the free switch. I am a new user can anyone guide me to do that ![](/images/icons/contenttypes/comment_16.png) Posted by ssoni2 at Feb 13, 2018 16:02                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| **Debian 8 Long Term Support reaching end-of-life**<https://www.debian.org/News/2020/20200709> ![](/images/icons/contenttypes/comment_16.png) Posted by livem at May 18, 2021 21:19                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| 实际上没有什么区别，-meta-all实际上是-all的别名，-all会安装几乎所有的东西！ ![](/images/icons/contenttypes/comment_16.png) 发表者：silik0n 于2016年12月05日17:20                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| echo "deb <http://files.freeswitch.org/repo/deb/freeswitch-1.6/> jessie main" > /etc/apt/sources.list.d/freeswitch.list以上这行代码正在破坏我的**"apt-get update"**功能，出现下面的错误，因为它使用了SHA1算法，而不是SHA256。**错误-1：**W: GPG error: <http://files.freeswitch.org/repo/ubuntu-1604/freeswitch-unstable> xenial InRelease:由于公钥不可用，无法验证以下签名：NO\_PUBKEY 018DDB2EF14D5181W: 仓库 '<http://files.freeswitch.org/repo/ubuntu-1604/freeswitch-unstable> xenial InRelease' 未签名。N: 无法验证此类仓库的数据，因此使用它将可能会有安全风险。N: 有关仓库创建和用户配置详细信息，请参阅apt-secure（8）手册页。然后我用以下命令将密钥添加到gpg中：apt-key adv --keyserver [keyserver.ubuntu.com](http://keyserver.ubuntu.com) \--recv-keys D76EDC7725E010CF**错误-2：**W: <http://files.freeswitch.org/repo/deb/freeswitch-1.6/dists/jessie/InRelease>：此密钥的签名（20B06EE621AB150D40F6079FD76EDC7725E010CF）使用了弱摘要算法（SHA1）**错误-3：**apt-get install -y freeswitch-meta-all nginx-extras freeswitch-mod-verto freeswitch-mod-rtc以下软件包有未满足的依赖关系：freeswitch-meta-all ：依赖于freeswitch-meta-codecs (= 1.6.15\~32\~bec4538-1\~jessie+1)，但不打算安装该软件包依赖于freeswitch-mod-av (= 1.6.15\~32\~bec4538-1\~jessie+1)，但不打算安装该软件包依赖于freeswitch-mod-soundtouch (= 1.6.15\~32\~bec4538-1\~jessie+1)，但不打算安装该软件包依赖于freeswitch-mod-spandsp (= 1.6.15\~32\~bec4538-1\~jessie+1)，但不打算安装该软件包依赖于freeswitch-mod-perl (= 1.6.15\~32\~bec4538-1\~jessie+1)，但不打算安装该软件包E: 无法纠正问题，您有损坏的软件包。 ![](/images/icons/contenttypes/comment_16.png) 发表者：ajaychoudary 于2017年03月17日10:01 |
+| 所以我成功安装了verto，并且它在我的安全站点上运行。请问有人知道如何建立安全的网络套接字（wss）连接吗？Netstat显示我的服务器正在监听wss端口8082，但连接被拒绝，无论是在firefox还是chrome中，而且我已经多次重启fs和nginx。我的防火墙中打开了该端口，所以我不知道下一步该尝试什么。 <http://prntscr.com/ev5ywx><http://prntscr.com/ev5zdi><http://prntscr.com/ev60h9>我将研究如何使用SIP TLS，并不使用wss来看看是否能够连接！ ![](/images/icons/contenttypes/comment_16.png) 发表者：simbahmso 于2017年04月11日11:36                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 看起来您正在尝试将Verto Communicator连接到mod\_sofia的WSS... 您需要设置mod\_verto... ![](/images/icons/contenttypes/comment_16.png) 发表者：silik0n 于2017年06月01日12:46                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 我认为主要和发布源构建部分中的这些内容有些过头了！ \# 因为我们处在一个将经历多次rebases的分支中，所以最好设置这个，否则在pull（update）时会出现冲突。 git config --global pull.rebase true 您真的不应该告诉人们更改他们的全局配置...我会这样写... cd freeswitch \# 因为我们处在一个将经历多次rebases的分支中，所以最好设置这个，否则在pull（update）时会出现冲突。 git config pull.rebase true ... ![](/images/icons/contenttypes/comment_16.png) 发表者：jaeckel 于2017年10月20日06:47                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| 嗨，我已成功安装freeswitch，我也想实施HA，但我想知道如何停止freeswitch的自动启动。 ![](/images/icons/contenttypes/comment_16.png) 发表者：frodood 于2017年10月20日07:45                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| 谢谢\~ ![](/images/icons/contenttypes/comment_16.png) 发表者：livem 于2018年01月26日04:23
 
+# Title: 如何有效地学习外语
 
+## 概述
+学习外语是一种具有挑战性但又非常有益的过程。掌握一门外语可以带给你无数的好处，包括更好的工作机会、更广泛的人际交往和开拓视野的机会。在本文中，我们将分享一些有效学习外语的方法和技巧，帮助你加快学习速度并取得更好的学习成果。
+
+## 1. 制定明确的学习目标
+在开始学习外语之前，制定明确的学习目标是非常重要的。这将帮助你保持动力，并更好地组织你的学习计划。将学习目标分解为小目标，并逐步实现它们，这样你就能够看到自己的进展并保持积极的学习态度。
+
+## 2. 寻找适合自己的学习资源
+寻找适合自己的学习资源是学习外语的关键。根据自己的学习风格和喜好，选择适合你的学习材料和工具，如教科书、在线课程、语音教程等。利用技术的力量，可以选择一些好的语言学习应用程序或在线语言交流平台来增强你的学习效果。
+
+## 3. 多听多说多练习
+学习语言最重要的部分是听说练习。多听外语材料，如音频、视频或流行歌曲，以熟悉语音和语调。积极参与口语练习，与母语人士进行交流，帮助你提高口语表达能力和听力理解能力。不断练习写作和阅读，扩大词汇量和语法知识。
+
+## 4. 创造语言学习环境
+创造一个有利于语言学习的环境可以加速你的学习进度。尽量用外语替换掉日常生活中的一些常用词汇，如数字、动词等。参加语言交流活动，与其他学习者一起分享学习经验和技巧。通过沉浸式学习或居住在讲外语的国家，可以更好地提高语言水平。
+
+## 5. 不断复习和练习
+学习外语需要持之以恒的复习和练习。定期回顾和复习你学过的内容，以巩固记忆。利用各种练习题和模拟测试来检验自己的掌握程度，并找出薄弱的领域加以改进。不断挑战自己，保持学习的动力。
+
+## 结论
+学习外语需要耐心和努力，但通过制定明确的学习目标、寻找适合自己的学习资源、多听多说多练习、创造语言学习环境和不断复习和练习，你将能够有效地学习外语并取得成功。坚持下去，相信自己，你一定能够掌握一门外语并拓宽自己的视野。加油！

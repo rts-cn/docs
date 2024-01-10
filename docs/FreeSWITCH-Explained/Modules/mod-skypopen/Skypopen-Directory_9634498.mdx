@@ -1,52 +1,49 @@
+# Skypopen Directory
 
-# Skypopen Directory 
-
- 
-
-## About
+## 关于
 
 Skypopen Directory
 
-Click here to expand Table of Contents
+点击这里展开目录
 
-* 1 [Disclaimer](#disclaimer)
-* 2 [Skypopen Directory configuration example](#skypopen-directory-configuration-example)  
-   * 2.1 [Dialplan](#dialplan)  
-   * 2.2 [Perl Script](#perl-script)  
-   * 2.3 [Bonus: python version](#bonus-python-version)
+* 1 [免责声明](#免责声明)
+* 2 [Skypopen Directory配置示例](#skypopen-directory-configuration-example)
+  * 2.1 [拨号计划](#dialplan)
+  * 2.2 [Perl脚本](#perl-script)
+  * 2.3 [附加：Python版本](#bonus-python-version)
 
-## Disclaimer
+## 免责声明
 
-Please keep in mind that this script does not provide any authentication. If you intend on using it as a DISA route, you should probably add PIN protection to the script or dialplan.
+请注意，此脚本不提供任何身份验证。如果您打算将其用作DISA路由，建议给脚本或拨号计划添加PIN码保护。
 
-## Skypopen Directory configuration example
+## Skypopen Directory配置示例
 
-his example has two components:
+此示例由两个组件组成：
 
-1. The XML dialplan  
-Used to launch the directory, and dial out.
-2. The Perl script  
-The actual directory 'meat'.
+1. XML拨号计划
+用于启动目录并拨出电话。
+2. Perl脚本
+实际的目录内容。
 
-This script relies on your FreeSWITCH installation to have the following working modules:
+此脚本依赖于您的FreeSWITCH安装具有以下正常工作的模块：
 
-* mod\_perl
-* mod\_skypopen
-* _mod\_flite_
-* _mod\_dialplan\_xml_
+* mod_perl
+* mod_skypopen
+* _mod_flite_
+* _mod_dialplan_xml_
 
-You may substitute _mod\_flite_ and _mod\_dialplan\_xml_ and update your script where appropriate.
+您可以根据需要替换_mod_flite_和_mod_dialplan_xml_并更新脚本。
 
-### Dialplan
+### 拨号计划
 
-I have this in 'dialplan/local/skype.xml'
+我在'dialplan/local/skype.xml'中有以下内容
 
-**Dialplan** Expand source 
+**拨号计划** 展开源代码
 
 ```xml
 <extension name="skypeDir">
   <condition field="destination_number" expression="^1024$">
-     <action application="perl" data="skype.pl"/>
+    <action application="perl" data="skype.pl"/>
   </condition>
 </extension>
 
@@ -62,103 +59,107 @@ I have this in 'dialplan/local/skype.xml'
 </extension>
 ```
 
-### Perl Script
+### Perl脚本
 
-I place this in 'scripts/skype.pl'
+我将其放在 `scripts/skype.pl` 中。
 
-**Skype.pl** Expand source 
+**Skype.pl**源码展示：
 
 ```perl
+####
+# skype.pl - skype目录示例
 ####                                                                                                                                 
-# skype.pl - skype directory example                                                                                                 
-####                                                                                                                                 
-# by daniel o'neill (http://wiki.freeswitch.org/wiki/Skypopen_Directory)                                                             
+# 作者：Daniel O’Neill（http://wiki.freeswitch.org/wiki/Skypopen_Directory）
 ####                                                                                                                                 
 
 my $api = new freeswitch::API;
 my $e = new freeswitch::EventConsumer("custom", "skypopen::incoming_raw");
-my $c = 0; # incremented, counter used to correlate skypopen API responses to their requests
+my $c = 0; # 递增，用于将skypopen API响应与请求关联起来
 
-my $timeoutcheck = 30000; # time to wait for the user to dial an extension, in milliseconds.
+my $timeoutcheck = 30000; # 等待用户拨打分机的时间，以毫秒为单位。
 
-my $interface = 'skype1'; # the skype interface to dial-out on.
-                          # you could also use 'ANY', or read this from $session->getVariable() and specify it in your dialplan.
+my $interface = 'skype1'; # 拨出的skype接口。
+                          # 你也可以使用'ANY'，或从$session->getVariable()中读取，并在dialplan中指定。
 
-my $dp_context   = 'local';        # or, more commonly, 'default'
-my $dp_extension = 'skypeDirDial'; # as located in the dialplan context
-my $dp_format    = 'XML';          # or perhaps 'YAML'                 
+my $dp_context   = 'local';        # 或者，更常见的是'default'
+my $dp_extension = 'skypeDirDial'; # 在拨号计划上下文中的位置
+my $dp_format    = 'XML';          # 或者什么是'YAML'               
 
-# TTS engine to use.
-# You could also use Cepstral, for example
-$session->set_tts_parms("flite", "slt"); # awb, kal, rms or slt
+# 使用的TTS引擎。
+# 你也可以使用Cepstral，例如
+$session->set_tts_parms("flite", "slt"); # awb, kal, rms 或 slt
 # $session->set_tts_parms("cepstral", "Amy");                  
 
-freeswitch::consoleLog( "info", "Entering Skype.pl directory.\n" );
+freeswitch::consoleLog( "info", "进入Skype.pl目录。\n" );
 
 $session->answer();
 
-$friendList = getFriends( $e ); # this is actually pretty fast
+$friendList = getFriends( $e ); # 实际上非常快速
 
-# Gather our contacts
-my $contacts;        
-my $d = 0; # 'online' or 'away' counter
-foreach my $a(@{ $friendList }) {      
+# 收集我们的联系人
+my $contacts;
+my $d = 0; # '在线'或'离开'计数器
+foreach my $a (@{ $friendList }) {      
         $contacts->{$a}->{'username'} = $a;
-        $contacts->{$a}->{'status'} = getStatus( $e, $a ); # for less than 100, this is fairly quick also.
-        if( $contacts->{$a}->{'status'} eq 'ONLINE'                                                       
-         || $contacts->{$a}->{'status'} eq 'AWAY' ) {                                                     
-                $contacts->{$a}->{'available'} = 1;                                                       
+        $contacts->{$a}->{'status'} = getStatus($e, $a); # 对于少于100个，这也是相当快的。
+        if ($contacts->{$a}->{'status'} eq '在线' || $contacts->{$a}->{'status'} eq '离开') {                                                     
+                $contacts->{$a}->{'可用'} = 1;                                                       
                 $d++;                                                                                     
         }                                                                                                 
 }                                                                                                         
 
-# if < 10 contacts online, user may dial 1 through 9
+# 如果在线联系人数量小于10，则用户可以拨打1到9
 my $len = 1;                                        
-if( $d > 999 ) {                                    
-        # if > 999 and < 10000 contacts online, user may dial 0001 through 9999
+if ($d > 999) {                                    
+        # 如果在线联系人数量大于999且小于10000，则用户可以拨打0001到9999
         $len = 4;                                                              
-} elsif( $d > 99 ) {                                                           
-        # if > 99 and < 1000 contacts online, user may dial 001 through 999    
+} elsif ($d > 99) {                                                           
+        # 如果在线联系人数量大于99且小于1000，则用户可以拨打001到999    
         $len = 3;                                                              
-} elsif( $d > 9 ) {                                                            
-        # if > 9 and < 100 contacts online, user may dial 01 through 99        
+} elsif ($d > 9) {                                                            
+        # 如果在线联系人数量大于9且小于100，则用户可以拨打01到99        
         $len = 2;                                                              
-}                                                                              
+}
 
-# sort alphabetically by username
-my @ckeys = sort { $a->{'username'} cmp $b->{'username'} } keys( %{$contacts} );
-$d = 1; # entries begin at extension 1                                          
+# 按用户名按字母顺序排序
+my @ckeys = sort { $a->{'username'} cmp $b->{'username'} } keys( %{$contacts} );
+$d = 1; # 分机从1开始
 
-# we'll speak this string later on.  if you want to say something before rambling off the directory, enter it here.
-my $final = 'Skype directory. ';                                                                                   
+# 待会我们会说出这个字符串。如果你想在列举完通讯录之前说点什么，请在这里输入。
+my $final = 'Skype通讯录。';
 
-# compile our spoken directory
-foreach my $ukey( @ckeys ) {  
+# 编辑我们的通讯录内容
+foreach my $ukey( @ckeys ) {
         $a = $contacts->{$ukey};
         if( $a->{'available'} == 1 ) {
                 my $user = $a->{'username'};
-                my $num = sprintf('%0'.$len.'d', $d); # pad extension with zeros (eg, 001) so all extensions are the same length
-                $d = 1 + $d; # increment our extension                                                                          
-                $n = $num;                                                                                                      
-                $n =~ s/(\d)/\1,/gs; # makes 'three one one' instead of 'three hundred and eleven'                              
-                $final .= "For $user, dial $n. "; # this will be spoken                                                         
-                $contacts->{$ukey}->{'number'} = $num; # assign the extension                                                   
-        }                                                                                                                       
-}                                                                                                                               
+                my $num = sprintf('%0'.$len.'d', $d); # 用零填充分机号（例如，001），以便所有分机号都具有相同的长度
+                $d = 1 + $d; # 增加我们的分机号
+                $n = $num;
+                $n =~ s/(\d)/\1,/gs; # 改成“三一一”而不是“三百一十一”
+                $final .= "拨打 $n 可联系 $user。"; # 这将会被朗读
+                $contacts->{$ukey}->{'number'} = $num; # 分配分机号
+        }
+}
 
-if( length($final) == 0 ) {
-        $session->speak("No skype contacts are online.  Please try later.");
-        return bail();                                                      
-} else {                                                                    
-        # if you seriously have 9999 contacts, you may have to wait a while for your name to come up.
-        $session->speak($final);                                                                     
+```perl
+if(length($final) == 0) {
+        $session->speak("暂无在线的Skype联系人，请稍后再试。");
+        return bail();
+} else {
+        # 如果你真的有9999个联系人，可能需要等一会儿才能轮到你的名字。
+        $session->speak($final);
 
-        # this method is simpler than a non-blocking solution, but requires the user to sit through each name before allowing them to dial their extension.
-        my $sel = $session->getDigits( $len, "#", $timeoutcheck );                                                                                         
-        if( $sel && length("$sel") != 0 ) {                                                                                                                
-                my $user = getUser( $contacts, $sel );                                                                                                     
-                if( $user == -1 ) { return bail(); }                                                                                                       
+        # 这种方法比非阻塞解决方案更简单，但需要用户在拨号分机号码之前耐心等待每个联系人的名字。
+        my $sel = $session->getDigits($len, "#", $timeoutcheck);
+        if($sel && length("$sel") != 0) {
+                my $user = getUser($contacts, $sel);
+                if($user == -1) {
+                    return bail();
+                }
+```
 
+```perl
                 # to see how this works, refer to the XML dialplan accompanying this script
                 $session->setVariable( "destuser", $user );                                
                 $session->transfer( $dp_extension, $dp_format, $dp_context );              
@@ -202,135 +203,236 @@ sub getStatus {
         } else {
                 freeswitch::consoleLog( "info", "Skype.pl: Unexpected response: $body\n" );
         }
-
-        $c=1+$c;
-
-        return $status;
-}
-
-sub getFriends {
-        my $e = shift;
-
-        if( !$session->ready() ) { return bail(); }
-        $api->executeString( "skypopen $interface #$c SEARCH FRIENDS" );
-        if( !$session->ready() ) { return bail(); }
-
-        $ce = $e->pop(1);
-        if( !$ce ) { return bail(); }
-
-        my $body = $ce->getBody();
-
-        my @friends;
-        if( $body =~ m/^#$c USERS (.*)$/ ) {
-                @friends = split(/, /, $1);
-        } else {
-                freeswitch::consoleLog( "info", "Skype.pl: Unexpected response: $body\n" );
-        }
-
-        $c=1+$c;
-
-        return \@friends;
-}
-
-return 1;
 ```
 
-Once this is done, simply dial extension _1024_ (unless you changed it) to be routed to the directory, and follow the voice prompts.
+`#查看如何运作，请参考此脚本附带的 XML 拨号计划
+$session->setVariable("destuser", $user);
+$session->transfer($dp_extension, $dp_format, $dp_context);
+} else {
+$session->speak("抱歉，我没有收到选择。再见。");
+return bail();
+}
 
-### Bonus: python version
+sub getUser {
+my $users = shift;
+my $dtmfid = shift;
+foreach my $k (%{$users}) {
+if ($k->{'number'} eq $dtmfid) {
+return $k->{'username'};
+}
+}
+return -1;
+}
 
-For fun, here's a Python version:
+sub bail {
+$session->hangup();
+return 1;
+}
 
-**Skype.py** Expand source 
+sub getStatus {
+my $e = shift;
+my $u = shift;
+
+if (!$session->ready()) {
+return bail();
+}
+$api->executeString("skypopen $interface #$c GET USER $u ONLINESTATUS");
+if (!$session->ready()) {
+return bail();
+}
+
+$ce = $e->pop(1);
+if (!$ce) {
+return bail();
+}
+
+my $body = $ce->getBody();
+my $status = 'unknown';
+if ($body =~ m/^#$c USER $u ONLINESTATUS (.*)$/) {
+$status = $1;
+} else {
+freeswitch::consoleLog("info", "Skype.pl: Unexpected response: $body\n");
+}
+```
 
 ```py
-import os
-import re
-from operator import itemgetter, attrgetter
-from freeswitch import *
+friendList = getFriends(eCon, session, {})
+```
 
-requestCount	= 1 # incremented, counter used to correlate skypopen API responses to their requests
-interface	= 'skype1'
+```py
+def getFriends(e, session, params):
+    if not session.ready():
+        return bail()
 
+    session.executeString("skypopen {} #{} SEARCH FRIENDS".format(interface, requestCount))
+    if not session.ready():
+        return bail()
+
+    body = e.pop(1).getBody()
+
+    friends = []
+    friend_ids = re.findall(r"USERS (.*)", body)
+    if friend_ids:
+        friends = friend_ids[0].split(", ")
+
+    requestCount += 1
+
+    return friends
+```
+
+```py
+def bail():
+    session.execute("playback", "silence_stream://500")
+    session.execute("hangup")
+    return None
+```
+
+```py
+def consoleLog(level, message):
+    session.execute("console_log", "{} {}".format(level, message))
+```
+
+```py
+class EventConsumer:
+    def __init__(self, event_type, event_subclass):
+        self.event_type = event_type
+        self.event_subclass = event_subclass
+
+    def pop(self, index):
+        return None
+
+    def getBody(self):
+        return ""
+```
+
+```py
 def handler(session, args):
-	consoleLog( 'info', "Entering Skype.py directory.\n" )
+    consoleLog('info', "Entering Skype.py directory.\n")
+    timeoutcheck = 30000
+    dp_context = 'local'
+    dp_extension = 'skypeDirDial'
+    dp_format = 'XML'
 
-	timeoutcheck	= 30000			# time to wait for the user to dial an extension, in milliseconds.
-	dp_context	= 'local'		# or, more commonly, 'default'
-	dp_extension	= 'skypeDirDial'	# as located in the dialplan context
-	dp_format	= 'XML'			# or perhaps 'YAML'
-	
-	eCon = EventConsumer('custom', 'skypopen::incoming_raw')
+    session.set_tts_parms("flite", "slt")
 
-	session.set_tts_parms("flite", "slt") # awb, kal, rms or slt
+    session.answer()
 
-	session.answer()
+    friendList = getFriends(eCon, session, {})
+```
 
-	friendList = getFriends( eCon, session, {} )
+```py
+def getFriends(e, session, params):
+    if not session.ready():
+        return bail()
 
-	d = 0 # 'online' or 'away' counter
-	
-	contacts = {}
-	for a in friendList:
-		contacts[a] = {}
-		contacts[a]['username'] = a
-		contacts = getStatus( eCon, session, a, contacts )
-		if ( contacts[a]['status'] == 'ONLINE' ) or ( contacts[a]['status'] == 'AWAY' ):
-			contacts[a]['available'] = 1
-			d = d + 1
-		else:
-			contacts[a]['available'] = 0
+    session.executeString("skypopen {} #{} SEARCH FRIENDS".format(interface, requestCount))
+    if not session.ready():
+        return bail()
 
-	# if < 10 contacts online, user may dial 1 through 9
-	len = 1;
-	if( d > 999 ):
-		# if > 999 and < 10000 contacts online, user may dial 0001 through 9999
-		len = 4
-	elif( d > 99 ):
-		# if > 99 and < 1000 contacts online, user may dial 001 through 999
-		len = 3
-	elif( d > 9 ):
-		# if > 9 and < 100 contacts online, user may dial 01 through 99
-		len = 2
+    body = e.pop(1).getBody()
 
-	final = ''
-	d = 1 # entries begin at extension 1
+    friends = []
+    friend_ids = re.findall(r"USERS (.*)", body)
+    if friend_ids:
+        friends = friend_ids[0].split(", ")
+
+    requestCount += 1
+
+    return friends
+```
+
+```py
+def bail():
+    session.execute("playback", "silence_stream://500")
+    session.execute("hangup")
+    return None
+```
+
+```py
+def consoleLog(level, message):
+    session.execute("console_log", "{} {}".format(level, message))
+```
+
+```py
+class EventConsumer:
+    def __init__(self, event_type, event_subclass):
+        self.event_type = event_type
+        self.event_subclass = event_subclass
+
+    def pop(self, index):
+        return None
+
+    def getBody(self):
+        return ""
+```
+
+```python
+d = 0 # 在线或离开的计数器
+
+contacts = {}
+for a in friendList:
+    contacts[a] = {}
+    contacts[a]['username'] = a
+    contacts = getStatus(eCon, session, a, contacts)
+    if contacts[a]['status'] == 'ONLINE' or contacts[a]['status'] == 'AWAY':
+        contacts[a]['available'] = 1
+        d += 1
+    else:
+        contacts[a]['available'] = 0
+
+# 若在线联系人少于10人，用户可以选择拨打1到9
+len = 1
+if d > 999:
+    # 若在线联系人大于999并且小于10000，用户可以选择拨打0001到9999
+    len = 4
+elif d > 99:
+    # 若在线联系人大于99并且小于1000，用户可以选择拨打001到999
+    len = 3
+elif d > 9:
+    # 若在线联系人大于9并且小于100，用户可以选择拨打01到99
+    len = 2
+
+final = ''
+d = 1 # 分机号从1开始
 
 ###
-# This doesn't work, and I don't know Python, but the idea here is to sort the entries alphabetically.
+# 这里有问题，我不懂Python，但是想法是按用户名按字母顺序排序条目
 ###
-#	# sort alphabetically by username
-#	ckeys = sorted( contacts.iteritems(), key=itemgetter('username') )
+# # 按用户名按字母顺序排序
+# ckeys = sorted(contacts.iteritems(), key=itemgetter('username'))
 #
-#	# compile our spoken directory
-#	for k in ckeys:
-#		a = contacts[k]
+# # 编制我们的语音目录
+# for k in ckeys:
+#     a = contacts[k]
 
-	for username in contacts.keys():
-		if( contacts[username]['available'] == 1 ):
-			num = "%d" % d
-			num = num.zfill(len) # pad extension with zeros (eg, 001) so all extensions are the same length
-			d = 1 + d # increment our extension
-			n = num
-			rx = re.compile(r'(\d)')
-			n = rx.sub( r'\1 ', num ) # say "three one three" instead of "three hundred and thirteen"
-			final += "For %s, dial %s. " % (username, n) # this will be spoken
-			contacts[username]['number'] = num # assign the extension
-		else:
-			contacts[username]['number'] = ''
+for username in contacts.keys():
+    if contacts[username]['available'] == 1:
+        num = "%d" % d
+        num = num.zfill(len) # 将分机号用零填充，使得所有分机号长度相同（例如，001）
+        d += 1 # 增加分机号
+        n = num
+        rx = re.compile(r'(\d)')
+        n = rx.sub(r'\1 ', num) # 将“313”替换为“三一三”
+        final += "拨打%s的分机号为%s。" % (username, n) # 将会朗读出来
+        contacts[username]['number'] = num # 分配分机号
+    else:
+        contacts[username]['number'] = ''
+```
+```
 
+```python
 	if( final == '' ):
 		session.speak("No skype contacts are online.  Please try later.")
 		return bail(session)
 	else:
 		# if you seriously have 9999 contacts, you may have to wait a while for your name to come up.
-		session.speak( 'Skype directory.  %s' % (final) )
+		session.speak( 'Skype directory.  %s' % (final) )
 
 		# this method is simpler than a non-blocking solution,
 		# but requires the user to sit through each name before
 		# allowing them to dial their extension.
 		sel = session.getDigits( len, "#", timeoutcheck )
-		if( sel and sel != '' ):
+		if( sel and sel != '' ):
 			user = getUser( contacts, sel )
 			if( user == -1 ):
 				return bail(session)
@@ -360,7 +462,7 @@ def getStatus(eCon, session, user, userstatus):
 
 	if not ( session.ready() ):
 		return bail(session)
-	API().executeString( "skypopen %s #%d GET USER %s ONLINESTATUS" % (interface, requestCount, user) )
+	API().executeString( "skypopen %s #%d GET USER %s ONLINESTATUS" % (interface, requestCount, user) )
 	if not ( session.ready() ):
 		return bail(session)
 
@@ -375,19 +477,55 @@ def getStatus(eCon, session, user, userstatus):
 	if (m):
 		userstatus[ m.group(2) ]['status'] = m.group(3)
 	else:
-		consoleLog( "info", "Skype.py: Unexpected response: %s\n" % (body) )
+		consoleLog( "info", "Skype.py: Unexpected response: %s\n" % (body) )
 
 	requestCount = 1 + requestCount
 
 	return userstatus
+```
 
-def getFriends(eCon, session, friends):
+```python
+	if( final == '' ):
+		session.speak("没有在线的Skype联系人，请稍后再试。")
+		return bail(session)
+	else:
+		# 如果你确实有9999个联系人，可能需要一段时间才能找到你的名字。
+		session.speak( 'Skype目录。 %s' % (final) )
+
+		# 这种方法比非阻塞的解决方案更简单，
+		# 但需要用户在拨打分机号码之前听完每个名称。
+		sel = session.getDigits( len, "#", timeoutcheck )
+		if( sel and sel != '' ):
+			user = getUser( contacts, sel )
+			if( user == -1 ):
+				return bail(session)
+
+			# 关于这个的工作原理，请参考附带此脚本的XML拨号计划
+			session.setVariable( "destuser", user )
+			session.transfer( dp_extension, dp_format, dp_context )
+		else:
+			session.speak("很抱歉，我没有收到选择。再见。")
+			return bail(session)
+
+def getUser(users, dtmfid):
+	for k in users.keys():
+		if( users[k]['number'] == dtmfid ):
+			return users[k]['username']
+	return -1
+
+def bail(session):
+	session.hangup
+	return 1
+
+def getStatus(eCon, session, user, userstatus):
 	global requestCount
 	global interface
 
+	userstatus[user]['status'] = 'pending'
+
 	if not ( session.ready() ):
 		return bail(session)
-	API().executeString( "skypopen %s #%d SEARCH FRIENDS" % (interface, requestCount) )
+	API().executeString( "skypopen %s #%d GET USER %s ONLINESTATUS" % (interface, requestCount, user) )
 	if not ( session.ready() ):
 		return bail(session)
 
@@ -397,26 +535,58 @@ def getFriends(eCon, session, friends):
 
 	body = ce.getBody()
 
-	rx = re.compile( "^#(\d+) USERS (.*)$" )
+	rx = re.compile( r"^#(\d+) USER (.*?) ONLINESTATUS (.*)$" )
 	m = rx.match(body)
-
-	friends = []
 	if (m):
-		friends = re.split(', ', m.group(2))
+		userstatus[ m.group(2) ]['status'] = m.group(3)
 	else:
-		consoleLog( "info", "Skype.py: Unexpected response: %s\n" % (body) )
+		consoleLog( "info", "Skype.py: 非预期的响应：%s\n" % (body) )
 
 	requestCount = 1 + requestCount
 
-	return friends
+	return userstatus
 ```
 
-  
-####                                                                                                                                 
-# skype.pl - skype directory example                                                                                                 
-####                                                                                                                                 
-# by daniel o'neill (http://wiki.freeswitch.org/wiki/Skypopen_Directory)                                                             
-####                                                                                                                                 
+```python
+def getFriends(eCon, session, friends):
+    global requestCount
+    global interface
+    
+    if not session.ready():
+        return bail(session)
+    API().executeString("skypopen %s #%d SEARCH FRIENDS" % (interface, requestCount))
+    if not session.ready():
+        return bail(session)
+    
+    ce = eCon.pop(1)
+    if not ce:
+        return bail(session)
+    
+    body = ce.getBody()
+    
+    rx = re.compile("^#(\d+) USERS (.*)$")
+    m = rx.match(body)
+    
+    friends = []
+    if m:
+        friends = re.split(', ', m.group(2))
+    else:
+        consoleLog("info", "Skype.py: Unexpected response: %s\n" % body)
+        
+    requestCount = 1 + requestCount
+    
+    return friends
+```
+
+####
+
+# skype.pl - Skype directory example
+
+####
+
+# by Daniel O'Neill (http://wiki.freeswitch.org/wiki/Skypopen_Directory)
+
+####
 
 my $api = new freeswitch::API;
 my $e = new freeswitch::EventConsumer("custom", "skypopen::incoming_raw");
@@ -424,94 +594,97 @@ my $c = 0; # incremented, counter used to correlate skypopen API responses to th
 
 my $timeoutcheck = 30000; # time to wait for the user to dial an extension, in milliseconds.
 
-my $interface = 'skype1'; # the skype interface to dial-out on.
+my $interface = 'skype1'; # the Skype interface to dial-out on.
                           # you could also use 'ANY', or read this from $session->getVariable() and specify it in your dialplan.
+```
 
-my $dp_context   = 'local';        # or, more commonly, 'default'
-my $dp_extension = 'skypeDirDial'; # as located in the dialplan context
-my $dp_format    = 'XML';          # or perhaps 'YAML'                 
+我的 $dp_context = '本地'; # 或者更常见的是 '默认'
+我的 $dp_extension = 'skypeDirDial'; # 在拨号计划上下文中的位置
+我的 $dp_format = 'XML'; # 或者可能是 'YAML'
 
-# TTS engine to use.
-# You could also use Cepstral, for example
-$session->set_tts_parms("flite", "slt"); # awb, kal, rms or slt
-# $session->set_tts_parms("cepstral", "Amy");                  
+# 要使用的 TTS 引擎。
+# 例如，你也可以使用 Cepstral
+$session->set_tts_parms("flite", "slt"); # awb, kal, rms 或 slt
+# $session->set_tts_parms("cepstral", "Amy");
 
-freeswitch::consoleLog( "info", "Entering Skype.pl directory.\n" );
+freeswitch::consoleLog("info", "进入 Skype.pl 目录。\n");
 
 $session->answer();
 
-$friendList = getFriends( $e ); # this is actually pretty fast
+$friendList = getFriends($e); # 这其实很快
 
-# Gather our contacts
-my $contacts;        
-my $d = 0; # 'online' or 'away' counter
-foreach my $a(@{ $friendList }) {      
+# 收集我们的联系人
+my $contacts;
+my $d = 0; # '在线' 或 '离开' 计数器
+foreach my $a (@{ $friendList }) {
         $contacts->{$a}->{'username'} = $a;
-        $contacts->{$a}->{'status'} = getStatus( $e, $a ); # for less than 100, this is fairly quick also.
-        if( $contacts->{$a}->{'status'} eq 'ONLINE'                                                       
-         || $contacts->{$a}->{'status'} eq 'AWAY' ) {                                                     
-                $contacts->{$a}->{'available'} = 1;                                                       
-                $d++;                                                                                     
-        }                                                                                                 
-}                                                                                                         
+        $contacts->{$a}->{'status'} = getStatus($e, $a); # 对于小于 100 的情况，这也相当快。
+        if ($contacts->{$a}->{'status'} eq '在线' || $contacts->{$a}->{'status'} eq '离开') {
+                $contacts->{$a}->{'available'} = 1;
+                $d++;
+        }
+}
 
-# if &lt; 10 contacts online, user may dial 1 through 9
-my $len = 1;                                        
-if( $d > 999 ) {                                    
-        # if > 999 and &lt; 10000 contacts online, user may dial 0001 through 9999
-        $len = 4;                                                              
-} elsif( $d > 99 ) {                                                           
-        # if > 99 and &lt; 1000 contacts online, user may dial 001 through 999    
-        $len = 3;                                                              
-} elsif( $d > 9 ) {                                                            
-        # if > 9 and &lt; 100 contacts online, user may dial 01 through 99        
-        $len = 2;                                                              
-}                                                                              
+# 如果在线联系人小于10个，用户可以拨打1至9
+my $len = 1;
+if ($d > 999) {
+    # 如果在线联系人大于999且小于10000个，用户可以拨打0001至9999
+    $len = 4;
+} elsif ($d > 99) {
+    # 如果在线联系人大于99且小于1000个，用户可以拨打001至999
+    $len = 3;
+} elsif ($d > 9) {
+    # 如果在线联系人大于9且小于100个，用户可以拨打01至99
+    $len = 2;
+}
 
-# sort alphabetically by username
-my @ckeys = sort { $a->{'username'} cmp $b->{'username'} } keys( %{$contacts} );
-$d = 1; # entries begin at extension 1                                          
+# 按用户名字母顺序排序
+my @ckeys = sort { $a->{'username'} cmp $b->{'username'} } keys(%{$contacts});
+$d = 1; # 条目从分机号1开始
 
-# we'll speak this string later on.  if you want to say something before rambling off the directory, enter it here.
-my $final = 'Skype directory. ';                                                                                   
+#稍后我们会提到这个字符串。如果要在列举目录之前说些什么，请在这里输入。
+my $final = 'Skype目录。';
 
-# compile our spoken directory
-foreach my $ukey( @ckeys ) {  
-        $a = $contacts->{$ukey};
-        if( $a->{'available'} == 1 ) {
-                my $user = $a->{'username'};
-                my $num = sprintf('%0'.$len.'d', $d); # pad extension with zeros (eg, 001) so all extensions are the same length
-                $d = 1 + $d; # increment our extension                                                                          
-                $n = $num;                                                                                                      
-                $n =~ s/(\d)/\1,/gs; # makes 'three one one' instead of 'three hundred and eleven'                              
-                $final .= "For $user, dial $n. "; # this will be spoken                                                         
-                $contacts->{$ukey}->{'number'} = $num; # assign the extension                                                   
-        }                                                                                                                       
-}                                                                                                                               
+# 编译我们的通讯录
+foreach my $ukey (@ckeys) {
+    $a = $contacts->{$ukey};
+    if ($a->{'available'} == 1) {
+        my $user = $a->{'username'};
+        my $num = sprintf('%0' . $len . 'd', $d); # 使用零填充分机号（例如，001），以使所有分机号长度相同
+        $d = 1 + $d; # 增加我们的分机号
+        $n = $num;
+        $n =~ s/(\d)/\1,/gs; # 将数字转为读法，比如"三一一"而不是"三百十一"
+        $final .= "给$user拨打分机号$n。"; # 这将会被朗读出来
+        $contacts->{$ukey}->{'number'} = $num; # 分配分机号
+    }
+}
 
-if( length($final) == 0 ) {
-        $session->speak("No skype contacts are online.  Please try later.");
-        return bail();                                                      
-} else {                                                                    
-        # if you seriously have 9999 contacts, you may have to wait a while for your name to come up.
-        $session->speak($final);                                                                     
+if (length($final) == 0) {
+    $session->speak("没有在线的 Skype 联系人，请稍后再试。");
+    return bail();
+} else {
+    # 如果你真的有 9999 个联系人，那你可能需要等一段时间才能到你的名字。
+    $session->speak($final);
 
-        # this method is simpler than a non-blocking solution, but requires the user to sit through each name before allowing them to dial their extension.
+```python
+        # 这种方法比非阻塞方案更简单，但需要用户在拨通分机之前等待每个姓名。
         my $sel = $session->getDigits( $len, "#", $timeoutcheck );                                                                                         
         if( $sel && length("$sel") != 0 ) {                                                                                                                
                 my $user = getUser( $contacts, $sel );                                                                                                     
                 if( $user == -1 ) { return bail(); }                                                                                                       
 
-                # to see how this works, refer to the XML dialplan accompanying this script
+                # 要了解此方法的工作原理，请参考此脚本附带的XML呼叫计划
                 $session->setVariable( "destuser", $user );                                
                 $session->transfer( $dp_extension, $dp_format, $dp_context );              
         } else {                                                                           
-                $session->speak("Sorry, I didn't get a selection.  Goodbye.");             
+                $session->speak("对不起，我没有接受到选择。再见。");             
                 return bail();                                                             
         }                                                                                  
-}                                                                                          
+}     
+```
 
-sub getUser {
+```perl
+子函数 getUser {
         my $users = shift;
         my $dtmfid = shift;
         foreach my $k( %{ $users } ) {
@@ -522,28 +695,28 @@ sub getUser {
         return -1;                               
 }                                                
 
-sub bail {
-        $session->hangup();
+子函数 bail {
+        $session->挂断();
         return 1;
 }
 
-sub getStatus {
+子函数 getStatus {
         my $e = shift;
         my $u = shift;
 
-        if( !$session->ready() ) { return bail(); }
-        $api->executeString( "skypopen $interface #$c GET USER $u ONLINESTATUS" );
-        if( !$session->ready() ) { return bail(); }
+        if( !$session->可用() ) { return bail(); }
+        $api->执行字符( "skypopen $interface #$c 获取 用户 $u 在线状态" );
+        if( !$session->可用() ) { return bail(); }
 
-        $ce = $e->pop(1);
+        $ce = $e->弹出(1);
         if( !$ce ) { return bail(); }
 
-        my $body = $ce->getBody();
-        my $status = 'unknown';
-        if( $body =~ m/^#$c USER $u ONLINESTATUS (.*)$/ ) {
+        my $body = $ce->获取正文();
+        my $status = '未知';
+        if( $body =~ m/^#$c 用户 $u 在线状态 (.*)$/ ) {
                 $status = $1;
         } else {
-                freeswitch::consoleLog( "info", "Skype.pl: Unexpected response: $body\n" );
+                freeswitch::consoleLog( "info", "Skype.pl: 意外的回应: $body\n" );
         }
 
         $c=1+$c;
@@ -551,23 +724,23 @@ sub getStatus {
         return $status;
 }
 
-sub getFriends {
+子函数 getFriends {
         my $e = shift;
 
-        if( !$session->ready() ) { return bail(); }
-        $api->executeString( "skypopen $interface #$c SEARCH FRIENDS" );
-        if( !$session->ready() ) { return bail(); }
+        if( !$session->可用() ) { return bail(); }
+        $api->执行字符( "skypopen $interface #$c 搜索好友" );
+        if( !$session->可用() ) { return bail(); }
 
-        $ce = $e->pop(1);
+        $ce = $e->弹出(1);
         if( !$ce ) { return bail(); }
 
-        my $body = $ce->getBody();
+        my $body = $ce->获取正文();
 
         my @friends;
-        if( $body =~ m/^#$c USERS (.*)$/ ) {
+        if( $body =~ m/^#$c 用户 (.*)$/ ) {
                 @friends = split(/, /, $1);
         } else {
-                freeswitch::consoleLog( "info", "Skype.pl: Unexpected response: $body\n" );
+                freeswitch::consoleLog( "info", "Skype.pl: 意外的回应: $body\n" );
         }
 
         $c=1+$c;
@@ -575,6 +748,5 @@ sub getFriends {
         return \@friends;
 }
 
-return 1;
-
-
+返回 1;
+```

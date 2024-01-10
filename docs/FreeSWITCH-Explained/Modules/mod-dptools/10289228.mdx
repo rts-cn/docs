@@ -1,39 +1,34 @@
+# mod_dptools：页面
 
-# mod_dptools: page 
+## 关于
 
- 
+播放一段录制好的文件给一组通道，等待直到有人接听。设置page\_path为通道接听后播放的音频文件。当设置了sip自动接听标志位时，该命令变得更加有用，可以将页面消息发送到端点而无需手动接听电话。
 
-## About
+单击此处展开目录
 
-Play a recorded file to a list of channels, waiting until answered. Set page\_path to the audio file to play once the channel is answered. This command is even more useful when the sip auto answer flag is set to deliver the page message to the endpoint without answering the phone manually.
+- 1 [用法](#usage)
+- 2 [示例](#example)
 
-Click here to expand Table of Contents
+## 用法
 
-* 1 [Usage](#usage)
-* 2 [Example](#example)
-
-## Usage
-
-**page usage**
+**页面用法**
 
 ```xml
 page (page_path=/path/to/page_announcement.wav)<var1=value1,var2=value2...>sofia/internal/foo@bar.com:_:sofia/internal/foo2@bar.com:_:sofia...
 ```
 
-Note the use of "enterprise originate" by the use of the :\_: (colon underscore colon) notation to spawn each outbound call leg in its own separate thread.
+注意使用了“企业起源”的方式，通过使用:\_:符号（冒号下划线冒号）来为每个外拨话路线创建一个单独的线程。
 
-Note also that the page\_path is enclosed in parentheses. An absolute path is shown here, but a path relative to the ${sounds\_dir} can also be used.
+另请注意，page\_path被括号括起来。这里显示了一个绝对路径，但也可以使用相对于$ {sounds\_dir}的路径。
 
-FreeSWITCH waits for each phone to answer. Each leg gets its own copy of the audio file. You can add variables enclosed in &lt;> angles to be passed to each originate so you can put the sip\_auto\_answer flag in between the () and the list of channels.
+FreeSWITCH等待每个电话接听。每个话路线都会得到自己的音频文件副本。您可以在<>角括号中添加变量以便传递给每个起源，因此可以将sip\_auto\_answer标志位放在（）和通道列表之间。
 
-## Example
+## 示例
 
-**page example**
+**页面示例**
 
 ```xml
 page (page_path=/path/to/tornado_warning.wav)<nolocal:sip_auto_answer=true>sofia/internal/1000@bar.com:_:sofia/internal/1001@bar.com
 ```
 
-This example will call local extensions 1000 and 1001 in separate threads. When each one answers, which should happen almost instantaneously thanks to the sip\_auto\_answer flag, the file tornado\_warning.wav will play. The "nolocal:" operator exports the sip\_auto\_answer flag to the B-leg where it is actually needed; merely setting it on the A-leg will not achieve the desired result since the A-leg is already set up to FS.
-
-
+该示例将在单独的线程中调用本地分机1000和1001。当每个电话接听时（由于sip\_auto\_answer标志位，几乎是即时的），将播放tornado\_warning.wav文件。 "nolocal:"操作符会将sip\_auto\_answer标志导出到B-leg，这是实际需要的位置；仅在A-leg上设置它不能达到预期的结果，因为A-leg已经设置为FS。

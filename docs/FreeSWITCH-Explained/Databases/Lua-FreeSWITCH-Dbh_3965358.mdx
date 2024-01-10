@@ -1,35 +1,31 @@
+# Lua FreeSWITCH Dbh
 
-# Lua FreeSWITCH Dbh 
+## 关于
 
- 
+FreeSWITCH数据库处理程序（freeswitch.Dbh）允许您从Lua脚本连接到数据库。使用此方法的优势在于它利用FreeSWITCH提供的连接池，相对于为每个LuaSQL env:connect()创建新的TCP连接，速度有所提升。
 
-## About
+以下是在[mod\_lua](../Modules/mod_lua_1048944.mdx#--)脚本中使用[freeswitch.Dbh](https://confluence.freeswitch.org/display/FREESWITCH/Lua+with+Database#LuawithDatabase-freeswitch.dbh)的一些示例。
 
-The FreeSWITCH Database Handler (freeswitch.Dbh) allows you to connect to databases from your Lua script. The advantage of this method is that it makes use of connection pooling provided by FreeSWITCH which gives a nice increase in speed when compared to creating a new TCP connection for each LuaSQL env:connect().
+点击展开目录
 
-Here are some examples for using [freeswitch.Dbh](https://confluence.freeswitch.org/display/FREESWITCH/Lua+with+Database#LuawithDatabase-freeswitch.dbh) in a [mod\_lua](../Modules/mod_lua_1048944.mdx#--) script.
+* 1 [示例拨号计划应用](#示例拨号计划应用)  
+   * 1.1 [XML拨号计划](#xml拨号计划)  
+   * 1.2 [Lua脚本](#lua脚本)
+* 2 [示例用户目录XML](#示例用户目录xml)  
+   * 2.1 [Lua配置](#lua配置--)  
+   * 2.2 [Lua脚本](#lua脚本)
+* 3 [db\_connect.lua重写](#db_connectlua-重写)
+* 4 [参见](#参见)
 
-Click to expand Table of Contents
+## 示例拨号计划应用
 
-* 1 [Example Dialplan App](#example-dialplan-app)  
-   * 1.1 [XML Dialplan](#xml-dialplan)  
-   * 1.2 [Lua Script](#lua-script)
-* 2 [Example User Directory XML](#example-user-directory-xml)  
-   * 2.1 [Lua Configuration](#lua-configuration--)  
-   * 2.2 [Lua Script](#lua-script)
-* 3 [db\_connect.lua rewrite](#db_connectlua-rewrite)
-* 4 [See Also](#see-also)
+下面是一种简单的方法，用于从数据库获取一些变量，并将它们设置为通道变量：
 
-  
-## Example Dialplan App
+假设您的数据库中有一个名为_did\_users_的表，仅有两列：_did_和_user_，并且这两列都有唯一键。
 
-Here is a simple way to get a few variables from your db and set them as channel variables:
+### XML拨号计划
 
-Assume you have a table _did\_users_ in your db with only 2 columns: _did_ and _user_ with a unique key over both.
-
-### XML Dialplan
-
-**dbh Dialplan Example**
+**dbh拨号计划示例**
 
 ```xml
 <extension name="map_did_to_user" continue="true">
@@ -42,18 +38,19 @@ Assume you have a table _did\_users_ in your db with only 2 columns: _did_ and _
   <condition field="${user}" expression="...
 ```
 
-Note that the lua script must be run **inline**, so that the retrieved channel variables are available immediately.
+请注意，Lua脚本必须以**内联**的方式运行，以便检索到的通道变量立即可用。
 
-### Lua Script
+### Lua脚本
 
-**Map DID to user**
+**将DID映射到用户**
 
 ```xml
 -- map_did_to_user.lua
--- takes DID as first argument
+-- 以第一个参数作为DID
 
 local did = argv[1]
 
+```lua
 local dbh = freeswitch.Dbh("odbc://datasourcename:username:password")
 
 local function set_session_variables(row)
@@ -73,17 +70,17 @@ local sql_query = "SELECT user FROM did_users WHERE did = " .. did
 assert(dbh:query(sql_query, set_session_variables))
 ```
 
-The script checks if a session is available. If it is, the key/value will be set as a channel variable. The result will always be printed to your console in the debug level.
+脚本检查是否有可用的会话，如果有，key/value 将被设置为通道变量。结果将始终在调试级别打印到控制台。
 
-## Example User Directory XML
+## 示例用户目录 XML
 
-The following script is a simple way to use an SQL query to generate User Directory XML on the fly inside FreeSWITCH.
+以下脚本是一种使用 SQL 查询在 FreeSWITCH 内部动态生成用户目录 XML 的简单方法。
 
-It's assumed you have a table named `users` in your database containing the following columns: `domain, id, mailbox, number-alias, password, dial-string` and `user_context` (all varchars).
+假设您的数据库中有一个名为 `users` 的表，其中包含以下列：`domain, id, mailbox, number-alias, password, dial-string` 和 `user_context`（所有 varchars）。
 
-### Lua Configuration  
+### Lua 配置  
 
-You can enable sending XML directory lookups through Lua by adding the following lines to your _lua.conf.xml_:
+您可以通过将下面的几行代码添加到 _lua.conf.xml_ 来启用通过 Lua 发送 XML 目录查找：
 
 **lua.conf.xml**
 
@@ -92,37 +89,39 @@ You can enable sending XML directory lookups through Lua by adding the following
 <param name="xml-handler-bindings" value="directory"/>
 ```
 
-### Lua Script
+### Lua 脚本
 
-Based on the mailing list: <http://lists.freeswitch.org/pipermail/freeswitch-users/2012-January/079296.html> there are problems with Voicemail Inject when using Lua to serve configs (as well as personal experience), i will elaborate on this more in depth - Destreyf
+根据邮件列表：<http://lists.freeswitch.org/pipermail/freeswitch-users/2012-January/079296.html> 使用 Lua 来提供配置时，Voicemail Inject 存在一些问题（以及个人经验），我将详细说明这个问题 - Destreyf
 
-**MySQL Example**
+**MySQL 示例**
 
-```xml
+```lua
 -- gen_dir_user_xml.lua
--- example script for generating user directory XML
+-- 用于生成用户目录 XML 的示例脚本
+```
 
--- comment the following line for production:
-freeswitch.consoleLog("notice", "Debug from gen_dir_user_xml.lua, provided params:\n" .. params:serialize() .. "\n")
+```lua
+-- 在生产环境中注释以下行：
+freeswitch.consoleLog("notice", "来自 gen_dir_user_xml.lua 的调试信息，提供的参数：\n" .. params:serialize() .. "\n")
 
 local req_domain = params:getHeader("domain")
 local req_key    = params:getHeader("key")
 local req_user   = params:getHeader("user")
 
 assert (req_domain and req_key and req_user,
-  "This example script only supports generating directory xml for a single user !\n")
+  "此示例脚本仅支持为单个用户生成目录 XML！\n")
 
 local dbh = freeswitch.Dbh("odbc://datasourcename:username:password")
 if dbh:connected() == false then
-  freeswitch.consoleLog("notice", "gen_dir_user_xml.lua cannot connect to database" .. dsn .. "\n")
+  freeswitch.consoleLog("notice", "gen_dir_user_xml.lua 无法连接到数据库" .. dsn .. "\n")
   return
 end
 
--- it's probably wise to sanitize input to avoid SQL injections !
+-- 为了避免 SQL 注入，对输入进行清理是明智的！
 local my_query = string.format("select * from users where domain = '%s' and `%s`='%s' limit 1",
   req_domain, req_key, req_user)
 
-assert (dbh:query(my_query, function(u) -- there will be only 0 or 1 iteration (limit 1)
+assert (dbh:query(my_query, function(u) -- 只会有 0 或 1 个迭代（限制 1）
   XML_STRING =
 [[<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <document type="freeswitch/xml">
@@ -142,21 +141,21 @@ assert (dbh:query(my_query, function(u) -- there will be only 0 or 1 iteration (
   </section>
 </document>]]
 
-  -- comment the following line for production:
-  freeswitch.consoleLog("notice", "Debug from gen_dir_user_xml.lua, generated XML:\n" .. XML_STRING .. "\n")
+  -- 在生产环境中注释以下行：
+  freeswitch.consoleLog("notice", "来自 gen_dir_user_xml.lua 的调试信息，生成的 XML：\n" .. XML_STRING .. "\n")
 end))
 ```
 
-Note that the query in the example is formatted for MySQL; use double-quotes (") instead of backticks (\`) for PostgreSQL.
+请注意，示例中的查询是针对MySQL格式化的；对于PostgreSQL，请使用双引号（"）而不是反引号（\`）。
 
-## db_connect.lua rewrite
+## db_connect.lua 重写
 
-Chapter 7 of the [FreeSWITCH book](https://www.packtpub.com/freeswitch-1-0-6-build-robust-high-performance-telephony-systems/book) explains a db\_connect.lua script. This is a rewrite not using LuaSQL. I used a simple MS-Access database (freeswitch.accdb) to test the script.
+《FreeSWITCH 书籍》的第7章介绍了 db\_connect.lua 脚本。这是一个不使用 LuaSQL 的重写版本。我使用了一个简单的 MS-Access 数据库（freeswitch.accdb）来测试这个脚本。
 
 ```xml
 -- db_connect.lua
--- Connects to a database using freeswitch.Dbh connection pooling, checks PIN, reads balance
--- A hangup function makes the code a bit cleaner
+-- 使用 freeswitch.Dbh 连接池连接到数据库，检查 PIN 码，读取余额
+-- 通过挂机函数，使代码更加清晰
 
 local dbh = freeswitch.Dbh("odbc://datasourcename:username:password")
 local row = {}
@@ -169,49 +168,51 @@ function hangup_call ()
 end
 
 if dbh:connected() == false then
-   freeswitch.consoleLog("notice", "gen_dir_user_xml.lua cannot connect to database" .. dsn .. "\n")
+   freeswitch.consoleLog("notice", "gen_dir_user_xml.lua无法连接到数据库" .. dsn .. "\n")
    hangup_call()  
 end
 
--- Set invalid entry file
+-- 设置无效入口文件
 invalid = "ivr/ivr-that_was_an_invalid_entry.wav"
 
--- Greet caller
+-- 欢迎来电者
 session:answer()
 session:streamFile("ivr/ivr-hello.wav")
 tries = 0
+```
 
+```lua
 while (tries < 3) do
--- Collect account number
+    -- 收集账号
     acct = session:playAndGetDigits(3, 5, 3, 7000, "#", "phrase:enter_message_number", invalid, ".+")
     if (acct) then
-        -- Pull account from database -> assumes that acct is unique
+        -- 从数据库中提取账号 -> 假设acct是唯一的
         my_query = "select * from users where acct = " .. acct
         assert(dbh:query(my_query, function(qrow)
-        for key, val in pairs(qrow) do
-            row[key] = val
-        end
+            for key, val in pairs(qrow) do
+                row[key] = val
+            end
         end))
     end
-    -- Confirm that we received the record
+    -- 确认我们接收到了记录
     if (row.pin ~= nil) then
-        -- We have an account, now collect PIN and check
+        -- 拥有账号，现在收集 PIN 并进行检查
         tries = 0
         while (tries < 3) do
             pin = session:playAndGetDigits(3, 5, 3, 7000, "#", "ivr/ivr-please_enter_pin_followed_by_pound.wav", invalid, "\\d+")
             if (row.pin == pin) then
                 user_repeat = true
-                while(user_repeat == true) do
+                while (user_repeat == true) do
                     session:streamFile("voicemail/vm-you_have.wav")
                     session:sleep(200)
                     session:say(row.balance, "en", "currency", "pronounced")
                     session:sleep(200)
-                    -- "to repeat these options, please press 1"    
-                    digits = session:playAndGetDigits(1,1,3,7000,"#",
-                      "file_string://ivr/ivr-to_repeat_these_options.wav!ivr/ivr-please.wav!voicemail/vm-press.wav!digits/1.wav", 
-                                invalid,"\\d+") 
-                    -- repeat y/n
-                    freeswitch.consoleLog("INFO","User entered '" .. digits .. "'\n")
+                    -- "要重复这些选项，请按1"
+                    digits = session:playAndGetDigits(1, 1, 3, 7000, "#",
+                        "file_string://ivr/ivr-to_repeat_these_options.wav!ivr/ivr-please.wav!voicemail/vm-press.wav!digits/1.wav",
+                        invalid, "\\d+")
+                    -- 重复 y/n
+                    freeswitch.consoleLog("INFO", "用户输入了 '" .. digits .. "'\n")
                     if (digits == "1") then
                         user_repeat = true
                     else
@@ -220,33 +221,32 @@ while (tries < 3) do
                     end
                 end
             else
-                -- Callerr entered wrong PIN
+                -- 用户输入了错误的 PIN
                 session:streamFile("ivr/ivr-that_was_an_invalid_entry.wav")
                 tries = tries + 1;
             end
         end
         if (tries > 2) then
-            -- Too many failed attempts to enter PIN
+            -- 输入 PIN 失败的尝试次数过多
             session:streamFile("voicemail/vm-abort.wav")
             hangup_call()
             break
         end
     else
-        -- We did not find this account
+        -- 我们没有找到这个账号
         session:streamFile(invalid)
         tries = tries + 1;
     end
 end -- while (tries < 3)
+```
 
-if (tries > 2) then
+```lua
+如果 (tries > 2) then
     session:streamFile("voicemail/vm-abort.wav")
     hangup_call()
 end
 ```
 
-## See Also
+## 另请参阅
 
-[Lua Database](./Lua-with-Database_3965354.mdx#about)  
-
-  
-
+[Lua 数据库](./Lua-with-Database_3965354.mdx#about)

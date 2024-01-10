@@ -1,41 +1,34 @@
+# mod_dptools: answer
 
-# mod_dptools: answer 
+## 关于
 
- 
+回答呼叫以建立呼叫'A'通道与FreeSwitch服务器之间的双向音频连接。这与其他终端无关。
 
-## About
+服务器可能需要"answer"一个呼叫来播放音频文件或接收呼叫的DTMF信号。
 
-  
-Answer the call for a channel.This sets up duplex audio between the calling ''A'' leg and the FreeSwitch server. It is not about other endpoints.
+一旦回答了呼叫，仍然可以将呼叫转接到其他分机。因为在回答后的桥接实际上是一个转接过程，发送给呼叫者的回铃音将由`transfer_ringback`定义。
 
-  
-The server might need to 'answer' a call to play an audio file or to receive DTMF from the call.
+单击此处展开目录
 
-Once answered, calls can still be bridged to other extensions. Because a bridge after an answer is actually a transfer, the ringback tones sent to the caller will be defined by `transfer_ringback`.
-  
-  
-Click here to expand Table of Contents
+* 1 [用法](#usage)
+* 2 [示例](#example)
+   * 2.1 [播放音调](#play-a-tone)
+   * 2.2 [回答呼叫以检测传真音调](#answer-a-call-to-detect-fax-tones)
+* 3 [参见](#see-also)
 
-* 1 [Usage](#usage)
-* 2 [Example](#example)  
-   * 2.1 [Play A Tone](#play-a-tone)  
-   * 2.2 [Answer a Call to Detect FAX Tones](#answer-a-call-to-detect-fax-tones)
-* 3 [See Also](#see-also)
-
-## Usage
+## 用法
 
 answer
 
-## Example
+## 示例
 
-  
 ```xml
 <action application="answer"/>
 ```
 
-### Play A Tone
+### 播放音调
 
-A simple example to answer in order to play a 1004kc test tone to the caller, then hangup.
+一个简单的示例，回答呼叫以播放一个1004Hz的测试音调给呼叫者，然后挂断。
 
 ```xml
 	<extension name="play tone">
@@ -51,26 +44,21 @@ A simple example to answer in order to play a 1004kc test tone to the caller, th
 
 ```
 
-  
-### Answer a Call to Detect FAX Tones
+### 回答呼叫以检测传真音调
 
-We need to answer the call to let FreeSWITCH receive the audio to start detecting FAX tones. Because a bridge after an answer is actually a transfer, the ringback sent to the caller is now defined by transfer\_ringback
+我们需要回答呼叫以让FreeSWITCH接收音频并开始检测传真音调。因为在回答后的桥接实际上是一个转接过程，现在向呼叫者发送的回铃音由transfer_ringback定义。
 
 ```xml
-  <extension name="sales_fax">
+<extension name="sales_fax">
     <condition field="destination_number" expression="^sales_fax$"> 
-      <action application="answer"/>
-      <action application="set" data="transfer_ringback=${us-ring}"/>
-      <action application="spandsp_start_fax_detect" data="transfer 'FAX XML default' 6"/>
-      <action application="bridge" data="${group_call(sales@${domain_name})}"/>
+        <action application="answer"/>
+        <action application="set" data="transfer_ringback=${us-ring}"/>
+        <action application="spandsp_start_fax_detect" data="transfer 'FAX XML default' 6"/>
+        <action application="bridge" data="${group_call(sales@${domain_name})}"/>
     </condition>
-  </extension>
+</extension>
 ```
 
-  
-## See Also
+## 另请参阅
 
-* [mod\_dptools: pre answer](./6586998.mdx#about)
-
-  
-
+* [mod_dptools: pre answer](./6586998.mdx#about)

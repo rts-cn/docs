@@ -1,96 +1,82 @@
+# 会话 sayPhrase 
 
-# Session sayPhrase 
+## 关于
 
- 
+使用FreeSwitch的say宏API来播放提示音的宏。
 
-## About
+应该将宏放置在conf/lang\_XX.xml中。
 
-Speaks a prompt macro using the FreeSwitch say macro API.
+点击此处展开目录
 
-Macros should be placed in conf/lang\_XX.xml.
+* 1 [简介](#简介)
+* 2 [示例](#示例)
+* 3 [参见](#参见)
 
-Click here to expand Table of Contents
+## 简介
 
-* 1 [Synopsis](#synopsis)
-* 2 [Example](#example)
-* 3 [See Also](#see-also)
-
-## Synopsis
-
-  
 ```xml
 session.sayPhrase(macro_name [,macro_data] [,language] [,dtmf_callback] [,dtmf_callback_args]);
 ```
 
-* macro\_name - (string) The name of the say macro to speak
-* macro\_data - (string) Optional. Data to pass to the say macro
-* language - (string) Optional. Language to speak macro in (ie. "en" or "fr"). Defaults to "en".
-* dtmf\_callback - (function) DTMF callback function name (don't enclose it in quotes!).
-* dtmf\_callback\_args - (string) Optional. DTMF callback args to pass to the callback function when it is called.
+* macro\_name - (字符串)要发音的say宏名称
+* macro\_data - (字符串) 可选项。传递给say宏的数据
+* language - (字符串) 可选项。要发音的宏语言（例如"en"或"fr"）。默认为"en"。
+* dtmf\_callback - (函数) DTMF回调函数名称（不要用引号括起来！）。
+* dtmf\_callback\_args - (字符串) 可选项。在调用回调函数时传递给回调函数的DTMF回调参数。
 
-Callback return values and meanings:
+回调函数的返回值和含义:
 
-* true or "true" - Causes prompts to continue speaking.
-* Any other value interrupts the prompt and returns the value from the dtmf\_callback function
+* true 或 "true" - 导致提示音继续播放。
+* 其他任何值都会中断提示音，并返回dtmf_callback函数的返回值。
 
-## Example
+## 示例
 
-  
 ```xml
 var dtmf_digits = "";
-  
-  function on_dtmf(session, type, obj, arg)
-  {
-     if (type == "dtmf") {
-       console_log("on_dtmf got digit: " + obj.digit + "\n");
-       dtmf_digits += obj.digit;
-     }
-     return(true);
-  }
-  
-  /* Speaks a menu and waits for a single digit press. If the user does not enter a selection */
-  /* then the menu is repeated up to 3 times. */
-  function sayivrmenu(ivrsession, menuname, validdigits, timeout) {
-      var repeat = 0;
-  
-      console_log("sayivrmenu: menu=[" + menuname + "] validdigits=[" + validdigits + "]\n");
-  
-      session.flushDigits();
-      dtmf_digits = "";
-  
-      while (ivrsession.ready() && dtmf_digits == "" && repeat < 3) {
-          /* play phrase - if digit keyed while playing callback will catch them*/
-          ivrsession.sayPhrase(menuname, validdigits, "en", on_dtmf, "");
-  
-          /* if caller still here and has not entered any selection yet - wait for a selection*/
-          if (ivrsession.ready() && dtmf_digits == "") {
-              dtmf_digits = ivrsession.getDigits(1, "", timeout);
-              /* if still no selection repeat menu */
-              if (dtmf_digits == "") {
-                  repeat++;
-              }
-          }
-      }
-      return(dtmf_digits);
-  }
-  
-  
-  var menuselection = "";
-  
-  /** Let's answer our call **/
-  session.answer();
-  
-  /** Play our Main Menu prompt (options 0, 1, 2, 3 and #) **/
-  menuselection = sayivrmenu(session, "mainmenu", "0123#", 6000);
-  
-  if (session.ready()) {
-      session.execute("phrase", "saydigits," + menuselection);
-  }
+
+function on_dtmf(session, type, obj, arg) {
+    if (type == "dtmf") {
+        console_log("on_dtmf got digit: " + obj.digit + "\n");
+        dtmf_digits += obj.digit;
+    }
+    return (true);
+}
+
+function sayivrmenu(ivrsession, menuname, validdigits, timeout) {
+    var repeat = 0;
+
+    console_log("sayivrmenu: menu=[" + menuname + "] validdigits=[" + validdigits + "]\n");
+
+    session.flushDigits();
+    dtmf_digits = "";
+
+    while (ivrsession.ready() && dtmf_digits == "" && repeat < 3) {
+        ivrsession.sayPhrase(menuname, validdigits, "en", on_dtmf, "");
+
+        if (ivrsession.ready() && dtmf_digits == "") {
+            dtmf_digits = ivrsession.getDigits(1, "", timeout);
+
+            if (dtmf_digits == "") {
+                repeat++;
+            }
+        }
+    }
+    return (dtmf_digits);
+}
+
+
+var menuselection = "";
+
+session.answer();
+
+menuselection = sayivrmenu(session, "mainmenu", "0123#", 6000);
+
+if (session.ready()) {
+    session.execute("phrase", "saydigits," + menuselection);
+}
 ```
 
-## See Also
+## 参见
 
-* [Speech Phrase Management](../../../Configuration/Speech-Phrase-Management_9634492.mdx#0-about)
-
-  
-
+- [语音短语管理](../../../Configuration/Speech-Phrase-Management_9634492.mdx#0-about)
+```

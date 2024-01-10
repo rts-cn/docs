@@ -1,13 +1,10 @@
+# Lua邮件调用示例
 
-# Lua Mail Call example 
+## 关于
 
- 
+这个脚本接受一个参数，即文件名，并使用lua发送该文件的邮件。您必须加载lua socket库。[http://w3.impa.br/\~diego/software/luasocket/old/luasocket-2.0-beta/smtp.html](http://w3.impa.br/\~diego/software/luasocket/old/luasocket-2.0-beta/smtp.html)
 
-## About
-
-This script takes one argument, a filename, and mails that file using lua. You must have the lua socket lib loaded.http://w3.impa.br/\~diego/software/luasocket/old/luasocket-2.0-beta/smtp.html
-
-Call it like this in the dialplan:
+在dialplan中按如下方式调用：
 
 ```xml
 <action application="set" data="hangup_after_bridge=false"/>
@@ -24,48 +21,47 @@ Call it like this in the dialplan:
     <condition field="destination_number" expression="^mail_this$">
         <action application="lua" data="mail_call.lua ${rec_file}"/>
         <action application="hangup" data="NORMAL_CLEARING" />    
-         </condition>
+    </condition>
 </extension>
 ```
 
-Here is mail\_call.lua
+这是mail_call.lua：
 
 ```xml
 session:sleep(500);
 freeswitch.consoleLog("NOTICE", "Mail Call!"..argv[1].." \n");
 
--- load the smtp support and its friends
+-- 加载smtp支持及其相关组件
 local smtp = require("socket.smtp")
 local mime = require("mime")
 local ltn12 = require("ltn12")
+```
 
--- creates a source to send a message with two parts. The first part is 
--- plain text, the second part is an mp3, encoded as base64.
+```lua
+-- 创建一个包含两个部分的消息源，用于发送消息。第一部分是纯文本，第二部分是base64编码的mp3文件。
 source = smtp.message{
   headers = {
-     -- Remember that headers are *ignored* by smtp.send. 
+     -- 注意，smtp.send函数会忽略这些头部信息。
      from = "FreeSWITCH <freeswitch@servercorps.com>",
      to = "Mail Call<mailcall@freeswitch.org>",
-     subject = "Here is a message with mp3 attachment"
+     subject = "这是一个带有mp3附件的消息"
   },
   body = {
-    -- first part: no headers means plain text, us-ascii.
-    -- The mime.eol low-level filter normalizes end-of-line markers.
+    -- 第一部分：没有头部表示纯文本，使用us-ascii编码。
+    -- mime.eol函数用于标准化行尾标记。
     [1] = { 
       body = mime.eol(0, [[
-        Here is a call logged and recorded by FreeSWITCH.
+        这是由FreeSWITCH记录和录音的通话。
       ]])
     },
-    -- second part: headers describe content to be an mp3 file 
-    -- sent under the base64 transfer content encoding.
-    -- notice that nothing happens until the message is actually sent. 
-    -- small chunks are loaded into memory right before transmission and 
-    -- translation happens on the fly.
+    -- 第二部分：头部描述内容为一个mp3文件，使用base64传输编码。
+    -- 需要注意的是，直到消息实际发送之前，不会发生任何操作。
+    -- 小块数据会在传输之前加载到内存中，并且实时进行转换。
     [2] = { 
       headers = {
         ["content-type"] = 'audio/mpeg; name='..argv[1],
         ["content-disposition"] = 'attachment; filename='..argv[1],
-        ["content-description"] ='Call Recording mp3',
+        ["content-description"] ='通话录音 mp3',
         ["content-transfer-encoding"] = "BASE64"
       },
       body = ltn12.source.chain(
@@ -80,14 +76,12 @@ source = smtp.message{
   }
 }
 
--- finally send it
+-- 最后发送消息
 r, e = smtp.send{
     from = "<freeswitch@servercorps.com>",
     rcpt = "<mailcall@freeswitch.org>",
     source = source,
 }
 
---Todo : Delete the mp3 file here
+--Todo : 在此删除mp3文件
 ```
-
-

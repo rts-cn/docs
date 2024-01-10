@@ -1,45 +1,42 @@
+# mod_dptools: IVR 菜单
 
-# mod_dptools: IVR Menu 
+## 关于
 
- 
+IVR 菜单文档页面。
 
-## About
+点击这里展开目录
 
-The IVR Menu documentation page.
+* 1 [总体概念](#general-concept)
+* 2 [用法](#usage)
+* 3 [选项](#options)
+* 4 [播放远程音频文件](#playing-remote-audio-files)
+   * 4.1 [使用 mod_http_cache](#using-mod_http_cache)
+   * 4.2 [使用 mod_shout](#using-mod_shout)
+* 5 [示例](#examples)
+   * 5.1 [如果没有按下 DTMF 键如何路由呼叫](#how-to-route-the-call-if-no-dtmf-is-pressed)
+   * 5.2 [如何用一个数字运行多个应用程序](#how-to-run-several-apps-with-one-digit)
+   * 5.3 [用另一种方法用一个数字运行多个应用程序](#another-way-to-run-several-apps-with-one-digit)
+   * 5.4 [声音文件的路径](#path-for-sound-files-)
+* 6 [变量](#variables)
+   * 6.1 [ivr_menu 状态](#ivr_menu-statues)
+* 7 [事件](#events)
+* 8 [参见](#see-also)
 
-Click here to expand Table of Contents
+## 总体概念
 
-* 1 [General Concept](#general-concept)
-* 2 [Usage](#usage)
-* 3 [Options](#options)
-* 4 [Playing remote audio files](#playing-remote-audio-files)  
-   * 4.1 [Using mod\_http\_cache](#using-mod_http_cache)  
-   * 4.2 [Using mod\_shout](#using-mod_shout)
-* 5 [Examples](#examples)  
-   * 5.1 [How to route the call if no DTMF is pressed](#how-to-route-the-call-if-no-dtmf-is-pressed)  
-   * 5.2 [How to run several apps with one digit](#how-to-run-several-apps-with-one-digit)  
-   * 5.3 [Another way to run several apps with one digit](#another-way-to-run-several-apps-with-one-digit)  
-   * 5.4 [Path for Sound Files](#path-for-sound-files-)
-* 6 [Variables](#variables)  
-   * 6.1 [ivr\_menu statues](#ivr_menu-statues)
-* 7 [Events](#events)
-* 8 [See Also](#see-also)
-
-## General Concept
-
-You may also want to reference this;
+你可能也想参考这个链接；
 
 <http://www.packtpub.com/article/freeswitch-utilizing-the-built-in-ivr-engine>
 
-The IVR Menu feature allows you to easily create IVR menus by describing them in XML. (See also [phrase macros](../mod_dptools_1970333.mdx#-c))
+IVR 菜单功能允许您通过在 XML 中描述来轻松创建 IVR 菜单。（也参见 [短语宏](../mod_dptools_1970333.mdx#-c)）
 
-Menus are defined in the autoload\_configs/ivr.conf.xml file configuration as below.
+菜单在 autoload\_configs/ivr.conf.xml 配置文件中定义如下。
 
 ```xml
-<configuration name="ivr.conf" description="IVR menus">
+<configuration name="ivr.conf" description="IVR菜单">
   <menus>
-    <!-- demo IVR setup -->
-    <!-- demo IVR, Main Menu -->
+    <!-- 演示IVR设置 -->
+    <!-- 演示IVR，主菜单 -->
     <menu name="demo_ivr"
           greet-long="phrase:demo_ivr_main_menu"
           greet-short="phrase:demo_ivr_main_menu_short"
@@ -52,12 +49,12 @@ Menus are defined in the autoload\_configs/ivr.conf.xml file configuration as be
       <entry action="menu-exec-app" digits="1" param="bridge sofia/$${domain}/888@conference.freeswitch.org"/>
       <entry action="menu-exec-app" digits="2" param="transfer 9996 XML default"/>    <!-- FS echo -->
       <entry action="menu-exec-app" digits="3" param="transfer 9999 XML default"/>    <!-- MOH -->
-      <entry action="menu-sub" digits="4" param="demo_ivr_submenu"/>  <!-- demo sub menu -->
+      <entry action="menu-sub" digits="4" param="demo_ivr_submenu"/>  <!-- 演示子菜单 -->
       <entry action="menu-exec-app" digits="5" param="transfer 1234*256 enum"/>    <!-- Screaming monkeys -->
-      <entry action="menu-exec-app" digits="/^(10[01][0-9])$/" param="transfer $1 XML default"/> <!-- dial ext & x-fer -->
-      <entry action="menu-top" digits="9"/>    <!-- Repeat this menu -->
+      <entry action="menu-exec-app" digits="/^(10[01][0-9])$/" param="transfer $1 XML default"/> <!-- 拨号分机和X转接 -->
+      <entry action="menu-top" digits="9"/>    <!-- 重复此菜单 -->
     </menu>
-    <!-- Demo IVR, Sub Menu -->
+    <!-- 演示IVR，子菜单 -->
     <menu name="demo_ivr_submenu"
         greet-long="phrase:demo_ivr_sub_menu"
         greet-short="phrase:demo_ivr_sub_menu_short"
@@ -71,7 +68,7 @@ Menus are defined in the autoload\_configs/ivr.conf.xml file configuration as be
 </configuration>
 ```
 
-The IVR Menu supports prompts using the phrase macro. To speak a phrase macro preface your macro name with "phrase:". Be sure to specify the tts-engine, tts-voice, and phrase-lang parameters. See the following menu example.
+IVR菜单支持使用短语宏的提示。要以短语宏的形式发出提示，请在宏名称之前加上"phrase:"。请确保指定了tts-engine、tts-voice和phrase-lang参数。请参考以下菜单示例。
 
 ```xml
 <menu name="main"
@@ -93,90 +90,90 @@ The IVR Menu supports prompts using the phrase macro. To speak a phrase macro pr
 </menu>
 ```
 
-## Usage
+## 用法
 
 ```xml
 ivr
 ```
 
-Examples:
+示例：
 
 ```xml
 <action application="ivr" data="main"/>
 ```
 
-To intercept only if the call is not bridged (available since git-58fe45a):Note it is sometime necessary to have the following before the call to the ivr application so it won't pick up in early media:
+仅在呼叫未被桥接时拦截（自git-58fe45a以来可用）：请注意，有时需要在调用ivr应用程序之前添加以下内容，以防止在早期媒体中进行拾音：
 
 ```xml
 <action application="answer"/>
 ```
 
-## Options
+## 选项
 
-Menu tag options. 
+菜单标签选项。
 
-* **name** \- the name of the ivr menu.
-* **greet-long** \- the menu prompt played the first time the menu is played. May be a filename (starting with \\ or /) or "say:Text to speak" for TTS, or "phrase:phrase\_macro\_name" to speak a phrase macro.  
-   * When using a "phrase:my\_phrase" you can specify the string to pass along for input pattern matching like so: "phrase:my\_phrase:options|option2".
-* **greet-short** \- the shorter version of the menu prompt played when the menu loops. May be filename, say, or phrase.
-* **invalid-sound** \- played when no entry or an invalid entry is made. May be filename, say, or phrase.
-* **exit-sound** \- played when the menu is terminated, May be filename, say, or phrase.
-* **inter-digit-timeout** \- number of milliseconds to wait for a selection.
-* **timeout** \- number of milliseconds to wait for a after playing confirm-macro to conform entered digits.
-* **confirm-macro** \-
-* **confirm-key** \- the key that tells the IVR that digit-entry is finished. Defaults to #, even if blank.  
-   * To override the # as a built-in terminator and change it to \* enter in the dialplan before you run the ivr this would disable.  
-   ```xml  
-    <action application="set" data="ivr_menu_terminator=*"/>  
+* **name** - IVR菜单的名称。
+* **greet-long** - 在第一次播放菜单时播放的菜单提示。可以是以\\或/开头的文件名，也可以是用于TTS的"say:要说的文本"，或者是要说出短语宏的"phrase:phrase_macro_name"。
+   * 当使用"phrase:my_phrase"时，可以使用以下方式指定要传递的字符串以进行输入模式匹配："phrase:my_phrase:options|option2"。
+* **greet-short** - 在菜单循环时播放的菜单提示的较短版本。可以是文件名、say或短语。
+* **invalid-sound** - 当没有输入或输入无效时播放的声音。可以是文件名、say或短语。
+* **exit-sound** - 在菜单终止时播放的声音。可以是文件名、say或短语。
+* **inter-digit-timeout** - 等待选择的毫秒数。
+* **timeout** - 播放confirm-macro以确认输入的数字之后等待的毫秒数。
+* **confirm-macro** -
+* **confirm-key** - 告诉IVR输入数字已完成的键。默认为#，即使为空也是如此。
+   * 要覆盖#作为内置终止符并将其更改为*，在运行ivr之前在dialplan中输入以下内容即可禁用它。
+   ```xml
+    <action application="set" data="ivr_menu_terminator=*"/>
    ```
-* **confirm-attempts** \-
-* **max-failures** \- maximum wrong digits entry(ies) before ending the menu (default 3 if not specified or invalid (less than 1) values are Specified).
-* **max-timeouts** \- maximum timeout retry(ies) before ending the menu (default will use the max\_failures value or 3 if both are left blank Or invalid (less than 1) values are specified).
-* **exec-on-max-failures** \- Execute a FreeSWITCH dialplan application on maximum failures
-* **exec-on-max-timeouts** \- Execute a FreeSWITCH dialplan application on maximum timeouts
-* **tts-engine** \- name of TTS engine to speak text (ie. cepstral). (optional).
-* **tts-voice** \- name of TTS voice to use to speak text (ie. david). (Necessary if tts-engine is specified).
-* **digit-len** \- maximum number of digits to collect before searching for a matching menu entry.
+* **confirm-attempts** -
+* **max-failures** - 在结束菜单之前最多允许的错误数字输入次数（默认值为3，如果未指定或指定了无效（小于1）的值）。
+* **max-timeouts** - 在结束菜单之前最大的超时重试次数（默认值将使用max_failures值，如果两者都留空或指定了无效（小于1）的值，将使用3）。
+* **exec-on-max-failures** - 在最大错误次数时执行FreeSWITCH拨号计划应用程序。
+* **exec-on-max-timeouts** - 在最大超时重试次数时执行FreeSWITCH拨号计划应用程序。
+* **tts-engine** - TTS引擎的名称，用于朗读文本（例如cepstral）。（可选）。
+* **tts-voice** - 用于朗读文本的TTS语音的名称（例如david）。（如果指定了tts-engine，则必需）。
+* **digit-len** - 在搜索匹配的菜单项之前最多收集的数字数量。
 
-Each menu can support a number of actions bound to a key as follows:
+每个菜单可以支持多个与键绑定的操作，如下所示：
 
-* **menu-exit**  \- Exit the IVR menues.
-* **menu-sub** \- Load a **sub-menu**.
-* **menu-exec-app** \- Execute a FreeSWITCH dialplan **application**.
-* **menu-play-sound** \- Play a sound file or speak text.  
+* **menu-exit** - 退出IVR菜单。
+* **menu-sub** - 加载一个子菜单。
+* **menu-exec-app** - 执行FreeSWITCH拨号计划应用程序。
+* **menu-play-sound** - 播放声音文件或朗读文本。  
 ```xml  
- <entry action="menu-play-sound" digits="3" param="say: You pressed 3"/>  
+ <entry action="menu-play-sound" digits="3" param="say: 你按了3"/>  
  <entry action="menu-play-sound" digits="6" param="voicemail/vm-goodbye.wav"/>  
 ```
-* **menu-back** \- Return to the calling menu level.
-* **menu-top** \- Return to the top level menu.
-* **menu-exec-api** was previously documented on this page and is documented in the FreeSWITCH book - it is however not currently supported.
+* **menu-back** - 返回上一级菜单。
+* **menu-top** - 返回顶级菜单。
+* **menu-exec-api** 在本页中曾有过文档记录，并且在FreeSWITCH书籍中有文档记录，但目前不支持。
 
-## Playing remote audio files
+## 播放远程音频文件
 
-There are two ways to play remote audio:
+有两种播放远程音频的方法：
 
-* **mod\_shout**
-* **mod\_http\_cache**
+* **mod_shout**
+* **mod_http_cache**
 
-Generally speaking, [mod\_http\_cache](https://wiki.freeswitch.org/wiki/Mod%5Fhttp%5Fcache "Mod http cache")  is the preferred method, and this is explained below. 
+一般来说，[mod_http_cache](https://wiki.freeswitch.org/wiki/Mod%5Fhttp%5Fcache "Mod http cache")是首选方法，下面将进行解释。
 
-### Using mod_http_cache
+### 使用mod_http_cache
 
-Here is an example using [mod\_http\_cache](https://wiki.freeswitch.org/wiki/Mod%5Fhttp%5Fcache "Mod http cache"):
+这是一个使用[mod_http_cache](https://wiki.freeswitch.org/wiki/Mod%5Fhttp%5Fcache "Mod http cache")的示例：
 
 ```xml
 greet-short="http_cache://http://127.0.0.1/audio.mp3"
 ```
 
-By using the above, you can avoid hitting the remote server every time the audio needs to be played.
+通过使用上述方法，您可以避免每次播放音频时都向远程服务器发送请求。
 
-However, it introduces some issues that you need to be aware of:
+然而，它引入了一些需要注意的问题：
 
-* A suitable caching period needs to be used. If it's too high, then changes to the audio file won't happen in a timely fashion. Too low, and you risk having the same problems explained in mod\_shout.
-* The initial caching of the audio file directly impacts the IVR. If it takes 2 seconds for the audio file to cache initially, then the IVR will 'freeze' for 2 seconds. You can potentially look at using [http\_prefetch](https://wiki.freeswitch.org/wiki/Mod%5Fhttp%5Fcache#http%5Fprefetch "Mod http cache") to get around this.
+* 需要使用适当的缓存期限。如果时间太长，音频文件的更改将无法及时发生。如果时间太短，可能会出现与mod_shout中解释的相同问题的风险。
+* 音频文件的初始缓存会直接影响IVR。如果音频文件的缓存需要2秒钟才能完成，那么IVR将会“冻结”2秒钟。您可以考虑使用[http_prefetch](https://wiki.freeswitch.org/wiki/Mod%5Fhttp%5Fcache#http%5Fprefetch "Mod http cache")来解决这个问题。
 
-You will notice that audio files will start playing much quicker than mod\_shout, and the first few milliseconds of audio might get cut off. To get around this, just introduce a 500ms sleep, like so:
+您会注意到，与mod_shout相比，音频文件会更快地开始播放，并且开头的几毫秒可能会被剪掉。为了解决这个问题，只需添加一个500毫秒的延迟，像这样：
 
 ```xml
 <action application="answer"/>
@@ -184,62 +181,37 @@ You will notice that audio files will start playing much quicker than mod\_shout
 <action application="ivr" data="my_ivr"/>
 ```
 
-### Using mod_shout
+### 使用mod_shout
 
-Here is an example of using mod\_shout:
+以下是使用mod_shout的示例：
 
 ```xml
 greet-short="shout://127.0.0.1/audio.mp3"
 ```
 
-However, you should be aware of the following problems;
+但是，您应该注意以下问题：
 
-* Every time an audio file needs to be played, a new HTTP request is made to the remote server. This could result in accidental DDoS.
-* Any latency/slowness on the HTTP request will directly impact your IVR (if it takes 2 seconds to download the audio file, the IVR will 'freeze' for 2 seconds).
-* There is noticeable delay between play events, even if your remote HTTP server is on the same machine!
-* For the above reasons, this is not an advisable approach for production systems.
+* 每次需要播放音频文件时，都会向远程服务器发起新的HTTP请求。这可能导致意外的DDoS攻击。
+* HTTP请求的延迟/缓慢将直接影响您的IVR（如果下载音频文件需要2秒钟，IVR将会“冻结”2秒钟）。
+* 即使您的远程HTTP服务器位于同一台机器上，播放事件之间仍会有明显的延迟！
+* 基于以上原因，这不是一个适合生产环境系统的可取方法。
 
-## Examples
+## 示例
 
-### How to route the call if no DTMF is pressed
+### 如果没有按下DTMF，如何路由呼叫
 
-First, define the IVR main menu like this:
-
-```xml
-<menu name="ivr-test"
-  greet-long="/usr/local/freeswitch/sounds/greetings.wav"
-  timeout="10000"
-  inter-digit-timeout="2000"
-  max-failures="1"
-  max-timeouts="2"
-  digit-len="1">
-      <entry action="menu-exec-app" digits="1" param="bridge sofia/internal/1001%10.10.10.10"/>
-      <entry action="menu-exec-app" digits="2" param="bridge sofia/internal/1002%10.10.10.10"/>
-      <entry action="menu-exec-app" digits="3" param="bridge sofia/internal/1003%10.10.10.10"/>
-</menu>
-```
-
-And then in your dialplan, you need:
+首先，像这样定义IVR的主菜单：
 
 ```xml
-<extension name="from_carrier_to_ivr-test">
-    <condition field="destination_number" expression="^15559876543$">
-        <action application="set" data="hangup_after_bridge=true"/>
-        <action application="ivr" data="ivr-test"/>
-        <action application="bridge" data="sofia/internal/1000%10.10.10.10"/>
-    </condition>
+<extension name="ivr-test">
+    <condition field="destination_number" expression="^12345$">
+        <action application="answer"/>
+        <action application="execute_extension" data="1,entry,1"/>
+    </condition>
 </extension>
 ```
 
-With this config, if the IVR manages to bridge the call, it will hang up when the bridge ends.
-
-But if no DTMF is sent, twice in a row (max-timeouts control that), FreeSWITCH will exit the IVR menu and process the next dialplan line, which bridges to 1000.
-
-### How to run several apps with one digit
-
-You need to use the execute\_extension app, with the inline parameter.
-
-For example:
+This will execute the "entry" action with the digit "1" as the parameter when the destination number matches "12345".
 
 ```xml
 <include>
@@ -267,47 +239,47 @@ bridge:sofia/internal/1002%10.10.10.10,playback:ivr/ivr-busy.wav,hangup inline"/
 </include>
 ```
 
-With execute\_extension, you can add in sequence any apps you need, as in a regular XML extension, but the string containing the apps must not contain whitespaces.
+使用`execute_extension`，你可以按顺序添加任何你需要的应用程序，就像在常规的 XML 分机上一样，但是包含应用程序的字符串不能包含空格。
 
-So you need to replace them by \\s, or as above, to put the substring with the spaces between ' ':
+所以你需要用`\\s`来替换它们，或者像上面那样在 `' '`之间放置带有空格的子字符串：
 
 ```xml
 limit:'hash ivr in'
 ```
 
-Also, see the playback and hangup apps after the bridge app.
+另外，请注意在 bridge 应用程序之后的 playback 和 hangup 应用程序。]]]
 
-In an IVR (to be confirmed formally), continue\_on\_fail=true is the default.
+在一个 IVR（待正式确认），`continue_on_fail=true` 是默认设置。
 
-This means that if the bridge is not successful in my example, the file will be played back to the caller and the call will be hung up.
+这意味着如果在我的例子中 bridge 不成功，文件将会被播放给呼叫者并且呼叫将会被挂断。
 
-If you don't hang up the call there, the IVR will playback the greetings file again.
+如果你不在那里挂断通话，IVR 将会再次播放问候文件。
 
-To end the call after a successful bridge, you just need to set:
+要在成功的 bridge 之后结束通话，你只需要设置：
 
 ```xml
 <action application="set" data="hangup_after_bridge=true"/>
 ```
 
-From the dialplan before calling the iVR, or in each execute\_extension string, as in the previous example above.
+在呼叫 IVR 之前的拨号计划中，或者在每个 execute_extension 字符串中，如上面的示例。
 
-### Another way to run several apps with one digit
+### 使用一个按键运行多个应用的另一种方法
 
-Simply list the same digit multiple times in the IVR menu definition. For instance if you have multiple entries for "1" then each entry for 1 will be executed in sequence if 1 is pressed. Note: if they are executed in reverse order you are using a version of Freeswitch that was built prior to September 2010 - to fix this you can either get a newer version or put the entries in reverse order so that they will be executed in the correct order! 
+在 IVR 菜单定义中多次列出相同的按键。例如，如果你有多个针对“1”的条目，那么在按下 1 键时，每个 1 的条目都将按顺序执行。注意：如果它们倒序执行，说明你正在使用一个早于 2010 年 9 月构建的 Freeswitch 版本 - 要解决这个问题，你可以获取一个更新的版本，或者将条目倒序排列，以确保它们按正确的顺序执行！ 
 
-### Path for Sound Files 
+### 声音文件路径
 
-Use an absolute path value for the greeting sounds. When you use a relative path (i.e. you don't start with a forward slash) then it will assume that you want to use a sound file somewhere in the sounds directory structure.
+对于问候音的绝对路径值。当你使用相对路径（即不以正斜杠开头）时，它将假设你想要在声音目录结构中的某个地方使用声音文件。
 
-Relative: greet-short="ivr/ivr-menu.wav"
+相对路径：greet-short="ivr/ivr-menu.wav"
 
-Absolute: greet-short="/full/path/to/file/ivr-menu.wav"
+绝对路径：greet-short="/full/path/to/file/ivr-menu.wav"
 
-## Variables
+## 变量
 
-### ivr_menu statues
+### ivr_menu 状态
 
-Channel Variable with options of success, failure or timeout.
+通道变量，可选值为 success、failure 或 timeout。
 
 ```xml
 variable_ivr_menu_status: [success]
@@ -315,26 +287,59 @@ variable_ivr_menu_status: [failure]
 variable_ivr_menu_status: [timeout]
 ```
 
-## Events
+## 事件
 
-Custom IVR Menu events since FreeSWITCH **1.6 .** 
+自由交换 **1.6** 版本起的自定义 IVR 菜单事件。
 
-| Event-Name | Event-Subclass | desc |
-| ---------- | -------------- | ---- |
-| Custom     | menu::enter    |      |
-| Custom     | menu::exit     |      |
+| 事件名        | 事件子类       | 描述 |
+| ------------ | -------------- | ---- |
+| Custom       | menu::enter    |      |
+| Custom       | menu::exit     |      |
 
-## See Also
+## 参见
 
-* [Variable\_ivr\_menu\_status](https://wiki.freeswitch.org/wiki/Variable%5Fivr%5Fmenu%5Fstatus "Variable ivr menu status")
-* [Channel\_Variables](https://wiki.freeswitch.org/wiki/Channel%5FVariables "Channel Variables")
+* [Variable_ivr_menu_status](https://wiki.freeswitch.org/wiki/Variable%5Fivr%5Fmenu%5Fstatus "Variable ivr menu status")
+* [Channel_Variables](https://wiki.freeswitch.org/wiki/Channel%5FVariables "Channel Variables")
 
-### Comments:
+### 注释：
 
-| Sometimes IVR menu got error " Too many levels of **recursion** " ![](/images/icons/contenttypes/comment_16.png) Posted by livem at Jul 13, 2016 03:13                                                                                                                                                                                                                                                                                                      |
+| 有时候 IVR 菜单会出现“递归层级过多”的错误！[](/images/icons/contenttypes/comment_16.png) 由 livem 于 2016年7月13日 03:13 发布                                                                                                                                                                                                                                                                                              |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| That is a hard-coded limitation, if you call other menus recursively via the \`menu-sub\` action more than 12 times, it will exit the menu without executing it.See "Nesting IVRs" from <https://www.packtpub.com/books/content/freeswitch-utilizing-built-ivr-engine> for an alternative if menu-sub cannot be used (i.e. add an extension that invokes an IVR). ![](/images/icons/contenttypes/comment_16.png) Posted by Lekensteyn at Jul 27, 2016 11:40 |
-| Is that wil cause freeswitch **crash** ? ![](/images/icons/contenttypes/comment_16.png) Posted by livem at Jul 27, 2016 23:42                                                                                                                                                                                                                                                                                                                               |
-| **confirm-macro** **confirm-attempts**Can add some example codes with this two options ? ![](/images/icons/contenttypes/comment_16.png) Posted by livem at Sep 19, 2016 03:37                                                                                                                                                                                                                                                                               |
+| 这是一个硬编码的限制，如果您通过“菜单子菜单（menu-sub）”操作递归调用其他菜单超过12次，它将在执行之前退出菜单。如果无法使用 menu-sub（即添加调用 IVR 的扩展），请参考《嵌套 IVR》来寻找替代方法。来自<https://www.packtpub.com/books/content/freeswitch-utilizing-built-ivr-engine>！[](/images/icons/contenttypes/comment_16.png) 由 Lekensteyn 于2016年7月27日 11:40 发布 |
+| 这会导致 freeswitch 崩溃吗？![](/images/icons/contenttypes/comment_16.png) 由 livem 于2016年7月27日 23:42 发布                                                                                                                                                                                                                                                                                                                             |
+| confirm-macro 和 confirm-attempts 可以提供一些使用这两个选项的示例代码吗？![](/images/icons/contenttypes/comment_16.png) 由 livem 于2016年9月19日 03:37 发布                                                                                                                                                                                                                                                                                      |
 
+# Markdown Example
 
+这是一个示例Markdown文本。它展示了如何使用标题，列表和链接。
+
+## 标题
+
+可使用`#`符号来创建标题，`##`表示二级标题，以此类推。
+
+- # 一级标题
+- ## 二级标题
+- ### 三级标题
+
+## 列表
+
+使用`-`来表示无序列表：
+
+- 列表项1
+- 列表项2
+- 列表项3
+
+使用数字和`.`来表示有序列表：
+
+1. 列表项1
+2. 列表项2
+3. 列表项3
+
+## 链接
+
+使用`[]`和`()`来创建链接，如下所示：
+
+- [谷歌](https://www.google.com)
+- [百度](https://www.baidu.com)
+
+请阅读以下内容并根据情况进行翻译。谢谢！

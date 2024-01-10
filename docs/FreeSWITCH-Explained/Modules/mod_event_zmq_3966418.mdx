@@ -1,37 +1,34 @@
-
 # mod_event_zmq 
 
- 
+## 关于
 
-## About
+这个模块使用[ØMQ库](http://www.zeromq.org/)，为FreeSWITCH提供了在机器和机器之间的连接（inproc，IPC，TCP，多播）。本页不是一个详尽的0MQ使用参考，建议您参考[ØMQ网站的学习部分](http://www.zeromq.org/intro:read-the-manual)；您将找到几个视频演示和特别优雅的**手册**。
 
-This module provides on and off-machine connectivity (inproc, IPC, TCP, Multicast) to FreeSWITCH using the [ØMQ library](http://www.zeromq.org/). This page is not meant to be an exhaustive reference of how 0MQ can be used, for that we recommend going to the [learning section](http://www.zeromq.org/intro:read-the-manual) of the ØMQ site; along with a couple video presentations you will find **The Guide**, which is particularly well written.
+编写此模块的目的是使与FreeSWITCH的集成更加简单、可扩展，并且比[mod\_event\_socket](mod_event_socket_1048924.mdx#11-acl)或[mod\_erlang\_event](mod_erlang_event_1048926.mdx#api-)能够提供的多语言支持更加丰富。ØMQ库支持超过20种语言的绑定，因此您很可能可以使用您喜欢的语言轻松与FreeSWITCH集成。
 
-This module was written to make integration with FreeSWITCH much easier, more scalable, and available to more languages than [mod\_event\_socket](mod_event_socket_1048924.mdx#11-acl) or [mod\_erlang\_event](mod_erlang_event_1048926.mdx#api-) could effectively provide. The ØMQ library has bindings for over 20 languages, so chances are that you can easily integrate with FreeSWITCH using your favorite.
+点击这里展开目录
 
-Click here to expand Table of Contents
+* 1 [待办事项](#to-do)
+* 2 [数据格式](#data-format)
+* 3 [接收事件](#receiving-events)
+* 4 [安装前提条件](#installation-prerequisites)
 
-* 1 [To Do](#to-do)
-* 2 [Data Format](#data-format)
-* 3 [Receiving Events](#receiving-events)
-* 4 [Installation Prerequisites](#installation-prerequisites)
+## 待办事项
 
-## To Do
+* 配置文件
+* 访问控制
+* API通道
+* 从拨号计划中调出应用程序
+* XML搜索绑定（通过mod\_event\_zmq提供类似于[mod\_xml\_curl](./mod_xml_curl_1049001.mdx)的配置）
 
-* Configuration file
-* Access control
-* API channel
-* Application to call out from dialplan
-* XML search bindings (provide configuration via mod\_event\_zmq similar to [mod\_xml\_curl](./mod_xml_curl_1049001.mdx))
+## 数据格式
 
-## Data Format
+与modzmq的所有数据交互使用JSON。几乎每种语言都有一些JSON框架可用，如果没有，使用几行代码解析JSON也足够简单。
 
-All data interactions with modzmq use JSON. Almost every language has some kind of JSON framework available, and if not JSON is simple enough to parse with a handful of lines of code.
-
-Here's an example JSON encoded event:
+以下是一个JSON编码的示例事件：
 
 ```xml
- {
+{
  	"Event-Name":	"MESSAGE_WAITING",
  	"Core-UUID":	"43190614-3ab7-43b2-8697-849bad26b9ab",
  	"FreeSWITCH-Hostname":	"myfreeswitch.example.com",
@@ -51,11 +48,11 @@ Here's an example JSON encoded event:
  }
 ```
 
-## Receiving Events
+## 接收事件
 
-The current version of modzmq stands up a TCP PUB endpoint to publish all switch events to any subscribers; this endpoint listens on all IP addresses on port 5556.
+当前版本的modzmq创建了一个TCP PUB端点来发布所有的交换机事件给任何订阅者；该端点在端口5556上监听所有的IP地址。
 
-Here's a simple Python example client that subscribes to the event publications, printing 100 events before quitting:
+以下是一个简单的Python例子客户端，订阅事件发布，打印100个事件后停止：
 
 ```py
  import zmq
@@ -69,16 +66,14 @@ Here's a simple Python example client that subscribes to the event publications,
      print string
 ```
 
-A couple interesting things to note:
+需要注意的几个有趣的地方：
 
-You can start the client before or after the server starts, ØMQ will take care of establishing the network connection, and reconnection if the server goes down and up while the client is running. You can also connect any number of clients to the publisher simultaneously, they'll all receive the same messages.
+您可以在服务器启动之前或之后启动客户端，ØMQ会负责建立网络连接，并在客户端运行时处理服务器的连续断开和重连。您也可以同时连接任意数量的客户端到发布者，它们都会接收相同的消息。
 
-**Warning**
+**警告**
 
-The ZMQ Library and fork() don't work together very well. mod\_event\_zmq may core dumps if FreeSWITCH uses fork() for system calls (e.g. sending mail, use voicemail, etc). You can put &lt;param name="threaded-system-exec" value="true"/> in switch.conf.xml to overcome this for system calls but this doesn't mean you are safe from crashes. [\[1\]](http://marc.info/?l=freeswitch-dev&m=135084884902442)
+ZMQ库和fork()函数在一起工作得不太好。如果FreeSWITCH在使用fork()进行系统调用（比如发送邮件，使用语音邮件等）时，mod_event_zmq可能会导致core dumps。您可以在switch.conf.xml中添加<param name="threaded-system-exec" value="true"/>来解决系统调用的问题，但这并不意味着您不会遇到崩溃问题。在编译这个模块之前，您需要在系统上安装libuuid-devel或libuuid-dev软件包。
 
-## Installation Prerequisites
+## 安装前提条件
 
-You will need to have libuuid-devel or libuuid-dev package installed on your system before compiling this module.
-
-
+在编译这个模块之前，您需要在系统上安装libuuid-devel或libuuid-dev软件包。

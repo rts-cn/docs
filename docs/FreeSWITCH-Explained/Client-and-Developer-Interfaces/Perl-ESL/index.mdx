@@ -1,68 +1,66 @@
+# Perl ESL
 
-# Perl ESL 
 
- 
+### 关于
 
-### About
+Perl ESL 模块允许通过事件套接字接口与 FreeSWITCH 进行本地交互。它允许发送命令、接收输出以及从 FreeSWITCH 服务器接收事件。Perl ESL 模块是一个带有二进制组件的自动生成的 SWIG Perl 模块。你不能只复制 PM 文件并使用它，你必须正确编译模块并生成 ESL.so 文件（该文件必须保存在与 ESL.pm 相同的目录中）。请注意，每当 libesl 发生更改时，你都需要重新制作和安装更新的 Perl ESL 模块，否则可能会发生故障或意外工作。
 
-The Perl ESL module allows for native interaction with FreeSWITCH over the event socket interface. It allows for sending commands, receiving their output, and receiving events from the FreeSWITCH server. The Perl ESL module is an auto-generated swig perl module with a binary component to it. You CANNOT just copy the PM file and use that, you must properly compile the module and get the ESL.so file generated also (which must be kept in the same directory as the ESL.pm). Note any time a change to libesl occurs you will need to re-make and install the updated perl ESL module or else things may break or work unexpectedly.
+点击展开目录
 
-Click to expand Table of Contents
+* 1 [安装](#installation)
+* 2 [使用](#usage)
+* 3 [故障排除](#troubleshooting)
+* 4 [示例](#poe-example)  
+   * 4.1 [fs_ivrd 示例](#fs_ivrd-example)  
+   * 4.2 [POE 示例](#poe-example)
 
-* 1 [Installation](#installation)
-* 2 [Usage](#usage)
-* 3 [Troubleshooting](#troubleshooting)
-* 4 [Examples](#poe-example)  
-   * 4.1 [fs\_ivrd Example](#fs_ivrd-example)  
-   * 4.2 [POE Example](#poe-example)
+## 安装
 
-## Installation
+参见：<https://freeswitch.org/confluence/display/FREESWITCH/Event+Socket+Library#EventSocketLibrary-Installation>
 
-See: <https://freeswitch.org/confluence/display/FREESWITCH/Event+Socket+Library#EventSocketLibrary-Installation>
+## 使用
 
-## Usage
-
-You must include the module in your perl script:
+在你的 Perl 脚本中，你必须包含该模块：
 
 require ESL;
 
-If you installed them somewhere not in the default path:
+如果你将它们安装在默认路径之外的某处：
 
 use lib '/path/to/ESL/Location';
 
-You can then establish a connection using:
+然后，你可以使用以下代码建立连接：
 
 my $fs = new ESL::ESLconnection($host, $port, $password);
 
-$port should be a string and not a number. Apparently the SWIG interface behind the scenes fails silently if it's passed as a number.
+$port 应该是一个字符串，而不是一个数字。显然，如果它被作为一个数字传递，SWIG 背后的接口会默默失败。
 
-Some common commands used in an esl client:
+一些在 ESL 客户端中常用的命令：
 
-* $fs->connected() - test if you are connected
-* my $reply = $fs->recvEvent() - get the next event
-* my $reply = $fs->recvEventTimed(timeout\_ms) - recv the next event or timeout after X ms
-* $reply->getHeader("header-name") - get the value of the named header from this event
-* $reply->getBody() - receive the body of the event; can be many lines
-* $fs->disconnect() - disconnect the ESL socket
-* $fs->events("event\_type","events to subscribe to") - subscribe to these events for example: $fs->events("plain","heartbeat CHANNEL\_HANGUP\_COMPLETE");
-* my $result = $fs->api("api command") - execute an api command
+* $fs->connected() - 测试是否已连接
+* my $reply = $fs->recvEvent() - 获取下一个事件
+* my $reply = $fs->recvEventTimed(timeout\_ms) - 接收下一个事件，或者等待X毫秒后超时
+* $reply->getHeader("header-name") - 获取该事件的指定头部的值
+* $reply->getBody() - 接收事件的正文内容；可能会有多行
+* $fs->disconnect() - 断开ESL socket连接
+* $fs->events("event\_type","events to subscribe to") - 订阅这些事件，例如：$fs->events("plain","heartbeat CHANNEL\_HANGUP\_COMPLETE");
+* my $result = $fs->api("api command") - 执行一个API命令
 
-For more examples see the libs/esl/perl source code folder for various perl examples for doing things with Perl ESL.
+更多示例请参考libs/esl/perl源代码文件夹中的各种使用Perl ESL进行操作的示例。
 
-## Troubleshooting
+## 故障排除
 
-* DO NOT use alarm in combination with the module at all (or at least with recvEvent) it will cause you to become disconnected from the server, use recvEventTimed instead.
-* If you call an invalid function like $reply->blah it may throw a swig error and say unable to load X, unfortunately X most likely doesn't exist and you just made a mistake.
-* Make sure after updating FreeSWITCH you recompile the perl module with `make perlmod` and `make perlmod-install` to ensure the libesl is properly up to date.
-* Do NOT use the old FreeSWITCH::Client esl module this is extremely outdated and does NOT work properly any more.
+* 绝对禁止在使用模块时与alarm命令结合使用（尤其是与recvEvent一起使用），这样会导致与服务器的连接中断，请使用recvEventTimed代替。
+* 如果调用了一个无效的函数，例如$reply->blah，可能会抛出SWIG错误并显示无法加载X，不幸的是X很可能不存在，您只是犯了一个错误。
+* 确保在更新FreeSWITCH之后，使用`make perlmod`和`make perlmod-install`重新编译perl模块，以确保libesl已经正确更新。
+* 切勿使用旧版的FreeSWITCH::Client esl模块，该模块极其过时，并且已经无法正常工作。
 
-## Examples
+## 示例
 
-### fs_ivrd Example
+### fs_ivrd示例
 
-Another way to do this is by using the fs\_ivrd script.
+另一种方法是使用fs\_ivrd脚本。
 
-To call this script from the dialplan use:
+要从拨号计划中调用此脚本，请使用：
 
 ```xml
 <extension name="ivr-application">
@@ -73,19 +71,19 @@ To call this script from the dialplan use:
 </extension>
 ```
 
-fs\_ivrd needs to run in the background to await the connection from FreeSWITCH; this is started by:
+fs\_ivrd 需要在后台运行以等待来自 FreeSWITCH 的连接；可以通过以下方式启动：
 
 cd /usr/local/freeswitch/bin
 
 ./fs_ivrd -h 127.0.0.1 -p 9090
 
-This will start it, listening on localhost port 9090 for the outbound ESL connection from FS.
+这将在本地监听 9090 端口，用于接收来自 FS 的外出 ESL 连接。
 
-You can specify fs\_ivrd to start automatically in conf/autoload\_configs/perl.conf.xml
+您可以在 conf/autoload_configs/perl.conf.xml 中指定 fs\_ivrd 自动启动。
 
-An example of ivr1.pl is below:
+下面是 ivr1.pl 的示例代码：
 
-**Example ivr1.pl**
+**示例 ivr1.pl**
 
 ```perl
 #!/usr/bin/perl
@@ -137,15 +135,15 @@ while (!$authenticated && $tries < 3) {
 $con->execute("hangup");
 ```
 
-See also [Ivrd](../../Prototypes/IVRd_13173376.mdx#about) for more info.
+更多信息请参见 [Ivrd](../../Prototypes/IVRd_13173376.mdx#about)。
 
-### POE Example
+### POE 示例
 
-This is an example of perl daemon that checks the event socket connection to FreeSWITCH every 5 seconds, if connected, it listens for Valet Parking events and does some MySQL stuff. I'm not a perl expert so I'm sure this code could be cleaned up a bit, but it works!
+这是一个示例的Perl守护程序，每5秒钟检查与FreeSWITCH的事件套接字连接，如果连接成功，则监听Valet停车事件并执行一些MySQL操作。我不是Perl专家，所以我确定这段代码还可以整理一下，但它能正常工作！
 
-POE = [Perl Object Environment](http://poe.perl.org/)
+POE = [Perl对象环境](http://poe.perl.org/)
 
-**Example POE**
+**示例POE**
 
 ```perl
 #!/usr/bin/perl
@@ -157,23 +155,23 @@ use POE;
 use IO::Handle; 
 require ESL;
 
-# become daemon
-my $pid = fork();
+# 成为守护进程
+my $pid = fork();[to_be_replace1]
 if($pid) {
   open ("PID", ">/var/run/perl-esl-out.pid");
   print PID $pid;
   close (PID);
-  #end parent process
+  # 结束父进程
   #print "#parent process";
   exit(0);
 }
 
-# set new process group
+# 设置新的进程组
 setpgrp;
 
-open STDOUT, '>>/var/log/perl-esl-out.log' or die "$0: Can't write to /var/log/perl-esl-out.log: $!";
-open STDERR, '>>/var/log/perl-esl-out.log' or die "$0: Can't write to /var/log/perl-esl-out.log: $!";
-open my $log_fh, '>>', '/var/log/perl-esl-out.log' or die "failed to open log: $!";
+open STDOUT, '>>/var/log/perl-esl-out.log' or die "$0: 无法写入 /var/log/perl-esl-out.log: $!";
+open STDERR, '>>/var/log/perl-esl-out.log' or die "$0: 无法写入 /var/log/perl-esl-out.log: $!";
+open my $log_fh, '>>', '/var/log/perl-esl-out.log' or die "无法打开日志文件: $!";
 $log_fh->autoflush(1);
 
 my $switch = "fs_switch01";
@@ -188,6 +186,7 @@ my $ping = 0;
 my $inbound;
 my $success = 0;
 my $sth;
+```
 
 POE::Session->create(
   inline_states => {
@@ -253,11 +252,11 @@ POE::Session->create(
   },
 );
 
-# Start the server.
+```Simplified Chinese
+
+# 启动服务器。
 $poe_kernel->run();
 
 close $log_fh;
 exit 0;
 ```
-
-

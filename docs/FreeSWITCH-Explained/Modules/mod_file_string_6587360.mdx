@@ -1,101 +1,96 @@
+# mod_file_string
 
-# mod_file_string 
+## 关于
 
- 
+**file\_string** 是一种方便的方式，用于指定要按顺序播放或写入的多个声音文件。这是一个便利特性。
 
-## About
+file\_string 是由 [mod\_dptools](./mod_dptools_1970333.mdx#-c) 实现的。
 
-**file\_string** is a useful way of specifying multiple sound files to be played or written sequentially. It is a convenience feature.
+点击此处展开目录
 
-file\_string is implemented by [mod\_dptools](./mod_dptools_1970333.mdx#-c).
+* 1 [讨论](#discussion)
+* 2 [示例](#examples)
+* 3 [执行参数](#execution-parameters)  
+   * 3.1 [超时示例](#timeout-example)
 
-Click here to expand Table of Contents
+## 讨论
 
-* 1 [Discussion](#discussion)
-* 2 [Examples](#examples)
-* 3 [Execution Parameters](#execution-parameters)  
-   * 3.1 [Timeout Example](#timeout-example)
+file\_string 的概念很简单：当您需要按顺序播放多个声音文件时，尤其是当文件较多时，可以方便地在开始播放之前指定所有这些文件。在写入模式下，如果写入失败，则尝试写入列表中的下一个文件。
 
-## Discussion
+使用 file\_string 有两种方法：
 
-The idea behind file\_string is simple: when you have multiple sound files to play sequentially, especially when there are many of them, it is convenient to be able to specify all of those files before initiating the playback. In write mode if writing fails, next try are made to the next file in the list
+* 高级方法，核心功能使用 switch\_ivr\_playback()
+* 低级方法，使用直接文件句柄的代码
 
-There are two methods of using file\_string:
+您可以设置最多128个文件在列表中。
 
-* high level, core most functions that use switch\_ivr\_playback()
-* low level, code that uses direct file handles
+## 示例
 
-You can set up to 128 files in the list.
-
-## Examples
-
-The high level method works like this:
+高级方法的工作原理如下：
 
 ```xml
-<!-- Delimiter is set by a var which also enables the parser -->
+<!-- 分隔符由一个变量设置，并同时启用解析器 -->
 <action application="set" data="playback_delimiter=!"/>
 <action application="set" data="playback_sleep_val=500"/>
 <action application="playback" data="/ram/sr8k.wav!/ram/swimp.wav"/> 
 ```
 
-The low level method works this way:
+低级方法的工作方式如下：
 
 ```xml
-<!-- Delimiter is always ! char -->
+<!-- 分隔符始终为 ! 字符 -->
 <action application="playback" data="file_string:///ram/sr8k.wav!/ram/swimp.wav"/> 
 ```
 
-You may also use this for on hold music:
+您还可以将其用于等候音乐：
 
 ```xml
 <action application="set" data="hold_music=file_string://sounds/holdmusic1.wav!sounds/yourcallisimportant.wav" />
 ```
 
-You can also use it for [play\_and\_get\_digits](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Fplay%5Fand%5Fget%5Fdigits "Misc. Dialplan Tools play and get digits"):
+您还可以在 [play\_and\_get\_digits](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Fplay%5Fand%5Fget%5Fdigits "Misc. Dialplan Tools play and get digits") 中使用它。
 
 ```xml
 <action application="play_and_get_digits" data="7 7 3 30000 # file_string://${sound_prefix}/voicemail/8000/vm-hello.wav!${sound_prefix}/conference/8000/conf-pin.wav /invalid.wav ivrsel \d+"/>
 ```
 
-Record session failover. If writing fails, it tries the next file:
+录制会话故障转移。如果写入失败，则尝试下一个文件：
 
 ```xml
 <action application="record_session" data="file_string://${record_dir}/${record_filename}!${backup_record_dir}/${record_filename}"/>
 ```
 
-Note that you have to specify the full path, as sound path expansion is done in switch\_ivr\_play\_file, which is above the level that the file\_string:// protocol operates at.
+请注意，您必须指定完整路径，因为对声音路径的扩展是在switch\_ivr\_play\_file中完成的，而该协议操作的级别高于file\_string://协议的级别。
 
-## Execution Parameters
+## 执行参数
 
-There is a "timeout=" parameter expressed in milliseconds that limits the duration of the file played. This is useful for testing new moh, prompts, etc. audio levels It also allows for more flexible concatenated audio files.
+有一个以毫秒为单位的"timeout="参数，限制了文件播放的持续时间。这对于测试新的moh、提示音等音频水平非常有用。它还允许更灵活地拼接音频文件。
 
-### Timeout Example
+### 超时示例
 
-In this example, an extension is made that plays all listed files as follows:
+在此示例中，创建一个扩展，按照以下方式播放所有列出的文件：
 
-1. Announce a number to easily identify the file in the list.
-2. Play the file for 15 seconds. This is long enough to hear the song and take notes if needed.
+1. 宣布一个数字以便于在列表中标识文件。
+2. 播放文件15秒钟。这足够长，能听到歌曲并及时记录笔记（如果需要）。
 
-An answer is required to prevent the call from timing out so any number of files can be played in a single call.
+需要回答以防止呼叫超时，以便在单个呼叫中可以播放任意数量的文件。
 
 ```xml
- <extension name="testsounds">
-     <condition field="destination_number" expression="^8787$">
-       <action application="answer"/>
-     
-       <action application="say" data="en number pronounced 1"/>
-       <action application="playback" data="{timeout=15000}file_string://${sound_dir}/music/8000/music1.wav"/>
-       <action application="say" data="en number pronounced 2"/>
-       <action application="playback" data="{timeout=15000}file_string://${sound_dir}/music/8000/music2.wav"/>
-       <action application="say" data="en number pronounced 3"/>
-       <action application="playback" data="{timeout=15000}file_string://${sound_dir}/music/8000/music3.wav"/>
+<extension name="testsounds">
+    <condition field="destination_number" expression="^8787$">
+        <action application="answer"/>
+
+        <action application="say" data="en number pronounced 1"/>
+        <action application="playback" data="{timeout=15000}file_string://${sound_dir}/music/8000/music1.wav"/>
+        <action application="say" data="en number pronounced 2"/>
+        <action application="playback" data="{timeout=15000}file_string://${sound_dir}/music/8000/music2.wav"/>
+        <action application="say" data="en number pronounced 3"/>
+        <action application="playback" data="{timeout=15000}file_string://${sound_dir}/music/8000/music3.wav"/>
         ...
-       ...
-       <action application="hangup"/>
-     </condition>
-   </extension>
+        ...
+        <action application="hangup"/>
+    </condition>
+</extension>
 ```
 
-Without the timeout, you would have to listen to entire files.
-
-
+如果没有设置超时，您将不得不听完整个文件。

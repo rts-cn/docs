@@ -1,55 +1,52 @@
+# 拨号计划示例
 
-# Dialplan Recipes 
+## 关于
 
- 
+这个页面是一个"拨号计划菜谱"
 
-## About
+点击这里展开目录
 
-This page is a "Dial Plan Cookbook"
+* 1 [限制示例](#limit-examples)
+* 2 [分页](#paging)
+* 3 [会议和内部通讯](#conferencing-and-intercom)
+* 4 [跟随我/寻呼](#followmehunt)
+* 5 [多个外部电话](#multiple-offsite-phones)
+* 6 [分叉拨号示例](#forked-dial-example)  
+   * 6.1 [具有进展和尝试不同超时时间的分叉拨号](#forked-dial-with-differing-timeouts-for-progress-and-attempt)
+* 7 [使用mod fifo的简单呼叫中心](#simple-call-center-using-mod-fifo)
+* 8 [通过IVR控制的简单呼叫转移](#simple-call-forwarding-controlled-via-ivr)
+* 9 [简单的日/夜模式](#simple-daynite-mode)
+* 10 [参见](#see-also)
 
-Click here to expand Table of Contents
+## 限制示例
 
-* 1 [Limit Examples](#limit-examples)
-* 2 [Paging](#paging)
-* 3 [Conferencing and Intercom](#conferencing-and-intercom)
-* 4 [FollowMe/Hunt](#followmehunt)
-* 5 [Multiple offsite phones](#multiple-offsite-phones)
-* 6 [Forked dial example](#forked-dial-example)  
-   * 6.1 [Forked dial with differing timeouts for progress and attempt](#forked-dial-with-differing-timeouts-for-progress-and-attempt)
-* 7 [Simple call center using mod fifo](#simple-call-center-using-mod-fifo)
-* 8 [Simple Call Forwarding Controlled Via IVR](#simple-call-forwarding-controlled-via-ivr)
-* 9 [Simple Day/Nite Mode](#simple-daynite-mode)
-* 10 [See Also](#see-also)
+* [多行溢出](../Examples/Multi-line-rollover_9634397.mdx#goal)
 
-## Limit Examples
+## 分页
 
-* [Multi-line rollover](../Examples/Multi-line-rollover_9634397.mdx#goal)
+* [组播分页](../Modules/index.mdx#about)
 
-## Paging
+## 会议和内部通讯
 
-* [Multicast Paging](../Modules/index.mdx#about)
+* [会议和内部通讯](../Conference/index.mdx#about)
 
-## Conferencing and Intercom
+配置一个拨号计划，呼叫多个电话，让它们自动应答并加入到一个会议中。当发起人挂断时，会议结束。
 
-* [Conferencing and Intercom](../Conference/index.mdx#about)
+## 跟随我/寻呼
 
-Configuring a dialplan to call multiple phones, have them auto-answer and be added to a conference. The conference is ended when the initiator hangs up.
+* [拨号计划跟随我](Dialplan-FollowMe_9634428.mdx#about)
 
-## FollowMe/Hunt
+## 多个外部电话
 
-* [Dialplan FollowMe](Dialplan-FollowMe_9634428.mdx#about)
+* [外部电话示例](XML-Dialplan/Example-Offsite-phones/index.mdx#about)
 
-## Multiple offsite phones
+## 分叉拨号示例
 
-* [Example Offsite phones](XML-Dialplan/Example-Offsite-phones/index.mdx#about)
+分叉拨号是指同时尝试拨打两个目的地。FreeSWITCH将同时尝试呼叫两个桥接选项。首先回复183（会话进展）消息的桥接路由将接通通话，而另一个桥接路由将被关闭。只有在此食谱执行的配置文件中启用 [inbound-late-negotiation](../Codecs-and-Media/Codec-Negotiation_2883752.mdx#-freeswitch--codec-negotiation-) 才能实现此功能（不能在桥接到的配置文件中启用）。
 
-## Forked dial example
+例如：
 
-Forked dial is when you want to attempt to ring 2 destinations at the same time. FreeSWITCH will attempt to call both bridge options simultaneously. The first bridge leg that replies with a 183 (session progress) message will win the call, and the other bridge leg is dropped. This only will work if you enable [inbound-late-negotiation](../Codecs-and-Media/Codec-Negotiation_2883752.mdx#-freeswitch--codec-negotiation-) in the profile this recipe is executing under ( not in the bridged-to profile ).
-
-an example is:
-
- **Forked dial example** Expand source 
+ **分叉拨号示例** 展开源代码 
 
 ```xml
  <extension name="dialoutpstn">
@@ -61,31 +58,29 @@ an example is:
  </extension>
 ```
 
-### Forked dial with differing timeouts for progress and attempt
+### 在进展和尝试阶段使用不同的超时时间的分叉拨号
 
-It is also possible to have various legs of the bridge contain different timeouts. For instance, if you're attempting to bridge to an extension that has VoiceMail on it, or perhaps a cell phone which will fail over to voice mail within a short period of time. The bridge application may be called with the following options for data:
+还可以使桥接的各个路由具有不同的超时时间。例如，如果您尝试将通话桥接到一个带有语音邮件的分机，或者尝试桥接到手机，并且手机会在很短的时间内切换到语音邮件。可以使用以下选项调用bridge应用程序：
 
-**Forked dial with differing timeouts** Expand source 
+**在进展和尝试阶段使用不同的超时时间的分叉拨号** 展开源代码 
 
 ```xml
 <action application="bridge" data="[leg_progress_timeout=5,leg_timeout=10]sofia/gateway/gatewayA/$1@1.2.3.4,[leg_progress_timeout=8,leg_timeout=30]sofia/gateway/gatewayB/$1@4.5.6.7"/>
 ```
 
-## Simple call center using mod fifo
+## 使用mod fifo的简单呼叫中心
 
-* [Simple call center using mod fifo](../Modules/mod-fifo/Simple-call-center-using-mod-fifo_9634446.mdx#about)
+* [使用mod fifo的简单呼叫中心](../Modules/mod-fifo/Simple-call-center-using-mod-fifo_9634446.mdx#about)
 
-## Simple Call Forwarding Controlled Via IVR
+## 通过IVR控制的简单呼叫转移
 
-* [Simple CF with IVR](../Examples/Simple-Call-Forward-with-IVR_9634448.mdx#--)
+* [简单的呼叫转移与IVR组合](../Examples/Simple-Call-Forward-with-IVR_9634448.mdx#--)
 
-## Simple Day/Nite Mode
+## 简单的白天/夜间模式
 
-* [Simple Day Nite Mode](../Examples/Simple-Day-Nite-Mode_9634451.mdx#--)
+* [简单的白天夜间模式](../Examples/Simple-Day-Nite-Mode_9634451.mdx#--)
 
-## See Also
+## 另请参阅
 
-* [Misc.\_Dialplan\_Tools\_bridge](index.mdx#0-about)
-* [Regular Expression](../Examples/Regular-Expression/index.mdx#42x)
-
-
+* [其他\_Dialplan\_工具\_桥接](index.mdx#0-about)
+* [正则表达式](../Examples/Regular-Expression/index.mdx#42x)

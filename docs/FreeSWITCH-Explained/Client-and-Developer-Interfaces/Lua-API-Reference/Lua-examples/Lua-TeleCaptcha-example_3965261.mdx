@@ -1,33 +1,25 @@
+# Lua 电话验证码演示
 
-# Lua TeleCaptcha example 
+## 关于
 
- 
+以下 LUA 脚本可用于电话验证码。请确保阅读描述并设置所需的配置变量，以指向您的音频文件。
 
-## About
-
-The following LUA script can be used for tele-captcha. Please be sure to read the description and set the config variables needed to point to your audio files.
-
-## Lua Script Telecaptcha.lua
+## Lua 脚本 Telecaptcha.lua
 
 ```xml
 --[[
-	title: tele-captcha
+	title: 电话验证码
 	author: johnnyvoip
-	date: October 15, 2008
+	date: 2008年10月15日
 	
 	description:
-	This is a script designed to be run before another action within the dialplan.  It's purpose is to act as a 
-	simple audio captcha to verify human "intelligence" on the other line of the phone.  On engagement it will play the user the
-	<intro file> and then a numeric code for them to input, it will wait until all the digits have been inputted or timeout.  If the 
-	user succeeds, the <correct file> will be played and the session will continue.  If the code was incorrectly entered or
-	it timed out, the user will be played the <incorrect file> if there are retries available and then repeated the code to enter again.  
-	If the user fails and has no retries left the session will be disconnected with no file played.
+	这是一个设计用于在呼叫计划中的另一个动作之前运行的脚本。它的目的是作为一个简单的音频验证码，以验证电话另一端的人类"智能"。在启动时，它会为用户播放<intro file>，然后播放一个数字代码供其输入，直到所有数字都被输入或者超时。如果用户成功，将会播放<correct file>并且会话将继续。如果代码输入错误或超时，用户将会播放<incorrect file>（如果还有重试次数），然后重复输入代码。如果用户失败并且没有剩余的重试次数，则会断开会话而不播放任何文件。
 	
-	Changable parameters (The values given are defaults) :
+	可更改的参数（给出的值是默认值）：
 		<action application="set" data="tc_upper_bound=9999"/>
 		<action application="set" data="tc_lower_bound=0"/>
 		<action application="set" data="tc_retries=3"/>
-		<action application="set" data="tc_timeout=5000"/><!-- time in ms -->
+		<action application="set" data="tc_timeout=5000"/><!-- 时间以毫秒为单位 -->
 		<action application="set" data="tc_sounds_path=tele-captcha/"/>
 		<action application="set" data="tc_intro_filename=intro"/>
 		<action application="set" data="tc_incorrect_filename=incorrect"/>
@@ -36,59 +28,60 @@ The following LUA script can be used for tele-captcha. Please be sure to read th
 		<action application="set" data="tc_digit_filename_prefix="/>
 		<action application="set" data="tc_digit_filename_postfix="/>		
 		
-	Before it will work : 
-	Set the file paths for the sounds, either configure them via session vars, use the defaults, or change the defaults below
-	The sound files it expects are 0-9 digits, an intro file, an incorrect file and a correct file all located in the sounds_path.
-	
+	在其正常工作之前： 
+	设置声音文件的路径，可以通过会话变量进行配置，使用默认值，或者在下方更改默认值。
+	所需的声音文件是0-9数字、intro文件、incorrect文件和correct文件，所有这些文件都位于sounds_path中。
 ]]
--- Constants
+-- 常量
 DP_PRFIX 		= "tc_" ;
 PADDING_DIGIT 	= "0" ;
 GET_DIGITS_DONE = "#" ;
+```
 
--- Session overrides, each sessionVariable is prepended with DP_PREFIX
-TIMEOUT 				= { sessionVariable = "timeout", 				defaultValue = 5000 }
-RETRIES 				= { sessionVariable = "retries", 				defaultValue = 3 }
-UPPER_BOUND 			= { sessionVariable = "upper_bound", 			defaultValue = 9999 }
-LOWER_BOUND 			= { sessionVariable = "lower_bound", 			defaultValue = 0 }
-SOUNDS_PATH 			= { sessionVariable = "sounds_path", 			defaultValue = "tele-captcha/" }
-FILENAME_INTRO 			= { sessionVariable = "intro_filename", 		defaultValue = "intro" }
-FILENAME_CORRECT 		= { sessionVariable = "correct_filename", 		defaultValue = "correct" }
-FILENAME_INCORRECT 		= { sessionVariable = "incorrect_filename", 	defaultValue = "incorrect" }
-FILENAME_EXTENSION 		= { sessionVariable = "sounds_extension", 		defaultValue = "wav" }
-FILENAME_DIGIT_PREFIX 	= { sessionVariable = "digit_filename_prefix", 	defaultValue = "" }
-FILENAME_DIGIT_POSTFIX 	= { sessionVariable = "digit_filename_postfix", defaultValue = "" }
+-- 会话覆盖，每个 sessionVariable 都以 DP_PREFIX 为前缀
+TIMEOUT                    = { sessionVariable = "timeout",               defaultValue = 5000 }
+RETRIES                    = { sessionVariable = "retries",               defaultValue = 3 }
+UPPER_BOUND                = { sessionVariable = "upper_bound",           defaultValue = 9999 }
+LOWER_BOUND                = { sessionVariable = "lower_bound",           defaultValue = 0 }
+SOUNDS_PATH                = { sessionVariable = "sounds_path",           defaultValue = "tele-captcha/" }
+FILENAME_INTRO             = { sessionVariable = "intro_filename",         defaultValue = "intro" }
+FILENAME_CORRECT           = { sessionVariable = "correct_filename",       defaultValue = "correct" }
+FILENAME_INCORRECT         = { sessionVariable = "incorrect_filename",     defaultValue = "incorrect" }
+FILENAME_EXTENSION         = { sessionVariable = "sounds_extension",       defaultValue = "wav" }
+FILENAME_DIGIT_PREFIX      = { sessionVariable = "digit_filename_prefix",  defaultValue = "" }
+FILENAME_DIGIT_POSTFIX     = { sessionVariable = "digit_filename_postfix", defaultValue = "" }
 
--- Play a string that consists of only numbers
+-- 播放只包含数字的字符串
 function playStringOfNumbers( numberString )
-	for digit=1, string.len( numberString ) do
-		playSingleNumber( string.sub( numberString, digit, digit ) );
-	end
+    for digit=1, string.len( numberString ) do
+        playSingleNumber( string.sub( numberString, digit, digit ) );
+    end
 end
 
--- Plays a single number if it is in the 0-9 range
+-- 如果数字在0-9范围内，则播放单个数字
 function playSingleNumber( number )
-	number = tonumber( number );
-	if( number < 10 and number >= 0 ) then
-		playTeleCaptchaSoundFile( sessionOrDefault( FILENAME_DIGIT_PREFIX ) .. number .. sessionOrDefault( FILENAME_DIGIT_POSTFIX ) );
-	end
+    number = tonumber( number );
+    if( number < 10 and number >= 0 ) then
+        playTeleCaptchaSoundFile( sessionOrDefault( FILENAME_DIGIT_PREFIX ) .. number .. sessionOrDefault( FILENAME_DIGIT_POSTFIX ) );
+    end
 end
 
--- Prepend a string with another string a set amount of times
+-- 在字符串前面添加另一个字符串一定次数
 function padStringWithString( theString, padString, totalTimesToPad )
-	while totalTimesToPad > 0 do
-		theString = padString .. theString;
-		totalTimesToPad = totalTimesToPad - 1;
-	end
-	return theString;
+    while totalTimesToPad > 0 do
+        theString = padString .. theString;
+        totalTimesToPad = totalTimesToPad - 1;
+    end
+    return theString;
 end
 
--- play a file from this scripts directory
+```lua
+-- 从脚本目录播放文件
 function playTeleCaptchaSoundFile( filename )
 	session:execute( "playback", sessionOrDefault( SOUNDS_PATH ) .. filename .. "." .. sessionOrDefault( FILENAME_EXTENSION ) );
 end
 
--- assign the first value if not null, otherwise default it to the second value
+-- 如果第一个值不为空，则赋值为第一个值，否则赋值为第二个值
 function sessionOrDefault( obj )
 	local sessionVariable = sessionVar( obj.sessionVariable );
 	if sessionVariable then
@@ -98,65 +91,63 @@ function sessionOrDefault( obj )
 	end
 end
 
--- generate a numeric string that is inbetween the lower and upper range and is padded to be
--- the maxium possible len everytime eg. code of 2 in a range from 0-99999 will be 00002
+-- 生成一个介于下限和上限之间的数字字符串，补齐至最大可能长度
+-- 例如，如果在0-99999的范围内产生一个值为2的数字，在前面补0后为00002
 function numericKeyCodeString( lowerRange, upperRange )
 	local digitCount = string.len( tostring( upperRange ) );
 	local randomNumericCode = tostring( math.random( lowerRange, upperRange ) );
 	return padStringWithString( randomNumericCode, PADDING_DIGIT, digitCount - string.len( randomNumericCode ) );
 end
 
--- retreive a session variable for this script
+-- 获取脚本的会话变量
 function sessionVar( name )
 	return session:getVariable( DP_PRFIX..name );
 end
 
--- helper to play the intro file
+-- 播放介绍文件的辅助函数
 function playFileIntro()
 	playTeleCaptchaSoundFile( sessionOrDefault( FILENAME_INTRO ) );
 end
 
--- helper to play the correct file
+-- 播放正确文件的辅助函数
 function playFileCorrect()
 	playTeleCaptchaSoundFile( sessionOrDefault( FILENAME_CORRECT ) );
 end
 
--- helper to play the incorrect file
+-- 播放错误文件的辅助函数
 function playFileIncorrect()
 	playTeleCaptchaSoundFile( sessionOrDefault( FILENAME_INCORRECT ) );
 end
 
--- main programming logic ::
+-- 主要的编程逻辑::
+```
 
 -- answer, always needed
 session:answer( );
--- setup parameters
+-- 设置参数
 local timeout 	 = sessionOrDefault( TIMEOUT );
 local lowerRange = sessionOrDefault( LOWER_BOUND );
 local upperRange = sessionOrDefault( UPPER_BOUND );
 local retries 	 = sessionOrDefault( RETRIES );
--- get the code based on the range
+-- 根据范围获取代码
 local code = numericKeyCodeString( lowerRange, upperRange );
--- play the intro
+-- 播放介绍
 playFileIntro();
 repeat
-	-- play the string of numbers to the user
+	-- 将数字串播放给用户
 	playStringOfNumbers( code );
-	-- request digits
+	-- 请求输入数字
 	userInput = session:getDigits( string.len( code ), GET_DIGITS_DONE, timeout );
-	-- one less retry
+	-- 减少一次重试次数
 	retries = retries - 1;
-	-- play the appropriate response after getting digits
+	-- 在获取数字后播放适当的回应
 	if( retries > 0 and not( userInput == code ) ) then
 		playFileIncorrect();
 	end
 until retries == 0 or userInput == code
--- only if it was failed hangup the session
+-- 仅在失败时挂断会话
 if( userInput == code ) then
 	playFileCorrect();
 else
 	session:hangup( "1" );
 end
-```
-
-

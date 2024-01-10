@@ -1,68 +1,66 @@
+# Broadvoice供应商（美国）
 
-# Provider Broadvoice (USA) 
-
- 
-
-Last update: 17 November 2010
+最后更新日期：2010年11月17日
 
 * 1 [Broadvoice.com](#broadvoicecomhttpbroadvoicecom)
-* 2 [Dialplan Codec Selection](#dialplan-codec-selection)
-* 3 [DNS SRV and Broadvoice](#dns-srv-and-broadvoice)
-* 4 [Alternative DNS method](#alternative-dns-method)
+* 2 [拨号计划编解码器选择](#dialplan-codec-selection)
+* 3 [DNS SRV和Broadvoice](#dns-srv-and-broadvoice)
+* 4 [备用DNS方法](#alternative-dns-method)
 
 ### [Broadvoice.com](http://Broadvoice.com)
 
-### Dialplan Codec Selection
+### 拨号计划编解码器选择
 
-* Incoming and Outgoing calls work with UDP only.
-* As of 12 February 2008 Broadvoice is not [RFC 3261](https://tools.ietf.org/html/rfc3261) compliant. Broadvoice does not support the usage of TCP within their SIP stack. This means you have to set the [absolute\_codec\_string channel variable](../../Dialplan/Variables-Archive/x__Channel-Variables_1048892.mdx#channel-variables-in-dial-strings) to PCMU.
-* [Chris](https://wiki.freeswitch.org/wiki/User:Danielsonchris "User:Danielsonchris") 11:24, 31 January 2008 (EST) It was brought up on the IRC channel, Broadvoice apparently isn't following the SIP specifications for MTU packet sizes.  
-   * You will receive a [4xx Request Failure Responses](../../Troubleshooting-Debugging/SIP-Protocol-Messages_1048971.mdx#4xx-request-failure-responses) message unless you trim down the number of codecs contained in the UDP packets. By setting the [absolute\_codec\_string channel variable](../../Dialplan/Variables-Archive/x__Channel-Variables_1048892.mdx#channel-variables-in-dial-strings) to PCMU, you will play by their rules.  
+* 来电和去电仅支持UDP协议。
+* 自2008年2月12日以来，Broadvoice不符合[RFC 3261](https://tools.ietf.org/html/rfc3261)标准。Broadvoice不支持在其SIP堆栈中使用TCP。这意味着您必须将[absolute\_codec\_string通道变量](../../Dialplan/Variables-Archive/x__Channel-Variables_1048892.mdx#channel-variables-in-dial-strings)设置为PCMU。
+* [Chris](https://wiki.freeswitch.org/wiki/User:Danielsonchris "User:Danielsonchris") 11:24，2008年1月31日（美国东部时间）在IRC频道上提到，Broadvoice显然没有遵循MTU数据包大小的SIP规范。
+   * 除非您将UDP数据包中所含编解码器的数量减少，否则将收到一个[4xx请求失败响应](../../Troubleshooting-Debugging/SIP-Protocol-Messages_1048971.mdx#4xx-request-failure-responses)消息。
+   * 通过将[absolute\_codec\_string通道变量](../../Dialplan/Variables-Archive/x__Channel-Variables_1048892.mdx#channel-variables-in-dial-strings)设置为PCMU，您将按照他们的规则运作。
    * `originate {absolute_codec_string=PCMU}sofia/gateway/broadvoice/12221231234 15551231234` `  
    `
 
-### DNS SRV and Broadvoice
+### DNS SRV和Broadvoice
 
-Broadvoice uses DNS SRV records to provide failover to redundant geographically disparate SIP proxy servers located across the US. FreeSWITCH supports [DNS SRV](http://wiki.freeswitch.org/wiki/DNS) records.
+Broadvoice使用DNS SRV记录来为分布在美国各地的冗余地理区域SIP代理服务器提供故障转移。FreeSWITCH支持[DNS SRV](http://wiki.freeswitch.org/wiki/DNS)记录。
 
-The use of DNS SRV for failover seems to occur many times during the course of each day, presumably as part of a load balancing function within the Broadvoice network. Having initially attempted to follow the DNS "fix" documented below I kept getting registration errors at regular intervals each time broadvoice failover mechanism kicked in.
+在每天的过程中，DNS SRV 的故障转移似乎发生了很多次，可能是 Broadvoice 网络中负载平衡功能的一部分。最初我试图按照以下文档中记录的 DNS "修复" 进行操作，但每次 broadvoice 故障转移机制启动时，都会定期出现注册错误。
 
-The following configuration seems to work reliably. The proxy should use the nearest broadvoice server to you:
+以下配置似乎能够可靠地工作。代理应该使用你附近的 broadvoice 服务器：
 
-* [proxy-nyc.broadvoice.com](http://proxy-nyc.broadvoice.com)
-* [proxy-bos.broadvoice.com](http://proxy-bos.broadvoice.com)
-* [proxy-dca.broadvoice.com](http://proxy-dca.broadvoice.com)
-* [proxy-atl.broadvoice.com](http://proxy-atl.broadvoice.com)
-* [proxy-chi.broadvoice.com](http://proxy-chi.broadvoice.com)
-* [proxy-mia.broadvoice.com](http://proxy-mia.broadvoice.com)
-* [proxy-lax.broadvoice.com](http://proxy-lax.broadvoice.com)
+- [proxy-nyc.broadvoice.com](http://proxy-nyc.broadvoice.com)
+- [proxy-bos.broadvoice.com](http://proxy-bos.broadvoice.com)
+- [proxy-dca.broadvoice.com](http://proxy-dca.broadvoice.com)
+- [proxy-atl.broadvoice.com](http://proxy-atl.broadvoice.com)
+- [proxy-chi.broadvoice.com](http://proxy-chi.broadvoice.com)
+- [proxy-mia.broadvoice.com](http://proxy-mia.broadvoice.com)
+- [proxy-lax.broadvoice.com](http://proxy-lax.broadvoice.com)
 
-Note that you MUST use the SRV record which contain a dash within the host name. These DNS SRV records are not directly "pingable" but can be resolved by performing an "nslookup" with a 'set type = SRV' first.
+请注意，你必须使用包含横线的 SRV 记录作为主机名。这些 DNS SRV 记录不能直接进行 "ping"，但可以通过先执行 "nslookup" 并设置类型为 "SRV" 来解析。
 
 ```xml
-  <include>
-        <gateway name="broadvoice">
-          <param name="username" value="5555551234"/>
-          <param name="realm" value="sip.broadvoice.com"/>
-          <param name="from-domain" value="sip.broadvoice.com"/>
-          <param name="password" value="hackmybroadvoiceaccount"/>
-          <param name="extension" value="5555551234"/>
-          <param name="proxy" value="proxy-nyc.broadvoice.com"/> <!-- example using the broadvoice DNS SRV record for New York City. -->
-          <param name="expire-seconds" value="60"/>
-          <param name="register" value="true"/>
-          <param name="retry-seconds" value="60"/>
-        </gateway>
-    </include> 
+<include>
+  <gateway name="broadvoice">
+    <param name="username" value="5555551234"/>
+    <param name="realm" value="sip.broadvoice.com"/>
+    <param name="from-domain" value="sip.broadvoice.com"/>
+    <param name="password" value="hackmybroadvoiceaccount"/>
+    <param name="extension" value="5555551234"/>
+    <param name="proxy" value="proxy-nyc.broadvoice.com"/> <!-- 例子中使用了 New York City 的 broadvoice DNS SRV 记录 -->
+    <param name="expire-seconds" value="60"/>
+    <param name="register" value="true"/>
+    <param name="retry-seconds" value="60"/>
+  </gateway>
+</include>
 ```
 
-### Alternative DNS method
+### 替代DNS方法
 
-* The following method is suggested IF you experience difficulty using DNS SRV. It is a work around that seems to cause frequent registration errors.
-* Broadvoice has a funny DNS situation, use the following fix. (Broadvoice kept on returning [403 Forbidden messages](../../Troubleshooting-Debugging/SIP-Protocol-Messages_1048971.mdx#4xx-request-failure-responses) until I modified my DNS entries within the hosts file)  
-   * This is according to the directions on [broadvoice.com](http://broadvoice.com)[\[1\]](http://www.broadvoice.com/support%5Finstall%5Fasterisk.html)
+* 如果您在使用DNS SRV时遇到困难，建议采用以下方法。这是一个解决方案，似乎会导致频繁的注册错误。
+* Broadvoice有一个有趣的DNS情况，请使用以下修复方法。（Broadvoice一直返回[403 Forbidden消息](../../Troubleshooting-Debugging/SIP-Protocol-Messages_1048971.mdx#4xx-request-failure-responses)，直到我在主机文件中修改了我的DNS条目）
+   * 这是根据[broadvoice.com](http://broadvoice.com)上的说明[【1】](http://www.broadvoice.com/support%5Finstall%5Fasterisk.html)。
 
 ```text
-Ping the following, and choose the best time.
+Ping以下地址，并选择最佳时间。
 proxy.lax.broadvoice.com
 proxy.dca.broadvoice.com
 proxy.mia.broadvoice.com
@@ -71,29 +69,25 @@ proxy.chi.broadvoice.com
 proxy.bos.broadvoice.com
 proxy.nyc.broadvoice.com
 
-Modify your hosts (*nix world: /etc/hosts, windows: C:\Windows\System32\drivers\etc\hosts) file
-with the correct IP address as follows:
+在您的主机文件（*nix系统：/etc/hosts，Windows系统：C:\Windows\System32\drivers\etc\hosts）中修改为正确的IP地址，如下所示：
 {ip} sip.broadvoice.com 
 ```
 
 ```xml
-     <include>
-        <gateway name="broadvoice">
-          <param name="username" value="5555551234"/>
-          <param name="realm" value="BroadWorks"/>
-          <param name="from-domain" value="sip.broadvoice.com"/>
-          <param name="password" value="hackmybroadvoiceaccount"/>
-          <param name="extension" value="5555551234"/>
-          <param name="proxy" value="sip.broadvoice.com"/>
-          <param name="expire-seconds" value="3600"/>
-          <param name="register" value="true"/>
-          <param name="retry-seconds" value="3600"/>
-        </gateway>
-    </include>
+   <include>
+      <gateway name="broadvoice">
+        <param name="username" value="5555551234"/>
+        <param name="realm" value="BroadWorks"/>
+        <param name="from-domain" value="sip.broadvoice.com"/>
+        <param name="password" value="hackmybroadvoiceaccount"/>
+        <param name="extension" value="5555551234"/>
+        <param name="proxy" value="sip.broadvoice.com"/>
+        <param name="expire-seconds" value="3600"/>
+        <param name="register" value="true"/>
+        <param name="retry-seconds" value="3600"/>
+      </gateway>
+  </include>
 ```
 
 `  
 `
-
-  
-

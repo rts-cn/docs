@@ -1,27 +1,24 @@
+# 为其他架构构建Debian软件包
 
-# Building debs for other architectures 
+## 简介
 
- 
+本页面介绍了如何为其他架构（如ARM或MIPS）构建FreeSWITCH Debian软件包。
 
-## About
+点击此处展开目录
 
-This page explains how to build FreeSWITCH Debian packages for other architectures, like ARM or MIPS.
+* 1 [构建步骤](#构建步骤)
 
-Click here to expand Table of Contents
+## 构建步骤
 
-* 1 [Building procedure](#building-procedure)
-
-## Building procedure
-
-The following instructions build Debian 8 packages for architectures that are not available from official FreeSWITCH repositories. The FreeSWITCH package build process depends on prerequisite libraries which are expected to be available from a package repository via HTTP. So, you need to set up your own Debian package repository, create your own PGP key, and upload the dependency packages onto it.
+以下说明将在官方FreeSWITCH软件包库中不可用的架构上构建Debian 8软件包。FreeSWITCH软件包构建过程依赖于预先安装的库，这些库应通过HTTP从软件包存储库中获取。因此，您需要设置自己的Debian软件包存储库，创建您自己的PGP密钥，并将依赖软件包上传到其中。
 
 ```bash
-# Get the architecture name. 
+# 获取架构名称
 export MY_HOST_ARCH=`dpkg-architecture -q DEB_HOST_ARCH`
 
 apt-get update && apt-get install -y git curl screen aptitude reprepro make sox flac
 
-# create a PGP key for signing your repository
+# 为您的存储库创建一个PGP密钥
 mkdir ~/.gnupg/
 cat >~/.gnupg/gpg.conf <<'EOT'
 default-preference-list SHA512 SHA384 SHA256 SHA224 AES256 AES192 AES CAST5 BZIP2 ZLIB ZIP Uncompressed
@@ -33,28 +30,29 @@ rngd -r /dev/urandom
 gpg --gen-key
 
 gpg --list-public-keys
-# further on, AEEA3C42 is my public key, and you need to use yours
+# 在接下来的步骤中，AEEA3C42是我的公钥，您需要使用您自己的公钥
 
-# optionally remove passphrase
+# （可选）删除密钥口令
 gpg --edit-key AEEA3C42
 passwd
 save
 
-# the build process may take several hours, so screen is a good way to avoid terminal interruptions
+# 构建过程可能需要几个小时，因此使用screen命令可以避免终端中断
 cd 
 screen -RL
 
-
 ####
-# build the dependency libraries. The process may take a long time, so use Ctrl-A Ctrl-D to detach from the screen if needed
+# 构建依赖库。此过程可能需要很长时间，如果需要，使用Ctrl-A Ctrl-D进行screen分离
+```
 
+```shell
 mkdir /usr/src/freeswitch-video-deps
 git clone https://freeswitch.org/stash/scm/sd/freeswitch-video-deps.git /usr/src/freeswitch-video-deps/src
 /usr/src/freeswitch-video-deps/src/debian/sd-repo-builder --arch=${MY_HOST_ARCH} \
   --dir=/usr/src/freeswitch-sd --repo=/var/local/freeswitch-unstable-${MY_HOST_ARCH} --sign=AEEA3C42
 
 ####
-# build the sound packages and add them to the repo manually
+# 构建音频包并手动将其添加到仓库
 
 mkdir /usr/src/freeswitch-sounds
 cd /usr/src/freeswitch-sounds
@@ -77,41 +75,43 @@ dpkg-buildpackage -uc -us -Zxz -z1
 reprepro -Vb /var/local/freeswitch-unstable-${MY_HOST_ARCH} includedeb jessie /usr/src/freeswitch-sounds/*.deb
 
 ####
-# set up the HTTP repository 
+# 设置HTTP仓库
 
-# publish the repo to your web server
+# 将仓库发布到您的Web服务器
 rsync -av --delete /var/local/freeswitch-unstable-${MY_HOST_ARCH} USER@WEBSERVER.EXAMPLE.COM:/srv/www/www.EXAMPLE.COM/debian
 
-# publish your PGP key
+# 发布您的PGP密钥
 gpg --armor --output EXAMPLE.COM.gpg.key --export AEEA3C42
 scp EXAMPLE.COM.gpg.key USER@WEBSERVER.EXAMPLE.COM:/srv/www/www.EXAMPLE.COM/debian
 
-# add the repo to your sources list
+# 将仓库添加到sources列表
 vi /etc/apt/sources.list
-# add a line pointing to your server, like 
+# 添加指向您的服务器的行，例如
 # deb http://www.EXAMPLE.COM/debian/freeswitch-unstable-armhf/ jessie main
+```
 
-# import the key 
+```markdown
+# 导入密钥
 curl http://www.EXAMPLE.COM/debian/EXAMPLE.COM.gpg.key | apt-key add -
 
-# check that there are no errors
+# 检查是否出现错误
 apt-get update 
 
 ####
-# Build FreeSWITCH packages
+# 构建FreeSWITCH包
 
-# we need our own copy of public PGP keys and sources.list
+#我们需要自己的公共PGP密钥和sources.list
 apt-key exportall >/root/debian_keyring.asc
 
-vi /root/sources.list 
-# supply a sources list that has the Debian packages for your architecture and a link to your custom repo:
-# deb http://ftp.fr.debian.org/debian/ jessie main contrib non-free
-# deb http://www.EXAMPLE.COM/debian/freeswitch-unstable-armhf/ jessie main
+vi /root/sources.list
+# 提供一个含有适用于您体系结构的Debian软件包和指向您自定义存储库的链接的sources list:
+#deb http://ftp.fr.debian.org/debian/ jessie main contrib non-free
+#deb http://www.EXAMPLE.COM/debian/freeswitch-unstable-armhf/ jessie main
 
 mkdir /usr/src/freeswitch-debs
 git clone https://freeswitch.org/stash/scm/fs/freeswitch.git /usr/src/freeswitch-debs/freeswitch
 cd /usr/src/freeswitch-debs/freeswitch
-fgrep -v 'mod_sangoma_codec' build/modules.conf.most  >/root/modules.conf.${MY_HOST_ARCH}  
+fgrep -v 'mod_sangoma_codec' build/modules.conf.most >/root/modules.conf.${MY_HOST_ARCH}
 ./debian/util.sh build-all -bijn -z1 -a ${MY_HOST_ARCH} -c jessie \
   -f /root/modules.conf.${MY_HOST_ARCH} -T /root/sources.list -K /root/debian_keyring.asc
 
@@ -119,8 +119,7 @@ reprepro -Vb /var/local/freeswitch-unstable-${MY_HOST_ARCH} includedeb jessie /u
 rsync -av --delete /var/local/freeswitch-unstable-${MY_HOST_ARCH} USER@WEBSERVER.EXAMPLE.COM:/srv/www/www.EXAMPLE.COM/debian
 ```
 
-After finishing this scenario, you should be able to install the packages onto your target hosts, following the standard installation sequence (with the only exception that you need to import your own PGP key and the repo URL).
+完成此场景后，您应该能够按照标准安装顺序将包安装到目标主机上（唯一的例外是您需要导入自己的PGP密钥和存储库URL）。
 
-FreeSWITCH maintainers strictly discourage publishing third-party repositories, for obvious reasons of security and reliability.
-
-
+由于安全和可靠性的明显原因，FreeSWITCH维护人员严格禁止发布第三方存储库。
+```

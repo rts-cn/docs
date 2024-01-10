@@ -1,30 +1,29 @@
-
 # FreeBSD 
 
- 
+## 关于
 
-## About
+这些文档是编译Freeswitch所需的最低要求。它将使用您平台上的默认编译器，除非您在配置之前使用CC和CXX变量进行了覆盖。不再需要通过任何额外的步骤。它应该可以直接使用，并且我们可以在需要时解决任何具体的问题。如果您希望帮助改进这份更新的文档，请发送电子邮件至[brian@freeswitch.org](mailto:brian@freeswitch.org)，或联系IRC上的bkw_。
 
-These docs are BARE minimum to allow Freeswitch to compile. It will use the default compiler on your platform unless you override it with CC and CXX variables prior to configure. None of the extra hoops need to be jumped through any longer. It should just WORK out of the box and we can address any specific issues as they come up. Anyone wishing to help improve this updated documentation please email [brian@freeswitch.org](mailto:brian@freeswitch.org) or contact bkw\_ on IRC,
+需要维护者
 
-Maintainer Needed
+我们需要您来维护FreeSWITCH的此版本。请联系一位FreeSWITCH核心开发者，他们可以在Freenode IRC频道#freeswitch或[freeswitch-users@lists.freeswitch.org](mailto:freeswitch-users@lists.freeswitch.org)邮件列表上为此操作系统的代码保持最新。
 
-We need YOU to maintain this port of FreeSWITCH. Please contact one of the FreeSWITCH core developers on Freenode IRC channel #freeswitch or the [freeswitch-users@lists.freeswitch.org](mailto:freeswitch-users@lists.freeswitch.org) mailing list to help them keep the code current for this operating system.
+* [构建环境](#构建环境--)
+* [FreeBSD rc.d脚本](#freebsd-rcd-脚本)
 
-* [Build Environment](#build-environment--)
-* [FreeBSD rc.d script](#freebsd-rcd-script)
+## 构建环境
 
-## Build Environment  
+这是[安装](../index.mdx#about)文档的一部分，您应该先阅读。它提供了适用于FreeBSD 10.2的特殊说明。如果您使用FreeBSD，它将默认使用clang。如果您想强制使用，请导出CC=\`which clang\`和CXX=\`which clang++\`，或者如果您喜欢，使用gcc和g++。以下操作将构建默认的modules.conf，并且您希望启用的其他模块可能需要更多的依赖。此构建过程在FreeBSD 11.2上已经测试过：
 
-This is part of the [Installation](../index.mdx#about) documentation which you should review first. It provides notes unique to FreeBSD 10.2\. If you're on FreeBSD it will default to using clang. If you want to force it, export CC=\`which clang\` and export CXX=\`which clang++\` or if you prefer, use gcc and g++. The following will build the default modules.conf, and additional modules you wish to enable may require more dependencies. To enable or disable modules edit modules.conf file and comment or uncomment modules with #. This build procedure is tested on FreeBSD 11.2:
-
-**FreeSWITCH Master**
+**FreeSWITCH主代码**
 
 ```bash
 pkg install autoconf automake curl git gmake jpeg-turbo ldns libedit libtool openssl pcre pkgconf speex sqlite3 wget sudo libsndfile lua52 opus tiff
 cd /usr/local/src/;
 git clone https://freeswitch.org/stash/scm/fs/freeswitch.git
+```
 
+```simplified_chinese
 cd freeswitch
 ./bootstrap.sh -j
 ./configure 
@@ -32,19 +31,19 @@ gmake
 sudo gmake install cd-sounds-install cd-moh-install
 ```
 
-If you get gmake error stating no-extended-offsetof, then execute code below and run ./configure again:
+如果你在执行 gmake 时遇到 no-extended-offsetof 错误，请执行下面的代码，并再次运行 ./configure：
 
 ```xml
 sed -i' ' -e s:'-Wno-extended-offsetof:-Wno-invalid-offsetof -Wunknown-warning-option:' Makefile;
 sed -i' ' -e s:'-Wno-extended-offsetof:-Wno-invalid-offsetof:' configure;
 ```
 
-If you want to change directory prefix, enable Postgresql support, use configure like this (taken from FuxionPBX build script):
+如果你想改变目录前缀、启用 PostgreSQL 支持，请按照下面的方式使用 configure（取自 FuxionPBX 构建脚本）：
 
 ```xml
 pkg install postgresql10-server postgresql10-client sudo;
 
-#Initialize database
+# 初始化数据库
 sudo sysrc postgresql_enable="YES";
 sudo service postgresql initdb;
 sudo service postgresql start;
@@ -56,7 +55,7 @@ sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE freeswitch to fsuser;
 ./configure --prefix=/usr/local/freeswitch --disable-dependency-tracking --enable-core-pgsql-support --disable-fhs;
 ```
 
-If you want to enable mod\_av you need to install libav and mp4v2 packages:
+如果你想启用 mod_av，你需要安装 libav 和 mp4v2 包：
 
 ```xml
 pkg install autoconf automake curl git gmake jpeg-turbo ldns libedit libtool openssl pcre pkgconf speex sqlite3 wget sudo libsndfile lua52 opus tiff libav mp4v2;
@@ -70,12 +69,12 @@ gmake
 sudo gmake install cd-sounds-install cd-moh-install
 ```
 
-To fix building mod\_av with deprecated functions edit mod\_av Makefile:
+要修复使用已弃用函数构建 mod_av，请编辑 mod_av Makefile：
 
 ```xml
 vi /usr/local/src/freeswitch/src/mod/applications/mod_av/Makefile
-# edit CFLAGS lines and add -Wno-deprecated-declarations:
- 
+# 编辑CFLAGS行，并添加-Wno-deprecated-declarations：
+
 AVCODEC_CFLAGS = -I/usr/local/include -Wno-deprecated-declarations
 AVFORMAT_CFLAGS = -I/usr/local/include -Wno-deprecated-declarations
 AVRESAMPLE_CFLAGS = -I/usr/local/include -Wno-deprecated-declarations
@@ -112,9 +111,9 @@ sudo gmake install cd-sounds-install cd-moh-install
 ```
 
   
-## FreeBSD rc.d script
+## FreeBSD rc.d脚本
 
-The default installation comes with an rc-script but it doesn't meet the requirements of the FreeBSD rc.d framework. I've created (or actually copy/pasted it from Postfix) a script that does meets the rc.d requirements. Create the example below in /usr/local/etc/rc.d and give it the name 'freeswitch'
+默认安装附带了一个rc脚本，但它不符合FreeBSD rc.d框架的要求。我创建了一个脚本（实际上是从Postfix中复制/粘贴过来的），它符合rc.d的要求。在/usr/local/etc/rc.d中创建以下示例，并将其命名为'freeswitch'
 
 /usr/local/etc/rc.d/freeswitch
 
@@ -127,11 +126,11 @@ The default installation comes with an rc-script but it doesn't meet the require
 # REQUIRE: LOGIN cleanvar
 # KEYWORD: shutdown
 #
-# Add the following lines to /etc/rc.conf to enable freeswitch:
-# freeswitch_enable:       Set it to "YES" to enable freeswitch.
-#                          Default is "NO".
-# freeswitch_flags:        Flags passed to freeswitch-script on startup.
-#                          Default is "".
+# 向/etc/rc.conf添加以下行以启用freeswitch：
+# freeswitch_enable：将其设置为“YES”以启用freeswitch。
+# 默认为“NO”。
+# freeswitch_flags：启动时传递给freeswitch脚本的标志。
+# 默认为“”。
 #
 . /etc/rc.subr
 name="freeswitch"
@@ -152,31 +151,56 @@ freeswitch_stop() {
 run_rc_command "$1"
 ```
 
-After creating the file it's time to change the permissions, otherwise it can't be executed. Go to /usr/local/etc/rc.d and issue the following command
+创建文件后，需要更改权限，否则无法执行。进入/usr/local/etc/rc.d并执行以下命令：
 
 ```bash
 chmod u-w,ugo+x freeswitch
 ```
 
-Now it's time for calling the script from /etc/rc.conf. Put the two line below in the rc.conf file. The first one executes the startup script itself, the second one pipes the parameters.
+现在是从/etc/rc.conf调用脚本的时候了。将下面的两行放在rc.conf文件中。第一行执行启动脚本本身，第二行将参数传递给脚本。
 
 ```bash
 freeswitch_enable="YES"
-freeswitch_flags="-nc" 
+freeswitch_flags="-nc"
 ```
 
-In this example FreeSWITCH™ gets started with the parameters -nc (no console, you can access the console later using [fs\_cli](https://wiki.freeswitch.org/wiki/Fs%5Fcli "Fs cli")). If your Freeswitch server has a IP address and not behind a NAT router, add the "-nonat" parameter (This will disable NAT traversal feature of FreeSWITCH). After a reboot you should see something like this in your console:
+在这个例子中，使用参数-nc（不带控制台启动FreeSWITCH）。如果您的FreeSWITCH服务器有一个IP地址而不是在NAT路由器后面，请添加“-nonat”参数（这将禁用FreeSWITCH的NAT遍历功能）。重新启动后，您应该在控制台上看到如下信息：
 
 10381 Backgrounding.
-  
-  
+
 ### Comments:
 
-| I know these instructions are deprecated, but it would be nice to get this built on freebsd. I am getting the following error when compiling. src/switch\_core\_video.c:545:20: error: unused function 'switch\_img\_get\_yuv\_pixel' \[-Werror,-Wunused-function\]static inline void switch\_img\_get\_yuv\_pixel(switch\_image\_t \*img, switch\_yuv\_color\_t \*yuv, int x, int y) ^src/switch\_core\_video.c:702:20: error: unused function 'switch\_color\_rgb2yuv' \[-Werror,-Wunused-function\]static inline void switch\_color\_rgb2yuv(switch\_rgb\_color\_t \*rgb, switch\_yuv\_color\_t \*yuv) ^src/switch\_core\_video.c:713:20: error: unused function 'switch\_color\_yuv2rgb' \[-Werror,-Wunused-function\]static inline void switch\_color\_yuv2rgb(switch\_yuv\_color\_t \*yuv, switch\_rgb\_color\_t \*rgb) ^3 errors generated.Makefile:1901: recipe for target 'src/libfreeswitch\_la-switch\_core\_video.lo' failedgmake\[1\]: \*\*\* \[src/libfreeswitch\_la-switch\_core\_video.lo\] Error 1gmake\[1\]: Leaving directory '/root/src/freeswitch'Makefile:1067: recipe for target 'all' failedgmake: \*\*\* \[all\] Error 2 ![](/images/icons/contenttypes/comment_16.png) Posted by pankid at Sep 22, 2015 14:08                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 我知道这些说明已经过时了，但是如果能在FreeBSD上构建这个会很好。编译时我遇到了以下错误。src/switch_core_video.c:545:20: 错误：未使用的函数 'switch_img_get_yuv_pixel' \[-Werror,-Wunused-function\]static inline void switch_img_get_yuv_pixel(switch_image_t *img, switch_yuv_color_t *yuv, int x, int y) ^src/switch_core_video.c:702:20: 错误：未使用的函数 'switch_color_rgb2yuv' \[-Werror,-Wunused-function\]static inline void switch_color_rgb2yuv(switch_rgb_color_t *rgb, switch_yuv_color_t *yuv) ^src/switch_core_video.c:713:20: 错误：未使用的函数 'switch_color_yuv2rgb' \[-Werror,-Wunused-function\]static inline void switch_color_yuv2rgb(switch_yuv_color_t *yuv, switch_rgb_color_t *rgb) ^3个错误已生成。Makefile:1901: target 'src/libfreeswitch_la-switch_core_video.lo' 的规则失败gmake\[1\]: \*\*\* \[src/libfreeswitch_la-switch_core_video.lo\] 错误 1gmake\[1\]: 离开目录'/root/src/freeswitch'Makefile:1067: target 'all' 的规则失败gmake: \*\*\* \[all\] 错误 2 ![](/images/icons/contenttypes/comment_16.png)Posted by pankid at 2015年9月22日 14:08                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Hi [Nicholas Schoonover](https://freeswitch.org/confluence/display/~pankid)!I just built freeSWITCH from master on a digital ocean droplet and it built and installed correctly:FreeSWITCH Version 1.7.0+git\~20160318T233049Z\~4d180b1aa1\~64bit (git 4d180b1 2016-03-18 23:30:49Z 64bit) ![](/images/icons/contenttypes/comment_16.png) Posted by jungleboogie at Mar 19, 2016 01:54                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| If you have updates, by all means please update this page with your findings. I checked and you are in the the Confluence editors group.THANKS! ![](/images/icons/contenttypes/comment_16.png) Posted by boteman at Mar 28, 2016 14:21                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| FreeSWITCH Version 1.8.2+git\~20180926T175525Z\~a98a958ac3\~64bit (git a98a958 2018-09-26 17:55:25Z 64bit)built cleanly 11-3-18 on FreeBSD 11.2-RELEASE-p4 #0: Thu Sep 27 08:16:24 UTC 2018Thanks to Brian West, Michael Jerris, Ken Rice and Anthony Minessale II for all you do andfor making it run on FreeBSD. ![](/images/icons/contenttypes/comment_16.png) Posted by kimc at Nov 03, 2018 19:32                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| FreeSWITCH Version 1.10.1-dev+git\~20190805T233722Z\~ad99d725af\~64bit (git ad99d72 2019-08-05 23:37:22Z 64bit)FreeBSD 11.3-STABLE #0 r350400MFreeBSD clang version 8.0.1 (tags/RELEASE\_801/final 366581) (based on LLVM 8.0.1)Built using bash :pkg install autoconf automake curl git gmake jpeg ldns libedit libtool openssl pcre pkgconf speex sqlite3 wget sudo libsndfile lua52 opus tiffmkdir \~/srccd \~/srcgit clone <https://freeswitch.org/stash/scm/fs/freeswitch.git>CFLAGS+=-Wno-errorexport CFLAGScd freeswitch./bootstrap.sh -jsed -i' ' -e s:'applications/mod\_signalwire:#applications/mod\_signalwire:' modules.conf;sed -i' ' -e s:'databases/mod\_pgsql:#databases/mod\_pgsql:' modules.conf;./configuresed -i' ' -e s:'-Wno-extended-offsetof:-Wno-invalid-offsetof -Wunknown-warning-option:' Makefile;sed -i' ' -e s:'-Wno-extended-offsetof:-Wno-invalid-offsetof:' configure;./configuregmakesudo gmake install cd-sounds-install cd-moh-installlightly tested using Microsip 3.19.18 (IVR works fine, audio/video record/playback works)mod\_signalwire disabled (libks missing)mod\_pgsql disabled (pgsql headers not installed on machine, using sqlite)CFLAGS modified to cope with clang 8.0.0 (libsofia-sip-ua doesn't build if ~~Wno~~ error is not set)patch available in [FS-10581](https://freeswitch.org/jira/browse/FS-10581?src=confmacro)  \-[Authenticate](https://freeswitch.org/confluence/plugins/servlet/applinks/oauth/login-dance/authorize?applicationLinkID=c4b15fa3-ad57-3c05-af05-8c167cb92266) to see issue details  still necessary. ![](/images/icons/contenttypes/comment_16.png) Posted by emss at Jun 21, 2019 09:02 |
+| 嗨[Nicholas Schoonover](https://freeswitch.org/confluence/display/~pankid)！我刚刚在Digital Ocean Droplet上从master分支构建了freeSWITCH，并且成功地构建和安装了：FreeSWITCH版本为1.7.0+git\~20160318T233049Z\~4d180b1aa1\~64位（git 4d180b1 2016-03-18 23:30:49Z 64位）![](/images/icons/contenttypes/comment_16.png)Posted by jungleboogie于2016年3月19日 01:54                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 如果您有更新内容，请随时用您的发现更新此页面。我检查了一下，您是Confluence编辑组的成员。谢谢！![](/images/icons/contenttypes/comment_16.png)Posted by boteman于2016年3月28日 14:21                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| FreeSWITCH版本为1.8.2+git\~20180926T175525Z\~a98a958ac3\~64位（git a98a958 2018-09-26 17:55:25Z 64位），在FreeBSD 11.2-RELEASE-p4 #0上干净地构建了于2018年11月3日。:周四9月27号08:16:24 UTC 2018特别鸣谢Brian West, Michael Jerris, Ken Rice和Anthony Minessale II的付出，使其能在FreeBSD上运行。![](/images/icons/contenttypes/comment_16.png)Posted by kimc于2018年11月03日 19:32                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| FreeSWITCH版本1.10.1-dev+git\~20190805T233722Z\~ad99d725af\~64位（git ad99d72 2019-08-05 23:37:22Z 64位）FreeBSD 11.3-STABLE #0 r350400MFreeBSD clang版本8.0.1（标签/RELEASE\_801/final 366581）（基于LLVM 8.0.1）使用的bash：pkg install autoconf automake curl git gmake jpeg ldns libedit libtool openssl pcre pkgconf speex sqlite3 wget sudo libsndfile lua52 opus tiffmkdir \~/srccd \~/srcgit clone <https://freeswitch.org/stash/scm/fs/freeswitch.git>CFLAGS+=-Wno-errorexport CFLAGScd freeswitch./bootstrap.sh -jsed -i' ' -e s:'applications/mod\_signalwire:#applications/mod\_signalwire:' modules.conf;sed -i' ' -e s:'databases/mod\_pgsql:#databases/mod\_pgsql:' modules.conf;./configuresed -i' ' -e s:'-Wno-extended-offsetof:-Wno-invalid-offsetof -Wunknown-warning-option:' Makefile;sed -i' ' -e s:'-Wno-extended-offsetof:-Wno-invalid-offsetof:' configure;./configuregmakesudo gmake install cd-sounds-install cd-moh-install轻量测试使用Microsip 3.19.18（IVR正常工作，音频/视频录制/回放正常工作）mod\_signalwire禁用（缺少libks）mod\_pgsql禁用（机器上未安装pgsql头文件，使用sqlite）CFLAGS修改以适应clang 8.0.0（如果不设置~~Wno~~ error，libsofia-sip-ua将无法构建）[FS-10581](https://freeswitch.org/jira/browse/FS-10581?src=confmacro)中提供的补丁依然是必需的。![](/images/icons/contenttypes/comment_16.png)Posted by emss于2019年6月21日 09:02
 
+# 简介
 
+这个程序是一个[验证多因子认证](https://en.wikipedia.org/wiki/Multi-factor_authentication)的示例实现。它演示了如何使用多个身份验证因子来增强系统的安全性。
+
+## 如何运行示例
+
+1. 在开始之前，请确保您已安装 Python 3.x。
+2. 安装所需的依赖包，可以运行以下命令：
+
+   ```
+   pip install -r requirements.txt
+   ```
+   
+3. 在 `config.py` 文件中配置您的数据库和邮件设置。
+4. 启动应用程序，可以运行以下命令：
+
+   ```
+   python app.py
+   ```
+   
+5. 打开浏览器并访问 `http://localhost:5000`，您将看到一个简单的登录页面。
+6. 输入您的凭据进行登录，系统将要求您通过另外的身份验证因子进行验证。
+
+## 注意事项
+
+- 此示例中使用了简单的验证码和电子邮件验证码作为示范。在实际的应用程序中，您应该使用更强大和安全的方法来验证用户身份。
+- 此示例仅用于演示目的，您应根据您的需求进行相应的定制和安全增强。

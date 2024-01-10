@@ -1,91 +1,89 @@
+# 更新Debian仓库以添加SignalWire令牌的Ansible剧本
 
-# Ansible playbook to update your Debian repository to add a SignalWire Token 
+## 简介
 
- 
+在[SureVoIP](../../Interoperability/Providers-ITSPs/2883852.mdx#-freeswitch--provider-surevoip-uk-)和[TelcoSwitch](http://telcoswitch.com)中，我们在许多不同角色的FreeSWITCH中（30个以上的服务器），从SBC、托管VoIP到API等，因此我们需要更新我们的Debian系统上的apt仓库，以添加一个[SignalWire个人访问令牌](https://id.signalwire.com/personal%5Faccess%5Ftokens)进行身份验证，原因是[FreeSWITCH宣布](https://mailchi.mp/freeswitch.com/announcement-566106)。
 
-## Introduction
+我写了一个小的剧本，用于删除旧的样式仓库、1.8仓库，下载gpg密钥，为apt创建认证文件/目录并创建新的仓库。
 
-At [SureVoIP](../../Interoperability/Providers-ITSPs/2883852.mdx#-freeswitch--provider-surevoip-uk-) and [TelcoSwitch](http://telcoswitch.com) we have FreeSWITCH in lots of different roles (30+ servers) from SBCs, Hosted VoIP, APIs etc., so we needed to update the apt repos on our Debian systems to add a [SignalWire Personal Access Token](https://id.signalwire.com/personal%5Faccess%5Ftokens) for authentication due to the [FreeSWITCH announcement](https://mailchi.mp/freeswitch.com/announcement-566106).
-
-I've done a small playbook to remove the old style repo, 1.8 repo, download the gpg key, create the auth file/directory for apt and create the new repo. 
-
-Hopefully it will save others a few hours writing and testing, plus loads of time updating all your instances.
+希望能为其他人节省几个小时的编写和测试时间，同时节省更新所有实例的大量时间。
 
 **freeswitch\_signalwire\_repo.yml**
 
 ```yml
 ---
-# Author: Gavin Henry <ghenry@surevoip.co.uk>
-# Updated: 2022-03-22
+# 作者: Gavin Henry <ghenry@surevoip.co.uk>
+# 更新日期: 2022年3月22日
 #
-# Run with:
+# 运行方式:
 #  ansible-playbook -u xxxxx --limit ansible_group,hostname,etc freeswitch_signalwire_repo.yml
-#  Automated manual steps from - https://freeswitch.org/confluence/display/FREESWITCH/Debian
+#  执行手动步骤 - https://freeswitch.org/confluence/display/FREESWITCH/Debian
 #
-- name: Remove FreeSWITCH plain repo and add SignalWire protected one
-  hosts: hostname, group etc.
+- name: 移除FreeSWITCH普通仓库并添加受SignalWire保护的仓库
+  hosts: 主机名, 组名 等
   become: true
   gather_facts: true
 
   tasks:
-    #- name: Print all available facts
+    #- name: 打印所有可用的事实
     #  ansible.builtin.debug:
     #    var: ansible_facts
+```
 
-    - name: Fetch password protected FreeSWITCH GPG key
-      # username/password only available since 2.8, in older versions you need to use url_username/url_password
-      get_url:
-        url: https://freeswitch.signalwire.com/repo/deb/debian-release/signalwire-freeswitch-repo.gpg
-        username: signalwire
-        password: '{{ signalwire_freeswitch_key }}'
-        dest: /usr/share/keyrings/signalwire-freeswitch-repo.gpg
-      when: ansible_os_family == 'Debian' and ansible_distribution_major_version|int >= 9
+```yaml
+- name: 获取受密码保护的FreeSWITCH GPG密钥
+  # 自2.8版本起才有用户名/密码功能，在旧版本中需要使用url_username/url_password
+  get_url:
+    url: https://freeswitch.signalwire.com/repo/deb/debian-release/signalwire-freeswitch-repo.gpg
+    username: signalwire
+    password: '{{ signalwire_freeswitch_key }}'
+    dest: /usr/share/keyrings/signalwire-freeswitch-repo.gpg
+  when: ansible_os_family == 'Debian' and ansible_distribution_major_version|int >= 9
 
-    - name: Make apt auth directory
-      ansible.builtin.file:
-        path: /etc/apt/auth.conf.d
-        state: directory
-        mode: '0755'
-      when: ansible_os_family == 'Debian' and ansible_distribution_major_version|int >= 9
+- name: 创建apt auth目录
+  ansible.builtin.file:
+    path: /etc/apt/auth.conf.d
+    state: directory
+    mode: '0755'
+  when: ansible_os_family == 'Debian' and ansible_distribution_major_version|int >= 9
 
-    - name: Create apt auth.conf.d freeswitch file
-      ansible.builtin.copy:
-        dest: /etc/apt/auth.conf.d/freeswitch.conf
-        owner: root
-        group: root
-        mode: '0700'
-        content: 'machine freeswitch.signalwire.com login signalwire password {{ signalwire_freeswitch_key }}'
-      when: ansible_os_family == 'Debian' and ansible_distribution_major_version|int >= 9
+- name: 创建apt auth.conf.d的freeswitch文件
+  ansible.builtin.copy:
+    dest: /etc/apt/auth.conf.d/freeswitch.conf
+    owner: root
+    group: root
+    mode: '0700'
+    content: 'machine freeswitch.signalwire.com login signalwire password {{ signalwire_freeswitch_key }}'
+  when: ansible_os_family == 'Debian' and ansible_distribution_major_version|int >= 9
 
-    - name: "Remove vanilla FreeSWITCH repo"
-      ansible.builtin.apt_repository:
-        repo: deb http://files.freeswitch.org/repo/deb/debian-release/ {{ ansible_distribution_release }} main
-        state: absent
-      when: ansible_os_family == 'Debian' and ansible_distribution_major_version|int >= 9
+- name: "移除原始FreeSWITCH软件源"
+  ansible.builtin.apt_repository:
+    repo: deb http://files.freeswitch.org/repo/deb/debian-release/ {{ ansible_distribution_release }} main
+    state: absent
+  when: ansible_os_family == 'Debian' and ansible_distribution_major_version|int >= 9
 
-    - name: "Remove 1.8 FreeSWITCH repo"
-      ansible.builtin.apt_repository:
-        repo: deb http://files.freeswitch.org/repo/deb/freeswitch-1.8/ {{ ansible_distribution_release }} main
-        state: absent
-      when: ansible_os_family == 'Debian' and ansible_distribution_major_version|int >= 9
+- name: "移除1.8版本的FreeSWITCH软件源"
+  ansible.builtin.apt_repository:
+    repo: deb http://files.freeswitch.org/repo/deb/freeswitch-1.8/ {{ ansible_distribution_release }} main
+    state: absent
+  when: ansible_os_family == 'Debian' and ansible_distribution_major_version|int >= 9
+```
 
-    - name: "Remove 1.8 FreeSWITCH src repo"
+```yaml
+- name: "移除1.8版本的FreeSWITCH源代码库"
       ansible.builtin.apt_repository:
         repo: deb-src http://files.freeswitch.org/repo/deb/freeswitch-1.8/ {{ ansible_distribution_release }} main
         state: absent
       when: ansible_os_family == 'Debian' and ansible_distribution_major_version|int >= 9
 
-    - name: "Add SignalWire FreeSWITCH repo"
+- name: "添加SignalWire FreeSWITCH源"
       ansible.builtin.apt_repository:
         repo: deb [signed-by=/usr/share/keyrings/signalwire-freeswitch-repo.gpg] https://freeswitch.signalwire.com/repo/deb/debian-release/ {{ ansible_distribution_release }} main
         state: present
         filename: freeswitch
       when: ansible_os_family == 'Debian' and ansible_distribution_major_version|int >= 9
 
-# You could set the password here or on your CLI. We set it in group_vars/all in our Ansible Inventory
+# 在这里或命令行中设置密码，我们在Ansible库存的group_vars/all中设置
 #  vars:
 #    - signalwire_freeeswitch_key: pat_XXXXX
 ```
-  
-  
-

@@ -1,55 +1,46 @@
+# 目录
 
-# Directory 
+## 关于
 
- 
+用户目录保存了注册到FreeSWITCH™的设备的凭证和配置信息。
 
-  
-## About
+点击展开目录
 
-The user directory holds credentials and configuration information for devices that register with FreeSWITCH™.
+* 1 [默认配置](#default-config)
+   * 1.1 [上级用户目录](#parent-user-directory)
+   * 1.2 [用户条目](#user-entry)
 
-  
-Click to expand Table of Contents
+## 默认配置
 
-* 1 [Default Config](#default-config)  
-   * 1.1 [Parent User Directory](#parent-user-directory)  
-   * 1.2 [User Entry](#user-entry)
+### 上级用户目录
 
-  
-## Default Config
+默认的上级XML目录文件是`conf/directory/default.xml`，并遍历子文件系统目录以包括来自多租户分区的用户（如果使用）。
 
-### Parent User Directory
-
-The default parent XML directory file is `conf/directory/default.xml` and traverses child file system directories to include users from multi-tenant partitions, if used.
-
-**Stock Directory Parent**
+**默认目录上级**
 
 ```xml
 <!--
-    NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE 
+    注意 注意 注意 注意 注意 注意 注意 注意 注意 注意
     
-    FreeSWITCH works off the concept of users and domains just like email.
-    You have users that are in domains for example 1000@domain.com.
+    FreeSWITCH的工作原理与电子邮件相似，都是基于用户和域的概念。
+    例如，您有一个位于域中的用户，如1000@domain.com。
     
-    When freeswitch gets a register packet it looks for the user in the directory
-    based on the from or to domain in the packet depending on how your sofia profile
-    is configured.  Out of the box the default domain will be the IP address of the
-    machine running FreeSWITCH.  This IP can be found by typing "sofia status" at the
-    CLI.  You will register your phones to the IP and not the hostname by default.
-    If you wish to register using the domain please open vars.xml in the root conf
-    directory and set the default domain to the hostname you desire.  Then you would
-    use the domain name in the client instead of the IP address to register 
-    with FreeSWITCH.
+    当FreeSWITCH收到一个注册包时，它会根据数据包中的发送方或接收方域，在目录中查找用户，
+    具体取决于您的sofia配置文件。默认情况下，IP地址将是默认域。
+    您可以通过在根目录的vars.xml中打开它，将默认域设置为您想要的主机名。
+    然后，在客户端中使用域名注册而不是IP地址来注册FreeSWITCH。
     
-    NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE 
+    注意 注意 注意 注意 注意 注意 注意 注意 注意 注意
 -->
+```
 
+```xml
 <include>
-  <!--the domain or ip (the right hand side of the @ in the addr-->
+  <!--域名或IP地址（addr中@右手边的部分）-->
   <domain name="$${domain}">
     <params>
       <param name="dial-string" value="{^^:sip_invite_domain=${dialed_domain}:presence_id=${dialed_user}@${dialed_domain}}${sofia_contact(*/${dialed_user}@${dialed_domain})}"/>
-      <!-- These are required for Verto to function properly -->
+      <!-- 这些是使Verto正常工作所必需的 -->
       <!-- <param name="jsonrpc-allowed-methods" value="verto"/> -->
       <!-- <param name="jsonrpc-allowed-event-channels" value="demo,conference,presence"/> -->
     </params>
@@ -68,9 +59,8 @@ The default parent XML directory file is `conf/directory/default.xml` and traver
       <group name="sales">
         <users>
           <!--
-              type="pointer" is a pointer so you can have the 
-              same user in multiple groups.  It basically means
-              to keep searching for the user in the directory.
+              type="pointer" 是指针，可以将同一用户添加到多个组中。
+              它基本上意味着在目录中继续寻找用户。
           -->
           <user id="1000" type="pointer"/>
           <user id="1001" type="pointer"/>
@@ -102,11 +92,11 @@ The default parent XML directory file is `conf/directory/default.xml` and traver
 </include>
 ```
 
-### User Entry
+### 用户输入
 
-Stock configuration for station 1000 located in `conf/directory/default/1000.xml`
+位于 `conf/directory/default/1000.xml` 的站点1000的股票配置
 
-**User 1000 Entry**
+**用户1000输入**
 
 ```xml
 <include>
@@ -129,8 +119,6 @@ Stock configuration for station 1000 located in `conf/directory/default/1000.xml
 </include>
 ```
 
-Context-Sensitive
+上下文敏感
 
-The user\_context variable will override the "public" context set as the default in both internal and external sip\_profiles because of the priority hierarchy: user > group > domain. This elevates the privilege of registered user stations to dial the more extensive and dangerous extensions in the "default" dialplan as opposed to the few innocuous extensions listed in the "public" dialplan that ships with FreeSWITCH.
-
-
+由于优先级层次结构：用户>组>域，user\_context变量将在内部和外部sip\_profiles中覆盖设置为默认的"public"上下文。这将提升注册用户站点的特权，以拨打更广泛且更危险的"default"拨号计划中的分机，而不是在带有FreeSWITCH的"public"拨号计划中列出的几个无害的分机。

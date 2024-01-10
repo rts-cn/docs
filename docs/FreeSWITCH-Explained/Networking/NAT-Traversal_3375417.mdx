@@ -1,57 +1,52 @@
+# NAT穿越
 
-# NAT Traversal 
+## 关于
 
- 
+对于支持不力的设备遇到了一些困难。FreeSWITCH竭尽全力修复了电话和网关设备中的NAT支持问题。
 
-## About
+为了帮助FreeSWITCH穿越NAT，请参阅[外部配置文件](../Configuration/Sofia-SIP-Stack/External-Profile_13173235.mdx#about)页面。
 
-Some difficulties have been encountered with devices that have poor [NAT](./NAT_6587473.mdx#about) support. FreeSWITCH goes to great lengths to repair broken NAT support in phones and gateway devices.
+一些路由器提供了应用层网关功能，可能会阻止FreeSWITCH的NAT穿越工作。有关更多信息，包括如何禁用它，请参阅[ALG页面](./ALG_3375419.mdx#about)。
 
-In order to aid FreeSWITCH in traversing [NAT](./NAT_6587473.mdx#about) please see the [External profile](../Configuration/Sofia-SIP-Stack/External-Profile_13173235.mdx#about) page.
+点击这里展开目录
 
-Some routers offer an Application Layer Gateway feature which can prevent FreeSWITCH NAT traversal from working. See the [ALG page](./ALG_3375419.mdx#about) for more information, including how to disable it.
-
-  
-Click here to expand Table of Contents
-
-* 1 [Using STUN to aid in NAT Traversal](#using-stun-to-aid-in-nat-traversal)  
-   * 1.1 [STUN servers](#stun-servers)
-* 2 [Using FreeSWITCH built-in methods to aid in NAT Traversal](#using-freeswitch-built-in-methods-to-aid-in-nat-traversal)  
-   * 2.1 [nat-options-ping](#nat-options-ping)  
-   * 2.2 [NDLB-force-rport](#ndlb-force-rport)  
-   * 2.3 [apply-nat-acl](#apply-nat-acl)  
-   * 2.4 [sip\_sticky\_contact](#-sip_sticky_contact-)  
-   * 2.5 [sip\_nat\_detected](#-sip_nat_detected-)  
-   * 2.6 [sip-force-contact](#-sip-force-contact-)  
-   * 2.7 [NDLB-connectile-dysfunction](#ndlb-connectile-dysfunction)  
-   * 2.8 [NDLB-tls-connectile-dysfunction](#-ndlb-tls-connectile-dysfunction-)  
+* 1 [使用STUN协助进行NAT穿越](#using-stun-to-aid-in-nat-traversal)
+   * 1.1 [STUN服务器](#stun-servers)
+* 2 [使用FreeSWITCH内置方法协助进行NAT穿越](#using-freeswitch-built-in-methods-to-aid-in-nat-traversal)
+   * 2.1 [nat-options-ping](#nat-options-ping)
+   * 2.2 [NDLB-force-rport](#ndlb-force-rport)
+   * 2.3 [apply-nat-acl](#apply-nat-acl)
+   * 2.4 [sip_sticky_contact](#-sip_sticky_contact-)
+   * 2.5 [sip_nat_detected](#-sip_nat_detected-)
+   * 2.6 [sip-force-contact](#-sip-force-contact-)
+   * 2.7 [NDLB-connectile-dysfunction](#ndlb-connectile-dysfunction)
+   * 2.8 [NDLB-tls-connectile-dysfunction](#-ndlb-tls-connectile-dysfunction-)
    * 2.9 [NDLB-connectile-dysfunction-2.0](#-ndlb-connectile-dysfunction-20-)
-* 3 [Using Phone specific features to aid in NAT Traversal](#using-phone-specific-features-to-aid-in-nat-traversal)  
+* 3 [使用电话特定功能协助进行NAT穿越](#using-phone-specific-features-to-aid-in-nat-traversal)
    * 3.1 [Polycom](#polycom)
-* 4 [FreeSWITCH Behind NAT](#freeswitch-behind-nat)  
-   * 4.1 [sip\_profiles](#sip_profiles)
-* 5 [Restricting Port Range](#restricting-port-range--)
-* 6 [Distilled Wisdom](#distilled-wisdom)
-* 7 [See Also](#see-also--)
+* 4 [FreeSWITCH位于NAT后面](#freeswitch-behind-nat)
+   * 4.1 [SIP配置文件](#sip_profiles)
+* 5 [限制端口范围](#restricting-port-range--)
+* 6 [精华智慧](#distilled-wisdom)
+* 7 [参见](#see-also--)
 
-### Using STUN to aid in NAT Traversal
+### 使用STUN协助进行NAT穿越
 
-[STUN](https://en.wikipedia.org/wiki/STUN) is a method to allow an end host (i.e. phone) to discover its public IP address if it is located behind a [NAT](./NAT_6587473.mdx#about) . Using this method requires a STUN server on the public internet and a client on the phone. The phone's STUN client queries the STUN server for it's own public IP and transmits the information it has received in it's connection information in the SIP packets it sends to the SIP server.
+[STUN](https://en.wikipedia.org/wiki/STUN)是一种方法，可以使端点主机（即电话）在位于[NAT](./NAT_6587473.mdx#about)后时发现自己的公共IP地址。使用这种方法需要在公共网络上设置一个STUN服务器，并在手机上安装一个客户端。电话的STUN客户端向STUN服务器查询自己的公共IP，并将收到的信息传输到其连接信息中，通过发送给SIP服务器的SIP数据包传送。
 
-Enable and configure STUN settings on your phone in order correctly to report your phone's contact information to FreeSWITCH when registering. Unfortunately, not all phones have a properly working STUN client.
+在注册时，启用和配置手机上的STUN设置，以便正确地向FreeSWITCH报告手机的联系信息。不幸的是，并非所有手机都有一个正常工作的STUN客户端。
 
-#### STUN servers
+#### STUN服务器
 
-This site contains a list of public STUN servers: <https://gist.github.com/zziuni/3741933>   
-[stun.freeswitch.org](http://stun.freeswitch.org) is never guaranteed to be up and running so use it in production at your own risk. There are several open source projects to run your own STUN server, e.g. [STUNTMAN](http://www.stunprotocol.org/)
+该网站包含一个公共STUN服务器的列表： <https://gist.github.com/zziuni/3741933>   [stun.freeswitch.org](http://stun.freeswitch.org) 不保证始终上线运行，因此在生产环境中使用时需自担风险。有几个开源项目可以运行你自己的STUN服务器，例如[STUNTMAN](http://www.stunprotocol.org/)
 
-### Using FreeSWITCH built-in methods to aid in NAT Traversal
+### 使用FreeSWITCH内置方法协助进行网络地址转换(NAT)穿越
 
 #### nat-options-ping
 
-This parameter causes FreeSWITCH to regularly (every 20 - 40s) send an OPTIONS packet to NATed registered endpoints in order to keep the port on the clients firewall open. This is usefull if the initial REGISTER works, but subsequently the phone is no longer reachable, as the clients firewall has closed the port the REGISTER originated from.
+此参数使FreeSWITCH定期（每20-40秒）向NAT注册的终端发送OPTIONS数据包，以保持客户端防火墙上的端口打开。如果初始的注册正确工作，但随后电话无法访问，这个功能非常有用，因为客户端防火墙已关闭注册的端口。
 
-Activate this parameter in sip\_profiles/internal.xml and restart the sip profile:
+在sip\_profiles/internal.xml中激活此参数，然后重新启动SIP配置文件：
 
 **sip\_profiles/internal.xml**
 
@@ -61,7 +56,7 @@ Activate this parameter in sip\_profiles/internal.xml and restart the sip profil
 
 #### NDLB-force-rport
 
-This parameter forces FreeSWITCH to send SIP responses to the network port from which they were received. Use with caution, as it may break things for devices that actually expect to get replies on a different port. See [Sofia Configuration Files](../Configuration/Sofia-SIP-Stack/Sofia-Configuration-Files_7144453.mdx#-default-configuration-file-)  for more details.
+此参数强制FreeSWITCH将SIP响应发送到收到请求的网络端口。请谨慎使用，因为它可能会破坏那些期望在不同端口上接收回复的设备。有关详细信息，请参见[Sofia配置文件](../Configuration/Sofia-SIP-Stack/Sofia-Configuration-Files_7144453.mdx#-default-configuration-file-)。
 
 **sip\_profiles/internal.xml**
 
@@ -69,29 +64,35 @@ This parameter forces FreeSWITCH to send SIP responses to the network port from 
  <param name="NDLB-force-rport" value="true/safe"/>
 ```
 
-#### apply-nat-acl
+#### 应用NAT访问控制列表(ACL)
 
-You can add the apply-nat-acl param to your profile to force [NAT](./NAT_6587473.mdx#about) behavior when matching a certain access list
+您可以将 apply-nat-acl 参数添加到您的配置文件中，以在匹配特定访问列表时强制使用 NAT 行为。
 
-&lt;param name="apply-nat-acl" value="rfc1918"/>
+```xml
+<param name="apply-nat-acl" value="rfc1918"/>
+```
 
-Possible values of apply-nat-acl using access list: [ACL Notes](./3965687.mdx#-acl-)
+使用访问列表时，apply-nat-acl 的可能值请参考 [ACL 注释](./3965687.mdx#-acl-)
 
 ####  sip_sticky_contact 
 
-&lt;action application="set" data="sip_sticky_contact=true"/>
+```xml
+<action application="set" data="sip_sticky_contact=true"/>
+```
 
 ####  sip_nat_detected 
 
-sip\_nat\_detected is set to true when [NAT](./NAT_6587473.mdx#about) is detected. Use it in your dialplan to handle NATted devices differently.
+当检测到 NAT 时，sip_nat_detected 的值将设置为 true。在您的拨号计划中使用它来处理经过 NAT 处理的设备。
 
-&lt;condition field="${sip_nat_detected}" expression="true">
+```xml
+<condition field="${sip_nat_detected}" expression="true">
+```
 
 ####  sip-force-contact 
 
-The sip-force-contact variable can be used to activate NATHACK / TLSHACK registration, which rewrites the contact IP:port.
+sip-force-contact 变量可用于激活 NATHACK / TLSHACK 注册，它将重写联系人的 IP:port。
 
-**User Directory Example**
+**用户目录示例**
 
 ```xml
 <user id="100" mailbox="100">
@@ -105,42 +106,38 @@ The sip-force-contact variable can be used to activate NATHACK / TLSHACK registr
 </user> 
 ```
 
-  
 #### NDLB-connectile-dysfunction
 
-  
-* Rewrites contact IP and port to that of the NAT device by looking at IP address:port info from the packets reaching FreeSWITCH.
-* Forces REGISTER expiry to 30 seconds. (Unless sip-force-expires is set)
+* 通过查看到达 FreeSWITCH 的数据包中的 IP 地址:port 信息，重写联系人的 IP 和端口。
+* 强制 REGISTER 过期时间为 30 秒。（除非设置了 sip-force-expires 参数）
 
-This is similar to the way Asterisk tries to deal with NAT traversal.  
-  
-  
-####  NDLB-tls-connectile-dysfunction 
+这类似于 Asterisk 处理 NAT 穿越的方式。
 
-  
-* Rewrites contact port
+#### NDLB-tls-connectile-dysfunction 
 
-####  NDLB-connectile-dysfunction-2.0 
+* 重写联系人的端口
 
-Needs documentation; apparently rewrites IP and port and adds the \`fs\_path\` parameter in the Contact header.
+#### NDLB-connectile-dysfunction-2.0 
 
-* Forces REGISTER expiry to 30 seconds. (Unless sip-force-expires is set)
+需要文档说明，显然重写 IP 和端口，并在 Contact 头中添加 `fs_path` 参数。
 
-### Using Phone specific features to aid in NAT Traversal
+* 强制 REGISTER 过期时间为 30 秒。（除非设置了 sip-force-expires 参数）
 
-Your phone may allow you to specify your public network information to use when registering and/or a keepalive-mechanism to keep the signalling-port open. Please check with the manufacturer of your phone for the best information.
+### 使用手机特定功能来帮助进行 NAT 穿越
+
+你的手机可能允许你指定注册和/或保持信号端口打开的公共网络信息的使用方式。请与手机制造商核实获取最佳信息。
 
 #### Polycom
 
 &lt;nat nat.ip="4.2.2.2" nat.signalPort="" nat.mediaPortStart="" nat.keepalive.interval=""/>
 
-### FreeSWITCH Behind NAT
+### NAT 后的 FreeSWITCH
 
-With FreeSWITCH behind NAT, FreeSWITCH can only bind its ports to a local IP. However when connecting to FreeSWITCH from an external network, the external IP is needed.
+在 NAT 后使用 FreeSWITCH 时，FreeSWITCH 只能将端口绑定到本地 IP。然而，在从外部网络连接到 FreeSWITCH 时，需要外部 IP。
 
-With the standard setup users may be able to register phones correctly, however the phones may not be reachable and you may encounter no audio or one way audio when a call is set up.
+在标准设置下，用户可能可以成功注册电话，但电话可能无法访问，并且在建立通话时可能遇到没有音频或单向音频的问题。
 
-This is one working example for FreeSWITCH behind NAT:
+以下是 FreeSWITCH 在 NAT 后的一个工作示例：
 
 **vars.xml**
 
@@ -152,11 +149,11 @@ This is one working example for FreeSWITCH behind NAT:
 
 ```
 
-host:[domain.example.com](http://domain.example.com) is another possible value; however this will not toggle the autonat flags.
+另外一个可能的值是 host:[domain.example.com](http://domain.example.com)，但这不会切换自动 NAT 标志。
 
-If FreeSWITCH sits behind NAT with dynamic DNS and stun doesn't work, you should write a script that determines your public IP address, makes the change, and calls reloadxml. This also holds true for the external profile. No special processing happens to determine the IP address before the variable gets passed to the external profile.
+如果 FreeSWITCH 使用动态 DNS 的方式位于 NAT 后且 stun 不起作用，您应该编写一个脚本来确定您的公共 IP 地址，进行更改并调用 reloadxml。对于外部配置文件，同样适用。在将变量传递给外部配置文件之前，不会发生特殊处理以确定 IP 地址。
 
-host:[domain.example.com](http://domain.example.com) may be used in places "where you have two interfaces in a box and one is public–facing and one isn't, so one never has to tell the lies."
+host:[domain.example.com](http://domain.example.com) 可以在“在一台设备上有两个接口，一个面向公网，另一个不是，因此不必撒谎”的情况下使用。
 
 #### sip_profiles
 
@@ -173,15 +170,15 @@ host:[domain.example.com](http://domain.example.com) may be used in places "wher
 <param name="ext-rtp-ip" value="$${external_rtp_ip}"/> 
 ```
 
-Do not set ext-rtp-ip to a domain name instead of an IP or STUN entry; you will encounter a "SIP/2.0 500 Cannot Get IP Address for Media" error.
+不要将`ext-rtp-ip`设置为域名而不是IP或STUN条目，否则将遇到"SIP/2.0 500 Cannot Get IP Address for Media"错误。
 
-By default external\_sip\_ip and external\_rtp\_ip are set in vars.xml to use the FreeSWITCH STUN server.
+默认情况下，`external_sip_ip`和`external_rtp_ip`在`vars.xml`中设置为使用FreeSWITCH STUN服务器。
 
-### Restricting Port Range  
+### 限制端口范围
 
-Some firewall providers provide limited support for port forwarding or virtual servers or whatever they are called by the provider. To help, FreeSWITCH can limit the ports it will use for RTP streams, so you don't have to forward 16,000 ports. You will need enough to handle all media channels coming across the firewall. Keep that in mind.
+一些防火墙供应商对于端口转发或虚拟服务器等提供有限的支持。为了提供帮助，FreeSWITCH可以限制用于RTP流的端口范围，这样您就不必转发16000个端口。您需要足够的端口来处理从防火墙传输的所有媒体通道，记住这一点。
 
-Specify the lower and upper bounds on port numbers in conf/autoload\_configs/switch.conf.xml as follows:
+在`conf/autoload_configs/switch.conf.xml`中指定端口范围的下限和上限，如下所示：
 
 **switch.conf.xml**
 
@@ -190,33 +187,30 @@ Specify the lower and upper bounds on port numbers in conf/autoload\_configs/swi
 <param name="rtp-end-port" value="16389"/> 
 ```
 
-In the example above, you only need to forward 6 ports, so it will also only allow a maximum of 6 audio channels across that connection, and depending on networking configurations maybe not even that. Be very careful with your expectation level here.
+在上面的示例中，您只需要转发6个端口，因此它也只允许跨该连接传输的最大6个音频通道，取决于网络配置，甚至可能没有这么多。在这里要非常谨慎，请注意您的期望值。
 
-### Distilled Wisdom
+### 重要提示
 
-Archived for posterity from: \[[FS-users mailing list](http://lists.freeswitch.org/pipermail/freeswitch-users/2012-November/089739.html)\]
+摘自：\[[FS-users邮件列表](http://lists.freeswitch.org/pipermail/freeswitch-users/2012-November/089739.html)\]
 
-Kristian Kielhofner &lt;kris at [kriskinc.com](http://kriskinc.com)\> Wed Nov 21 07:49:52 MSK 2012
+Kristian Kielhofner &lt;kris at [kriskinc.com](http://kriskinc.com)\> 2012年11月21日 MSK时间上午7:49:52
 
-You can rewrite the SDP to anything you want but that doesn't mean you'll get media.
+您可以将SDP重写为任何您想要的内容，但这并不意味着您将获得媒体。
 
-I suggest you do some research on the two main schools for SIP NAT traversal (far end and near end). In a nutshell, far end NAT traversal is implemented by the server. This is the FreeSWITCH default. The SDPs are rewritten to the address of the FreeSWITCH server and passed to the remote endpoint. This causes the media to be relayed at the server between the endpoints. This has the advantage of being universally compatible - regardless of how dumb the endpoint(s) is/are. Disadvantages are many - increased sever load, bandwidth, latency, etc. However, with many endpoints this is the only choice.
+我建议你对SIP NAT穿越的两个主要学派（远端和近端）进行一些研究。简单来说，远端NAT穿越是由服务器实现的。这是FreeSWITCH的默认选择。SDP被重写为FreeSWITCH服务器的地址，并传递到远程终端。这导致媒体在终端之间通过服务器进行中继。这有一个优点，就是无论终端有多笨，都可以普遍适用。劣势也是很多的——增加了服务器负载、带宽、延迟等等。然而，对于许多终端来说，这是唯一的选择。
 
-Near end NAT traversal relies on advanced technologies such as STUN, TURN, and ICE to be supported by the client (and the servers to enable them to be configured and available). TURN actually blurs the lines between these two strategies, as do various hybrid approaches using local proxies, etc. but that's for another day.
+近端NAT穿越依赖于先进的技术，如STUN、TURN和ICE，需要客户端支持，并且服务器要能够配置和可用。TURN实际上模糊了这两个策略之间的界线，还有一些使用本地代理等混合方法，但这是另一个话题了。
 
-Bypass media is incompatible with NAT unless you're using STUN/TURN/ICE in your clients and even then I'm not sure FreeSWITCH will completely and cleanly handle the various ICE/SIP/SDP interactions.
+除非您的客户端使用STUN/TURN/ICE，否则绕过媒体与NAT不兼容，即使这样，我也不能确定FreeSWITCH是否完全和清晰地处理各种ICE/SIP/SDP交互。
 
-### See Also  
+### 参见
 
-[Access Control List (ACL)](./General-NAT-example-scenarios_13173280.mdx#scenario-1) (Modifying NAT behavior when matching a certain access list)
+[访问控制列表（ACL）](./General-NAT-example-scenarios_13173280.mdx#scenario-1)（在匹配特定访问列表时修改NAT行为）
 
-[General NAT example scenarios](./General-NAT-example-scenarios_13173280.mdx#scenario-1) \- real-world examples
+[一般NAT示例场景](./General-NAT-example-scenarios_13173280.mdx#scenario-1) - 真实世界的例子
 
-[NAT](./NAT_6587473.mdx#about) \- Network Address Translation
+[NAT](./NAT_6587473.mdx#about) - 网络地址转换
 
-[NAT traversal](./NAT-Traversal_3375417.mdx#about) \- user NAT traversal
+[NAT穿越](./NAT-Traversal_3375417.mdx#about) - 用户NAT穿越
 
-[sofia ext-rtp-ip settings](https://freeswitch.org/confluence/display/~boteman/sofia.conf.xml#sofia.conf.xml-Settings)
-
-  
-
+[sofia ext-rtp-ip设置](https://freeswitch.org/confluence/display/~boteman/sofia.conf.xml#sofia.conf.xml-Settings)

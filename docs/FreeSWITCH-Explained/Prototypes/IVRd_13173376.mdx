@@ -1,134 +1,134 @@
-
 # IVRd 
 
  
 
-## About
+## 关于
 
-The FreeSWITCH IVR daemon ("ivrd") is a handy abstraction layer that sits on top of the [ESL](../Modules/mod_esl_6587340.mdx#about). The basic idea is that the ivrd will allow the user to have a STDIN/STDOUT interface for simple call control. This makes it even easier to use the powerful event socket for handling calls.
+FreeSWITCH IVR 守护进程（"ivrd"）是一个方便的抽象层，它位于 [ESL](../Modules/mod_esl_6587340.mdx#about) 之上。基本思想是 ivrd 允许用户使用 STDIN/STDOUT 接口进行简单呼叫控制。这使得使用强大的事件套接字处理呼叫变得更加容易。
 
-Click here to expand Table of Contents
+点击此处展开目录
 
-* 1 [Requirements](#requirements)
-* 2 [Launching the daemon](#launching-the-daemon)
-* 3 [Examples](#examples)  
-   * 3.1 [Perl ESL::IVR Syntax](#perl-eslivr-syntax)
-* 4 [Troubleshooting](#troubleshooting)
-* 5 [See Also](#see-also)
+* 1 [要求](#requirements)
+* 2 [启动守护进程](#launching-the-daemon)
+* 3 [示例](#examples)  
+   * 3.1 [Perl ESL::IVR 语法](#perl-eslivr-syntax)
+* 4 [故障排除](#troubleshooting)
+* 5 [参见](#see-also)
 
-## Requirements
+## 要求
 
-There are a few prerequisites that you will need:
+您将需要满足以下几个先决条件：
 
-* Executable script that can read/write to STDIN/STDOUT
-* An unblocked TCP/UDP port where the ivrd can listen for socket connections
-* If using **ESL::IVR** module then ESL's **perlmod** needs to be built
-* At least one dialplan extension that sets the **ivr\_path** variable and calls the **socket** application
+* 可以读/写 STDIN/STDOUT 的可执行脚本
+* 一个未阻塞的 TCP/UDP 端口，ivrd 可以用于监听套接字连接
+* 如果使用 **ESL::IVR** 模块，则需要构建 ESL 的 **perlmod**
+* 至少一个设置 **ivr\_path** 变量并调用 **socket** 应用程序的拨号计划扩展
 
-## Launching the daemon
+## 启动守护进程
 
-The daemon must be left running in it's own process. We recommend using GNU **screen** and leaving the ivrd running in the foreground on one of the screens.
+守护进程必须在自己的进程中持续运行。我们建议使用 GNU **screen**，并将 ivrd 在其中一个屏幕上保持前台运行。
 
-Launch the ivrd and specify the host and port:
+启动 ivrd 并指定主机和端口：
 
 ```bash
 /usr/local/freeswitch/bin/fs_ivrd -h 127.0.0.1 -p 9090
 ```
 
-The daemon will be listening for socket connections on port 9090\. (Use whichever port suits you.) The daemon can listen for connections on the localhost or on a different host. Be sure that you have good network connectivity between the host and the daemon if they are not on the same machine.
+守护进程将在端口 9090 上监听套接字连接。（使用适合您的任何端口。）守护进程可以在本地主机或不同主机上监听连接。如果主机和守护进程不在同一台机器上，请确保它们之间有良好的网络连接。
 
-## Examples
+## 示例
 
-Using the ivrd launched above (localhost, port 9090), here is a simple dialplan entry:
+使用上述启动的 ivrd（本地主机，端口 9090），这是一个简单的拨号计划条目：
 
 ```xml
 <extension name="ivrd-example1">
    <condition field="destination_number" expression="^(995\d)$">
-     <action application="log" data="INFO Let's do some ivrd, shall we?"/>
+     <action application="log" data="INFO 让我们来做一些IVRD，好吗？"/>
      <action application="set" data="ivr_path=/usr/local/freeswitch/scripts/ivrd-hello_world.pl"/>
      <action application="socket" data="127.0.0.1:9090 full"/>
    </condition>                     
  </extension>
 ```
 
-Note how we set the channel variable **ivr\_path** before calling the **socket** app. The **ivr\_path** variable must contain the name of an _executable_ script. Below is an example of such a script:
+注意，在调用**socket**应用程序之前，我们设置了通道变量 **ivr\_path**。**ivr\_path** 变量必须包含一个可执行脚本的名称。下面是这样一个脚本的示例：
 
 ```perl
 #!/usr/bin/perl
 #
 # ivrd-hello_world.pl                 
 #
-# Launched from FreeSWITCH using socket app and ${ivr_path} variable
+# 从FreeSWITCH中使用socket app和${ivr_path}变量启动
 #
 use strict;
 use warnings;
 
-# Use lib is easy, but you can also install your ESL.pm and esl/perl/ESL/* into site_perl
+# 使用lib很容易，但您还可以将ESL.pm和esl/perl/ESL/*安装到site_perl中
 use lib '/usr/src/freeswitch/libs/esl/perl';  
 use ESL::IVR
                         
-$| = 1;        # Turn off buffering
-select STDERR; # We'll take this stream, thanks
+$| = 1;        # 关闭缓冲
+select STDERR; # 我们会处理这个流，谢谢
 print "Starting ivrd-hello_world.pl...\n\n";
 
-## Set the root dir for sound files
+## 设置声音文件的根目录
 my $sound_root = '/usr/local/freeswitch/sounds/en/us/callie';
                          
-## Create the connection object which is basically an IVR
+## 创建连接对象，它基本上是一个IVR
 my $con = new ESL::IVR;  
 
-## Get this channel's uuid and dialed number
+## 获取此通道的UUID和被拨号码
 my $uuid = $con->{_uuid};
 my $dest = $con->getVar('destination_number');
                          
-## Answer call, sleep for half second to let media get up and running
+## 应答呼叫，延迟半秒以确保媒体正常运行
 $con->execute('answer','',$uuid);
 $con->execute('sleep','500');
                                                                                            
-## Play a simple greeting        
+## 播放简单的欢迎语        
 $con->playback('ivr/ivr-welcome_to_freeswitch.wav'); 
+```
 
-## Tell the call what he/she dialed
+## 告诉被呼叫方他/她拨打的号码
 $con->execute('sleep','500');
 $con->execute('say', "en number iterated $dest");
 
-## Politely disconnect             
+## 礼貌地断开连接             
 $con->execute('sleep','1000');
 $con->playback('ivr/ivr-thank_you.wav');
 $con->execute('sleep','500');
 $con->playback('voicemail/vm-goodbye.wav');
 ```
 
-### Perl ESL::IVR Syntax
+### Perl ESL::IVR 语法
 
-The $con object above has very simple syntax:
+上述的 $con 对象有非常简单的语法：
 
-Get or Set a channel variable:
+获取或设置通道变量：
 
 ```perl
 my $script_var = $con->getVar('var_name');
 $con->setVar('var_name','var_value_to_set');
 ```
 
-Execute an API:
+执行 API：
 
 ```perl
 my $result = $con->api('api_name','api args here');
 ```
 
-Execute a dialplan application:
+执行拨号计划应用程序：
 
 ```perl
 $con->execute('app_name','app args here');
 ```
 
-Playback shortcut:
+播放快捷方式：
 
 ```perl
 $con->playback('/path/to/sound/file.wav');
 ```
 
-PlayAndGetDigits shortcut:
+播放并读取按键快捷方式：
 
 ```perl
 my $digits = $con->read('min', 'max', 'tries',
@@ -138,7 +138,7 @@ my $digits = $con->read('min', 'max', 'tries',
                         'chan_var', 'regex');
 ```
 
-Read shortcut:
+读取快捷方式：
 
 ```perl
 my $digits = $con->read('min', 'max', 'chan_var',
@@ -146,18 +146,16 @@ my $digits = $con->read('min', 'max', 'chan_var',
                         'timeout', 'termination_digits');
 ```
 
-## Troubleshooting
+## 故障排除
 
-If you are experiencing issues, like "socket errors" on the FS CLI then check a few things:
+如果您遇到问题，比如在 FS CLI 上出现 "socket errors"，请检查一些事项：
 
-* Confirm that the port number of the daemon and the socket app are the same
-* Test your extension using **nc** as described [here](../Client-and-Developer-Interfaces/Event-Socket-Library/Event-Socket-Outbound_3375460.mdx#faq)
-* Make sure that your script is executable
-* Run your script from the command line and confirm that there are no syntax errors
+* 确认守护进程的端口号和套接字应用程序的端口号是相同的
+* 使用 **nc** 来测试您的分机，如 [这里](../Client-and-Developer-Interfaces/Event-Socket-Library/Event-Socket-Outbound_3375460.mdx#faq) 所述
+* 确保您的脚本是可执行的
+* 从命令行运行您的脚本，并确认没有语法错误
 
-## See Also
+## 参见
 
-* [Event Socket Outbound](../Client-and-Developer-Interfaces/Event-Socket-Library/Event-Socket-Outbound_3375460.mdx#faq)
-* [PHP Example](../Client-and-Developer-Interfaces/PHP-ESL/index.mdx#-ivrd-)
-
-
+* [事件套接字传出](../Client-and-Developer-Interfaces/Event-Socket-Library/Event-Socket-Outbound_3375460.mdx#faq)
+* [PHP 示例](../Client-and-Developer-Interfaces/PHP-ESL/index.mdx#-ivrd-)

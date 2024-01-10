@@ -1,41 +1,36 @@
-
 # Golang ESL 
 
- 
+## 介绍
 
-## Introduction
+[GoESL](https://github.com/0x19/goesl) 是一个非常简单直接的 [Go](http://golang.org/) 包，旨在与 FreeSWITCH [ESL](Event-Socket-Library/index.mdx#-new-) 进行交互。GoESL 支持客户端和服务器。服务器用于绑定和监听传入的 FreeSWITCH 消息，客户端用于发送 API 命令。GoESL 包含了一些帮助函数，可以在 helpers.go 中找到，因此您可以轻松地应答、挂断或发送 API 事件。
 
-[GoESL](https://github.com/0x19/goesl) is a very simple and straight forward [Go](http://golang.org/) package designed to interact with FreeSWITCH [ESL](Event-Socket-Library/index.mdx#-new-). GoESL supports both client and server. Server is used to bind and listen for incoming FreeSWITCH messages where client is used for sending API commands. GoESL package contains few helpers which can be found in helpers.go so you can easily answer, hangup or send api events.
+## 安装
 
-## Installation
+[GoESL](https://github.com/0x19/goesl) 是一个可扩展的包。使用标准的 go get 命令即可快速安装 :) 请确保您的电脑上已正确设置 [Go](http://golang.org/)。
 
-[GoESL](https://github.com/0x19/goesl) is a package designed to be extended. Standard go get will get you going :) Make sure to have [Go](http://golang.org/) properly setup on your box.
+如果您不知道如何安装，可以参考 [Go 入门](http://golang.org/doc/install)。
 
-If you're unsure how to do it [Go Getting Started](http://golang.org/doc/install) will help you out.
-
-**Installing GoESL package**
+**安装 GoESL 包**
 
 ```cpp
 go get github.com/0x19/goesl
 ```
 
-## How To / Examples
+## 如何使用 / 示例
 
-Following block of the code is the only thing you will need to do in order to import GoESL
+以下代码块是导入 GoESL 的唯一需求：
 
-  
 ```cpp
 import (
     . "github.com/0x19/goesl"
 )
 ```
 
-  
-All available examples can be found at [GoESL Examples](https://github.com/0x19/goesl/tree/master/examples)
+所有可用的示例可以在 [GoESL 示例](https://github.com/0x19/goesl/tree/master/examples) 中找到。
 
-### Client Example
+### 客户端示例
 
-Following example will connect to FreeSWITCH event socket interface and send originate api command  
+下面的示例将连接到 FreeSWITCH 事件套接字接口并发送 originate API 命令：
 
 ```cpp
 package examples
@@ -49,28 +44,30 @@ import (
 )
 
 var (
-    fshost   = flag.String("fshost", "localhost", "Freeswitch hostname. Default: localhost")
-    fsport   = flag.Uint("fsport", 8021, "Freeswitch port. Default: 8021")
-    password = flag.String("pass", "ClueCon", "Freeswitch password. Default: ClueCon")
-    timeout  = flag.Int("timeout", 10, "Freeswitch conneciton timeout in seconds. Default: 10")
+    fshost   = flag.String("fshost", "localhost", "Freeswitch 主机名。默认值：localhost")
+    fsport   = flag.Uint("fsport", 8021, "Freeswitch 端口。默认值：8021")
+    password = flag.String("pass", "ClueCon", "Freeswitch 密码。默认值：ClueCon")
+    timeout  = flag.Int("timeout", 10, "Freeswitch 连接超时时间（秒）。默认值：10")
 )
 
 func main() {
+```
 
-    // Boost it as much as it can go ...
-	// We don't need this since Go 1.5
+```go
+    // 尽力提升它的性能...
+	// 自从 Go 1.5 版本以后我们不再需要这行代码了
     // runtime.GOMAXPROCS(runtime.NumCPU())
 
     client, err := NewClient(*fshost, *fsport, *password, *timeout)
 
     if err != nil {
-        Error("Error while creating new client: %s", err)
+        Error("创建新的客户端时出错：%s", err)
         return
     }
 
-    // Apparently all is good... Let us now handle connection :)
-    // We don't want this to be inside of new connection as who knows where it my lead us.
-    // Remember that this is crutial part in handling incoming messages. This is a must!
+    // 看起来一切都很好... 现在让我们来处理连接吧 :)
+    // 我们不希望这个在 new connection 函数里面，因为谁知道这会把我们带到哪里。
+    // 记住这是处理传入消息的关键部分。这是必须的！
     go client.Handle()
 
     client.Send("events json ALL")
@@ -82,21 +79,21 @@ func main() {
 
         if err != nil {
 
-            // If it contains EOF, we really dont care...
+            // 如果错误信息包含 EOF，那么我们真的不关心它...
             if !strings.Contains(err.Error(), "EOF") && err.Error() != "unexpected end of JSON input" {
-                Error("Error while reading Freeswitch message: %s", err)
+                Error("读取 Freeswitch 消息时出错：%s", err)
             }
 
             break
         }
 
-        Debug("Got new message: %s", msg)
+        Debug("收到新消息：%s", msg)
     }
 }
 ```
 
   
-You can run this code by saving it as client.go and than running
+可以将此代码保存为 client.go 然后运行以下命令来运行它
 
   
 ```bash
@@ -104,9 +101,9 @@ You can run this code by saving it as client.go and than running
 ```
 
   
-### Server Example (TTS)
+### 服务器示例（TTS）
 
-Following example will start server and listen for incoming messages. Once received speak (TTS) will be initiated to the originator.
+下面的示例将启动服务器并监听传入的消息。一旦收到消息，将会发起 TTS（文本转语音）来回应原发者。
 
 ```cpp
 package examples
@@ -125,16 +122,18 @@ func main() {
 
     defer func() {
         if r := recover(); r != nil {
-            Error("Recovered in: ", r)
+            Error("恢复错误: ", r)
         }
     }()
+```
 
-    // Boost it as much as it can go ...
-    // We don't need this since Go 1.5
+```go
+    // 尽可能地提升...
+    // 自Go 1.5起，我们不再需要这个
     // runtime.GOMAXPROCS(runtime.NumCPU())
 
     if s, err := NewOutboundServer(":8084"); err != nil {
-        Error("Got error while starting FreeSWITCH outbound server: %s", err)
+        Error("在启动FreeSWITCH呼出服务器时发生错误： %s", err)
     } else {
         go handle(s)
         s.Start()
@@ -142,7 +141,7 @@ func main() {
 
 }
 
-// handle - Running under goroutine here to explain how to run tts outbound server
+// handle - 运行在goroutine下以解释如何运行tts呼出服务器
 func handle(s *OutboundServer) {
 
     for {
@@ -150,91 +149,90 @@ func handle(s *OutboundServer) {
         select {
 
         case conn := <-s.Conns:
-            Notice("New incomming connection: %v", conn)
+            Notice("新建传入连接： %v", conn)
 
             if err := conn.Connect(); err != nil {
-                Error("Got error while accepting connection: %s", err)
+                Error("在接受连接时发生错误: %s", err)
                 break
             }
 
             answer, err := conn.ExecuteAnswer("", false)
 
             if err != nil {
-                Error("Got error while executing answer: %s", err)
+                Error("在执行应答时发生错误: %s", err)
                 break
             }
 
-            Debug("Answer Message: %s", answer)
-            Debug("Caller UUID: %s", answer.GetHeader("Caller-Unique-Id"))
+            Debug("应答消息: %s", answer)
+            Debug("呼叫者UUID: %s", answer.GetHeader("Caller-Unique-Id"))
 
             cUUID := answer.GetCallUUID()
 
             if te, err := conn.ExecuteSet("tts_engine", "flite", false); err != nil {
-                Error("Got error while attempting to set tts_engine: %s", err)
+                Error("在尝试设置tts_engine时发生错误: %s", err)
             } else {
-                Debug("TTS Engine Msg: %s", te)
+                Debug("TTS引擎消息: %s", te)
             }
 
             if tv, err := conn.ExecuteSet("tts_voice", "slt", false); err != nil {
-                Error("Got error while attempting to set tts_voice: %s", err)
+                Error("在尝试设置tts_voice时发生错误: %s", err)
             } else {
-                Debug("TTS Voice Msg: %s", tv)
+                Debug("TTS语音消息: %s", tv)
             }
+```
 
-            if sm, err := conn.Execute("speak", goeslMessage, true); err != nil {
-                Error("Got error while executing speak: %s", err)
-                break
-            } else {
-                Debug("Speak Message: %s", sm)
+```go
+if sm, err := conn.Execute("speak", goeslMessage, true); err != nil {
+    Error("执行speak时出现错误: %s", err)
+    break
+} else {
+    Debug("Speak消息: %s", sm)
+}
+
+if hm, err := conn.ExecuteHangup(cUUID, "", false); err != nil {
+    Error("执行hangup时出现错误: %s", err)
+    break
+} else {
+    Debug("Hangup消息: %s", hm)
+}
+
+go func() {
+    for {
+        msg, err := conn.ReadMessage()
+
+        if err != nil {
+
+            // 如果包含EOF，我们并不关心它...
+            if !strings.Contains(err.Error(), "EOF") {
+                Error("读取Freeswitch消息时出现错误: %s", err)
             }
-
-            if hm, err := conn.ExecuteHangup(cUUID, "", false); err != nil {
-                Error("Got error while executing hangup: %s", err)
-                break
-            } else {
-                Debug("Hangup Message: %s", hm)
-            }
-
-            go func() {
-                for {
-                    msg, err := conn.ReadMessage()
-
-                    if err != nil {
-
-                        // If it contains EOF, we really dont care...
-                        if !strings.Contains(err.Error(), "EOF") {
-                            Error("Error while reading Freeswitch message: %s", err)
-                        }
-                        break
-                    }
-
-                    Debug("Got message: %s", msg)
-                }
-            }()
-
-        default:
+            break
         }
+
+        Debug("得到消息: %s", msg)
     }
+}()
+
+default:
+}
+}
 
 }
 ```
 
-  
-You can run this code by saving it as tts\_server.go and than running  
-  
+您可以将此代码保存为tts\_server.go并运行它：
+
 ```bash
 go build tts_server.go && ./tts_server
 ```
 
-## See Also
+## 参见
 
 * [lxfontes/go-eventsocket](https://github.com/lxfontes/go-eventsocket)
 * [fiorix/go-eventsocket](https://github.com/fiorix/go-eventsocket)
-  
-  
-### Comments:
 
-| go build client.go && ./clientnot worked$ go build client.go && ./clientbash: ./client: No such file or directory ![](/images/icons/contenttypes/comment_16.png) Posted by denis at Aug 09, 2016 12:48 |
+
+### 评论:
+
+| 执行go build client.go && ./client没有奏效$ go build client.go && ./clientbash: ./client: 没有那个文件或目录 ![](/images/icons/contenttypes/comment_16.png) 作者: denis 时间: Aug 09, 2016 12:48 |
 | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-
-

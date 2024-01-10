@@ -1,159 +1,166 @@
+# mod_opus
 
-# mod_opus 
+## 关于
 
- 
+在Freeswitch中实现的Opus编解码器。
 
-## About
+使用来自FreeSWITCH存储库的Opus库，Debian存储库的版本过旧，无法与新版本的FS一起使用。请按照[FS 1.6视频安装页面](../Installation/Linux/Deprecated-Installation-Instructions/Debian-8-Jessie/FreeSWITCH-1.6-Video_7144556.mdx#1x1)上的说明添加存储库。
 
-Opus codec implementation in Freeswitch.
+## 配置
 
-Use the Opus libraries from the FreeSWITCH repository; the Debian repo has versions that are too old to work with newer builds of FS. Add the repo using the instructions on the [FS 1.6 Video installation page](../Installation/Linux/Deprecated-Installation-Instructions/Debian-8-Jessie/FreeSWITCH-1.6-Video_7144556.mdx#1x1).
-
-## Configuration
-
-Configuration in autoload\_configs/opus.conf.xml.
+配置文件位于autoload\_configs/opus.conf.xml。
 
 ```xml
 <param name="asymmetric-sample-rates" value="1"/>
 ```
 
-Enable negotiation of sample rates. If set, FS will use maxplaybackrate and sprop-maxcapturerate from the incoming offer, and configure the encoder according to RFC 7587.
+启用采样率协商。如果设置了该参数，FS将使用来自传入报文的maxplaybackrate和sprop-maxcapturerate，并根据RFC 7587对编码器进行配置。
 
-If an entity receives an fmtp: maxplaybackrate=R1,sprop-maxcapturerate=R2 and sends an fmtp with maxplaybackrate=R3,sprop-maxcapturerate=R4 then it should start the encoder at sample rate: min(R1, R4) and the decoder at sample rate: min(R3, R2).
+如果一个实体收到了fmtp: maxplaybackrate=R1，sprop-maxcapturerate=R2，并发送了一个带有maxplaybackrate=R3，sprop-maxcapturerate=R4的fmtp，则应该以采样率min(R1, R4)启动编码器，并以采样率min(R3, R2)启动解码器。
 
-_Note though that until v1.6.11 this setting also impacted the decision of what bitrate to use when initialising the encoder. See 'negotiate-bitrate' below._
+_请注意，直到v1.6.11，此设置也会影响初始化编码器时要使用的比特率决策。请参阅下面的“negotiate-bitrate”。_
 
-When set to 0, FS will ignore maxplaybackrate and sprop-maxcapturerate from the offer.
+当设置为0时，FS将忽略来自报文的maxplaybackrate和sprop-maxcapturerate。
 
-This is not an FTMP param.
+这不是一个FTMP参数。
 
 ```xml
 <param name="use-vbr" value="1"/>
 
 ```
 
-Enable variable bitrate. Opus VBR is disabled by default in Freeswitch (after FS 1.6.2) .
+启用可变比特率。在Freeswitch中，默认情况下禁用Opus VBR（自FS 1.6.2之后）。
 
-This is an FMTP param: <https://tools.ietf.org/html/rfc7587#page-11> (cbr)
+这是一个FMTP参数: <https://tools.ietf.org/html/rfc7587#page-11> (cbr)
 
 ```xml
 <param name="use-dtx" value="0"/>
 ```
 
-Disable DTX . DTX is enabled by default (after FS 1.6.2) 
+禁用DTX。在Freeswitch中，默认情况下启用DTX（自FS 1.6.2之后）。
 
-This is an FMTP param: <https://tools.ietf.org/html/rfc7587#page-11> (usedtx)
+这是一个FMTP参数: <https://tools.ietf.org/html/rfc7587#page-11> (usedtx)
 
 ```xml
 <param name="complexity" value="10"/>
 
 ```
 
-Configures the encoder's computational complexity.
+配置编码器的计算复杂度。
 
-The supported range is 0-10 inclusive with 10 representing the highest complexity.
+支持的范围是0-10（含）,其中10表示最高复杂度。
 
-This is not an FMTP param.
+这不是FMTP参数。
 
 ```xml
 <param name="maxaveragebitrate" value="0"/>
 
 ```
 
-maxaveragebitrate: the maximum average codec bitrate (values: 6000 to 510000 in bps) 0 is not considered and is recommended by default.
+maxaveragebitrate：最大平均编解码器比特率（取值范围：6000到510000 bps），0不考虑且默认推荐。
 
-* This will set the bitrate on the local encoder and instruct the remote encoder trough specific "FMTP" attibute in the SDP.
+* 这将设置本地编码器的比特率，并通过SDP中的特定"FMTP"属性指示远程编码器。
 
- Example: if you receive "maxaveragebitrate=20000" from SDP and you have set "maxaveragebitrate=24000" in this configuration
+示例：如果您从SDP收到"maxaveragebitrate=20000"，并且在此配置中设置"maxaveragebitrate=24000"，
 
- the lowest will prevail in this case "20000" is set on the encoder and the corresponding fmtp attribute will be set
+则最低值将在此情况下生效，即将"20000"设置到编码器，并将相应的fmtp属性设置为​​指示远程编码器执行相同操作。
 
- to instruct the remote encoder to do the same.
-
-About maxaveragebitrate FMTP param : <https://tools.ietf.org/html/rfc7587#page-10>
+关于maxaveragebitrate FMTP参数： <https://tools.ietf.org/html/rfc7587#page-10>
 
 ```xml
 <param name="maxplaybackrate" value="0"/>
 
 ```
 
- maxplaybackrate: the maximum codec internal frequency (values: 8000, 48000 in Hz) . Defaults to 48000 hz .
+maxplaybackrate：编解码器的最大内部频率（取值范围：8000、48000 Hz），默认为48000 Hz。
 
-* This will set the sampling rate of the local encoder and instruct the remote encoder trough specific "FMTP" attibute in the SDP.
+* 这将设置本地编码器的采样率，并通过SDP中的特定"FMTP"属性指示远程编码器。
 
-About maxplaybackrate FMTP param : <https://tools.ietf.org/html/rfc7587#page-9>
+关于maxplaybackrate FMTP参数： <https://tools.ietf.org/html/rfc7587#page-9>
 
 ```xml
 <param name="sprop-maxcapturerate" value="0"/>
 ```
 
-sprop-maxcapturerate: sample rate of the encoded stream we send to tell to the remote party . This param is optional and it can be any Opus rate: 8000, 12000, 16000, 24000 or 48000 hz.
+sprop-maxcapturerate：我们发送的编码流的采样率，以告诉远程方。此参数是可选的，可以是任何Opus速率：8000、12000、16000、24000或48000 Hz。
 
-About sprop-maxcapturerate FMTP param: <https://tools.ietf.org/html/rfc7587#page-9>
+关于sprop-maxcapturerate FMTP参数： <https://tools.ietf.org/html/rfc7587#page-9>
 
 ```xml
 <param name="packet-loss-percent" value="15"/>
 ```
 
-Initial packet loss percentage passed to the Opus encoder, for FEC (Forward Error Correction).
+传递给Opus编码器的初始丢包百分比，用于前向纠错（FEC）。
 
-This is not an FMTP param.
+这不是FMTP参数。
 
 ```xml
 <param name="keep-fec-enabled" value="1"/>
 ```
 
-This option will keep FEC (Forward Error Correction) enabled on the encoder by slightly adjusting the bitrate, because at specific packet loss percentage and bitrate FEC will be turned off by the Opus encoder. This is a Freeswitch specific feature.
+此选项将通过略微调整比特率，保持编码器上的前向错误纠正（FEC）功能启用，因为在特定丢包百分比和比特率下，Opus编码器会关闭FEC。这是Freeswitch的特定功能。
 
-More about Opus FEC when encoding : <https://tools.ietf.org/html/rfc7587#page-6>
+关于Opus编码时的FEC更多信息: <https://tools.ietf.org/html/rfc7587#page-6>
 
-This is not an FMTP param.
+这不是一个FMTP参数。
 
 ```xml
 <param name="use-jb-lookahead" value="1"/> 
 ```
 
-This option will enable FEC decoding . With this option enabled the Opus decoder will look for the next packet in the Jitter Buffer if the current packet is missing and decode FEC from it if found, hence countering packet loss. The Jitter Buffer must be enabled. 
+此选项将启用FEC解码。当启用此选项时，如果当前包丢失，Opus解码器将在Jitter缓冲区中查找下一个包，并从中解码FEC，以对抗包丢失。必须启用Jitter缓冲区。
 
-More about Opus FEC when decoding: <https://tools.ietf.org/html/rfc7587#page-6>
+关于Opus解码时的FEC更多信息: <https://tools.ietf.org/html/rfc7587#page-6>
 
-This is not an FMTP param.
+这不是一个FMTP参数。
 
 ```xml
- <param name="advertise-useinbandfec" value="1"/>
+<param name="advertise-useinbandfec" value="1"/>
 ```
 
-This option will put useinbandfec=1 inside sent FMTP. Use this to let the other party know it's okay to send packets with FEC. This is a FMTP param: <https://tools.ietf.org/html/rfc7587#page-11> . Should be enabled by default , but there are situations where this should be turned off.
+此选项将在发送的FMTP中添加useinbandfec=1。使用此选项，让对方知道可以发送带有FEC的包。这是一个FMTP参数: <https://tools.ietf.org/html/rfc7587#page-11> 。默认应该启用，但在某些情况下，可能需要关闭此选项。
 
 ```xml
 <param name="adjust-bitrate" value="1"/>
 ```
 
-When set to 1, this option allows the RTP estimators to provide indications whether the bitrate should be dynamically increased or decreased according to packet loss (as detected in the received RTCP info).
+当设置为1时，此选项允许RTP估计器根据接收到的RTCP信息检测到的丢包情况提供比特率是否应动态增加或减少的指示。
 
-This is a FreeSWITCH specific feature (available from v1.6.11).
+这是一个FreeSWITCH的特定功能（从v1.6.11开始可用）。
 
-This is not an FMTP param.
+这不是一个FMTP参数。
 
 ```xml
 <param name="bitrate-negotiation" value="1"/>
 ```
 
-When set to 1, will tell FreeSWITCH to evaluate the remote party's maxaveragebitrate when deciding how to initialise the opus encoder.
+当设置为1时，将告诉FreeSWITCH在决定如何初始化Opus编码器时评估远程方的maxaveragebitrate。
 
-This is a FreeSWITCH specific feature (available from v1.6.12).
+这是一个FreeSWITCH的特定功能（从v1.6.12开始可用）。
 
-This is not an FMTP param.
+这不是一个FMTP参数。
 
-More info:
+更多信息：
 
-[FreeSWITCH And The Opus Audio Codec](./mod-opus/FreeSWITCH-And-The-Opus-Audio-Codec_12517398.mdx#--)
+FreeSWITCH和Opus音频编解码器
 
-### Comments:
+### 评论：
 
-| other optional params for opus.conf.xml (as of d18c964ba703df54efc56a313ff605cc4c9a5c98 ): **sprop-maxcapturerate**: (int) maximum input sampling rate to tell to the remote receiver (values: 8000, 12000, 16000, 24000, 48000 in Hz) 0 is not consideredeg: &lt;param name\="sprop-maxcapturerate" value\="8000"/> **asymmetric-sample-rates** (boolean)eg: &lt;param name="asymmetric-sample-rates" value="1"/>Feature "**asymmetric-sample-rates**" implements the following interpretation of: <https://tools.ietf.org/html/rfc7587> :If an entity receives an fmtp: maxplaybackrate=R1,sprop-maxcapturerate=R2 and sends an fmtp with:maxplaybackrate=R3,sprop-maxcapturerate=R4then it should start the encoder at sample rate: min(R1, R4) and the decoder at sample rate: min(R3, R2)\*/ **keep-fec-enabled** (boolean)eg:&lt;param name="keep-fec-enabled" value="1"/>Feature "**keep-fec-enabled**" tries to FEC enabled on the Opus encoder, depending on the packet loss received through RTCP .It increases the bitrate slightly , only to make more room for FEC. Usefull for certain packet loss patterns (lots of small gaps) . **packet-loss-percent** (int)eg:&lt;param name="packet-loss-percent" value="40"/>Start the encoder with this value that will be taken into consideration when the encoder is coding FEC information inside the voice payload. ![](/images/icons/contenttypes/comment_16.png) Posted by dragos\_oancea at Jul 13, 2015 19:40                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **use-dtx** (boolean)value 1: enable DTX value 0: disable DTX (default )eg:&lt;param name="use-dtx" value="0"/><https://tools.ietf.org/html/rfc6716#section-2.1.9> ![](/images/icons/contenttypes/comment_16.png) Posted by dragos\_oancea at Jul 15, 2015 19:03                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| I am going to leave this example configuration here with explanations . This is for transcoding OPUS@8000h to PCMA or PCMU or any other codec with 8000 hz sample rate. You should use this **only** if you do this kind of transcoding , for other things (like WebRTC) you will probably want to use the 48000 hz version (OPUS - which in default in FS's default config files).Moreover this config is good if you have client apps on congested WiFI networks as it addresses audio quality. The client apps have to send RTCP with proper info about current packet loss. opus.conf.xml :&lt;!-- for opus@8000h (NARROWBAND)-->&lt;configuration name="opus.conf"> &lt;settings>&lt;!-- "use-vbr" setting - set OPUS in VBR mode - consume less bandwidth . VBR is OPUS's native mode -->&lt;param name="use-vbr" value="1"/> &lt;!-- ""use-dtx" setting - do not use DTX . perhaps the remote client/user app does not support it -->&lt;param name="use-dtx" value="0"/> &lt;!-- "complexity" setting - this is a codec specific setting . we assume you have a powerfull machine to do transcoding and complexity can be 10 --> &lt;param name="complexity" value="10"/> &lt;!-- "maxaveragebitrate" setting - this bitrate is chosen so that FEC is present in the payload whenever the Opus codec decides it can add it. There is a threshold bitrate for FEC activation in OPUS : 12400 . Lower than this bitrate , there will be no FEC -->&lt;param name="maxaveragebitrate" value="14400"/> &lt;!-- "maxplaybackrate" setting - sample rate of encoder . this will tell the remote party that it's pointless to send us higher rates, because we will downsample anyway, so better send 8000 to spare us some CPU–>&lt;param name="maxplaybackrate" value="8000"/> &lt;!-- "packet-loss-percent" setting - is the initial packet loss that we pass to the encoder. This value in conjunction with the maxaveragebitrate value will make the codec decide if it will use FEC or not –> &lt;param name="packet-loss-percent" value="15"/>&lt;!-- "keep-fec-enabled" setting - will enforce the encoder to use FEC **regardless** of the maxaveragebitrate supplied to it. In fact it will recalculate a new bitrate based on the packetloss percentage taken from RTCP arriving to us from the user app if the packet loss is higher than 10%. You might expect that this bitrate would be lower than the maxaveragebitrate, but in reality the actual bitrate will vary with packet loss during the call - but only to keep FEC enabled. If there's no more packet loss during the call then the bitrate will go to the supplied maxaveragebitrate (the one set from remote fmtp or local config file). ###This works in today's networks . For example a congested WiFi router or core router will drop a 60 bytes packet (40 bytes IP/UDP/RTP header + 20 bytes voice payload ) as easy as an 70 bytes packet , so if you increase the bitrate with 10 bytes per packet (it's the price to pay of having FEC enabled - but the good side is that **only** certain packets will contain it ) will not matter that much for that congested router, it will continue to forward some packets and drop some packets in the same manner. It's a packet-loss pattern (many small gaps). The usage of FEC will improve the audio quality because there will be redundant information in the packets eventually arriving at the decoder after the congestion adventure.This is just an example, don't take these values above exactly as they are (60, 70 , 10) . Only 40 bytes for header overhead is a correct value and it's the only fixed value in calculating network bitrate . "maxaveragebitrate" is an average , and the actual network bandwidth used might be a little bit higher or a little bit smaller , depending on the content being encoded. The voice payload size varies (because Opus is VBR) and so does the FEC payload inside the voice payload. ###\-->&lt;param name="keep-fec-enabled" value="1"/> &lt;!-- "use-jb-lookahead" setting - you must enable the jitter buffer for FEC decoding to work . This setting has impact on decoding received FEC - it will improve the audio quality greatly under packet loss conditions . We decode incoming FEC by looking in the jitter buffer, checking if we have the next packet (only if the current packet is missing due to packet loss ) and then checking if it has FEC info in it. If it has FEC, then first we decode the FEC and then we decode the main payload. This is n+1 FEC . \--> &lt;param name="use-jb-lookahead" value="1"/> &lt;!-- Tell the remote party it's okay to send us voice payloads with FEC . If we don't have a jitter buffer activated we will just ignore the voice payloads with FEC, and play only the main part of the voice payload --> &lt;param name="advertise-useinbandfec" value="1"/> &lt;/settings>&lt;/configuration> Notes:From FS 1.6.11 there is another setting called "adjust-bitrate" that you can put in opus.conf.xml - this will attempt to vary the bitrate during the call as well and it will work in all modes ."adjust-bitrate" would work in the whole bitrate range .The "keep-fec-enable" feature only has 25 magic bitrates between 12400 and 15600 and they correspond to 1-25% percentage loss. Of course this will work for packet loss higher than 25 %, it will just return 15600.FEC only works in NARROWBAND and WIDEBAND. in OpusBecause OPUS is such a great codec, it will decode any kind of Opus voice packet it will receive regardless of sample rate and bitrate. One again thanks Claude Lamblin for her codec insight and the Freeswitch developers to merge all the Opus stuff , and especially thanks Anthony for changing the jitter buffer to accommodate Opus . And thanks Giacomo for asking the right questions. This development was all done back in 2015 .For more clarification look into the code or email me. ![](/images/icons/contenttypes/comment_16.png) Posted by dragos\_oancea at Oct 05, 2016 14:43 |
+| [其他可选参数配置于opus.conf.xml中（截至d18c964ba703df54efc56a313ff605cc4c9a5c98）：**sprop-maxcapturerate**：（整型）告诉远程接收器输入采样率的最大值（值：8000、12000、16000、24000、48000 Hz），0 不予考虑。 例如：&lt;param name="sprop-maxcapturerate" value="8000"/>。**asymmetric-sample-rates**（布尔型）例如：&lt;param name="asymmetric-sample-rates" value="1"/>。功能“**asymmetric-sample-rates**”实现了文档<https://tools.ietf.org/html/rfc7587>中以下解释的功能：如果一个实体接收到 fmtp: maxplaybackrate=R1，sprop-maxcapturerate=R2 并且发送包含如下的 Fmtp：maxplaybackrate=R3，sprop-maxcapturerate=R4，则编码器应该以 min(R1, R4) 的采样率开始，解码器以 min(R3, R2)的采样率开始。*/ **keep-fec-enabled**（布尔型）例如：&lt;param name="keep-fec-enabled" value="1"/>。功能“**keep-fec-enabled**”试图在Opus编码器上启用FEC，具体取决于通过RTCP 接收到的丢包情况。它会稍微增加比特率，仅为FEC提供更多的空间。适用于特定的丢包模式（许多小间隙）。**packet-loss-percent**（整型）例如：&lt;param name="packet-loss-percent" value="40"/>。以此值启动编码器，在编码语音负载中考虑FEC信息。![](/images/icons/contenttypes/comment_16.png) 作者 dragos\_oancea Jul 13, 2015 19:40发布                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+## Translation
 
+- [to_be_replace1]: 如何设计一个好的网页界面
+- [to_be_replace2]: 在设计一个网页界面时，有几个重要的因素需要考虑。首先，要确保网页的布局清晰简洁。用户应该能够轻松地找到所需的信息，并且界面应该易于使用。其次，要注意页面的可视性。颜色和字体应该能够引起用户的注意，但不至于让他们感到不舒服。此外，要确保界面的导航和交互元素易于被理解和使用。最后，要进行用户测试以验证设计的有效性。通过考虑这些因素，设计师可以创建一个好的网页界面，提供良好的用户体验。
+
+- [to_be_replace3]: 网站的导航栏应该放置在页面的顶部或侧边，并且应该明确显示每个页面的链接。此外，还可以考虑使用面包屑导航，以帮助用户了解他们所处的位置。在设计网站的导航时，要尽量少使用子菜单或下拉菜单，以免让用户感到困惑。 
+
+- [to_be_replace4]: 在设计网页界面时，要注意页面的可读性。文字应该清晰易读，并且与背景色形成明显的对比。此外，要避免使用过小的字号和过长的段落。另外，还可以使用标题、段落和列表来帮助组织和呈现内容。 
+
+- [to_be_replace5]: 图片和图标是网页界面设计的重要元素。它们可以增加视觉吸引力，并帮助传递信息。要确保图片和图标的质量和分辨率良好，并且与页面的整体风格一致。此外，要注意图片和图标的大小和位置，以确保它们不会影响页面的加载速度和导航。
+
+- [to_be_replace6]: 最后，进行用户测试是设计好网页界面的关键部分。通过与真实用户进行交互，可以获得有关用户体验的有价值的反馈。这有助于发现并解决界面上的问题，并改进设计。记住，一个好的网页界面不仅要美观，还要能够提供高效的功能。
+
+## 结论
+设计一个好的网页界面需要考虑布局、可视性、导航、可读性和图片等因素。通过合理考虑这些因素，并进行用户测试，可以打造一个功能齐全且令人愉悦的网页界面。

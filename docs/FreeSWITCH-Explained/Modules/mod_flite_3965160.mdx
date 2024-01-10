@@ -1,41 +1,38 @@
+# mod_flite
 
-# mod_flite 
+## 关于
 
- 
+Flite（又称为Festival Lite）是一个小巧的嵌入式TTS（文本转语音）引擎，完全免费。
 
-## About
+支持FreeBSD，Mac，Linux和Windows。
 
-Flite (aka Festival Lite) is a small embeddable TTS (Text to Speech) engine that's totally free.
+请勿同时加载mod_cepstral和mod_flite（符号冲突）。
 
-Works on FreeBSD, Mac, Linux and Windows.
+声音采样率为16khz，有以下选项：
 
-Don't load mod\_cepstral and mod\_flite at the same time. (symbol collision).
+- slt（女声）
+- rms（男声）
+- awb（男声）
+- kal（男声）
 
-Voices are 16khz, and are:
+## 安装mod_flite
 
-* slt (female voice)
-* rms (male voice)
-* awb (male voice)
-* kal (male voice)
+在modules.conf中：
 
-## Installing mod_flite
+- 取消注释asr_tts/mod_flite；
 
-In modules.conf:
+在src目录的顶层编辑modules.conf，不要与freeswitch/conf/modules.conf.xml文件混淆（稍后您还需要进行编辑，请参阅下面的说明）。此安装假定您将编译此模块。
 
-* Uncomment asr\_tts/mod\_flite;
+在同一文件中注释掉asr_tts/mod_cepstral。不能同时使用这两个模块。
 
-Edit the modules.conf at the top level of your src directory and NOT to be confused with the freeswitch/conf/modules.conf.xml file which you will also have to edit later - see below). This installation has been written assuming that you are going to be compiling this module.
+- 运行make和make install。
 
-Comment out asr\_tts/mod\_cepstral from the same file. Both modules cannot be used together.
+在freeswitch/conf/autoload_configs/modules.conf.xml中：
 
-* Run make, make install.
+- 取消注释&lt;load module="mod_flite"/&gt;
+- 注释掉&lt;load module="mod_cepstral"/&gt;
 
-In freeswitch/conf/autoload\_configs/modules.conf.xml:
-
-* Uncomment **&lt;load module="mod\_flite"/>**
-* Comment out **&lt;load module="mod\_cepstral"/>**
-
-## Using mod_flite
+## 使用mod_flite
 
 ```xml
     <extension name="flite">
@@ -47,13 +44,11 @@ In freeswitch/conf/autoload\_configs/modules.conf.xml:
     </extension>
 ```
 
-To set volume at your desired level:
+设置音量为所需级别：
 
 ```xml
  <action application="set_audio_level" data="write 4"/>
  <action application="set_audio_level" data="read 4"/>
 ```
 
-write for output audio stream and read for incoming audio stream. read and write can take integral values from 4 to -4
-
-
+write用于输出音频流，read用于输入音频流。read和write的取值范围为4到-4的整数值。

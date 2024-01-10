@@ -1,108 +1,103 @@
+# JavaScript事件处理器
 
-# JavaScript Event Handler 
+## 关于
 
- 
+JavaScript的事件处理器类。
 
-## About
+点击此处展开目录
 
-EventHandler class for JavaScript.
+* 1 [构造函数](#constructor)
+* 2 [方法](#-freeswitch--javascript-event-handler-)  
+   * 2.1 [订阅](#subscribe)  
+   * 2.2 [取消订阅](#unsubscribe)  
+   * 2.3 [添加过滤器](#addfilter)  
+   * 2.4 [删除过滤器](#deletefilter)  
+   * 2.5 [获取事件](#sendevent)  
+   * 2.6 [发送事件](#sendevent)  
+   * 2.7 [执行API](#executeapi)  
+   * 2.8 [执行后台API](#executebgapi)  
+   * 2.9 [销毁](#-freeswitch--javascript-event-handler-)
+* 3 [属性](#properties)  
+   * 3.1 [准备就绪](#-freeswitch--javascript-event-handler-)
+* 4 [事件订阅示例](#example-of-event-subscription)
 
-Click here to expand Table of Contents
-
-* 1 [Constructor](#constructor)
-* 2 [Methods](#-freeswitch--javascript-event-handler-)  
-   * 2.1 [subscribe](#subscribe)  
-   * 2.2 [unSubscribe](#unsubscribe)  
-   * 2.3 [addFilter](#addfilter)  
-   * 2.4 [deleteFilter](#deletefilter)  
-   * 2.5 [getEvent](#sendevent)  
-   * 2.6 [sendEvent](#sendevent)  
-   * 2.7 [executeApi](#executeapi)  
-   * 2.8 [executeBgApi](#executebgapi)  
-   * 2.9 [destroy](#-freeswitch--javascript-event-handler-)
-* 3 [Properties](#properties)  
-   * 3.1 [ready](#-freeswitch--javascript-event-handler-)
-* 4 [Example of event subscription](#example-of-event-subscription)
-
-### Constructor
+### 构造函数
 
 use('EventHandler');
 var eh = new EventHandler([string eventType, ...]);
 
-Constructs a new EventHandler instance, and (optionally) starts subscribing to the events provided. Before using the EventHandler you must tell mod\_v8 to load the EventHandler class.
+构造一个新的EventHandler实例，并（可选地）开始订阅所提供的事件。在使用EventHandler之前，必须告诉mod\_v8加载EventHandler类。
 
-### Methods
+### 方法
 
-#### subscribe
+#### 订阅
 
 bool result = eh.subscribe([string eventType, ...]);
 
-Add eventType(s) to subscribe for.
+添加要订阅的eventType(s)。
 
-#### unSubscribe
+#### 取消订阅
 
 bool result = eh.unSubscribe([string eventType, ...]);
 
-Remove eventType(s) from subscribtion.
+从订阅中删除eventType(s)。
 
-#### addFilter
+#### 添加过滤器 
 
 bool result = eh.addFilter(string headerName, string headerValue);
 
-Adds a filter to the subscription, this will allow to get only the events holding the header/value information as provided.
+向订阅中添加过滤器，这将只获取具有提供的标头/值信息的事件。
 
-#### deleteFilter
+#### 删除过滤器
 
 bool result = eh.deleteFilter(string headerName);
 
-Deletes a previously defined filter.
+删除之前定义的过滤器。
 
-#### getEvent
+#### 获取事件
 
 Event evt = eh.getEvent([int timeoutMs]);
 
-Receives an event. If timeout is given it will wait no more that the given time. If no event was received within the given time, null will be returned. If no timeout is given, it will wait here until it receives an event.
+接收事件。如果给定超时时间，则最多等待给定的时间。如果在给定的时间内未收到任何事件，则返回null。如果没有给定超时时间，则将在此处等待，直到收到事件为止。
 
 #### sendEvent
 
 bool result = eh.sendEvent(Event event[, Session session | string sessionUUID]);
 
-Sends an event to the FS event system, or if a session/uuid is provided, it will be sent to that specific session's command queue.
+将事件发送到FS事件系统，如果提供了会话/UUID，则将其发送到该特定会话的命令队列。
 
 #### executeApi
 
 string result = eh.executeApi(string cmd[, string arg]);
 
-Executes an API command with optional arguments. Returns the result from the API.
+执行具有可选参数的API命令。返回来自API的结果。
 
 #### executeBgApi
 
 string jubUUID = eh.executeBgApi(string cmd[, string arg]);
 
-Executes a background API command (in a separate thread) with optional arguments. Returns the job UUID. When execution is finished a BACKGROUND\_JOB event will be fired, inside that event the job UUID value will be found.
+在单独的线程中执行后台API命令，并带有可选参数。返回作业UUID。执行完成后，将触发BACKGROUND_JOB事件，在该事件中可以找到作业UUID的值。
 
 #### destroy
 
 eh.destroy();
 
-Destroys and unsubscribes for all events.
+销毁并取消订阅所有事件。
 
-### Properties
+### 属性
 
 #### ready
 
-Readonly property, returns false if the instance has been destroyed, or true otherwise.
+只读属性，如果实例已被销毁，则返回false，否则返回true。
 
-### Example of event subscription
+### 事件订阅示例
 
-   /* This will subscribe for all events in the system, and loop forever */
-   use('EventHandler');
+   /* 这将订阅系统中的所有事件，并无限循环 */
+   use（'EventHandler'）；
    
-   var eh = new EventHandler('ALL');
-   var evt;
+   var eh = new EventHandler（'ALL'）；
+   var evt；
    
-   while ((evt = eh.getEvent(60000))) {
-       consoleLog('info', 'Got event: ' + evt.serialize() + '\n');
+   while（（evt = eh.getEvent（60000）））{
+       consoleLog（'info'，'获得事件：' + evt.serialize（）+ '\n'）；
    }
-
-

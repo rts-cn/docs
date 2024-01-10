@@ -1,38 +1,35 @@
+# mod_fifo
 
-# mod_fifo 
+## 关于
 
- 
+mod_fifo是一个呼叫中心应用程序，允许你创建自定义呼叫队列并分配优先级。
 
-## About
+FIFO代表“先进先出”。当呼叫进入队列时，它们按顺序排列，以便队列中等待时间最长的呼叫将被首先接听。通常，FIFO呼叫队列用于“先来先服务”的呼叫场景，例如客户服务呼叫中心。
 
-mod\_fifo is a call center app which allows you to make custom call queues with assigned priorities.
+mod_callcenter是mod_fifo的一个替代方案，它更像是一个传统的ACD应用程序，由FreeSWITCH™社区的一名成员贡献。
 
-FIFO stands for "First In, First Out". As calls enter the queue, they are arranged in order so that the call that has been in the queue for the longest time will be the first call to get answered. Generally FIFO call queues are used in "first come, first served" call scenarios such as customer service call centers.
+点击展开目录
 
-An alternative to mod\_fifo is [mod\_callcenter](mod_callcenter_1049389.mdx#--) which is more of a traditional ACD application and was contributed by a member of the FreeSWITCH™ community.
-
-Click to expand Table of Contents
-
-* 1 [Usage](#-fifo-)
-* 2 [Definitions](#definitions)
-* 3 [Configuration](#configuration)  
-   * 3.1 [Agent Callback](#agent-callback)
-* 4 [Dialplan Example](#dialplan-example)  
-   * 4.1 [Put a caller into a FIFO queue](#put-a-caller-into-a-fifo-queue)  
-   * 4.2 [Take a caller out of a FIFO queue](#take-a-caller-out-of-a-fifo-queue)  
-      * 4.2.1 [Taking a specific caller out of a queue](#-taking-a-specific-caller-out-of-a-queue-)  
-   * 4.3 [Setting MOH and announce sounds](#setting-moh-and-announce-sounds-)  
-   * 4.4 [Implementing FIFO slots](#implementing-fifo-slots-)  
-   * 4.5 [Agent/Caller Example](#agentcaller-example)  
-   * 4.6 [Park Time Out Example](#park-time-out-example)  
-   * 4.7 [Park/Un-park Example](#parkun-park-example)  
-   * 4.8 [Simple On-hook Agent Login/Logout Example](#simple-on-hook-agent-loginlogout-example)  
-   * 4.9 [Another example of On-hook Agent Login/Logout with loopback members](#another-example-of-on-hook-agent-loginlogout-with-loopback-members)
-* 5 [JavaScript Example](#javascript-example)
-* 6 [Lua Example, queue position announcement trick](#lua-example-queue-position-announcement-trick)  
-   * 6.1 [Queue Position, alternate method](#queue-position-alternate-method)
-* 7 [Details](#details)
-* 8 [API Commands](#-api-commands-)  
+* 1 [使用方法](#-fifo-)
+* 2 [定义](#definitions)
+* 3 [配置](#configuration)  
+   * 3.1 [代理回调](#agent-callback)
+* 4 [拨号计划示例](#dialplan-example)  
+   * 4.1 [将来电者放入FIFO队列](#put-a-caller-into-a-fifo-queue)  
+   * 4.2 [从FIFO队列中取出来电者](#take-a-caller-out-of-a-fifo-queue)  
+      * 4.2.1 [从队列中取出指定来电者](#-taking-a-specific-caller-out-of-a-queue-)  
+   * 4.3 [设置MOH和通告音](#setting-moh-and-announce-sounds-)  
+   * 4.4 [实现FIFO插槽](#implementing-fifo-slots-)  
+   * 4.5 [代理/来电者示例](#agentcaller-example)  
+   * 4.6 [停车超时示例](#park-time-out-example)  
+   * 4.7 [停车/解除停车示例](#parkun-park-example)  
+   * 4.8 [简单挂机代理登录/注销示例](#simple-on-hook-agent-loginlogout-example)  
+   * 4.9 [使用回传成员的挂机代理登录/注销示例](#another-example-of-on-hook-agent-loginlogout-with-loopback-members)
+* 5 [JavaScript示例](#javascript-example)
+* 6 [Lua示例，队列位置通告技巧](#lua-example-queue-position-announcement-trick)  
+   * 6.1 [队列位置，另一种方法](#queue-position-alternate-method)
+* 7 [详情](#details)
+* 8 [API命令](#-api-commands-)  
    * 8.1 [fifo](#-fifo-)  
       * 8.1.1 [list|list\_verbose](#-listlist_verbose)  
          * 8.1.2 [count](#-fifo-)  
@@ -41,40 +38,40 @@ Click to expand Table of Contents
    * 8.2 [fifo\_member](#-fifo_member-)  
       * 8.2.1 [add](#-fifo-)  
          * 8.2.2 [del](#-fifo-)
-* 9 [Additional variables](#-additional-variables-)  
-   * 9.1 [Caller leg channel variables used or set by mod\_fifo](#caller-leg-channel-variables-used-or-set-by-mod_fifo)  
-   * 9.2 [Consumer leg channel variables set by mod\_fifo](#consumer-leg-channel-variables-set-by-mod_fifo)  
-      * 9.2.1 [Examples](#-examples-)
-* 10 [See Also](#-fifo-)
+* 9 [额外的变量](#-additional-variables-)  
+   * 9.1 [mod_fifo使用或设置的来电通道变量](#caller-leg-channel-variables-used-or-set-by-mod_fifo)  
+   * 9.2 [mod_fifo设置的消费者通道变量](#consumer-leg-channel-variables-set-by-mod_fifo)  
+      * 9.2.1 [示例](#-examples-)
+* 10 [参见](#-fifo-)
 
-## Usage
+## 使用说明
 
-**App Invocation**
+**应用调用**
 
 ```xml
 <fifo name>[!<importance_number>] [in [<announce file>|undef] [<music file>|undef] | out [wait|nowait] [<announce file>|undef] [<music file>|undef]]
 ```
 
-## Definitions
+## 定义
 
-Keep these terms in mind as they will help you with your mod\_fifo endeavors:
+记住以下术语，它们将有助于您进行mod\_fifo的尝试：
 
-* Consumer - An **off-hook agent**, that is, an agent who calls into the FIFO queue and is waiting to 'consume' incoming calls from the queue. The consumer's phone is in use the entire time that he/she is logged in to the queue.
-* Member - An **on-hook agent**, that is, an agent who logs into the queue but whose phone is idle until an inbound call hits the queue. The agent's phone rings and he/she takes a call off the queue. Multiple members' phones can ring for each incoming call.
-* Caller - A person who has called into the queue. The caller can be "waiting" or can be speaking to an agent.
+* 消费者 - 一个**摘机坐席**，即一个从FIFO队列中呼叫并等待消费队列中来电的坐席。消费者的电话在他/她登录到队列时一直处于使用状态。
+* 成员 - 一个**挂机坐席**，即登录到队列但电话处于空闲状态，直到有一个呼入电话进入队列。坐席的电话会响起，然后他/她从队列中接听电话。每个呼入电话会使多个成员的电话同时响起。
+* 呼叫者 - 打入队列的人。呼叫者可以是“等待中”的状态，也可以正在与坐席通话。
 
-## Configuration
+## 配置
 
-Global configuration parameters for mod\_fifo are contained in:
+mod\_fifo的全局配置参数存储在：
 
 ```xml
 $CONFDIR/autoload_configs/fifo.conf.xml 
 ```
 
   
-### Agent Callback
+### 坐席回调
 
-This will call registered agents. Think asterisk queue members.
+这将呼叫已注册的坐席，类似于Asterisk的队列成员。
 
 ```xml
 <configuration name="fifo.conf" description="FIFO Configuration">
@@ -86,101 +83,99 @@ This will call registered agents. Think asterisk queue members.
 </configuration>
 ```
 
-* **member timeout:** how long to ring the extension (in seconds) before moving on.
-* **simo:** number of simultaneous registrations to ring. Must be set to at least 1.  
-   * If you have multiple phones registered to the same extension, this controls how many extensions to ring at once  
-   * Example: 10 phones registered to one extension, set simo="10" to ring all 10.
-* **lag:** seconds to wait before initiating another call (think wrapup-time in Asterisk).
-* **fifo\_member\_wait:** possible values are either _wait_ or _nowait_. ([more info](mod_fifo_3966031.mdx#-additional-variables-))
+* **会员超时:** 在转接之前的振铃时间（以秒为单位）。
+* **simo:** 同时注册的振铃数。必须至少设置为1。
+   * 如果您有多个电话注册到同一个分机，这会控制同时振铃的分机数量。
+   * 例如：有10个电话注册到一个分机，将simo设置为"10"，以振铃全部10个电话。
+* **延迟:** 在启动另一个呼叫之前等待的秒数（类似于Asterisk中的处理时间）。
+* **fifo_member_wait:** 可能的值是"wait"或"nowait"。（[更多信息](mod_fifo_3966031.mdx#-additional-variables-)）
 
-Note: If you wish to specify the caller ID presented when a fifo calls an agent, set the origination\_caller\_id\_name and origination\_caller\_id\_num variables to the values desired. These could be set within the {} of the dialstring, or they could be set using the set application in the dialplan which places the caller into the fifo (before the 'fifo in' executed on the caller).
+注意：如果您希望指定FIFO调用代理时呈现的呼叫方ID，请将origination_caller_id_name和origination_caller_id_num变量设置为所需的值。这些可以在拨号字符串的{}内设置，也可以在将呼叫方放入FIFO之前的拨号计划中使用set应用程序进行设置（在执行'fifo in'之前）。
 
-[A real call center example](mod-fifo/Simple-call-center-using-mod-fifo_9634446.mdx#about)
+[一个真实的呼叫中心示例](mod-fifo/Simple-call-center-using-mod-fifo_9634446.mdx#about)
 
-## Dialplan Example
+## 拨号计划示例
 
-### Put a caller into a FIFO queue
+### 将呼叫方放入FIFO队列
 
 ```xml
 <action application="fifo" data="myqueue in /tmp/exit-message.wav /tmp/music-on-hold.wav"/> 
 ```
 
-  
-The preceding will put a call into "myqueue", playing "/tmp/music-on-hold.wav" over and over again. "/tmp/exit-message.wav" will be played to the user as the user is being taken out of the queue.
+上述示例将呼叫放入"myqueue"，一遍又一遍地播放"/tmp/music-on-hold.wav"。在将用户从队列中取出时，将向用户播放"/tmp/exit-message.wav"。
 
-### Take a caller out of a FIFO queue
+### 从FIFO队列中取出呼叫方
 
 ```xml
 <action application="fifo" data="myqueue out nowait /tmp/caller-found.wav /tmp/agent-music-on-hold.wav"/>
 ```
 
-  
-This pulls the oldest caller out of "myqueue" and connects them with the agent on the current channel. "/tmp/caller-found.wav" will be played to the agent as the call is taken out of the FIFO.
+该操作将最早加入"myqueue"的呼叫方提取出来，并将其与当前通道上的代理连接起来。在呼叫方从FIFO中取出时，将向代理播放"/tmp/caller-found.wav"。
 
-If there are no calls in the FIFO queue and you have the "wait" parameter set, "/tmp/agent-music-on-hold.wav" will be played to the agent over and over again until a new call arrives. Additionally, after taking a call from the queue which ends without the agent hanging up, the agent will be returned to the FIFO queue.
+如果FIFO队列中没有任何呼叫，并且您设置了"wait"参数，将会一直播放"/tmp/agent-music-on-hold.wav"，直到有一个新的呼叫到达为止。此外，如果从队列中接听了一个呼叫，而该呼叫没有由座席挂断，座席将被放回FIFO队列中。
 
-If you have the "nowait" parameter set and there are no calls in the FIFO queue, processing immediately continues past the FIFO queue. If there are one or more calls in the queue, only one call is retrieved and processing continues past the FIFO queue after that call ends.
+如果您设置了"nowait"参数，并且FIFO队列中没有呼叫，处理将立即继续进行。如果队列中有一个或多个呼叫，只会检索到一个呼叫，并在该呼叫结束后继续进行。
 
-####  Taking a specific caller out of a queue 
+####  从队列中选择特定的呼叫者
 
-If you want to pick a specific caller out of queue, set the variable fifo\_bridge\_uuid to be the UUID of the caller in queue.
+如果您想从队列中选择特定的呼叫者，请将变量fifo\_bridge\_uuid设置为队列中呼叫者的UUID。
 
-### Setting MOH and announce sounds 
+### 设置MOH和播报音
 
-Here are some ways that you can use to set the MOH and announce sounds for both fifo in and fifo out
+以下是设置FIFO调用中和FIFO调用之外的MOH和播报音的一些方法：
 
 ```xml
-<action application="set" data="fifo_music=<sound path>"/> 
-<action application="set" data="fifo_announce=<sound path>" />
-<action application="set" data="fifo_orbit_announce=<sound path>" />
-<action application="set" data="fifo_orbit_exten=<exten>:[timeout]" />
-<action application="set" data="fifo_override_announce=<sound path>" />
+<action application="set" data="fifo_music=<声音路径>"/>
+<action application="set" data="fifo_announce=<声音路径>" />
+<action application="set" data="fifo_orbit_announce=<声音路径>" />
+<action application="set" data="fifo_orbit_exten=<分机>:[超时时间]" />
+<action application="set" data="fifo_override_announce=<声音路径>" />
 ```
 
-### Implementing FIFO slots 
+### 实施FIFO插槽
 
-Each FIFO can have 10 priority slots (default priority is 5). Priority 1 has higher priority than 10\. With the FIFO slot, you can put a caller into one of the ten FIFO slots with:
+每个FIFO可以有10个优先级插槽（默认优先级为5）。优先级1的优先级高于10。通过FIFO插槽，您可以将呼叫者放入十个FIFO插槽之一，例如：
 
 ```xml
 <action application="set" data="fifo_priority=1" />
 ```
 
-Consumers can be assigned to pick up callers with specific priority using fifo\_pop\_order variable, such as follow:
+消费者可以被分配去接听具有特定优先级的呼叫者，使用fifo\_pop\_order变量，如下所示：
 
 ```xml
 <action application="set" data="fifo_pop_order=1,2" />
 ```
 
-You can assign multiple priority orders using a comma-delimited list.
+您可以使用逗号分隔的列表分配多个优先级顺序。
 
-### Agent/Caller Example
+### 代理/ 拨打方案示例
 
-This scenario has two extensions: 7010 will be for agents who will hear music till someone calls 7011 will be the customer who will hear hold music until an agent is free.
+该场景有两个分机：7010用于代理人，在有人拨打之前他们将听到音乐；7011用于客户，在有代理人可用之前他们将听到保持音乐。
 
-```xml
-    <extension name="Agent_Wait">
-      <condition field="destination_number" expression="^7010$">
-        <action application="set" data="fifo_music=$${hold_music}"/>
-        <action application="answer"/>
-        <action application="fifo" data="myq out wait"/>
-      </condition>
-    </extension>
-    <extension name="Queue_Call_In">
-      <condition field="destination_number" expression="^7011$">
-        <action application="set" data="fifo_music=$${hold_music}"/>
-        <action application="answer"/>
-        <action application="fifo" data="myq in"/>
-      </condition>
-    </extension>
-```
+ ```xml
+   <extension name="Agent_Wait">
+     <condition field="destination_number" expression="^7010$">
+       <action application="set" data="fifo_music=$${hold_music}"/>
+       <action application="answer"/>
+       <action application="fifo" data="myq out wait"/>
+     </condition>
+   </extension>
+   <extension name="Queue_Call_In">
+     <condition field="destination_number" expression="^7011$">
+       <action application="set" data="fifo_music=$${hold_music}"/>
+       <action application="answer"/>
+       <action application="fifo" data="myq in"/>
+     </condition>
+   </extension>
+ ```
 
-The agents can dial in to extension 7010 and wait. Callers can be routed/transferred to extension 7011 where they'll be queued until an agent is available.
+代理人可以拨打7010分机并等待。呼叫者可以被路由/转接到7011分机，并在有代理人可用之前排队等待。
 
-### Park Time Out Example
+### 超时停车示例
 
-This Example will return the parked call to exten 1004 after 20 sec.
+该示例将在20秒后将停车呼叫返回到分机1004。
 
-```xml
+ ```xml
  <extension name="park" continue="true">
    <condition field="destination_number" expression="^5900$">
      <action application="set" data="fifo_music=$${hold_music}"/>
@@ -188,90 +183,97 @@ This Example will return the parked call to exten 1004 after 20 sec.
      <action application="fifo" data="5900@$${domain} in"/>
    </condition>
  </extension>
-```
+ ```
 
-### Park/Un-park Example
+### 停车/取消停车示例
 
-See [Park & Retrieve](../Examples/13173503.mdx#about)
+请参阅[Park & Retrieve](../Examples/13173503.mdx#about)
 
-### Simple On-hook Agent Login/Logout Example
+### 简单的摘机代理人登录/注销示例
 
-Expand source 
+扩展源代码
 
-```xml
+ ```xml
  <include>
 
   <!--
 
-    This is a simple FIFO agent login/logout dialplan example. Drop it into the conf/dialplan/default directory in a standard
-    FreeSWITCH install or modify it as you see fit.
+    这是一个简单的FIFO代理人登录/注销拨号计划示例。将其放入标准的FreeSWITCH安装的conf/dialplan/default目录中，或根据自己的需求进行修改。
+```
 
-    These are "on hook" agents, i.e. the phone rings when a call comes in; agents don't sit and wait on the phone.
-    Dial 6* plus the FIFO number to log in.  Example: 6*1 to log into "FIFO1"
-    Dial 6# plus the FIFO number to log out. Example: 6#1 to log out of "FIFO1"
-    NOTE: I added 6** as an alternative to logging out b/c some phone dialplans don't like 6#...
+这些是“空闲坐席”，即电话来电时会响铃；坐席不需要坐在电话旁等待。
 
-    By default there are ten slots. You can mix, match, add, etc. as you see fit.
-    NOTE: There isn't any error checking, so the the system will say that the user is logged in or out no matter what!
-    NOTE: I have added an option to use group_confirm so that your agents have to press 1 to accept. This is useful in the case where an agent is a cell phone or other phone that has voicemail.
+拨打6*加上FIFO号码进行登录。例如：拨打6*1进行“FIFO1”的登录。
 
-    Send a caller to the queue by transferring to 610[0-9]; 6101 corresponds to FIFO1, 6102 to FIFO2, etc.
+拨打6#加上FIFO号码进行注销。例如：拨打6#1进行“FIFO1”的注销。
 
-    To see that your user did indeed login go to the FS CLI and type "fifo list" and it will show you everything.
-    Use "fifo list_verbose" to see LOTS of information about the FIFO queues.
+注意：我添加了6**作为退出的备选方法，因为一些电话拨号计划不支持6#...
 
-  -->
+默认情况下有十个插槽。您可以根据需要混合、匹配、添加等操作。
 
-  <!-- Agent login extension: 6*[0-9] -->
-  <extension name="Agent Login">
-    <condition field="destination_number" expression="^6\*(\d)">
-      <action application="answer"/>
-      <action application="set" data="result=${fifo_member(add FIFO$1 {fifo_member_wait=nowait}user/${user_name} )"/>
-      <!-- use the following line instead if you want to have group_confirm for the agent 
-	<action application="set" data="result=${fifo_member(add FIFO$1 {fifo_member_wait=nowait,group_confirm_file=ivr/ivr-accept_reject_voicemail.wav,group_confirm_key=1}user/${user_name} )"/>   
-      -->
+注意：系统没有进行任何错误检查，所以无论如何系统都会显示用户已登录或已注销！
 
-      <action application="log" data="INFO Add FIFO agent result: ${result}"/>
-      <action application="log" data="INFO User Login: FIFO$1 User: ${user_name}"/>
-      <!-- No error checking, just assuming login went well... -->
-      <action application="playback" data="ivr/ivr-you_are_now_logged_in.wav"/>
-    </condition>
-  </extension>
+注意：我添加了一个选项来使用group_confirm，这样您的坐席必须按1接听。这在坐席是手机或具有语音邮箱的其他电话的情况下非常有用。
 
-  <!-- Agent logout extension: 6#[0-9] -->
-  <extension name="Agent Logout">
-    <condition field="destination_number" expression="^6(#|\*\*)(\d)">
-      <action application="answer"/>
-      <action application="set" data="result=${fifo_member(del FIFO$2 {fifo_member_wait=nowait}user/${user_name})}"/>
-      <!-- Use this line instead if you are using group_group confirm
-	   <action application="set" data="result=${fifo_member(del FIFO$2 {fifo_member_wait=nowait,group_confirm_file=ivr/ivr-accept_reject_voicemail.wav,group_confirm_key=1}user/${user_name} )"/>
-       -->
+将呼叫转接到队列，请将呼叫转接到610[0-9]；6101对应FIFO1，6102对应FIFO2，依此类推。
 
-      <action application="log" data="INFO Del FIFO agent result: ${result}"/>
-      <action application="log" data="INFO User Logout: FIFO$1 User: ${user_name}"/>
-      <!-- No error checking, just assuming logout went well... -->
-      <action application="playback" data="ivr/ivr-you_are_now_logged_out.wav"/>
-    </condition>
-  </extension>
+要查看用户是否确实登录，请转到FS CLI并输入“fifo list”，它将显示您的所有信息。
+
+使用“fifo list_verbose”可以查看有关FIFO队列的大量信息。
+
+--> 
+
+<!-- 坐席登录分机号码：6*[0-9] -->
+<extension name="坐席登录">
+  <condition field="destination_number" expression="^6\*(\d)">
+    <action application="answer"/>
+    <action application="set" data="result=${fifo_member(add FIFO$1 {fifo_member_wait=nowait}user/${user_name} )"/>
+    <!-- 如果您希望为坐席启用group_confirm，请使用以下行替换
+  <action application="set" data="result=${fifo_member(add FIFO$1 {fifo_member_wait=nowait,group_confirm_file=ivr/ivr-accept_reject_voicemail.wav,group_confirm_key=1}user/${user_name} )"/>   
+    -->
+
+```xml
+<action application="log" data="INFO 添加FIFO坐席结果: ${result}"/>
+<action application="log" data="INFO 用户登录: FIFO$1 用户: ${user_name}"/>
+<!-- 没有错误检查，只假设登录成功了... -->
+<action application="playback" data="ivr/ivr-you_are_now_logged_in.wav"/>
+</condition>
+</extension>
+
+<!-- 坐席退出登录分机：6#[0-9] -->
+<extension name="坐席退出">
+<condition field="destination_number" expression="^6(#|\*\*)(\d)">
+<action application="answer"/>
+<action application="set" data="result=${fifo_member(del FIFO$2 {fifo_member_wait=nowait}user/${user_name})}"/>
+<!-- 如果使用group_confirm，使用此行
+<action application="set" data="result=${fifo_member(del FIFO$2 {fifo_member_wait=nowait,group_confirm_file=ivr/ivr-accept_reject_voicemail.wav,group_confirm_key=1}user/${user_name} )"/>
+-->
+
+<action application="log" data="INFO 删除FIFO坐席结果: ${result}"/>
+<action application="log" data="INFO 用户退出登录: FIFO$1 用户: ${user_name}"/>
+<!-- 没有错误检查，只假设退出登录成功了... -->
+<action application="playback" data="ivr/ivr-you_are_now_logged_out.wav"/>
+</condition>
+</extension>
 
 
-  <!-- Send a call to FIFO[0-9] -->
-  <extension name="send caller to FIFO">
-    <condition field="destination_number" expression="^610(\d)$">
-      <action application="answer"/>
-      <action application="set" data="fifo_music=$${hold_music}"/>
-      <action application="playback" data="ivr/ivr-hold_connect_call.wav"/>
-      <action application="fifo" data="FIFO$1 in"/>
-    </condition>
-  </extension>
+<!-- 将呼叫发送到FIFO[0-9] -->
+<extension name="将呼叫发送到FIFO">
+<condition field="destination_number" expression="^610(\d)$">
+<action application="answer"/>
+<action application="set" data="fifo_music=$${hold_music}"/>
+<action application="playback" data="ivr/ivr-hold_connect_call.wav"/>
+<action application="fifo" data="FIFO$1 in"/>
+</condition>
+</extension>
 </include>
 ```
 
-See also the contrib file: [01\_FIFO\_example.xml](http://fisheye.freeswitch.org/browse/%7Eraw,r=15467/FreeSWITCH/contrib/mcollins/01%5FFIFO%5Fexample.xml)
+请参阅贡献文件：[01\_FIFO\_example.xml](http://fisheye.freeswitch.org/browse/%7Eraw,r=15467/FreeSWITCH/contrib/mcollins/01%5FFIFO%5Fexample.xml)
 
-### Another example of On-hook Agent Login/Logout with loopback members
+### On-hook坐席登录/注销的另一个示例，循环成员
 
-You might also want to mess around with the call that is being generated by the FIFO to the agent. You can achieve that by using mod\_loopback to make the call go back to the dialplan as shown:
+您可能还希望对FIFO生成的呼叫进行调整。您可以使用mod\_loopback将呼叫返回到拨号计划中，如下所示：
 
 ```xml
 <extension name="Agent Login">
@@ -285,7 +287,7 @@ You might also want to mess around with the call that is being generated by the 
 </extension>
 ```
 
-You would also have to change the way you log agents out like this:
+您还需要更改注销坐席的方式，如下所示：
 
 ```xml
 <extension name="Agent Logout">
@@ -299,83 +301,77 @@ You would also have to change the way you log agents out like this:
 </extension>
 ```
 
-Finally, you would have to setup the piece of the dialplan where the FIFO, using mod\_loopback, is going to place the call to. I chose a simple one like this:
+最后，您需要设置FIFO通过mod\_loopback拨打电话的拨号计划部分。我选择了一个简单的设置，如下所示：
 
 ```xml
-<extension name="Dial to Agent from Queue">
+<extension name="从队列拨打坐席">
  <condition field="destination_number" expression="^1(10[01][0-9])$">
   <action application="bridge" data="user/$1@$${domain}"/>
  </condition>
 </extension>
 ```
 
-On the code above, you have to be careful with applications that would make originate return with a successful call such as pre\_answer or start\_dtmf. If it returns without you making sure agent picked up, both legs are going to be hungup.
+在上面的代码中，你需要小心那些可能会使 originate 返回一个成功呼叫的应用程序，比如 pre_answer 或 start_dtmf。如果返回而没有确认坐席接通，双方都将被挂断。
 
-See contrib file [Based on MCollins dialplan](http://fisheye.freeswitch.org/browse/%7Eraw,r=15478/FreeSWITCH/contrib/jmesquita/conf/01%5Ffifo.xml)
+参考文件 [基于 MCollins dialplan](http://fisheye.freeswitch.org/browse/%7Eraw,r=15478/FreeSWITCH/contrib/jmesquita/conf/01%5Ffifo.xml)
 
-## JavaScript Example
+## JavaScript 示例
 
-The following are JavaScript versions of the examples above. Here we are adding a call to a queue.
+以下是上述示例的 JavaScript 版本。在这里，我们向队列添加一个呼叫。
 
 ```xml
 session.execute( "fifo", "myqueue in 'sounds/your-being-picked-up.wav' 'sounds/tunes.wav'" );
 ```
 
-You can replace the sound files with "undef" if you don't want them. Here we are taking a call out of a queue without specifying an announcement file.
+如果不想要声音文件，可以用 "undef" 替换它们。在这里，我们将一个呼叫从队列中取出而不指定公告文件。
 
 ```xml
 session.execute( "fifo", "myqueue out wait undef 'sounds/tunes.wav'" );
 ```
 
-This call is **non blocking** when putting a call into the fifo. You still have access to the session but you won't know, for example, when the call is taken off of the queue. If you are interested in these events, watching the event socket is where you should focus.
+这个调用在将呼叫放入 FIFO 时是**非阻塞**的。您仍然可以访问会话，但是您不会知道，例如，何时将呼叫从队列中取出。如果您对这些事件感兴趣，应该关注事件套接字。
 
-## Lua Example, queue position announcement trick
+## Lua 示例，队列位置公告的技巧
 
-The fifo\_chime\_list variable may point at a fixed symlink (were are in the Linux World), and by changing the symlink pointer during the period, where the customer waits inside the fifo, the sound played back will change. The Lua example below implements this trick. The channel variables: fifo\_chime\_list and fifo\_chime\_freq must be set before the customer enters the fifo. In order to make the symlink unique, the uuid is used at the first name of the symlink:
+fifo\_chime\_list 变量可能指向一个固定的符号链接（我们在 Linux 世界中），并且在客户等待 fifo 内部期间，通过更改符号链接指针，播放的声音将会发生变化。下面的 Lua 示例实现了这个技巧。在客户进入 fifo 之前，必须设置通道变量：fifo\_chime\_list 和 fifo\_chime\_freq。为了使符号链接唯一，uuid 在符号链接的第一个名称处使用。
 
-Expand source 
+扩展源代码
 
 ```xml
--- Scriptname: voiceprompts.lua
--- This script provides queue position announcement
--- using a symlink to the appropiate queue length file
+-- 脚本名称：voiceprompts.lua
+-- 该脚本提供队列位置的公告
+-- 使用符号链接到相应的队列长度文件
 
--- Initialization of variables
+-- 变量初始化
 api = freeswitch.API()
 caller_uuid = argv[1]
--- Queue_name not used presently
+-- 队列名称目前未使用
 queue_name = argv[2]
 times = 1
--- The 0.wav file is a very short silence sound file
+-- 0.wav 文件是一个非常短的静音声音文件
 symlinkcommand = "ln -s -f /var/spool/voiceprompts/0.wav /var/spool/voiceprompts/"..caller_uuid..".wav"
 os.execute(symlinkcommand)
-
-while (times<1000) do
-  freeswitch.msleep(2000)
-  position = api:executeString("uuid_getvar "..caller_uuid.." fifo_position")
-  freeswitch.consoleLog("notice","Callers fifo position: "..position.."\n");
-  if (string.sub(position,1,4)~="-ERR") then
-    position = tonumber(position)
-    times = times + 1
-    -- We only announce the position when the caller is number two, as number one may already be on the way to be helped.
-    position = position - 1
-    if (position > 3) then position = 3 end
-    symlinkcommand = "ln -s -f /var/spool/voiceprompts/"..position..".wav /var/spool/voiceprompts/"..caller_uuid..".wav"
-    freeswitch.consoleLog("notice","Symlinkcommand: "..symlinkcommand.." result: "..os.execute(symlinkcommand).."\n");
-    os.execute(symlinkcommand)
-  else times = 1000 end
-  freeswitch.msleep(4000)
-end
-delsymlink = "rm '/var/spool/voiceprompts/"..caller_uuid..".wav'"
-result = os.execute(delsymlink)
 ```
 
-The Lua script must be called by the dialplan before the customer enters the fifo. The dialplan for the queue is:
-
-Expand source 
+在（times<1000）的情况下
+|   延时2000毫秒
+|   执行命令行：获取caller_uuid的fifo_position
+|   在控制台输出通知：Callers fifo position: position\n
+|   如果position的前4个字符不是"-ERR"
+|   |   将position转换为数字
+|   |   times增加1
+|   |   （当caller是第二个的时候）通知位置，因为第一个可能已经在得到帮助的路上了
+|   |   如果position大于3，位置限制在3
+|   |   同时链接命令行为：ln -s -f /var/spool/voiceprompts/position.wav /var/spool/voiceprompts/caller_uuid.wav
+|   |   在控制台输出通知：Symlinkcommand: symlinkcommand result: 执行命令行结果\n
+|   |   执行命令行：symlinkcommand
+|   否则times设为1000
+|   延时4000毫秒
+结束循环
+执行命令行：删除 '/var/spool/voiceprompts/caller_uuid.wav'，结果为result
 
 ```xml
-<extension name="Receive queue, fifo customer" >
+<extension name="接收队列，FIFO客户">
   <condition field="destination_number" expression="^(\*16\*.*)$">
     <action application="set" data="queue_caller_id_name=Queue-${destination_number:4}-${effective_caller_id_name}"/>
     <action application="set" data="queue_name=${used_domain}${destination_number:4}"/>
@@ -392,43 +388,42 @@ Expand source
 </extension>
 ```
 
-Naturally the choice of prefix: \*16\*, and the naming of the queue is unimportant for this example.
+自然前缀选择：\*16\*，以及队列的命名对于这个例子而言并不重要。
 
-### Queue Position, alternate method
+### 队列位置，替代方法
 
-Note that a combination of phrase macros and uuid\_getvar can be used to accomplish this as well. Before placing the call in fifo, set the fifo\_chime\_list value as follows:
+注意，组合使用短语宏和uuid\_getvar也可以实现这一目的。在将呼叫放入FIFO之前，将fifo\_chime\_list的值设置如下：
 
 ```xml
 <action application="set" data="fifo_chime_list=phrase:queue_position_macro:${uuid}" />
 ```
 
-Inside the phrase macro, use the UUID passed in to get the queue position:
+在短语宏中，使用传入的UUID来获取队列位置：
 
 ```xml
 <macro name="queue_position_macro">
 	<input pattern="(.*)">
 		<match>
-			<action function="play-file" data="queue_pos_intro" /> <!-- "You are caller number" -->
-			<action function="play-file" data="cardinals/${uuid_getvar $0 fifo_position}" /> <!-- sound files with names "1", "2", etc. -->
+			<action function="play-file" data="queue_pos_intro" /> <!-- "您目前在排队的位置为"-->
+			<action function="play-file" data="cardinals/${uuid_getvar $0 fifo_position}" /> <!-- 音频文件名为 "1", "2", 等等 -->
 		</match>
 	</input>
 </macro>
 ```
 
-  
-Playing the caller number could, of course, be handled with another macro to play large numbers more eloquently.
+当然，播放呼叫者的位置也可以使用另一个宏更出色地播放大数值。
 
-## Details
+## 详情
 
-The agent prompt will play to the agent as the caller hears hold music then the agent will hear nothing as the caller is played their exit message. The agent can end the call with the caller at any time by pressing "\*". If the agent hangs up the call while either the agent's prompt or the callers prompt are being played, but before the calls are bridged, the caller will be dropped. (should this be fixed?)
+在呼叫者听到保持音乐的同时，代理会收到代理提示，然后代理将听不到任何声音，因为呼叫者将听到结束消息。代理可以随时按"\*"按键与呼叫者结束通话。如果代理在两个呼叫都被连接之前挂断通话，呼叫将被中断。 （需要修复吗？）
 
-Using [bind\_meta\_app](../../Channel-Variables-Catalog/bind_meta_key_16353592.mdx#bind_meta_key) prior to calling 'fifo out x' to refer to, say, \*1 to transfer calls will override the '\*' hangup functionality. In this case, an additional \* is necessary to use this hangup feature. ('\*\*' instead of '\*')
+在调用'fifo out x'之前，使用[bind_meta_app](../../Channel-Variables-Catalog/bind_meta_key_16353592.mdx#bind_meta_key)来引用"\*1"等来转接呼叫会覆盖"\*"的挂机功能。在这种情况下，使用这个挂机功能需要额外的"\*"。 （用"\*\*"代替"\*"）
 
-The fifo\_music channel variable (which can be set globally in freeswitch.xml) will control the music that's played in the FIFO.
+fifo_music通道变量（可以在freeswitch.xml中全局设置）将控制在FIFO中播放的音乐。
 
-**Note (this applies to FreeSWITCH 1.0.1 and later)**: setting the variable "fifo\_consumer\_exit\_key" to something, you can override the default "\*" key that exits the call on the consumer side.
+**注意（适用于FreeSWITCH 1.0.1及更高版本）**：将变量"fifo_consumer_exit_key"设置为其他值，可以覆盖默认的"\*"按键，在消费者端退出呼叫。
 
-##  API Commands 
+##  API命令
 
 ###  fifo 
 
@@ -438,114 +433,113 @@ The fifo\_music channel variable (which can be set globally in freeswitch.xml) w
 fifo list|list_verbose [ fifo_name ] 
 ```
 
-  
-Both 'fifo list' and 'fifo list\_verbose' give tons of information about the FIFO's that are currently defined, including any customer who are waiting or being serviced, the consumers in the FIFO, and the members. If we specify this command with the fifo name then it filters the information of given fifo name alone.
+无论是'fifo列表'还是'fifo列表_verbose'都提供了关于当前定义的FIFO的大量信息，包括等待或正在服务的任何客户，FIFO中的消费者以及成员。如果我们使用fifo名称指定此命令，那么它只会过滤给定FIFO名称的信息。
 
-####  count
+####  计数
 
 ```xml
 fifo count [ fifo_name ]
 ```
 
-Example output:
+示例输出：
 
 ```xml
 fifo_1:0:0:1:0:0
 fifo_2:0:0:0:0:0
 ```
 
-For each FIFO, a colon ':' separated list of counts in the following format is returned:
+对于每个FIFO，返回以下格式的用冒号':'分隔的计数列表：
 
 ```xml
-fifo_name:consumer_count:caller_count:member_count:ring_consumer_count:idle_consumer_count
+fifo_name:消费者计数:呼叫者计数:成员计数:环状消费者计数:空闲消费者计数
 ```
 
-####  importance
+####  重要性
 
 ```xml
 fifo importance <fifo_name>
 ```
 
   
-Outputs the importance value for the named fifo.
+输出指定fifo的重要性值。
 
-####  reparse \[del_all\]
+####  重新解析 \[删除全部\]
 
 ```xml
 fifo reparse [del_all]
 ```
 
   
-Re-parses the conf for mod\_fifo; if you are using mod\_xml\_curl for configuration data, this will also re-request the xml.
+重新解析mod_fifo的配置；如果您使用mod_xml_curl进行配置数据，则还会重新请求xml。
 
-The parameter del\_all causes cleanup of used memory (fifos are not deleted automatically when they become empty). Memory would not be an issue in most installations, as each fifo consumes very little of it, but it might eventually happen if you are dealing with multi-tenancy.
+参数del_all会清除已使用的内存（当fifo变为空时，fifo不会自动删除）。在大多数安装中，内存不会成为问题，因为每个fifo占用的内存很少，但是如果您处理多租户，可能最终会发生这种情况。
 
 ###  fifo_member 
 
-####  add
+####  添加
 
 ```xml
 add <fifo_name> <originate_string> [<simo_count>] [<timeout>] [<lag>] [expires] [taking-calls]
 ```
 
   
-Adds a member to the named fifo, with the same values as described in the Agent Callback section. If the named FIFO does not already exist, it is created.
+向指定的fifo中添加一个成员，成员的值与代理回调部分描述的值相同。如果指定的FIFO不存在，则会创建该FIFO。
 
-####  del
+####  删除
 
 ```xml
 del <fifo_name> <originate_string>
 ```
 
   
-Deletes the member from the named fifo. Deleting the last member from the FIFO does **not** remove the FIFO.
+从指定的fifo中删除成员。删除FIFO中的最后一个成员**不会**删除FIFO本身。
 
-##  Additional variables 
+##  附加变量
 
-* fifo\_destroy\_after\_use: FreeSWITCH automatically create a new FIFO when the first time use it, and keep in the memory hash. This var tell FreeSWITCH destroy it to save memory. Using for a one time FIFO.
+**fifo_destroy_after_use**: 当第一次使用FIFO时，FreeSWITCH会自动创建一个新的FIFO，并将其保留在内存哈希中。这个变量告诉FreeSWITCH在使用完后销毁它以节省内存。适用于一次性的FIFO。
 
-### Caller leg channel variables used or set by mod_fifo
+### 由mod_fifo使用的主叫腿通道变量或设定的变量
 
-* **fifo\_chime\_list**: a list of files to broadcast while the customer is waiting for someone to answer
-* **fifo\_chime\_freq:** playing sound files to caller every fifo\_chime\_freq seconds
-* **fifo\_orbit\_exten:** (exten:timeout), transfer the caller to exten on timeout (use "\_continue\_" to move on in current extension)
-* **fifo\_orbit\_dialplan:** use this dialplan for the transfer, made on timeout. if not present use the current dialplan
-* **fifo\_orbit\_context:** use this context for the transfer, made on timeout. if not present use the current context
-* **fifo\_orbit\_announce:** play to caller
-* **fifo\_caller\_exit\_key:** caller hangup by default
-* **fifo\_caller\_exit\_to\_orbit:** use with fifo\_caller\_exit\_key, transfer the caller to exten other than hangup
-* **fifo\_serviced\_uuid:** ?
-* **fifo\_status:** WAITING, TIMEOUT, ABORTED, DONE
-* **fifo\_timestamp:** timestamp of when the caller was bridged to the consumer
-* **fifo\_serviced\_by:** the uuid of the consumer leg that picked-up of the call
-* **fifo\_serviced\_uuid:** the uuid of the consumer leg that triggered the pick-up of the call, matches fifo\_serviced\_by if fifo\_consumer\_id is not set
+- **fifo_chime_list**: 在等待接听时要广播的文件列表
+- **fifo_chime_freq**: 每隔fifo_chime_freq秒向呼叫者播放声音文件
+- **fifo_orbit_exten**: 在超时时将呼叫方转接到指定的分机（exten:timeout）（使用"\_continue\_"进行当前分机的继续）
+- **fifo_orbit_dialplan**: 在超时时使用该dialplan进行转接。如果不存在，则使用当前的dialplan
+- **fifo_orbit_context**: 在超时时使用该上下文进行转接。如果不存在，则使用当前的上下文
+- **fifo_orbit_announce**: 播放给呼叫者的提示音
+- **fifo_caller_exit_key**: 默认情况下呼叫方挂断键为hangup
+- **fifo_caller_exit_to_orbit**: 与fifo_caller_exit_key一起使用，将呼叫方转接到除挂断之外的其他分机
+- **fifo_serviced_uuid**: ?
+- **fifo_status**: WAITING（等待中），TIMEOUT（超时），ABORTED（中止），DONE（完成）
+- **fifo_timestamp**: 呼叫方与接受方建立桥接的时间戳
+- **fifo_serviced_by**: 接受该呼叫的消费者腿的uuid
+- **fifo_serviced_uuid**: 触发接受该呼叫的消费者腿的uuid（如果fifo_consumer_id未设置，则与fifo_serviced_by匹配）
 
-### Consumer leg channel variables set by mod_fifo
+### 由mod_fifo设定的消费者腿通道变量
 
-These channel variables will be set by mod\_fifo according to what is specified for these variables in the configuration of a particular consumer.
+这些通道变量将由mod_fifo根据特定消费者的配置中为这些变量指定的内容进行设定。
 
-If a consumer is statically defined as a member, the values for these variables may be set within {} of the dial string used to call the consumer. To set multiple variables within the {}, separate each variable=value by commas.
+如果将消费者静态定义为成员，则可以在用于呼叫消费者的拨号字符串的 {} 中设置这些变量的值。要在 {} 中设置多个变量，用逗号分隔每个变量=值。
 
-If a consumer executes dialplan to receive a call from a fifo, the values for these variables may be set (with the set application) in the dialplan the consumer executes.
+如果消费者执行拨号计划以从一个 fifo 接收呼叫，则可以在消费者执行的拨号计划中（使用 set 应用程序）设置这些变量的值。
 
-* **fifo\_strategy:** the strategy to get the caller out of the fifo. Can be: "more\_ppl" or "waiting\_longer" (default);
-* **fifo\_consumer\_id:** if set, this indicates which uuid should the fifo consumer call be transferred to, useful when the consumer is another uuid;
-* **fifo\_record\_template:** if set, this is the file where the session will record to, expanded on the caller channel;
-* **fifo\_status:** WAITING or TALKING
-* **fifo\_target:** the uuid of the call the consumer is talking to
-* **fifo\_override\_announce:** overrides the consumer announce of the fifo
-* **fifo\_consumer\_wrapup\_sound:** played at the end of a serviced caller
-* **fifo\_consumer\_wrapup\_key:** to
-* **fifo\_pop\_order:** comma separated list of the priorities this consumer calls for
-* **fifo\_member\_wait:** This variable can be set to either 'wait' or 'nowait' on the consumer leg.  
-   * If it's set to 'wait', then the consumer's leg of the call will not hangup when the caller hangs up \[default\].  
-   * If it's set to 'nowait' then the consumer's leg of the call will hangup when the caller hangs up.
+- **fifo\_strategy:** 从 fifo 中取出呼叫者的策略。可以是："more\_ppl" 或 "waiting\_longer"（默认）；
+- **fifo\_consumer\_id:** 如果设置了该变量，则指示 fifo 消费者呼叫要传输到的 uuid，当消费者是另一个 uuid 时非常有用；
+- **fifo\_record\_template:** 如果设置了该变量，则是会话录制到的文件，会在呼叫者通道上扩展；
+- **fifo\_status:** WAITING 或 TALKING；
+- **fifo\_target:** 消费者正在与之通话的呼叫的 uuid；
+- **fifo\_override\_announce:** 覆盖 fifo 消费者的公告；
+- **fifo\_consumer\_wrapup\_sound:** 在服务完呼叫者后播放的声音；
+- **fifo\_consumer\_wrapup\_key:** to；
+- **fifo\_pop\_order:** 按优先级排序的逗号分隔的这个消费者的呼叫列表；
+- **fifo\_member\_wait:** 可以将此变量设置为消费者语音通道的'wait' 或 'nowait'。  
+     - 如果设置为 'wait'，则当呼叫者挂机时，消费者的语音通道不会挂断\[默认\]。  
+     - 如果设置为 'nowait'，则当呼叫者挂机时，消费者的语音通道将挂断。
 
-####  Examples 
+#### 示例 
 
-#####  nowait setting and recording file name 
+##### 设置 nowait 和录音文件名 
 
-* For on hook consumer (statically defined); in this example 12345 will ring when a caller is in the fifo named MyFifo@$${domain}
+* 对于直挂消费者（静态定义）；在此示例中，当有呼叫者在名为 MyFifo@$${domain} 的 fifo 中时，12345 会响铃。
 
 ```xml
 <configuration name="fifo.conf" description="FIFO Configuration">
@@ -557,7 +551,7 @@ If a consumer executes dialplan to receive a call from a fifo, the values for th
  </configuration>
 ```
 
-* For consumer that dials in to consume; in this example 56789 must be dialed to retrieve a caller from the fifo named MyFifo@$${domain}
+* 要消费者拨打来消费; 例如，必须拨打56789来检索名为MyFifo@$${domain}的fifo中的呼叫者
 
 ```xml
  <extension name="Get_Fifo_Call">
@@ -569,8 +563,6 @@ If a consumer executes dialplan to receive a call from a fifo, the values for th
  </extension>
 ```
 
-##  See Also 
+##  另请参阅
 
-* [mod\_callcenter](./mod_callcenter_1049389.mdx#--)
-
-
+* [mod_callcenter](./mod_callcenter_1049389.mdx#--)

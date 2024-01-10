@@ -1,41 +1,38 @@
+# Freeswitch IVR Originate
 
-# Freeswitch IVR Originate 
+点击此处展开目录
 
- 
+* 1 [IVR 呼叫数据语法](#ivr-originate-data-syntax)  
+   * 1.1 [呼叫普通通道](#call-a-normal-channel)  
+   * 1.2 [呼叫多个目的地的外呼](#multiple-destinations-in-outbound-calls)  
+   * 1.3 [应答确认](#answer-confirmation)  
+   * 1.4 [通道变量](#channel-variables)
 
-Click here to expand Table of Contents
+## IVR 呼叫数据语法
 
-* 1 [IVR originate data syntax](#ivr-originate-data-syntax)  
-   * 1.1 [Call a normal channel](#call-a-normal-channel)  
-   * 1.2 [Multiple destinations in outbound calls](#multiple-destinations-in-outbound-calls)  
-   * 1.3 [Answer confirmation](#answer-confirmation)  
-   * 1.4 [Channel variables](#channel-variables)
+### 呼叫普通通道
 
-## IVR originate data syntax
-
-### Call a normal channel
-
-Default pattern for originating calls:
+呼叫的默认模式如下:
 
 endpoint_name/endpointdata
 
-Originating by profile:
+按配置文件呼叫:
 
 sofia/${profile_name}/1234@domain.com
 
-Or by gateway(the sofia/gateway/ has special meaning make sure you include it when dialing via a gateway):
+或按网关呼叫(sofia/gateway/在拨打网关时具有特殊意义，请确保包含在内):
 
 sofia/gateway/${gateway_name}/1234
 
-If you want to set variables on the originated call, see the description at the top of the [\_\_Channel Variables](./Variables-Archive/x__Channel-Variables_1048892.mdx#--) page.
+如果您想在发起的呼叫上设置变量，请参考[\_\_Channel Variables](./Variables-Archive/x__Channel-Variables_1048892.mdx#--)页面上的描述。
 
-### Multiple destinations in outbound calls
+### 呼叫多个目的地的外呼
 
-This means any dialstring may contain a '|' and/or ',' separated list of call URLs. The "|" calls one call at a time, the "," calls multiple calls simultaneously.
+这意味着任何拨号字符串都可以包含一个由'|'和/或','分隔的呼叫URL列表。"|"一次呼叫一个呼叫，","同时呼叫多个呼叫。
 
-The example below will call 2 locations and connects the first to answer
+下面的示例将呼叫2个位置，并连接第一个应答的位置。
 
-**call 2, bridge to the first to answer**
+**呼叫2个位置，并连接第一个应答的位置**
 
 ```xml
 <extension name="3002">
@@ -45,7 +42,7 @@ The example below will call 2 locations and connects the first to answer
 </extension>
 ```
 
-If you have a problem with one of the destinations causing the others to stop ringing, insert this into the bridge application: {ignore_early_media=true} like so:
+如果在目的地中的某个位置出现问题导致其他位置停止振铃，请在桥接应用程序中插入以下内容: {ignore_early_media=true}，如下所示:
 
 ```xml
 <extension name="3002">
@@ -55,11 +52,11 @@ If you have a problem with one of the destinations causing the others to stop ri
 </extension>
 ```
 
-If only one destination has the problem, use square brackets instead of curly brackets. Channel variables set within curly brackets (braces) apply to all the call destinations, whereas channel variables set within square brackets apply only to the call destination immediately following it.
+如果只有一个目标存在问题，请使用方括号代替花括号。在花括号中设置的通道变量将应用于所有呼叫目标，而在方括号中设置的通道变量只会应用于其后的呼叫目标。
 
-And this example will first call 1 location and if that results in a failure, try 2 at once on the next go
+此示例首先会呼叫第一个位置，如果失败，则下一次同时尝试呼叫两个位置
 
-**call 1, then call 2**
+**先呼叫1，然后呼叫2**
 
 ```xml
 <extension name="3002">
@@ -69,35 +66,35 @@ And this example will first call 1 location and if that results in a failure, tr
 </extension>
 ```
 
-#### Enterprise originate
+#### 企业发起
 
   
-**IMPORTANT, you must set continue\_on\_fail=true on the A-leg of the call!**
+**重要，您必须在呼叫的 A-leg 上设置 continue\_on\_fail=true！**
 
-The so called 'enterprise originate' syntax is a way to simultaneously originate multiple calls in several threads (regular simultaneous originate is single threaded). To use it simply separate valid dial strings by :\_: . Each dial string can have its own {} and \[\] blocks and can themselves be simultaneous or sequential (containing ',' or '|') as above. To add channel variables to the entire enterprise originate use &lt;> blocks:
+所谓的“企业发起”语法是一种同时在多个线程中发起多个呼叫的方式（常规的同时发起是单线程的）。使用它，只需用 :\_: 分隔有效的拨号字符串。每个拨号字符串可以有自己的{}和 \[\] 块，并且它们本身可以是同时的或者连续的（包含 ',' 或 '|'），如上所述。要将通道变量添加到整个企业发起，请使用&lt;> 块：
 
 originate &lt;all_threads=true>{first_thread=true}sofia/gw/foo/bar:_:{second_thread=true}sofia/gw/foo/baz
 
-This can be helpful when dealing with call forwarding. Without it, FreeSWITCH™ would drop the simultaneous dial and transfer to the forwarded extension.
+这在处理呼叫转移时非常有帮助。如果没有使用它，FreeSWITCH™将放弃同时呼叫并转接到转移的分机。
 
-For example, I'm bridging to two SIP phones, 101 and 102, with "," between them. 101 redirects to some other URL. 102 will now stop ringing. With :\_: it wouldn't.
+例如，我通过","将101和102两部SIP电话连接起来。101会重定向到另一个URL，而102将停止响铃。使用:\_:的话，就不会停止响铃。
 
-By default each new thread is it's own A-leg in the CDRs. You can access the variable ent\_originate\_aleg\_uuid to put the call back together.
+默认情况下，每个新的线程都是CDR中的自己的A-leg。您可以访问变量ent_originate_aleg_uuid来重新拼接呼叫。
 
-**XML Diaplan Example**
+**XML Diaplan 示例**
 
 ```xml
 <action application="set" data="continue_on_fail=true"/> 
 <action application="bridge" data="<ignore_early_media=true>{origination_caller_id_number=18005551212}sofia/internal/18004441212@192.168.0.10:5060:_:{origination_caller_id_number=18005551213}sofia/internal/18004441213@192.168.0.11:5060"/>
 ```
 
-### Answer confirmation
+### 回答确认
 
-It is possible to map a certain key as required indication of an accepted call. You may also supply a filename to play possibly instructing the call recipient to press the desired key etc...
+可以将某个按键映射为接受呼叫的必要指示。您还可以提供一个文件名来播放提示音，指示通话接收者按下所需的按键等等...
 
-The example below will call 2 locations playing prompt.wav to any who answer and completing the call to the first off-hook recipient to dial "4"
+以下示例将调用2个位置，在接听者回答并按下“4”后才完成呼叫。
 
-**call 2, wait for confirmation key==4**
+**呼叫2号，等待确认按键==4**
 
 ```xml
 <extension name="3002">
@@ -110,38 +107,37 @@ The example below will call 2 locations playing prompt.wav to any who answer and
 </extension
 ```
 
-  
-The following is the equivalent but the confirm data is passed via the bridge parameters (This is for situations where there is no originating channel to set variables on). It can also be used from the FreeSWITCH command line with the dial string in double quotes (e.g. the originate command).
+以下是等效的形式，但是确认数据通过桥接参数传递（这适用于没有原始通道可以设置变量的情况）。它还可以在FreeSWITCH命令行中使用带双引号的拨号字符串（例如，originate 命令）。
 
-**alternate form**
-
-```xml
- <extension name="3002">
-  <condition field="destination_number" expression="^3002$">
-    <action application="bridge" data="{group_confirm_file=/path/to/prompt.wav,group_confirm_key=4,call_timeout=60} iax/guest@somebox/1234,sofia/test-int/1000@somehost"/>
-  </condition>
-</extension>
-```
-
-This logic should be permitted in anything that establishes an outgoing call with `switch_ivr_originate`(). That means even in the originate API command you can call multiple targets and send whoever answers first to an extension that calls more multiple targets. You should be able to do the same in the mod\_conference dial and dynamic conference features.
-
-Note that setting `group_confirm_file` without `group_confirm_key` makes no effect. If you want to just playback an audio prompt to the callee before bridging the call, without asking any confirmation, here's an example:
-
-**no confirm key**
+**替代形式**
 
 ```xml
 <extension name="3002">
   <condition field="destination_number" expression="^3002$">
-    <action application="bridge" data="{group_confirm_file=playback /path/to/prompt.wav,group_confirm_key=exec,call_timeout=60} iax/guest@somebox/1234,sofia/test-int/1000@somehost"/>
+    <action application="bridge" data="{group_confirm_file=exec:node /path/to/test.js,group_confirm_key=exec,call_timeout=60} iax/guest@somebox/1234,sofia/test-int/1000@somehost"/>
   </condition>
 </extension> 
 ```
 
-exec in answer confirm
+在任何使用`switch_ivr_originate`()建立外拨呼叫的场景中，都可以使用这个逻辑。这意味着即使在API命令`originate`中，你也可以调用多个目标，并将其中先接听的转接到一个呼叫更多目标的分机。你应该能够在`mod_conference`拨号和动态会议功能中使用相同的方法。
 
-Instead of requiring locations to press a certain key to accept the call, you can require them to complete a script. This is done by setting 'group\_confirm\_key=exec' and 'group\_confirm\_file=application script &lt;args>'. In the example below, the test.js script is run for each location that is dialed. Whichever location finishes the script first gets the call.
+请注意，如果不设置 `group_confirm_key`，设置 `group_confirm_file` 将不会产生效果。如果你只想在转接呼叫之前给被叫方播放一个音频提示，而不需要任何确认，以下是一个示例：
 
-**execute javascript on each destination**
+**无确认键**
+
+```xml
+<extension name="3002">
+  <condition field="destination_number" expression="^3002$">
+    <action application="bridge" data="{group_confirm_file=playback: /path/to/prompt.wav,group_confirm_key=exec,call_timeout=60} iax/guest@somebox/1234,sofia/test-int/1000@somehost"/>
+  </condition>
+</extension> 
+```
+
+执行确认键
+
+与其要求被叫地点按下确认键接受呼叫，你可以要求他们完成一个脚本。通过设置`group_confirm_key=exec`和`group_confirm_file=application script <args>`来实现此功能。在下面的示例中，对每个被拨打的地点运行`test.js`脚本。哪个地点先完成脚本就接听呼叫。
+
+**在每个目标上执行Javascript**
 
 ```xml
  <extension name="3002">
@@ -154,18 +150,15 @@ Instead of requiring locations to press a certain key to accept the call, you ca
 </extension>
 ```
 
-Remember that when making a parallel dial in bridge, the script will be executed for all the end (which answers) but finally bridges with the one who completed the script successfully.
+请记住，在进行并行呼叫桥接时，脚本将为所有已接通的终端执行，但最终只与成功完成脚本的终端进行桥接操作。
 
-### Channel variables
+### 通道变量
 
-| Variable                        | Description                                                                                       |
-| ------------------------------- | ------------------------------------------------------------------------------------------------- |
-| group\_confirm\_key             | A digit that should be entered by the called party to accept the call.                            |
-| group\_confirm\_file            | An audio file or phrase that is played to the called party (e.g. "Press 1 to answer the call")    |
-| group\_confirm\_cancel\_timeout | If set, cancels leg\_timeout after the call is answered. originate\_timeout still remains active. |
-| group\_confirm\_error\_file     | Audio file or phrase to play after invalid confirmation input.                                    |
-| group\_confirm\_read\_timeout   | Time in milliseconds to wait for the confirmation input (default: 5000)                           |
-| fail\_on\_single\_reject        | (boolean value, needs description)                                                                |
-  
-  
-
+| 变量                            | 描述                                                                                       |
+| ------------------------------- | ----------------------------------------------------------------------------------------- |
+| group\_confirm\_key             | 被叫方应输入的数字以接听呼叫。                                                                |
+| group\_confirm\_file            | 播放给被叫方的音频文件或短语（例如："按1接听呼叫"）                                        |
+| group\_confirm\_cancel\_timeout | 如果设置，则取消呼叫接通后的话单超时。发起超时仍然保持活动状态。                               |
+| group\_confirm\_error\_file     | 无效确认输入后播放的音频文件或短语。                                                        |
+| group\_confirm\_read\_timeout   | 等待确认输入的时间（以毫秒为单位）（默认值：5000）                                         |
+| fail\_on\_single\_reject        | （布尔值，需要说明）                                                                          |

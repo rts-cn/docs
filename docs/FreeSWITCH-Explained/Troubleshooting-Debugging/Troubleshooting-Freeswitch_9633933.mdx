@@ -1,46 +1,42 @@
+# Freeswitch 故障排除
 
-# Troubleshooting Freeswitch 
+## 关于
 
- 
+您无需重新编译带有调试信息的版本或使用调试器来执行以下步骤（有关此操作，请参阅 [Freeswitch 调试](Debugging-Freeswitch_9633850.mdx#about)）。
 
-## About
+单击此处展开目录
 
-You need not recompile with debug symbols or use a debugger to take these steps (for that, see [Debugging Freeswitch](Debugging-Freeswitch_9633850.mdx#about))
+- 1 [对于急切的调试](#debug-for-the-impatient)
+- 2 [启用 SIP/Sofia 跟踪](#enabling-sipsofia-tracing)
+- 3 [在 Windows 上启用 SIP/Sofia 跟踪](#enabling-sipsofia-tracing-on-windows)
+- 4 [增加调试输出](#increase-debug-output)
+- 5 [给输出着色](#colorizing-output-)
+- 6 [启用 libedit](#enabling-libedit)
+- 7 [调试问题呼叫，如点击音](#debugging-problematic-calls-such-as-clicks)
 
-  
-Click here to expand Table of Contents
+### 对于急切的调试
 
-* 1 [Debug for the Impatient](#debug-for-the-impatient)
-* 2 [Enabling SIP/Sofia Tracing](#enabling-sipsofia-tracing)
-* 3 [Enabling SIP/Sofia Tracing on Windows](#enabling-sipsofia-tracing-on-windows)
-* 4 [Increase Debug Output](#increase-debug-output)
-* 5 [Colorizing output](#colorizing-output-)
-* 6 [Enabling libedit](#enabling-libedit)
-* 7 [Debugging problematic calls, such as clicks](#debugging-problematic-calls-such-as-clicks)
-
-### Debug for the Impatient
-
-From a bash/shell:
+从 bash/shell 中执行以下操作：
 
 ```bash
 export TPORT_LOG=1
 ```
 
-Start FreeSWITCH (e.g. /usr/local/freeswitch/bin/freeswitch)
+启动 FreeSWITCH（例如，/usr/local/freeswitch/bin/freeswitch）。
 
-Press F8.
+按下 F8 键。
 
-This will produce quite of logs ready to be pasted into freeswitch pastebin <http://pastebin.freeswitch.org/> 
+该操作将生成大量日志，可以粘贴到 freeswitch pastebin <http://pastebin.freeswitch.org/> 中。
 
-To turn this logging off, exit freeswitch and:
+要关闭此日志记录功能，请退出 freeswitch 并执行以下操作：
 
 ```bash
 unset TPORT_LOG
 ```
 
-### Enabling SIP/Sofia Tracing
+### 启用 SIP/Sofia 跟踪
 
-Stop FreeSWITCH. At the bash shell prompt enter any subset of the following:
+停止 FreeSWITCH。在 bash shell 提示符下，输入以下任何子集：
 
 ```bash
 export SOFIA_DEBUG=9
@@ -50,19 +46,19 @@ export TPORT_DEBUG=9
 export TPORT_LOG=1
 ```
 
-NOTE: If you only want to see the SIP messages then use the TPORT\_LOG export only.
+注意：如果您只想看到 SIP 消息，则只需使用 TPORT\_LOG 导出。
 
-For the full set of environment variables, see <http://sofia-sip.sourceforge.net/refdocs/debug%5Flogs.html>
+有关完整的环境变量设置，请参阅 <http://sofia-sip.sourceforge.net/refdocs/debug%5Flogs.html>。
 
-You don't have to rebuild sofia for these to work.
+无需对 sofia 进行重新构建即可使其正常工作。
 
-Restart FreeSWITCH.
+重新启动 FreeSWITCH。
 
-### Enabling SIP/Sofia Tracing on Windows
+### 在 Windows 上启用 SIP/Sofia 跟踪
 
-* From mailing list post by UV.
+* 从 UV 的邮件列表帖子中获得。
 
-In Windows, you need to set those environment variables using "set" instead of "export". Like this:
+在 Windows 上，您需要使用 "set" 而不是 "export" 来设置这些环境变量。例如：
 
 ```bash
 set SOFIA_DEBUG=9
@@ -77,24 +73,24 @@ set TPORT_DUMP=tport_sip.log
 set SU_DEBUG=9
 ```
 
-Then run freeswitch.exe in the same process.
+然后在同一个进程中运行freeswitch.exe。
 
-### Increase Debug Output
+### 增加调试输出
 
-Edit console.conf.xml 
+编辑console.conf.xml文件
 
 ```xml
 <param name="log_event" value="DEBUG"/> 
 <param name="all" value="DEBUG"/>
 ```
 
-Edit switch.conf.xml (especially if you have lots of calls, reduce logging)
+编辑switch.conf.xml文件（特别是当有大量呼叫时，减小日志记录）
 
 ```xml
  <param name="loglevel" value="debug"/>
 ```
 
-The possible values for value are (use only the text value in ""): 
+value的可能值为（只使用引号中的文字值）：
 
 ```bash
 0 "CONSOLE",
@@ -107,55 +103,52 @@ The possible values for value are (use only the text value in ""):
 7 "DEBUG"
 ```
 
-\[what are the possible name values?\]
+\[可能的name值是什么？\]
 
-You may also use the console API to set debug level on FS console.
-
-```bash
-freeswitch@de> console loglevel [0-7] (numerical value as above)
-```
-
-And you can also set the levels of fsctl.
+您也可以使用控制台API在FS控制台上设置调试级别。
 
 ```bash
-freeswitch@de> fsctl loglevel [0-7] (numerical value as above)
+freeswitch@de> console loglevel [0-7]（使用上述的数值）
 ```
 
-Use `/log [<loglevel>](../Modules/mod_console_1048950.mdx#log-levels-)` to change the console log level when connected via [fs\_cli](../Configuration/Command-Line-Switches_6587362.mdx#argument-list), because the above methods have no effect on fs\_cli.
+您还可以设置fsctl的级别。
 
-### Colorizing output 
+```bash
+freeswitch@de> fsctl loglevel [0-7]（使用上述的数值）
+```
 
-In console.conf.xml uncomment the color mode.
+使用`/log [<loglevel>](../Modules/mod_console_1048950.mdx#log-levels-)`可以在通过[fs\_cli](../Configuration/Command-Line-Switches_6587362.mdx#argument-list)连接时更改控制台日志级别，因为以上方法对fs\_cli没有影响。
 
-The colors are:
+### 给输出添加颜色
 
-* ALER - Red
-* CRIT - Red
-* ERROR - Red
-* WARNING - Magenta
-* NOTICE - Cyan
-* INFO - Green
-* DEBUG - Yellow
+在console.conf.xml中取消注释颜色模式。
 
-### Enabling libedit
+颜色如下：
 
-Whatever libedit is, enable it via --enable-core-libedit-support argument to configure script.
+* ALER - 红色
+* CRIT - 红色
+* ERROR - 红色
+* WARNING - 品红色
+* NOTICE - 青色
+* INFO - 绿色
+* DEBUG - 黄色
 
-### Debugging problematic calls, such as clicks
+### 启用libedit
 
-1. Check to see what the encoding is, so you know what needs to be debugged. 'show channels' on the fs\_cli.
-2. Make a call to the same endpoint, to see if it is related to a short, or long call.
-3. Check for any error or warning output in the fs\_cli during the calls, to see if there is something obvious that FS already knows about.
-4. If with the same endpoint you always experience the problem, try to isolate where the issue is.
-5. Call 9198 and listen to Tetris to see if the problem is present there.
-6. Call 9197 and listen to the mw tone.
-7. Call 9196 and test the echo.
-8. If steps 5-7 don't show the issue, then the connection between phone to FS is fine.
-9. Try other endpoints to see whether it is experienced in all cases.
-10. Call 5000, and call the 888 conference to see whether the issue is present there.
-11. Call the endpoint (if it is PSTN) with a POTS or mobile phone, to see whether it is VoIP related or endpoint related.
+无论libedit是什么，都可以通过--enable-core-libedit-support参数来启用它。
 
-You should know where the issue lies after these steps!
+### 调试问题呼叫，例如点击声音
 
-  
+1. 检查编码，以确定需要调试的内容。在fs\_cli上执行'show channels'命令。
+2. 对同一终端进行呼叫，以查看问题是否与短呼叫或长呼叫有关。
+3. 在呼叫过程中，检查fs\_cli是否有任何错误或警告信息，以查看FS是否已经知道明显的问题。
+4. 如果在同一终端上始终出现问题，请尝试确定问题出现的位置。
+5. 拨打9198并听听俄罗斯方块，看看问题是否存在。
+6. 拨打9197并听听中频音调。
+7. 拨打9196并测试回音。
+8. 如果步骤5-7没有显示问题，则电话到FS之间的连接正常。
+9. 尝试其他终端，查看问题是否在所有情况下都发生。
+10. 拨打5000，并召开888会议，看看问题是否存在。
+11. 如果终端是PSTN，则使用POTS电话或移动电话拨打终端，以查看问题是与VoIP相关还是与终端相关。
 
+在完成这些步骤后，您应该知道问题所在！

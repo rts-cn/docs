@@ -1,60 +1,56 @@
+# 组呼
 
-# Call Groups 
+## 简介
 
- 
+同时给多个电话打电话。同时或依次将组内所有电话分机振铃。可以使用任意两位数的组号。下面的示例将使用组号01。
 
-## About
+单击此处展开目录
 
-Ring several phones at once. Ring all phone extensions in a group all at once or in order. Any two digit group number may be used. The following example will use group number 01.
+* 1 [组分机](#组分机)
+* 2 [从服务器操作组](#从服务器操作组)
+* 3 [参见](#参见)
 
-Click here to expand Table of Contents
+## 组分机
 
-* 1 [Group Extensions](#group-extensions)
-* 2 [Manipulating Groups from the Server](#manipulating-groups-from-the-server)
-* 3 [See Also](#see-also)
+**添加到组**
 
-## Group Extensions
+81\[2位数组号\]
 
-**Add to Group**
+拨打分机号码8101将当前电话添加到01组。
 
-81\[2 digit group number\]
+**从组中删除**
 
-Calling Extension 8101 will add the current phone to group 01.
+80\[2位数组号\]
 
-  
-**Delete from Group**
+拨打分机号码8001将当前电话分机从01组中删除。
 
-80\[2 digit group number\]
+**同时振铃组**
 
-Calling Extension 8001 will remove the current phone extension from group 01.
+82\[2位数组号\]
 
-**Ring Group Simultaneous**
+拨打分机号码8201将组01中的所有电话分机同时响铃。
 
-82\[2 digit group number\]
+**顺序振铃组**
 
-Calling Extension 8201 will ring all phone extensions in group 01.
+83\[2位数组号\]
 
-**Ring Group Order**
+拨打分机号码8301将组01中的第一个电话分机响铃，然后是组中下一个电话，再然后是组中的下一个电话分机，直到有人接听。
 
-83\[2 digit group number\]
+## 从服务器操作组
 
-Calling Extension 8301 will ring the first phone extensions in group 01 followed by the next phone in the group and then ring the next phone extension in the group until the call is answered.
+##### 向组添加外部号码
 
-## Manipulating Groups from the Server
-
-##### Adding an external number to a Call Group
-
-Assuming that the local domain is set to [example.com](http://example.com), and you want the group to make a call to 01234555678 via a gateway called sipprivider, you can do it thus from the CLI:
+假设本地域名设置为 [example.com](http://example.com)，你想让该组通过名为 sipprivider 的网关拨打 01234555678 号码，你可以通过命令行界面执行以下操作：
 
 ```xml
 group insert:01@example.com:[sip_cid_type=none]sofia/gateway/sipprovider/01234555678
 ```
 
-This allows one to set things up so that extensions can be logged in/out using the above 8xxx codes, but the group always calls one's mobile(s)
+这样就可以设置使得通过上述8xxx代码可以登录/注销分机，而组始终呼叫设备的手机。
 
-##### Deleting from a Group
+##### 从组中删除
 
-It is possible to delete items in a group using the 'group delete' command at the FreeSwitch CLI, but you need to know what's in the group. If it all goes horribly wrong, you can get rid of a call group by manipulating the SQL database directly. Assuming that you're using SQLight3, you can see the current state of play, thus:
+可以使用 FreeSwitch CLI 中的'group delete'命令来删除组中的项目，但您需要了解组中的内容。如果出现严重问题，可以直接操作 SQL 数据库来删除呼叫组。假设您正在使用 SQLight3，您可以查看当前的状态，如下所示：
 
 ```xml
 # sqlite3 ~freeswitch/db/call_limit.db
@@ -65,14 +61,12 @@ voip|01@example.com|[sip_cid_type=none]sofia/gateway/sipprovider/01234555678
 voip|01@example.com|sofia/internal/sip:1000@12.23.34.45:2048;line=abcde
 ```
 
-and then discard (in this case) group [01@example.com](mailto:01@example.com) thus:
+然后通过以下方式删除（在本例中）组 [01@example.com](mailto:01@example.com)：
 
 ```xml
 sqlite> delete from group_data where groupname = '01@example.com';
 ```
 
-## See Also
+## 参考资料
 
-[Features](../[DEAD/Features_6586725.mdx#about)
-
-
+[功能](../[DEAD/Features_6586725.mdx#about)

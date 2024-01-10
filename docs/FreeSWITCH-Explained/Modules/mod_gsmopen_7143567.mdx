@@ -1,117 +1,116 @@
-
 # mod_gsmopen 
 
  
 
-## About
+## 关于
 
-GSMopen is a FreeSWITCH™ endpoint (channel driver) that allows an SMS message to be sent to and from FreeSWITCH as well as incoming and outgoing GSM voice calls that can be bridged, originated, answered, etc. as in all other endpoints, e.g. sofia/SIP). An SMS on FreeSWITCH is handled following the CHAT API (like the text messaging in mod\_sofia, mod\_skypopen, and mod\_dingaling).
+GSMopen是FreeSWITCH™的一个端点（通道驱动程序），允许将短信消息发送到FreeSWITCH，并且可以进行来电和去电的GSM语音呼叫，可以进行桥接、发起、接听等操作，就像其他所有端点一样，比如sofia/SIP。在FreeSWITCH上处理短信时遵循CHAT API（类似于mod_sofia、mod_skypopen和mod_dingaling中的文本消息）。
 
-Status
+状态
 
-GSMopen is in "beta" status.
+GSMopen处于“beta”状态。
 
-UNLOCK THE DONGLE
+解锁Dongle
 
-Is your dongle unlocked?
+你的Dongle已解锁吗？
 
-Click here to expand Table of Contents
+点击这里展开目录
 
-* 1 [Quick Start Guide](#quick-start-guide)
-* 2 [What Is GSMopen](#what-is-gsmopen-)
-* 3 [DATA CONNECTION Concurrent on Same Dongle](#data-connection-concurrent-on-same-dongle-)
-* 4 [Hardware Requirements](#hardware-requirements-)  
-   * 4.1 [Compatibility List](#compatibility-list)  
-   * 4.2 [Voice calls and SMS](#voice-calls-and-sms-)  
-   * 4.3 [SMS ONLY (no voice calls)](#sms-only-no-voice-calls-)
-* 5 [Dialplan](#dialplan)  
-   * 5.1 [The "ANY" and "RR" interfaces](#the-any-and-rr-interfaces)
-* 6 [CONFIGURATION FILE and incoming voice calls](#configuration-file-and-incoming-voice-calls-)  
-   * 6.1 [IMEI and IMSI automatic device discovery (only on Linux)](#imei-and-imsi-automatic-device-discovery-only-on-linux-)  
-   * 6.2 [Configuration File](#configuration-file)  
-   * 6.3 [Incoming Voice Calls](#incoming-voice-calls-)  
-   * 6.4 [Multiple Concurrent Incoming Calls to the Same GSM Number](#multiple-concurrent-incoming-calls-to-the-same-gsm-number-)
-* 7 [API and CLI Commands](#gsmopen-commands--)  
-   * 7.1 [Integration with mod\_sms](#integration-with-mod_sms-)  
-   * 7.2 [GSM Commands](#gsmopen-commands--)  
+* 1 [快速入门指南](#quick-start-guide)
+* 2 [什么是GSMopen](#what-is-gsmopen-)
+* 3 [数据连接同时使用同一插卡](#data-connection-concurrent-on-same-dongle-)
+* 4 [硬件要求](#hardware-requirements-)  
+   * 4.1 [兼容性列表](#compatibility-list)  
+   * 4.2 [语音通话和短信](#voice-calls-and-sms-)  
+   * 4.3 [仅短信（无语音通话）](#sms-only-no-voice-calls-)
+* 5 [拨号计划](#dialplan)  
+   * 5.1 ["ANY" 和 "RR" 接口](#the-any-and-rr-interfaces)
+* 6 [配置文件和呼入语音通话](#configuration-file-and-incoming-voice-calls-)  
+   * 6.1 [IMEI和IMSI自动设备发现（仅在Linux上）](#imei-and-imsi-automatic-device-discovery-only-on-linux-)  
+   * 6.2 [配置文件](#configuration-file)  
+   * 6.3 [呼入语音通话](#incoming-voice-calls-)  
+   * 6.4 [同一GSM号码的多个并发呼入通话](#multiple-concurrent-incoming-calls-to-the-same-gsm-number-)
+* 7 [API和CLI命令](#gsmopen-commands--)  
+   * 7.1 [与mod\_sms的集成](#integration-with-mod_sms-)  
+   * 7.2 [GSM命令](#gsmopen-commands--)  
       * 7.2.1 [console interface\_name](#console-interface_name)  
          * 7.2.2 [list](#list)  
          * 7.2.3 [remove](#remove)  
          * 7.2.4 [reload](#reload)  
-   * 7.3 [gsmopen Commands](#gsmopen-commands--)  
+   * 7.3 [gsmopen命令](#gsmopen-commands--)  
       * 7.3.1 [gsmopen\_boost\_audio](#-gsmopen_boost_audio-)  
          * 7.3.2 [gsmopen\_dump](#-gsmopen_dump-)  
          * 7.3.3 [gsmopen\_sendsms](#-gsmopen_sendsms-)  
          * 7.3.4 [chat](#-chat-)  
-         * 7.3.5 [ussd on chat](#-ussd-on-chat-)  
-   * 7.4 [Events](#-gsmopen_sendsms-)  
-      * 7.4.1 [Voice Calls](#-voice-calls-)  
-         * 7.4.2 [MESSAGE (SMS)](#-gsmopen_sendsms-)  
+         * 7.3.5 [chat上的USSD](#-ussd-on-chat-)  
+   * 7.4 [事件](#-gsmopen_sendsms-)  
+      * 7.4.1 [语音通话](#-voice-calls-)  
+         * 7.4.2 [短信（消息）](#-gsmopen_sendsms-)  
          * 7.4.3 [gsmopen::dump\_event](#-gsmopendump_event-)  
          * 7.4.4 [gsmopen::alarm](#-gsmopenalarm-)
-* 8 [Building](#-building)  
-   * 8.1 [Known Issues](#-known-issues-)  
-   * 8.2 [Linux, \*BSD, etc](#linux-bsd-etc-)  
-      * 8.2.1 [Which Linux distro? Desktop or Server?](#which-linux-distro-desktop-or-server-)  
-         * 8.2.2 [Prerequisites](#prerequisites)  
-         * 8.2.3 [Build and Install](#build-and-install)  
-         * 8.2.4 [Configuration File](#configuration-file-)  
-         * 8.2.5 [Determine the correct device files to use for controldevice\_name and controldevice\_audio\_name](#determine-the-correct-device-files-to-use-for-controldevice_name-and-controldevice_audio_name)  
-         * 8.2.6 [Start FS and Load GSMopen](#start-fs-and-load-gsmopen)  
+* 8 [构建](#-building)  
+   * 8.1 [已知问题](#-known-issues-)  
+   * 8.2 [Linux，\*BSD等](#linux-bsd-etc-)  
+      * 8.2.1 [选择哪个Linux发行版？桌面版或服务器版？](#which-linux-distro-desktop-or-server-)  
+         * 8.2.2 [先决条件](#prerequisites)  
+         * 8.2.3 [构建和安装](#build-and-install)  
+         * 8.2.4 [配置文件](#configuration-file-)  
+         * 8.2.5 [确定正确的设备文件来控制controldevice\_name和controldevice\_audio\_name](#determine-the-correct-device-files-to-use-for-controldevice_name-and-controldevice_audio_name)  
+         * 8.2.6 [启动FS并加载GSMopen](#start-fs-and-load-gsmopen)  
    * 8.3 [Windows](#gsmopen-on-windows)  
-      * 8.3.1 [Prerequisites on Windows](#prerequisites-on-windows-)  
-         * 8.3.2 [Build and Install GSMopen on Windows](#build-and-install-gsmopen-on-windows-)  
-         * 8.3.3 [Configuration File on Windows](#configuration-file-on-windows)  
-         * 8.3.4 [Start FS and Load GSMopen on Windows](#start-fs-and-load-gsmopen-on-windows)
-* 9 [How to Report Bugs and Request Features](#-how-to-report-bugs-and-request-features-)
-* 10 [How to Find Help](#-how-to-find-help-)  
-   * 10.1 [UNLOCK THE DONGLE!!!](#-unlock-the-dongle-)
-* 11 [Troubleshooting](#troubleshooting)  
-   * 11.1 [Intermittent failures](#intermittent-failures-)  
-   * 11.2 [VMWare support](#vmware-support)
-* 12 [See Also](#-gsmopen_sendsms-)
+      * 8.3.1 [在Windows上的先决条件](#prerequisites-on-windows-)  
+         * 8.3.2 [在Windows上构建和安装GSMopen](#build-and-install-gsmopen-on-windows-)  
+         * 8.3.3 [Windows上的配置文件](#configuration-file-on-windows)  
+         * 8.3.4 [在Windows上启动FS并加载GSMopen](#start-fs-and-load-gsmopen-on-windows)
+* 9 [如何报告错误和请求功能](#-how-to-report-bugs-and-request-features-)
+* 10 [如何寻求帮助](#-how-to-find-help-)  
+   * 10.1 [解锁插卡！](#-unlock-the-dongle-)
+* 11 [故障排除](#troubleshooting)  
+   * 11.1 [间歇性故障](#intermittent-failures-)  
+   * 11.2 [VMWare支持](#vmware-support)
+* 12 [参阅](#-gsmopen_sendsms-)
 
-## Quick Start Guide
+## 快速入门指南
 
-Steps needed to use GSMopen:
+使用GSMopen所需的步骤：
 
-* Compile and install FreeSWITCH
-* Compile and install the prerequisites (gsmlib and libctb)
-* Compile and install mod\_gsmopen
-* Install and edit mod\_gsmopen config file
-* Connect one or more Huawei USB dongles (or other GSM modems) to the FreeSWITCH server machine
-* Be sure the **dongle has the "voice" capability UNLOCKED**, or unlock it with dc-unlocker ( <http://www.dc-unlocker.com/> ).
-* Start FreeSWITCH
-* Load mod\_gsmopen in FreeSWITCH
-* Profit!
+* 编译并安装FreeSWITCH
+* 编译并安装先决条件（gsmlib和libctb）
+* 编译并安装mod_gsmopen
+* 安装并编辑mod_gsmopen配置文件
+* 将一个或多个华为USB设备（或其他GSM调制解调器）连接到FreeSWITCH服务器机器上
+* 确保**设备已解锁“语音”功能**，或使用dc-unlocker解锁设备（<http://www.dc-unlocker.com/>）
+* 启动FreeSWITCH
+* 在FreeSWITCH中加载mod_gsmopen
+* 赚钱！
 
-UNLOCK THE DONGLE
+解锁设备
 
- **UNLOCK THE DONGLE!!!** 
+**解锁设备！！！**
 
-Be sure the **dongle has the "voice" capability unlocked**, or unlock it with dc-unlocker ( <http://www.dc-unlocker.com/> )
+确保**设备已解锁“语音”功能**，或使用dc-unlocker解锁设备（<http://www.dc-unlocker.com/>）
 
-## **What Is GSMopen** 
+## **GSMopen是什么**
 
-GSMopen is an endpoint (channel driver) that allows an SMS to be sent to and from FreeSWITCH as well as incoming and outgoing GSM voice calls (that can be bridged, originated, answered, etc. as in all other endpoints, e.g. sofia/SIP). An SMS on FreeSWITCH is handled following the CHAT API (like the text messaging in mod\_sofia, mod\_skypopen, and mod\_dingaling).
+GSMopen是一个端点（通道驱动程序），允许在FreeSWITCH上发送和接收短信，以及进行呼入和呼出的GSM语音通话（可以跟其他端点一样进行桥接、发起、接听等操作，如sofia/SIP）。在FreeSWITCH上处理短信时，遵循CHAT API（如mod_sofia、mod_skypopen和mod_dingaling中的文本短信）。
 
-Preferred GSM modem to use for voice calls (and SMS) is Huawei E1550 dongle, or compatible.
+用于语音通话（和短信）的首选GSM调制解调器是华为E1550 USB设备或兼容设备。
 
-GSMopen works in FreeSWITCH on Linux and Windows, native at 8khz (GSM is 8khz compressed audio). It probably works on \*BSD and OSX too.
+GSMopen在Linux和Windows上运行FreeSWITCH，本地以8khz（GSM是8khz压缩音频）。它很可能也能在\*BSD和OSX上运行。
 
-GSMopen operates on GSM cellular/mobile connections in the same way that OpenZAP operates on analog lines. One interface (a GSM modem) is needed for each channel. For example, two concurrent calls would need two channels as well as two USB GSM dongles connected to the FreeSWITCH server box.
+GSMopen的操作方式与OpenZAP在模拟线路上的操作方式相同。每个通道需要一个接口（GSM调制解调器）。例如，同时进行两个呼叫也需要两个通道，以及连接到FreeSWITCH服务器机器的两个USB GSM设备。
 
-Obviously you must have credit on the SIM(s) inside the modems to make and receive calls, just like you need credits for your regular cell phone to work.
+显然，您必须在调制解调器内的SIM卡上拥有通话所需的余额，就像您手机使用需要余额一样。
 
-GSMopen uses **very** low CPU, so it works with the less powerful server platforms without problems (e.g. embedded appliances).
+GSMopen使用非常低的CPU，因此它能在性能较差的服务器平台上运行而无问题（例如嵌入式设备）。
 
-GSMopen has been contributed to the community by: Giovanni Maruzzelli (gmaruzz a|\~t gmail dot com) with a lot of help from the core developer team and hints, patches, suggestions, bug reports, feature requests from the superlative FS community.
+GSMopen由Giovanni Maruzzelli（gmaruzz at gmail dot com）为社区做出了贡献，核心开发团队以及来自超棒的FS社区的提示、补丁、建议、错误报告和功能请求给予了很多帮助。
 
-GSMopen is fully integrated with [Mod\_sms](./mod_sms_6587288.mdx#set) so you can use it for your messaging system pleasure.
+GSMopen与[Mod_sms](./mod_sms_6587288.mdx#set)完全集成，因此您可以将其用于您的短消息系统的乐趣。
 
-## **DATA CONNECTION Concurrent on Same Dongle** 
+## **同一插槽上的数据连接并发**
 
-Tarmo Aia wrote:   _The only working (voice) dongle what i have tested is E173, with that there is no need to to anything extraordinary. Just standard setup. The tests reveal that if You have 3G coverage, the data and voice would be concurrent, if you have below 3G (2,5 or 2 or 1G) in the very moment when you start voice calling over GSM dongle, the data would be disconnected. The data connection would be restored after the call is hung up - actually this is very logical because when the dongle is using 2G or similar coverage, the frequency for calling and data transmitting is the same. I suspect that if you call with 3G coverage, the call would go in the 1G frequency. If you are more interested I can put the dongle to the radio lab and do some measurements ;-) About setup: I'm using FS 1.2-stable, for bringing up data connection i use wvdial, config would be like: (/etc/wvdial.conf)_ 
+Tarmo Aia写道：我测试过的唯一正常（语音）插槽是E173，使用它时无需做任何特殊操作，只需进行标准设置即可。测试结果显示，如果您处于3G覆盖范围内，数据和语音可以同时进行，如果您在使用GSM插槽进行语音通话时，网络信号低于3G（2.5G、2G或1G），则数据连接将会中断。在通话挂断之后，数据连接将会恢复。实际上，这是非常合理的，因为当插槽使用2G或类似网络时，用于通话和数据传输的频率是相同的。我怀疑，如果您在3G网络覆盖范围内进行通话，通话可能会使用1G频率。如果您对此更感兴趣，我可以把插槽放到无线电实验室进行测量；关于设置方面：我使用的是FS 1.2-stable版本，启动数据连接我使用的是wvdial，配置如下：（/etc/wvdial.conf）
 
 ```xml
 [Dialer xxx]
@@ -125,21 +124,21 @@ New PPPD = yes
 Auto DNS = 1
 ```
 
-__To run data just type wvdial xxx (the xxx should be your provider or smth)_ 
+__要运行数据连接，只需键入wvdial xxx（xxx应该是您的服务提供商或类似的内容）__
 
-_In the test machine, config files for FS were pretty out-of-the-box, in gsmopen.conf i just changed the interface control ports to right ones. Hope it was enough information,_ 
+在测试机上，FS的配置文件非常简化，只需将`gsmopen.conf`中的接口控制端口更改为正确的端口即可。希望这是足够的信息。
 
-## **Hardware Requirements** 
+## **硬件要求**
 
-The CPU load generated by the GSMopen endpoint is very low, so if a server is able to run FS, it will have no problems using GSMopen channels.
+GSMopen终端生成的CPU负载非常低，因此，如果一个服务器能够运行FS，那么使用GSMopen通道将不会有任何问题。
 
-You will need at least one physical interface to connect to a GSM network.
+您至少需要一个物理接口来连接GSM网络。
 
-### Compatibility List
+### 兼容性列表
 
-Preferred GSM modem to use with GSMopen is Huawei E1550 dongle, or compatible.
+GSMopen首选的GSM模块是华为E1550 Dongle，或兼容模块。
 
-Please add to this list; probably most dongles are compatible.
+请添加到这个列表中；大多数Dongle可能都是兼容的。
 
 * E1550
 * E1552
@@ -155,38 +154,38 @@ Please add to this list; probably most dongles are compatible.
 * K3715
 * K3765
 
-Look for "Huawei modem" on Ebay or similar sites. Eg: <http://www.aliexpress.com/wholesale?isFreeShip=y&SearchText=huawei%2Be1550&CatId=0&manual=y>
+在Ebay或类似网站上搜索“华为模块”。例如：<http://www.aliexpress.com/wholesale?isFreeShip=y&SearchText=huawei%2Be1550&CatId=0&manual=y>
 
-Anyway, if other brands or models have the basic USB interfaces (serial + audio) but requires different modem commands, I will add support to them. Open a Jira for it, or contact me directly.
+无论如何，如果其他品牌或型号具有基本的USB接口（串口+音频），但需要不同的模块命令，我将为其添加支持。请在Jira上提出请求，或直接与我联系。
 
-USB Power
+USB电源
 
-**MORE THAN ONE DEVICE** on an USB bus without dedicated power supply can have **intermittent failure**, because dongles can use all of the power! If you use more than one device, use an external power supply connected to a.c. mains to supply your USB hub. Each dongle requires about 500mA / 0.5W to be safe.
+在没有专用电源供应的USB总线上使用多个设备可能会导致间断性故障，因为Dongle可能会使用所有的电源！如果您使用多个设备，请使用连接到交流电源的外部电源适配器来为USB集线器供电。每个Dongle大约需要500mA / 0.5W的电流来确保安全。
 
-### Voice calls and SMS 
+### 语音呼叫和短信
 
-If you have trouble with voice calls, please check that the dongle has the "voice" capability and that "voice" capability is **unlocked**. To check the capability existence and status, and unlock it if needed, you can use dc-unlocker client for windows ( <http://www.dc-unlocker.com/> , client and checking are free, small fee to unlock).
+如果您在语音呼叫方面遇到问题，请检查Dongle是否具有“voice”功能，并且“voice”功能是否**已解锁**。要检查功能是否存在以及状态，并在需要时进行解锁，您可以使用Windows的dc-unlocker客户端（<http://www.dc-unlocker.com/>，客户端和检查是免费的，解锁需要支付少量费用）。
 
-### SMS ONLY (no voice calls) 
+### 仅短信（无语音呼叫）
 
-* Any GSM modem (secondhand cellphone or a professional modem) that accepts AT commands and its data cable to connect it to the server.
+* 任何接受AT命令并使用数据线将其连接到服务器的GSM调制解调器（二手手机或专业调制解调器）。
 
-## **Dialplan**
+## **拨号计划**
 
-How to use GSMopen for outbound voice calls from FreeSWITCH™.
+如何使用GSMopen从FreeSWITCH™进行出站语音呼叫。
 
-Like other endpoints it's easy to build up useful dialplans using GSMopen. You can use the standard format with the interface name:
+与其他终端一样，使用GSMopen创建有用的拨号计划非常简单。您可以使用带有接口名称的标准格式：
 
 gsmopen/interface1/3472665618
 
-To call the number "3472665618" using the gsmopen interface named "interface1"
+使用名为"interface1"的gsmopen接口呼叫号码"3472665618"。
 
-Dialplan snippet:
+拨号计划片段：
 
-**GSMopen Dialplan Example**
+**GSMopen拨号计划示例**
 
 ```xml
-    <!-- dial 3472665618 via gsmopen using interface1 interface to go out -->
+    <!-- 使用gsmopen通过interface1接口拨打3472665618 -->
     <extension name="gsmopen">
       <condition field="destination_number" expression="^2909$">
         <action application="bridge" data="gsmopen/interface1/3472665618"/>
@@ -194,25 +193,25 @@ Dialplan snippet:
     </extension>
 ```
 
-### The "ANY" and "RR" interfaces
+### "ANY"和"RR"接口
 
-The poor man's interface grouping.
+穷人版的接口分组。
 
-You can also use the "ANY" or "RR" interfaces
+您还可以使用"ANY"或"RR"接口。
 
 gsmopen/ANY/3472665618
 gsmopen/RR/3472665618
 
-Use the ANY alias to call "3472665618" using the first available (idle, not in a call) gsmopen interface, automatically selected (thx [Seven Du](https://freeswitch.org/confluence/display/~seven)).
+使用"ANY"别名，使用第一个可用的（空闲且不在通话中的）gsmopen接口来呼叫"3472665618"，自动选择接口（感谢[Seven Du](https://freeswitch.org/confluence/display/~seven)）。
 
-Use the RR alias to select the interface using a Round Robin algorithm to distribute calls more fairly between all the available interfaces.
+使用"RR"别名，使用轮询算法选择接口，以公平地分配所有可用接口之间的呼叫。
 
-Dialplan snippet:
+拨号计划片段：
 
-**GSMopen Round Robin Dialplan Example**
+**GSMopen轮询拨号计划示例**
 
 ```xml
-    <!-- dial 3472665618 via gsmopen RR interface -->
+    <!-- 使用gsmopen RR接口拨打3472665618 -->
     <extension name="gsmopen">
       <condition field="destination_number" expression="^2908$">
         <action application="bridge" data="gsmopen/RR/3472665618"/>
@@ -220,65 +219,64 @@ Dialplan snippet:
     </extension>
 ```
 
-## **CONFIGURATION FILE and incoming voice calls** 
+## **配置文件和入站语音呼叫**
 
-### IMEI and IMSI automatic device discovery (only on Linux) 
+### IMEI和IMSI自动设备发现（仅适用于Linux）
 
-These two new configuration parameters allow for startup automatic discovery and configuration of command (controldevice\_name) and audio (controldevice\_audio\_name) devices.
+这两个新的配置参数允许在启动时自动发现和配置命令（controldevice\_name）和音频（controldevice\_audio\_name）设备。
 
-Eg: in an interface definition you can specify the IMEI of the dongle, or the IMSI of the SIM card contained into the dongle, or both, and mod\_gsmopen will scan the system looking for the correct devices.
+例如：在接口定义中，您可以指定移动宽带设备的IMEI号码，或者指定SIM卡中包含的IMSI号码，或者两者皆指定，然后mod\_gsmopen将扫描系统以寻找正确的设备。
 
-Values automatically discovered at startup override controldevice\_name and controldevice\_audio\_name. This means that if discovery works you can omit controldevice\_name and controldevice\_audio\_name from the interface definition.
+在启动时自动发现的值会覆盖controldevice\_name和controldevice\_audio\_name。这意味着如果发现功能正常运作，您可以在接口定义中省略controldevice\_name和controldevice\_audio\_name。
 
-If BOTH IMEI and IMSI are specified in one interface description, they MUST be BOTH correct. You can specify just one, if you prefer.
+如果在一个接口描述中同时指定IMEI和IMSI，它们两者必须都是正确的。如果您愿意，您也可以只指定其中一个。
 
-### Configuration File 
+### 配置文件
 
-GSMopen is **very** configurable.
+GSMopen非常可配置。
 
-Almost any single AT command used to manage call flow and to understand signaling and status can be customized.
+几乎任何用于管理呼叫流程、理解信令和状态的AT命令都可以定制。
 
-There are default values for all values, so you can leave the configuration file almost empty (you lazy!).
+所有值都有默认值，因此您可以将配置文件几乎留空（您这懒鬼！）。
 
-**gsmopen.conf.xml** Expand source 
+**gsmopen.conf.xml** 代码示例
 
 ```xml
-<configuration name="gsmopen.conf" description="GSMopen Configuration">
-  <global_settings>
-    <param name="debug" value="8"/>
-    <param name="dialplan" value="XML"/>
-    <param name="context" value="default"/>
-    <param name="hold-music" value="$${moh_uri}"/>
-    <param name="destination" value="9999"/>
-  </global_settings>
-  <!-- one entry here per gsmopen interface -->
-  <per_interface_settings>
-    <interface id="1" name="interface0">
-        <param name="hold-music" value="$${moh_uri}"/>
-        <param name="dialplan" value="XML"/>
-        <param name="context" value="default"/>
-        <param name="destination" value="5000"/>
-        <param name="controldevice_name" value="/dev/ttyUSB3"/>
-        <param name="controldevice_audio_name" value="/dev/ttyUSB2"/>
-        <param name="imei" value="353443043468086"/> <!-- if both imei and imsi are correct, the two device names will be overridden with the discovered names -->
-        <param name="imsi" value="220032500058601"/>
-    </interface>
-    <interface id="3" name="interfaceNICE">
-        <param name="hold-music" value="$${moh_uri}"/>
-        <param name="dialplan" value="XML"/>
-        <param name="context" value="default"/>
-        <param name="destination" value="9996"/>
-        <param name="controldevice_name" value="/dev/ttyUSB7"/>
-        <param name="controldevice_audio_name" value="/dev/ttyUSB6"/>
-    </interface>
-  </per_interface_settings>
-</configuration> 
+<配置名称="gsmopen.conf" 描述="GSMopen配置">
+  <全局设置>
+    <参数名称="调试" 值="8"/>
+    <参数名称="拨号计划" 值="XML"/>
+    <参数名称="上下文" 值="默认"/>
+    <参数名称="保持音乐" 值="$${moh_uri}"/>
+    <参数名称="目标" 值="9999"/>
+  </全局设置>
+  <!--每个gsmopen接口都有一个条目-->
+  <每个接口设置>
+    <接口id="1" 名称="接口0">
+        <参数名称="保持音乐" 值="$${moh_uri}"/>
+        <参数名称="拨号计划" 值="XML"/>
+        <参数名称="上下文" 值="默认"/>
+        <参数名称="目标" 值="5000"/>
+        <参数名称="控制设备名称" 值="/dev/ttyUSB3"/>
+        <参数名称="控制设备音频名称" 值="/dev/ttyUSB2"/>
+        <参数名称="IMEI" 值="353443043468086"/> <!--如果IMEI和IMSI都正确，则这两个设备名称将被发现的名称覆盖-->
+        <参数名称="IMSI" 值="220032500058601"/>
+    </接口>
+    <接口id="3" 名称="接口NICE">
+        <参数名称="保持音乐" 值="$${moh_uri}"/>
+        <参数名称="拨号计划" 值="XML"/>
+        <参数名称="上下文" 值="默认"/>
+        <参数名称="目标" 值="9996"/>
+        <参数名称="控制设备名称" 值="/dev/ttyUSB7"/>
+        <参数名称="控制设备音频名称" 值="/dev/ttyUSB6"/>
+    </接口>
+  </每个接口设置>
+</配置> 
 ```
 
-  
- Following are all the various configurable parameters you can set for each interface (with their default values):
+以下是可以为每个接口设置的各种可配置参数（及其默认值）：
 
-**GSMopen Defaults** Expand source 
+**GSMopen默认值**
 
 ```xml
   context = "default"
@@ -363,164 +361,247 @@ There are default values for all values, so you can leave the configuration file
   gsmopen_serial_sync_period = "300"
 ```
 
-### Incoming Voice Calls 
+```xml
+  context = "default"
+  dialplan = "XML"
+  destination = "5000"
+  controldevice_name = NULL
+  controldevice_audio_name = NULL
+  digit_timeout = NULL
+  max_digits = NULL
+  hotline = NULL
+  dial_regex = NULL
+  hold_music = NULL
+  fail_dial_regex = NULL
+  enable_callerid = "true"
+  at_dial_pre_number = "ATD"
+  at_dial_post_number = ";"
+  at_dial_expect = "OK"
+  at_hangup = "ATH"
+  at_hangup_expect = "OK"
+  at_answer = "ATA"
+  at_answer_expect = "OK"
+  at_send_dtmf = "AT+VTS"
+  at_preinit_1 = ""
+  at_preinit_1_expect = ""
+  at_preinit_2 = ""
+  at_preinit_2_expect = ""
+  at_preinit_3 = ""
+  at_preinit_3_expect = ""
+  at_preinit_4 = ""
+  at_preinit_4_expect = ""
+  at_preinit_5 = ""
+  at_preinit_5_expect = ""
+  at_postinit_1 = "at+cmic=0,9"
+  at_postinit_1_expect = "OK"
+  at_postinit_2 = "AT+CKPD=\"EEE\""
+  at_postinit_2_expect = "OK"
+  at_postinit_3 = "AT+CSSN=1,0"
+  at_postinit_3_expect = "OK"
+  at_postinit_4 = "at+sidet=0"
+  at_postinit_4_expect = "OK"
+  at_postinit_5 = "at+clvl=99"
+  at_postinit_5_expect = "OK"
+  at_query_battchg = "AT+CBC"
+  at_query_battchg_expect = "OK"
+  at_query_signal = "AT+CSQ"
+  at_query_signal_expect = "OK"
+  at_call_idle = "+MCST: 1"
+  at_call_incoming = "+MCST: 2"
+  at_call_active = "+CSSI: 7"
+  at_call_failed = "+MCST: 65"
+  at_call_calling = "+CSSI: 1"
+  at_indicator_noservice_string = "CIEV: 20"
+  at_indicator_nosignal_string = "CIEV: 50"
+  at_indicator_lowsignal_string = "CIEV: 5;1"
+  at_indicator_lowbattchg_string = "CIEV: 0;1"
+  at_indicator_nobattchg_string = "CIEV: 0;0"
+  at_indicator_callactive_string = "CIEV: 3;1"
+  at_indicator_nocallactive_string = "CIEV: 3;0"
+  at_indicator_nocallsetup_string = "CIEV: 6;0"
+  at_indicator_callsetupincoming_string = "CIEV: 6;1"
+  at_indicator_callsetupoutgoing_string = "CIEV: 6;2"
+  at_indicator_callsetupremoteringing_string = "CIEV: 6;3"
+  alsacname = "plughw:1"
+  alsapname = "plughw:1"
+  at_early_audio = "0"
+  at_after_preinit_pause = "500000"
+  at_initial_pause = "500000"
+  at_has_clcc = "0"
+  at_has_ecam = "0"
+  alsa_period_size = "160"
+  alsa_periods_in_buffer = "4"
+  gsmopen_sound_rate = "8000"
+  alsa_play_is_mono = "1"
+  alsa_capture_is_mono = "1"
+  capture_boost = "5"
+  playback_boost = "10"
+  no_sound = "0"
+  portaudiocindex = "1"
+  portaudiopindex = "1"
+  speexecho = "1"
+  speexpreprocess = "1"
+  gsmopen_serial_sync_period = "300"
+```
 
-Each incoming voice call that arrives on the interface will be directed to the _destination_ extension in the _context_ context.
+###来电语音通话
 
-So, please edit or add those fields to the config file to adapt it to your needs. The default config file works with the default, out-of-the-box, demo FreeSWITCH dialplan.
+每个到达接口的来电都将被转接到 *目的地* 分机，在 *上下文* 上下文中。
 
-### Multiple Concurrent Incoming Calls to the Same GSM Number 
+所以，请编辑或添加这些字段到配置文件中，以适应您的需求。默认的配置文件可以与默认的、开箱即用的 FreeSWITCH 拨号计划一起使用。
 
-This is possible, if the carrier supports call forwarding. You must set up call forwarding on BUSY, NOT REACHABLE state. Remember to switch off CALL WAITING.
+### 同一 GSM 号码的多个并发呼入
 
-Each physical interface (eg: GSM modem) has its own SIM, with just one number. You must have one interface for each concurrent call.
+如果运营商支持呼叫转移，这是可能的。您必须在忙线和不可达状态下设置呼叫转移。记得要关闭呼叫等待。
 
-When a call is made by a remote party to a number, the carrier sends the call to the SIM that bears that number. If that SIM is busy or unreachable, the carrier will redirect the call to the forwarded number. Same way you can add additional SIM cards / phones - forward them.
+每个物理接口（例如：GSM 调制解调器）都有自己的 SIM 卡，只有一个号码。您必须为每一个并发呼叫都有一个接口。
 
-The carrier can limit maximum call forwarding chain length. If you experience that situation, please add that information here.
+当远程方呼叫一个号码时，运营商会将呼叫发送到拥有该号码的 SIM 卡。如果那个 SIM 卡忙碌或不可达，运营商将把呼叫转接到被转移的号码。同样的方式，您可以添加额外的 SIM 卡/手机-进行呼叫转移。
 
-## API and CLI Commands 
+运营商可以限制最大呼叫转移链长度。如果您遇到这种情况，请在此处添加该信息。
 
-GSMopen adds various commands to the standard FreeSWITCH API and Commands.
+## API 和 CLI 命令
 
-They can all be used both through the command line and via API / ESL / whatever.
+GSMopen 添加了各种命令到标准的 FreeSWITCH API 和 Commands 中。
 
-### Integration with mod_sms 
+它们都可以通过命令行和 API / ESL / 其他方式同时使用。
 
-GSMopen is fully integrated with [mod\_sms](./mod_sms_6587288.mdx#set) so you can use it for your messaging system pleasure.
+### 与 mod_sms 集成
 
-### GSM Commands  
+GSMopen 与 [mod_sms](./mod_sms_6587288.mdx#set) 完全集成，因此您可以将其用于您的消息系统。
 
-"gsm" commands are intended to be used from the FS command line ("gsm remove" and "gsm reload" can be useful from Event socket as well).
+### GSM 命令
+
+"gsm" 命令旨在从 FS 命令行使用（"gsm remove" 和 "gsm reload" 也可以从事件套接字中派上用场）。
 
 #### console interface_name
 
-You begin typing "`gsm console interface_name`" to direct the "current console" to sending messages to interface\_name. From now on, you can type "gsm AT\_command" and AT\_command string will be sent to the modem identified by interface `interface_name`.
+你开始输入“`gsm console interface_name`”来给“当前控制台”指定发送消息到 interface\_name。从现在开始，你可以输入“gsm AT\_command”并且 AT\_command 字符串将会被发送到由 interface `interface_name` 标识的调制解调器。
 
 gsm console interface1
 gsm ATI
 
-#### list
+#### 列表
 
-"gsm list" gives the list and status of all the running GSMopen interfaces (a star marks the interface from which "RR" - see below - will start hunting an IDLE one), statistics about inbound failed and total calls, outbound failed and total calls per each interface.
+“`gsm list`”会给出所有正在运行的 GSMopen 接口的列表和状态（星号标记的接口表示“RR” - 在下面会解释 - 将会从中搜索一个“IDLE”接口），每个接口的入站失败和总呼叫次数，以及出站失败和总呼叫次数的统计信息。
 
 gsm list
 
-#### remove
+#### 删除
 
 gsm remove &lt;interface_name | interface_id>
 
-This command removes the gsmopen interface with name interface\_name or with id interface\_id, if that interface is idle.
+该命令会删除名称为 interface\_name 或具有 ID interface\_id 的 gsmopen 接口，前提是该接口空闲。
 
 gsm remove interface1
 
-[Muhammad Shahzad](https://freeswitch.org/confluence/display/~shahzad) and [Seven Du](https://freeswitch.org/confluence/display/~seven) contributed code for adding and removing interfaces on the fly.
+[Muhammad Shahzad](https://freeswitch.org/confluence/display/~shahzad) 和 [Seven Du](https://freeswitch.org/confluence/display/~seven) 为实时添加和删除接口贡献了代码。
 
-#### reload
+#### 重新加载
 
 gsm reload
 
-This command re-reads GSMopen configuration file gsmopen.conf.xml and adds ONLY the non running interfaces it found in that file. All existing running interfaces are not affected.
+该命令会重新读取 GSMopen 配置文件 gsmopen.conf.xml，并仅添加在该文件中发现的尚未运行的接口。所有已经运行的接口不受影响。
 
-### gsmopen Commands  
+### gsmopen 命令
 
-"gsm remove" and "gsm reload" (see abvoe) can be useful from API / ESL / whatever as well.
+“`gsm remove`”和“`gsm reload`”（参见上文）同样也可以从 API / ESL / 任何地方使用。
 
-"gsmopen" commands are intended to be used by programs (API / ESL / whatever) and have the format: "gsmopen interface\_name AT\_command\_string". They send the AT\_command string to the modem identified by interface interface\_name.
+“gsmopen”命令是用于被程序（API / ESL / 任何地方）调用的，其格式为: “gsmopen interface\_name AT\_command\_string”。它们会将 AT\_command 字符串发送到由 interface interface\_name 标识的调制解调器上。
 
 gsmopen interface2 ATI
 
-This allows you to use directly the entire power of the AT command set of your GSM modem or cellphone. For example, to prototype a new feature, do customization, etc. Typing "`console loglevel 9`" at the FS command line allows you to see the AT answers from the GSM modem.
+这将允许您直接使用您的GSM调制解调器或手机的AT命令集的全部功能。例如，用于原型设计新功能、进行自定义等。在FS命令行中键入"`console loglevel 9`"可以查看来自GSM调制解调器的AT响应。
 
 ####  gsmopen_boost_audio 
 
-This command affects the volumes of incoming and outbound audio at the sample level, in code. This command may be useful to interactively (trial and error during a call) find the best audio gain setting for your setup, then you write the found values in the config file. Boost can be for playback or for capture, and can be negative or positive (expressed in deciBel units). Syntax is:
+该命令在代码中以样本级别影响传入和传出音频的音量。该命令可用于在通话过程中进行互动（试错），找到您设置的最佳音频增益值，然后将找到的值写入配置文件中。增强可以用于回放或捕获，并且可以是负值或正值（以分贝为单位）。语法如下：
 
-gsmopen_boost_audio interface_name [&lt;play|capt> &lt;value_in_deciBels>]
+gsmopen_boost_audio 接口名称 [&lt;播放|捕获> &lt;分贝值>]
 
-where the boost value can range from -40dB to +40dB
+其中增益值范围为-40dB至+40dB
 
-Example:
+示例：
 
-gsmopen_boost_audio interface3 play -10
+gsmopen_boost_audio interface3 播放 -10
 
-The example will lower by 10 decibels the volume of the playback in interface3
+该示例将降低接口3的回放音量10分贝
 
 ####  gsmopen_dump 
 
-This command generates (fires) a CUSTOM event of type gsmopen::dump\_event that reports a lot of useful information about the interface interface\_name.
+该命令生成（触发）一个类型为gsmopen::dump\_event的CUSTOM事件，报告关于接口接口\_名称的许多有用信息。
 
-If interface\_name is "list", gsmopen\_dump will fire as many events as the number of running interfaces, one for each of them.
+如果接口\_名称为"list"，gsmopen\_dump将为运行的接口数量触发相同数量的事件，每个接口一个。
 
 gsmopen_dump interface1
 
-Or,
+或者，
 
 gsmopen_dump list
 
-For the event description, see below, **Events**.
+有关事件描述，请参见下面的**Events**。
 
 ####  gsmopen_sendsms 
 
-It supports full UTF8 SMS text, although the FS command line only accepts ASCII. Please use ESL or API to send UTF8 text.
+它支持完整的UTF8短信文本，尽管FS命令行仅支持ASCII。请使用ESL或API发送UTF8文本。
 
-gsmopen_sendsms interface_name destination_number SMS_text
+gsmopen_sendsms 接口名称 目标号码 短信文本
 
-Example:
+示例：
 
-gsmopen_sendsms interface1 3472665618 this is a nice SMS text
+gsmopen_sendsms interface1 3472665618 这是一条很好的短信文本
 
-####  chat 
+####  chat
 
-GSMopen answers to the FreeSWITCH standard "chat" command too, and uses its arguments to execute a gsmopen\_sendsms command. So, if you have a messaging application that uses the chat command with Sofia/SIP or Jingle, no need to recode it with special cases for SMS messages :-)
+GSMopen也可以响应FreeSWITCH标准的"chat"命令，并利用其参数执行gsmopen\_sendsms命令。因此，如果您的消息应用程序使用Sofia/SIP或Jingle的chat命令，就无需为短信消息单独编码了 :-)
 
-It uses SMS as protocol specification. e.g., from command line:
+它使用SMS作为协议规范。例如，可以从命令行发送：
 
 chat SMS|interface3|3472665618|ciao amore
 
-####  ussd on chat 
+#### chat命令上的ussd
 
-You can send ussd to operator, using the special destination "ussd". Eg:
+您可以使用特殊目标"ussd"向运营商发送ussd。例如：
 
 chat SMS|interface3|ussd|*141#
 
-###  Events 
+### 事件
 
-GSMopen generates (fires) various CUSTOM events in addition to the standard FreeSWITCH events on voice calls (like the other endpoints) and MESSAGE (chat) events on incoming SMS (like Sofia and Jingle).
+GSMopen除了生成标准FreeSWITCH语音呼叫事件（如其他终端设备）和传入短信（如Sofia和Jingle）的MESSAGE（chat）事件外，还生成（触发）各种自定义事件。
 
-####  Voice Calls 
+#### 语音通话
 
-Standard CODEC and CHANNEL\_\* events.
+标准的CODEC和CHANNEL\_\*事件。
 
-See [Event list](../Introduction/Event-System/Event-List_7143557.mdx#nat)
+参见[事件列表](../Introduction/Event-System/Event-List_7143557.mdx#nat)
 
-####  MESSAGE (SMS) 
+#### 传入短信（SMS）
 
-The Event type generated by an incoming SMS is of type MESSAGE (like in Jingle and Sofia).
+传入短信生成的事件类型是MESSAGE（与Jingle和Sofia类似）。
 
-The interesting fields are:
+感兴趣的字段有：
 
-**GSMopen Event Fields**
+**GSMopen事件字段**
 
 ```xml
-login:                the interface name that received the SMS
-from:                 the sender's number, urlencoded
-date:                 the date of the received message, urlencoded
-datacodingscheme:     which kind of alphabet was used to send the message
-servicecentreaddress: address of SC used to send the message
-messagetype:          numeric, usually 0, kind of message
-during-call:          bool, the message was received while a voice call was ongoing?
+login:                接收短信的接口名称
+from:                 发件人号码，urlencoded编码
+date:                 收到消息的日期，urlencoded编码
+datacodingscheme:     发送消息时所使用的字母表类型
+servicecentreaddress: 用于发送消息的服务中心地址
+messagetype:          数字，通常为0，表示消息类型
+during-call:          布尔值，消息是否在语音通话进行中接收到
 ```
 
-And obviously the body, encoded in UTF8, that contains the SMS text.
+当然，还有以UTF8编码的正文，其中包含SMS文本。
 
-UTF8 Encoding
+UTF8编码
 
-**The body is UTF8 encoded**, gives you ASCII for ASCII, and UTF8 for all the rest.
+**正文采用UTF8编码**，如果是ASCII，则为ASCII编码，对于其他字符则为UTF8编码。
 
-This is a telnet session to the Events port (8021) asking for authorization, asking for events of type message in plain format, then an incoming SMS as reported with Events plain.
+这是一个对事件端口(8021)的telnet会话，请求授权并要求以纯文本格式获取消息类型的事件，然后是以Events plain报告的传入短信。
 
-**GSMopen Event Query** Expand source 
+**GSMopen事件查询** 源码
 
 ```bash
 telnet 127.0.0.1 8021
@@ -578,17 +659,15 @@ Content-Length: 5
 Test
 ```
 
-####  gsmopen::dump_event 
+####  gsmopen::dump_event
 
-CUSTOM events of type `gsmopen::dump_event` are fired in response to a gsmopen\_dump command or API call (e.g., from command line or via script or through the ESL). This event reports a lot of useful information on the state of the interface which name was given as argument to the command; if that name is "list" the command will fire as many gsmopen::dump\_event as interfaces are running, one for each of them.
+`gsmopen::dump_event`类型的CUSTOM事件是作为对gsmopen_dump命令或API调用（例如，通过命令行、脚本或ESL）的响应而触发的。该事件报告了关于作为命令参数给定的接口状态的大量有用信息；如果该名称是"list"，则该命令将触发与运行的接口数量相同的gsmopen::dump_event事件，每个接口触发一个。
 
-This is an example of the gsmopen::dump\_event fired in response to:
+以下是响应`gsmopen_dump interface2001`时触发的gsmopen::dump_event示例：
 
-gsmopen_dump interface2001
+事件:
 
-Event:
-
-**GSMopen dump\_event** Expand source 
+**GSMopen dump_event** 展开源码 
 
 ```bash
 Content-Length: 990
@@ -636,110 +715,109 @@ session_uuid_str: _undef_
 during-call: false
 ```
 
-During a call (while a call is active on the interface) a lot of useful info is added (courtesy of Math ;-)
+在通话中（当接口上有活动通话时），会添加许多有用的信息（由Math提供；-）
 
-The command used to generate the event is the same, but the interface is in an active call, executing a JavaScript app:
+生成事件的命令是相同的，但界面是在一个活动呼叫中，执行一个 JavaScript 应用程序：
 
-**GSMopen dump\_event During Active Call** Expand source 
+**GSMopen dump\_event 具体内容：活动呼叫中** 展开源代码
 
 ```bash
 Content-Length: 2399
 Content-Type: text/event-plain
-
-Event-Subclass: gsmopen%3A%3Adump_event
-Event-Name: CUSTOM
-Core-UUID: 28d9e2e2-068d-11df-8f99-e9d7ea2264f4
-FreeSWITCH-Hostname: hardy64
-FreeSWITCH-IPv4: 192.168.0.12
-FreeSWITCH-IPv6: %3A%3A1
-Event-Date-Local: 2010-01-24%2017%3A55%3A40
-Event-Date-GMT: Sun,%2024%20Jan%202010%2016%3A55%3A40%20GMT
-Event-Date-Timestamp: 1264352140851653
-Event-Calling-File: mod_gsmopen.cpp
-Event-Calling-Function: dump_event_full
-Event-Calling-Line-Number: 3008
-interface_name: interface2001
-interface_id: 1
-active: 1
-not_registered: 0
-home_network_registered: 1
-roaming_registered: 0
-got_signal: 2
-running: 1
-imei: 353579017208923
-imsi: 222018302196169
-controldev_dead: 0
-controldevice_name: /dev/ttyACM2
-no_sound: 0
-alsacname: plughw%3A2
-alsapname: plughw%3A2
-playback_boost: 1619.086162
-capture_boost: 910.479058
-dialplan: XML
-context: default
-destination: 2000
-ib_calls: 1
-ob_calls: 0
-ib_failed_calls: 0
-ob_failed_calls: 0
-interface_state: 2
-phone_callflow: 5
-session_uuid_str: 45fbda50-0909-11df-8f99-e9d7ea2264f4
-during-call: true
-Channel-State: CS_EXECUTE
-Channel-State-Number: 4
-Channel-Name: gsmopen/interface2001
-Unique-ID: 45fbda50-0909-11df-8f99-e9d7ea2264f4
-Call-Direction: inbound
-Presence-Call-Direction: inbound
-Answer-State: answered
-Channel-Read-Codec-Name: L16
-Channel-Read-Codec-Rate: 8000
-Channel-Write-Codec-Name: L16
-Channel-Write-Codec-Rate: 8000
-Caller-Username: gsmopen
-Caller-Dialplan: XML
-Caller-Caller-ID-Name: GSMopen%3A%20%2B393472665618
-Caller-Caller-ID-Number: %2B393472665618
-Caller-Destination-Number: 2000
-Caller-Unique-ID: 45fbda50-0909-11df-8f99-e9d7ea2264f4
-Caller-Source: mod_gsmopen
-Caller-Context: default
-Caller-Channel-Name: gsmopen/interface2001
-Caller-Profile-Index: 1
-Caller-Profile-Created-Time: 1264352127793104
-Caller-Channel-Created-Time: 1264352127793104
-Caller-Channel-Answered-Time: 1264352133281836
-Caller-Channel-Progress-Time: 1264352127803152
-Caller-Channel-Progress-Media-Time: 0
-Caller-Channel-Hangup-Time: 0
-Caller-Channel-Transfer-Time: 0
-Caller-Screen-Bit: true
-Caller-Privacy-Hide-Name: false
-Caller-Privacy-Hide-Number: false
-variable_read_codec: L16
-variable_read_rate: 8000
-variable_write_codec: L16
-variable_write_rate: 8000
-variable_channel_name: gsmopen/interface2001
-variable_endpoint_disposition: ANSWER
-variable_instance_id: 100
-variable_current_application_data: freedomfone/leave_message/main.js%20100
-variable_current_application: javascript
 ```
 
-####  gsmopen::alarm 
+事件子类：gsmopen%3A%3Adump_event
+事件名称：CUSTOM
+核心UUID：28d9e2e2-068d-11df-8f99-e9d7ea2264f4
+FreeSWITCH主机名：hardy64
+FreeSWITCH-IPv4地址：192.168.0.12
+FreeSWITCH-IPv6地址：%3A%3A1
+本地事件日期：2010-01-24%2017%3A55%3A40
+GMT事件日期：Sun,%2024%20Jan%202010%2016%3A55%3A40%20GMT
+事件时间戳：1264352140851653
+调用文件：mod_gsmopen.cpp
+调用函数：dump_event_full
+调用行号：3008
+接口名称：interface2001
+接口ID：1
+活动状态：1
+未注册：0
+主注册网络：1
+漫游注册：0
+接收到信号：2
+运行状态：1
+IMEI：353579017208923
+IMSI：222018302196169
+控制设备失效：0
+控制设备名称：/dev/ttyACM2
+无声音：0
+音频设备名称：plughw%3A2
+音频设备播放增益：1619.086162
+音频设备采集增益：910.479058
+拨号计划：XML
+上下文：default
+目的地：2000
+呼入呼叫数量：1
+呼出呼叫数量：0
+呼入失败呼叫数量：0
+呼出失败呼叫数量：0
+接口状态：2
+电话呼叫流程：5
+会话UUID字符串：45fbda50-0909-11df-8f99-e9d7ea2264f4
+通话中：true
+通道状态：CS_EXECUTE
+通道状态编号：4
+通道名称：gsmopen/interface2001
+唯一标识符：45fbda50-0909-11df-8f99-e9d7ea2264f4
+呼叫方向：呼入
+在线状态呼叫方向：呼入
+应答状态：已应答
+通道读取编解码器名称：L16
+通道读取编解码器速率：8000
+通道写入编解码器名称：L16
+通道写入编解码器速率：8000
+呼叫方用户名：gsmopen
+呼叫方拨号计划：XML
+呼叫方主叫呼叫ID名称：GSMopen%3A%20%2B393472665618
+呼叫方主叫呼叫ID号码：%2B393472665618
+呼叫方目标号码：2000
+呼叫方唯一标识符：45fbda50-0909-11df-8f99-e9d7ea2264f4
+呼叫方来源：mod_gsmopen
+呼叫方上下文：default
+呼叫方通道名称：gsmopen/interface2001
+呼叫方配置文件索引：1
+呼叫方配置文件创建时间：1264352127793104
+呼叫方通道创建时间：1264352127793104
+呼叫方通道应答时间：1264352133281836
+呼叫方通道进程时间：1264352127803152
+呼叫方通道进程媒体时间：0
+呼叫方通道挂断时间：0
+呼叫方通道转移时间：0
+呼叫方屏幕位：true
+呼叫方隐藏呼叫名称：false
+呼叫方隐藏呼叫号码：false
+变量读取编解码器：L16
+变量读取速率：8000
+变量写入编解码器：L16
+变量写入速率：8000
+变量通道名称：gsmopen/interface2001
+变量节点结果：应答
+变量实例ID：100
+当前应用程序数据：freedomfone/leave_message/main.js%20100
+当前应用程序：javascript
 
-CUSTOM events of subtype gsmopen::alarm are automatically fired when something bad happens to an interface, usually resulting in the interface being unavailable for service.
+#### gsmopen::alarm 
 
-Most interesting fields are:
+`gsmopen::alarm`的subtype是CUSTOM事件，当接口发生问题时会自动触发，通常导致接口无法提供服务。
 
-alarm_code       integer      refers to the type of alarm
-alarm_message    string       descriptive text
+最有趣的字段是：
 
-alarm\_code possible values are defined below:
+- `alarm_code`：整数类型，表示告警类型
+- `alarm_message`：字符串类型，描述性文本
 
-**GSMopen alarm\_code Events**
+`alarm_code`可能的取值如下所示：
+
+**GSMopen alarm_code Events**
 
 ```bash
 0 ALARM_FAILED_INTERFACE
@@ -750,87 +828,87 @@ alarm\_code possible values are defined below:
 5 ALARM_NETWORK_LOW_SIGNAL
 ```
 
-Other fields are the same as in the dump\_event event. During a call, the alarm event also gets the additional fields.
+其他字段与`dump_event`事件中的一样。在通话过程中，告警事件还会有额外的字段。
 
-This is an example of an alarm event for an interface that fails to initialize at startup (because the physical serial port does not exist):
+下面是一个示例，表示在启动时接口无法初始化（因为物理串口不存在）的告警事件：
 
 **GSMopen Alarm Event** Expand source 
 
 ```bash
 Content-Length: 1023
 Content-Type: text/event-plain
-
-Event-Subclass: gsmopen%3A%3Aalarm
-Event-Name: CUSTOM
-Core-UUID: 28d9e2e2-068d-11df-8f99-e9d7ea2264f4
-FreeSWITCH-Hostname: hardy64
-FreeSWITCH-IPv4: 192.168.0.12
-FreeSWITCH-IPv6: %3A%3A1
-Event-Date-Local: 2010-01-24%2017%3A38%3A15
-Event-Date-GMT: Sun,%2024%20Jan%202010%2016%3A38%3A15%20GMT
-Event-Date-Timestamp: 1264351095120533
-Event-Calling-File: mod_gsmopen.cpp
-Event-Calling-Function: dump_event_full
-Event-Calling-Line-Number: 3005
-alarm_code: 0
-alarm_message: gsmopen_serial_init%20failed
-interface_name: interface4001
-interface_id: 2
-active: 0
-not_registered: 0
-home_network_registered: 0
-roaming_registered: 0
-got_signal: 0
-running: 0
-imei: _undef_
-imsi: _undef_
-controldev_dead: 0
-controldevice_name: /dev/ttyACM0
-no_sound: 0
-alsacname: plughw%3A1
-alsapname: plughw%3A1
-playback_boost: 10.000000
-capture_boost: 5.000000
-dialplan: XML
-context: default
-destination: 2000
-ib_calls: 0
-ob_calls: 0
-ib_failed_calls: 0
-ob_failed_calls: 0
-interface_state: 0
-phone_callflow: 0
-session_uuid_str: _undef_
-during-call: false
 ```
 
-##  Building
+事件子类：gsmopen%3A%3Aalarm
+事件名称：CUSTOM
+核心UUID：28d9e2e2-068d-11df-8f99-e9d7ea2264f4
+FreeSWITCH主机名：hardy64
+FreeSWITCH IPv4地址：192.168.0.12
+FreeSWITCH IPv6地址：%3A%3A1
+本地事件日期：2010-01-24%2017%3A38%3A15
+GMT事件日期：Sun,%2024%20Jan%202010%2016%3A38%3A15%20GMT
+时间戳：1264351095120533
+调用文件：mod_gsmopen.cpp
+调用函数：dump_event_full
+调用行号：3005
+报警代码：0
+报警消息：gsmopen_serial_init%20failed
+接口名称：interface4001
+接口ID：2
+激活状态：0
+未注册状态：0
+主网络注册状态：0
+漫游注册状态：0
+接收到信号：0
+运行状态：0
+IMEI：_undef_
+IMSI：_undef_
+控制设备已断开连接：0
+控制设备名称：/dev/ttyACM0
+无声音：0
+ALSA邻居名：plughw%3A1
+ALSA播放名：plughw%3A1
+播放增益：10.000000
+捕获增益：5.000000
+拨号计划：XML
+上下文：default
+目标：2000
+呼入呼叫数：0
+呼出呼叫数：0
+呼入失败呼叫数：0
+呼出失败呼叫数：0
+接口状态：0
+电话通话流程：0
+会话UUID字符串：_undef_
+通话中：false
 
-###  Known Issues 
+## 构建
 
-Be sure the **dongle has the "voice" capability unlocked**, or unlock it with dc-unlocker ( <http://www.dc-unlocker.com/> ).
+### 已知问题
 
-### Linux, \*BSD, etc 
+请确保**无线设备已解锁“语音”功能**，或使用dc-unlocker（<http://www.dc-unlocker.com/>）进行解锁。
 
-#### Which Linux distro? Desktop or Server? 
+### Linux，\*BSD等
 
-Desktop operating systems and distros are completely unsupported.
+#### 使用的Linux发行版是哪个？桌面版还是服务器版？
 
-If you want to use desktop operating systems you have to find the way yourself, sorry.
+不支持桌面操作系统和发行版。
 
-Only operating systems supported by GSMopen are 64 bit servers: LTS ubuntu 12.04, centos 6, SL6, Debian 6, running directly on the hardware (eg: **no Virtual Machines**), or in OpenVZ containers running on Debian 6 or Centos 6 .
+如果您想使用桌面操作系统，您需要自己找到解决办法，很抱歉。
 
-#### Prerequisites
+GSMopen仅支持64位服务器操作系统：LTS Ubuntu 12.04，CentOS 6，SL6，Debian 6，直接运行在硬件上（例如：**不要在虚拟机中运行**），或者在运行在Debian 6或Centos 6上的OpenVZ容器中运行。
 
-##### CentOS 5.x 
+#### 先决条件
 
-CentOS 5.x **DOES NOT WORK** with Huaweis and mod\_gsmopen, **use CentOS 6.x**
+##### CentOS 5.x
 
-##### CentOS 6.x, RHEL6.x, Scientific 6 Server 64-bit 
+CentOS 5.x **不支持**与Huawei和mod_gsmopen一起使用，**请使用CentOS 6.x**。
 
-Before building GSMopen module do:
+##### CentOS 6.x, RHEL6.x, Scientific 6 64位服务器
 
-**GSMopen Pre-Build**
+在构建 GSMopen 模块之前，请执行以下操作：
+
+**GSMopen 预构建**
 
 ```bash
 cd gsmlib/gsmlib-1.10-patched-13ubuntu
@@ -840,17 +918,17 @@ make install
 ldconfig
 ```
 
-Despite the name of the directory, it works well particularly for CentOS ;)
+尽管目录的名称是这样的，但在 CentOS 上它也能很好地工作 ;)
 
-Check if the library is added by running
+通过运行下面的命令检查库是否已添加：
 
 ldconfig -p | grep gsm
 
-If you don't see any records, correct it after reading this post <http://linux.101hacks.com/unix/ldconfig/> e.g. adding new rule file in /etc/[ld.so](http://ld.so).d/. Then re-run **ldconfig**
+如果您没有看到任何记录，在阅读此帖子后进行修正：<http://linux.101hacks.com/unix/ldconfig/>，例如在/etc/[ld.so](http://ld.so).d/中添加新的规则文件。然后重新运行 **ldconfig**
 
-then:
+然后执行以下操作：
 
-**Make GSMopen**
+**构建 GSMopen**
 
 ```bash
 cd /usr/src/freeswitch/src/mod/endpoints/mod_gsmopen/libctb-0.16/build
@@ -859,11 +937,11 @@ make DEBUG=0 GPIB=0 install
 ldconfig
 ```
 
-##### Ubuntu LTS 12.04 Server 64-bit
+##### Ubuntu LTS 12.04 64位服务器
 
-Before building GSMopen module do:
+在构建 GSMopen 模块之前，请执行以下操作：
 
-**GSMopen Pre-Build**
+**GSMopen 预构建**
 
 ```bash
 apt-get install gsm-utils
@@ -871,9 +949,9 @@ apt-get install libgsmme-dev
 apt-get install usb-modeswitch-data usb-modeswitch
 ```
 
-then:
+然后执行以下操作：
 
-**Make GSMopen**
+**构建 GSMopen**
 
 ```bash
 cd /usr/src/freeswitch/src/mod/endpoints/mod_gsmopen/libctb-0.16/build
@@ -882,13 +960,13 @@ make DEBUG=0 GPIB=0 install
 ldconfig
 ```
 
-You may need to reboot to have your dongle recognized
+您可能需要重新启动以使您的设备被识别
 
-##### Debian 6 (Squeeze) Server 64-bit
+##### Debian 6 (Squeeze) 64位服务器
 
-Before building GSMopen module do:
+在构建 GSMopen 模块之前，请执行以下操作：
 
-**Debian GSMopen Pre-Build**
+**Debian GSMopen 预构建**
 
 ```bash
 apt-get install gsm-utils
@@ -896,9 +974,9 @@ apt-get install libgsmme-dev
 apt-get install usb-modeswitch-data usb-modeswitch
 ```
 
-then:
+然后执行以下操作：
 
-**Debian Make GSMopen**
+**Debian 构建 GSMopen**
 
 ```bash
 cd /usr/src/freeswitch/src/mod/endpoints/mod_gsmopen/libctb-0.16/build
@@ -907,11 +985,11 @@ make DEBUG=0 GPIB=0 install
 ldconfig
 ```
 
-You may need to reboot to have your dongle recognized
+您可能需要重新启动以使您的设备被识别
 
-#### Build and Install
+#### 构建和安装
 
-After installing prerequisites (see above), go into `mod_gsmopen` directory and type:
+在安装依赖项之后（见上文），进入 `mod_gsmopen` 目录，然后执行以下命令：
 
 ```xml
 cd /usr/src/freeswitch/src/mod/endpoints/mod_gsmopen/
@@ -919,11 +997,11 @@ make clean
 make install
 ```
 
-#### Configuration File
+#### 配置文件
 
-Install and edit the gsmopen configuration file:
+安装并编辑gsmopen配置文件：
 
-**GSMopen Config File**
+**GSMopen配置文件**
 
 ```bash
 cd /usr/src/freeswitch.trunk/src/mod/endpoints/mod_gsmopen/configs/
@@ -931,100 +1009,98 @@ cp gsmopen.conf.xml /usr/local/freeswitch/conf/autoload_configs/
 vi /usr/local/freeswitch/conf/autoload_configs/gsmopen.conf.xml
 ```
 
-#### Determine the correct device files to use for controldevice_name and controldevice_audio_name
+#### 确定用于controldevice_name和controldevice_audio_name的正确设备文件
 
-Connect to your usb device /dev/ttyUSBx and then call the modem's number. If you see "RING" then that device should be the controldevice\_name. Usually the highest number is the control device. controldevice\_audio\_name is usually the device one less than the controldevice\_name.
+连接到您的USB设备/dev/ttyUSBx，然后拨打调制解调器的号码。如果您看到 "RING"，那么该设备应该是controldevice_name。通常，数字最高的设备是控制设备。controldevice_audio_name通常是controldevice_name的前一个设备。
 
-#### Start FS and Load GSMopen
+#### 启动FS并加载GSMopen
 
-Launch FreeSWITCH:
+启动FreeSWITCH：
 
 /usr/local/freeswitch/bin/freeswitch
 
-Then activate debug logging in console and logfile, and load mod\_gsmopen:
+然后在控制台和日志文件中激活调试日志记录，并加载mod_gsmopen：
 
 ```xml
-freeswitch@machine> console loglevel 9
-freeswitch@machine> fsctl loglevel 9
-freeswitch@machine> load mod_gsmopen
+freeswitch@机器> console loglevel 9
+freeswitch@机器> fsctl loglevel 9
+freeswitch@机器> load mod_gsmopen
 ```
 
 ###  Windows 
 
-GSMopen runs very well on Windows.
+GSMopen在Windows上运行得非常好。
 
-GSMopen (mod\_gsmopen) is **NOT** automatically built when you build FreeSWITCH on Windows.
+在Windows上需预先准备：
 
-#### Prerequisites on Windows 
+##### 在Windows上构建FreeSWITCH
 
-##### Build FreeSWITCH on Windows 
+您将需要来自微软的Visual C编译器，商业版的或者免费（像啤酒一样）的Visual C Express（需要注册）。在我们的案例中，无论是商业版还是免费版，它们都能达到相同的效果（例如：不需要购买商业版仅用于GSMopen）。
 
-You will need the Visual C compiler from Microsoft, commercial version, or the free (as in beer) Visual C Express (requires registration). They both give the same results in our case (eg: no need to buy the commercial version just for GSMopen).
+在从[Stash](https://freeswitch.org/stash/projects/FS/repos/freeswitch/browse/w32)下载了FS源代码或打包的FS源代码发布后，按照如何在Windows上构建FS的说明进行操作。使用Visual C（Express或非Express）：
 
-After having downloaded the FS sources from [Stash](https://freeswitch.org/stash/projects/FS/repos/freeswitch/browse/w32) or the packaged FS source release, follow the instructions on how to build FS on Windows. Using Visual C (Express or not):
+* 打开Freeswitch.sln文件
+* 右键单击解决方案资源管理器顶部的主解决方案节点
+* 右键单击并选择构建
 
-* Open Freeswitch.sln
-* Right–click the main solution node at the top of the Solution Explorer
-* Right–click and select Build
+这将构建没有GSMopen的FreeSWITCH。现在，您必须构建先决条件（见下文），并在先决条件构建完成后，最终构建mod_gsmopen。
 
-This will build FreeSWITCH **WITHOUT** GSMopen. You must now build the prerequisites (see below) and after prerequisites are built, eventually build mod\_gsmopen.
+##### 在Windows上使用GSMopen
 
-##### GSMopen on Windows
-
-After having built FreeSWITCH, go into FreeSWITCH source directory, eg: c:\\freeswitch, and then go to
+在构建完FreeSWITCH之后，进入FreeSWITCH源代码目录，例如：c:\\freeswitch，然后进入
 
 cd src/mod_gsmopen/gsmlib/gsmlib-1.10-patched-13ubuntu/win32 
 
-Using Visual C (Express or not):
+使用Visual C（Express或其他版本）：
 
-* Open gsmlib.sln (Note: if you are using 2008 Pro or higher or 2010 Pro or higher this step is not needed; see below)
-* Right–click the main solution node at the top of the Solution Explorer
-* Right–click and select Build
+* 打开gsmlib.sln文件（注意：如果您使用的是2008专业版或更高版本或2010专业版或更高版本，则不需要此步骤；请参见下文）
+* 右键单击解决方案资源管理器顶部的主解决方案节点
+* 右键单击并选择构建
 
-**ERRORS ARE OK!**, we're only interested in building the library, and it will be built OK. Errors come from application building; we're not interested in the application here.
+**错误是正常的！**我们只关心构建库，它将会成功构建。错误来自应用程序构建；我们在这里不关心应用程序。
 
-Then you must start a Visual Studio Command Prompt (from the "Visual Studio Tools" Start Menu). Inside the Command Prompt window go to
+然后，您必须启动Visual Studio命令提示符（从“Visual Studio工具”开始菜单中）。在命令提示符窗口内进入
 
 c:/freeswitch/src/mod/endpoints/mod_gsmopen/libctb-0.16/build
 
-Inside the Command Prompt window execute:
+在命令提示符窗口内执行以下命令：
 
-**GSMopen Visual Studio Command Window**
+**GSMopen Visual Studio命令行窗口**
 
 ```bash
 nmake -f makefile.vc DEBUG=1 GPIB=0
 nmake -f makefile.vc DEBUG=0 GPIB=0
 ```
 
-Visual Studio Pro Users
+Visual Studio 专业版用户
 
-If you have Visual Studio 2008 Pro or 2010 Pro you must execute the above nmake command then build mod\_gsmopen (gsmlib will be built automatically as a dependency).
+如果您有Visual Studio 2008专业版或2010专业版，您必须执行上述nmake命令，然后构建mod_gsmopen（gsmlib将作为依赖项自动构建）。
 
-#### Build and Install GSMopen on Windows 
+#### 在Windows上构建和安装GSMopen
 
-Go back to the Visual C compiler from Microsoft, commercial version, or the free (as in beer) Visual C Express (requires registration). They both give the same results in our case (eg: no need to buy the commercial version just for GSMopen).
+返回到微软的Visual C编译器，商业版本，或者免费（免费饮用）的Visual C Express（需要注册）。在我们的情况下，它们都可以获得相同的结果（例如：不需要购买商业版本来使用GSMopen）。
 
-* Open Freeswitch.sln
-* Right–click the main solution node at the top of the Solution Explorer
-* Click on "Add" and choose "Existing Project" (Note: If you have VS2008 Pro or higher or VS2010 Pro or higher this step is not needed)
-* Navigate to c:/freeswitch/src/mod/endpoints/mod\_gsmopen/ and select "mod\_gsmopen.2008.vcproj"
-* mod\_gsmopen is added to the FreeSWITCH solution tree
-* Right–click on "mod\_gsmopen" and choose "Build"
+* 打开Freeswitch.sln文件
+* 在解决方案资源管理器的顶部，右键单击主解决方案节点
+* 点击“添加”，然后选择“现有项目”（注意：如果您使用的是VS2008专业版或更高版本，或者VS2010专业版或更高版本，不需要此步骤）
+* 导航到c:/freeswitch/src/mod/endpoints/mod_gsmopen/，然后选择"mod_gsmopen.2008.vcproj"文件
+* mod_gsmopen将被添加到FreeSWITCH解决方案树中
+* 右键单击"mod_gsmopen"，然后选择"Build"
 
-#### Configuration File on Windows
+#### Windows上的配置文件
 
-Install and edit the gsmopen configuration file:
+安装并编辑gsmopen配置文件：
 
-copy c:/freeswitch/src/mod/endpoints/mod_gsmopen/configs/gsmopen.conf.xml c:/freeswitch/Debug/conf/autoload_configs/
-notepad c:/freeswitch/Debug/conf/autoload_configs/gsmopen.conf.xml
+复制c:/freeswitch/src/mod/endpoints/mod_gsmopen/configs/gsmopen.conf.xml文件到c:/freeswitch/Debug/conf/autoload_configs/目录下
+使用记事本打开c:/freeswitch/Debug/conf/autoload_configs/gsmopen.conf.xml文件
 
-#### Start FS and Load GSMopen on Windows
+#### 在Windows上启动FS并加载GSMopen
 
-Launch FreeSWITCH:
+启动FreeSWITCH:
 
-c:/freeswitch/Debug/freeswitch.exe 
+c:/freeswitch/Debug/freeswitch.exe
 
-Then activate debug logging in console and logfile, and load mod\_gsmopen:
+然后在控制台和日志文件中激活调试日志记录，并加载mod_gsmopen模块:
 
 ```xml
 freeswitch@machine> console loglevel 9
@@ -1032,55 +1108,51 @@ freeswitch@machine> fsctl loglevel 9
 freeswitch@machine> load mod_gsmopen
 ```
 
-##  How to Report Bugs and Request Features 
+## 如何报告错误和请求功能
 
-Be sure the **dongle has the "voice" capability unlocked**, or unlock it with dc-unlocker ( <http://www.dc-unlocker.com/> ).
+* 确保**dongle已解锁"voice"功能**，或使用dc-unlocker进行解锁（<http://www.dc-unlocker.com/>）。
 
-You can file bug reports, hints, suggestions, feature requests, improvements, patches, etc to [Jira](https://freeswitch.org/jira) open an account there if you don't have it (it's free ;-) ).
+您可以向[Jira](https://freeswitch.org/jira)提交错误报告、提示、建议、功能请求、改进等。如果尚未注册，请在那里注册一个账户（免费的；-)）。
 
-Here's the best way to give us info on bugs:
+下面是向我们提供错误信息的最佳方式:
 
-1) from the FS CLI: "console loglevel 9"
-2) from the FS CLI: "fsctl loglevel 9"
-3) from the FS CLI: "unload mod_gsmopen"
-4) from the FS CLI: "load mod_gsmopen"
-5) reproduce the bug
-6) attach the *complete, since the beginning* 
-   console output (or freeswitch.log file) 
-   **as a file attachment** to the Jira bug. 
-   Please do not cut and paste console output 
-   or freeswitch.log in the Jira message. ATTACH it.
+将以下内容翻译成简体中文：
 
-If the bug involves crashes, core dumps, etc, please read this guide on how to report it [Reporting Issues to GitHub](../Troubleshooting-Debugging/Reporting-Issues-to-GitHub_5046304.mdx#about) , then file a JIRA to mod\_gsmopen with all relevant info.
+1）从FS CLI： "console loglevel 9"
+2）从FS CLI： "fsctl loglevel 9"
+3）从FS CLI： "unload mod_gsmopen"
+4）从FS CLI： "load mod_gsmopen"
+5）重现该错误
+6）将**从一开始**的完整控制台输出(或freeswitch.log文件) **作为文件附件**附加到Jira错误报告中。请不要在Jira消息中剪贴控制台输出或freeswitch.log文件，而是附加它。
 
-##  How to Find Help 
+如果该错误涉及崩溃、核心转储等问题，请阅读此指南以了解如何报告错误[Reporting Issues to GitHub](../Troubleshooting-Debugging/Reporting-Issues-to-GitHub_5046304.mdx#about)，然后使用所有相关信息向mod_gsmopen提交JIRA错误报告。
 
-Be sure the **dongle has the "voice" capability unlocked**, or unlock it with dc-unlocker ( <http://www.dc-unlocker.com/> ).
+## 如何获取帮助
 
-You can drop in the IRC channels #freeswitch on [irc.freenode.net](http://irc.freenode.net) to ask questions and discuss issues. The original developer [Giovanni Maruzzelli](https://freeswitch.org/confluence/display/~gmaruzz) of GSMopen is called "gmaruzz" in the IRC channel.
+确保**解锁了"voice"功能的Dongle**，或使用dc-unlocker进行解锁（<http://www.dc-unlocker.com/>）。
 
-You can also write to the FS users' and developers' mailing lists: <http://lists.freeswitch.org/mailman/listinfo> but PLEASE do not write to both; choose either IRC or the mailing list to avoid overloading the volunteer users who provide support.
+您可以访问IRC频道的#freeswitch（[irc.freenode.net](http://irc.freenode.net)）进行提问和讨论。GSMopen的原始开发者Giovanni Maruzzelli在IRC频道中的昵称是"gmaruzz"。
 
-UNLOCK THE DONGLE FIRST
+您也可以写信到FS用户和开发者的邮件列表：<http://lists.freeswitch.org/mailman/listinfo>，但请不要同时写信到两个地方，选择IRC或邮件列表中的一个以避免给提供支持的志愿用户造成过多负担。
 
-###  UNLOCK THE DONGLE!!! 
+首先解锁Dongle。
 
-Be sure the **dongle has the "voice" capability unlocked**, or unlock it with dc-unlocker ( <http://www.dc-unlocker.com/> ).
+### 解锁Dongle！！！
 
-## Troubleshooting
+确保**解锁了"voice"功能的Dongle**，或使用dc-unlocker进行解锁（<http://www.dc-unlocker.com/>）。
 
-### Intermittent failures 
+## 故障排除
 
-**MORE THAN ONE DEVICE** on a USB bus without a dedicated power supply can have **intermittent failure**, because dongles can use all of the power! Remember, this dongle is a tiny cellular radio and needs plenty of current to transmit. If you use more than one device, use an external (or many, cascaded) power supplies, powered from the wall to supply the USB hub. That's perfectly OK.
+### 间歇性故障
 
-### VMWare support
+**在没有专用电源的USB总线上连接多个设备**可能会出现**间歇性故障**，因为dongles会使用所有的功率！请记住，这个dongle是一个微型蜂窝通信设备，需要大量电流来进行传输。如果你使用多个设备，请使用外部（或者多个，级联的）电源，从墙上获得电力供给USB集线器。这样是完全可行的。
 
-Be sure to check your VMWare host supports DirectPath I/O. Check in vCenter under the host's Configuration/Advanced Settings/DirectPath I/O. If it says "Host does not support passthrough configuration" you wont be able to make it work.
+### VMWare支持
 
-## See Also  
+请确保您的VMWare主机支持直通I/O。在vCenter的主机配置/高级设置/直通I/O下进行检查。如果显示“主机不支持直通配置”，则无法使其工作。
+
+## 另请参阅  
 
 [mod\_sms](./mod_sms_6587288.mdx#set)
 
-<https://txlab.wordpress.com/2014/12/22/connecting-yeastar-tg200-gsm-gateway-with-freeswitch/> — article on using Yeastar TG200 GSM gateway by [Stanislav Sinyagin](https://freeswitch.org/confluence/display/~ssinyagin)
-
-
+<https://txlab.wordpress.com/2014/12/22/connecting-yeastar-tg200-gsm-gateway-with-freeswitch/> — Stanislav Sinyagin的文章，介绍如何使用Yeastar TG200 GSM网关+[Stanislav Sinyagin](https://freeswitch.org/confluence/display/~ssinyagin)

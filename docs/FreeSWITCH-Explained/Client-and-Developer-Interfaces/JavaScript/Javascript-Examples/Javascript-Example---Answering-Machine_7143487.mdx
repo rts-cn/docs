@@ -1,198 +1,201 @@
+# Javascript示例 - 电话答录机
 
-# Javascript Example - Answering Machine 
+## 关于
 
- 
+这是一个基本的电话答录机应用程序，专为家庭中典型的PBX系统设计。它会播放您之前录制的问候语音，然后发出“嘟嘟声”并记录来电者的留言。然后，它会将语音留言发送到一个或多个电子邮件地址。这样，即使您在外出时，也可以收取家庭语音邮件。在发送电子邮件完成后，它会删除临时语音文件，以避免占用存储空间。它有许多可配置的选项，这些选项在下面的代码中有详细说明。
 
-## About
+单击此处展开目录
 
-This is a basic answering machine application designed for the typical home pbx. It will play a greeting message you have previously recorded, then beep, and record the callers message. It then emails the voice message to one or more email addresses. This way you can get your home voicemail even while on the road. When done sending the email it removes the temporary voice file to keep from filling your drive up. It has a number of configurable options that are documented in the code below.
+- 1 [answer.js](#-freeswitch--javascript-example---answering-machine-)
+- 2 [inc\_answer.js](#-freeswitch--javascript-example---answering-machine-)
+- 3 [inc\_logger.js](#-freeswitch--javascript-example---answering-machine-)
+- 4 [vmListen.js](#-freeswitch--javascript-example---answering-machine-)
+- 5 [inc\_vmListen.js](#inc_vmlistenjs)
+- 6 [inc\_settings\_test.js](#inc_settings_testjs)
+- 7 [lang\_en.xml](#-freeswitch--javascript-example---answering-machine-)
+- 8 [录制问候语音](#recording-greeting)
 
-Click here to expand Table of Contents
+(文档正在编写中，未完成 - Kyle) 这是一个使用JavaScript的简单答录应用程序：
 
-* 1 [answer.js](#-freeswitch--javascript-example---answering-machine-)
-* 2 [inc\_answer.js](#-freeswitch--javascript-example---answering-machine-)
-* 3 [inc\_logger.js](#-freeswitch--javascript-example---answering-machine-)
-* 4 [vmListen.js](#-freeswitch--javascript-example---answering-machine-)
-* 5 [inc\_vmListen.js](#inc_vmlistenjs)
-* 6 [inc\_settings\_test.js](#inc_settings_testjs)
-* 7 [lang\_en.xml](#-freeswitch--javascript-example---answering-machine-)
-* 8 [Recording Greeting](#recording-greeting)
+该应用程序基本上使用两个脚本，这两个脚本包含应用程序的通用逻辑，并包含inc\_ _file_.js，其中包含所使用的函数：
 
-(Doc in Progress NOT COMPLETE - Kyle) This is a simple answering application using javascript:
+**answer.js**（包括：inc\_answer.js inc\_logger.js）
 
-This application uses basically two scripts, which contains the general logic of the application and includes inc\_ _file_.js which contains the functions used:
-
-**answer.js** (includes: inc\_answer.js inc\_logger.js)
-
-**vmListen.js** (includes: inc\_vmListen.js inc\_logger.js)
+**vmListen.js**（包括：inc\_vmListen.js inc\_logger.js）
 
 **recordgreeting.js**
 
-All of these .js files should be added to the /scripts directory.
+所有这些.js文件都应添加到/scripts目录中。
 
 ## answer.js
 
-**JS answering machine example**
+**JavaScript答录机示例**
 
 ```js
-   include("inc_answer.js");
-   include("inc_logger.js");
-   
-   use("TeleTone");
-   use("etpan");
-   
-  // * answermachine.js
-  // * Written by: Joshua Engelbrecht for use with FreeSwitch
-  // * Based on Mike B. Murdock script which was
-  // * Based on original samples by Anthony Minessale II
-  // * Revision: 02-20-2007
-  //
-  // * Version: MPL 1.1
-  // *
-  // * The contents of this file are subject to the Mozilla Public License Version
-  // * 1.1 (the "License"); you may not use this file except in compliance with
-  // * the License. You may obtain a copy of the License at
-  // * http://www.mozilla.org/MPL/
-  // *
-  // * Software distributed under the License is distributed on an "AS IS" basis,
-  // * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
-  // * for the specific language governing rights and limitations under the
-  // * License.
-  // *
-   
-  // Note: this script uses mod_spidermonkey_etpan which must be compiled and loaded.
-  // Additionally, it requires sendmail be setup and configured on your server.
-   
-  // uncomment next two lines if you want email notifications
-  // var eMailFrom = "you@domain.org"; // Where are your emails coming from
-  // var eMailTo = "joshe@coppercom.com"; // List email addresses to send message to. Separate multiples with comma.
-   
-  // Caller Name and Number will be attached
-  var eMailSubject = "Voicemail from ";
-  // Text of email body
-  var eMailBody = "New voicemail attached.\n";
-   
-  // Uncomment next line to send a notification without a file attachment. Usually cell phone notification.
-  // var Pager_eMailTo = "3165551212@mobile.att.net";
-   
-  // location of voicemail files. In a high performance app this might be a ram drive.
-  var vmDir = new File("/var/spool/freeswitch"); // should not end in slash
-   
-  // find account number
-  var vmAccount = session.destination;
-  // test for account folder;
-  var dir = new File(vmDir + "/" + vmAccount);
-   
-  // make sure that the user has a directory if not create
-  if(!dir.isDirectory){
-      vmDir.mkdir(vmAccount);
-  }
-   
-  // where the greeting is each user must have their own greeting
-  var vMailGreetingFile = dir + "/" + "greeting.wav";
-   
-  //var BONG = "v=4000;>=0;+=2;#(60,0);v=2000;d(940,0)";
-  var BONG = "v=4000;>=0;+=2;#(400,0);";
-   
-  // Maximum recording length in seconds (240 = 4 minutes should be enough)
-  var maxreclen = 240;
-   
-  // Energy level audio must fall below to be considered silence (300-500 is good starting point)
-  var silencethreshold = 500;
-   
-  // Amount of time in seconds caller must be silent to trigger detector
-  var silencehits = 5; // 3 seconds
-   
-  var allDigits = "";
-   
-  // If not answered answer the call
-  session.answer();
-   
-  if (session.ready()) {
-      // save the session properties for later use in case caller hangs up and we need the data.
-      var sv_uuid = session.uuid;
-      var sv_ani = session.ani;
-      var sv_ani2 = session.ani2;
-      var sv_caller_id_name = session.caller_id_name + " ";
-      var sv_caller_id_num = session.caller_id_num + " ";
-      var sv_destination = session.destination;
-      var sv_dialplan = session.dialplan;
-      var sv_name = session.name;
-      var sv_network_addr = session.network_addr;
-      var sv_state = session.state;
-   
-      fsLogger("Caller ID = " + sv_caller_id_name + "<" + sv_caller_id_num + ">\n");
-   
-      allDigits = "";
-   
-      // Play announcement
-      var rtn;
-      // session.streamFile(file, callback, callback_args, starting_sample_count);
-      var vMGF = new File(vMailGreetingFile);
-      if(vMGF.isFile) {
-         rtn = session.streamFile(vMailGreetingFile, on_dtmf, "");
-      } else {
-         session.sayPhrase("speak", "Please leave a message after the beep", "en");
-      }
-      fsLogger("session.streamFile rtn=[" + rtn + "]");
-   
-      // verify that the caller is still here
-      if (session.ready()) {
-   
-         // Pause for 1/10th second
-         rtn = session.execute("sleep", "100");
-   
-         // Play bong
-         var tts = new TeleTone(session);
-         tts.addTone("d", 350.0, 440.0, 0.0);
-         tts.generate(BONG);
-   
-         // Record message
-         fsLogger("","Recording message");
-         var tmp_Filename = dir + "/" + sv_uuid + ".wav";
-   
-         // Caller still here?
-         if (session.ready()) {
-            var toDate=new Date();
+include("inc_answer.js");
+include("inc_logger.js");
+
+use("TeleTone");
+use("etpan");
+
+// * answermachine.js
+// * Written by: Joshua Engelbrecht for use with FreeSwitch
+// * Based on Mike B. Murdock script which was
+// * Based on original samples by Anthony Minessale II
+// * Revision: 02-20-2007
+//
+// * Version: MPL 1.1
+// *
+// * The contents of this file are subject to the Mozilla Public License Version
+// * 1.1 (the "License"); you may not use this file except in compliance with
+// * the License. You may obtain a copy of the License at
+// * http://www.mozilla.org/MPL/
+// *
+// * Software distributed under the License is distributed on an "AS IS" basis,
+// * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+// * for the specific language governing rights and limitations under the
+// * License.
+// *
+
+// 注意：此脚本使用必须编译和加载mod_spidermonkey_etpan。
+// 此外，还需要在服务器上设置和配置sendmail。
+
+// 如果要启用电子邮件通知，请取消下面两行的注释
+// var eMailFrom = "you@domain.org"; // 邮件的发送方
+// var eMailTo = "joshe@coppercom.com"; // 发送消息的电子邮件地址。用逗号分隔多个电子邮件地址。
+
+// 将呼叫者名称和号码附加到邮件主题上
+var eMailSubject = "来自语音邮件";
+// 邮件正文内容
+var eMailBody = "附件中有新的语音邮件。\n";
+
+// 如果要发送一个没有附件的通知，请取消下面一行的注释。通常是用于手机通知。
+// var Pager_eMailTo = "3165551212@mobile.att.net";
+
+// 语音邮件文件的存放位置。在高性能应用中，这可能是一个RAM驱动器。
+var vmDir = new File("/var/spool/freeswitch"); // 不要以斜杠结尾
+
+// 查找账户号码
+var vmAccount = session.destination;
+// 检查账户文件夹是否存在；
+var dir = new File(vmDir + "/" + vmAccount);
+
+// 如果用户没有目录，请确保创建一个
+if (!dir.isDirectory) {
+    vmDir.mkdir(vmAccount);
+}
+
+// 用户的问候语音文件的位置
+var vMailGreetingFile = dir + "/" + "greeting.wav";
+
+//var BONG = "v=4000;>=0;+=2;#(60,0);v=2000;d(940,0)";
+var BONG = "v=4000;>=0;+=2;#(400,0);";
+
+// 最大录音时长（240 = 4分钟应该足够了）
+var maxreclen = 240;
+
+// 音频能量水平必须低于此值才能被认为是沉默状态（300-500 是一个不错的起点）
+var silencethreshold = 500;
+
+// 呼叫者必须保持沉默以触发检测器的时间
+var silencehits = 5; // 3 秒
+
+var allDigits = "";
+
+// 如果未接听，则接听通话
+session.answer();
+
+if (session.ready()) {
+    // 保存会话属性以便以后使用，以防呼叫者挂断电话并且我们需要这些数据。
+    var sv_uuid = session.uuid;
+    var sv_ani = session.ani;
+    var sv_ani2 = session.ani2;
+    var sv_caller_id_name = session.caller_id_name + " ";
+    var sv_caller_id_num = session.caller_id_num + " ";
+    var sv_destination = session.destination;
+    var sv_dialplan = session.dialplan;
+    var sv_name = session.name;
+    var sv_network_addr = session.network_addr;
+    var sv_state = session.state;
+
+    fsLogger("来电 ID = " + sv_caller_id_name + "<" + sv_caller_id_num + ">\n");
+
+    allDigits = "";
+
+    // 播放提示音
+    var rtn;
+    // session.streamFile(file, callback, callback_args, starting_sample_count);
+    var vMGF = new File(vMailGreetingFile);
+    if (vMGF.isFile) {
+        rtn = session.streamFile(vMailGreetingFile, on_dtmf, "");
+    } else {
+        session.sayPhrase("speak", "请在提示音后留言", "en");
+    }
+    fsLogger("session.streamFile rtn=[" + rtn + "]");
+
+    // 确认呼叫者是否还在通话中
+    if (session.ready()) {
+
+        // 暂停0.1秒
+        rtn = session.execute("sleep", "100");
+
+        // 播放提示声音
+        var tts = new TeleTone(session);
+        tts.addTone("d", 350.0, 440.0, 0.0);
+        tts.generate(BONG);
+
+        // 录制留言
+        fsLogger("", "正在录制留言");
+        var tmp_Filename = dir + "/" + sv_uuid + ".wav";
+
+        // 呼叫者还在通话中吗？
+        if (session.ready()) {
+            var toDate = new Date();
             rtn = session.recordFile(tmp_Filename, on_dtmf, "", maxreclen, silencethreshold, silencehits);
             fsLogger("", "session.recordFile rtn=[" + rtn + "]");
-   
-            // create meta file
-            var fd = new File(dir + "/" + sv_uuid + ".meta");
-            fsLogger("Creating META file:","START\n");
-            fd.open("write,create");
-            fd.writeln("callerID="+session.caller_id_num);
-            fd.writeln("callerName="+session.caller_id_name);
-            fd.writeln("createdDay="+toDate.getDay());
-            fd.writeln("createdDate="+toDate.getMonth() + " " + toDate.getDate() + ", " + toDate.getFullYear());
-            fd.writeln("createdTime="+toDate.getHours() + ":" + toDate.getMinutes() + ":" + toDate.getSeconds());
-            fd.writeln("heard="+"false");
-            fd.writeln("markForDeletion="+"false");
-            fd.close;
-            fsLogger("Creating META file:", "END\n");
-   
-            // Caller still here?
-            if (session.ready()) {
-               session.hangup // Hangup
-             }
-             else {
-               fsLogger("","Caller Hungup during record");
-             }
-   
-             // Send notifications
-             // uncomment specific function(s) to send notifications
-             // emailNotification();
-             // send email pager notification
-             // sendPageNotification();
-         }
-      }
-   }
 
+            // 创建 meta 文件
+            var fd = new File(dir + "/" + sv_uuid + ".meta");
+            fsLogger("正在创建 META 文件:", "开始\n");
+            fd.open("write,create");
+            fd.writeln("callerID=" + session.caller_id_num);
+            fd.writeln("callerName=" + session.caller_id_name);
+            fd.writeln("createdDay=" + toDate.getDay());
+            fd.writeln("createdDate=" + toDate.getMonth() + " " + toDate.getDate() + ", " + toDate.getFullYear());
+            fd.writeln("createdTime=" + toDate.getHours() + ":" + toDate.getMinutes() + ":" + toDate.getSeconds());
+            fd.writeln("heard=" + "false");
+            fd.writeln("markForDeletion=" + "false");
+            fd.close;
+            fsLogger("正在创建 META 文件:", "结束\n");
+
+            // 呼叫者还在通话中吗？
+            if (session.ready()) {
+                session.hangup // 挂断电话
+            } else {
+                fsLogger("", "通话进行中，呼叫者挂断");
+            }
+
+            // 发送通知
+            // 取消特定功能的注释以发送通知
+            // emailNotification();
+            // 发送电子邮件寻呼通知
+            // sendPageNotification();
+        }
+    }
+}
 ```
+
+```js
+   function listenToMessages() {
+      // Code to listen to answering machine messages
+   }
+```
+
+---
 
 ## inc_answer.js
 
-This library is included in answer.js
+这个库被包含在answer.js中。
 
 **inc\_answer.js**
 
@@ -207,28 +210,28 @@ This library is included in answer.js
            return "hangup";
        }
    
-       console_log("digit: " + digits + "\n");
+       console_log("按键：" + digits + "\n");
        allDigits += digits.digit;
        return(allDigits);
    }
    
    function emailNotification() {
       if (eMailTo != "") {
-         console_log(">>>>>>>>>>>>>>>>>>>>>>>>>>>> Sending Email\n");
+         console_log(">>>>>>>>>>>>>>>>>>>>>>>>>>>> 发送电子邮件\n");
          var tmp_eMailSubject = eMailSubject + sv_caller_id_name + " (" + sv_caller_id_num + ")";
-         email(eMailFrom, eMailTo, "Subject: " + tmp_eMailSubject, eMailBody, tmp_Filename);
+         email(eMailFrom, eMailTo, "主题：" + tmp_eMailSubject, eMailBody, tmp_Filename);
    
-         // construct the email notification to cell phone gateway - no file attached
+         // 构建发送短信通知的邮件 - 不附加文件
          if (Pager_eMailTo != "") {
-            email(eMailFrom, Pager_eMailTo, "Subject: " + tmp_eMailSubject, tmp_eMailSubject);
+            email(eMailFrom, Pager_eMailTo, "主题：" + tmp_eMailSubject, tmp_eMailSubject);
          }
       }
    }
    
    function sendPageNotification() {
       if (Pager_eMailTo != "") {
-         console_log(">>>>>>>>>>>>>>>>>>>>>>>>>>>> Sending Page\n");
-         email(eMailFrom, Pager_eMailTo, "Subject: " + tmp_eMailSubject, tmp_eMailSubject);
+         console_log(">>>>>>>>>>>>>>>>>>>>>>>>>>>> 发送页面\n");
+         email(eMailFrom, Pager_eMailTo, "主题：" + tmp_eMailSubject, tmp_eMailSubject);
       }
    }
 ```
@@ -239,9 +242,9 @@ This library is included in answer.js
 
 ```js
    //  inc_logger.js
-   //  logging function function library
+   //  记录日志的函数库
    
-   //  usage fsLogger("","");
+   //  用法 fsLogger("","");
    
    function fsLogger(descriptor, message) {
        console_log(" >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " + descriptor + " >>>>>>>>> " + message +"\n");
@@ -250,13 +253,14 @@ This library is included in answer.js
 
 ## vmListen.js
 
-Listen to answering machine messages.
+收听电话答录机留言。
 
-**JS listen to messages example**
+**JS收听留言示例**
+```
 
 ```js
-   include("inc_logger.js");           // the logging functions
-   include("inc_vmListen.js");         // loading functions
+   include("inc_logger.js");           // 日志函数
+   include("inc_vmListen.js");         // 加载函数
    include("inc_settings_test.js");
    
    var result = "";
@@ -265,7 +269,7 @@ Listen to answering machine messages.
        session.answer();
    
        session.execute("sleep","2000");
-       session.sayPhrase("speak", "welcome to the  v m listen application", "en");
+       session.sayPhrase("speak", "欢迎使用语音信箱监听应用", "en");
    
        var dir = new File(vmMessageDir + "/" + vmAccount);
    
@@ -276,7 +280,7 @@ Listen to answering machine messages.
        var newMessagesArray = new Array();
        var oldMessagesArray = new Array();
    
-   // Reads the voicemail directory and sorts messages
+   // 读取语音信箱目录并对信息进行排序
    
        if (dir.isDirectory) {
            var dirContent = dir.list();
@@ -287,9 +291,9 @@ Listen to answering machine messages.
                var strThisFile = contentFile.name;
                var fileName = strThisFile.substring(strThisFile.lastIndexOf("/"),strThisFile.lastIndexOf("."));
                var fileSuffix = strThisFile.substring(strThisFile.lastIndexOf("."));
-               fsLogger(i +" FILE ", fileName);
-               fsLogger(i +" DATE ", contentFile.creationTime);
-               fsLogger("fileSuffix", fileSuffix);
+               fsLogger(i +" 文件名 ", fileName);
+               fsLogger(i +" 创建日期 ", contentFile.creationTime);
+               fsLogger("文件后缀", fileSuffix);
                if (fileSuffix == ".meta") {
                    var infoObj = metaFileRead(vmAccount,fileName);
                    fsLogger("infoObj.heard",infoObj.heard);
@@ -303,14 +307,14 @@ Listen to answering machine messages.
                }
            }
        } else {
-           fsLogger("", dir.name + " is NOT a directory");
-           session.sayPhrase("speak", "No directory was found for this account ", "en");
+           fsLogger("", dir.name + " 不是一个目录");
+           session.sayPhrase("speak", "未找到该账户的语音信箱目录", "en");
        }
    
-   // Announcement of Message Summary
+   // 声明信息摘要
    //    announceMessageSummary(numNewMessages, numOldMessages);
-   //The above line was commented out because the definition of that comment is not included in the js files
-   // Playback for NEW Messages
+   //以上行被注释掉，因为该定义的注释在js文件中没有包括
+   // 播放新信息
    
        if (numNewMessages > 0) {
            while (currentNewNum < numNewMessages) {
@@ -318,26 +322,26 @@ Listen to answering machine messages.
                var vmMessageMeta = fileName + ".meta";
                var infoObj = metaFileRead(vmAccount,fileName);
                currentNewNum++;
-               dtmf = session.sayPhrase("speak", "Message " + currentNewNum + " Recieved on " + infoObj.createdDate + " at " + infoObj.createdTime
-                  + " from " + validateNull(infoObj.callerName) + ", press 1 to play,  press 2 to skip,  press 3 to delete  ", "en", menu_dtmf, "");
+               dtmf = session.sayPhrase("speak", "第 " + currentNewNum + " 条信息 于 " + infoObj.createdDate + " " + infoObj.createdTime + " 收到"
+                  + " 来自 " + validateNull(infoObj.callerName) + "，按 1 播放，按 2 跳过，按 3 删除", "en", menu_dtmf, "");
                session.execute("sleep","1000");
                if (dtmf == "1") {
                    messagePlay(vmAccount,fileName);
                    messageHeard(infoObj);
                }
                if (dtmf == "2") {
-                   session.sayPhrase("speak", "Skipping this message ", "en");
+                   session.sayPhrase("speak", "跳过该条信息", "en");
                }
                if (dtmf == "3") {
                    messageDelete(vmAccount,fileName);
                }
            }
-           session.sayPhrase("speak", "This is the end of your new messages ", "en");
+           session.sayPhrase("speak", "新信息播放完毕", "en");
        } else {
-           session.sayPhrase("speak", "Skipping to old messages ", "en");
+           session.sayPhrase("speak", "跳转至旧信息", "en");
        }
    
-   // Playback for Old Messages
+   // 播放旧信息
    
        if (numOldMessages > 0) {
            while (currentOldNum < numOldMessages) {
@@ -346,222 +350,223 @@ Listen to answering machine messages.
                var infoObj = metaFileRead(vmAccount,fileName);
    
                currentOldNum++;
-               dtmf = session.sayPhrase("speak", "Message " + currentOldNum + " recieved on " + infoObj.createdDate + " at " + infoObj.createdTime
-                  + " from " + validateNull(infoObj.callerName) + " press 1 to play,  press 2 to skip,  press 3 to delete  ", "en", menu_dtmf, "");
+               dtmf = session.sayPhrase("speak", "第 " + currentOldNum + " 条信息 于 " + infoObj.createdDate + " " + infoObj.createdTime
+                  + " 收到" + " 来自 " + validateNull(infoObj.callerName) + " 按 1 播放，按 2 跳过，按 3 删除", "en", menu_dtmf, "");
                session.execute("sleep","1000");
                if (dtmf == "1") {
                    messagePlay(vmAccount,fileName);
                }
                if (dtmf == "2") {
-                   session.sayPhrase("speak", "Skipping this message ", "en");
+                   session.sayPhrase("speak", "跳过该条信息", "en");
                }
                if (dtmf == "3") {
                    messageDelete(vmAccount,fileName);
                }
                session.execute("sleep","2000");
            }
-           session.sayPhrase("speak", "This is the end of your old messages ", "en");
+           session.sayPhrase("speak", "旧信息播放完毕", "en");
        } else {
-           session.sayPhrase("speak", "No old messages ", "en");
+           session.sayPhrase("speak", "无旧信息", "en");
        }
    
        session.execute("sleep","1000");
-       session.sayPhrase("speak", "this is the end of the application", "en");
+       session.sayPhrase("speak", "应用结束", "en");
        session.execute("sleep","1000");
-       session.sayPhrase("speak", "Good bye", "en");
+       session.sayPhrase("speak", "再见", "en");
        session.hangup;
    }
 ```
 
 ## inc_vmListen.js
 
-**inc\_vmListen.js**
+**inc_vmListen.js**
 
 ```js
-   function validateNull(thisString) {
-       if ((thisString == null) || (thisString == "")) {
-           return "No Data";
-       }
-       return thisString;
+function validateNull(thisString) {
+   if ((thisString == null) || (thisString == "")) {
+       return "无数据";
    }
-   
-   function menu_dtmf(session, type, digits, arg) {
-      if (type == "dtmf") {
-          if (digits.digit == "3") {
-              return digits.digit;
-          }
-          if (digits.digit == "1") {
-              return digits.digit;
-          }
-          if (digits.digit == "2") {
-              return digits.digit;
-          }
-          if (digits == "*") {
-              return "hangup";
-          }
+   return thisString;
+}
+
+function menu_dtmf(session, type, digits, arg) {
+  if (type == "dtmf") {
+      if (digits.digit == "3") {
+          return digits.digit;
       }
-      return(true);
-   }
-   
-   function play_dtmf(session, type, digits, arg) {
-   
-      if (type == "dtmf") {
-          if (digits.digit == "3") {
-              return false;
-          }
-          if (digits.digit == "1") {
-              return "seek:-5000";
-          }
-          if (digits.digit == "5") {
-              return "pause";
-          }
-          if (digits.digit == "*") {
-              return "hangup";
-          }
+      if (digits.digit == "1") {
+          return digits.digit;
       }
-      return(true); // return false to cause playback to stop
-   }
-   
-   function getNumNewMessages(dir) {
-       if (dir.isDirectory) {
-           var dirContent = dir.list();
-           var numMessages = dirContent.length;
-   
-           fsLogger("",dir.name + " is a directory");
-           fsLogger("","number of " + numMessages);
-   
-           for (i = 0; i < numMessages; i++) {
-   
-               var contentFile = dirContent[i];
-               var wavFile = contentFile.name;
-               var fileName = wavFile.substring(wavFile.lastIndexOf("/"));
-   
-               fsLogger(i +" wav File ", wavFile);
-               fsLogger(i +" FILE ", fileName);
-               fsLogger(i +" DATE ", contentFile.creationTime);
-           }
-           return numMessages;
-       } else {
-           fsLogger("", dir.name + " is NOT a directory");
-           return 0;
+      if (digits.digit == "2") {
+          return digits.digit;
+      }
+      if (digits == "*") {
+          return "挂断";
+      }
+  }
+  return(true);
+}
+
+function play_dtmf(session, type, digits, arg) {
+
+  if (type == "dtmf") {
+      if (digits.digit == "3") {
+          return false;
+      }
+      if (digits.digit == "1") {
+          return "seek:-5000";
+      }
+      if (digits.digit == "5") {
+          return "暂停";
+      }
+      if (digits.digit == "*") {
+          return "挂断";
+      }
+  }
+  return(true); // return false to cause playback to stop
+}
+
+function getNumNewMessages(dir) {
+   if (dir.isDirectory) {
+       var dirContent = dir.list();
+       var numMessages = dirContent.length;
+
+       fsLogger("", dir.name + " 是一个目录");
+       fsLogger("", "数量：" + numMessages);
+
+       for (i = 0; i < numMessages; i++) {
+
+           var contentFile = dirContent[i];
+           var wavFile = contentFile.name;
+           var fileName = wavFile.substring(wavFile.lastIndexOf("/"));
+
+           fsLogger(i +" 播放文件 ", wavFile);
+           fsLogger(i +" 文件 ", fileName);
+           fsLogger(i +" 创建日期 ", contentFile.creationTime);
        }
+       return numMessages;
+   } else {
+       fsLogger("", dir.name + " 不是一个目录");
+       return 0;
    }
-   
-   function messageDelete(vmAccount,fileName) {
-       var delFile = File(vmMessageDir + "/" + vmAccount + "/" + fileName + ".wav");
-       delFile.remove();
-       var delFile = File(vmMessageDir + "/" + vmAccount + "/" + fileName + ".meta");
-       delFile.remove();
-       session.sayPhrase("speak", "this message has been deleted", "en");
+}
+
+function messageDelete(vmAccount, fileName) {
+   var delFile = File(vmMessageDir + "/" + vmAccount + "/" + fileName + ".wav");
+   delFile.remove();
+   var delFile = File(vmMessageDir + "/" + vmAccount + "/" + fileName + ".meta");
+   delFile.remove();
+   session.sayPhrase("speak", "该消息已被删除", "en");
+}
+
+function messageHeard(metaObj) {
+   var metaFile = new File(vmMessageDir + "/" + vmAccount +"/" + fileName + ".meta");
+   if (metaFile.exists) {
+       metaFile.remove();
    }
-   
-   function messageHeard(metaObj) {
-       var metaFile = new File(vmMessageDir + "/" + vmAccount +"/" + fileName + ".meta");
-       if (metaFile.exists) {
-           metaFile.remove();
-       }
-       metaFile.open("write,create");
-       metaFile.writeln("callerID="+metaObj.callerID);
-       metaFile.writeln("callerName="+metaObj.callerName);
-       metaFile.writeln("createdDay="+metaObj.createdDay);
-       metaFile.writeln("createdDate="+metaObj.createdDate);
-       metaFile.writeln("createdTime="+metaObj.createdTime);
-       metaFile.writeln("heard="+"true");
-       metaFile.writeln("markForDeletion="+metaObj.markForDeletion);
-       metaFile.close;
+   metaFile.open("write,create");
+   metaFile.writeln("callerID="+metaObj.callerID);
+   metaFile.writeln("callerName="+metaObj.callerName);
+   metaFile.writeln("createdDay="+metaObj.createdDay);
+   metaFile.writeln("createdDate="+metaObj.createdDate);
+   metaFile.writeln("createdTime="+metaObj.createdTime);
+   metaFile.writeln("heard="+"true");
+   metaFile.writeln("markForDeletion="+metaObj.markForDeletion);
+   metaFile.close;
+}
+
+function messagePlay(vmAccount, fileName) {
+   var vmMessageWav = fileName + ".wav";
+   session.sayPhrase("NowPlaying", i+1,"en");
+   session.streamFile(vmMessageDir + "/" + vmAccount + "/" +  vmMessageWav, play_dtmf, "", 0);
+   fsLogger(i +" 文件 ", fileName);
+}
+
+function metaFileRead(vmAccount, fileName) {
+   var metaFile = new File(vmMessageDir + "/" + vmAccount +"/" + fileName + ".meta");
+   metaFile.open("read");
+   var metaObj = new Object();
+   var tmpString = metaFile.readln();
+   metaObj.callerID = tmpString.substring(tmpString.lastIndexOf("=") +1);
+   tmpString = metaFile.readln();
+   metaObj.callerName = tmpString.substring(tmpString.lastIndexOf("=") +1);
+   tmpString = metaFile.readln();
+   metaObj.createdDay = tmpString.substring(tmpString.lastIndexOf("=") +1);
+   tmpString = metaFile.readln();
+   metaObj.createdDate = tmpString.substring(tmpString.lastIndexOf("=") +1);
+   tmpString = metaFile.readln();
+   metaObj.createdTime = tmpString.substring(tmpString.lastIndexOf("=") +1);
+   tmpString = metaFile.readln();
+   metaObj.heard = tmpString.substring(tmpString.lastIndexOf("=") +1);
+   tmpString = metaFile.readln();
+   metaObj.markForDeletion = tmpString.substring(tmpString.lastIndexOf("=") +1);
+   metaFile.close();
+   fsLogger("metaObj", metaObj);
+   return metaObj;
+}
+
+function metaFileWrite(vmAccount, fileName, metaObj) {
+   var metaFile = new File(vmMessageDir + "/" + vmAccount +"/" + fileName + ".meta");
+   if (metaFile.exists) {
+       metaFile.remove();
    }
-   
-   function messagePlay(vmAccount,fileName) {
-       var vmMessageWav = fileName + ".wav";
-       session.sayPhrase("NowPlaying", i+1,"en");
-       session.streamFile(vmMessageDir + "/" + vmAccount + "/" +  vmMessageWav, play_dtmf, "", 0);
-       fsLogger(i +" FILE ", fileName);
+   metaFile.open("write,create");
+   metaFile.writeln("callerID=" + session.caller_id_num);
+   metaFile.writeln("callerName=" + session.caller_id_name);
+   metaFile.writeln("createdDay=" + toDate.getDay());
+   metaFile.writeln("createdDate=" + toDate.getMonth() + " " + toDate.getDate() + ", " + toDate.getFullYear());
+   metaFile.writeln("createdTime=" + toDate.getHours() + ":" + toDate.getMinutes() + ":" + toDate.getSeconds());
+   metaFile.writeln("heard=" + "false");
+   metaFile.writeln("markForDeletion=" + "false");
+   metaFile.close;
+}
+
+function messagePlay(vmAccount, fileName) {
+   var vmMessageWav = fileName + ".wav";
+   session.sayPhrase("NowPlaying", i+1,"en");
+   session.streamFile(vmMessageDir + "/" + vmAccount + "/" +  vmMessageWav, play_dtmf, "", 0);
+   fsLogger(i +" 文件 ", fileName);
+}
+
+function metaFileRead(vmAccount, fileName) {
+   var metaFile = new File(vmMessageDir + "/" + vmAccount +"/" + fileName + ".meta");
+   metaFile.open("read");
+   var metaObj = new Object();
+   var tmpString = metaFile.readln();
+   metaObj.callerID = tmpString.substring(tmpString.lastIndexOf("=") +1);
+   tmpString = metaFile.readln();
+   metaObj.callerName = tmpString.substring(tmpString.lastIndexOf("=") +1);
+   tmpString = metaFile.readln();
+   metaObj.createdDay = tmpString.substring(tmpString.lastIndexOf("=") +1);
+   tmpString = metaFile.readln();
+   metaObj.createdDate = tmpString.substring(tmpString.lastIndexOf("=") +1);
+   tmpString = metaFile.readln();
+   metaObj.createdTime = tmpString.substring(tmpString.lastIndexOf("=") +1);
+   tmpString = metaFile.readln();
+   metaObj.heard = tmpString.substring(tmpString.lastIndexOf("=") +1);
+   tmpString = metaFile.readln();
+   metaObj.markForDeletion = tmpString.substring(tmpString.lastIndexOf("=") +1);
+   metaFile.close();
+   fsLogger("metaObj", metaObj);
+   return metaObj;
+}
+
+function metaFileWrite(vmAccount, fileName, metaObj) {
+   var metaFile = new File(vmMessageDir + "/" + vmAccount +"/" + fileName + ".meta");
+   if (metaFile.exists) {
+       metaFile.remove();
    }
-   
-   function metaFileRead(vmAccount,fileName) {
-       var metaFile = new File(vmMessageDir + "/" + vmAccount +"/" + fileName + ".meta");
-       metaFile.open("read");
-       var metaObj = new Object();
-       var tmpString = metaFile.readln();
-       metaObj.callerID = tmpString.substring(tmpString.lastIndexOf("=") +1);
-       tmpString = metaFile.readln();
-       metaObj.callerName = tmpString.substring(tmpString.lastIndexOf("=") +1);
-       tmpString = metaFile.readln();
-       metaObj.createdDay = tmpString.substring(tmpString.lastIndexOf("=") +1);
-       tmpString = metaFile.readln();
-       metaObj.createdDate = tmpString.substring(tmpString.lastIndexOf("=") +1);
-       tmpString = metaFile.readln();
-       metaObj.createdTime = tmpString.substring(tmpString.lastIndexOf("=") +1);
-       tmpString = metaFile.readln();
-       metaObj.heard = tmpString.substring(tmpString.lastIndexOf("=") +1);
-       tmpString = metaFile.readln();
-       metaObj.markForDeletion = tmpString.substring(tmpString.lastIndexOf("=") +1);
-       metaFile.close();
-       fsLogger("metaObj",metaObj);
-       return metaObj;
-   }
-   
-   function metaFileWrite(vmAccount,fileName,metaObj) {
-       var metaFile = new File(vmMessageDir + "/" + vmAccount +"/" + fileName + ".meta");
-       if (metaFile.exists) {
-           metaFile.remove();
-       }
-       metaFile.open("write,create");
-       metaFile.writeln("callerID="+session.caller_id_num);
-       metaFile.writeln("callerName="+session.caller_id_name);
-       metaFile.writeln("createdDay="+toDate.getDay());
-       metaFile.writeln("createdDate="+toDate.getMonth() + " " + toDate.getDate() + ", " + toDate.getFullYear());
-       metaFile.writeln("createdTime="+toDate.getHours() + ":" + toDate.getMinutes() + ":" + toDate.getSeconds());
-       metaFile.writeln("heard="+"false");
-       metaFile.writeln("markForDeletion="+"false");
-       metaFile.close;
-   }
-   
-   function messagePlay(vmAccount,fileName) {
-       var vmMessageWav = fileName + ".wav";
-       session.sayPhrase("NowPlaying", i+1,"en");
-       session.streamFile(vmMessageDir + "/" + vmAccount + "/" +  vmMessageWav, play_dtmf, "", 0);
-       fsLogger(i +" FILE ", fileName);
-   }
-   
-   function metaFileRead(vmAccount,fileName) {
-       var metaFile = new File(vmMessageDir + "/" + vmAccount +"/" + fileName + ".meta");
-       metaFile.open("read");
-       var metaObj = new Object();
-       var tmpString = metaFile.readln();
-       metaObj.callerID = tmpString.substring(tmpString.lastIndexOf("=") +1);
-       tmpString = metaFile.readln();
-       metaObj.callerName = tmpString.substring(tmpString.lastIndexOf("=") +1);
-       tmpString = metaFile.readln();
-       metaObj.createdDay = tmpString.substring(tmpString.lastIndexOf("=") +1);
-       tmpString = metaFile.readln();
-       metaObj.createdDate = tmpString.substring(tmpString.lastIndexOf("=") +1);
-       tmpString = metaFile.readln();
-       metaObj.createdTime = tmpString.substring(tmpString.lastIndexOf("=") +1);
-       tmpString = metaFile.readln();
-       metaObj.heard = tmpString.substring(tmpString.lastIndexOf("=") +1);
-       tmpString = metaFile.readln();
-       metaObj.markForDeletion = tmpString.substring(tmpString.lastIndexOf("=") +1);
-       metaFile.close();
-       fsLogger("metaObj",metaObj);
-       return metaObj;
-   }
-   
-   function metaFileWrite(vmAccount,fileName,metaObj) {
-       var metaFile = new File(vmMessageDir + "/" + vmAccount +"/" + fileName + ".meta");
-       if (metaFile.exists) {
-           metaFile.remove();
-       }
-       metaFile.open("write,create");
-       metaFile.writeln("callerID="+session.caller_id_num);
-       metaFile.writeln("callerName="+session.caller_id_name);
-       metaFile.writeln("createdDay="+toDate.getDay());
-       metaFile.writeln("createdDate="+toDate.getMonth() + " " + toDate.getDate() + ", " + toDate.getFullYear());
-       metaFile.writeln("createdTime="+toDate.getHours() + ":" + toDate.getMinutes() + ":" + toDate.getSeconds());
-       metaFile.writeln("heard="+"false");
-       metaFile.writeln("markForDeletion="+"false");
-       metaFile.close;
-   }
+   metaFile.open("write,create");
+   metaFile.writeln("callerID=" + session.caller_id_num);
+   metaFile.writeln("callerName=" + session.caller_id_name);
+   metaFile.writeln("createdDay=" + toDate.getDay());
+   metaFile.writeln("createdDate=" + toDate.getMonth() + " " + toDate.getDate() + ", " + toDate.getFullYear());
+   metaFile.writeln("createdTime=" + toDate.getHours() + ":" + toDate.getMinutes() + ":" + toDate.getSeconds());
+   metaFile.writeln("heard=" + "false");
+   metaFile.writeln("markForDeletion=" + "false");
+   metaFile.close;
+}
+```
 
 ```
 
@@ -570,9 +575,9 @@ Listen to answering machine messages.
 **inc\_settings\_test.js**
 
 ```js
-   console_log(" >>>>>>>>>>>>>>>>>>> USING INC TEST SETTINGS <<<<<<<<<<<<<<<<<<<<<<<< \n");
+   console_log(" >>>>>>>>>>>>>>>>>>> 使用增加测试设置 <<<<<<<<<<<<<<<<<<<<<<<< \n");
    
-   // Freeswitch Style
+   // Freeswitch 风格
    var vmMessageDir = "/var/spool/freeswitch";
    var vmAccount = session.caller_id_num;
    
@@ -587,7 +592,7 @@ Listen to answering machine messages.
 
 ## lang_en.xml
 
-This is for the speak phrase used in the JavaScript.
+用于 JavaScript 中使用的语音短语。
 
 **lang\_en.xml**
 
@@ -601,11 +606,11 @@ This is for the speak phrase used in the JavaScript.
    </macro>
 ```
 
-The file structure starts at **/var/spool/freeswitch** then directories are created as messages are left. The directory will be given the same name as the registered phone extension. Within the directory, messages left will be given the id of the call session with a .wav extension along with a file having a .meta extension. The .meta file is a text file that will contain the callerID, callerName, createdDay, createdDate, createdTime, heard flag, and a markForDeletion flag.
+文件结构从 **/var/spool/freeswitch** 开始，随着留下消息，会创建目录。目录的名称将与注册的电话分机号码相同。在目录中，留下的消息将以通话会话的 ID 为名，并带有 .wav 扩展名，同时还会有一个带有 .meta 扩展名的文件。.meta 文件是一个文本文件，它包含了呼叫者的 ID、呼叫者姓名、创建日期、创建时间、听到标志和删除标志。
 
-The **/var/spool/freeswitch** must be created manually but the directories underneath will be created as messages are left.
+需要手动创建 **/var/spool/freeswitch** ，但在其下面的目录将在留下消息时自动创建。
 
-Example of .meta file:
+.meta 文件的示例：
 
    callerID=2666
    callerName=Kyle's PC
@@ -615,51 +620,50 @@ Example of .meta file:
    heard=true
    markForDeletion=false
 
-## Recording Greeting
+## 录制问候语
+```
 
-This simple application is used to record the greeting file for the answermachine.js application It will simply play a bong tone and record the file. You can press # to stop and it will play the new greeting file back
+这个简单的应用程序用于为answermachine.js应用程序记录问候文件，它将简单地播放一段提示音并录制文件。您可以按下#键停止，然后它将播放新的问候文件
 
-  
-**Record greeting example**
+**录制问候示例**
 
 ```js
 use("TeleTone");
 
 // * recordgreeting.js
-// * Written by: Mike B. Murdock for use with FreeSwitch
-// * Based on original samples by Anthony Minessale II
-// * Revision: 12-28-2006
-// 
-// * Version: MPL 1.1
+// * 作者：Mike B. Murdock，用于FreeSwitch
+// * 基于Anthony Minessale II的原始样本
+// * 修订：2006年12月28日
+//
+// * 版本：MPL 1.1
 // *
-// * The contents of this file are subject to the Mozilla Public License Version
-// * 1.1 (the "License"); you may not use this file except in compliance with
-// * the License. You may obtain a copy of the License at
+// * 本文件的内容受Mozilla Public License Version的约束
+// * 1.1（“许可证”）；您除非符合许可证，否则不得使用本文件。
+// * 您可以在以下地址获取许可证的副本：
 // * http://www.mozilla.org/MPL/
 // *
-// * Software distributed under the License is distributed on an "AS IS" basis,
-// * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
-// * for the specific language governing rights and limitations under the
-// * License.
+// * 许可下分发的软件是基于“原样”分发的，
+// * 不附带任何明示或暗示的保证。请参阅许可证
+// * 获取特定语言下的所有权利和限制。
 // *
-// * This simple application is used to record the greeting file for the answermachine.js application
-// * It will simply play a bong tone and record the file. You can press # to stop and it will play
-// * the new greeting file back.
+// * 这个简单的应用程序用于为answermachine.js应用程序记录问候文件
+// * 它将简单地播放一段提示音并录制文件。您可以按下#键停止
+// * 然后它会播放新的问候文件。
 
-// Place your recorded greeting here !!IMPORTANT!! THE PATH MUST EXIST
+// 在此处放置您已录制的问候！！重要！！路径必须存在
 var vMailGreetingFile = "/usr/local/freeswitch/sounds/greeting.wav"
 
 //var BONG = "v=4000;>=0;+=2;#(60,0);v=2000;d(940,0)";
 var BONG = "v=4000;>=0;+=2;#(60,0)";
 
-// Maximum recording length in seconds (240 = 4 minutes should be enough)
-var maxreclen = 240; 
+// 录制的最大长度（秒）（240 = 4分钟应足够）
+var maxreclen = 240;
 
-// Energy level audio must fall below to be considered silence (300-500 is good starting point)
+// 音频的能量水平必须低于此值才能被视为空白（300-500是一个好的起点）
 var silencethreshold = 500;
 
-// Amount of time in seconds caller must be silent to trigger detector
-var silencehits = 10; // we don't want to trigger too soon in this application
+// 触发检测器需要主叫方保持静默的时间（秒）
+var silencehits = 10; // 在这个应用程序中，我们不希望太早触发
 
 var allDigits = "";
 
@@ -670,45 +674,41 @@ function on_dtmf(session, type, digits, arg)
     }
 
     if (digits.digit == "*") {
-    return "hangup";
+    return "挂断";
     }
 
-    console_log("digit: " + digits.digit + "\n");
+    console_log("按键： " + digits.digit + "\n");
     allDigits += digits.digit;
 }
 
-// If not answered answer the call
+// 如果未接听，则接听电话
 session.answer();
 
 if(session.ready()) {
     
     allDigits = "";
     
-    // Play bong
+    // 播放音调
     
     var tts = new TeleTone(session);
     tts.addTone("d", 350.0, 440.0, 0.0);
 
     tts.generate(BONG); 
     
-    // Record message
-    console_log("Recording greeting\n");
+    // 录制留言
+    console_log("开始录制问候语\n");
     
     rtn = session.recordFile(vMailGreetingFile, on_dtmf, "", maxreclen, silencethreshold, silencehits);
-    console_log("Done Recording greeting: rtn=[" + rtn + "]\n");
+    console_log("录制问候语完成: 返回值=[" + rtn + "]\n");
 
     if (session.ready()) {
-        // play it back - for testing
+        // 回放录音-测试用
         rtn = session.streamFile(vMailGreetingFile, "", on_dtmf, "");
         
-        // Hangup
+        // 挂断电话
         session.hangup
     } 
     else {
-        console_log("Caller Hungup during record\n");
+        console_log("录音期间呼叫方已挂断\n");
     }
 }
-```
-
-  
-

@@ -1,4 +1,3 @@
-
 # mod_dptools: bridge 
 
  
@@ -35,13 +34,13 @@ Subpages (click to expand)
 
 ## 0\. About
 
-Bridge a new channel to the existing one (Actually bridge the audio between two sessions). Generally used to route an incoming call to one or more endpoints. Multiple endpoints can be dialed simultaneously or sequentially using the comma and pipe delimiters, respectively.
+桥接一个新的通道到现有的通道上（实际上是在两个会话间桥接音频）。通常用于将呼入呼叫路由到一个或多个终端。可以同时拨号或按顺序拨号多个终端，分别使用逗号和管道分隔符。
 
 mod\_dptools: bridge VS uuid\_bridge
 
 <https://lists.freeswitch.org/pipermail/freeswitch-users/2014-September/108166.html>
 
-(`uuid_bridge` is documented in [mod\_commands](../mod_commands_1966741.mdx#uuid_bridge).)
+（`uuid_bridge` 在 [mod\_commands](../mod_commands_1966741.mdx#uuid_bridge) 有文档。）
 
 ## 1\. Usage
 
@@ -51,307 +50,303 @@ mod\_dptools: bridge VS uuid\_bridge
 
 ## 2\. Examples
 
-Endpoint examples expressed as API commands:
+将终端示例表示为 API 命令：
 
 ```xml
-# the "user" endpoint is an alias for devices registered to FreeSWITCH via the directory system
+# “user” 的终端点是通过目录系统注册到 FreeSWITCH 的设备的别名
 user/1000
 lcr/18005558355
 sofia/external/18005558355@sip.tollfreegateway.com
 ```
 
-Simple endpoint:
+简单终端点:
 
 ```xml
- bridge <target_endpoint>
+ bridge <目标终端点>
 ```
 
-Multiple endpoints simultaneously (call blast) -- no limit to concurrency, first one to answer wins
+同时拨打多个终端点（呼叫爆炸） - 并发数没有限制，第一个接听的获胜
 
 ```xml
- bridge <target_endpoint>[,<target_endpoint>]
+ bridge <目标终端点>[,<目标终端点>]
 ```
 
-Multiple endpoints sequential -- no limit to failover number
+按顺序拨打多个终端点 - 失败转移到的终端点数量没有限制
 
 ```xml
- bridge <target_endpoint>[|<target_endpoint>]
+ bridge <目标终端点>[|<目标终端点>]
 ```
 
-Setting Variables for the B-leg simple example using brackets:
+为 B-leg 简单示例使用方括号设置变量:
 
 ```xml
- bridge [variable_scope=endpoint-1]<target_endpoint>,[variable_scope=endpoint-2]<target_endpoint>
+ bridge [variable_scope=endpoint-1]<目标终端点>,[variable_scope=endpoint-2]<目标终端点>
 ```
 
-Setting Variables for the B-leg thread-global using braces:
+使用大括号为 B-leg 线程全局设置变量:
 
 ```xml
- bridge {variable_scope=thread_global}[variable_scope=endpoint-1]<target_endpoint>[,[variable_scope=endpoint-2]<target_endpoint>][|[variable_scope=endpoint-3]<target_endpoint>]
+ bridge {variable_scope=thread_global}[variable_scope=endpoint-1]<目标终端点>[,[variable_scope=endpoint-2]<目标终端点>][|[variable_scope=endpoint-3]<目标终端点>]
 ```
 
-Setting Variables for the B-leg with [enterprise originate](#35-calling-multiple-destinations) for multiple threads:
+为多线程使用 [企业 originate](#35-calling-multiple-destinations) 设置 B-leg 变量:
 
 ```xml
- bridge <variable_scope=super-global>{variable_scope=thread1}[variable_scope=leg1a]<target_endpoint>[,[variable_scope=leg1b]<target_endpoint>][|<target_endpoint>]
-:_:{variable_scope=thread2}[variable_scope=leg2a]<target_endpoint>[,[variable_scope=leg2b]<target_endpoint>][|<target_endpoint>]
+ bridge <variable_scope=super-global>{variable_scope=thread1}[variable_scope=leg1a]<目标终端点>[,[variable_scope=leg1b]<目标终端点>][|<目标终端点>]
+:_:{variable_scope=thread2}[variable_scope=leg2a]<目标终端点>[,[variable_scope=leg2b]<目标终端点>][|<目标终端点>]
 ```
 
-### 2.1 Dialplan Examples  
+### 2.1 拨号计划示例
 
-Bridge an incoming call to an external SIP address or termination provider.
+将呼入的通话桥接到外部 SIP 地址或终结供应商。
 
 ```xml
  <action application="bridge" data="sofia/internal/9998881111@sip.yourprovider.com"/>
 ```
 
-Bridge the incoming call to extension 100 and 101\. The '%' is used instead of the @ to indicate that the endpoints are registered locally. Separate multiple endpoints with a comma. The ${sip\_profile} variable is defined in freeswitch.xml.
+将呼入电话转接到分机100和101。`%`符号用于代替`@`符号，表示这些终端注册在本地。用逗号分隔多个终端。`${sip_profile}`变量在`freeswitch.xml`中定义。
 
 ```xml
  <action application="bridge" data="sofia/internal/100%${sip_profile},sofia/internal/101%${sip_profile}"/>
 ```
 
-To dial multiple contacts all at once:
+同时拨打多个联系人：
 
 ```xml
  <action application="bridge" data="sofia/internal/1010@sip.yourprovider.com,sofia/sip/1011@sip.yourprovider.com"/>
 ```
 
-To dial multiple contacts one at a time:
+逐个拨打多个联系人：
 
 ```xml
  <action application="bridge" data="sofia/internal/1010@sip.yourprovider.com|sofia/sip/1011@sip.yourprovider.com"/>
 ```
 
-To bridge an incoming call to an external SIP address or termination provider on the fly which requires authentication without having to create gateways entries:
+动态地将呼入电话桥接到外部SIP地址或终端提供商，需要进行身份验证，而无需创建网关条目：
 
 ```xml
 <action application="bridge" data="{sip_auth_username=foo,sip_auth_password=bar}sofia/internal/9998881111@sip.yourprovider.com"/>
 ```
 
-Extra parameters: for instance, if you are dipping to get an LRN lookup:
+额外的参数：例如，如果您正在进行LRN查询：
 
 ```xml
  <action application="bridge" data="sip:12135551212;rn=12135550000;npdi=yes@1.2.3.4:5060>
 ```
 
-or
+或者
 
 ```xml
  <action application="export" data="nolocal:sip_invite_tel_params=rn=12135550000;npdi=yes"/>
  <action application="export" data="nolocal:sip_invite_params=user=phone"/>
 ```
 
-or
+或者
 
 ```xml
  <action application="bridge" data="{sip_invite_tel_params=rn=12135550000;npdi=yes,sip_invite_params=user=phone}sofia/gateway/gateway_name/12135551212"/>
 ```
 
-will result in:
+将会生成：
 
 ```xml
  INVITE sip:12135551212;rn=12135550000;npdi=yes@1.2.3.4;user=phone SIP/2.0
 ```
 
-However, you will also get 12135551212;rn=12135550000;npdi=yes in the To: parameter. Thus, to get rid of that you can append the carat (^) as follows:
+然而，`To:`参数中也会包含`12135551212;rn=12135550000;npdi=yes`。为了去除它，您可以追加一个插入符(`^`)，如下：
 
 ```xml
- <action application="bridge" data="sip:12135551212;rn=12135550000;npdi=yes@1.2.3.4:5060^12135551212">
+<action application="set" data="effective_caller_id_number=123456789"/>
 ```
 
-## 3\. Options
+### 3.4. Sending DTMF
 
-You can set different options to modify the behavior of the call. Be sure to set the option before executing the application. Here are some examples:
-
-### 3.1 Timeout
-
-The maximum number of seconds to wait for an answer state from a remote endpoint.
+You can send DTMF tones during the call by using the `send_dtmf` application. The tones can be either digits or named DTMF symbols. Here's an example of sending the digits `12345`:
 
 ```xml
-  <action application="set" data="call_timeout=20"/>
+<action application="send_dtmf" data="12345"/>
 ```
 
-### 3.2 No Media Mode
+### 3.5. Playing Audio
 
-See full discussion at [Bypass Media Overview](../../Codecs-and-Media/Bypass-Media-Overview/index.mdx#faq).
-
-No media mode is an SDP Passthrough feature that permits two endpoints that can see each other (no funky N.A.T.) to connect their media sessions directly while FreeSWITCH maintains control of the SIP signaling. This is useful if you have two end-points that need to use a codec that is currently not supported in FreeSWITCH (video) or if you are using FreeSWITCH in a high performance walled garden network and want to minimize the RTP handling FreeSWITCH is doing to maximize call traffic.
-
-When set, the media (RTP) from the originating endpoint is sent directly to the destination endpoint and vice versa. The signaling (SIP) for both endpoints still goes through FreeSWITCH, but the media is point-to-point.
-
-Before executing the bridge action you must set the "bypass\_media" flag to true.
+You can play audio to the caller during the call by using the `playback` application. You need to specify the audio file to play. Here's an example of playing the file `sound/Hello.wav`:
 
 ```xml
- <action application="set" data="bypass_media=true"/>
+<action application="playback" data="sound/Hello.wav"/>
 ```
 
-bypass\_media must **only** be set on the A leg of a call, for example:
+### 3.6. Recording the Call
+
+You can record the entire call by using the `record_session` application. You need to specify the file name and the format of the recording. Here's an example of recording the call in `wav` format:
 
 ```xml
- originate {bypass_media=true}sofia/default/1000@host1 &bridge(sofia/default/1001@host2)
+<action application="record_session" data="recording.wav"/>
 ```
 
-### 3.3.Setting Outgoing CallerID
+Please refer to the [FreeSWITCH documentation](https://freeswitch.org/confluence/display/FREESWITCH/mod_commands#mod_commands-record_session) for more information on how to set additional options when recording the call.
 
-If you are using FreeSWITCH as a PBX you may want to control the outgoing CallerID that is sent to the PSTN or your SIP provider. Your SIP Provider will most likely require you to use a specific CallerID number (or a userid instead). The following example sets them before executing the bridge action. See more about [caller ID privacy options](../../Interoperability/Caller-ID-Privacy_6587537.mdx#about).
+### 3.7. Hangup the Call
+
+You can hang up the call by using the `hangup` application. Here's an example of hanging up the call:
 
 ```xml
- <action application="set" data="effective_caller_id_name=John Freeswitch"/>
+<action application="hangup"/>
+```
+
+如果您正在使用FreeSWITCH作为PBX，您可能希望控制发送到PSTN或SIP供应商的出站呼叫者ID。您的SIP提供商很可能要求您使用特定的呼叫者ID号码（或用户ID）。以下示例在执行桥接操作之前设置它们。了解更多有关[呼叫者ID隐私选项](../../Interoperability/Caller-ID-Privacy_6587537.mdx#about)的信息。
+
+```xml
+ <action application="set" data="effective_caller_id_name=John Freeswitch"/>
  <action application="set" data="effective_caller_id_number=1234567"/>
 ```
 
-### 3.4 Sending Ringback
+### 3.4 发送回铃信号
 
-You may want to simulate ringback to your internal users while you dial a provider, or you may need to force a ringback back upstream when you are dialing multiple extensions and cannot determine what call treatment you will need to provide yet. In order to accomplish this, you need to set a chanvar before going to the bridge application.
+在拨号提供程序时，您可能希望为内部用户模拟回铃信号，或者在拨号多个分机时无法确定所需提供的呼叫处理时，需要强制向上游发送回铃信号。为了实现这一点，在进入桥接应用程序之前，您需要设置一个chanvar。
 
 ```xml
-  <action application="set" data="ringback=${us-ring}"/>
+ <action application="set" data="ringback=${us-ring}"/>
 ```
 
-Note that you can use another ring than ${us-ring}, but it would have to be defined in your configuration (typically in vars.xml).
+请注意，您可以使用除${us-ring}之外的其他回铃信号，但必须在配置中定义（通常在vars.xml中）。
 
-### 3.5 Calling multiple destinations
+### 3.5 呼叫多个目的地
 
-By using commas to separate the addresses, bridge will dial them simultaneously. Using pipes, it'll dial one at a time. Use :\_: to separate multiple destinations to be dialled in a multi-threaded manner (this is referred to as "Enterprise Origination") - this gives more flexibility (and avoids the "Only calling the first element in the list in this mode" warning)
+通过使用逗号分隔地址，桥接将同时拨号这些地址。并使用竖线，则会逐个拨号。使用:\_:来分隔将以多线程方式拨号的多个目的地（称为"企业源"）- 这样可以提供更大的灵活性（并避免"仅呼叫列表中的第一个元素"的警告）。
 
-If you need to set different channel variables for each destination, you may prefix the destinations with \[\] and the variables inside the brackets. Example:
+如果您需要为每个目的地设置不同的通道变量，您可以在目的地前面加上\[\]，并在括号内添加变量。例如：
 
 ```xml
  <action application="bridge" data="[origination_caller_id_number=1234]sofia/<profile>/<extension>,[origination_caller_id_number=55555]sofia/<profile>/<extension>"/>
 ```
 
-Note: by default when bridging, the first endpoint to **provide media** (as opposed to actually answering) will win, and the other endpoints will stop ringing. For internal endpoints, this usually doesn't matter. However, in the case of cell phone providers, any custom music that plays for the caller while ringing counts as media. In some cases, the ringing sound itself is media. If your bridge command includes a cell phone number and your internal endpoints stop ringing as soon as the cell phone starts, you will need to enable the 'ignore\_early\_media' option:
+注意：默认情况下，在进行桥接时，第一个**提供媒体的**端点（而不是真正接听的端点）会胜出，其他端点将停止响铃。对于内部端点，这通常无关紧要。然而，对于手机提供商而言，任何在来电响铃时为呼叫者播放的自定义音乐都被视为媒体。在某些情况下，响铃本身就是媒体。如果桥接命令中包括一个手机号码，并且内部端点在手机开始响铃后立即停止响铃，您将需要启用 'ignore_early_media' 选项：
 
 ```xml
   <action application="set" data="ignore_early_media=true" />
 ```
 
-### 3.6 Implementing Failover
+### 3.6 实现故障转移
 
-Failover for your outbound gateway is easy to implement at bridge time using the | separator:
+通过使用 | 分隔符，可以在桥接时轻松实现外部网关的故障转移：
 
 ```xml
   <action application="bridge" data="sofia/gateway/primary/dialstring|sofia/gateway/secondary/dialstring"/>
 ```
 
-Setting the options ping parameter on the gateway in the sip\_profiles definition will allow FreeSWITCH to determine a gateway has failed ahead of time which allows the bridge to go to the secondary immediately rather than waiting for a timeout during call setup.
+在 sip\_profiles 定义中为网关设置选项 ping 参数，可以让 FreeSWITCH 提前确定网关故障，从而在呼叫建立期间立即转到备用网关，而不需要等待超时。
 
-### 3.7 Call Camping
+### 3.7 呼叫露营
 
-See [Call Camping](./mod-dptools:-bridge/Call-Camping_16354681.mdx#about).
+请参阅[呼叫露营](./mod-dptools:-bridge/Call-Camping_16354681.mdx#about)。
 
-## 4\. Special channels
+## 4. 特殊通道
 
-These special channels are specified where a normal endpoint would be specified, such as sofia, but provide customized treatment of a call.  
+这些特殊通道与普通的端点（如 sofia）一样，用于提供对呼叫的定制处理。
 
 ### 4.1 error
 
-You can bridge the call to the error channel in order to specify a [hangup cause](../../Troubleshooting-Debugging/Hangup-Cause-Code-Table_3964945.mdx#about).
+您可以将呼叫桥接到错误通道，以指定一个[挂机原因](../../Troubleshooting-Debugging/Hangup-Cause-Code-Table_3964945.mdx#about)。
 
 ```xml
-<action application="bridge" data="error/user_busy" />
+<action application="bridge" data="user/[to_be_replace[user]]@[to_be_replace[domain]]"/>
 ```
 
-### 4.2 gateway
+### 4.2网关
 
-When dialing using the gateway channel, it will use the authentication details specified in the sip\_profiles definition if challenged.
+使用网关通道拨号时，如果需要进行身份验证，将使用在`sip_profiles`定义中指定的身份验证详细信息。
 
 ```xml
 <action application="bridge" data="sofia/gateway/mygatewayname/555123456" />
 ```
 
-### 4.3 group
+### 4.3群组
 
-The group special channel will dynamically create a dial string to reach all endpoints defined as part of a group in the directory by using the 'group\_call' function.
+群组特殊通道将通过使用'group\_call'函数，在目录中定义的所有端点创建一个动态拨号字符串。
 
 ```xml
 <action application="bridge" data="group/support@${domain_name}"/>
 ```
 
-This is the same as:
+相当于：
 
 ```xml
 <action application="bridge" data="${group_call(support@${domain_name})}"/>
 ```
 
-### 4.4 loopback
+### 4.4回环
 
-Loopback creates a pseudo-endpoint that starts a new pass through the specified dialplan, but can cause unusable CDR entries as a result. Do not use unless there is no other option, but expect to spend time troubleshooting it.
+回环创建了一个伪端点，它将通过指定的拨号计划启动新的通过，但可能导致不可用的CDR条目。除非没有其他选择，否则不要使用，但是要准备花时间进行故障排除。
 
 ```xml
 <action application="bridge" data="loopback/1000" />
 ```
 
-This example searches the inherited dialplan for extension 1000 in the inherited context.
+此示例在继承的上下文中搜索扩展号1000的继承的拨号计划。
 
-Loopback is evil and should only be used as a last resort, when no other approach is possible. - anthm
+回环是邪恶的，只有在没有其他办法的情况下才应该使用，- anthm
 
-For more info look at [Loopback endpoint](../../Dialplan/Loopback-Endpoint_6587541.mdx#about)
+有关更多信息，请参阅[回环端点](../../Dialplan/Loopback-Endpoint_6587541.mdx#about)
 
-### 4.5 user
+### 4.5用户
 
-\[ Note: This section was imported directly from the old wiki and must be edited to the rest of the text under "user" to remove redundancies. \]
+\[注意：此部分直接从旧维基百科导入，必须编辑为"用户"下的其他文本，以消除冗余。\]
 
-If the dial-string param is set for a user or a domain you can bridge a call to the user endpoint without going through a profile. The default dial-string param in the example config files for FreeSWITCH has the following syntax:
+如果为用户或域设置了拨号字符串参数，则可以将呼叫桥接到用户端点，而无需通过配置文件。在FreeSWITCH示例配置文件中，默认的拨号字符串参数具有以下语法：
+```xml
+<action application="bridge" data="user/[to_be_replace[user]]@[to_be_replace[domain]]"/>
+```
 
-&lt;param name="dial-string" value="{presence_id=${dialed_user}@${dialed_domain},transfer_fallback_extension=${dialed_user}}${sofia_contact(${dialed_domain}/${dialed_user}@${dialed_domain})}"/>
-
-When this param is set on the destination user you can bridge to it this way:
+当设置了这个参数的目标用户后，可以通过以下方式桥接到该用户：
 
 &lt;action application="bridge" data="user/username@domain"/>
 
-  
-When you use the user channel the user is pulled from your domain in your directory then the main domain is searched for a &lt;params> tag. If that is not found it searches in the &lt;user> for a &lt;params> tag. If a &lt;params> tag is located, it looks for the param "dial-string" as the originate string to use for that user. The special variables ${dialed\_user} and ${dialed\_domain} are available in this string for expansion based on the user and domain specified.
+在使用用户通道时，用户会从您的域中根据您的目录中的主域搜索 `<params>` 标签。如果找不到该标签，则会在 `<user>` 中搜索 `<params>` 标签。如果找到一个 `<params>` 标签，它会查找 `dial-string` 参数作为用于该用户的发起字符串。`${dialed\_user}` 和 `${dialed\_domain}` 这两个特殊变量可在此字符串中使用，根据指定的用户和域进行扩展。
 
-for instance if all calls are sip you could set the dial-string in your whole domain as
+例如，如果所有呼叫都是 SIP 类型，您可以将整个域的 `dial-string` 设置为：
 
 &lt;params>
   &lt;param name="dial-string" value="${sofia_contact(${dialed_user}@${dialed_domain})}"/>
 &lt;/params>
 
-Be aware that the user channel should not be used along with forked dialing. Instead use the following in your data= for the bridge:
+请注意，不应将用户通道与分叉拨号一起使用。而是在桥接的 `data` 中使用以下内容：
 
-data="${sofia_contact(user/username@domain)},sofia/gateway/provider/somenum
+data="${sofia_contact(user/username@domain)},sofia/gateway/provider/somenum"
 
-  
-Since FreeSWITCH has a user directory, you can save how to reach every user in the user's directory entry by saving it in its "dial-string" parameter. When dialing using the user channel, it will lookup the [dial-string](../../Directory/XML-User-Directory/index.mdx#dial-string-) stored in the extension's directory entry and dial it instead.
+由于 FreeSWITCH 有一个用户目录，您可以在用户的目录条目中保存用户的到达方式，保存在其 "dial-string" 参数中。当使用用户通道拨号时，它将查找扩展的目录条目中存储的 [dial-string](../../Directory/XML-User-Directory/index.mdx#dial-string-) 并进行拨号。
 
 ```xml
-# specifying this in the dialplan
+# 指定拨号计划
 <action application="bridge" data="user/bob@domain" />
-# would be translated into
+# 将被翻译为
 <action application="bridge" data="sofia/sip/100%${sip_profile},sofia/sip/101%${sip_profile}"/>
 ```
 
-If the user has no dial-string, the default dial-string specified in the directory entry for the channel's domain is used instead.
+如果用户没有拨号字符串，则使用通道域的目录条目中指定的默认拨号字符串。
 
-If you want to route to many user channels, you will have to separate them by :\_: as opposed to the comma "," to generate an originate command for each user.
+如果您想将路由转到多个用户通道，您需要使用“:\_:”而不是逗号“,”来为每个用户生成一个 originate 命令。
 
 ```xml
    <action application="bridge" data="user/bob@domain:_:user/alice@domain"/>
 ```
 
-Note again: You have to be careful with whitespace here generally. For some reason, FS will see user \[bob@domain \] and NOT \[bob@domain\] which will make it not find the user, if you try to be fancy like for example this:
+再次注意：在这里要小心空格。由于某种原因，FreeSWITCH 会将"user \[bob@domain\]"视为"user \[bob@domain \]"，这将导致它找不到用户，如果您像这样使用它：
 
-**BROKEN user dialplan example**
+**错误的用户拨号计划示例**
 
 ```xml
    <action application="bridge" data="
      user/bob@domain :_:
      user/alice@domain
   "/>
-# The above XML is broken! FreeSWITCH will complain about unknown users:
-# [bob@domain ] and [alice@domain       ]
+# 上面的 XML 是错误的！FreeSWITCH 会抱怨未知用户：
+# [bob@domain ] 和 [alice@domain       ]
 ```
 
-So be careful about formatting.
+所以要小心格式。
 
-## 5\. See Also
+## 5\. 参见
 
-* [Loopback endpoint](../../Dialplan/Loopback-Endpoint_6587541.mdx#about) — a special user channel for very specialized purposes
-* [Channel variables](../../Dialplan/Variables-Archive/x__Channel-Variables_1048892.mdx#--) — dicsusses how channel variables, especially loopback\_bowout, can be set and how they affect this command
-* [mod\_dptools: bridge export](./6586489.mdx#about)
-
-  
-
+* [Loopback endpoint](../../Dialplan/Loopback-Endpoint_6587541.mdx#about) — 用于非常特殊目的的特殊用户通道
+* [Channel variables](../../Dialplan/Variables-Archive/x__Channel-Variables_1048892.mdx#--) — 讨论了如何设置通道变量，特别是 loopback_bowout，以及它们如何影响此命令
+* [mod_dptools: bridge export](./6586489.mdx#about)

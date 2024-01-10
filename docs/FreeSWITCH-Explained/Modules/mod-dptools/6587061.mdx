@@ -1,37 +1,36 @@
-
 # mod_dptools: sched hangup 
 
  
 
 ---
 
-Table of Contents (click to expand)
+目录（点击展开）
 
-* [0\. About](#0-about)  
-   * [0.1 Abort sched\_cancel workaround](#01-abort-sched_cancel-workaround)
-* [2\. Examples](#2-examples)  
-   * [2.1 Dialplan example 1 - 60 seconds for the entire call](#21-dialplan-example-1---60-seconds-for-the-entire-call)  
-   * [2.2 Dialplan example 2 - Ensure 60 seconds of "talk" time](#22-dialplan-example-2---ensure-60-seconds-of-talk-time)  
-   * [2.3 Using the FreeSWITCH API outside the dialplan](#-freeswitch--mod_dptools-sched-hangup-)
-* [3\. See also](#3-see-also)
+* [0\. 关于](#0-about)  
+   * [0.1 取消 sched_cancel 的解决方法](#01-abort-sched_cancel-workaround)
+* [2\. 示例](#2-examples)  
+   * [2.1 拨号计划示例 1 - 整个通话60秒](#21-dialplan-example-1---60-seconds-for-the-entire-call)  
+   * [2.2 拨号计划示例 2 - 确保有60秒的“通话”时间](#22-dialplan-example-2---ensure-60-seconds-of-talk-time)  
+   * [2.3 在拨号计划之外使用FreeSWITCH API](#-freeswitch--mod_dptools-sched-hangup-)
+* [3\. 参见](#3-see-also)
 
 ---
 
-## 0\. About
+## 0\. 关于
 
-The `sched_hangup` application allows you to schedule a hangup action for a call, basically to limit call duration.
+`sched_hangup` 应用程序允许您为呼叫安排一个挂断动作，以限制呼叫时长。
 
-TODO How to cancel?
+TODO 如何取消？
 
-[sched\_cancel](./6587049.mdx#0-about) only seems to work for [sched\_transfer](./6587055.mdx#0-about) and [sched\_broadcast](./6587042.mdx#0-about). ([sched\_cancel](./6587049.mdx#0-about) needs a task or group ID, and only the latter two set the ID in the session, I tested.)
+[sched_cancel](./6587049.mdx#0-about) 似乎只适用于 [sched_transfer](./6587055.mdx#0-about) 和 [sched_broadcast](./6587042.mdx#0-about)。（[sched_cancel](./6587049.mdx#0-about) 需要一个任务或群组 ID，并且只有后两者在会话中设置了 ID，我已经测试过了。）
 
-### 0.1 Abort `sched_cancel` workaround
+### 0.1 取消 `sched_cancel` 的解决方法
 
-Couldn't find a solution, but this workaround effectively solved the problem:
+找不到解决方案，但是这个解决方法有效地解决了问题：
 
-> Set up [sched\_transfer](../mod_dptools_1970333.mdx#-c) to a non-existent extension, which will result in a hangup with `No route, Aborting`, unless aborted with [sched\_cancel](../mod_dptools_1970333.mdx#-c).
+> 设置 [sched_transfer](../mod_dptools_1970333.mdx#-c) 到一个不存在的分机，这将导致挂断并显示“没有路由，中止”，除非使用 [sched_cancel](../mod_dptools_1970333.mdx#-c) 进行取消。
 
-Below is a Lua example, but this strategy would work in the dialplan just the same because the `sched_*` commands are all dialplan applications (i.e., part of [mod\_dptools](../mod_dptools_1970333.mdx#-c)).
+下面是一个 Lua 示例，但是这个策略在拨号计划中同样适用，因为 `sched_*` 命令都是拨号计划应用程序（即 [mod_dptools](../mod_dptools_1970333.mdx#-c) 的一部分）。
 
 ```xml
 session:execute("sched_transfer", "+600 9999 XML default")
@@ -40,77 +39,75 @@ local lsi = session:getVariable("last_sched_id")
 session:execute("sched_cancel", tostring(lsi))
 ```
 
-1\. Syntax
+1\. 语法
 
-**In the dialplan**
+**在拨号计划中**
 
 ```xml
 <action application="sched_hangup" data="[+]<time>[ <hangup_cause>]"/> 
 ```
 
-**As an API call**
+**作为API调用**
 
 ```xml
- sched_hangup [+]<time> <uuid>[ <hangup_cause>]"
+sched_hangup [+]<time> <uuid>[ <hangup_cause>]"
 ```
 
-| Parameter   | Description                                                                                                                                                                                                           | Examples                                                                 |
+| 参数       | 描述                                                                                                                                                                                                         | 示例                                                                 |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| \[+\]&lt;time> | Time in seconds.If used **with +** then the call will be hung up after that number of seconds.If used **without +** then the given value is considered the number of seconds since the epoch, 1970-01-01 00:00:00 UTC | +60 (hang up after 1 minute)2003336820 (hang up at Jun 25 2033 11:27 AM) |
-| &lt;cause>     | The [hangup cause](../../Troubleshooting-Debugging/Hangup-Cause-Code-Table_3964945.mdx#about) with which the call should be terminated.                                                                                                                  | ALLOTTED\_TIMEOUT (the default)                                          |
-| &lt;uuid>      | The unique identifier (UUID) of the call leg. See [Channel Variables](../../Dialplan/Channel-Variables_16352493.mdx#about).                                                                                                             | f2120667-3cd6-42bc-8be6-8cf4207cf6bc                                     |
+| \[+\]&lt;time> | 时间，单位为秒。如果使用**加号(+)**，则呼叫将在指定秒数后挂断。如果不使用**加号(+)**，则给定的值表示1970-01-01 00:00:00 UTC以来的秒数。                                         | +60 (1分钟后挂断)2003336820 (2033年6月25日上午11:27挂断)                         |
+| &lt;cause>     | 呼叫的[挂断原因](../../Troubleshooting-Debugging/Hangup-Cause-Code-Table_3964945.mdx#about)，用于终止呼叫。                                                                                                                  | ALLOTTED_TIMEOUT (默认值)                                           |
+| &lt;uuid>      | 呼叫通道的唯一标识符(UUID)。参见[通道变量](../../Dialplan/Channel-Variables_16352493.mdx#about)。                                                                                                                | f2120667-3cd6-42bc-8be6-8cf4207cf6bc                                     |
 
-To get the absolute time in seconds since the Epoch, see this [Stackoverflow thread](https://stackoverflow.com/questions/1092631/get-current-time-in-seconds-since-the-epoch-on-linux-bash).
+要获取自纪元以来的绝对时间（以秒为单位），请参阅此[Stackoverflow主题](https://stackoverflow.com/questions/1092631/get-current-time-in-seconds-since-the-epoch-on-linux-bash)。
 
-## 2\. Examples
+## 2\. 示例
 
-### 2.1 Dialplan example 1 - 60 seconds for the entire call
+### 2.1 拨号计划示例1 - 整个通话持续60秒
 
-Before you call bridge, add another action that executes the `sched_hangup` application.
+在调用`bridge`之前，添加另一个执行`sched_hangup`应用程序的操作。
 
 ```xml
-<!-- Make the call last 1 minute, and end with SWITCH_CAUSE_ALLOTTED_TIMEOUT -->
+<!-- 将通话时长设置为1分钟，并以SWITCH_CAUSE_ALLOTTED_TIMEOUT结束 -->
 <action application="sched_hangup" data="+60 allotted_timeout"/>
 <action application="bridge" data="sofia/external/1234567@10.10.10.10"/>
 ```
 
-`SWITCH_CAUSE_ALLOTTED_TIMEOUT` is the default [hangup cause](../../Troubleshooting-Debugging/Hangup-Cause-Code-Table_3964945.mdx#about) so it could have been omitted as well.
+`SWITCH_CAUSE_ALLOTTED_TIMEOUT`是默认的[挂断原因](../../Troubleshooting-Debugging/Hangup-Cause-Code-Table_3964945.mdx#about)，因此也可以省略。
 
-This setup will hang up the call exactly 60 seconds after calling `sched_hangup`, **including call setup time**. For example, if remote side answers the call 15 seconds after phone starts ringing there will be 45 seconds left for the actual conversation.
+这个设置将在调用`sched_hangup`之后的60秒准确地挂断通话，**包括呼叫设置时间**。例如，如果远程一方在电话开始响铃后15秒接听电话，则实际对话剩余45秒。
 
-### 2.2 Dialplan example 2 - Ensure 60 seconds of "talk" time
+### 2.2 拨号计划示例2 - 确保拥有60秒的“对话”时间
 
-If you want to ensure 60 seconds of "talk" time, start sched\_hangup at the moment of answering using the [execute\_on\_answer](../../../Channel-Variables-Catalog/execute_on_answer_16352786.mdx#execute_on_answer) [channel variable](../../Dialplan/Channel-Variables_16352493.mdx#about):
+如果您想确保拥有60秒的“对话”时间，请在接听电话的时刻启动`sched_hangup`，使用[execute_on_answer](../../../Channel-Variables-Catalog/execute_on_answer_16352786.mdx#execute_on_answer) [通道变量](../../Dialplan/Channel-Variables_16352493.mdx#about)：
 
 ```xml
 <action application="set" data="execute_on_answer=sched_hangup +60 alloted_timeout" />
-<action application="bridge" data="sofia/external/1234567@10.10.10.10" /> 
+<action application="bridge" data="sofia/external/1234567@10.10.10.10" />
 ```
 
-If your A-leg call has already been answered (e.g., with an IVR), and you want to limit on the B-leg, then use [api\_on\_answer](../../../Channel-Variables-Catalog/api_on_answer_16352805.mdx#api_on_answer) channel variable:
+如果您的A-leg呼叫已经被接听（例如，通过IVR），并且您想限制B-leg上的时间，则使用[api_on_answer](../../../Channel-Variables-Catalog/api_on_answer_16352805.mdx#api_on_answer)通道变量：
 
 ```xml
 <action application="export" data="nolocal:api_on_answer=sched_hangup +60 ${uuid} alloted_timeout" />
 <action application="bridge" data="sofia/external/1234567@10.10.10.10" /> 
 ```
 
-### 2.3 Using the [FreeSWITCH API](../../Introduction/FreeSWITCH-API_30867723.mdx#-freeswitch--freeswitch-api-) outside the dialplan
+### 2.3 在拨号计划之外使用FreeSWITCH API
 
-Once a call is already up you can do it from the sched\_hangup API command from [XML-RPC](../../Configuration/FreeSWITCH-XML-RPC_13173038.mdx#--) or the [CLI](../../Client-and-Developer-Interfaces/1048948.mdx#or).
+一旦通话已建立，您可以通过[XML-RPC](../../Configuration/FreeSWITCH-XML-RPC_13173038.mdx#--)或[CLI](../../Client-and-Developer-Interfaces/1048948.mdx#or)命令中的sched\_hangup API来执行。
 
-Do a show channels to get the uuid of the call then enter.
+可以通过执行show channels命令获得通话的uuid，然后输入以下命令：
 
 ```xml
 sched_hangup +60 <uuid> alotted_timeout 
 ```
 
-All the params besides uuid have the same meaning as the dialplan app.
+除了uuid以外的所有参数与拨号计划应用具有相同的意义。
 
-## 3\. See also
+## 3. 参考资料
 
-* [FreeSwitch Scheduler API](../../Configuration/FreeSWITCH-Scheduler-API_13173035.mdx#about)
-* [Variable execute\_on\_answer](../../../Channel-Variables-Catalog/execute_on_answer_16352786.mdx#execute_on_answer)
-* [Hangup Cause Code Table](../../Troubleshooting-Debugging/Hangup-Cause-Code-Table_3964945.mdx#about)
-  
-  
-
+* [FreeSwitch调度程序API](../../Configuration/FreeSWITCH-Scheduler-API_13173035.mdx#about)
+* [变量execute_on_answer](../../../Channel-Variables-Catalog/execute_on_answer_16352786.mdx#execute_on_answer)
+* [挂机原因代码表](../../Troubleshooting-Debugging/Hangup-Cause-Code-Table_3964945.mdx#about)
+```

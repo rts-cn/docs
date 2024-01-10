@@ -1,51 +1,33 @@
+# WebRTC
 
-# WebRTC 
+## 关于
 
- 
+WebRTC可以直接在更好的Web浏览器和设备中进行实时通信，无需插件，如Adobe Flash或Silverlight。WebRTC始终以安全模式运行。FreeSWITCH提供了一个WebRTC门户，可以通过网页演示通过网络进行电话处理的可能性。欢迎加入我们的每周电话会议。
 
-## About
+配置FreeSWITCH与WSS证书的过程与经典WebRTC或FreeSWITCH的Verto终端使用相同。
 
-  
-WebRTC provides Real-Time Communications directly from better web browsers and devices without requiring plug-ins such as Adobe Flash nor Silverlight. WebRTC **always** operates in secure mode.FreeSWITCH provides a [WebRTC portal](https://conference.freeswitch.org/) to its public conference bridge to demonstrate the possibilities for handling telephony via a web page; join us for our weekly conference calls.
 
-  
-The process for configuring FreeSWITCH with WSS certificates is the same whether for use with classic WebRTC or the FreeSWITCH [Verto endpoint](../Modules/mod_verto_3964934.mdx#about).
+## 安装
 
-  
-Click to expand Table of Contents
-
-* 1 [Installation](#installation)  
-   * 1.1 [Debian 7 (Wheezy)](#debian-7-wheezy)  
-   * 1.2 [Building FreeSWITCH](#building-freeswitch)  
-   * 1.3 [Install Certificates](#install-certificates)
-* 2 [Start FreeSWITCH](#start-freeswitch)
-* 3 [Setting up Apache:](#setting-up-apache)
-* 4 [nginx](#nginx)
-* 5 [A quick how to from bkw (Brian K. West):](#a-quick-how-to-from-bkw-brian-k-west)
-* 6 [Caveats](#caveats)
-* 7 [Errors](#errors)
-* 8 [Next](#next)
-* 9 [Clients](#clients)
-* 10 [Tips](#tips)
-* 11 [References](#references)
-
-## Installation
-
-The configuration for Secure Web Sockets is slightly different than for TLS over SIP. This guide covers WSS certificate setup.
+使用安全Web套接字的配置与TLS over SIP稍有不同。本指南涵盖了WSS证书设置。
 
 ### Debian 7 (Wheezy)
 
-Install Debian 7 (Wheezy) minimal.
+安装Debian 7（Wheezy）最小化版本。
 
 ### Building FreeSWITCH
 
-**Building**
+**构建**
 
 ```bash
 apt-get install git build-essential automake autoconf libtool wget python zlib1g-dev libjpeg-dev libncurses5-dev libssl-dev libpcre3-dev libcurl4-openssl-dev libldns-dev libedit-dev libspeexdsp-dev libspeexdsp-dev libsqlite3-dev apache2
- 
+
 cd /usr/src/
 git clone https://freeswitch.org/stash/scm/fs/freeswitch.git
+```
+
+```markdown
+安装 FreeSWITCH
 
 cd freeswitch
 ./bootstrap.sh -j
@@ -54,24 +36,24 @@ make
 make install cd-sounds-install cd-moh-install
 mkdir -p /usr/local/freeswitch/certs
 
-edit /usr/local/freeswitch/conf/sip_profiles/internal.xml
-# Set these params and save the file:
+编辑 /usr/local/freeswitch/conf/sip_profiles/internal.xml
+# 设置以下参数并保存文件:
 <param name="tls-cert-dir" value="/usr/local/freeswitch/certs"/>
 <param name="wss-binding" value=":7443"/>
 ```
 
-If behind N.A.T. make sure to set the ext-sip-ip and ext-rtp-ip in vars.xml to the public IP address of your FreeSWITCH. 
+如果在 N.A.T. 后面，请确保在 vars.xml 中将 ext-sip-ip 和 ext-rtp-ip 设置为 FreeSWITCH 的公共 IP 地址。
 
-If talking to clients both inside and outside the N.A.T. you must set the local-network-acl rfc1918.auto, and prefix the ext-sip-ip and ext-rtp-ip to autonat:X.X.X.X
+如果与内外客户端进行通信，您必须将 local-network-acl rfc1918.auto 设置为 ext-sip-ip 和 ext-rtp-ip 的前缀 autonat:X.X.X.X
 
-### Install Certificates
+### 安装证书
 
-Layout of /usr/local/freeswitch/certs/wss.pem:
+/usr/local/freeswitch/certs/wss.pem 的布局：
 
 **/usr/local/freeswitch/certs/wss.pem**
 
 ```xml
-Cert, Key and Chain(s) are all contained in a single file in this order:
+证书、密钥和链都包含在单个文件中，按顺序排列：
  
 -----BEGIN CERTIFICATE-----
 <cert>
@@ -84,185 +66,247 @@ Cert, Key and Chain(s) are all contained in a single file in this order:
 -----END CERTIFICATE-----
 ```
 
-## Start FreeSWITCH
+## 启动 FreeSWITCH
 
 /usr/local/freeswitch/bin/freeswitch -ncwait
 
-Once started execute:
+启动后执行:
 
 ```xml
 fs_cli -x 'sofia status profile internal' | grep WSS-BIND-URL
 ```
 
-If you get output then your wss on FreeSWITCH is setup correctly.
+如果有输出，则表示 FreeSWITCH 上的 wss 设置正确。
 
-## Setting up Apache:
+## 设置 Apache：
 
 a2enmod ssl
 
 a2ensite
 
-(Configure your certificates/chain/keys per standard https docs; this is beyond the scope of this document so not covered here.)
+（按照标准的 https 文档配置您的证书/链/密钥。这超出了该文档的范围，因此不在此介绍。）
 
-Now verify your certs using <http://www.sslshopper.com/ssl-checker.html>
+现在使用 <http://www.sslshopper.com/ssl-checker.html> 验证您的证书。
 
-Verify the hostname and hostname:7443 so you can verify that your certificate chain is intact.
+验证主机名和主机名:7443，以便验证证书链是否完整。
 
 ## nginx
 
-Notes captured from the freeswitch-users mailing list:
+从 freeswitch-users 邮件列表中获取的注释：
 
-From: Dan Edwards  
-Sent: Monday, 01 February, 2016 09:35  
-Subject: Re: \[Freeswitch-users\] WebSocket behind NGINX
+发件人：Dan Edwards 
+发送时间：2016年2月1日星期一 09:35
+主题：Re: [Freeswitch-users] WebSocket behind NGINX
+```
 
-I'm also running behind Nginx and what I found worked was to proxy to the actual IP address (192.168.1.1 vs. 127.0.0.1), then explicitly removing 192.168.1.1 from the localnet ACL in acl.conf. I had to remove 192.168.1.1 from localnet so FS will offer external IP addresses for RTP.
+我也在使用Nginx，我发现可以通过代理到实际的IP地址（192.168.1.1 vs. 127.0.0.1），然后在acl.conf中明确将192.168.1.1从localnet ACL中移除。我必须将192.168.1.1从localnet中移除，这样FS才会为RTP提供外部IP地址。
 
-  
-\-----Original Message-----
+-----原始消息-----
 
-From: Anton  
-Sent: Saturday, January 30, 2016 2:20 PM  
-Subject: \[Freeswitch-users\] WebSocket behind NGINX  
-  
-Hello All,  
-  
-I have to proxy all websocket requests though a nginx server. Right now I am using next configuration:  
-  
-map $http\_upgrade $connection\_upgrade {  
- default upgrade;  
- '' close;  
-}  
-  
-server {  
- listen 443;  
- server\_name [wss.somedomain.com.ua](http://wss.somedomain.com.ua);  
-  
- ssl on;  
- ssl\_certificate /etc/nginx/cert.pem;  
- ssl\_certificate\_key /etc/nginx/private.key;  
-  
- location / {  
- proxy\_pass <http://127.0.0.1:5066>;  
- proxy\_http\_version 1.1;  
- proxy\_set\_header Upgrade $http\_upgrade;  
- proxy\_set\_header Connection $connection\_upgrade;  
- proxy\_read\_timeout 86400s;  
- }  
-  
- access\_log /var/log/nginx/wss\_access;  
- error\_log /var/log/nginx/wss\_error debug; }  
-  
-I dumped traffic from nginx and found out that "switching protocol"  
-phrase was successful but INVITE message from my browser in pending state.  
-Maybe FreeSWITCH wants real IP not loopback? Who have faced with similar problem?  
-  
-BR,  
+发件人：Anton
+发送时间：2016年1月30日星期六 下午2:20
+主题：[Freeswitch-users] Nginx后面的WebSocket
+
+大家好，
+
+我必须通过一个nginx服务器代理所有的WebSocket请求。目前我正在使用以下配置：
+
+```nginx
+map $http_upgrade $connection_upgrade {
+   default upgrade;
+   '' close;
+}
+
+server {
+   listen 443;
+   server_name wss.somedomain.com.ua;
+
+   ssl on;
+   ssl_certificate /etc/nginx/cert.pem;
+   ssl_certificate_key /etc/nginx/private.key;
+
+   location / {
+      proxy_pass http://127.0.0.1:5066;
+      proxy_http_version 1.1;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection $connection_upgrade;
+      proxy_read_timeout 86400s;
+   }
+
+   access_log /var/log/nginx/wss_access;
+   error_log /var/log/nginx/wss_error debug;
+}
+```
+
+我从nginx中转储了流量，发现“切换协议”的短语成功了，但是我的浏览器中的INVITE消息处于挂起状态。也许FreeSWITCH需要真实的IP而不是回环地址？谁遇到过类似的问题？
+
+顺祝商祺，
 Anton
 
-  
-## A quick how to from bkw (Brian K. West):
+## bkw（Brian K. West）的快速指南：
 
-  
-**Certificates**
+**证书**
 
 ```bash
-# Create certificates:
+# 创建证书：
 
+使用下列命令获取文件：
+
+```
 wget http://files.freeswitch.org/downloads/ssl.ca-0.1.tar.gz
+```
+
+解压缩文件：
+
+```
 tar zxfv ssl.ca-0.1.tar.gz
+```
+
+切换到解压后的目录：
+
+```
 cd ssl.ca-0.1/
+```
+
+将所有脚本文件中的`md5`替换为`sha256`：
+
+```
 perl -i -pe 's/md5/sha256/g' *.sh
+```
+
+将所有脚本文件中的`1024`替换为`4096`：
+
+```
 perl -i -pe 's/1024/4096/g' *.sh
+```
+
+生成根证书：
+
+```
 ./new-root-ca.sh
+```
+
+生成服务器证书：
+
+```
 ./new-server-cert.sh self.bkw.org
+```
+
+签署服务器证书：
+
+```
 ./sign-server-cert.sh self.bkw.org
+```
+
+将证书和私钥合并为 `wss.pem` 文件：
+
+```
 cat self.bkw.org.crt self.bkw.org.key > /usr/local/freeswitch/certs/wss.pem
+```
 
-# Setup Apache:
+下面是设置 Apache 的步骤：
 
-# default-ssl:
+- 在 `default-ssl` 配置中添加以下内容：
 
+```
 SSLCertificateFile    /usr/local/freeswitch/certs/wss.pem
 SSLCertificateKeyFile /usr/local/freeswitch/certs/wss.pem
 SSLCertificateChainFile /usr/local/freeswitch/certs/wss.pem
-
-# Setup Sofia TLS:
-
-cat self.bkw.org.crt self.bkw.org.key > /usr/local/freeswitch/certs/agent.pem
-cat ca.crt > /usr/local/freeswitch/certs/cafile.pem
-
-# vars.xml:
-
-<X-PRE-PROCESS cmd="set" data="internal_ssl_enable=true"/>
-<X-PRE-PROCESS cmd="set" data="external_ssl_enable=true"/>
-
-# Restart FreeSWITCH.
-
-## Now make sure your system has ca.crt imported so it will trust your new found hotness.
-
-# TEST:
-
-openssl s_client -connect self.bkw.org:443
-openssl s_client -connect self.bkw.org:5061
-openssl s_client -connect self.bkw.org:5081
-openssl s_client -connect self.bkw.org:8082
-
-
-# Depending on what you've setup you'll see:
-
-subject=/C=US/ST=Oklahoma/L=McAlester/O=Tonka Truck/OU=Secure Web Server/CN=self.bkw.org/emailAddress=brian@bkw.org
-issuer=/C=US/ST=Oklahoma/L=McAlester/O=Whizzzzzzy Bang Bang/OU=Certification Services Division/CN=WBB Root CA/emailAddress=brian@bkw.org
-
-# Or there abouts.
-
 ```
 
-  
-## Caveats
+- 设置 Sofia TLS：
 
-The latest version of Freeswitch should automatically generate self-signed certificates. However, self-signed certs often don't work very well, since you will need to induce the prompt to allow an untrusted certificate. You should use a trusted certificate, just as you would your website. If you take your WebRTC url, such as &lt;wss://foo.bar.com:7443> and change it to <https://foo.bar.com:7443> you can visit it in the browser and give it a permanent exception. On macOS and Windows you may import the ca.crt into your trust store.
+```
+cat self.bkw.org.crt self.bkw.org.key > /usr/local/freeswitch/certs/agent.pem
+cat ca.crt > /usr/local/freeswitch/certs/cafile.pem
+```
 
-## Errors
+- 修改 `vars.xml` 文件：
 
-If you see the following:
+```
+<X-PRE-PROCESS cmd="set" data="internal_ssl_enable=true"/>
+<X-PRE-PROCESS cmd="set" data="external_ssl_enable=true"/>
+```
 
-**Profile Error**
+- 重启 FreeSWITCH。
 
-[ERR] sofia.c:2855 Error Creating SIP UA for profile: external (sip:host@127.0.0.1:5090;maddr=10.10.1.150;transport=udp,tcp) ATTEMPT 1 (RETRY IN 5 SEC)
+现在，确保你的系统已经导入了 `ca.crt`，以便信任你的新证书。
 
-The likely causes for this are:
+测试连接：
 
-1) Another application is already listening on the specified address.
+- 测试 `self.bkw.org:443`：
 
-2) The IP address to which the profile is attempting to bind is not local to this system.
+```
+openssl s_client -connect self.bkw.org:443
+```
 
-There could be a certificate problem and the wss directive will cause the whole profile to fail.
+- 测试 `self.bkw.org:5061`：
 
-## Next
+```
+openssl s_client -connect self.bkw.org:5061
+```
 
-Now Proceed to configure sipjs/sipml5.
+- 测试 `self.bkw.org:5081`：
 
-## Clients
+```
+openssl s_client -connect self.bkw.org:5081
+```
+
+- 测试 `self.bkw.org:8082`：
+
+```
+openssl s_client -connect self.bkw.org:8082
+```
+
+根据你的设置，你将会看到类似如下的内容：
+
+```
+subject=/C=US/ST=Oklahoma/L=McAlester/O=Tonka Truck/OU=Secure Web Server/CN=self.bkw.org/emailAddress=brian@bkw.org
+issuer=/C=US/ST=Oklahoma/L=McAlester/O=Whizzzzzzy Bang Bang/OU=Certification Services Division/CN=WBB Root CA/emailAddress=brian@bkw.org
+```
+
+请注意：
+
+最新版本的Freeswitch应该会自动生成自签名证书。然而，自签名证书经常不太好用，因为你需要引发提示以允许一个不受信任的证书。你应该使用一个受信任的证书，就像你会对待你的网站一样。如果你把你的WebRTC网址，比如&lt;wss://foo.bar.com:7443> 改成 <https://foo.bar.com:7443>，你可以在浏览器中访问它并给予它一个永久的例外。在macOS和Windows上，你可以将ca.crt导入到你的信任存储中。
+
+## 错误
+
+如果你看到以下内容:
+
+**配置文件错误**
+
+[ERR] sofia.c:2855 为配置文件创建SIP UA失败: external (sip:host@127.0.0.1:5090;maddr=10.10.1.150;transport=udp,tcp) 尝试 1（5秒后重试）
+
+可能的原因有：
+
+1) 其他应用程序已经在指定的地址上进行监听。
+
+2) 配置文件试图绑定的IP地址不是本地地址。
+
+可能存在证书问题，wss指令会导致整个配置文件失败。
+
+## 接下来
+
+现在开始配置sipjs/sipml5。
+
+## 客户端
 
 * [SIP.js](http://sipjs.com/)
-* [sipml5](http://sipml5.org) – World's first HTML5 SIP client from Doubango
-* [JsSIP](http://jssip.net/) – Written by the authors of **[RFC 7118](https://tools.ietf.org/html/rfc7118)** and [OverSIP](http://oversip.net)
+* [sipml5](http://sipml5.org) - 来自Doubango的世界上第一个HTML5 SIP客户端
+* [JsSIP](http://jssip.net/) - 由**[RFC 7118](https://tools.ietf.org/html/rfc7118)**和[OverSIP](http://oversip.net)的作者编写
 
-## Tips
+## 提示
 
-If you want you can use Opus codec for high audio quality. If you do, be careful with testing with software SIP clients, because SIP clients which implement it according to the RFC's are currently rare (possibly non-existent). You'd better call between two WebRTC peers. If you for example want to use Jitsi, my current experience is that you can call with Jitsi with the Opus codec to Freeswitch (probably because Freeswitch accepts the not 100% correct SDP sent by Jitsi), but when Freeswitch originates a call it won't work.
+如果你想要，可以使用Opus编解码器来获得高质量的音频。但要注意，在使用软件SIP客户端进行测试时要小心，因为目前根据RFC实现Opus编解码器的SIP客户端非常罕见（可能根本不存在）。最好通过两个WebRTC节点之间进行通话。例如，如果你想要使用Jitsi，我的当前经验是你可以使用Jitsi与Freeswitch进行Opus编解码器的呼叫（可能是因为Freeswitch接受Jitsi发送的不完全正确的SDP），但是当Freeswitch发起呼叫时则不起作用。
 
-Use this to see if ws and wss work:
+使用以下命令来查看ws和wss是否可以正常工作：
 
 ```xml
 sofia status profile internal
 ```
 
-## References
+## 参考资料
 
-[WebRTC Glossary](https://webdesignmiamiflorida.com/webrtc/glossary.php)
+[WebRTC词汇表](https://webdesignmiamiflorida.com/webrtc/glossary.php)
 
-[Test firewall for proper WebRTC ports](http://www.netscan.co/)  
-  
-
+[测试防火墙是否开放正确的WebRTC端口](http://www.netscan.co/)

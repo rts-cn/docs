@@ -1,75 +1,67 @@
+# 外呼会议通话
 
-# Outbound Conference Calls 
+## 关于
 
- 
+拨打一系列的目标电话号码并将其添加到会议中。
 
-## About
+点击此处展开目录
 
-  
-Dial a list of destination phone numbers and add them to a conference.  
+- [使用方法](#-freeswitch--outbound-conference-calls-)
+- [示例](#-freeswitch--outbound-conference-calls-)
+- [参考资料](#-freeswitch--outbound-conference-calls-)
 
-  
-Click here to expand Table of Contents
+## 使用方法
 
-* 1 [Usage](#-freeswitch--outbound-conference-calls-)
-* 2 [Example](#-freeswitch--outbound-conference-calls-)
-* 3 [See Also](#-freeswitch--outbound-conference-calls-)
-
-## Usage
-
-Use **conference\_set\_auto\_outcall** to have [mod\_conference](../Modules/mod_conference_3965534.mdx#list) call one or more conferees when a conference starts. To have it call more than one endpoint, simply repeat the **conference\_set\_auto\_outcall** action in the dialplan for each destination number.
+使用**conference\_set\_auto\_outcall**在会议开始时通过[mod\_conference](../Modules/mod_conference_3965534.mdx#list)呼叫一个或多个与会人员。如果要呼叫多个终端，只需在拨号计划中为每个目标号码重复**conference\_set\_auto\_outcall**操作。
 
 ```xml
 <action application="conference_set_auto_outcall" data="dialstring"/>
 ```
 
-## Example
+## 示例
 
-Here is an example of using **conference\_set\_auto\_outcall** with some of the other conference\_auto\_outcall\_\* parameters to start a conference when someone dials **12345**. Extensions 1000, 1001, and 1004 will be dialed when the conference starts.
+以下是使用**conference\_set\_auto\_outcall**和其他conference\_auto\_outcall\_\*参数的示例，当有人拨打**12345**时启动一个会议。会议开始时，会自动拨号1000、1001和1004。
 
-Because 1004 is in a noisy environment that station has the "mute" flag set initially; when that station presses 0 it will toggle the mute as normal, it simply starts in the muted state to avoid disrupting the conference with noise. Note the use of square brackets around the mute flags for 1004; when FS builds the originate string the square brackets apply their contents only to that one destination, not to the whole dial string.
+因为1004处于嘈杂的环境中，该工作站最初设置了“静音”标志；当该工作站按下0时，它将像平常一样切换到静音状态，它只是以静音状态启动，以避免干扰会议。请注意1004的静音标志周围使用了方括号；当FS构建发起字符串时，方括号仅将其内容应用于该目标，而不是整个拨号字符串。
 
-**Conference Dialplan Example**
+**会议拨号计划示例**
 
 ```xml
-<extension name="Demonstrate conference_set_auto_outcall">
+<extension name="演示conference_set_auto_outcall">
   <condition field="destination_number" expression="^(12345)$">
     <action application="answer"/>
 
     <action application="set" data="conference_auto_outcall_timeout=5"/>
     <action application="set" data="conference_auto_outcall_flags=none"/>
+```
 
-    <action application="set" data="conference_auto_outcall_caller_id_name=$${effective_caller_id_name}"/>
-    <action application="set" data="conference_auto_outcall_caller_id_number=$${effective_caller_id_number}"/>
-    <action application="set" data="conference_auto_outcall_profile=default"/>
+```xml
+<action application="set" data="conference_auto_outcall_caller_id_name=$${effective_caller_id_name}"/>
+<action application="set" data="conference_auto_outcall_caller_id_number=$${effective_caller_id_number}"/>
+<action application="set" data="conference_auto_outcall_profile=default"/>
 
-    <action application="conference_set_auto_outcall" data="user/1000@$${domain}"/>
-    <action application="conference_set_auto_outcall" data="user/1001@$${domain}"/>
-    <action application="conference_set_auto_outcall" data="[conference_member_flags=mute]user/1004"/>
+<action application="conference_set_auto_outcall" data="user/1000@$${domain}"/>
+<action application="conference_set_auto_outcall" data="user/1001@$${domain}"/>
+<action application="conference_set_auto_outcall" data="[conference_member_flags=mute]user/1004"/>
 
-    <action application="conference" data="$1@default"/>
-  </condition>
+<action application="conference" data="$1@default"/>
+</condition>
 </extension>
 ```
 
   
-It is also possible to autocall multiple destination at once, just remember to escape your variables if you have more than one or any non-escaped chars in it. Again, note the use of square brackets to apply settings to only one destination.
+同时，还可以同时自动呼叫多个目标，只需记住如果你有多个变量或任何非转义字符，请转义它们。再次注意使用方括号只应用于一个目标的设置。
 
-Overall, it is much easier to use the individual outcall lines as shown above.
+总体而言，按照以上所示的独立外呼线路更加容易。
 
-**Single-Line Conference Outdial**
+**单行会议外呼**
 
 ```xml
 <action application="conference_set_auto_outcall" data="['var1=a,var2=b']user/1001@$${domain},['var1=c,var2=d']user/1002@$${domain}"/>
 ```
 
-## See Also
+## 另请参阅
 
-"Mad Boss" example extensions in [Vanilla XML dialplan](https://freeswitch.org/stash/projects/FS/repos/freeswitch/browse/conf/vanilla/dialplan/default.xml)
+“疯狂老板”示例扩展，在[Vanilla XML拨号计划文件](https://freeswitch.org/stash/projects/FS/repos/freeswitch/browse/conf/vanilla/dialplan/default.xml)
 
-[mod\_conference](../Modules/mod_conference_3965534.mdx#list) \- shows syntax and examples
-
-  
----
-
-
+[mod_conference](../Modules/mod_conference_3965534.mdx#list) \- 显示语法和实例

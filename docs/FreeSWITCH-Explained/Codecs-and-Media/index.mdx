@@ -1,45 +1,42 @@
-
 # Codecs and Media 
 
- 
+## 关于
 
-## About
+编解码器是媒体流或文件格式的一种编码和压缩方案。该术语是从“COding and DECoding”（编码和解码）的缩写派生而来。更多技术信息请参考这篇文章：<http://en.wikipedia.org/wiki/Codec>。FreeSWITCH™具有完全绕过媒体服务器以节省带宽和服务器负载的功能，同时在不支持特定编解码器的情况下代理媒体，以便设备之间直接交换媒体。
 
-A codec is an encoding and compression scheme for a media stream or file format. The term is an acronym derived from COding and DECoding. See this article for more technical information: <http://en.wikipedia.org/wiki/Codec>. FreeSWITCH™ has provisions for bypassing the media server altogether to save bandwidth and load on the server as well as proxy media in cases where a particular codec is not supported; this allows devices to exchange media directly between them.
+点击展开目录
 
-Click to expand Table of Contents
+* 1 [高清音频支持](#hd-audio-support)
+* 2 [在modules.conf.xml中启用编解码器](#enabling-codecs-in-modulesconfxml--)
+* 3 [dingaling.conf.xml文件](#dingalingconfxml-file)
+* 4 [sofia.conf.xml文件](#sofiaconfxml-file)
+* 5 [媒体代理](#media-proxying)  
+   * 5.1 [媒体代理的好处](#benefits-of-proxy-media)
+* 6 [Proxy\_Media提供的编解码器](#benefits-of-proxy-media)
+* 7 [参见](#see-also)
 
-* 1 [HD Audio support](#hd-audio-support)
-* 2 [Enabling codecs in modules.conf.xml](#enabling-codecs-in-modulesconfxml--)
-* 3 [dingaling.conf.xml file](#dingalingconfxml-file)
-* 4 [sofia.conf.xml file](#sofiaconfxml-file)
-* 5 [Media proxying](#media-proxying)  
-   * 5.1 [Benefits of proxy media](#benefits-of-proxy-media)
-* 6 [Codecs offered by Proxy\_Media](#benefits-of-proxy-media)
-* 7 [See Also](#see-also)
+### 高清音频支持
 
-### HD Audio support
+FreeSWITCH支持大多数高清（高清晰度）音频编解码器，包括Speex、G.722、G.722.1（Siren）和SILK。BroadVoice编解码器是由Brian（bkw）在官方发布后90分钟内添加进来的。
 
-FreeSWITCH supports most HD (high definition) audio codecs including Speex, G.722, G.722.1 (Siren) and SILK. BroadVoice codecs were added by Brian (bkw) just 90 minutes after official release.
+### 在modules.conf.xml中启用编解码器
 
-### Enabling codecs in modules.conf.xml  
+FreeSWITCH支持大量的VoIP压缩编解码器，但默认配置不会为所有传输类型启用全部编解码器。编解码器在各个模块和核心FreeSWITCH源代码中构建（核心编解码器无需加载模块，它们在CORE_PCM_MODULE中，例如，它们已经内置在FreeSWITCH的核心中）。对于不在核心中的编解码器，您需要编译并加载相应的模块。
 
-FreeSWITCH supports a large number of VoIP compression codecs out of the box, however the default config does not enable them all for all transport types. Codecs are built from various modules and from the core FreeSWITCH source (no need to load modules for core codecs, they are in CORE\_PCM\_MODULE, e.g. they're built into the core of FreeSWITCH). For codecs not in core, you need to compile and load the corresponding module.
+一些编解码器存在专利限制，因此它们不是开源的，无法直接进行分发。根据适用情况，可以购买许可证进行使用。
 
-Some codecs are encumbered by patents, therefore they are not open source and can not be distributed directly. Licenses are available for purchase where applicable.
+执行fs\_cli命令"show codec"可以显示已启用的编解码器。
 
-Executing the fs\_cli command "show codec" displays the enabled codecs.
-
-The [vars.xml](../Configuration/Configuring-FreeSWITCH/vars.xml_7144079.mdx#about) file contains the the following lines that globally control which codecs are negotiated with remote endpoints:
+[vars.xml](../Configuration/Configuring-FreeSWITCH/vars.xml_7144079.mdx#about)文件包含以下全局控制与远程终端协商的编解码器的配置行：
 
 ```xml
- <X-PRE-PROCESS cmd="set" data="global_codec_prefs=G722,PCMA,PCMU,GSM"/>
- <X-PRE-PROCESS cmd="set" data="outbound_codec_prefs=G722,PCMA,PCMU,GSM"/>
+<X-PRE-PROCESS cmd="set" data="global_codec_prefs=G722,PCMA,PCMU,GSM"/>
+<X-PRE-PROCESS cmd="set" data="outbound_codec_prefs=G722,PCMA,PCMU,GSM"/>
 ```
 
-**Note:** iLBC@30i configures the iLBC codec to default to 30ms frames instead of 20ms frames which will allow you to receive iLBC calls from Asterisk servers which unfortunately do not correctly send their iLBC codec preferences.
+**注意：**iLBC@30i配置iLBC编解码器的帧长度为30毫秒而不是20毫秒，这将允许您接收来自Asterisk服务器的iLBC呼叫，这些服务器不正确地发送其iLBC编解码器的首选项。
 
-Most transports (channels) have a config block at the top of their configuration file like the following:
+大多数传输（通道）在其配置文件的顶部都有一个配置块，如下所示：
 
 ```xml
 <settings>
@@ -47,11 +44,11 @@ Most transports (channels) have a config block at the top of their configuration
 </settings>
 ```
 
-**Note:** There are generally other lines inside the &lt;settings> block, but you can safely ignore them for now.
+**注意：**&lt;settings>块中通常会有其他行，但您可以暂时忽略它们。
 
-### dingaling.conf.xml file
+### dingaling.conf.xml文件
 
-The default [dingaling.conf.xml](../Modules/mod_dingaling_6587385.mdx#faq) config contains the following (codec related) settings:
+默认的[dingaling.conf.xml](../Modules/mod_dingaling_6587385.mdx#faq)配置包含以下（与编解码器相关的）设置：
 
 ```xml
 <settings>
@@ -59,11 +56,11 @@ The default [dingaling.conf.xml](../Modules/mod_dingaling_6587385.mdx#faq) confi
 </settings>
 ```
 
-While you may use almost any codec you wish when using [dingaling](../Modules/mod_dingaling_6587385.mdx#faq) to talk between two FreeSWITCH servers, the official Google Talk(tm) client has some very peculiar quirks in its codec handling.
+使用[dingaling](../Modules/mod_dingaling_6587385.mdx#faq)在两个FreeSWITCH服务器之间通信时，您几乎可以使用任何编解码器，但官方的Google Talk(tm)客户端在处理编解码器时有一些非常特殊的问题。
 
-### sofia.conf.xml file
+### sofia.conf.xml文件
 
-The default [sofia.conf.xml](../Configuration/Sofia-SIP-Stack/Sofia-Configuration-Files_7144453.mdx#--) config contains the following settings related to codecs:
+默认的[sofia.conf.xml](../Configuration/Sofia-SIP-Stack/Sofia-Configuration-Files_7144453.mdx#--)配置包含与编解码器相关的以下设置：
 
 ```xml
 <settings>
@@ -72,32 +69,30 @@ The default [sofia.conf.xml](../Configuration/Sofia-SIP-Stack/Sofia-Configuratio
 </settings>
 ```
 
-This allows [Sofia-SIP](../Configuration/Sofia-SIP-Stack/index.mdx#faq) to inherit the **global\_codec\_prefs** which we configured in [vars.xml](../Configuration/Configuring-FreeSWITCH/vars.xml_7144079.mdx#about). It's best to leave it that way, however you may manually specify a codec list if you wish.
+这允许[Sofia-SIP](../Configuration/Sofia-SIP-Stack/index.mdx#faq)继承我们在[vars.xml](../Configuration/Configuring-FreeSWITCH/vars.xml_7144079.mdx#about)中配置的**global\_codec\_prefs**。最好保持这种方式，但如果您愿意，也可以手动指定一个编解码器列表。
 
-### Media proxying
+### 媒体代理
 
-FreeSWITCH can proxy media between endpoints if is NATed or you want to reduce usage of your CPU
+如果启用NAT或您想减少CPU使用率，FreeSWITCH可以在终端之间代理媒体。
 
-#### Benefits of proxy media
+#### 代理媒体的好处
 
-* Lower CPU usage\*
-* N.A.T. handling (RTP Side)
-* Pass–through not supported Codecs like G721, G728, G719, AMR and some other codecs\*
-* Video conferencing through external MCU
+* 更低的CPU使用率\*
+* N.A.T.处理（RTP端）
+* 支持过程中不支持的编解码器，如G721、G728、G719、AMR和其他一些编解码器\*
+* 通过外部MCU进行视频会议
 
-### Codecs offered by [Proxy_Media](../Configuration/Proxy-Media_13173588.mdx#faqs)
+### [Proxy_Media](../Configuration/Proxy-Media_13173588.mdx#faqs)提供的编解码器
 
-* PROXY PASS-THROUGH to pass audio media in proxy mode
-* PROXY VIDEO PASS-THROUGH to pass video media in proxy mode
+* PROXY PASS-THROUGH在代理模式下传递音频媒体
+* PROXY VIDEO PASS-THROUGH在代理模式下传递视频媒体
 
-### See Also
+### 参见
 
-* [Audio Codecs](./Audio-Codecs_1048675.mdx#--)
+* [音频编解码器](./Audio-Codecs_1048675.mdx#--)
 * [mod\_fsv](../Modules/mod_fsv_6587435.mdx#about)
-* [Codec Negotiation](./index.mdx#about)
-* [Proxy Media](../Configuration/Proxy-Media_13173588.mdx#faqs)
-* [Bypass Media](../../Channel-Variables-Catalog/bypass_media_16353339.mdx#bypass_media)
-* [Proxy Media (Variable)](../../Channel-Variables-Catalog/proxy_media_16353349.mdx#proxy_media)
-* [Daala codec](https://www.youtube.com/watch?v=Dmho4gcRvQ4) — YouTube of Linux 2015 Conference presentation of Daala codec project, includes nice graph at 7:20 plotting capabilities versus bandwidth of various audio codecs
-
-
+* [编解码器协商](./index.mdx#about)
+* [代理媒体](../Configuration/Proxy-Media_13173588.mdx#faqs)
+* [绕过媒体](../../Channel-Variables-Catalog/bypass_media_16353339.mdx#bypass_media)
+* [代理媒体（变量）](../../Channel-Variables-Catalog/proxy_media_16353349.mdx#proxy_media)
+* [Daala编解码器](https://www.youtube.com/watch?v=Dmho4gcRvQ4) — Daala编解码器项目的Linux 2015会议演示视频，包括在7:20处绘制的各种音频编解码器的能力与带宽之间的关系图表

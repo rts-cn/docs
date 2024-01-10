@@ -1,43 +1,40 @@
+# mod_skypopen（Skype模块）
 
-# mod_skypopen 
-
- 
-
-## mod_skypopen does not work anymore
+## mod_skypopen不再工作
 
 <http://lists.freeswitch.org/pipermail/freeswitch-users/2017-June/126571.html>
 
-## About
+## 关于
 
-mod\_skypopen was the Skype endpoint implemented by FreeSWITCH, but it does not work anymore. See <http://lists.freeswitch.org/pipermail/freeswitch-users/2017-June/126571.html>
+mod_skypopen是由FreeSWITCH实现的Skype终端，但是它不再工作。请参阅<http://lists.freeswitch.org/pipermail/freeswitch-users/2017-June/126571.html>
 
-Click here to expand Table of Contents
+点击此处展开目录
 
-* 1 [mod\_skypopen does not work anymore](#mod_skypopen-does-not-work-anymore)
-* 2 [SHORT BLUEPRINT: STEPS NEEDED TO USE SKYPOPEN](#short-blueprint-steps-needed-to-use-skypopen-)
-* 3 [Overview and Info](#-overview-and-info-)  
-   * 3.1 [What is Skypopen](#what-is-skypopen-)  
-   * 3.2 [Which Skype Client to use on Linux](#-which-skype-client-to-use-on-linux)  
-   * 3.3 [Supported Platforms and Distros](#-supported-platforms-and-distros)  
-   * 3.4 [Skype Contacts, Messages, Buddy List, etc](#-skype-contacts-messages-buddy-list-etc-)
-* 4 [Building, Configuration and Operation](#-building-configuration-and-operation)  
+* 1 [mod\_skypopen不再工作](#mod_skypopen-does-not-work-anymore)
+* 2 [简要蓝图：使用Skypopen的步骤](#short-blueprint-steps-needed-to-use-skypopen-)
+* 3 [概述和信息](#-overview-and-info-)  
+   * 3.1 [什么是Skypopen](#what-is-skypopen-)  
+   * 3.2 [在Linux上使用哪个Skype客户端](#-which-skype-client-to-use-on-linux)  
+   * 3.3 [支持的平台和发行版](#-supported-platforms-and-distros)  
+   * 3.4 [Skype联系人、消息、好友列表等](#-skype-contacts-messages-buddy-list-etc-)
+* 4 [构建、配置和操作](#-building-configuration-and-operation)  
    * 4.1 [Linux](#-skypopen-)  
-      * 4.1.1 [Which packages are required to build mod\_skypopen on Linux](#-which-packages-are-required-to-build-mod_skypopen-on-linux-)  
-         * 4.1.2 [Build procedure (all Linuxes) for FS and mod\_skypopen](#-build-procedure-all-linuxes-for-fs-and-mod_skypopen-)  
-         * 4.1.3 [Pulseaudio Configuration](#-pulseaudio-configuration-)  
-         * 4.1.4 [Interactive Skype Client INSTALLER and CONFIGURATOR](#-interactive-skype-client-installer-and-configurator-)  
-         * 4.1.5 [How to start the Skype clients, then start FreeSWITCH and load mod\_skypopen on Linux](#-how-to-start-the-skype-clients-then-start-freeswitch-and-load-mod_skypopen-on-linux-)  
-         * 4.1.6 [Problems in starting skype clients ?](#-problems-in-starting-skype-clients--)  
+      * 4.1.1 [在Linux上构建mod\_skypopen所需的软件包](#-which-packages-are-required-to-build-mod_skypopen-on-linux-)  
+         * 4.1.2 [FS和mod\_skypopen的构建过程（适用于所有Linux发行版）](#-build-procedure-all-linuxes-for-fs-and-mod_skypopen-)  
+         * 4.1.3 [Pulseaudio配置](#-pulseaudio-configuration-)  
+         * 4.1.4 [交互式Skype客户端安装程序和配置程序](#-interactive-skype-client-installer-and-configurator-)  
+         * 4.1.5 [如何启动Skype客户端，然后在Linux上启动FreeSWITCH并加载mod\_skypopen](#-how-to-start-the-skype-clients-then-start-freeswitch-and-load-mod_skypopen-on-linux-)  
+         * 4.1.6 [启动Skype客户端时遇到问题？](#-problems-in-starting-skype-clients--)  
    * 4.2 [Windows](#-skypopen-)  
-      * 4.2.1 [How to build Skypopen on Windows, and which tools and files are needed](#-how-to-build-skypopen-on-windows-and-which-tools-and-files-are-needed-)  
-         * 4.2.2 [Config files location and script to start Skype client instances on Windows](#-config-files-location-and-script-to-start-skype-client-instances-on-windows-)  
-         * 4.2.3 [Running Skypopen on Windows as a Service](#-running-skypopen-on-windows-as-a-service-)
-* 5 [Config File Details (skypopen.conf.xml)](#-config-file-details-skypopenconfxml-)
-* 6 [Dialplan, and how to use Skypopen](#-dialplan-and-how-to-use-skypopen-)  
-   * 6.1 [Dialplan](#-skypopen-)  
-   * 6.2 [The "RR" interface, poor man interface grouping](#-the-rr-interface-poor-man-interface-grouping-)  
-   * 6.3 [optional "Skype URI"](#-optional-skype-uri-)
-* 7 [API and CLI Commands](#-api-and-cli-commands-)  
+      * 4.2.1 [如何在Windows上构建Skypopen，以及需要哪些工具和文件](#-how-to-build-skypopen-on-windows-and-which-tools-and-files-are-needed-)  
+         * 4.2.2 [配置文件位置和在Windows上启动Skype客户端实例的脚本](#-config-files-location-and-script-to-start-skype-client-instances-on-windows-)  
+         * 4.2.3 [将Skypopen作为服务在Windows上运行](#-running-skypopen-on-windows-as-a-service-)
+* 5 [配置文件详细信息（skypopen.conf.xml）](#-config-file-details-skypopenconfxml-)
+* 6 [呼叫计划和如何使用Skypopen](#-dialplan-and-how-to-use-skypopen-)  
+   * 6.1 [呼叫计划](#-skypopen-)  
+   * 6.2 [“RR”接口，简单的接口分组](#-the-rr-interface-poor-man-interface-grouping-)  
+   * 6.3 [可选的“Skype URI”](#-optional-skype-uri-)
+* 7 [API和CLI命令](#-api-and-cli-commands-)  
    * 7.1 [sk](#-skypopen-)  
    * 7.2 [sk list](#-skypopen-)  
    * 7.3 [sk balances](#-sk-balances-)  
@@ -46,265 +43,261 @@ Click here to expand Table of Contents
    * 7.6 [skypopen](#-skypopen-)  
    * 7.7 [skypopen\_chat](#-skypopen_chat-)  
    * 7.8 [chat](#-skypopen_chat-)
-* 8 [Channel Variables](#-channel-variables-)  
+* 8 [通道变量](#-channel-variables-)  
    * 8.1 [DTMFs: skype\_add\_outband\_dtmf\_also\_when\_bridged](#-dtmfs-skype_add_outband_dtmf_also_when_bridged-)  
    * 8.2 [DTMFs: skype\_get\_inband\_dtmf](#-dtmfs-skype_get_inband_dtmf-)
-* 9 [Events](#-skypopen-)  
-   * 9.1 [Voice Calls](#-skypopen-)  
-   * 9.2 [MESSAGE (Chat)](#-skypopen_chat-)
-* 10 [Adding and removing interfaces on the fly](#-adding-and-removing-interfaces-on-the-fly-)
-* 11 [Advanced Configuration](#-advanced-configuration-)  
-   * 11.1 [Multiple concurrent incoming calls to the same Skype username](#-multiple-concurrent-incoming-calls-to-the-same-skype-username-)  
-   * 11.2 [Running multiple instances (MAX 6) of the same Skype username on Linux, for BOTH incoming and outbound calls](#-running-multiple-instances-max-6-of-the-same-skype-username-on-linux-for-both-incoming-and-outbound-calls-)
-* 12 [Testing with the "Echo" application](#-testing-with-the-echo-application-)
-* 13 [TO DO](#-skypopen-)
-* 14 [TROUBLESHOOTING](#troubleshooting-)  
-   * 14.1 [Problems in starting skype clients ?](#-problems-in-starting-skype-clients--)  
-   * 14.2 [Error and warnings at the starting of Skype clients on Linux](#error-and-warnings-at-the-starting-of-skype-clients-on-linux-)
-* 15 [Use cases, integration, special implementations](#-use-cases-integration-special-implementations-)  
-   * 15.1 [Skypopen Directory-dialing example](#mod_skypopen-does-not-work-anymore)  
-   * 15.2 [Passing Caller ID to Remote Skype ID - by Zohair](#passing-caller-id-to-remote-skype-id---by-zohair-)
-* 16 [How To Report BUGS and Feature Requests](#how-to-report-bugs-and-feature-requests-)
-* 17 [Common Problems](#common-problems)
+* 9 [事件](#-skypopen-)  
+   * 9.1 [语音电话](#-skypopen-)  
+   * 9.2 [消息（聊天）](#-skypopen_chat-)
+* 10 [动态添加和删除接口](#-adding-and-removing-interfaces-on-the-fly-)
+* 11 [高级配置](#-advanced-configuration-)  
+   * 11.1 [相同的Skype用户名同时有多个并发呼入电话](#-multiple-concurrent-incoming-calls-to-the-same-skype-username-)  
+   * 11.2 [在Linux上运行同一Skype用户名的多个实例（最多6个），用于呼入和呼出电话](#-running-multiple-instances-max-6-of-the-same-skype-username-on-linux-for-both-incoming-and-outbound-calls-)
+* 12 [使用“回声”应用程序进行测试](#-testing-with-the-echo-application-)
+* 13 [待办事项](#-skypopen-)
+* 14 [故障排除](#troubleshooting-)  
+   * 14.1 [启动Skype客户端时遇到问题？](#-problems-in-starting-skype-clients--)  
+   * 14.2 [在Linux上启动Skype客户端时遇到的错误和警告](#error-and-warnings-at-the-starting-of-skype-clients-on-linux-)
+* 15 [用例、集成和特殊实现](#-use-cases-integration-special-implementations-)  
+   * 15.1 [Skypopen目录拨号示例](#mod_skypopen-does-not-work-anymore)  
+   * 15.2 [将主叫ID传递给远程Skype ID（由Zohair创建）](#passing-caller-id-to-remote-skype-id---by-zohair-)
+* 16 [如何报告错误和功能请求](#how-to-report-bugs-and-feature-requests-)
+* 17 [常见问题](#common-problems)
 
-## SHORT BLUEPRINT: STEPS NEEDED TO USE SKYPOPEN 
+## STEPS NEEDED TO USE SKYPOPEN: 短暂的蓝图
 
-* Compile and install FreeSWITCH
-* Compile and install mod\_skypopen
-* Install (on Linux) Xvfb and Pulseaudio
-* Configure Pulseaudio for low cpu usage
-* Download and install Skype client (on Linux, this is done by the **INTERACTIVE INSTALLER**)
-* Configure Skype client (on Linux, this is done by the **INTERACTIVE INSTALLER**)
-* Install and edit mod\_skypopen config file (on Linux, this is done by the **INTERACTIVE INSTALLER**)
-* Create a script to start the Skype clients with needed parameters (on Linux, this is done by the **INTERACTIVE INSTALLER**)
-* Start Skype clients using the script
-* Start FreeSWITCH
-* Load mod\_skypopen in FreeSWITCH
-* Profit!
+* 编译和安装FreeSWITCH
+* 编译和安装mod\_skypopen
+* 在Linux上安装Xvfb和Pulseaudio
+* 配置Pulseaudio以降低CPU使用率
+* 下载并安装Skype客户端（在Linux上，可通过“交互式安装程序”完成）
+* 配置Skype客户端（在Linux上，可通过“交互式安装程序”完成）
+* 安装并编辑mod\_skypopen配置文件（在Linux上，可通过“交互式安装程序”完成）
+* 创建一个脚本以使用所需参数启动Skype客户端（在Linux上，可通过“交互式安装程序”完成）
+* 使用脚本启动Skype客户端
+* 启动FreeSWITCH
+* 在FreeSWITCH中加载mod\_skypopen
+* 获利！
 
-**NEW Interactive INSTALLER for LINUX**: using the provided script, you'll end up with a complete and configured, ready for calls, installation of Skypopen on FreeSWITCH!!! (see below)
+**LINUX上的新的交互式安装程序**：使用提供的脚本，您将获得在FreeSWITCH上已安装并配置完毕、准备就绪接听电话的Skypopen！（详见下文）
 
-##  Overview and Info 
+## 概述和信息
 
-#### **What is Skypopen** 
+#### Skypopen是什么
 
-**This software** (_Skypopen_) **uses the Skype API but is not endorsed, certified or otherwise approved in any way by Skype.**
+**这个软件（Skypopen）使用了Skype API，但并未得到Skype的认可、认证或以任何方式得到批准。**
 
-Skypopen is an endpoint (channel driver) that uses the Skype client as an interface to the Skype network, and allows incoming and outgoing Skype calls to/from FreeSWITCH (that can be bridged, originated, answered, etc. as in all other endpoints, e.g. [Sofia-SIP](https://70.169.193.216/wiki/Sofia-SIP "Sofia-SIP")).
+Skypopen是一个终端点（通道驱动程序），它将Skype客户端作为与Skype网络交互的界面，并允许FreeSWITCH进行来电和去电的Skype通话（可以像其他终端点一样进行桥接、发起、接听等操作，例如[Sofia-SIP](https://70.169.193.216/wiki/Sofia-SIP "Sofia-SIP")）。
 
-Skypopen works in FreeSWITCH (FS) on both Linux and Windows (directly, no Cygwin needed), native at 16khz (Skype client has 16khz audio I/O).
+Skypopen可以在Linux和Windows的FreeSWITCH（直接运行，无需Cygwin）上运行，支持16khz的音频（Skype客户端具有16khz的音频输入/输出）。
 
-Think of Skypopen as similar to FreeTDM for analog lines. For each channel you need an interface (a Skype client). So, for example, two concurrent calls would need two channels, and therefore two Skype clients running on your FreeSWITCH server.
+将Skypopen视为模拟线路的FreeTDM。针对每个通道，您需要一个界面（一个Skype客户端）。因此，例如，两个并发通话将需要两个通道，并且在您的FreeSWITCH服务器上运行两个Skype客户端。
 
-If your Skype client(s) have Skype credits, then Skypopen works for SkypeOut calls as well.
+如果你的Skype客户端有Skype积分，那么Skypopen也适用于SkypeOut呼叫。
 
-On Linux the Skype client can use a lot of CPU if you don't customize your setup. To lower its CPU consumption, you customize the configuration of Pulseaudio.
+在Linux上，如果你不自定义设置，Skype客户端可能会消耗大量的CPU。为了降低CPU消耗，你需要自定义配置Pulseaudio。
 
-You start your Skype clients using the provided scripts (the interactive installer for Linux write a script, while mod\_skypopen/configs/startskype.bat is for windows).
+你可以使用提供的脚本来启动Skype客户端（适用于Linux的交互式安装程序会生成一个脚本，而mod_skypopen/configs/startskype.bat适用于Windows）。
 
-Skypopen has been contributed to the community by: Giovanni Maruzzelli (gmaruzz at gmail dot com) with lot of help from the core developer's team, and hints, patches, suggestions, bug reports, features requests from the superlative FreeSWITCH community.
+Skypopen是由Giovanni Maruzzelli（gmaruzz@gmail.com）在核心开发团队的大力帮助、建议、补丁、建议、错误报告和功能请求的帮助下贡献给社区的。
 
-####  Which Skype Client to use on Linux
+#### 在Linux上使用哪个Skype客户端
 
-Use the **dynamic** build of the **stable** Skype client (4.3.37), is the only one that works (the **interactive installer automatically download and install the correct Skype client**, see below).
+使用**稳定**的**动态**版本的Skype客户端（4.3.37），这是唯一适用的版本（**交互式安装程序会自动下载和安装正确的Skype客户端**，请参阅下方）。
 
-**Don't** use the build for your distro
+**不要**使用为你的发行版构建的版本。
 
-####  Supported Platforms and Distros
+#### 支持的平台和发行版
 
-Skypopen runs well on Linux and Windows. Does **not work on Mac OSX**.
+Skypopen在Linux和Windows上运行良好。**不在Mac OSX上运行**。
 
-Most supported Linux distro are:
+最受支持的Linux发行版有：
 
-* Debian 7 64 bit server (wheezy)
-* CentOS 6.5.x 64 bit server(RHEL6)
-* Ubuntu SERVER LTS 64 bit (Trusty - 14.04)
+- Debian 7 64位服务器（wheezy）
+- CentOS 6.5.x 64位服务器（RHEL6）
+- Ubuntu SERVER LTS 64位（Trusty - 14.04）
 
-If you don't have a specially compelling reason (that will pay you back for time and frustration), do yourself a favor and go with one of the most supported Linux distro, or with Windows.
+如果没有特别强烈的原因（可以为你节省时间和困扰），请选用受支持度较高的Linux发行版或Windows。
 
-Skypopen runs on Virtual Machines, there are various installation happily running on EC2 (so, Xen).
+Skypopen可以在虚拟机上运行，目前有各种安装成功在EC2上（即Xen）。
 
-On Windows, Skypopen runs well starting from XP up.
+在Windows上，Skypopen从XP版本开始运行良好。
 
-####  Skype Contacts, Messages, Buddy List, etc 
+#### Skype联系人、消息、好友列表等
 
-Skypopen automatically directs the Skype client instance to agree to a request of being added to the Contact List and to make known its "status" (online, offline, etc), without adding the requester to the Contact List of the Skype client instance.
+Skypopen会自动将Skype客户端实例定向到同意添加到联系人列表的请求，并公布其“状态”（在线、离线等），而无需将请求者添加到Skype客户端实例的联系人列表中。
 
-Skypopen automatically directs the Skype client instance to flag as "Seen" all received messages.
+Skypopen会自动将Skype客户端实例标记为“已阅”，以标记所有接收到的消息。
 
-##  Building, Configuration and Operation
+## 构建、配置和操作
 
-###  Linux 
+### Linux
 
-####  Which packages are required to build mod_skypopen on Linux 
+#### 在Linux上构建mod_skypopen所需的软件包
 
-You will need the libraries needed by Skype client and by the fake X server.
+您需要Skype客户端和虚拟X服务器所需的库。
 
-**REALLY, you need all the packages below!**
+**确实，您需要下面的所有软件包！**
 
-You can cut and paste the follow:
+您可以将以下内容进行复制和粘贴：
 
-#####  Debian 7.x required packages 
+##### Debian 7.x所需的软件包
 
-In addition to the packages required to build and run FreeSWITCH, you will need the following:
+除了构建和运行FreeSWITCH所需的软件包外，您还需要以下软件包：
 
 ```xml
- # Dependencies for building mod_skypopen:
- apt-get install \
- libx11-dev libx11-dev libxau-dev libxcb1-dev libxdmcp-dev \
- x11proto-core-dev x11proto-input-dev x11proto-kb-dev xtrans-dev
+# 构建mod_skypopen所需的依赖软件包：
+apt-get install \
+libx11-dev libx11-dev libxau-dev libxcb1-dev libxdmcp-dev \
+x11proto-core-dev x11proto-input-dev x11proto-kb-dev xtrans-dev
 
- # Infrastructure needed to run skype client:
- apt-get install \
- xvfb pulseaudio
+# 运行Skype客户端所需的基础设施：
+apt-get install \
+xvfb pulseaudio
 
- # Dependencies of skype client:
- # Enable i386 libraries installing
- dpkg --add-architecture i386 
- apt-get update
- # Install libraries
- apt-get install \
- fontconfig fontconfig-config gcc-4.7-base:i386 libasound2:i386 \
- libasound2-plugins:i386 libasyncns0:i386 libattr1:i386 libaudio2:i386 \
- libavahi-client3:i386 libavahi-common-data:i386 libavahi-common3:i386 \
- libavcodec53:i386 libavutil51:i386 libc6:i386 libc6-i686:i386 libcap2:i386 \
- libcomerr2:i386 libcups2:i386 libdbus-1-3:i386 libdirac-encoder0:i386 \
- libexpat1:i386 libffi5:i386 libflac8:i386 libfontconfig1 libfontconfig1:i386 \
- libfreetype6:i386 libgcc1:i386 libgcrypt11:i386 libglib2.0-0:i386 \
- libgnutls26:i386 libgpg-error0:i386 libgsm1:i386 libgssapi-krb5-2:i386 \
- libgstreamer-plugins-base0.10-0:i386 libgstreamer0.10-0:i386 libice6:i386 \
- libjack-jackd2-0:i386 libjbig0:i386 libjpeg8:i386 libjson0:i386 \
- libk5crypto3:i386 libkeyutils1:i386 libkrb5-3:i386 libkrb5support0:i386 \
- liblcms1:i386 liblzma5:i386 libmng1:i386 libmp3lame0:i386 libogg0:i386 \
- libopenjpeg2:i386 liborc-0.4-0:i386 libp11-kit0:i386 libpcre3:i386 \
- libpng12-0:i386 libpulse0:i386 libqt4-dbus:i386 libqt4-network:i386 \
- libqt4-xml libqt4-xml:i386 libqtcore4 libqtcore4:i386 libqtdbus4 \
- libqtdbus4:i386 libqtgui4:i386 libqtwebkit4:i386 libsamplerate0:i386 \
- libschroedinger-1.0-0:i386 libselinux1:i386 libsm6:i386 libsndfile1:i386 \
- libspeex1:i386 libspeexdsp1:i386 libsqlite3-0:i386 libssl1.0.0:i386 \
- libstdc++6:i386 libtasn1-3:i386 libtheora0:i386 libtiff4:i386 libuuid1:i386 \
- libva1:i386 libvorbis0a:i386 libvorbisenc2:i386 libvpx1:i386 libwrap0:i386 \
- libx11-6:i386 libx11-xcb1:i386 libx264-123:i386 libxau6:i386 libxcb1:i386 \
- libxdmcp6:i386 libxext6:i386 libxi6:i386 libxml2:i386 libxrender1:i386 \
- libxss1:i386 libxt6:i386 libxtst6:i386 libxv1:i386 libxvidcore4:i386 qdbus \
- ttf-dejavu-core uuid-runtime zlib1g:i386
+# Skype客户端的依赖项：
+# 启用i386库的安装
+dpkg --add-architecture i386
+apt-get update
+# 安装库
+apt-get install \
+fontconfig fontconfig-config gcc-4.7-base:i386 libasound2:i386 \
+libasound2-plugins:i386 libasyncns0:i386 libattr1:i386 libaudio2:i386 \
+libavahi-client3:i386 libavahi-common-data:i386 libavahi-common3:i386 \
+libavcodec53:i386 libavutil51:i386 libc6:i386 libc6-i686:i386 libcap2:i386 \
+libcomerr2:i386 libcups2:i386 libdbus-1-3:i386 libdirac-encoder0:i386 \
+libexpat1:i386 libffi5:i386 libflac8:i386 libfontconfig1 libfontconfig1:i386 \
+libfreetype6:i386 libgcc1:i386 libgcrypt11:i386 libglib2.0-0:i386 \
+libgnutls26:i386 libgpg-error0:i386 libgsm1:i386 libgssapi-krb5-2:i386 \
+libgstreamer-plugins-base0.10-0:i386 libgstreamer0.10-0:i386 libice6:i386 \
+libjack-jackd2-0:i386 libjbig0:i386 libjpeg8:i386 libjson0:i386 \
+libk5crypto3:i386 libkeyutils1:i386 libkrb5-3:i386 libkrb5support0:i386 \
+liblcms1:i386 liblzma5:i386 libmng1:i386 libmp3lame0:i386 libogg0:i386 \
+libopenjpeg2:i386 liborc-0.4-0:i386 libp11-kit0:i386 libpcre3:i386 \
+libpng12-0:i386 libpulse0:i386 libqt4-dbus:i386 libqt4-network:i386 \
+libqt4-xml libqt4-xml:i386 libqtcore4 libqtcore4:i386 libqtdbus4 \
+libqtdbus4:i386 libqtgui4:i386 libqtwebkit4:i386 libsamplerate0:i386 \
+libschroedinger-1.0-0:i386 libselinux1:i386 libsm6:i386 libsndfile1:i386 \
+libspeex1:i386 libspeexdsp1:i386 libsqlite3-0:i386 libssl1.0.0:i386 \
+libstdc++6:i386 libtasn1-3:i386 libtheora0:i386 libtiff4:i386 libuuid1:i386 \
+libva1:i386 libvorbis0a:i386 libvorbisenc2:i386 libvpx1:i386 libwrap0:i386 \
+libx11-6:i386 libx11-xcb1:i386 libx264-123:i386 libxau6:i386 libxcb1:i386 \
+libxdmcp6:i386 libxext6:i386 libxi6:i386 libxml2:i386 libxrender1:i386 \
+libxss1:i386 libxt6:i386 libxtst6:i386 libxv1:i386 libxvidcore4:i386 qdbus \
+ttf-dejavu-core uuid-runtime zlib1g:i386
+
+##### Ubuntu 14.04.x所需的软件包
+
+除了构建和运行FreeSWITCH所需的软件包之外，您还需要以下软件包：
+
+```xml
+# 构建mod_skypopen所需的依赖项：
+apt-get install \
+libx11-dev libx11-dev libxau-dev libxcb1-dev libxdmcp-dev \
+x11proto-core-dev x11proto-input-dev x11proto-kb-dev xtrans-dev
+
+# 运行Skype客户端所需的基础设施：
+apt-get install \
+xvfb pulseaudio
+```
+
+# Skype客户端的依赖关系:
+apt-get install \
+fontconfig fontconfig-config gcc-4.7-base:i386 libasound2:i386 \
+libasound2-plugins:i386 libasyncns0:i386 libattr1:i386 libaudio2:i386 \
+libavahi-client3:i386 libavahi-common-data:i386 libavahi-common3:i386 \
+libavcodec53:i386 libavutil51:i386 libc6:i386 libc6-i686:i386 libcap2:i386 \
+libcomerr2:i386 libcups2:i386 libdbus-1-3:i386 libdirac-encoder0:i386 \
+libexpat1:i386 libffi5:i386 libflac8:i386 libfontconfig1 libfontconfig1:i386 \
+libfreetype6:i386 libgcc1:i386 libgcrypt11:i386 libglib2.0-0:i386 \
+libgnutls26:i386 libgpg-error0:i386 libgsm1:i386 libgssapi-krb5-2:i386 \
+libgstreamer-plugins-base0.10-0:i386 libgstreamer0.10-0:i386 libice6:i386 \
+libjack-jackd2-0:i386 libjbig0:i386 libjpeg8:i386 libjson0:i386 \
+libk5crypto3:i386 libkeyutils1:i386 libkrb5-3:i386 libkrb5support0:i386 \
+liblcms1:i386 liblzma5:i386 libmng1:i386 libmp3lame0:i386 libogg0:i386 \
+libopenjpeg2:i386 liborc-0.4-0:i386 libp11-kit0:i386 libpcre3:i386 \
+libpng12-0:i386 libpulse0:i386 libqt4-dbus:i386 libqt4-network:i386 \
+libqt4-xml libqt4-xml:i386 libqtcore4 libqtcore4:i386 libqtdbus4 \
+libqtdbus4:i386 libqtgui4:i386 libqtwebkit4:i386 libsamplerate0:i386 \
+libschroedinger-1.0-0:i386 libselinux1:i386 libsm6:i386 libsndfile1:i386 \
+libspeex1:i386 libspeexdsp1:i386 libsqlite3-0:i386 libssl1.0.0:i386 \
+libstdc++6:i386 libtasn1-3:i386 libtheora0:i386 libtiff4:i386 libuuid1:i386 \
+libva1:i386 libvorbis0a:i386 libvorbisenc2:i386 libvpx1:i386 libwrap0:i386 \
+libx11-6:i386 libx11-xcb1:i386 libx264-123:i386 libxau6:i386 libxcb1:i386 \
+libxdmcp6:i386 libxext6:i386 libxi6:i386 libxml2:i386 libxrender1:i386 \
+libxss1:i386 libxt6:i386 libxtst6:i386 libxv1:i386 libxvidcore4:i386 qdbus \
+ttf-dejavu-core uuid-runtime zlib1g:i386
+
+##### CentOS 6.5.x 和 7.x 系统所需软件包
+
+除了构建和运行 FreeSWITCH 所需的软件包外，您还需要以下软件包：
+
+```xml
+# CentOS 6.x 构建 mod_skypopen 的依赖项:
+yum install \
+libX11-devel
+
+# CentOS 7.x 构建 mod_skypopen 的依赖项:
+yum install \
+libX11-devel
+
+# 运行 skype 客户端所需的基础设施:
+yum install \
+pulseaudio Xvfb xorg-x11-fonts* xz pulseaudio-utils bzip2
+
+# skype 客户端的依赖项:
+# CentOS 6.x 启用库仓库
+yum localinstall http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm
+
+## CentOS 7 启用库仓库
+yum localinstall http://dl.fedoraproject.org/pub/epel/beta/7/x86_64/epel-release-7-0.2.noarch.rpm
+rpm -Uvh http://li.nux.ro/download/nux/dextop/el7/x86_64/nux-dextop-release-0-1.el7.nux.noarch.rpm
+
+# 安装库 CentOS 6.x 和 7
+yum install \
+qt-x11.i686 qtwebkit.i686 glibc.i686 libgcc.i686 libstdc++.i686 libXv.i686 \
+libX11.i686 libXext.i686 libXScrnSaver.i686 pulseaudio-libs.i686 alsa-plugins-pulseaudio.i686
+
+# CentOS 6.x 额外所需的库:
+yum install \
+libcanberra-gtk2.i686 gtk2-engines.i686 PackageKit-gtk-module.i686
 
 ```
 
-#####  Ubuntu 14.04.x required packages 
+#### FS 和 mod_skypopen 的构建过程（所有 Linux 系统）
 
-In addition to the packages required to build and run FreeSWITCH, you will need the following:
+注意您必须安装**高清音效和音乐**软件包，其中包括 8khz 和 16khz（Skype 的本机工作频率为 16 khz）。例如，从 FreeSWITCH 源代码目录执行："make hd-sounds-install && make hd-moh-install"
 
-```xml
- # Dependencies for building mod_skypopen:
- apt-get install \
- libx11-dev libx11-dev libxau-dev libxcb1-dev libxdmcp-dev \
- x11proto-core-dev x11proto-input-dev x11proto-kb-dev xtrans-dev
-
- # Infrastructure needed to run skype client:
- apt-get install \
- xvfb pulseaudio
-
- # Dependencies of skype client:
- apt-get install \
- fontconfig fontconfig-config gcc-4.7-base:i386 libasound2:i386 \
- libasound2-plugins:i386 libasyncns0:i386 libattr1:i386 libaudio2:i386 \
- libavahi-client3:i386 libavahi-common-data:i386 libavahi-common3:i386 \
- libavcodec53:i386 libavutil51:i386 libc6:i386 libc6-i686:i386 libcap2:i386 \
- libcomerr2:i386 libcups2:i386 libdbus-1-3:i386 libdirac-encoder0:i386 \
- libexpat1:i386 libffi5:i386 libflac8:i386 libfontconfig1 libfontconfig1:i386 \
- libfreetype6:i386 libgcc1:i386 libgcrypt11:i386 libglib2.0-0:i386 \
- libgnutls26:i386 libgpg-error0:i386 libgsm1:i386 libgssapi-krb5-2:i386 \
- libgstreamer-plugins-base0.10-0:i386 libgstreamer0.10-0:i386 libice6:i386 \
- libjack-jackd2-0:i386 libjbig0:i386 libjpeg8:i386 libjson0:i386 \
- libk5crypto3:i386 libkeyutils1:i386 libkrb5-3:i386 libkrb5support0:i386 \
- liblcms1:i386 liblzma5:i386 libmng1:i386 libmp3lame0:i386 libogg0:i386 \
- libopenjpeg2:i386 liborc-0.4-0:i386 libp11-kit0:i386 libpcre3:i386 \
- libpng12-0:i386 libpulse0:i386 libqt4-dbus:i386 libqt4-network:i386 \
- libqt4-xml libqt4-xml:i386 libqtcore4 libqtcore4:i386 libqtdbus4 \
- libqtdbus4:i386 libqtgui4:i386 libqtwebkit4:i386 libsamplerate0:i386 \
- libschroedinger-1.0-0:i386 libselinux1:i386 libsm6:i386 libsndfile1:i386 \
- libspeex1:i386 libspeexdsp1:i386 libsqlite3-0:i386 libssl1.0.0:i386 \
- libstdc++6:i386 libtasn1-3:i386 libtheora0:i386 libtiff4:i386 libuuid1:i386 \
- libva1:i386 libvorbis0a:i386 libvorbisenc2:i386 libvpx1:i386 libwrap0:i386 \
- libx11-6:i386 libx11-xcb1:i386 libx264-123:i386 libxau6:i386 libxcb1:i386 \
- libxdmcp6:i386 libxext6:i386 libxi6:i386 libxml2:i386 libxrender1:i386 \
- libxss1:i386 libxt6:i386 libxtst6:i386 libxv1:i386 libxvidcore4:i386 qdbus \
- ttf-dejavu-core uuid-runtime zlib1g:i386
-
-```
-
-#####  CentOS 6.5.x and 7.x required packages 
-
-In addition to the packages required to build and run FreeSWITCH, you will need the following:
-
-```xml
- # CentOS 6.x Dependencies for building mod_skypopen:
- yum install \
- libX11-devel
-
- # CentOS 7.x Dependencies for building mod_skypopen:
- yum install \
- libX11-devel
-
- # Infrastructure needed to run skype client:
- yum install \
- pulseaudio Xvfb xorg-x11-fonts* xz pulseaudio-utils bzip2
-
- # Dependencies of skype client:
- # CentOS 6.x Enable libraries repo
- yum localinstall http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm
-
- ## CentOS 7 Enable libraries repos
- yum localinstall http://dl.fedoraproject.org/pub/epel/beta/7/x86_64/epel-release-7-0.2.noarch.rpm
- rpm -Uvh http://li.nux.ro/download/nux/dextop/el7/x86_64/nux-dextop-release-0-1.el7.nux.noarch.rpm
-
- # Install libraries CentOS 6.x and 7
- yum install \
- qt-x11.i686 qtwebkit.i686 glibc.i686  libgcc.i686 libstdc++.i686 libXv.i686 \
- libX11.i686 libXext.i686 libXScrnSaver.i686 pulseaudio-libs.i686 alsa-plugins-pulseaudio.i686
-
- # CentOS 6.x additional libraries needed:
- yum install \
- libcanberra-gtk2.i686 gtk2-engines.i686 PackageKit-gtk-module.i686
-
-```
-
-####  Build procedure (all Linuxes) for FS and mod_skypopen 
-
-Note you must install the **hd sounds and music** packages, that includes both 8khz and 16khz (skype works at 16 khz native), eg: from FreeSWITCH source directory: "make hd-sounds-install && make hd-moh-install"
-
-**After you finished to compile FreeSWITCH, in FreeSWITCH source directory edit modules.conf and uncomment the mod\_skypopen line**.
+**在完成编译 FreeSWITCH 后，编辑 FreeSWITCH 源代码目录下的 modules.conf 文件，并取消 mod\_skypopen 的注释**。
 
 ```xml
 edit modules.conf
 ```
 
-Then, "make install" again from the FreeSWITCH root directory (this will compile and install just the mod\_skypopen module).
+然后，从 FreeSWITCH 的根目录再次执行 "make install"（这将只编译和安装 mod\_skypopen 模块）。
 
 ```xml
-make install #yes, again, this time will add mod_skypopen
-```
+make install #是的，再次运行，这次会添加mod_skypopen
 
-####  Pulseaudio Configuration 
+#### Pulseaudio配置
 
-#####  Debian 7 
+##### Debian 7
 
-Configuration files:
+配置文件：
 
 ```xml
-edit /etc/default/pulseaudio
+编辑 /etc/default/pulseaudio
 PULSEAUDIO_SYSTEM_START=1
 
-edit /etc/pulse/system.pa # delete or comment out all file contents, and add at the end:
+编辑 /etc/pulse/system.pa # 删除或注释掉所有文件内容，在末尾添加:
 load-module module-null-sink 
 load-module module-native-protocol-unix auth-anonymous=1
 
-edit /etc/init.d/pulseaudio 
-# delete --high-priority
+编辑 /etc/init.d/pulseaudio 
+# 删除 --high-priority
 
-edit /etc/pulse/daemon.conf 
-# add at the end of the file:
+编辑 /etc/pulse/daemon.conf 
+# 在文件末尾添加:
 daemonize = yes
 system-instance = yes
 resample-method = trivial
@@ -315,29 +308,29 @@ default-fragment-size-msec = 20
 alternate-sample-rate = 44100
 ```
 
-Add the user running the Skype clients to pulse-access group
+将运行Skype客户端的用户添加到pulse-access组中
 
 ```xml
 adduser root pulse-access
 ```
 
-#####  Ubuntu 14.04 
+##### Ubuntu 14.04
 
-Configuration files:
+配置文件：
 
 ```xml
-edit /etc/init/pulseaudio.conf 
-# uncomment "start on ..."
+编辑 /etc/init/pulseaudio.conf 
+# 取消注释"start on ..."
 
-edit /etc/pulse/system.pa # delete or comment out all file contents, and add at the end:
+编辑 /etc/pulse/system.pa # 删除或注释掉所有文件内容，在末尾添加:
 load-module module-null-sink 
 load-module module-native-protocol-unix auth-anonymous=1
 
-edit /etc/init.d/pulseaudio 
-# delete --high-priority
+编辑 /etc/init.d/pulseaudio 
+# 删除 --high-priority
 
-edit /etc/pulse/daemon.conf 
-# add at the end of the file:
+编辑 /etc/pulse/daemon.conf 
+# 在文件末尾添加:
 daemonize = yes
 system-instance = yes
 resample-method = trivial
@@ -348,23 +341,25 @@ default-fragment-size-msec = 20
 alternate-sample-rate = 44100
 ```
 
-Add the user running the Skype clients to pulse-access group
+将运行Skype客户端的用户添加到pulse-access组中
 
 ```xml
 adduser root pulse-access
 ```
 
-#####  CentOS 6.5 and 7.x  
+##### CentOS 6.5和7.x
 
-Configuration files:
+配置文件：
 
 ```xml
-edit /etc/pulse/system.pa # delete or comment out all file contents, and add at the end:
+编辑 /etc/pulse/system.pa # 删除或注释掉所有文件内容，在末尾添加:
 load-module module-null-sink 
 load-module module-native-protocol-unix auth-anonymous=1
+```
 
-edit /etc/pulse/daemon.conf 
-# add at the end of the file:
+编辑 /etc/pulse/daemon.conf
+在文件末尾添加以下内容：
+```
 daemonize = yes
 system-instance = yes
 resample-method = trivial
@@ -375,48 +370,48 @@ default-fragment-size-msec = 20
 alternate-sample-rate = 44100
 ```
 
-Add the user running the Skype clients to pulse-access group
+将运行Skype客户端的用户添加到pulse-access组中
 
 ```xml
 usermod -G pulse-access -a root
 ```
 
-Disable SELinux
+禁用SELinux
 
 ```xml
-edit /etc/sysconfig/selinux # disabled!
+编辑 /etc/sysconfig/selinux # 禁用！
 ```
 
-Start Pulseaudio, there is no /etc/init.d/pulseaudio, so you must start it "by hand" (eg: from /etc/rc.local):
+启动Pulseaudio，由于没有 /etc/init.d/pulseaudio 文件，所以必须手动启动它（例如：从 /etc/rc.local 中启动）：
 
 ```xml
 /usr/bin/pulseaudio --system=true --daemonize=true --log-level=info --log-target=syslog
 ```
 
-####  Interactive Skype Client INSTALLER and CONFIGURATOR 
+####  可互动的Skype客户端安装程序和配置工具 
 
-Go to the "install" subdir of mod\_skypopen sources, then execute the "[install.pl](http://install.pl)" script.
+进入mod_skypopen源代码的"install"子目录，然后执行 "[install.pl](http://install.pl)" 脚本。
 
 ```xml
 cd /usr/src/freeswitch/src/mod/endpoints/mod_skypopen/install
 ./install.pl
 ```
 
-It will ask you questions and will let you review all the values you entered before to do any real action.
+它会询问您一些问题，然后让您在执行任何真正的操作之前检查输入的所有值。
 
-Then it will download and install (where you told it) the correct Skype client, and will create and install (where and how you told it) all the needed configurations and startup scripts.
+然后它将下载并安装（您指定的位置）正确的Skype客户端，并创建并安装（您指定的位置和方式）所有所需的配置和启动脚本。
 
-You'll end up with a complete and configured installation of mod\_skypopen for FreeSWITCH, ready for calls.
+您将获得一个完整配置好的mod_skypopen安装程序，用于FreeSWITCH，准备好进行通话。
 
-From 0 to Skype calls in 30 seconds !!!
+从零到Skype通话只需30秒！！！
 
-######  Skype 4.3.37 is the only Skype client version that works 
+######  Skype 4.3.37 是唯一可用的Skype客户端版本 
 
-Starting first week of August 2014, Microsoft stopped operating the authorization servers for Skype clients prior to version 4.3.37\. They require Pulseaudio. Following this page and using the automatic installer you will be all set, no problem.
+从2014年8月的第一周开始，微软停止了对版本低于4.3.37的Skype客户端的授权服务器的运营。它们需要Pulseaudio。按照本页面的说明，并使用自动安装程序，您将一切就绪，无需任何问题。
 
-####  How to start the Skype clients, then start FreeSWITCH and load mod_skypopen on Linux 
+####  如何在Linux上启动Skype客户端，然后启动FreeSWITCH并加载mod_skypopen
 
-First you start the Skype clients with the script created by the interactive configurator, then you start FreeSWITCH, and load mod\_skypopen in it.
+首先，使用交互式配置器创建的脚本启动Skype客户端，然后启动FreeSWITCH，并在其中加载mod\_skypopen。
 
 ```xml
 sh /usr/local/freeswitch/skypopen/skype-clients-startup-dir/start_skype_clients.sh
@@ -424,117 +419,115 @@ sh /usr/local/freeswitch/skypopen/skype-clients-startup-dir/start_skype_clients.
 load mod_skypopen
 ```
 
-Yay!
+太棒了！
 
-####  Problems in starting skype clients ? 
+#### 启动Skype客户端时遇到问题了吗？
 
-Check you disabled both SELinux (on CentOS) or AppArmor (on Ubuntu)
+请检查是否禁用了SELinux（在CentOS上）或AppArmor（在Ubuntu上）。
 
-###  Windows 
+### Windows操作系统
 
-####  How to build Skypopen on Windows, and which tools and files are needed 
+#### 如何在Windows上构建Skypopen，以及需要哪些工具和文件
 
-Skypopen has been designed to work well on windows since the beginning, like FreeSWITCH itself.
+Skypopen从一开始就被设计成在Windows上运行良好，就像FreeSWITCH本身一样。
 
-Skypopen (mod\_skypopen) is automatically built when you build FreeSWITCH on Windows.
+在Windows上构建FreeSWITCH时，Skypopen（mod\_skypopen）会自动构建。
 
-You will need the Visual C compiler from Microsoft, commercial version, or the free (as in beer) Visual C Express (requires registration). They both give the same results in our case (eg: no need to buy the commercial version just for Skypopen).
+您需要来自微软的Visual C编译器，商业版本或免费（即免费啤酒）的Visual C Express（需要注册）。在我们的情况下，它们都会产生相同的结果（例如：不需要为了Skypopen购买商业版本）。
 
-After having downloaded the FreeSWITCH sources from svn or the packaged FreeSWITCH source release, follow the instruction on how to build FreeSWITCH on Windows. Using Visual C (Express or not):
+从svn或打包的FreeSWITCH源代码发布中下载FreeSWITCH源代码后，按照如何在Windows上构建FreeSWITCH的说明进行操作。使用Visual C（Express或非Express）：
 
-* Open Freeswitch.sln
-* Right click the main solution node at the top of the Solution Explorer
-* Right click and select Build
+* 打开Freeswitch.sln
+* 在Solution Explorer的顶部，右键单击主解决方案节点
+* 右键单击并选择Build
 
-Then, **download and install the 16khz sounds and music, needed by Skypopen** (16khz native, like Skype itself):
+然后，**下载并安装Skypopen所需的16khz声音和音乐**（16khz原生，就像Skype本身）：
 
-* Right click on "Download 16khzsound" and select Build
-* Right click on "Download 16khzmusic" and select Build
-* Right click on "16khz sound" and select Build
-* Right click on "16khz music" and select Build
+* 右键单击“Download 16khzsound”并选择Build
+* 右键单击“Download 16khzmusic”并选择Build
+* 右键单击“16khz sound”并选择Build
+* 右键单击“16khz music”并选择Build
 
-  
- Test if FreeSWITCH works at all: <http://wiki.freeswitch.org/wiki/Installation%5FGuide#Windows%5Fquick%5Fstart>
+测试FreeSWITCH是否能正常工作： <http://wiki.freeswitch.org/wiki/Installation%5FGuide#Windows%5Fquick%5Fstart>
 
-Then, go forward with the configuration of mod\_skypopen (see below).
+然后，继续配置mod\_skypopen（如下所示）。
 
-####  Config files location and script to start Skype client instances on Windows 
+#### 配置文件位置和在Windows上启动Skype客户端实例的脚本
 
-You'll probably build the "Debug" version. So, go and copy src\\mod\\endpoints\\mod\_skypopen\\configs/skypopen.conf.xml to Debug\\conf\\autoload\_configs. Edit it to reflect your configuration.
+你可能会构建“Debug”版本。所以，去复制src\\mod\\endpoints\\mod\_skypopen\\configs/skypopen.conf.xml到Debug\\conf\\autoload\_configs。编辑它以反映你的配置。
 
-Then, go into src\\mod\\endpoints\\mod\_skypopen\\configs/ and edit startskype.bat to suit your configuration. Remember that startskype.bat needs wait.bat to be in its same directory (wait.bat is in the "configs" dir too).
+然后，进入src\\mod\\endpoints\\mod\_skypopen\\configs/目录，并编辑startskype.bat以适应你的配置。记住，startskype.bat需要等待.bat与它的同一目录中（等待.bat也在“configs”目录中）。
 
-Eventually, launch the Skype client instances using startskype.bat, then launch FreeSWITCH, and from the FreeSWITCH command line:
+最后，使用startskype.bat启动Skype客户端实例，然后启动FreeSWITCH，在FreeSWITCH命令行中执行：
 
 load mod_skypopen
 
-The Skype instances will ask you for permission to be connected by Skypopen. Give the auth.
+Skype实例会要求你批准通过Skypopen进行连接。给予权限。
 
-If you put in config file the **silent\_mode** (recommended, see section on configuration file), another authorization will be asked to you. Give it, and not to ask again!
+如果你在配置文件中设置**silent\_mode**（推荐，见配置文件部分），就会要求你进行另一次授权。给予它，并且不再询问！
 
-  
- You're all set.
+你已准备就绪。
 
-####  Running Skypopen on Windows as a Service 
+#### 在Windows上将Skypopen作为服务运行
 
-I assume you have FreeSWITCH configured and working with mod\_skypopen (running from the command line). I mean, first you have to make sure all is working as a "normal non-service application".
+我假设你已经配置了FreeSWITCH的mod\_skypopen，并且它可以从命令行中运行。也就是说，首先你必须确保一切都作为“正常非服务应用程序”正常工作。
 
-The difficult thing is to have the Skype client instances started by a service (FreeSWITCH itself is able to be a Windows Service).
+困难的是，通过服务启动Skype客户端实例（FreeSWITCH本身可以成为Windows服务）。
 
-You install FreeSWITCH as service (freeswitch.exe -install servicename), then use the "services" applet to run it under "local system" user, starting manually (not automatically).
+你可以把FreeSWITCH安装为服务（freeswitch.exe -install servicename），然后使用“服务”应用程序以“本地系统”用户身份手动启动它（不自动启动）。
 
-Then edit to your like (Skype usernames/passwords AND change the name of the service to be started from AICCU to the name of the FreeSWITCH service - on the last line -) and copy the 2 command files contained in the configs/windows-service/ directory to a known location (eg. C:\\).
+然后，根据你的喜好进行编辑（Skype用户名/密码，并更改要从AICCU启动服务的名称到FreeSWITCH服务的名称 - 位于最后一行 -），并将包含在configs/windows-service/目录中的两个命令文件复制到已知的位置（例如C:\\）。
 
-For creating the service that will starts the Skype client instances and the FreeSWITCH service you just setup, you need to use instsrv and srvany from "Windows Server 2003 Resource Kit Tools": <http://www.microsoft.com/downloads/details.aspx?FamilyID=9D467A69-57FF-4AE7-96EE-B18C4790CFFD&displaylang=en>
+为了创建一个服务来启动您刚刚设置的Skype客户端实例和FreeSWITCH服务，您需要使用"Windows Server 2003资源工具包"中的instsrv和srvany命令： <http://www.microsoft.com/downloads/details.aspx?FamilyID=9D467A69-57FF-4AE7-96EE-B18C4790CFFD&displaylang=en>
 
-Procedure for creating a service is detailed here: <http://support.microsoft.com/kb/137890> (or more shortly here: <http://www.sixxs.net/wiki/Configuring%5FWindows%5FVista#.2816.29%5F%5FInstalling%5FAICCU%5FUtility%5Fas%5Fa%5FService> )
+创建服务的详细步骤请参考这里：<http://support.microsoft.com/kb/137890>（或者更简短的链接：<http://www.sixxs.net/wiki/Configuring%5FWindows%5FVista#.2816.29%5F%5FInstalling%5FAICCU%5FUtility%5Fas%5Fa%5FService>）
 
-You create an (empty) service with those tools, then you follow the procedure steps and as "Parameters"->"Application" you put the string "C:\\startskype.cmd"
+您可以使用这些工具创建一个（空的）服务，然后按照步骤操作，在"参数"->"应用程序"中输入字符串"C:\\startskype.cmd"
 
-Then, from the "services" applet in Control Center ->administrative tools, you make sure the service is owned by "local system" and that "Access desktop" is ticked.
+然后，在控制中心->管理工具的"服务"小程序中，确保该服务的所有者是"本地系统"，并且"访问桌面"被选中。
 
-Start the service manually from the "services" applet.
+手动从"服务"小程序中启动该服务。
 
-Maybe it will appear a "the service wants to access the desktop". Go to "show message" to see what Skype wants, and give some configurations if needed.
+可能会出现一个"服务要访问桌面"的提示。点击"显示消息"查看Skype需要什么并进行必要的配置。
 
-After a while, when the FreeSWITCH service will be started by our new "startskype.cmd" service, it will appear "the service wants to access the desktop". Go there and give Skype clients authorization to be connected by FreeSWITCH, forever.
+经过一段时间，当新的"startskype.cmd"服务启动了FreeSWITCH服务后，又会出现"服务要访问桌面"的提示。进入那里，授权Skype客户端永久连接到FreeSWITCH。
 
-Stop both services from the "Services" applet.
+从"服务"小程序中停止这两个服务。
 
-Unfortunately I've found no way to have the Skype instances shutdown when the service is shutdown. So, exit the Skype client instances manually, or reboot.
+遗憾的是，我没找到一种方法来使Skype实例在服务关闭时自动关闭。因此，请手动退出Skype客户端实例，或者重新启动。
 
-Restart the service, manually from the "Services" applet.
+再次手动从"服务"小程序中启动该服务。
 
-From another machine, make a Skype call to FreeSWITCH.
+从另一台机器上给FreeSWITCH打一个Skype电话。
 
-If all works as expected, stop both services, make sure (via "services" applet) the FreeSWITCH service will retry three times to start, with a minute pause (just to allow for the Skype clients to start and settle their connection with the network, to be on the safe side).
+如果一切按预期工作，请停止两个服务，并确保（通过“服务”应用程序）FreeSWITCH服务将重试三次启动，每次暂停一分钟（只是为了让Skype客户端启动并与网络建立连接，为了安全起见）。
 
-Make the service to start "automatic" (only the "startskype.cmd" service, not the FreeSWITCH service. The FreeSWITCH service is started by the "startskype.cmd" service.
+将服务设置为“自动启动”（只有“startskype.cmd”服务，而不是FreeSWITCH服务。FreeSWITCH服务由“startskype.cmd”服务启动。
 
-Reboot the machine, don't log in, make another test call to FreeSWITCH via Skype, and... joy :-)
+重新启动机器，不要登录，通过Skype再次进行测试呼叫到FreeSWITCH，然后……喜悦：-）
 
-The trick for me (on Vista) is to use the same "local system" account for both the Skype and the FreeSWITCH services, and \*NOT\* to use a personal account. Go figure... :-)
+对我来说（在Vista上），诀窍是为Skype和FreeSWITCH服务使用相同的“local system”帐户，而\ *不是\ *使用个人帐户。想想……:-）
 
-##  Config File Details (skypopen.conf.xml) 
+## 配置文件详细信息（skypopen.conf.xml）
 
-Following is a sample config file.
+以下是示例配置文件。
 
-In the first section you set defaults, then you override in the "interface" sections. All and each global\_settings parameter can be overridden in each of the interface definition.
+在第一部分中，您设置默认值，然后在“interface”部分中进行了覆盖。每个全局_settings参数都可以在接口定义的每个部分中进行覆盖。
 
-**X11-display** is not used on Windows :).
+**X11-display**在Windows上不使用:)
 
-**report\_incoming\_chatmessages** is useful when you have multiple channels with the same skypeusername. They will all receive a message for that skype\_user. You probably want to have one only MESSAGE event fired on the ESL.
+**report_incoming_chatmessages**在具有相同skype用户名的多个通道时非常有用。它们都将接收到该skype_user的消息。您可能希望在ESL上只触发一次MESSAGE事件。
 
-**write\_silence\_when\_idle** will make mod\_skypopen to send packets of silence to the Skype client when there are no audio writes from FreeSWITCH (inactivity, silence, network lag, etc). This proved useful on some platforms to keep the Skype client on his toes, and to avoid loosing packets "synch" that ends up in a _ghost sounding_ voice.
+**write_silence_when_idle**将使mod_skypopen在FreeSWITCH没有音频写入时向Skype客户端发送静默数据包（不活动，静音，网络延迟等等）。这对于保持Skype客户端的状态以避免丢包“同步”和防止出现“幽灵声音”在某些平台上非常有用。
 
-**setsockopt** will make mod\_skypopen to drastically reduce the size of the tcp buffer and set the option NO\_TCP\_DELAY. This will results in a lower latency and more respect for internal timing, but an higher CPU load.
+**setsockopt**会使mod\_skypopen大幅缩减TCP缓冲区的大小，并设置选项NO\_TCP\_DELAY。这将导致较低的延迟和更好地尊重内部定时，但CPU负载将更高。
 
-**silent\_mode** works on **Windows**, using the latest Skype client (update it! :) ). At very first start of FreeSWITCH each Skype client will ask you an additional authorization, and from now on, the Skype client will never pop up windows on calls or chat. It will save a good deal of cpu cycles! _silent\_mode_ is not used by the Linux version (present Skype clients for Linux do not understand it).
+**silent\_mode**在Windows操作系统上运行，使用最新的Skype客户端（请更新！:)）。 FreeSWITCH首次启动时，每个Skype客户端都会要求您进行额外的授权，并且从现在开始，Skype客户端在通话或聊天时将不再弹出窗口。这将节省大量的CPU周期！Linux版本不使用_silent\_mode_（目前的Linux Skype客户端无法理解它）。
 
-Following example config file is for 4 interfaces, 2 of which will be connected to Skype client instances running as the same skypeuser "user5".
+以下示例配置文件适用于4个接口，其中2个接口将连接到作为相同skypeuser "user5"运行的Skype客户端实例。
 
 ```xml
-<configuration name="skypopen.conf" description="Skypopen Configuration">
+<configuration name="skypopen.conf" description="Skypopen配置">
   <global_settings>
     <param name="dialplan" value="XML"/>
     <param name="context" value="default"/>
@@ -545,7 +538,7 @@ Following example config file is for 4 interfaces, 2 of which will be connected 
     <param name="write_silence_when_idle" value="false"/>
     <param name="setsockopt" value="true"/>
   </global_settings>
-  <!-- one entry here per each skypopen interface -->
+  <!--每个skypopen接口有一个条目在此-->
   <per_interface_settings>
     <interface id="1" name="interface1">
         <param name="X11-display" value=":101"/>
@@ -569,20 +562,20 @@ Following example config file is for 4 interfaces, 2 of which will be connected 
 </configuration>
 ```
 
-##  Dialplan, and how to use Skypopen 
+## 拨号计划和使用Skypopen
 
-###  Dialplan 
+### 拨号计划
 
-Like other endpoints it's easy to build up useful dialplans using Skypopen. There are a few simple examples given in the "default.xml" dialplan located in mod\_skypopen/configs/
+像其他端点一样，使用Skypopen可以轻松构建有用的拨号计划。在 mod\_skypopen/configs/ 中的 "default.xml" 拨号计划中提供了一些简单的示例。
 
-You can use the standard format with the interface name:
+你可以使用接口名称的标准格式:
 
 skypopen/interface1/echo123
 
-to call "echo123" using the skypopen interface named "interface1"
+使用名为 "interface1" 的skypopen接口呼叫 "echo123"
 
 ```xml
-    <!-- dial echo123 via skypopen using interface1 interface to go out -->
+    <!-- 使用接口1接通skypeopen并拨打echo123 -->
     <extension name="skypopen">
       <condition field="destination_number" expression="^2909$">
         <action application="bridge" data="skypopen/interface1/echo123"/>
@@ -590,20 +583,20 @@ to call "echo123" using the skypopen interface named "interface1"
     </extension>
 ```
 
-###  The "RR" interface, poor man interface grouping 
+### "RR"接口，穷人级接口分组
 
-You can also use the "RR" interface
+你也可以使用"RR"接口
 
 skypopen/RR/echo123
 
-to call "echo123" using the first available (idle, not in a call) skypopen interface, automatically selected (thx Seven Du).
+通过第一个可用的（空闲，没有通话中）skypopen接口来拨打 "echo123"。自动选择（感谢Seven Du）。
 
-"RR" will choose an available idle interface based on a round robin algorithm (so to distribute outbound calls more fairly between all the available interfaces).
+"RR"会根据轮询算法选择一个可用的空闲接口（这样可以在所有可用接口之间更公平地分布呼出通话）。
 
-Dialplan snippets:
+拨号计划片段：
 
 ```xml
-    <!-- dial echo123 via skypopen RR interface -->
+    <!-- 使用skypopen RR接口拨打echo123-->
     <extension name="skypopen">
       <condition field="destination_number" expression="^2908$">
         <action application="bridge" data="skypopen/RR/echo123"/>
@@ -611,22 +604,22 @@ Dialplan snippets:
     </extension>
 ```
 
-###  optional "Skype URI" 
+### 可选的"Skype URI" 
 
-If you modify your dialplan, you'll be able to call "skype uri"s for terminating calls via the Skype network.
+如果您修改了拨号计划，您将能够通过Skype网络终止呼叫拨打"Skype URI"。
 
-A "Skype URI" is composed by the word 'skype' followed by a slash and a destination: "skype/remote\_skypename" or "skype/skypeout\_phonenumber"
+"Skype URI"由单词'skype'后跟斜杠和目标组成："skype/remote_skypename"或"skype/skypeout_phonenumber"
 
-E.g. "skype/echo123" or "skype/+18007844444".
+例如："skype/echo123"或"skype/+18007844444"。
 
-You can use the "skype uri" of the provided dialplan directly from a SIP softphone, e.g. X-Lite.
+您可以从SIP软电话（如X-Lite）直接使用所提供的拨号计划的"Skype URI"。
 
-And you can call the "2909" extension in the provided dialplan from any kind of phone to be bridged to the Skype Test Call.
+您还可以使用所提供的拨号计划中的"2909"分机，从任何类型的电话拨打并桥接到Skype测试呼叫。
 
-Dialplan snippet:
+拨号计划片段：
 
 ```xml
-    <!-- dial via SKYPE uri using interface1 interface to go out -->
+    <!-- 使用 interface1 接口拨打通过 SKYPE URI -->
     <extension name="skype_uri">
       <condition field="destination_number" expression="^skype/(.*)$">
         <action application="bridge" data="skypopen/interface1/$1"/>
@@ -634,136 +627,136 @@ Dialplan snippet:
     </extension>
 ```
 
-With the provided skypopen.conf.xml all incoming Skype calls will be routed to the "5000" extension, the IVR in default FreeSWITCH installation.
+使用提供的 skypopen.conf.xml，所有呼入的 Skype 电话将会被路由到"5000" 分机，这是在默认 FreeSWITCH 安装中的 IVR。
 
-##  API and CLI Commands 
+##  API 和 CLI 命令
 
-Skypopen adds the "sk" and the "skypopen" API/CLI commands, for sending Skype API commands to the Skype client instance related to an interface. Both "sk" and "skypopen" commands can be used through the command line and via API/socket/ESL/whatever.
+Skypopen 添加了 "sk" 和 "skypopen" API / CLI 命令，用于向相关接口的 Skype 客户端实例发送 Skype API 命令。"sk" 和 "skypopen" 命令可以通过命令行和 API/Socket/ESL/其他方式使用。
 
-###  sk 
+###  sk
 
-"sk" commands are intended to be used from the FreeSWITCH command line ("sk remove" and "sk reload" can be useful from Event socket as well).
+"sk" 命令是用于从 FreeSWITCH 命令行使用的（"sk remove" 和 "sk reload" 也可以从 Event socket 中使用）。
 
-You begin typing "sk console interface\_name" to direct the "current console" to sending messages to interface\_name. Starting now on, you can type "sk command\_string" and command\_string will be sent to the Skype client instance related to interface interface\_name.
+您可以开始键入 "sk console interface\_name"，将 "current console" 定向到发送消息到 interface\_name。从现在开始，您可以键入 "sk command\_string"，command\_string 将会被发送到与 interface\_name 关联的 Skype 客户端实例。
 
 sk console interface1
 sk MESSAGE alice25 Hej Alice, this is a Skype chat message for you!
 
-###  sk list 
+###  sk list
 
-"sk list" gives the list and status of all the Skypopen interfaces (a star marks the interface from which "RR" - see below - will start hunting an IDLE one).
+"sk list" 显示所有的 Skypopen 接口列表和状态（星号表示 "RR" - 见下文 - 将开始寻找 IDLE 接口）。
 
 sk list
 
-###  sk balances 
+###  sk balances
 
-"sk balances" gives the list and balances (in account currency) of all the Skypopen interfaces (eg: the credits you have for Skypeout, calling PSTN). Patch added by Ivan Trifonov
+"sk balances" 显示所有 Skypopen 接口的余额（以账户货币计算）列表（例如：您用于 Skypeout、拨打 PSTN 的信用额）。Ivan Trifonov 添加的补丁。
 
 sk balances
 
-We got patches from Muhammad Shahzad and Seven Du for adding and removing interfaces on the fly.
+我们从 Muhammad Shahzad 和 Seven Du 那里得到添加和删除接口的补丁。
 
-###  sk reload 
+###  sk reload
 
-sk reload => this re-reads Skypopen configuration file skypopen.conf.xml and adds ONLY new interfaces it found in conf. All existing interfaces are not touched.
+sk reload => 这将重新读取Skypopen配置文件skypopen.conf.xml，并仅添加在配置文件中找到的新接口。所有现有接口均不受影响。
 
 sk reload
 
 ###  sk remove 
 
-sk remove &lt;skype-user> => this remove skypopen interface associated with given Skype user account, if it is idle.
+sk remove &lt;skype-user> => 如果处于空闲状态，则移除与给定Skype用户帐户相关联的skypopen接口。
 
 freeswitch@internal> sk remove Bob
 
-sk remove &lt;#interface-numeric-id> => this remove skypopen interface associated with given Skype interface\_id, if is idle (remember, you must add the pound sign in front of the interface-numeric-id, **\# is mandatory**).
+sk remove &lt;#interface-numeric-id> => 如果处于空闲状态，则移除与给定Skype接口ID相关联的skypopen接口（请记住，在接口编号之前必须添加井号标志，**\＃是强制的**）。
 
 freeswitch@internal> sk remove #10
 
-sk remove &lt;#interface-name> => this remove skypopen interface associated with given Skype interface\_name, if is idle (remember, you must add the pound sign in front of the interface-name, **\# is mandatory**).
+sk remove &lt;#interface-name> => 如果处于空闲状态，则移除与给定Skype接口名称相关联的skypopen接口（请记住，在接口名称之前必须添加井号标志，**\＃是必需的**）。
 
 freeswitch@internal> sk remove #interface10
 
 ###  skypopen 
 
-"sk remove" and "sk reload" (see before) can be useful from API/socket/ESL/whatever as well.
+"sk remove"和"sk reload"（见上文）也可从API/socket/ESL/任何地方使用。
 
-"skypopen" commands are intended to be used by programs (API/socket/ESL/whatever) and have the format: "skypopen interface\_name command\_string". They send the command\_string to the Skype client instance related to interface\_name.
+"skypopen"命令旨在由程序（API/socket/ESL/任何地方）使用，并具有以下格式："skypopen接口名称命令字符串"。它们将命令字符串发送到与接口名称相关联的Skype客户端实例。
 
-skypopen interface2 MESSAGE bob34 Ciao Bob! This is my Skype chat message for you from FreeSWITCH :-)
+skypopen interface2 MESSAGE bob34 你好Bob！这是我从FreeSWITCH给你的Skype聊天消息:-)
 
-This allow you to use directly the entire power of the Skype API ( <http://developer.skype.com/public-api-reference> ), for eg to send chat messages, interact with the buddy list, etc etc. Typing "console loglevel 9" at the FreeSWITCH command line allows you to see the Skype API answers from the Skype client instance.
+这使您能够直接使用Skype API的全部功能（ <http://developer.skype.com/public-api-reference> ），例如发送聊天消息，与好友列表交互等等。在FreeSWITCH命令行中输入"loglevel 9"可以查看Skype客户端实例的Skype API响应。
 
 ###  skypopen_chat 
 
-It supports full utf8 chat text, although the FreeSWITCH command line only accepts ASCII. Please use ESL or API to send utf8 text.
+它支持完整的UTF8聊天文本，尽管FreeSWITCH命令行仅接受ASCII。请使用ESL或API来发送UTF8文本。
 
-skypopen_chat interface_name remote_skypename chat_text
+skypopen_chat 接口名称 remote_skypename chat_text
 
-eg:
+例如：
 
-skypopen_chat interface2001 gmaruzz5 ciao bello
+skypopen_chat interface2001 gmaruzz5 你好帅
 
-###  chat 
+### 聊天
 
-Skypopen answers to the FreeSWITCH standard "chat" command too, and use its arguments to execute a skypopen\_chat command (it will find the first available interface that uses the "local\_skypename"). So, if you got a messaging applications that uses chat command with Sofia/SIP or Jingle, no need to recode it with special cases for Skype:).
+Skypopen也响应FreeSWITCH标准的“chat”命令，并使用它的参数来执行skypopen_chat命令（它将找到使用“local_skypename”的第一个可用接口）。所以，如果您有一个使用Sofia/SIP或Jingle的消息应用程序，并使用chat命令，就无需为Skype重新编码特殊情况:)。
 
 chat SKYPE|local_skypename|remote_skypename|chat_text
 
-It uses SKYPE as protocol specification. e.g., from command line:
+这里使用了SKYPE作为协议规范。例如，从命令行：
 
-chat SKYPE|user2|gmaruzz5|ciao amore
+chat SKYPE|user2|gmaruzz5|你好宝贝
 
-##  Channel Variables 
+## 通道变量
 
-####  DTMFs: skype_add_outband_dtmf_also_when_bridged 
+#### DTMF：skype_add_outband_dtmf_also_when_bridged
 
-When a skype call is bridged (eg: to a sip call) the default behavior is NOT to pass the incoming Skype DTMFs as out of band (signaling) DTMFs to the other call, because the audio (inband) DTMFs will be always present. Explanation: Skype sends DTMFs both as inband audio and as signaling, and you cannot disable the inband (audio) DTMFs.
+当将Skype呼叫桥接到SIP呼叫（例如：桥接到SIP呼叫）时，默认行为是不将传入的Skype DTMF作为带外（信令）DTMF传递给其他呼叫，因为音频（内部）DTMF将始终存在。解释：Skype同时将DTMF作为内部音频和信令发送，您无法禁用内部（音频）DTMF。
 
-When is desirable that on top of the audio DTMFs the other call receives outband (signaling) DTMFs too (eg: because is an ivr or a conference that do not recognize inband DTmFs), please set the channel variable 'skype\_add\_outband\_dtmf\_also\_when\_bridged' to 'true'.
+当希望在音频DTMF之上，另一呼叫也接收到带外（信令）DTMF时（例如：因为是IVR或会议不识别内部DTmFs），请将通道变量'skype_add_outband_dtmf_also_when_bridged'设置为'true'。
 
-E.g., in dialplan you can:
+例如，在拨号计划中您可以：
 
 &lt;action application="set" data="skype_add_outband_dtmf_also_when_bridged=true"/>
 
-####  DTMFs: skype_get_inband_dtmf 
+#### DTMF：skype_get_inband_dtmf
 
-Normally, by default, mod\_skypopen do not detect inband (audio) incoming DTMFs, because it get it via signaling from the skype peer.
+通常，除非通过Skype对等方的信令，否则mod\_skypopen默认不会检测到内部（音频）传入DTMF，因为它只通过音频信令来获取。
 
-When you have a call to skypeout numbers or an incoming call via the skypein service, you do not get DTMFs in signaling, you get it only as audio.
+当您拨打SkypeOut号码或通过SkypeIn服务接收来电时，您不会得到信令中的DTMF，只能将其作为音频接收。
 
-You set the channel variable 'skype\_get\_inband\_dtmf' to 'true' if you want mod\_skypopen to detect inband (audio) DTMFs coming from skype, eg: in skypein/skypeout calls.
+如果你想让mod_skypopen检测来自Skype（例如，在Skypein/Skypeout呼叫中）的带宽内（音频）DTMF信号，你可以将频道变量'skype_get_inband_dtmf'设置为'true'。
 
-E.g., in dialplan you can:
+举个例子，在dialplan中可以这样设置：
 
 &lt;action application="set" data="skype_get_inband_dtmf=true"/>
 
-Please note that skype peers will send you BOTH audio and signaling DTMFs, so if you set this variable to 'true' on a "normal" skype-skype call, you may get double digits.
+请注意，Skype对等方将同时发送音频和信令的DTMF信号，所以如果在“普通”的Skype对Skype呼叫中将此变量设置为'true'，可能会收到重复的数字。
 
-##  Events 
+##  事件
 
-Skypopen generates (fires) the standard FreeSWITCH events on voice calls (like the other endpoints) and MESSAGE (chat) events on incoming... chat (like Sofia and Jingle).
+Skypopen会生成（触发）语音呼叫的标准FreeSWITCH事件（与其他端点一样），并且在传入聊天时生成MESSAGE（聊天）事件（与Sofia和Jingle一样）。
 
-####  Voice Calls 
+####  语音呼叫
 
-Standard CODEC and CHANNEL\_\* events.
+标准的编解码器和通道事件。
 
-See [Event\_list](https://70.169.193.216/wiki/Event%5Flist "Event list")
+参见[事件列表](https://70.169.193.216/wiki/Event%5Flist "事件列表")
 
-####  MESSAGE (Chat) 
+####  MESSAGE（聊天）
 
-The Event type generated by an incoming chat is of type MESSAGE (like in Jingle and Sofia).
+传入聊天所生成的事件类型为MESSAGE（与Jingle和Sofia类似）。
 
-The most interesting fields are:
+最有趣的字段包括：
 
-login:                the interface name that received the chat
-hint:                 the skype display name of the sender
-from:                 the sender's skypename (username)
-date:                 the date of the received message, urlencoded
-during-call:          bool, the message was received while a voice call was ongoing?
+login：接收聊天的接口名称
+hint：发送者的Skype显示名称
+from：发送者的Skype名（用户名）
+date：接收消息的日期，经过URL编码
+during-call：布尔值，消息在语音通话进行中接收到？
 
-And obviously the body, encoded in utf8, that contains the chat's text.
+当然还有编码为UTF-8的正文，其中包含聊天的文本内容。
 
-To see it "under the hood" you can connect to the event socket via telnet:
+要在"底层"查看它，可以通过telnet连接到事件套接字：
 
 ```xml
 # telnet localhost 8021
@@ -781,113 +774,114 @@ To see it "under the hood" you can connect to the event socket via telnet:
  Reply-Text: +OK event listener enabled plain
 ```
 
-This is an example of MESSAGE event:
+这是MESSAGE事件的一个示例：
 
 ```xml
  Content-Length: 617
  Content-Type: text/event-plain
-
- Event-Name: MESSAGE
- Core-UUID: 269ea24a-208e-11df-84c7-573c2b1de1ea
- FreeSWITCH-Hostname: hardy64
- FreeSWITCH-IPv4: 192.168.0.12
- FreeSWITCH-IPv6: %3A%3A1
- Event-Date-Local: 2010-02-26%2022%3A29%3A34
- Event-Date-GMT: Fri,%2026%20Feb%202010%2021%3A29%3A34%20GMT
- Event-Date-Timestamp: 1267219774580741
- Event-Calling-File: mod_skypopen.c
- Event-Calling-Function: incoming_chatmessage
- Event-Calling-Line-Number: 2751
- proto: skype
- login: interface4001
- hint: Giovanni%20Maruzzelli
- from: gmaruzz4
- subject: SIMPLE%20MESSAGE
- chatname: %23gmaruzz4/$user4%3Bfaac11592a246288
- id: 8651
- during-call: true
- Content-Length: 10
-
- ciao belè
 ```
 
-##  Adding and removing interfaces on the fly 
+```markdown
+事件名称：MESSAGE
+核心UUID：269ea24a-208e-11df-84c7-573c2b1de1ea
+FreeSWITCH主机名：hardy64
+FreeSWITCH-IPv4：192.168.0.12
+FreeSWITCH-IPv6：％3A％3A1
+事件本地日期：2010-02-26%2022%3A29%3A34
+事件GMT日期：星期五，2020年2月26日21%3A29%3A34%20GMT
+事件时间戳：1267219774580741
+事件调用文件：mod_skypopen.c
+事件调用函数：incoming_chatmessage
+事件调用行号：2751
+协议：Skype
+登录：interface4001
+提示：Giovanni%20Maruzzelli
+来自：gmaruzz4
+主题：简单消息
+聊天名称：＃gmaruzz4/$user4%3Bfaac11592a246288
+ID：8651
+通话中：是
+内容长度：10
 
-We got a patch from Muhammad Shahzad for adding and removing interfaces on the fly. It basically adds two sk commands:
+您好belè
+```
 
-sk reload => this re-reads Skypopen configuration file skypopen.conf.xml and adds ONLY new interfaces it found in conf. All existing interfaces are not touched.
+## 在运行中添加和删除接口
 
-sk remove &lt;skype-user> => this remove skypopen interface associated with given Skype user account, if it is idle.
+我们获取了Muhammad Shahzad的补丁，用于在运行中添加和删除接口。它基本上添加了两个Sk命令：
 
-##  Advanced Configuration 
+`sk reload` => 这将重新读取Skypopen配置文件skypopen.conf.xml，并仅添加在配置中找到的新接口。所有现有接口不受影响。
 
-####  Multiple concurrent incoming calls to the same Skype username 
+`sk remove <skype用户>` => 如果指定的Skype用户帐户处于空闲状态，则删除与Skypopen接口关联的相应用户帐户。
 
-**Solutions based on "transfer" the call to another Skype username do not work anymore with new Skype client**
+## 高级配置
 
-####  Running multiple instances (MAX 6) of the same Skype username on Linux, for BOTH incoming and outbound calls 
+#### 同一Skype用户名对应的多个并发呼入呼叫
 
-The new Skype client limits the concurrent instances of the same username to 6
+**基于将呼叫“转接”到另一个Skype用户名的解决方案在新的Skype客户端中不再有效**
 
-**MAX 6 INSTANCES PER SKYPENAME**
+#### 在Linux上运行同一Skype用户名的多个实例（最多6个），用于呼入和呼出呼叫
 
-(you can have many skypenames, each one with a max of 6 concurring instances, eg: myskypenameA is used by 6 concurrent skype clients, myskypenameB is used by 6 concurrent skype clients, myskypenameC is used by 6 concurrent skype clients, total 36 concurrent instances on your machine)
+新的Skype客户端将同一用户名的并发实例限制为6个
 
-On Linux, you can run multiple instances of the same Skype username (eg: multiple Skype clients that register with the Skype networks as the same username, eg: 6 instances of the username "Bob"). On Windows, is not possible.
+**每个Skype用户名最多6个实例**
 
-Please use the **INTERACTIVE INSTALLER**, it will setup all (download and install the correct Skype client, script to start the Skype clients, Skype client configs, skypopen.conf.xml config file).
+（你可以拥有许多Skype名称，每个名称最多可以同时使用6个实例，例如：我的Skype名称A同时由6个Skype客户端使用，我的Skype名称B同时由6个Skype客户端使用，我的Skype名称C同时由6个Skype客户端使用，总共在您的计算机上有36个同时运行的实例）
 
-The trick is to launch the client instances with separate Xservers (as always with multiple clients) AND separate directories for the Skype client's database (eg: by default it resides in the ".Skype" directory in the user's home).
+在Linux上，您可以运行相同Skype用户名的多个实例（例如：使用相同用户名在Skype网络上注册的多个Skype客户端，例如：6个“Bob”用户名的实例）。在Windows上，不可行。
 
-You can find an example configuration file and launch scripts in configs/multiple-instance-same-skype-username/ directory.
+请使用**交互式安装程序**，它将设置所有内容（下载并安装正确的Skype客户端，启动Skype客户端的脚本，Skype客户端配置，skypopen.conf.xml配置文件）。
 
-##  Testing with the "Echo" application 
+技巧是使用单独的X服务器启动客户端实例（与多个客户端一样），并为Skype客户端数据库使用单独的目录（例如：默认情况下，它位于用户主目录中的“.Skype”目录中）。
 
-Because the Skype clients have their own AEC (Acoustic Echo Cancellation), if you test Skypopen with the echo() application (press 2 on the demo IVR) you will have a bizarre effect of your voice going up and down in volume "pulsations".
+您可以在configs/multiple-instance-same-skype-username/目录中找到示例配置文件和启动脚本。
 
-This is caused by the combined AEC of the Skype clients, that "think" the echo() application is the echo generated because you are in an empty room and are using loudspeakers.
+##  "Echo"应用程序测试
 
-On windows AEC can be disabled editing the config.xml file. On Linux, is not possible to disable it (disabling it with the API command has no effect).
+由于Skype客户端具有自己的AEC（声学回声消除）功能，如果您使用echo()应用程序（在演示IVR中按2键）进行Skypopen测试，则会出现声音的音量“脉动”现象。
 
-So, the test with the echo() application is only good to give you an idea of the latency. If you want to have an idea of the audio quality, use the "delayed echo" at extension 9195 of the default dialplan. Or the echo that is at end of "screaming monkeys" (kindly provided by John Todd, press 5 on the default IVR), but you'll add a transcoding to ulaw 8khz and a round trip to [loligo.com](http://loligo.com) servers.
+这是由于Skype客户端的组合AEC，它们“认为”echo()应用程序是由于您处于一个空房间并且正在使用扬声器而产生的回声。
 
-## **TO DO** 
+在Windows上，可以通过编辑config.xml文件禁用AEC。在Linux上，无法禁用它（使用API命令禁用它没有效果）。
 
-Requests, suggestions, ideas (feel free to add here, but best is to add on Jira - see below 'BUGS and Feature Requests'):
+所以，使用echo()应用程序进行测试只能给您一个延迟的概念。如果您想了解音频质量，可以在默认拨号计划的扩展号码9195上使用"延迟回声"。或者在"screaming monkeys"的最后添加回声（由John Todd提供，在默认IVR上按5），但是您需要对ulaw 8khz进行编码转换，并发送到[loligo.com](http://loligo.com)服务器来进行往返测试。
 
-## **TROUBLESHOOTING** 
+## **待办事项**
 
-####  Problems in starting skype clients ? 
+请求、建议、想法（请在此处添加，但最好添加到Jira - 请参阅下面的"BUGS和功能请求"）：
 
-Check you disabled both SELinux (on CentOS) or AppArmor (on Ubuntu)
+## **故障排除**
 
-#### **Error and warnings at the starting of Skype clients on Linux** 
+#### 启动skype客户端时出现问题？
 
-When starting the Skype clients on Linux, on certain distros you can have warnings and errors on the console, like those:
+检查您是否禁用了SELinux（在CentOS上）或AppArmor（在Ubuntu上）
 
-Couldn't open RGB_DB '/usr/share/X11/rgb'
-error opening security policy file /usr/lib64/xserver/SecurityPolicy
+#### **Linux上启动Skype客户端时的错误和警告**
 
-or this:
+在Linux上启动Skype客户端时，在某些发行版上，您可能会在控制台上看到警告和错误，例如：
 
-  
- Those are completely harmless, and after you are sure your script correctly starts the Skype clients, you can also redirect those outputs to /dev/null, if so you like.
+无法打开RGB_DB'/usr/share/X11/rgb'
+打开安全策略文件'/usr/lib64/xserver/SecurityPolicy'时出错
+
+或者是这样的：
+
+这些都是完全无害的，在确保您的脚本正确启动Skype客户端之后，如果愿意，您也可以将这些输出重定向到/dev/null。
 
 ##  Use cases, integration, special implementations 
 
-#### **[Skypopen Directory](https://70.169.193.216/wiki/Skypopen%5FDirectory "Skypopen Directory")\-dialing example** 
+#### **[Skypopen Directory](https://70.169.193.216/wiki/Skypopen%5FDirectory "Skypopen Directory")-拨号示例**
 
-An example of using text-to-speech to read a list of online Skype contacts with dynamic extensions, then dialing out when the user keys in the contact's extension.
+使用文本到语音读取在线Skype联系人列表，并在用户输入联系人扩展号码时拨号的示例。
 
-#### **Passing Caller ID to Remote Skype ID - by Zohair** 
+#### **将来电号码传递给远程Skype ID - 由Zohair提供**
 
-I am using xml curl(<http://wiki.freeswitch.org/wiki/Mod%5Fxml%5Fcurl>) and in my php file I added this :
+我正在使用xml curl(<http://wiki.freeswitch.org/wiki/Mod%5Fxml%5Fcurl>)，在我的php文件中添加了以下内容：
 
 ```xml
 <?php
  $calld  = $_REQUEST['Caller-Destination-Number'];
  $cally  = str_replace("skype3439","",$calld) ; 
-;( I am sending skype id like 'skype3439remoteskypeid'  so here i am removing skype3439)
+;( 我发送的skype id是类似于'skype3439remoteskypeid'的形式，因此我在这里去掉了skype3439)
  $callsk = $_REQUEST['Caller-Caller-ID-Number'];
  $zr     = 'api_result=${skypopen(interface1 MESSAGE '.$cally.' (mp) Call from '.$callsk.')}';
 header("Content-type: text/xml");
@@ -914,39 +908,156 @@ exit;
 ?>
 ```
 
-This way Caller Id will be sent before the call as a skype chat message which will only work if remoteskypeid has added the skype id which you are using, otherwise it won't work.
+这样一来，来电者的身份将在呼叫之前作为Skype聊天消息发送，但前提是远程Skype ID已经添加了您正在使用的Skype ID，否则将无法使用。
 
-## **How To Report BUGS and Feature Requests** 
+## **如何报告错误和功能请求**
 
-You can file bug reports, hints, suggestions, feature requests, improvements, patches, etc to <https://freeswitch.org/jira/browse/FS/component/10242/> open an account there if you don't have it (it's free ;-) ).
+您可以将错误报告、提示、建议、功能请求、改进和修补程序等等提交到 <https://freeswitch.org/jira/browse/FS/component/10242/>进行账户注册（它是免费的）。
 
-That's the best way to give us info on bugs:
+这是向我们提供有关错误信息的最佳方式：
+```
 
-1) from the FS CLI: "console loglevel 9"
-2) load mod_skypopen
-3) reproduce the bug
-4) attach the *complete, since beginning* console output **as a file attachment** to the Jira bug
-5) add any comment you may deem useful
+1）从FS CLI：`“console loglevel 9”` 
+2）加载 `mod_skypopen` 模块
+3）复现 bug
+4）将所有的控制台输出（从一开始到最后）**作为附件**附加到 Jira bug 上
+5）添加任何你认为有用的评论
 
-If the bug reports crashes, core dumps, etc, please first read this guide: [Reporting Issues to GitHub](../Troubleshooting-Debugging/Reporting-Issues-to-GitHub_5046304.mdx#about) then file a Jira with all relevant info to mod\_skypopen.
+如果 bug 导致崩溃、核心转储等，请先阅读这个指南: [将问题报告给 GitHub](../Troubleshooting-Debugging/Reporting-Issues-to-GitHub_5046304.mdx#about)，然后将所有相关信息一起提交到 mod\_skypopen 的 Jira 上。
 
-You can also write to the FreeSWITCH users' and developers' mailing lists: <http://lists.freeswitch.org/mailman/listinfo>
+你也可以写信到 Fresswitch 用户和开发者邮件列表: <http://lists.freeswitch.org/mailman/listinfo>
 
-And you can drop in the IRC channels #freeswitch and #freeswitch-dev on [irc.freenode.org](http://irc.freenode.org) to ask questions and discuss issues. The original developer of Skypopen is called "gmaruzz" in the IRC channel.
+并且你可以进入 IRC 频道 #freeswitch 和 #freeswitch-dev，讨论问题和提问。Skypopen 的原始开发者在 IRC 频道中叫做 "gmaruzz"。
 
-As a last resort, absolutely not the preferred way, you can write email to Giovanni Maruzzelli - gmaruzz @ gmail dot com
+作为最后的手段，绝不是首选方式，你可以给 Giovanni Maruzzelli 发送电子邮件 - gmaruzz@gmail.com
 
-## Common Problems
+## 常见问题
 
-1\. When starting pulseaudio with "alternate-sample-rate = 44100" in /etc/pulse/daemon.conf it will complain and not start:   
-  
-E: conf-parser.c: \[/etc/pulse/daemon.conf:90\] Unknown lvalue 'alternate-sample-rate' in section 'n/a'.
+1. 当在 /etc/pulse/daemon.conf 中设置 "alternate-sample-rate = 44100" 时，启动 pulseaudio 会报错并无法启动:
+   
+   E: conf-parser.c: \[/etc/pulse/daemon.conf:90\] Unknown lvalue 'alternate-sample-rate' in section 'n/a'.
 
-R: Probably your version of PulseAudio doesn't implement this config option, try upgrading PulseAudio or removing this setting.
+   R: 可能你的 PulseAudio 版本不支持这个配置选项，请尝试升级 PulseAudio 或删除该设置。
 
-### Comments:
+### 评论：
 
-| Hi all, I completed installation of mod\_skypopen module according to this artical.But I could not hear the voice once the call was connected. Is there anything wrong ? I noticed an error when starting the skype client sh /usr/local/freeswitch/skypopen/skype-clients-startup-dir/start\_skype\_clients.shERROR: Module snd\_pcm\_oss does not exist in /proc/modulesERROR: Module snd\_mixer\_oss does not exist in /proc/modulesERROR: Module snd\_seq\_oss does not exist in /proc/modulessocket(): Address family not supported by protocolsocket(): Address family not supported by protocolsocket(): Address family not supported by protocolinfo in fs\_cli : bgapi originate skypopen/skype102/+86186\*\*\*\*\*\*\*\*\* &bridge(skypopen/skype101/echo123) 2015-11-18 16:29:51.189472 \[DEBUG\] mod\_skypopen.c:1051 \[\| \] \[DEBUG\_SKYPE 1051 \]\[skype101 \]\[UP,INPROGRS\] NO SPACE in WRITE BUFFER: there was no space for 6402015-11-18 16:29:51.209469 \[DEBUG\] mod\_skypopen.c:900 \[| \] \[DEBUG\_SKYPE 900 \]\[skype101 \]\[UP,INPROGRS\] READ BUFFER EMPTY, skypopen\_audio\_read Silence2015-11-18 16:29:51.209469 \[DEBUG\] mod\_skypopen.c:900 \[| \] \[DEBUG\_SKYPE 900 \]\[skype102 \]\[UP,INPROGRS\] READ BUFFER EMPTY, skypopen\_audio\_read Silence2015-11-18 16:29:51.229466 \[DEBUG\] mod\_skypopen.c:900 \[| \] \[DEBUG\_SKYPE 900 \]\[skype101 \]\[UP,INPROGRS\] READ BUFFER EMPTY, skypopen\_audio\_read Silence2015-11-18 16:29:51.229466 \[DEBUG\] mod\_skypopen.c:900 \[| \] \[DEBUG\_SKYPE 900 \]\[skype102 \]\[UP,INPROGRS\] READ BUFFER EMPTY, skypopen\_audio\_read Silence2015-11-18 16:29:51.249469 \[DEBUG\] mod\_skypopen.c:900 \[| \] \[DEBUG\_SKYPE 900 \]\[skype101 \]\[UP,INPROGRS\] READ BUFFER EMPTY, skypopen\_audio\_read Silence2015-11-18 16:29:51.249469 \[DEBUG\] mod\_skypopen.c:900 \[| \] \[DEBUG\_SKYPE 900 \]\[skype102 \]\[UP,INPROGRS\] READ BUFFER EMPTY, skypopen\_audio\_read Silence2015-11-18 16:29:51.269469 \[DEBUG\] mod\_skypopen.c:900 \[| \] \[DEBUG\_SKYPE 900 \]\[skype101 \]\[UP,INPROGRS\] READ BUFFER EMPTY, skypopen\_audio\_read Silence2015-11-18 16:29:51.269469 \[DEBUG\] mod\_skypopen.c:1051 \[| \] \[DEBUG\_SKYPE 1051 \]\[skype102 \]\[UP,INPROGRS\] NO SPACE in WRITE BUFFER: there was no space for 6402015-11-18 16:29:51.269469 \[DEBUG\] mod\_skypopen.c:900 \[| \] \[DEBUG\_SKYPE 900 \]\[skype102 \]\[UP,INPROGRS\] READ BUFFER EMPTY, skypopen\_audio\_read Silence2015-11-18 16:29:51.269469 \[DEBUG\] mod\_skypopen.c:1051 \[| \] \[DEBUG\_SKYPE 1051 \]\[skype101 \]\[UP,INPROGRS\] NO SPACE in WRITE BUFFER: there was no space for 640 ![](/images/icons/contenttypes/comment_16.png) Posted by grednwang at Nov 18, 2015 11:39 |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+大家好，我根据这篇文章完成了mod\_skypopen模块的安装。但是在通话连接后我听不到声音。有什么问题吗？我在启动skype客户端时注意到了一个错误 sh /usr/local/freeswitch/skypopen/skype-clients-startup-dir/start\_skype\_clients.shERROR: 在/proc/modules中不存在模块snd\_pcm\_ossERROR: 在/proc/modules中不存在模块snd\_mixer\_ossERROR: 在/proc/modules中不存在模块snd\_seq\_osssocket(): 协议不支持的地址族socket(): 协议不支持的地址族socket(): 协议不支持的地址族fs\_cli中的信息: bgapi originate skypopen/skype102/+86186\*\*\*\*\*\*\*\*\* &bridge(skypopen/skype101/echo123) 2015-11-18 16:29:51.189472 \[DEBUG\] mod\_skypopen.c:1051 \[\| \] \[DEBUG\_SKYPE 1051 \]\[skype101 \]\[UP,INPROGRS\] 写缓冲中没有空间: 没有640的空间2015-11-18 16:29:51.209469 \[DEBUG\] mod\_skypopen.c:900 \[| \] \[DEBUG\_SKYPE 900 \]\[skype101 \]\[UP,INPROGRS\] 读缓冲为空，skypopen\_audio\_read Silence2015-11-18 16:29:51.209469 \[DEBUG\] mod\_skypopen.c:900 \[| \] \[DEBUG\_SKYPE 900 \]\[skype102 \]\[UP,INPROGRS\] 读缓冲为空，skypopen\_audio\_read Silence2015-11-18 16:29:51.229466 \[DEBUG\] mod\_skypopen.c:900 \[| \] \[DEBUG\_SKYPE 900 \]\[skype101 \]\[UP,INPROGRS\] 读缓冲为空，skypopen\_audio\_read Silence2015-11-18 16:29:51.229466 \[DEBUG\] mod\_skypopen.c:900 \[| \] \[DEBUG\_SKYPE 900 \]\[skype102 \]\[UP,INPROGRS\] 读缓冲为空，skypopen\_audio\_read Silence2015-11-18 16:29:51.249469 \[DEBUG\] mod\_skypopen.c:900 \[| \] \[DEBUG\_SKYPE 900 \]\[skype101 \]\[UP,INPROGRS\] 读缓冲为空，skypopen\_audio\_read Silence2015-11-18 16:29:51.249469 \[DEBUG\] mod\_skypopen.c:900 \[| \] \[DEBUG\_SKYPE 900 \]\[skype102 \]\[UP,INPROGRS\] 读缓冲为空，skypopen\_audio\_read Silence2015-11-18 16:29:51.269469 \[DEBUG\] mod\_skypopen.c:900 \[| \] \[DEBUG\_SKYPE 900 \]\[skype101 \]\[UP,INPROGRS\] 读缓冲为空，skypopen\_audio\_read Silence2015-11-18 16:29:51.269469 \[DEBUG\] mod\_skypopen.c:1051 \[| \] \[DEBUG\_SKYPE 1051 \]\[skype102 \]\[UP,INPROGRS\] 写缓冲中没有空间: 没有640的空间2015-11-18 16:29:51.269469 \[DEBUG\] mod\_skypopen.c:900 \[| \] \[DEBUG\_SKYPE 900 \]\[skype102 \]\[UP,INPROGRS\] 读缓冲为空，skypopen\_audio\_read Silence2015-11-18 16:29:51.269469 \[DEBUG\] mod\_skypopen.c:1051 \[| \] \[DEBUG\_SKYPE 1051 \]\[skype101 \]\[UP,INPROGRS\] 写缓冲中没有空间: 没有640的空间！  Posted by grednwang at Nov 18, 2015 11:39 |
+
+# Markdown格式说明
 
 
+此文档使用Markdown格式编写，以展示文本样式和格式。Markdown是一种轻量级标记语言，通过使用特定的符号和结构，可以实现文本标题、段落、列表、链接等功能。具体语法和示例在下文中给出。
+
+## 标题
+
+使用井号（#）符号可创建标题。井号数量代表标题级别，一级标题使用一个井号，二级标题使用两个井号，依此类推。
+
+示例:
+```
+# 一级标题
+
+## 二级标题
+
+### 三级标题
+```
+
+## 段落和换行
+
+段落是由一行或多行文本组成，它们可以通过空行分隔。单个换行符不会新建段落，只会创建新行。要创建新段落，请在两个段落之间插入一个空行。
+
+示例:
+```
+这是一个段落。
+
+这是另一个段落。
+```
+
+## 列表
+
+有序列表和无序列表可以通过使用符号（-、*、或+）和数字来创建。有序列表会自动按照数字顺序编号。
+
+示例:
+```
+- 无序列表项1
+- 无序列表项2
+- 无序列表项3
+
+1. 有序列表项1
+2. 有序列表项2
+3. 有序列表项3
+```
+
+## 链接
+
+链接可以通过使用方括号和圆括号来创建。方括号内为显示的链接文本，圆括号内为链接目标。链接可以指向其他网页、图片、文件等。
+
+示例:
+```
+[百度](https://www.baidu.com)
+
+![图片](https://example.com/image.jpg)
+```
+
+## 引用
+
+引用可以通过在文本前加上大于号（>）来创建。引用可以嵌套使用，每一级引用增加一个大于号。
+
+示例:
+```
+> 这是一个引用。
+
+>> 这是一个嵌套引用。
+```
+
+## 强调和斜体
+
+强调可以通过在文本两侧使用单个星号（*）或单个下划线（_）来创建。双重强调可以使用两对星号或下划线。
+
+示例:
+```
+*强调*
+
+_强调_
+
+**双重强调**
+
+__双重强调__
+```
+
+## 代码和代码块
+
+内联代码可以通过使用反引号(\`)来创建。代码块可以通过在一行文本之前和之后使用三个反引号（```）来创建。
+
+示例:
+```
+这是一段`内联代码`。
+
+```
+这是一个代码块。
+代码块可以有多行。
+```
+```
+
+## 分割线
+
+分割线可以在一行文本中使用三个或更多连字符（-）、星号（*）或下划线（_）来创建。
+
+示例:
+```
+---
+
+***
+
+___
+```
+
+## 转义字符
+
+Markdown使用反斜杠（\）作为转义字符，用于在特定符号前插入反斜线，以防止其被解释为Markdown语法。
+
+示例:
+```
+这是一个普通星号：\*
+```
+
+这些是Markdown格式的基本语法和示例。使用这些语法，可以创建漂亮的格式化文档。

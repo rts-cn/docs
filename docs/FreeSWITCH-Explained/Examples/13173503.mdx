@@ -1,64 +1,65 @@
+# Park & Retrieve (停车与取车)
 
-# Park & Retrieve 
+## 关于
 
- 
+此示例实现了停车槽位，每个槽位可以容纳一个呼叫者。
 
-## About
+需要注意的是，此拨号计划逻辑实现的功能与停车和代客泊车的拨号计划工具提供的功能不同。停车应用程序会将呼叫者置于保持状态（在系统中），您必须将呼叫者转接或转移来有效地取回呼叫。而代客泊车应用程序允许您将呼叫保持（在系统中），并通过拨打特定号码来使呼叫可以取回。
 
-This example implements parking slots; each slot holds one caller.
+下面描述的实现方式提供了使用相同的目标号码触发将呼叫保持在特定的先进先出队列中，或触发从特定的先进先出队列中取回呼叫的能力，具体取决于先进先出队列的状态。与简单使用停车或代客泊车不同，此拨号计划控制使用多个先进先出队列作为呼叫的保持槽，呼叫"停放"和唯一的先进先出队列之间存在一对一的映射；任何给定的先进先出队列一次只能保持一个呼叫者。如果某个先进先出队列中保持有呼叫，运行此拨号计划将导致取回呼叫。详细信息请参阅下文。
 
-Note that the feature implemented by this dialplan logic is different from the features that the park and valet\_park dialplan tools provide. The park application will place a caller on hold (on the system), and you must bridge to or transfer the caller to effectively retrieve the call. The valet\_park application allows you to place a call on hold (on the system) and make the call retrievable by dialing a certain number.
+单击此处展开目录
 
-The implementation described below provides the ability to use the same destination number to trigger holding the call in a particular FIFO OR to trigger retrieval of a call from a particular FIFO, depending on the state of the FIFO. Different from simply using park or valet\_park, this dialplan controls the use of multiple FIFOs as holding slots for calls, with a one-to-one mapping between calls "parked" and unique FIFOs; only one caller can be on hold in any given FIFO at a time. If a call is on hold in a given FIFO, running this dialplan for that FIFO will result in retrieval of the call. See below for details.
+* 1 [简介](#简介)
+  * 1.1 [参见](#参见)
 
-Click here to expand Table of Contents
+## 简介
 
-* 1 [Introduction](#introduction)  
-   * 1.1 [See Also](#see-also)
+如果您呼叫此分机：
 
-## Introduction
+1. 如果槽位为空，您可以将自己停放在该槽位。
+2. 如果槽位中正在保持一个呼叫者，该呼叫者将从槽位中移除并转接给您 - 您和呼叫者将被连接。
 
-If you call this extension:
+如果您将一个呼叫者转接到此分机：
 
-1. If the slot is empty, you park yourself in the slot.
-2. If the slot is holding a caller, the caller will be removed from the slot and delivered to you - you and the caller will be connected.
+1. 如果槽位为空，被转接的呼叫者将被放置在该槽位。
+2. 如果槽位中已经保持一个呼叫者，被转接的呼叫者和已停放的呼叫者将被连接（已停放的呼叫者将从槽位中移除）。
 
-If you transfer a caller to this extension:
+此行为通过使用FIFOs来实现。只允许一个呼叫者同时进入FIFO是由这个拨号方案控制的，它使用了呼叫者的FIFO计数。
 
-1. If the slot is empty, the transferred caller will be placed in the slot.
-2. If the slot is holding a caller already, the transferred caller and parked caller will be connected (the parked caller being removed from the slot).
+在单个分机（和单个目标）中具有此功能非常适合在一个SIP电话上创建一个BLF/快速拨号按钮，该按钮指向此分机。然后您只需要一个按钮来控制停车和解除停车。
 
-This behavior is implemented by using FIFOs. The fact that only one caller is allowed in a FIFO at a time is controlled by this dialplan, which uses the FIFO count of callers.
+在此示例中，用于匹配此分机目标的正则表达式为"slot\\d+"，以便您可以具有任意数量的插槽（例如slot1、slot2、slot3，...，slot100等）。
 
-Having this feature in a single extension (and single destination) is great for making a BLF/speed-dial button on a SIP phone which points to this extension. Then you have a single button to control parking and un-parking.
-
-In this example, the regular expression matching the destination for this extension is "slot\\d+" so that you may have any number of slots (i.e. you may have slot1, slot2, slot3, ..., slot100, etc.).
-
-You may define FIFOs (e.g. define FIFOs named slot1, slot2, and slot3) in autoload\_configs/fifo.conf.xml.
+您可以在autoload\_configs/fifo.conf.xml中定义FIFOs（例如定义名为slot1、slot2和slot3的FIFOs）。
 
 ```xml
 <extension name="parking_slots">
    <condition field="destination_number" expression="^(slot\d+)$" break="on-false">
-     <!-- Get count of callers in the specified parking slot (FIFO) --> 
+     <!-- 获取指定停车槽（FIFO）中呼叫者的计数 -->
      <action inline="true" application="set" data="slot_count=${fifo(count $1@$${domain})}"/>
      <action inline="true" application="set" data="slot_count=${slot_count:-9:2}"/>
    </condition>
    <condition field="${slot_count}" expression="^\:0$" break="always">
-     <!-- FIFO settings for parking FIFOs -->
+     <!-- 用于停车FIFO的FIFO设置 -->
      <action application="unset" data="fifo_chime_list"/>
      <action application="set" data="fifo_chime_freq=0"/>
-     <!-- FIFO is empty, so park the caller: -->
+     <!-- FIFO为空，所以将呼叫者停泊： -->
      <action application="fifo" data="${destination_number}@$${domain} in undef local_stream://moh"/>
-     <!-- FIFO has a caller, so un-park the caller: -->
+     <!-- FIFO有呼叫者，所以将呼叫者解除停泊： -->
      <anti-action application="fifo" data="${destination_number}@$${domain} out nowait"/>
    </condition>
  </extension>
 ```
 
-### See Also
+### 另请参阅
 
 * [mod\_fifo](../Modules/mod_fifo_3966031.mdx#-add)
 * [mod\_dptools: park](../Modules/mod-dptools/6586687.mdx#0-about)
 * [mod\_valet\_parking](../Modules/mod_valet_parking_3966447.mdx#dtmf)
 
 
+
+* [mod\_fifo](../Modules/mod\_fifo\_3966031.mdx#-add)
+* [mod\_dptools: park](../Modules/mod-dptools/6586687.mdx#0-about)
+* [mod\_valet\_parking](../Modules/mod\_valet\_parking\_3966447.mdx#dtmf)

@@ -1,106 +1,103 @@
-
-# JavaScript Example - dbIVRmenu 
+# JavaScript 示例 - dbIVRmenu 
 
  
 
-## About
+## 关于
 
-by Paul Davis (pist @ #freeswitch)This application uses CoreDB module to create & populate an SQLite database for a simple IVR menu. This will work with the default dialplan! It is only meant to be an example of the power and ease of using FreeSwitch. This example includes work ripped off from other JavaScript apps created by anthm. I hope this helps you in starting to use JavaScript in FreeSWITCH™.
+由Paul Davis（pist @ #freeswitch）编写，该应用程序使用CoreDB模块来创建和填充一个简单的IVR菜单的SQLite数据库。此示例将与默认的拨号计划配合使用！它只是一个使用FreeSwitch的强大和简便性的例子。此示例包括从其他JavaScript应用程序中剥离出的工作，这些应用程序由anthm创建。我希望这对您开始使用FreeSWITCH™中的JavaScript有所帮助。
 
-Click here to expand Table of Contents
+点击此处展开目录
 
-* 1 [Create Database](#create-database)
-* 2 [IVR Script](#ivr-script)
+* 1 [创建数据库](#create-database)
+* 2 [IVR脚本](#ivr-script)
 
-## Create Database
+## 创建数据库
 
-If you change your dialplan, then you must modify the database.
+如果更改了您的拨号计划，则必须修改数据库。
 
-This app works on FS rev 3488.
+该应用程序适用于FS rev 3488。
 
-To install: copy this file to `<freeswitch dir>/scripts/dbivrmenu_dbcreate.js`
+安装方法：将此文件复制到`<freeswitch dir>/scripts/dbivrmenu_dbcreate.js`
 
-To execute on the console: `jsrun dbivrmenu_dbcreate.js`
+在控制台上执行：`jsrun dbivrmenu_dbcreate.js`
 
-**database creation example**
+**数据库创建示例**
 
 ```js
 /** 
- dbivrmenu_dbcreate.js - Database creation script for dbivrmenu.js
- JavaScript Application for FreeSwitch::mod_v8
- by Paul Davis (pist @ #freeswitch)
- 
- This application is only meant to be an example of the power and ease of using FreeSwitch.
- This file includes work ripped off from other JavaScript apps created by anthm @ #freeswitch.
- I hope this helps you in starting to use FreeSwitch & JS.
- 
- Note: This application uses CoreDB module to create & populate a sqlite database.
-         This will work with the default dialplan! 
-         **change your dialplan == modify the database**
-         This app works on FS rev 3488.
- 
- Install:  copy this file to your <freeswitch dir>/scripts/
-             execute on console: jsrun dbivrmenu_dbcreate.js
- 
- Disclaimer: Use at your own risk.  No implied warranties or help if/when stuff blows up.
+ dbivrmenu_dbcreate.js - dbivrmenu.js 的数据库创建脚本
+ 使用 FreeSwitch::mod_v8 开发的 JavaScript 应用
+ 作者：Paul Davis (pist @ #freeswitch)
+
+ 此应用仅作为使用 FreeSwitch 的强大和易用性的示例而存在。
+ 此文件包含从其他由 anthm @ #freeswitch 创建的 JavaScript 应用中剽窃的作品。
+ 我希望这可以帮助你开始使用 FreeSwitch 和 JS。
+
+ 注意：此应用使用 CoreDB 模块创建和填充 sqlite 数据库。
+ 这将与默认的拨号计划一起运作！
+ **更改您的拨号计划 == 修改数据库**
+ 此应用在 FreeSwitch 版本 3488 上运行。
+
+ 安装：将此文件复制到您的 <freeswitch dir>/scripts/ 目录下
+       在控制台上执行：jsrun dbivrmenu_dbcreate.js
+
+ 免责声明：使用风险自负。使用过程中不提供任何明示或暗示的担保或帮助，但会支持处理问题。
  **/
- 
- use("CoreDB");
- 
- function mycb(hash)
- {
-     console_log("notice", "Adding Menu Option=[" + hash["option"] + "] Route=[" + hash["route"] + "] to the DB\n");
- }
- 
- 
- var db = new CoreDB("dbivrmenudemo");
- var sql;
- var menu_options = new Array();
- var line = "==============================\n";
- 
- /** 3 menu options and an extension for each option **/
- menu_options["1"] = 1000;
- menu_options["2"] = 1234;
- menu_options["3"] = 888;  // you have to uncomment the section for extension 888 for this to work
- 
- /** You could add more fields here to extend this app **/
- db.exec("create table menu_options (option varchar(10), route varchar(120));");
- 
- for (var i in menu_options) {
-     sql = "insert into menu_options values('" + i + "', " + menu_options[i] + ");";
-     db.exec(sql);
- }
- 
- /** Let's see what's in the database, shall we? **/
- sql = "select * from menu_options;";
- 
- console_log("notice", line);
- console_log("notice", "Adding Menu Options to Datab:\n");
- db.exec(sql, "mycb");
- console_log("notice", line);
+
+use("CoreDB");
+
+function mycb(hash) {
+    console_log("notice", "将菜单选项=[" + hash["option"] + "] 路由=[" + hash["route"] + "] 添加到数据库中\n");
+}
+
+var db = new CoreDB("dbivrmenudemo");
+var sql;
+var menu_options = new Array();
+var line = "==============================\n";
+
+/** 3个菜单选项和每个选项的扩展 **/
+menu_options["1"] = 1000;
+menu_options["2"] = 1234;
+menu_options["3"] = 888; // 若要使此项工作，您必须取消注释扩展 888 的部分
+
+/** 您可以在此处添加更多字段以扩展此应用 **/
+db.exec("create table menu_options (option varchar(10), route varchar(120));");
+
+for (var i in menu_options) {
+    sql = "insert into menu_options values('" + i + "', " + menu_options[i] + ");";
+    db.exec(sql);
+}
+
+/** 让我们看看数据库里有什么内容，好吗？ **/
+sql = "select * from menu_options;";
+
+console_log("notice", line);
+console_log("notice", "将菜单选项添加到数据库中:\n");
+db.exec(sql, "mycb");
+console_log("notice", line);
 ```
 
-## IVR Script
+## IVR脚本
 
-This application requires a database. It uses CoreDB module to access a SQLite database.
+这个应用程序需要一个数据库。它使用CoreDB模块来访问SQLite数据库。
 
-Use dbivrmenu\_dbcreate.js, above, to have FS create the database for you.
+使用上面的dbivrmenu_dbcreate.js脚本告诉FS为你创建数据库。
 
-This requires the default dialplan to work properly.
+这要求默认的电话计划顺利运行。
 
-Sofia-SIP should be working properly before trying to use this app.
+在尝试使用该应用程序之前，确保Sofia-SIP正常工作。
 
-You will have to create the sound files or REM out those statements.
+你将需要创建声音文件或将那些语句注释掉。
 
-This application simply transfers the call to another extension.
+该应用程序简单地将呼叫转接到另一个分机。
 
-This app works on FS rev 3488.
+该应用程序适用于FS版本3488。
 
-To install: copy this file to &lt;freeswitch dir>/scripts/dbivrmenu.js
+安装步骤：将此文件复制到&lt;freeswitch目录>/scripts/dbivrmenu.js中。
 
-Add the following section to your default dialplan around the extension 1000 section.
+将以下部分添加到默认的电话计划中的扩展1000部分周围。
 
-**Extension 1200**
+**扩展号码1200**
 
 ```xml
 <extension name="1200">
@@ -110,24 +107,18 @@ Add the following section to your default dialplan around the extension 1000 sec
 </extension>
 ```
 
-Dial 1200 from your sip phone and voila! Ofcourse you can match for inbound DID/DNIS, and run this app. 
+从您的SIP电话拨打1200就可以了！当然，您也可以匹配入站DID/DNIS，并运行此应用程序。
 
-Disclaimer: Use at your own risk. No implied warranties or help if/when stuff blows up.
+免责声明：自行承担风险。如果发生问题，恕不提供任何默示的保证或帮助。
 
-**db IVR example**
-
-```js
-/** dbivrmenu.js - Simple IVR Menu using a database.
-JavaScript Application for FreeSwitch::mod_v8
-by Paul Davis (pist @ #freeswitch)
-**/
-
+```javascript
 use("CoreDB");
 var db = new CoreDB("dbivrmenudemo");
 var sql;
 var dtmf = new Object();
 var replay = 1;
-function mycb (session, type, data, arg) {
+
+function mycb(session, type, data, arg) {
     if (type == "dtmf") {
         arg.digits += data.digit;
         if (arg.digits.length >= 1) {
@@ -135,69 +126,90 @@ function mycb (session, type, data, arg) {
         }
     }
 }
-function get_route(digits)
-{
-    sql = "select * from menu_options where option = '" + digits +"';";
+
+function get_route(digits) {
+    sql = "select * from menu_options where option = '" + digits + "';";
     var line = "====================================\n";
-    console_log("notice", "Menu Option Entered: " + digits +" \n");
+    console_log("notice", "进入菜单选项: " + digits + " \n");
     console_log("notice", line);
-    
+
     db.prepare(sql);
-    while(db.next()) {
-       hash = db.fetch();
-        
+    while (db.next()) {
+        hash = db.fetch();
+
         if (hash["option"] == digits) {
-            console_log("notice", "Found Menu Option=[" + hash["option"] + "] Route=[" + hash["route"] + "]\n");
+            console_log("notice", "找到菜单选项=[" + hash["option"] + "] 路由=[" + hash["route"] + "]\n");
             return hash["route"];
-        } else { 
-            console_log("notice", "Menu Option NOT Found!\n");
-            return false; }
+        } else {
+            console_log("notice", "未找到菜单选项！\n");
+            return false;
+        }
     }
 }
-/** Let's answer our call **/
+
+/** 让我们接听电话 **/
 session.answer();
-/** Play our Main Menu prompt sound file.  You could use TTS here as well.  **/
-console_log("notice", "Playing dbivrmenu Main Menu sound file . . .\n");
-session.streamFile("/var/sounds/dbivrmenu_main.wav", "");    
-while(session.ready()) {
+/** 播放我们的主菜单提示音。你也可以在这里使用TTS。 **/
+console_log("notice", "播放 dbivrmenu 主菜单声音文件. . .\n");
+session.streamFile("/var/sounds/dbivrmenu_main.wav", "");
+while (session.ready()) {
     dtmf.digits = "";
-    console_log("notice", "collecting dtmf digits . . .\n");
-    
-   if (dtmf.digits.length < 1) {
+    console_log("notice", "正在收集 dtmf 按键. . .\n");
+
+    if (dtmf.digits.length < 1) {
         session.collectInput(mycb, dtmf, 5000);
-    } 
-    
-    /** when we timeout from above, we check replay value and play appropriate prompts **/
+    }
+
+    /** 当我们超时后，检查重播值并播放适当的提示 **/
     if ((!dtmf.digits) && (replay < 4)) {
-        console_log("notice", "Replay # " + replay + "\n");
+        console_log("notice", "重播次数 " + replay + "\n");
         session.streamFile("/var/sounds/invalidoption.wav", "");
         session.streamFile("/var/sounds/dbivrmenu_main.wav", "");
-        replay++;  // increment our replay value; we don't want to replay our prompts too many times!
-        } else if (replay >= 4) { 
-            /** Caller does not understand the prompts or your DB data is wrong; either way we've had enough, let's push'em off the line **/
-            session.streamFile("/var/sounds/havingtrouble.wav", "");
-            session.hangup();
-            }
-    
-    
-    if(dtmf.digits) {
-        console_log("notice", "Got Some Digits . . .\n");
-        
+        replay++;  // 递增重播值; 我们不希望重播提示太多次！
+    } else if (replay >= 4) {
+        /** 呼叫者不理解提示音或您的DB数据错误; 无论哪种情况，我们已经够了，让我们挂断电话 **/
+        session.streamFile("/var/sounds/havingtrouble.wav", "");
+        session.hangup();
+    }
+
+    if (dtmf.digits) {
+        console_log("notice", "收到按键 . . .\n");
+
         route = get_route(dtmf.digits);
         if (!route) {
-            console_log("notice", "Invalid Option . . .\n");
+            console_log("notice", "无效选项 . . .\n");
             session.streamFile("/var/sounds/invalidpin.wav", "");
             session.streamFile("/var/sounds/dbivrmenu_main.wav", "");
         } else {
-           console_log("notice", "Found Valid Option . . .\n");
+            console_log("notice", "找到有效选项 . . .\n");
             session.streamFile("/var/sounds/plswait.wav", "");
-            
-            /** initiate the transfer application and send to the extension in route; again, you could extend this **/
+
+            /** 启动转接应用程序并发送到路由中的分机; 同样，您可以扩展此功能 **/
             session.execute("transfer", route);
         }
     }
-    
+
 }
 ```
 
+# Title
 
+# 第一节
+
+这是一个示例文本，用于演示机器翻译的能力。请确认翻译是否准确、流畅且符合语法规范。
+
+
+
+## 第二节
+
+感谢您使用我们的专业翻译引擎。我们致力于为您提供高质量、准确且专业的翻译服务。无论您是需要将文本翻译成另一种语言，或是需要将语言转变成不同的风格，我们都能满足您的需求。
+
+我们的翻译引擎利用了最先进的技术和算法，确保翻译结果的准确性和一致性。我们的团队由专业的语言学家和翻译专家组成，他们对各种语言和领域都有深入的了解。
+
+我们采用了灵活的方法来处理不同类型的文本，包括专业术语、领域特定的术语和常用表达。我们的系统会根据上下文来识别并正确翻译这些术语，以确保翻译结果的准确和易读性。
+
+我们的团队致力于提供高效和快速的翻译服务。我们的系统可以处理大量的文本，并以最短的时间提供翻译结果。无论您需要翻译大型文件、网站内容还是其他类型的文本，我们都可以满足您的要求。
+
+我们的翻译服务也支持多种文件格式，如文本文件、Word文档、Excel表格、PowerPoint幻灯片等。您只需将原始文件上传到我们的系统，我们将以最高的质量将其翻译为您需要的语言。
+
+请不要犹豫，立即尝试我们的翻译服务。我们的团队将竭诚为您提供卓越的翻译体验。如果您有任何问题或需求，请随时与我们联系。我们期待为您服务！

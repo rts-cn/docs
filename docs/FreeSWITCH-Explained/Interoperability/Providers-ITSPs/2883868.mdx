@@ -1,109 +1,110 @@
-
-# Provider Vitelity (USA) 
+# Vitelity供应商（美国）
 
  
 
-Last update: 20 November 2012
+最新更新：2012年11月20日
 
 * 1 [www.vitelity.com](#wwwvitelitycomhttpwwwvitelitycom)  
-   * 1.1 [Network Configuration](#network-configuration)  
-   * 1.2 [Vitelity Web Portal Setting](#vitelity-web-portal-setting)  
+   * 1.1 [网络配置](#network-configuration)  
+   * 1.2 [Vitelity Web Portal设置](#vitelity-web-portal-setting)  
    * 1.3 [vitelity.xml](#vitelityxml)  
    * 1.4 [public.xml](#vitelityxml)  
    * 1.5 [default.xml](#vitelityxml)  
-   * 1.6 [Finish Up](#finish-up)
-* 2 [Registration Method](#registration-method)
-* 3 [Notes](#-freeswitch--provider-vitelity-usa-)
+   * 1.6 [完成](#finish-up)
+* 2 [注册方法](#registration-method)
+* 3 [注意事项](#-freeswitch--provider-vitelity-usa-)
 
 ## [www.vitelity.com](http://www.vitelity.com)
 
-This method uses the static ip address of your FreeSWITCH configuration. Changes must be made to your account at [vitelity.com](http://vitelity.com) and also to local FreeSWITCH files. Follow this guide for complete instructions.
+此方法使用您的FreeSWITCH配置的静态IP地址。您需要在[vitelity.com](http://vitelity.com)上更改您的帐户和本地FreeSWITCH文件。请按照本指南的完整说明进行操作。
 
-### Network Configuration
+### 网络配置
 
-Before setting up the vitelity gateways be sure ports 5060-5061 and 5080 are not blocked on your FreeSWITCH server. You may have to configure port forwarding on your router to make this work correctly. For a quick and dirty setup place your FreeSWITCH server outside your firewall; know that this can be a security threat.
+在设置vitelity网关之前，请确保您的FreeSWITCH服务器上的端口5060-5061和5080没有被阻止。您可能需要在路由器上进行端口转发才能正常工作。为了快速简单设置，将FreeSWITCH服务器放在防火墙之外，但请注意这可能会带来安全威胁。
 
-### Vitelity Web Portal Setting
+### Vitelity Web Portal设置
 
-Login to your vitelity account at [vietlity.com](http://vietlity.com). You will see the new version 2 interface.
+登录到您的vitelity账户[vietlity.com](http://vietlity.com)。您将看到新的2版本界面。
 
-Click DIDs along the top tabs, then click sub accounts. Scroll to the bottom where you see IP address authentication. This is important! Enter your public ip address and port number 5080\. Save it.
+点击顶部选项卡中的DIDs，然后点击子账户。滚动到底部，您会看到IP地址验证。这很重要！输入您的公共IP地址和端口号5080。保存。
 
-Click the top support tab and then the setup wizard link.
+点击顶部的支持选项卡，然后点击设置向导链接。
 
 ```text
-Choose Asterisk PBX Server > Go
-  Read the text > Next
-  Do you have a static IP address choose YES > Go
-  Enter your IP address > GO
-  You will end up on the configuration page. Stay here.
+选择Asterisk PBX服务器>前往
+  阅读文本>下一步
+  您是否有静态IP地址选择是>前往
+  输入您的IP地址>前往
+  您将进入配置页面。停留在这里。
 ```
 
-On the configuration page copy down the host for \[vitel-inbound\] (should be something like inbound#.[vitelity.net](http://vitelity.net). Also copy down the host for \[vitel-outbound\] (should be something like [outbound.vitelity.net](http://outbound.vitelity.net))
+在配置页面上记录下\[vitel-inbound\]的主机（应该是类似于inbound#.[vitelity.net](http://vitelity.net)的内容）。同时也记录下\[vitel-outbound\]的主机（应该是类似于[outbound.vitelity.net](http://outbound.vitelity.net)的内容）。
 
-We now need to find out the password to your vitelity gateway. This is also called a secret. Click the top support tab. Choose switchvox configuration. A new page will open. Copy the password from the new screen. It will be some random set of letters and numbers.
+现在我们需要找出vitelity网关的密码，也叫做secret。点击顶部的支持选项卡，选择switchvox配置。一个新的页面将会打开，请从新页面中复制密码。这将是一串随机的字母和数字。
 
-You should have the following information:
+你应该有以下信息：
 
 ```text
-  vitel-inbound host
-  vitel-outbound host
-  vitelity password (secret) - not the same password you log into your account with.
+  vitel-inbound主机
+  vitel-outbound主机
+  vitelity密码（secret）- 这不是你登陆账户时使用的同一个密码。
 ```
 
 ### vitelity.xml
 
-Create a new file /usr/local/freeswitch/conf/sip\_profiles/external/vitelity.xml
+创建一个新文件 /usr/local/freeswitch/conf/sip\_profiles/external/vitelity.xml
 
-Copy and paste the following code to vitelity.xml. Adjust the setting to reflect the vitelity settings you just found. Reference the vitelity web portal configuration section above if you need help finding your credentials. Proxy values are the are the same as the hosts.
+将下面的代码复制粘贴到vitelity.xml文件中。根据你刚刚找到的vitelity设置调整配置。如果需要帮助找到凭据，请参考上述vitelity网站配置部分。代理值与主机相同。
 
 ```xml
 	<include>
 	<gateway name="vitelity-outbound">
-           <!--/// account username *required* ///-->
+           <!--/// 账户用户名 *必填* ///-->
            <param name="username" value="username"/>
-           <!--/// auth realm: *optional* same as gateway name, if blank ///-->
+           <!--/// 验证领域: *可选* 若为空与网关名称相同 ///-->
            <param name="realm" value="vitel-outbound"/>
-           <!--/// account password *required* ///-->
+           <!--/// 账户密码 *必填* ///-->
            <param name="password" value="password"/>
-           <!--/// extension for inbound calls: *optional* same as username, if blank ///-->
+           <!--/// 呼入电话的分机: *可选* 若为空与用户名相同 ///-->
            <param name="extension" value="default"/>
-           <!--/// proxy host: *optional* same as realm, if blank ///-->
+           <!--/// 代理主机: *可选* 若为空与领域相同 ///-->
            <param name="proxy" value="outbound1.vitelity.net"/>
-           <!--/// expire in seconds: *optional* 3600, if blank ///-->
+           <!--/// 过期时间（单位：秒）: *可选* 若为空为3600 ///-->
            <param name="expire-seconds" value="600"/>
-           <!--/// register: *optional* true, if blank ///-->
+           <!--/// 注册: *可选* 若为空则为true ///-->
            <param name="register" value="false" />
-         </gateway>
-	</include>
-
-
-	<include>
-	<gateway name="vitelity-inbound">
-           <!--/// account username *required* ///-->
-           <param name="username" value="your-username"/>
-           <!--/// auth realm: *optional* same as gateway name, if blank ///-->
-           <param name="realm" value="vitel-inbound"/>
-           <!--/// account password *required* (do not include allow=all) ///-->
-           <param name="password" value="your-password"/>
-           <!--/// extension for inbound calls: *optional* same as username, if blank ///-->
-           <param name="extension" value="default"/>
-           <!--/// proxy host: *optional* same as realm, if blank ///-->
-           <param name="proxy" value="inbound18.vitelity.net"/>
-           <!--/// expire in seconds: *optional* 3600, if blank ///-->
-           <param name="expire-seconds" value="600"/>
-           <param name="context" value="inbound"/>
-           <!--/// register: *optional* true, if blank ///-->
-           <param name="register" value="true" />
          </gateway>
 	</include>
 ```
 
+```
+
+<include>
+<gateway name="vitelity-inbound">
+           <!--/// 账户用户名 *必填* ///-->
+           <param name="username" value="your-username"/>
+           <!--/// 授权域名: *可选* 若为空，则与网关名称相同 ///-->
+           <param name="realm" value="vitel-inbound"/>
+           <!--/// 账户密码 *必填* （不包括 allow=all） ///-->
+           <param name="password" value="your-password"/>
+           <!--/// 呼入电话的分机号： *可选* 若为空, 则与用户名相同 ///-->
+           <param name="extension" value="default"/>
+           <!--/// 代理主机： *可选* 若为空, 则与域名相同 ///-->
+           <param name="proxy" value="inbound18.vitelity.net"/>
+           <!--/// 秒为单位的过期时间： *可选* 若为空, 则为 3600 ///-->
+           <param name="expire-seconds" value="600"/>
+           <param name="context" value="inbound"/>
+           <!--/// 注册： *可选* 若为空, 则为 true ///-->
+           <param name="register" value="true" />
+         </gateway>
+</include>
+```
+
 ### public.xml
 
-Add this to freeswitch/conf/dialplan/public.xml
+将以下内容添加到 freeswitch/conf/dialplan/public.xml
 
-Changing data="1000 ..." to a different number will change the extension to which the call is directed to.
+通过将 data="1000 ..." 更改为其他号码，可更改呼叫转接到的分机号码。
 
 ```xml
   <extension name="vitel-inbound">   
@@ -115,7 +116,7 @@ Changing data="1000 ..." to a different number will change the extension to whic
 
 ### default.xml
 
-Add this to freeswitch/conf/dialplan/default.xml Replace the efective\_caller\_id\_number=18001234567 with your phone number
+将以下内容添加到 freeswitch/conf/dialplan/default.xml, 将 effective\_caller\_id\_number=18001234567 替换为您的电话号码
 
 ```xml
  <extension name="vitel-outbound">
@@ -126,41 +127,42 @@ Add this to freeswitch/conf/dialplan/default.xml Replace the efective\_caller\_i
   </extension>
 ```
 
-### Finish Up
+### 调整设置
 
-You'll need to do a rescan to load the new gateway.
+你需要重新扫描以加载新的网关。
 
 ```xml
 sofia profile external rescan
 ```
 
-From the command line will do, it will even reload the dialplan at the same time.
+从命令行运行以上命令，它将同时重新加载拨号计划。
 
   
-Try calling your vitelity DID. If a sip phone is registered to extension 1000 the phone should ring. If a phone is not registerd the call should go to voicemail.
+尝试拨打你的Vitelity DID。如果一个SIP电话注册到分机1000，电话应该会响起。如果电话没有注册，呼叫将会进入语音信箱。
 
-Try calling out from extension 1000\. Dial with a leading 1 and the area code. Also try dialing with just the area code. Both should work.
+尝试从分机1000进行外呼。用以1开头的区号拨号。也可以只拨打区号，两种方式都应该能够拨通。
 
-Credit goes to the FreeSWITCH wiki and IRC channel. I've just pieced everything together.
+感谢FreeSWITCH wiki和IRC频道提供的帮助。我只是将所有东西拼凑在一起。
 
-If you have any questions please feel to try and find me on the IRC channel. Name: jch.
+如果你有任何问题，请尝试在IRC频道中找到我。用户名：jch。
 
-## Registration Method
+## 注册方法
 
-This seems to work easier. No acl's to mess with, and add inbound/outbound routes as normal. Also better integration with FusionPBX if that's your flavor.
+这个注册方法似乎更容易操作。不需要去烦恼ACL，并且可以像正常添加进出路由一样操作。如果你使用的是FusionPBX，它还与之更好地集成。
 
-Log into the web portal and set/get the following info.
+登录到网页控制台，获取和设置以下信息。
 
-1. set a username/password  
-   * DIDs -> Sub Accounts  
-   * Create a new login and set a password.
-2. Route to your Registered Account  
-   * My Account -> Routing  
-   * Select Set default route to the account 'wwwusername\_somethingyouset'
-3. Get the Proxy and Outbound proxy servers
-4. Support -> Generic SIP
+1. 设置用户名/密码
+   * DIDs -> 子账户
+   * 创建一个新的登录并设置密码。
+2. 设置到你的注册账户的路由
+   * My Account -> 路由
+   * 选择将默认路由设置为账户'wwwusername_somethingyouset'。
+3. 获取代理和出口代理服务器
+4. 支持 -> 通用SIP
 
-vim /usr/local/freeswitch/conf/sip\_profiles/external/Vitelity.xml
+vim /usr/local/freeswitch/conf/sip_profiles/external/Vitelity.xml
+```
 
 ```xml
 <include>
@@ -177,9 +179,7 @@ vim /usr/local/freeswitch/conf/sip\_profiles/external/Vitelity.xml
 </include>
 ```
 
-## Notes
+## 注意事项
 
-* **DTMF:** Some of the inbound and outbound SIP gateways/proxies utilize a combination of inband 2833 DTMF as well as did not handle FreeSWITCH's generated 2833 DTMF (for whatever reason). To mitigate this Vitelity assigned us to two different gateways: (Inbound/origination): [inbound21.vitelity.net](http://inbound21.vitelity.net) and (Outbound/termination): [sip22.vitelity.net](http://sip22.vitelity.net). This completely resolved our issues with intermittent DTMF issues on calls to various numbers as well as total non-operation with T-Mobile voicemail, Google Voice interaction, and POTS inband pass-through. Apparently these gateways use different "switches" which "handle DTMF differently." Submit a support ticket and they might move your account to those gateways if you're having issues.
-* **RTP timeout:** Vitelity has a 60-second timeout on the lack of RTP media stream packets (e.g. rtptimeout configuration in sip.conf on Asterisk). This manifests itself as dropped calls when recording audio (e.g. voicemail) after 60 seconds. This is because FreeSWITCH does not send RTP media when recording (to save bandwidth). FreeSWITCH SVN revisions before r13144 could not work around this. FreeSWITCH has a [record\_waste\_resources channel variable](../../Dialplan/Variables-Archive/x__Channel-Variables_1048892.mdx#variable-references) which transmits empty frames during record. Note also that the conference application has similar parameters.
-
-
+* **DTMF：** 一些入站和出站的SIP网关/代理同时使用了嵌入2833 DTMF和未处理FreeSWITCH生成的2833 DTMF（由于某种原因）。为了缓解这个问题，Vitelity给我们分配了两个不同的网关：（入站/发起）：[inbound21.vitelity.net](http://inbound21.vitelity.net) 和 （出站/终止）：[sip22.vitelity.net](http://sip22.vitelity.net)。这完全解决了我们在呼叫各种号码时出现的DTMF间歇问题以及与T-Mobile的语音邮件、Google Voice互动和POTS嵌入式传递的完全无法运行的问题。显然，这些网关使用不同的“开关”来“处理DTMF”。如果您遇到问题，可以提交一个支持工单，他们可能将您的帐户转移到这些网关上。
+* **RTP超时**：Vitelity对RTP媒体流数据包的缺乏（例如，在Asterisk的sip.conf中的rtptimeout配置）设置了60秒超时。当录制音频（例如，语音邮件）超过60秒时，呼叫将会中断。这是因为FreeSWITCH在录制时间时不发送RTP媒体（以节省带宽）。FreeSWITCH的r13144版本之前无法解决这个问题。FreeSWITCH有一个[record\_waste\_resources](../../Dialplan/Variables-Archive/x__Channel-Variables_1048892.mdx#variable-references)的通道变量，会在录制时传输空帧。同时请注意，会议应用程序也有类似的参数。

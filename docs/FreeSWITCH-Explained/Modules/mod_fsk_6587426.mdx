@@ -1,58 +1,57 @@
-
 # mod_fsk 
 
  
 
-## About
+## 关于
 
-This module is used to send and receive information via [Frequency-shift keying](http://en.wikipedia.org/wiki/Frequency-shift%5Fkeying). This can be used to send and receive Caller ID.
+该模块用于通过[频移键控](http://en.wikipedia.org/wiki/Frequency-shift%5Fkeying)发送和接收信息。可以用于发送和接收来电显示。
 
-Click here to expand Table of Contents
+单击此处展开目录
 
-* 1 [Installing](#installing)
-* 2 [Usage](#usage)  
+* 1 [安装](#installing)
+* 2 [使用方法](#usage)  
    * 2.1 [fsk\_send](#fsk_send)  
    * 2.2 [fsk\_recv](#fsk_recv)  
    * 2.3 [fsk\_simplify](#fsk_simplify)  
    * 2.4 [fsk\_display](#fsk_display)  
    * 2.5 [FreeSWITCH Peering](#freeswitch-peering)
 
-## Installing
+## 安装
 
-Edit modules.conf and add the following line:
+编辑modules.conf文件并添加以下行:
 
 ```xml
 applications/mod_fsk
 ```
 
-Then:
+然后执行以下命令:
 
 ```xml
 make mod_fsk
 make mod_fsk-install 
 ```
 
-Tell FreeSWITCH to load the module by adding the line below to modules.conf.xml in /usr/local/freeswitch/conf/autoload\_configs:
+通过在"/usr/local/freeswitch/conf/autoload\_configs"中的modules.conf.xml文件中添加以下行，告诉FreeSWITCH加载该模块:
 
 ```xml
 <load module="mod_fsk"/>
 ```
 
-## Usage
+## 使用方法
 
 ### fsk_send
 
-Undocumented.
+未记录。
 
 ### fsk_recv
 
-This registers a mediabug that detects FSK.
+这将注册一个检测FSK的mediabug。
 
 ```xml
 <action application="fsk_recv"/>
 ```
 
-Several variables may be set when FSK is detected:
+当检测到FSK时，可以设置多个变量:
 
 ```xml
 fsk_datetime
@@ -60,13 +59,13 @@ fsk_phone_name
 fsk_phone_num
 ```
 
-It is also possible to send name=value pairs, which are placed in variables with the fsk\_ prefix:
+还可以发送名称=值对，这些值将放置在以fsk\_为前缀的变量中:
 
 ```xml
 fsk_${name}
 ```
 
-It is also possible to execute an application when FSK is received:
+还可以在接收到FSK时执行应用程序:
 
 ```xml
 <action application="set" data="execute_on_fsk=..."/>
@@ -74,40 +73,40 @@ It is also possible to execute an application when FSK is received:
 
 ### fsk_simplify
 
-This can be used to simplify the call path, similar to uuid\_simplify. It is used with execute\_on\_fsk:
+这可以用于简化呼叫路径，类似于uuid\_simplify。它与execute\_on\_fsk一起使用:
 
 ```xml
 <action application="fsk_recv"/>
 <action application="set" data="execute_on_fsk=fsk_simplify"/>
 ```
 
-It will update the display with the ${fsk\_phone\_name} and ${fsk\_phone\_num} variables, which were set when FSK was detected.
+它将使用在检测到FSK时设置的${fsk\_phone\_name}和${fsk\_phone\_num}变量来更新显示。
 
 ### fsk_display
 
-This can be used to update the display with Caller ID information. It is used with execute\_on\_fsk:
+这可以用来更新显示呼叫者ID信息。它与 execute_on_fsk 配合使用：
 
 ```xml
 <action application="fsk_recv"/>
 <action application="set" data="execute_on_fsk=fsk_display"/>
 ```
 
-It will update the display with the ${fsk\_phone\_name} and ${fsk\_phone\_num} variables, which were set when FSK was detected.
+它将使用 ${fsk_phone_name} 和 ${fsk_phone_num} 变量更新显示，这些变量在检测到 FSK 时设置。
 
 ### FreeSWITCH Peering
 
-Using fsk, two FreeSWITCH machines can talk to each other and drop the call via PSTN and set up a direct peer connection. Via anthm.
+使用 fsk，两台 FreeSWITCH 机器可以通过 PSTN 互相通话并设置直接对等连接。通过 anthm。
 
-**This is currently in beta!!**
+**目前处于测试版！！**
 
-On the called box, in the dialplan that answers/bridges the incoming call:
+在被呼叫的盒子上，呼叫计划回答/桥接传入呼叫：
 
 ```xml
 <action application="set" data="execute_on_fsk=fsk_simplify"/>
 <action application="bind_meta_app" data="D b a fsk_recv::w"/>
 ```
 
-On the calling box, in the dialplan that bridges the outgoing call:
+在主动呼叫的盒子上，呼叫计划桥接传出呼叫：
 
 ```xml
 <action application="set" data="fsk_uri=i+${uuid}@$${domain}"/>
@@ -115,7 +114,7 @@ On the calling box, in the dialplan that bridges the outgoing call:
 <action application="set" data="bridge_pre_execute_aleg_data=*D"/>
 ```
 
-The calling box also needs this extension:
+主动呼叫的盒子还需要这个分机：
 
 ```xml
 <extension name="108">
@@ -127,7 +126,6 @@ The calling box also needs this extension:
 
 ### Comments:
 
-| For FreeSWITCH Peering:The 108 extension needs to have the closing &lt;/extension>. Additionally, the outgoing call part seems to be inaccurate. The \*D and fsk appear to be sent to the calling party not the called. It is also sent before my cell phone answers (in the case of calling my cell phone).It might also be good if instead of just blindly dialing, an unused SIT tone is sent on answer by all FS boxes setup to allow the upgrade, something short, something that won't be detected as an error by various phone systems. A modified bong-ring where the tones are different, maybe. Then calling systems can listen for this very short tone and then send the \*D and fsk data. This might also fix the problem where bridge\_pre\_execute\_aleg\_app sends it too early and execute\_on\_answer doesn't work as expected. ![](/images/icons/contenttypes/comment_16.png) Posted by tadams at Aug 17, 2015 20:14 |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 对于FreeSWITCH连接：108分机需要写上`</extension>`结束标签。此外，外呼部分似乎不准确。`\*D`和`fsk`似乎是发给呼叫方，而不是被呼叫方。而且，在我的手机应答之前发送。也许，不仅仅是盲目拨号，而是在所有设置为允许升级的FS盒子上，当应答时发送一个未使用的SIT音调，一个短暂的、不会被各种电话系统检测为错误的音调，可以是修改版的响铃音调，其中音调是不同的。然后呼叫系统可以监听这个非常短的音调，然后发送`\*D`和`fsk`数据。这也可能解决`bridge_pre_execute_aleg_app`过早发送，`execute_on_answer`不按预期工作的问题。![](/images/icons/contenttypes/comment_16.png) 发布者：tadams，发表于 2015年8月17日 20:14 |
 
-
+请注意，这是一个示例文本。

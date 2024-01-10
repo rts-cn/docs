@@ -1,107 +1,128 @@
+# Debian
 
-# Debian 
+需要身份验证
 
- 
+访问FreeSWITCH安装包需要SignalWire个人访问令牌（PAT）。
+[如何创建SignalWire个人访问令牌](../HOWTO-Create-a-SignalWire-Personal-Access-Token_67240087.mdx#attachments)
 
-Authentication required
+## 关于
 
-SignalWire Personal Access Tokens (PAT)s are required to access FreeSWITCH install packages.  
-[HOWTO Create a SignalWire Personal Access Token](../HOWTO-Create-a-SignalWire-Personal-Access-Token_67240087.mdx#attachments)
-
-## About
-
-FreeSWITCH project has been moved to GitHub: <https://github.com/signalwire/freeswitch>  
-Please open new issues in: <https://github.com/signalwire/freeswitch/issues>
+FreeSWITCH项目已迁移到GitHub： <https://github.com/signalwire/freeswitch>
+请在以下网址提交新问题： <https://github.com/signalwire/freeswitch/issues>
 
 **Linux**
 
-## **Sofia-sip and SpanDSP Notice!**
+## **Sofia-sip和SpanDSP 注意！**
 
-SpanDSP and sofia-sip
+Sofia-sip和SpanDSP
 
-Sofia-sip and SpanDSP dependencies have been removed from the FreeSWITCH™ tree since v1.10.4 Release (05 August 2020).
+自2020年8月5日起，FreeSWITCH™ v1.10.4版（发布版）已从FreeSWITCH树中删除Sofia-sip和SpanDSP的依赖关系。
 
-You can find source files of Sofia-sip here: <https://github.com/freeswitch/sofia-sip>
+您可以在此处找到Sofia-sip的源文件： <https://github.com/freeswitch/sofia-sip>
 
-SpanDSP sources are here: <https://github.com/freeswitch/spandsp>
+SpanDSP源文件在此处： <https://github.com/freeswitch/spandsp>
 
-Packages for Sofia-sip and SpandDSP are available for all supported platforms from our packaging repos.
+Sofia-sip和SpanDSP的软件包可在我们的打包仓库中提供给所有支持的平台。
 
-You might have to visit each directory, run `./bootstrap.sh` then `./configure` then `make install`
+您可能需要访问每个目录，运行`./bootstrap.sh`，然后`./configure`，最后`make install`
 
-We dropped support in packaging for anything older than Debian 9 and anything older than Centos 7 due to a number of dependency issues on older platforms.
+由于若干依赖问题，我们已停止支持Debian 9及更早版本以及Centos 7及更早版本的打包。
 
-### Commit Log
+### 提交日志
 
-See all FreeSWITCH commits here: <https://github.com/signalwire/freeswitch/commits/master>
+在此处查看所有FreeSWITCH提交记录： <https://github.com/signalwire/freeswitch/commits/master>
 
-## Installing FreeSWITCH - Package or Source
+## 安装FreeSWITCH - 包或源码
 
-**Easy Way**
+**简便方法**
 
-## Installing From Debian Packages
+## 从Debian包安装
 
-### Latest Release Branch:
+### 最新的发布分支：
 
-**Release package**
+**发布包**
 
 ```bash
-TOKEN=YOURSIGNALWIRETOKEN
+TOKEN=您的SignalWire令牌
 
 apt-get update && apt-get install -y gnupg2 wget lsb-release
 
 wget --http-user=signalwire --http-password=$TOKEN -O /usr/share/keyrings/signalwire-freeswitch-repo.gpg https://freeswitch.signalwire.com/repo/deb/debian-release/signalwire-freeswitch-repo.gpg
 
+```
+将以下内容添加到 /etc/apt/auth.conf 文件中：
+
+```shell
 echo "machine freeswitch.signalwire.com login signalwire password $TOKEN" > /etc/apt/auth.conf
+```
+
+将权限设置为 600：
+
+```shell
 chmod 600 /etc/apt/auth.conf
+```
+
+将以下内容添加到 /etc/apt/sources.list.d/freeswitch.list 文件中：
+
+```shell
 echo "deb [signed-by=/usr/share/keyrings/signalwire-freeswitch-repo.gpg] https://freeswitch.signalwire.com/repo/deb/debian-release/ `lsb_release -sc` main" > /etc/apt/sources.list.d/freeswitch.list
 echo "deb-src [signed-by=/usr/share/keyrings/signalwire-freeswitch-repo.gpg] https://freeswitch.signalwire.com/repo/deb/debian-release/ `lsb_release -sc` main" >> /etc/apt/sources.list.d/freeswitch.list
+```
 
-# you may want to populate /etc/freeswitch at this point.
-# if /etc/freeswitch does not exist, the standard vanilla configuration is deployed
+执行以下命令更新软件包列表并安装 FreeSWITCH™：
+
+```shell
 apt-get update && apt-get install -y freeswitch-meta-all
 ```
 
-FreeSWITCH™ is now installed and can be accessed with
+现在，已成功安装 FreeSWITCH™，可以使用以下命令访问：
 
 **FreeSwitch CLI**
 
-```bash
+```shell
 fs_cli -rRS
 ```
 
-Master Branch ("git"):
+如果要使用 Master Branch 版本，请注意以下信息：
 
-WARNING not suitable for production
+警告：Master Branch 版本不适用于生产环境
 
-**Master Test Package**
+安装 Master Test Package 的步骤如下：
 
-```bash
+```shell
 TOKEN=YOURSIGNALWIRETOKEN
 
+# 更新软件包列表并安装依赖包
 apt-get update && apt-get install -yq gnupg2 wget lsb-release
+
+# 下载信令 Wire 的 GPG 密钥
 wget --http-user=signalwire --http-password=$TOKEN -O /usr/share/keyrings/signalwire-freeswitch-repo.gpg https://freeswitch.signalwire.com/repo/deb/debian-unstable/signalwire-freeswitch-repo.gpg
 
+# 添加认证信息到 /etc/apt/auth.conf 文件
 echo "machine freeswitch.signalwire.com login signalwire password $TOKEN" > /etc/apt/auth.conf
 chmod 600 /etc/apt/auth.conf
+
+# 添加源列表到 /etc/apt/sources.list.d/freeswitch.list 文件
 echo "deb [signed-by=/usr/share/keyrings/signalwire-freeswitch-repo.gpg] https://freeswitch.signalwire.com/repo/deb/debian-unstable/ `lsb_release -sc` main" > /etc/apt/sources.list.d/freeswitch.list
 echo "deb-src [signed-by=/usr/share/keyrings/signalwire-freeswitch-repo.gpg] https://freeswitch.signalwire.com/repo/deb/debian-unstable/ `lsb_release -sc` main" >> /etc/apt/sources.list.d/freeswitch.list
+```
+```
 
-# you may want to populate /etc/freeswitch at this point.
-# if /etc/freeswitch does not exist, the standard vanilla configuration is deployed
+# 在这一点上，你可能想要填充`/etc/freeswitch`目录。
+# 如果`/etc/freeswitch`目录不存在，则将部署标准的基础配置。
 apt-get update && apt-get install -y freeswitch-meta-all
 ```
 
-### Building Debian Packages From Master Branch
+### 从主分支构建Debian软件包
 
-WARNING not suitable for production
+警告：不适用于生产环境
 
-The master branch depends on different libraries which are not available as packages in Debian distribution, but are available from FreeSWITCH repository. Thus, you will need internet access to the FreeSWITCH DEB repository.
+主分支依赖于Debian发行版中不存在的不同库，但可从FreeSWITCH存储库获取。因此，您需要访问FreeSWITCH DEB存储库的互联网。
 
-**Build your own .deb Master package**
+**构建自己的.deb主分支软件包**
 
 ```bash
-TOKEN=YOURSIGNALWIRETOKEN
+TOKEN=您的SignalWire令牌
 
 apt-get update && apt-get install -yq gnupg2 wget lsb-release
 wget --http-user=signalwire --http-password=$TOKEN -O /usr/share/keyrings/signalwire-freeswitch-repo.gpg https://freeswitch.signalwire.com/repo/deb/debian-unstable/signalwire-freeswitch-repo.gpg
@@ -113,36 +134,50 @@ echo "deb-src [signed-by=/usr/share/keyrings/signalwire-freeswitch-repo.gpg] htt
 
 apt-get update && apt-get install -y xz-utils devscripts cowbuilder git screen
 
-# nonstandard packages from freeswitch repo are not trusted by pbuilder !!
+# freeswitch存储库中的非标准软件包无法通过pbuilder进行验证！
 echo "ALLOWUNTRUSTED=yes" >> /etc/pbuilderrc
 
-# get the latest master. Use the -b flag to get a specific branch
+# 获取最新的主分支。使用-b选项获取特定的分支
 mkdir /usr/src/freeswitch-debs
 git clone https://github.com/signalwire/freeswitch.git /usr/src/freeswitch-debs/freeswitch
 
+在当前目录下切换到 `/usr/src/freeswitch-debs` 目录：
+```
 cd /usr/src/freeswitch-debs
-# here it's good to run screen with logging, so that you can detach from the shell prompt
-screen -L
-cd freeswitch
-./debian/util.sh build-all -aamd64 -cbuster
+```
 
-# here you can detach by Ctrl-a Ctrl-d and see the log files in /usr/src/freeswitch-debs/log/ folder.
-# The build may last about an hour, depending on your CPU speed.
-# If the build is successful, you will have a bunch of .deb files in /usr/src/freeswitch-debs
+# 这里建议使用带有日志记录的 screen 命令，这样你可以脱离终端提示符：
+```
+screen -L
+```
+
+切换到 `freeswitch` 目录下：
+```
+cd freeswitch
+```
+
+执行以下命令编译所有组件：
+```
+./debian/util.sh build-all -aamd64 -cbuster
+```
+
+# 你可以按下 Ctrl-a Ctrl-d 来脱离 `screen`，然后在 `/usr/src/freeswitch-debs/log/` 文件夹中查看日志文件。
+# 编译过程可能需要约一个小时，具体时间取决于你的 CPU 速度。
+# 如果编译成功，你将在 `/usr/src/freeswitch-debs` 文件夹中找到一系列 .deb 文件。
 
 
 ```
 
-**Compiling from source code**
+**从源代码编译**
 
-## Building From Source
+## 从源代码构建
 
-### Compiling Release Branch (production)
+### 编译正式版本分支（生产环境）
 
-**Release source build**
+**正式版本源代码构建**
 
 ```bash
-TOKEN=YOURSIGNALWIRETOKEN
+TOKEN=YOUR_SIGNALWIRE_TOKEN
 
 apt-get update && apt-get install -yq gnupg2 wget lsb-release
 wget --http-user=signalwire --http-password=$TOKEN -O /usr/share/keyrings/signalwire-freeswitch-repo.gpg https://freeswitch.signalwire.com/repo/deb/debian-release/signalwire-freeswitch-repo.gpg
@@ -151,33 +186,32 @@ echo "machine freeswitch.signalwire.com login signalwire password $TOKEN" > /etc
 chmod 600 /etc/apt/auth.conf
 echo "deb [signed-by=/usr/share/keyrings/signalwire-freeswitch-repo.gpg] https://freeswitch.signalwire.com/repo/deb/debian-release/ `lsb_release -sc` main" > /etc/apt/sources.list.d/freeswitch.list
 echo "deb-src [signed-by=/usr/share/keyrings/signalwire-freeswitch-repo.gpg] https://freeswitch.signalwire.com/repo/deb/debian-release/ `lsb_release -sc` main" >> /etc/apt/sources.list.d/freeswitch.list
+```
 
 apt-get update
- 
-# Install dependencies required for the build
+
+# 安装构建所需的依赖项
 apt-get build-dep freeswitch
- 
-# then let's get the source. Use the -b flag to get a specific branch
+
+# 接下来让我们获取源代码。使用 -b 参数来获取特定的分支
 cd /usr/src/
 git clone https://github.com/signalwire/freeswitch.git -bv1.10 freeswitch
 cd freeswitch
- 
-# Because we're in a branch that will go through many rebases, it's
-# better to set this one, or you'll get CONFLICTS when pulling (update).
+
+# 因为我们在一个将进行多次变基的分支中，最好进行此设置，否则在拉取更新时会出现冲突(CONFLICTS)。
 git config pull.rebase true
- 
-# ... and do the build
+
+# ... 然后进行构建
 ./bootstrap.sh -j
 ./configure
 make
 make install
 ```
+### 编译最新的主分支（用于测试）
 
-### Compiling Latest Master (for testing)
+警告：不适用于生产环境
 
-WARNING not suitable for production
-
-**Master source build**
+**最新主分支源代码构建**
 
 ```bash
 TOKEN=YOURSIGNALWIRETOKEN
@@ -192,49 +226,45 @@ echo "deb-src [signed-by=/usr/share/keyrings/signalwire-freeswitch-repo.gpg] htt
 
 apt-get update
 
-# Install dependencies required for the build
+# 安装构建所需的依赖项
 apt-get build-dep freeswitch
 
-# Then let's get the source. Use the -b flag to get a specific branch
+# 然后让我们获取源代码。使用 -b 参数来获取特定的分支
 cd /usr/src/
 git clone https://github.com/signalwire/freeswitch.git freeswitch
 cd freeswitch
 
-# Because we're in a branch that will go through many rebases, it's
-# better to set this one, or you'll get CONFLICTS when pulling (update).
+# 因为我们所在的分支将经历许多rebase，所以最好设置这个选项，否则在拉取（更新）时会出现冲突。
 git config pull.rebase true
 
-# ... and do the build
+# ...然后进行构建
 
-# The -j argument spawns multiple threads to speed the build process, but causes trouble on some systems
+# -j参数会启动多个线程以加快构建过程，但可能在某些系统上引起问题。
 ./bootstrap.sh -j
 
-# if you want to add or remove modules from the build, edit modules.conf
+# 如果您想向构建中添加或删除模块，请编辑modules.conf文件。
 vi modules.conf
 
-# add a module by removing '#' comment character at the beginning of the line
-# remove a module by adding the '#' comment character at the beginning of the line 
-# containing the name of the module to be skipped in the build process
+# 通过删除行首处的'#'注释字符来添加一个模块
+# 通过在行首处添加'#'注释字符来删除一个模块
+# 行首处包含的模块名将在构建过程中被跳过
 
 ./configure
 make
 make install
 
-# Install audio files:
+# 安装音频文件：
 make cd-sounds-install cd-moh-install
 
-# To update an installed build:
+# 更新已安装的构建：
 cd /usr/src/freeswitch
 make current
 ```
 
-### Build Arcutecture For Packages
+### 适用于软件包的构建架构
 
-We do not provide packages for 32 bit x86 systems.
+我们不为32位x86系统提供软件包。
 
-### Before Starting FreeSWITCH
+### 启动FreeSWITCH之前
 
-If you built FreeSWITCH™ from source code you should set file permissions and ownership before starting FreeSWITCH. Follow the [post-installation instructions](./Deprecated-Installation-Instructions/Debian-Post-Install-Tasks_13172868.mdx#about).
-
-  
-
+如果您是从源代码构建FreeSWITCH™，在启动FreeSWITCH之前，必须设置文件权限和所有权。请按照[安装后的说明](./Deprecated-Installation-Instructions/Debian-Post-Install-Tasks_13172868.mdx#about)进行操作。

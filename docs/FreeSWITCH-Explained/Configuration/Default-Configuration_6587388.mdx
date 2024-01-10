@@ -1,27 +1,24 @@
-
-# Default Configuration 
-
- 
+# 默认配置
 
 ---
 
-Table of Contents (click to expand)
+目录（点击展开）
 
-* [0\. About](#0-about)
-* [1\. Overview of default configuration files](#1-overview-of-default-configuration-files)
-* [2\. Introduction](#2-introduction)
-* [3\. Dialplans](#6-configuration-files)  
-   * [Dialplan XML](#6-configuration-files)  
+* [0\. 关于](#0-about)
+* [1\. 默认配置文件概述](#1-overview-of-default-configuration-files)
+* [2\. 介绍](#2-introduction)
+* [3\. 拨号计划](#6-configuration-files)  
+   * [拨号计划 XML](#6-configuration-files)  
    * [mod\_dialplan\_asterisk](#6-configuration-files)  
    * [ENUM](#6-configuration-files)
-* [4\. Codecs](#6-configuration-files)  
+* [4\. 编解码器](#6-configuration-files)  
    * [mod\_g723\_1](#-freeswitch--default-configuration-)  
    * [mod\_g729](#-freeswitch--default-configuration-)  
    * [mod\_amr](#-freeswitch--default-configuration-)  
    * [mod\_h26x](#-freeswitch--default-configuration-)  
    * [mod\_opus](#6-configuration-files)  
    * [mod\_vp8](#-freeswitch--default-configuration-)
-* [5\. Modules](#6-configuration-files)  
+* [5\. 模块](#6-configuration-files)  
    * [mod\_cdr\_csv](#6-configuration-files)  
    * [mod\_commands](#6-configuration-files)  
    * [mod\_conference](#6-configuration-files)  
@@ -48,7 +45,7 @@ Table of Contents (click to expand)
    * [mod\_voicemail](#6-configuration-files)  
    * [mod\_spandsp](#6-configuration-files)  
    * [mod\_file\_string](#6-configuration-files)
-* [6\. Configuration files](#6-configuration-files)  
+* [6\. 配置文件](#6-configuration-files)  
    * [conf/](#6-configuration-files)  
    * [conf/autoload\_configs/](#6-configuration-files)  
    * [conf/dialplan/](#6-configuration-files)  
@@ -58,137 +55,135 @@ Table of Contents (click to expand)
    * [conf/mrcp\_profiles/](#6-configuration-files)  
    * [conf/sip\_profiles/](#6-configuration-files)
 
----
+## 0. 关于
 
-## 0\. About
+对默认配置文件及其交互方式的讨论。
 
-A discussion of the default configuration files and how they interact.  
+待办事项请参见 [Vanilla installation files](../Installation/Linux/Vanilla-installation-files_27591294.mdx#0-about) 中的待办事项。
 
-TODO See TODOs in [Vanilla installation files](../Installation/Linux/Vanilla-installation-files_27591294.mdx#0-about).
+## 1. 默认配置文件概述
 
-## 1\. Overview of default configuration files
+默认配置文件的图表
 
-Diagram of default config files
+![点击放大图表](/attachments/6587388/7045132.jpg "点击放大图表")
 
-![Click to enlarge diagram](/attachments/6587388/7045132.jpg "Click to enlarge diagram")
+## 2. 简介
 
-## 2\. Introduction
+FreeSWITCH 随附大量的配置文件。本页面将帮助解释各种配置文件及其默认内容以及标准模块，但在任何情况下，[Github 仓库](https://github.com/signalwire/freeswitch) 的内容将覆盖本文档。
 
-FreeSWITCH ships with a large number of configuration files. This page will help explain the various configuration files and their default contents along with the standard modules, but in every case the [Github repository](https://github.com/signalwire/freeswitch) supersedes this document.
+大部分 FreeSWITCH 配置文件采用 XML 格式。
 
-Most of the FreeSWITCH configuration files are formatted in XML
+当 FreeSWITCH 启动或通过 API 发出 reloadxml 命令时，FreeSWITCH 会将所有配置文件编译为一个巨大的文件并保存在内存中。
 
-When FreeSWITCH starts or when the reloadxml command is issued to the API, FreeSWITCH compiles all configuration files into one huge file that is kept in memory.
+`log/freeswitch.xml.fsxml` 包含了将所有个别的配置文件串联在一起形成的一个巨大文件。当 FreeSWITCH 报告配置文件错误时，错误消息中的行号指的是该文件，该文件可能超过 10000 行。
 
-`log/freeswitch.xml.fsxml` contains all the individual configuration files concatenated together into one huge file. When FreeSWITCH reports a configuration file error, the line number in the error message refers to this file, which can have more than 10 thousand lines.
+## 3. 拨号计划
 
-## 3\. Dialplans 
+拨号计划是一系列的动作以及执行这些动作的条件。拨号计划告诉 FreeSWITCH 如何行动、何时行动以及要做什么。FreeSWITCH 支持 3 种拨号计划。
 
-A dialplan is a series of actions, and the conditions upon which they are executed. A dialplan tells FreeSWITCH how to behave, what to do, and when to do it. FreeSWITCH supports 3 Dialplans.
+### [拨号计划 XML](https://freeswitch.org/confluence/pages/viewpage.action?pageId=3966106)
 
-### [Dialplan XML](https://freeswitch.org/confluence/pages/viewpage.action?pageId=3966106) 
+Dialplan.xml 是 FreeSWITCH 的主要拨号计划。顾名思义，它是一个 XML 格式的文件。
 
-Dialplan.xml is the primary dialplan of FreeSWITCH. As its name suggests, it's an XML formatted file.
+### [mod_dialplan_asterisk](../Modules/mod_dialplan_asterisk_3966416.mdx#about)
 
-### [mod_dialplan_asterisk](../Modules/mod_dialplan_asterisk_3966416.mdx#about) 
+实际上，这个文件叫做 extensions.conf，它是一个兼容 Asterisk 样式拨号计划的文件。
 
-Actually, this file is called extensions.conf, it is a compatibility file that supports Asterisk style dialplans.
+## [枚举](../Modules/mod_enum_6587333.mdx#enum)
 
-### [ENUM](../Modules/mod_enum_6587333.mdx#enum) 
+枚举是一个将PSTN号码翻译成VoIP URI的转换系统。
 
-ENUM is a translation system from PSTN numbers to VoIP uri.
+## 4\. 编解码器
 
-## 4\. Codecs 
+这些模块提供编码和解码语音音频的各种方式的支持。
 
-These modules provide codecs - support for various ways of COding and DECoding speech audio.
+### [mod_g723_1](../Modules/mod_g723_1_3375594.mdx#about)
 
-### [mod_g723_1](../Modules/mod_g723_1_3375594.mdx#about) 
+mod_g723_1 是 G.723.1 的透传实现。
 
-mod\_g723\_1 is the G.723.1 pass-through implementation.
+### [mod_g729](../Modules/mod_g729_3375549.mdx#about)
 
-### [mod_g729](../Modules/mod_g729_3375549.mdx#about) 
+G.729 编解码器。有关许可信息，请参阅[商业版 G.729](../Modules/mod_com_g729_1049284.mdx#about)。
 
-The G.729 Codec. See the [commercial G.729](../Modules/mod_com_g729_1049284.mdx#about) version for licensing information.
+### [mod_amr](../Modules/mod_amr_3964984.mdx#about)
 
-### [mod_amr](../Modules/mod_amr_3964984.mdx#about) 
-
-The AMR Codec.
+AMR 编解码器。
 
 ### [mod_h26x](../Codecs-and-Media/Video-Codecs_1048673.mdx#comments)
 
-Video codec.
+视频编解码器。
 
 ### [mod_opus](../Modules/mod_opus_6586850.mdx#about)
 
-WebRTC codec.
+WebRTC 编解码器。
 
 ### mod_vp8
 
-Google video codec.
+Google 视频编解码器。
 
-## 5\. Modules 
+## 5\. 模块
 
-These modules provide additional functionality to FreeSWITCH.
+这些模块为FreeSWITCH提供额外的功能。
 
-### [mod_cdr_csv](../Modules/mod_cdr_csv_6587322.mdx#legs) 
+### [mod_cdr_csv](../Modules/mod_cdr_csv_6587322.mdx#legs)
 
-The Call Detail Record module
+呼叫详单模块。
 
-### [mod_commands](../Modules/mod_commands_1966741.mdx#--) 
+### [mod_commands](../Modules/mod_commands_1966741.mdx#--)
 
-A module that contains various commands.
+包含各种命令的模块。
 
-### [mod_conference](../Modules/mod_conference_3965534.mdx#list) 
+### [mod_conference](../Modules/mod_conference_3965534.mdx#list)
 
-The conferencing module.
+会议模块。
 
-### [mod_console](../Modules/mod_console_1048950.mdx#about) 
+### [mod_console](../Modules/mod_console_1048950.mdx#about)
 
-The module that reads and writes to the console.
+读取和写入控制台的模块。
 
-### [mod_dialplan_asterisk](../Modules/mod_dialplan_asterisk_3966416.mdx#about) 
+### [mod_dialplan_asterisk](../Modules/mod_dialplan_asterisk_3966416.mdx#about)
 
-The module responsible for parsing extensions.conf to provide a limited Asterisk-compatible configuration.
+负责解析 extensions.conf 文件，提供有限的兼容 Asterisk 配置的模块。
 
-### [mod_dialplan_xml](../Dialplan/XML-Dialplan/index.mdx#about) 
+### [mod_dialplan_xml](../Dialplan/XML-Dialplan/index.mdx#about)
 
-The module responsible for parsing and implementing the Dialplan.xml file.
+负责解析和实现 Dialplan.xml 文件的模块。
 
-### [mod_dptools](../Modules/mod_dptools_1970333.mdx#-c) 
+### [mod_dptools](../Modules/mod_dptools_1970333.mdx#-c)
 
-The Dial Plan Tools module, includes various functions to deal with dialplans.
+呼叫计划工具模块，包括各种处理呼叫计划的函数。
 
-### [mod_enum](../Modules/mod_enum_6587333.mdx#enum) 
+### [mod_enum](../Modules/mod_enum_6587333.mdx#enum)
 
-ENUM numbers lookup module (E.164) format
+ENUM号码查询模块（E.164格式）
 
 ### [mod_esf](../Modules/mod_esf_6587336.mdx#--) 
 
-Extra SIP Functionality module, provides multicast paging support.
+额外的SIP功能模块，提供组播扩音支持。
 
 ### [mod_event_socket](../Modules/mod_event_socket_1048924.mdx#11-acl) 
 
-Event Socket module, provides for script control of FreeSWITCH™.
+事件套接字模块，用于控制FreeSWITCH™的脚本。
 
 ### [mod_expr](../Modules/mod_expr_6587353.mdx#about) 
 
-Expression Evaluation Library module.
+表达式评估库模块。
 
 ### [mod_fifo](../Modules/mod_fifo_3966031.mdx#-add) 
 
-Basic call queuing module, for call centers.
+基本呼叫排队模块，用于呼叫中心。
 
 ### [mod_fsv](../Modules/mod_fsv_6587435.mdx#about) 
 
-Video File Format Module, for FreeSWITCH Video.
+视频文件格式模块，用于FreeSWITCH视频。
 
-###  mod_limit 
+### mod_limit 
 
-Limit the number of calls to or from an arbitrary resource; also implements db and group API functions and dialplan applications.
+限制与任意资源之间的呼叫数量；还实现了数据库和群组API函数以及拨号计划应用程序。
 
-mod\_limit is deprecated and has been integrated into the core.
+mod\_limit已被弃用并已集成到核心中。
 
-See also:
+另请参阅：
 
 * [limit](../Modules/mod-dptools/3375201.mdx#db)
 * [mod\_hash](../Modules/mod_hash_6586975.mdx#api)
@@ -196,74 +191,74 @@ See also:
 
 ### [mod_local_stream](../Modules/mod_local_stream_6587466.mdx#api) 
 
-Local streaming module.
+本地流模块。
 
 ### [mod_logfile](../Modules/mod_logfile_1048990.mdx#about) 
 
-Module that controls logging to a file.
+控制日志记录到文件的模块。
 
 ### [mod_loopback](../Dialplan/Loopback-Endpoint_6587541.mdx#about) 
 
-Local dialplan loopback module. Use with caution.
+本地拨号计划回环模块。谨慎使用。
 
 ### [mod_native_file](../Modules/mod_native_file_6587161.mdx#about) 
 
-Native sounds playback module.
+本机声音播放模块。
 
 ### mod_say_en 
 
-TTS (text-to-speech) services for English.
+英语TTS（文本到语音）服务。
 
 ### mod_sndfile 
 
-Sound file playback framework demo module.
+声音文件播放框架演示模块。
 
 ### [mod_sofia](../Modules/mod_sofia_1048707.mdx#about) 
 
-FreeSWITCH SIP endpoint module.
+FreeSWITCH SIP终端模块。
 
-### [mod_v8](../Modules/mod_v8_1048935.mdx#api) 
+### [mod_v8](../Modules/mod_v8_1048935.mdx#api)
 
-FreeSWITCH uses the Google V8 JavaScript (ECMAScript) engine, which supersedes mod\_spidermonkey. See the [Javascript](../Client-and-Developer-Interfaces/JavaScript/index.mdx#api) page for more information and examples.
+FreeSWITCH使用Google V8 JavaScript (ECMAScript)引擎，取代mod_spidermonkey。有关更多信息和示例，请参阅[JavaScript](../Client-and-Developer-Interfaces/JavaScript/index.mdx#api)页面。
 
-### [mod_tone_stream](../Modules/mod-dptools/mod-dptools:-gentones/Tone_stream_6586599.mdx#about) 
+### [mod_tone_stream](../Modules/mod-dptools/mod-dptools:-gentones/Tone_stream_6586599.mdx#about)
 
-Module for tone generation. See more under [TGML](../Modules/mod-dptools/mod-dptools:-gentones/TGML_6586573.mdx#lua).
+用于音调生成的模块。请参阅[TGML](../Modules/mod-dptools/mod-dptools:-gentones/TGML_6586573.mdx#lua)。
 
-### [mod_voicemail](../Modules/mod_voicemail_6587070.mdx#--) 
+### [mod_voicemail](../Modules/mod_voicemail_6587070.mdx#--)
 
-FreeSWITCH Voicemail Module
+FreeSWITCH语音信箱模块
 
-### [mod_spandsp](../Modules/mod_spandsp_6587021.mdx#--) 
+### [mod_spandsp](../Modules/mod_spandsp_6587021.mdx#--)
 
-The family of FreeSWITCH modules including mod\_fax, mod\_t38gateway, and the mod\_voipcodecs have been merged into one module called mod\_spandsp which takes advantage of all the DSP features found in the SpanDSP library including T.38 endpoint and gateway functionality.
+包括mod_fax、mod_t38gateway和mod_voipcodecs在内的FreeSWITCH模块系列已合并为一个名为mod_spandsp的模块，该模块利用SpanDSP库中的所有DSP功能，包括T.38终端和网关功能。
 
-### mod_file_string 
+### mod_file_string
 
-_Function of this module are now part of mod\_dptools_
+此模块的功能现在已成为mod_dptools的一部分
 
-Play strings of files
+播放文件的字符串
 
-## 6\. Configuration files
+## 6. 配置文件
 
-### [conf/](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla) 
+### [conf/](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla)
 
-This is the main configuration directory.
+这是主要的配置目录。
 
-To find it, issue the following inside [fs\_cli](../Client-and-Developer-Interfaces/1048948.mdx#or) ,
+要找到它，在[fs_cli](../Client-and-Developer-Interfaces/1048948.mdx#or)中执行以下操作：
 
 ```xml
 freeswitch@tr2> eval $${conf_dir}
 /etc/freeswitch
 ```
 
-or on your terminal:
+或在您的终端上执行：
 
 ```xml
 $ fs_cli -x 'eval $${conf_dir}'
 ```
 
-Anything that defines how the switch works is in a file in this directory or a sub-directory. The FreeSWITCH program itself loads only one single config file (i.e., conf/freeswitch.xml); that single config file contains directives to cause the loading of all other config files, making it theoretically possible to put all config options into one config file or to more sensibly use multiple config files from as many directories as desired (note that config files can include other config files or entire directories with glob wildcarding -- see the conf/freeswitch.xml for example). The default config structure (as of FS 1.0.4pre6) presents the following config files and directories:
+本目录或子目录中的文件包含了定义交换机工作方式的所有内容。FreeSWITCH程序本身只加载一个配置文件（即conf/freeswitch.xml），而该配置文件中包含了加载所有其他配置文件的指令，从理论上讲，你可以将所有配置选项放到一个配置文件中，或者更合理地使用多个目录中的多个配置文件（请注意，配置文件可以包含其他配置文件或使用通配符加载整个目录，详见conf/freeswitch.xml的示例）。默认的配置结构（截至FS 1.0.4pre6）包含以下配置文件和目录：
 
 conf/[extensions.conf](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/extensions.conf)
 conf/[freeswitch.xml](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/freeswitch.xml)
@@ -274,36 +269,36 @@ conf/[vars.xml](https://github.com/signalwire/freeswitch/tree/master/conf/vanill
 conf/[voicemail.tpl](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/voicemail.tpl)
 conf/[web-vm.tpl](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/web-vm.tpl)
 
-### [conf/autoload_configs/](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/autoload%5Fconfigs) 
+### [conf/autoload_configs/](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/autoload%5Fconfigs)
 
-conf/autoload_configs/[alsa.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/alsa.conf.xml)
-conf/autoload_configs/[cdr_csv.conf.xml](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/autoload%5Fconfigs/cdr%5Fcsv.conf.xml)
-conf/autoload_configs/[conference.conf.xml](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/autoload%5Fconfigs/conference.conf.xml)
-conf/autoload_configs/[console.conf.xml](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/autoload%5Fconfigs/console.conf.xml)
-conf/autoload_configs/[dialplan_directory.conf.xml](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/autoload%5Fconfigs/dialplan%5Fdirectory.conf.xml)
-conf/autoload_configs/[dingaling.conf.xml](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/autoload%5Fconfigs/dingaling.conf.xml)
-conf/autoload_configs/[enum.conf.xml](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/autoload%5Fconfigs/enum.conf.xml)
-conf/autoload_configs/[erlang_event.conf.xml](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/autoload%5Fconfigs/erlang%5Fevent.conf.xml)
-conf/autoload_configs/[event_multicast.conf.xml](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/autoload%5Fconfigs/event%5Fmulticast.conf.xml)
-conf/autoload_configs/[event_socket.conf.xml](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/autoload%5Fconfigs/event%5Fsocket.conf.xml)
-conf/autoload_configs/[ivr.conf.xml](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/autoload%5Fconfigs/ivr.conf.xml)
-conf/autoload_configs/[local_stream.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/local%5Fstream.conf.xml)
-conf/autoload_configs/[logfile.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/logfile.conf.xml)
-conf/autoload_configs/[lua.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/lua.conf.xml)
-conf/autoload_configs/[modules.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/modules.conf.xml)
-conf/autoload_configs/[perl.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/perl.conf.xml)
-conf/autoload_configs/[portaudio.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/portaudio.conf.xml)
-conf/autoload_configs/[post_load_modules.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/post%5Fload%5Fmodules.conf.xml)
-conf/autoload_configs/[rss.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/rss.conf.xml)
-conf/autoload_configs/[sofia.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/sofia.conf.xml)
-conf/autoload_configs/[switch.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/switch.conf.xml)
-conf/autoload_configs/[syslog.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/syslog.conf.xml)  
-conf/autoload_configs/[v8.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/v8.conf.xml)  
-conf/autoload_configs/[voicemail.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/voicemail.conf.xml)
-conf/autoload_configs/[xml_cdr.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/xml%5Fcdr.conf.xml)
-conf/autoload_configs/[xml_curl.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/xml%5Fcurl.conf.xml)
-conf/autoload_configs/[xml_rpc.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/xml%5Frpc.conf.xml)
-conf/autoload_configs/[zeroconf.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/zeroconf.conf.xml)
+[alsa.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/alsa.conf.xml)
+[cdr_csv.conf.xml](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/autoload%5Fconfigs/cdr%5Fcsv.conf.xml)
+[conference.conf.xml](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/autoload%5Fconfigs/conference.conf.xml)
+[console.conf.xml](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/autoload%5Fconfigs/console.conf.xml)
+[dialplan_directory.conf.xml](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/autoload%5Fconfigs/dialplan%5Fdirectory.conf.xml)
+[dingaling.conf.xml](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/autoload%5Fconfigs/dingaling.conf.xml)
+[enum.conf.xml](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/autoload%5Fconfigs/enum.conf.xml)
+[erlang_event.conf.xml](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/autoload%5Fconfigs/erlang%5Fevent.conf.xml)
+[event_multicast.conf.xml](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/autoload%5Fconfigs/event%5Fmulticast.conf.xml)
+[event_socket.conf.xml](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/autoload%5Fconfigs/event%5Fsocket.conf.xml)
+[ivr.conf.xml](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/autoload%5Fconfigs/ivr.conf.xml)
+[local_stream.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/local%5Fstream.conf.xml)
+[logfile.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/logfile.conf.xml)
+[lua.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/lua.conf.xml)
+[modules.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/modules.conf.xml)
+[perl.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/perl.conf.xml)
+[portaudio.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/portaudio.conf.xml)
+[post_load_modules.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/post%5Fload%5Fmodules.conf.xml)
+[rss.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/rss.conf.xml)
+[sofia.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/sofia.conf.xml)
+[switch.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/switch.conf.xml)
+[syslog.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/syslog.conf.xml)
+[v8.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/v8.conf.xml)
+[voicemail.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/voicemail.conf.xml)
+[xml_cdr.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/xml%5Fcdr.conf.xml)
+[xml_curl.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/xml%5Fcurl.conf.xml)
+[xml_rpc.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/xml%5Frpc.conf.xml)
+[zeroconf.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/zeroconf.conf.xml)
 
 ### [conf/dialplan/](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/dialplan) 
 
@@ -313,26 +308,26 @@ conf/dialplan/public.xml
 
 ### [conf/directory/](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/directory) 
 
-This is the sub–directory that will hold all of the users allowed access to make calls via FreeSWITCH.
+这是一个子目录，用于保存所有被允许通过FreeSWITCH进行通话的用户。
 
-It's possible to define all extensions in one single XML file. In practice, especially if your FS server is providing PBX or other telephony services for multiple companies (multi-tenancy), it's advisable to create multiple sub–directories (one per company) to contain the user config files.
+可以在一个单独的XML文件中定义所有的分机。但是在实践中，特别是如果你的FS服务器为多个公司（多租户）提供PBX或其他电话服务，建议创建多个子目录（每个公司一个），以包含用户配置文件。
 
-For example:
+例如：
 
-* conf/directory/default.xml — contains directive that causes loading of conf/directory/default/\*.xml files
-* conf/directory/default/4411.xml — contains config info for extension 4411.xml in the default-global context, meaning extension 4411 is shared across all companies; this could be useful for, say, a universal "help desk" service that could ring your FS help desk for all your clients.  
-   * conf/directory/companyA.xml — contains directive that causes loading of conf/directory/companyA/\*.xml child files  
-      * conf/directory/companyA/1000.xml — contains config info for extension 1000.xml in companyA  
-         * conf/directory/companyA/1001.xml — contains config info for extension 1001.xml in companyA  
-   * conf/directory/companyB.xml — contains directive that causes loading of conf/directory/companyB/\*.xml child files  
-      * conf/directory/companyB/1000.xml — contains config info for extension 1000.xml in companyB  
-         * conf/directory/companyB/1001.xml — contains config info for extension 1001.xml in companyB
+* conf/directory/default.xml — 包含指令，用于加载conf/directory/default/\*.xml文件
+* conf/directory/default/4411.xml — 包含默认全局上下文中分机4411.xml的配置信息，表示分机4411在所有公司之间共享；这对于像"帮助台"这样的通用服务可能非常有用，可以为所有客户的FS帮助台响铃。
+   * conf/directory/companyA.xml — 包含指令，用于加载conf/directory/companyA/\*.xml子文件  
+      * conf/directory/companyA/1000.xml — 包含公司A中分机1000.xml的配置信息  
+         * conf/directory/companyA/1001.xml — 包含公司A中分机1001.xml的配置信息  
+   * conf/directory/companyB.xml — 包含指令，用于加载conf/directory/companyB/\*.xml子文件  
+      * conf/directory/companyB/1000.xml — 包含公司B中分机1000.xml的配置信息  
+         * conf/directory/companyB/1001.xml — 包含公司B中分机1001.xml的配置信息
 
-### [conf/lang/](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/lang) 
+### [conf/lang/](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/lang)
 
-Configuration for multiple language support. Used by mod\_say\_xx, such as mod\_say\_en.
+配置多语言支持。被 mod\_say\_xx 使用，比如 mod\_say\_en。
 
-Example list of language files for English:
+例如英语的语言文件列表：
 
 conf/lang/en
 conf/lang/en/vm
@@ -343,19 +338,19 @@ conf/lang/en/demo
 conf/lang/en/demo/demo.xml
 conf/lang/en/demo/demo-ivr.xml
 
-Default configs includes de, en, fr, and ru.
+默认配置包括 de, en, fr, 和 ru。
 
-Useful in [Speech Phrase Management](./Speech-Phrase-Management_9634492.mdx#0-about).
+在 [语音短句管理](./Speech-Phrase-Management_9634492.mdx#0-about) 中非常有用。
 
-### [conf/jingle_profiles](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/jingle%5Fprofiles) 
+### [conf/jingle_profiles](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/jingle%5Fprofiles)
 
-This is where the different profiles for [mod\_dingaling](../Modules/mod_dingaling_6587385.mdx#faq) get placed.
+这是为 [mod\_dingaling](../Modules/mod_dingaling_6587385.mdx#faq) 放置不同配置文件的地方。
 
-### [conf/mrcp_profiles/](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/mrcp%5Fprofiles) 
+### [conf/mrcp_profiles/](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/mrcp%5Fprofiles)
 
-Profiles for Media Resource Control Protocol (MRCP) via [mod\_unimrcp](../Modules/mod_unimrcp_6586728.mdx#tts).
+提供媒体资源控制协议 (MRCP) 的配置文件，通过 [mod\_unimrcp](../Modules/mod_unimrcp_6586728.mdx#tts) 实现。
 
-Default profiles included:
+默认配置文件包括：
 
 conf/mrcp_profiles/nuance-5.0-mrcp-v2.xml
 conf/mrcp_profiles/loquendo-7-mrcp-v2.xml
@@ -366,11 +361,11 @@ conf/mrcp_profiles/voxeo-prophecy-8.0-mrcp-v1.xml
 
 ### [conf/sip_profiles/](https://github.com/signalwire/freeswitch/tree/master/conf/vanilla/sip%5Fprofiles)
 
-This is where the different SIP profiles (or endpoints) are defined. (See [Sofia SIP Stack](./Sofia-SIP-Stack/index.mdx#faq) and [Configuring FreeSWITCH](./Configuring-FreeSWITCH/index.mdx#set).) 
+这是定义不同 SIP Profile (或端点) 的地方。 (参见 [Sofia SIP Stack](./Sofia-SIP-Stack/index.mdx#faq) 和 [配置 FreeSWITCH](./Configuring-FreeSWITCH/index.mdx#set).)
 
-Public Context for Security
+为安全性提供公共上下文
 
-You'll notice that all the SIP profiles in the [default configuration](./Default-Configuration_6587388.mdx#mod_vp8) use the `public` context for their [dialplan](../Dialplan/index.mdx#0-about), **including the `internal` profile**:
+你会注意到，在[默认配置](./Default-Configuration_6587388.mdx#mod_vp8)中，所有的SIP配置文件都使用`public`上下文作为它们的[呼叫计划](../Dialplan/index.mdx#0-about)，**包括`internal`配置文件**。
 
 **conf/sip\_profiles/\*.xml**
 
@@ -378,7 +373,7 @@ You'll notice that all the SIP profiles in the [default configuration](./Default
 <param name="context" value="public"/>
 ```
 
-If you look in the directory config files, `conf/directory/default/*.xml` (see Introduction in [Dialplan](../Dialplan/index.mdx#0-about)), you'll notice that the SIP profile's context is overridden there like so:
+如果你查看目录配置文件`conf/directory/default/*.xml`（请参阅[Dialplan](../Dialplan/index.mdx#0-about)的介绍），你会注意到SIP配置文件的上下文在这里被重写，如下所示：
 
 **conf/directory/default/\*.xml**
 
@@ -386,13 +381,10 @@ If you look in the directory config files, `conf/directory/default/*.xml` (see I
 <variable name="user_context" value="default"/>
 ```
 
-When a user registers and places a call, their context is set to whatever is in their `user_context` variable, thus `default` .
+当用户注册并拨打电话时，他们的上下文将根据`user_context`变量的设置，即为`default`。
 
-The reasoning behind all of this is that if you manage to turn off authentication or otherwise open up the `internal` profile then you won't by default expose your private dialplan to the world (e.g., for toll fraud).
-  
-  
-## Attachments:
+这样做的原因是，如果你成功关闭认证或以其他方式打开`internal`配置文件，你默认不会将私有呼叫计划暴露给全世界（例如用于收费欺诈）。
 
-![](/images/icons/bullet_blue.gif) [fs\_default\_config.jpg](/attachments/6587388/7045132.jpg) (image/jpeg)  
+## 附件：
 
-
+![](/images/icons/bullet_blue.gif) [fs\_default\_config.jpg](/attachments/6587388/7045132.jpg) (image/jpeg)

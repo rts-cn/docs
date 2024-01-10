@@ -1,29 +1,27 @@
+# 联系映射
 
-# Contact Mapping 
 
- 
+## 关于
 
-## About
+将“友好”的电话号码映射到唯一的目录用户地址。
 
-Map a "friendly" phone number to a unique directory user address.
+点击此处展开目录
 
-Click here to expand Table of Contents
+* 1 [使用方法](#usage)
+* 2 [相关信息](#see-also)
 
-* 1 [Usage](#usage)
-* 2 [See Also](#see-also)
+## 使用方法
 
-## Usage
+有时候，您可能希望拥有一个与联系信息完全不同的目录用户名。例如，您可能希望每个设备使用 mac-address\_line-number（000e081c4f6a\_1）进行注册，但它们将具有将路由到它们的标准 npa-nxx 号码（509.123.4567）。
 
-There are times when you would like to have a directory username which is very different from the contact information for reaching that user. For instance, maybe you want each device to register with mac-address\_line-number (000e081c4f6a\_1) but they will have a standard npa-nxx number which routes to them (509.123.4567).
+您需要做几件事情。首先是目录：
 
-There are a couple things that you will need. First the directory:
+关键在于变量 `sip-force-user`。将其设置为您想要映射用户的电话号码：
 
-The key here is the variable `sip-force-user` . Set this to the phone number to which you want to map the user:
-
-**sip-force-user Example**
+**sip-force-user 示例**
 
 ```xml
-<!-- this is in conf/directory/default/ -->
+<!-- 这在 conf/directory/default/ 中 -->
 <include>
   <user id="000e081c4f6a_1" mailbox="5091234567">
     <params>
@@ -37,14 +35,14 @@ The key here is the variable `sip-force-user` . Set this to the phone number to 
 </include>
 ```
 
-Next, match a number and send the call to this user.
+接下来，匹配一个号码并将呼叫发送给该用户。
 
-You must use `sofia` or `sofia_contact` in the bridge string here, `user` will not work because of `sip-force-user`. Here is an example:
+在这里的桥接字符串中，您必须使用 `sofia` 或 `sofia_contact`，因为`user`由于`sip-force-user`的原因无法使用。以下是一个示例：
 
-**Contact Mapping XML Example**
+**联系映射 XML 示例**
 
 ```xml
-<!-- this is an example extension in conf/dialplan/ -->
+<!-- 这是conf/dialplan/中的一个示例扩展 -->
 <extension name="Call_User">
    <condition field="destination_number" expression="^(\d+)$">
      <action application="set" data="call_timeout=20"/>
@@ -59,10 +57,8 @@ You must use `sofia` or `sofia_contact` in the bridge string here, `user` will n
 </extension>
 ```
 
-A word of caution: depending on how you route calls here, this will match all numbers and try to send them to `sip-force-users` listed in your directory.
+注意：根据您在此处路由呼叫的方式不同，这将匹配所有号码并尝试将其发送到目录中列出的`sip-force-users`。
 
-## See Also
+## 参见
 
-There is an alternative method to contact mapping described here: [XML User Directory - Alphanumeric to numeric user mapping](./index.mdx#about)
-
-
+这里还有一种描述联系映射的替代方法：[XML用户目录-字母数字用户映射](./index.mdx#about)

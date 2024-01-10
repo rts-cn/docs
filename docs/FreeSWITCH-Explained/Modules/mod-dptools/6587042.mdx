@@ -1,88 +1,86 @@
-
 # mod_dptools: sched broadcast 
 
  
 
 ---
 
-Table of Contents (click to expand)
+<!-- 以下是目录部分 -->
+目录（点击展开）：
 
-* [0\. About](#-freeswitch--mod_dptools-sched-broadcast-)
-* [1\. Syntax](#-freeswitch--mod_dptools-sched-broadcast-)
-* [2\. Examples](#2-examples)  
-   * [2.1 Play audio in a channel to all participants after 1 hour](#21-play-audio-in-a-channel-to-all-participants-after-1-hour)  
-   * [2.2 Play audible "beep" every N seconds](#22-play-audible-beep-every-n-seconds)
-* [3\. See Also](#-freeswitch--mod_dptools-sched-broadcast-)
+* [0\. 关于](#-freeswitch--mod_dptools-sched-broadcast-)
+* [1\. 语法](#-freeswitch--mod_dptools-sched-broadcast-)
+* [2\. 示例](#2-examples)  
+   * [2.1 在一小时后向所有参与者播放音频](#21-play-audio-in-a-channel-to-all-participants-after-1-hour)  
+   * [2.2 每隔 N 秒播放可听到的“滴滴”声音](#22-play-audible-beep-every-n-seconds)
+* [3\. 参见](#-freeswitch--mod_dptools-sched-broadcast-)
 
 ---
 
-## 0\. About
+## 0\. 关于
 
-Schedule a broadcast in the future.
+在未来安排一次广播。
 
-When a scheduled broadcast is executed, the session variable **`last_sched_id`** is set to the task ID of the broadcast.
+当执行预定的广播时，会将会话变量 **`last_sched_id`** 设置为广播任务的 ID。
 
-TODO See TODOs in [mod\_dptools: sched transfer](./6587055.mdx#0-about).
+请参见 [mod\_dptools: sched transfer](./6587055.mdx#0-about) 中的 TODOs。
 
-## 1\. Syntax
+## 1\. 语法
 
-**In the dialplan**
+**在拨号计划中**
 
 ```xml
 <action application="sched_broadcast" data="[+]<time> [<dialplan_app>::]<path> <call_leg>" />
 ```
 
-This syntax is also valid as of [commit 116ebc0](https://github.com/signalwire/freeswitch/commit/116ebc0):
+根据 [commit 116ebc0](https://github.com/signalwire/freeswitch/commit/116ebc0)，此语法也是有效的：
 
-**In the dialplan**
+**在拨号计划中**
 
 ```xml
 <action application="sched_broadcast" data="@<time> <uuid> [<dialplan_app>::]<path> <call_leg> " />
 ```
 
-**As an API call**
+**作为 API 调用**
 
 ```xml
  sched_broadcast [[+]<time> | @<time>] <uuid> [<dialplan_app>::]<path> <call_leg>
 ```
 
-TODO Added the `[<dialplan_app>::]` part to the syntax based on the examples in section 2\. but didn't check whether it works.
+根据第二节示例部分的示例，添加了 `[<dialplan_app>::]` 的部分到语法中，但未进行验证。
 
-| Parameter   | Description                                                                                                                                                                                                           | Examples                                                                 |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| \[+\]&lt;time> | Time in seconds.If used **with +** then the call will be hung up after that number of seconds.If used **without +** then the given value is considered the number of seconds since the epoch, 1970-01-01 00:00:00 UTC | +60 (hang up after 1 minute)2003336820 (hang up at Jun 25 2033 11:27 AM) |
-| @&lt;time>     | Schedule a broadcast for every &lt;time> seconds for the duration of a call.See [Jira issue FS-5661](https://freeswitch.org/jira/browse/FS-5661) or **2\. Examples** section below.                                      | @60                                                                      |
-| &lt;uuid>      | The unique identifier (UUID) of the call leg. See [Channel Variables](../../Dialplan/Channel-Variables_16352493.mdx#about).                                                                                                             | f2120667-3cd6-42bc-8be6-8cf4207cf6bc                                     |
-| &lt;path>      | Specify the path of the audio file to broadcast.                                                                                                                                                                      | /tmp/main.wav                                                            |
-| &lt;call\_leg> | Specify the call leg to broadcast on.Valid value arealegblegbothbleg might mean "_other leg_" even if the leg this is set on (e.g., via an export) really **is** the B leg.                                           | aleg                                                                     |
+| 参数          | 描述                                                                                                                                                                                                                                                                                  | 示例                                                                |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| \[+\]&lt;time> | 时间，以秒为单位。如果使用 **+**，则呼叫在指定的秒数后挂断。如果不使用 **+**，则给定的值被视为从纪元时间（1970年01月01日00:00:00 UTC）开始的秒数。                                                                                        | +60 (1分钟后挂断)2003336820 (在2033年6月25日上午11:27挂断) |
+| @&lt;time>     | 安排广播，在呼叫期间每隔&lt;time>秒进行一次广播。详见 [Jira问题FS-5661](https://freeswitch.org/jira/browse/FS-5661) 或下面的**2. 示例**部分。                                                                                                     | @60                                                                      |
+| &lt;uuid>      | 呼叫的唯一标识符（UUID）。详见 [通道变量](../../Dialplan/Channel-Variables_16352493.mdx#about)。                                                                                                                                                                                    | f2120667-3cd6-42bc-8be6-8cf4207cf6bc                                     |
+| &lt;path>      | 指定要进行广播的音频文件路径。                                                                                                                                                                                                                                                        | /tmp/main.wav                                                            |
+| &lt;call\_leg> | 指定要进行广播的呼叫方向。有效值为：aleg、bleg、both或bleg可能表示"_其他方向_"，即使实际设置该选项的方向（例如通过导出）实际上是B端。                                                                                                                        | aleg                                                                     |
 
-## 2\. Examples
+## 2. 示例
 
-### 2.1 Play audio in a channel to all participants after 1 hour
+### 2.1 在一个小时后将音频播放到所有参与者所在的频道中
 
 ```xml
 <action application="sched_broadcast" data="+3600 /tmp/howdy.wav both"/> 
 ```
 
-This one with "playback" may help if the above does not work.
+如果上述方法不起作用，可以尝试使用以下代码。
 
 ```xml
 <action application="sched_broadcast" data="+3600 playback::/tmp/howdy.wav both"/> 
 ```
 
-### 2.2 Play audible "beep" every N seconds
+### 2.2 每隔 N 秒播放可听到的“嘟嘟声”
 
-Quoting [Jira issue FS-5661](https://freeswitch.org/jira/browse/FS-5661):
+引用 [Jira 问题 FS-5661](https://freeswitch.org/jira/browse/FS-5661)：
 
-> One example for usage is jurisdictions that require an audible "beep" every N seconds while a call is being recorded.
-> 
+> 一种用法是根据法域的要求，在录音通话过程中每隔 N 秒播放可听到的“嘟嘟声”。
+>
 > ```xml
 > <action application="sched_broadcast" data="@60 /tmp/call_recorded.wav both"/>
 > ```
 
-## 3\. See Also
+## 3\. 另请参阅
 
-* [mod\_dptools: displace\_session](./6586781.mdx#about) \- allows you to mix audio
-* [mod\_dptools: sched cancel](./6587049.mdx#0-about) \- allows you to cancel the scheduled broadcast
-
-
+* [mod_dptools: displace_session](./6586781.mdx#about) \- 允许您混合音频
+* [mod_dptools: sched cancel](./6587049.mdx#0-about) \- 允许您取消预定的广播

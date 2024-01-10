@@ -1,42 +1,38 @@
+# Email2callback
 
-# Email2callback 
+## 关于
 
- 
+这是一个用于通过电子邮件触发电话呼叫的Python脚本。
 
-## About
+点击此处展开目录
 
-A Python script that triggers a call from an e-mail message.  
+* 1 [步骤](#步骤)
 
-  
-Click here to expand Table of Contents
+## 步骤
 
-* 1 [Steps](#steps)
+以下说明假设您正在使用基于Debian的系统上的postfix。请根据您自己的系统进行适当的调整。
 
-## Steps
+要使用以下系统，请发送电子邮件至callback@FQDN，主题为"callback NUMERIC"或正文中包含"callback NUMERIC"。然后会根据email2callback用户的拨号计划，拨号到号码NUMERIC，例如"callback 1800123123"。
 
-These instructions assume you are using postfix on a debian based system. Please adapt to your own system appropriately.
+1. 安装postfix、sudo、python，并使postfix接受本地unix用户的邮件。
 
-To use the following system, send an email to callback@FQDN, with either the subject of "callback NUMERIC" or somewhere in the body with "callback NUMERIC". This will then dial the number NUMERIC based on the dialplan of the email2callback user, for example "callback 1800123123".
+2. 确保'freepy'（位于脚本/套接字目录中）已正确设置，这可能需要按照freepy的README/INSTALL中的说明安装SMC Python库。
 
-1\. Install postfix, sudo, python, and have postfix accept mail to local unix users.
+3. 创建一个扩展，用户名为email2callback，并为该用户选择一个适当的密码。请在下面的Python脚本中设置密码。
 
-2\. Make sure 'freepy' (found in the scripts/socket directory) is setup correctly, which may mean installation of the SMC python library as per the README/INSTALL of freepy.
-
-3\. Create an extension, with username of email2callback, and choose an appropriate password for the user. Please set the password within the python script below.
-
-4\. Add the following to /etc/sudoers, which will allow the nobody user (which postfix uses for spawning scripts from /etc/aliases) to execute the script owned by freeswitch:
+4. 添加以下内容到/etc/sudoers，这将允许nobody用户（postfix用于从/etc/aliases生成脚本）执行freeswitch拥有的脚本：
 
 ```xml
 nobody	ALL=NOPASSWD: /opt/freeswitch/scripts/socket/email2callback.py
 ```
 
-5\. Add the following to /etc/aliases, and then run newaliases:
+5. 添加以下内容到/etc/aliases，然后运行newaliases：
 
 ```xml
 callback: | /usr/local/bin/email2callback.sh
 ```
 
-6\. Create the file /usr/local/bin/email2callback.sh:
+6. 创建文件/usr/local/bin/email2callback.sh：
 
 **/usr/local/bin/email2callback.sh**
 
@@ -45,16 +41,16 @@ callback: | /usr/local/bin/email2callback.sh
 sudo /opt/freeswitch/scripts/socket/email2callback.py
 ```
 
-7\. Create the file /opt/freeswitch/scripts/socket/email2callback.py:
+7. 创建文件/opt/freeswitch/scripts/socket/email2callback.py：
 
 **/opt/freeswitch/scripts/socket/email2callback.py**
 
 ```xml
 #!/usr/bin/python
-# script to parse email for phonenumber in subject or body, and call back with extension
-# Replace DOMAIN with the value of $${domain}
-# Replace EXTENSION with the value of the application (&rxfax()) or extension (5000)
-# Replace PASSWORD with the password for the email2callback user extension
+# 脚本用于解析邮件，从主题或正文中提取电话号码，并使用分机号码回拨
+# 将DOMAIN替换为$${domain}的值
+# 将EXTENSION替换为应用程序(&rxfax())或分机号码(5000)的值
+# 将PASSWORD替换为email2callback用户分机的密码
 
 import sys
 import os
@@ -71,13 +67,13 @@ from fshelper import *
 def initiateCallback():
     outgoing_number="unknown"
 
-    # first try to parse the incoming email
+    # 首先解析传入的邮件
     message = email.message_from_file(sys.stdin)
 
     #
-    #  process the message here
+    # 在这里处理邮件
     #
-    syslog.syslog('Received mail from "%s", subject: "%s"' % (message.get('From'), message.get('Subject') ))
+    syslog.syslog('接收到来自"%s"的邮件，主题为："%s"' % (message.get('From'), message.get('Subject') ))
 
     subject = message.get('Subject')
     m = re.match('callback (\d*)', subject)
@@ -89,34 +85,33 @@ def initiateCallback():
     if m:
             outgoing_number = m.group(1)
    
-    syslog.syslog('Making outgoing call to "%s"' % outgoing_number) 
+    syslog.syslog('正在拨出电话给：" %s"' % outgoing_number) 
 
     fshelper = FsHelper(host="127.0.0.1",
                         passwd="ClueCon",
                         port=8021)        
 
     def worked(result):
-        print "Originate succeeded: %s" % result
+        print "发起呼叫成功：%s" % result
         reactor.stop()
         
     def failed(failure):
-        print "failed: %s" % failure
+        print "失败：%s" % failure
         reactor.stop()
+```
 
-
-    dest_ext_app = "EXTENSION"
-    party2dial="[sip_auth_username=email2callback,sip_auth_password=PASSWORD]sofia/external/%s@DOMAIN" % outgoing_number
-    d2 = fshelper.originate(party2dial=party2dial,
+```python
+dest_ext_app = "扩展"
+party2dial="[sip_auth_username=email2callback,sip_auth_password=PASSWORD]sofia/external/%s@DOMAIN" % outgoing_number
+d2 = fshelper.originate(party2dial=party2dial,
                             dest_ext_app=dest_ext_app,
                             bgapi=True)
         
-    d2.addCallback(worked)
-    d2.addErrback(failed)
-    reactor.run()    
+d2.addCallback(worked)
+d2.addErrback(failed)
+reactor.run()    
 
 
 if __name__=="__main__":
-	initiateCallback()
+    initiateCallback()
 ```
-
-

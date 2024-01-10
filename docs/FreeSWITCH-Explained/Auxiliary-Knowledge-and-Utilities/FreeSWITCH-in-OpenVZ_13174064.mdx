@@ -1,50 +1,43 @@
+# 在 OpenVZ 中运行 FreeSWITCH
 
-# FreeSWITCH in OpenVZ 
+## 关于
 
- 
+OpenVZ 是一个基于 Linux 的开源容器虚拟化解决方案。OpenVZ 在单个物理服务器上创建隔离、安全的容器（也称为 VE 或 VPS），以提高服务器利用率，并确保应用程序不发生冲突。每个容器都像独立的服务器一样执行，可以独立重启，并具有根访问权限、用户、IP 地址、内存、进程、文件、应用程序、系统库和配置文件。更多信息请参考 [http://wiki.openvz.org](http://wiki.openvz.org/)。
 
-## About
+单击此处展开目录
 
-OpenVZ is an open source container-based virtualization solution built on Linux. OpenVZ creates isolated, secure containers (otherwise known as VEs or VPSs) on a single physical server enabling better server utilization and ensuring that applications do not conflict. Each container performs and executes exactly like a stand-alone server; containers can be rebooted independently and have root access, users, IP addresses, memory, processes, files, applications, system libraries and configuration files. See [http://wiki.openvz.org](http://wiki.openvz.org/) for more information.
+* 1 [在 OpenVZ 中运行 FreeSWITCH](#在-openvz-中运行-freeswitch)  
+   * 1.1 [资源考虑](#资源考虑)
+* 2 [运行中的 FreeSWITCH VE 的实时迁移](#运行中的-freeswitch-ve-的实时迁移)
 
-Click here to expand Table of Contents
+## 在 OpenVZ 中运行 FreeSWITCH
 
-* 1 [Running FreeSWITCH in OpenVZ](#-freeswitch--freeswitch-in-openvz-)  
-   * 1.1 [Resource Considerations](#resource-considerations)
-* 2 [Live Migration of a running FreeSWITCH VE](#live-migration-of-a-running-freeswitch-ve)
-
-## Running FreeSWITCH in OpenVZ
-
-* FreeSWITCH in OpenVZ doesn't differ at all from running on standalone Linux.
-* FreeSWITCH OpenVZ template (<http://files.freeswitch.org/centos-5-x86%5F64-freeswitch.tar.gz>)
+* 在 OpenVZ 中运行 FreeSWITCH 与在独立的 Linux 上运行没有任何区别。
+* FreeSWITCH OpenVZ 模板 (<http://files.freeswitch.org/centos-5-x86%5F64-freeswitch.tar.gz>)
 * vzctl create 200 --ostemplate centos-5-x86\_64-freeswitch
 * vzctl set 200 --ipadd 192.168.1.200 --hostname freeswitch-01 --nameserver 192.168.1.1 --save
 * vzctl start 200
-* vzctl enter 200 (to check things are ok)
-* exit (to exit the ve)
+* vzctl enter 200 （检查一切是否正常）
+* exit （退出 VE）
 * vzctl set --userpasswd root:password
-* ssh [root@192.168.1.200](mailto:root@192.168.1.200) (using the password set in prior step)
+* ssh [root@192.168.1.200](mailto:root@192.168.1.200)（使用前一步中设置的密码登录）
 
-### Resource Considerations
+### 资源考虑
 
-* Use the ve-vps.basic.conf-sample included with OpenVZ for basic resources.
-* If you run into problems 'cat /proc/user\_beancounters', look at failcnt and increase resources.
+* 使用 OpenVZ 提供的 ve-vps.basic.conf-sample 作为基本资源。
+* 如果遇到问题，运行命令 'cat /proc/user\_beancounters'，查看 failcnt 并增加资源。
 
-## Live Migration of a running FreeSWITCH VE
+## 运行中的 FreeSWITCH VE 的实时迁移
 
-You can migrate a live running OpenVZ container with very little downtime. This requires ssh keys on each host so they can login without a password.
+你可以以很少的停机时间迁移一个正在运行的OpenVZ容器。这需要每个主机上都有SSH密钥，以便它们可以无密码登录。
 
-For example if you have two OpenVZ hardware nodes called openvz-hn01 and openvz-hn02:
+例如，如果你有两个名为openvz-hn01和openvz-hn02的OpenVZ硬件节点：
 
-* FreeSWITCH VEID 200 running on openvz-hn02
-* On openvz-hn02 you issue 'vzmigrate -v --online openvz-hn01 200' (This will live migrate the VE to openvz-hn01)
+* 在openvz-hn02上运行FreeSWITCH VEID 200
+* 在openvz-hn02上，你可以使用命令'vzmigrate -v --online openvz-hn01 200' （这将将VE实时迁移到openvz-hn01）
 
-  
-To migrate it back you perform the inverse:
+要迁移回来，你可以执行相反的操作：
 
-* On openvz-hn01 you issue 'vzmigrate -v --online openvz-hn02 200' (This will live migrate the VE to openvz-hn02)
+* 在openvz-hn01上，你可以使用命令'vzmigrate -v --online openvz-hn02 200' （这将将VE实时迁移到openvz-hn02）
 
-  
-You will have somewhere around 600ms-2000ms of audio drop out if live calls are up and media is passing thru your VE running FreeSWITCH. This all depends on the network between the two hardware nodes
-
-
+如果正在进行实时通话并且媒体通过运行FreeSWITCH的VE传递，你可能会遇到大约600毫秒到2000毫秒的音频中断。这完全取决于两个硬件节点之间的网络。

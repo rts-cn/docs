@@ -1,13 +1,10 @@
-
-# Provider ivox (Australia) 
-
- 
+# 供应商 ivox (澳大利亚)
 
 ## [ivox.com.au](http://ivox.com.au)
 
-Last update: 10 March 2011
+更新时间：2011年3月10日
 
-Both DID and outgoing calls work.
+直拨和呼出都可以使用。
 
 ```xml
 <include>
@@ -23,29 +20,26 @@ Both DID and outgoing calls work.
 </include>
 ```
 
-## For outbound calls to work
+## 要让呼出生效
 
-The crucial thing you need to do if you want to place calls is that you must set one variable in your outbound dialplan:
-
-```xml
-<action application="set" data="effective_caller_id_number=***your number***"/>
-```
-
-You will need these in every dialplan entry that uses this gateway.
-
-The reason for this is that ivox will reject any call that comes to it from anywhere other than the callerid that is registered with them. By default, freeswitch will send the caller id of your extension with the outgoing call, therefore ivox will reject the call. By setting these variables you override that default behaviour and ivox sees what it wants to see.
-
-  
-A more elegant way to achieve this is to set the following in your extension definitions:
+如果你想要打电话，你需要在你的呼出拨号计划中设置一个变量：
 
 ```xml
-<variable name="outbound_caller_id_number" value="***your number***"/>
+<action application="set" data="effective_caller_id_number=***你的号码***"/>
 ```
 
-And then in your outbound dialplan set:
+你需要在每个使用该网关的拨号计划条目中都设置这个变量。
+
+这样做的原因是，ivox会拒绝来自非注册呼叫方ID的任何呼叫。默认情况下，freeswitch会在呼出电话时发送你的分机的呼叫方ID，因此ivox会拒绝该呼叫。通过设置这些变量，你可以覆盖默认行为，让ivox看到它想要看到的呼叫方ID。
+
+要更加优雅地实现这一点，你可以在分机定义中设置以下内容：
 
 ```xml
-<action application="set" data="effective_caller_id_number=${outbound_caller_id_number}"/> 
+<variable name="outbound_caller_id_number" value="***你的号码***"/>
 ```
 
+然后在你的呼出拨号计划中设置：
 
+```xml
+<action application="set" data="effective_caller_id_number=${outbound_caller_id_number}"/>
+```

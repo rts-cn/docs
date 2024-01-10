@@ -1,118 +1,101 @@
-
-# Provider Voip Innovations (USA) 
-
- 
+# 供应商 Voip Innovations (美国)
 
 ## [www.voipinnovations.com](http://www.voipinnovations.com)
 
-Last Update: 24 September 2012
+最后更新：2012年9月24日
 
-This example assumes altering the default configuration included with FreeSWITCH. Custom contexts and such will require tweaking. ${FS Install DIR} is used to represent the directory in which FreeSWITCH is installed, by default this is /usr/local/freeswitch.
+此示例假设修改了FreeSWITCH附带的默认配置。自定义上下文等需要进行调整。`${FS Install DIR}`用来表示安装FreeSWITCH的目录，默认为`/usr/local/freeswitch`。
 
-## Outbound Calling
+## 呼出电话
 
-You'll need a few bits to get this working. First, add a Gateway profile to ${FS Install DIR}/conf/sip\_profiles/external/voipinnovations.xml
+您需要一些配置才能使其正常工作。首先，在`${FS Install DIR}/conf/sip\_profiles/external/voipinnovations.xml`中添加一个网关配置文件。
 
 ```xml
-  <include>
-     <gateway name="voipinnovations">
-       <param name="username" value="user"/>
-       <param name="password" value="pass"/> 
-       <param name="proxy" value="64.136.174.30"/>
-       <param name="context" value="public"/>
-       <param name="register" value="false"/>
-     </gateway>
-  </include>
+<include>
+  <gateway name="voipinnovations">
+    <param name="username" value="user"/>
+    <param name="password" value="pass"/> 
+    <param name="proxy" value="64.136.174.30"/>
+    <param name="context" value="public"/>
+    <param name="register" value="false"/>
+  </gateway>
+</include>
 ```
 
-The username and password fields are not used by VI, but are required by FreeSWITCH to create the gateway. The IP address they give you might be '64.136.174.35' instead of .30 listed above, check your welcome packet.
+用户名和密码字段不会被VI使用，但是FreeSWITCH需要这些字段来创建网关。他们给您的IP地址可能是上面列出的'64.136.174.30'而不是'.35'，请查看您的欢迎包。
 
-This should be just about enough to get outbound calling working. You just need to add one thing to the default dialplan to tell FS to send outbound calls to that gateway. Open up ${FS Install DIR}/conf/diaplans/default/[01\_example.com](http://01%5Fexample.com).xml. We'll use this as our template. Inside you should see this:
+这应该足够使呼出电话正常工作了。您只需要在默认的拨号计划中添加一个内容，告诉FS将呼出电话发送到该网关。打开`${FS Install DIR}/conf/dialplans/default/[01\_example.com](http://01%5Fexample.com).xml`。我们将使用它作为我们的模板。在其中，您应该看到以下内容：
 
 ```xml
 <include>
 
-  <extension name="local.example.com">
+<extension name="local.example.com">
     <condition field="${toll_allow}" expression="local"/>
     <condition field="destination_number" expression="^(\d{7})$">
-      <action application="set" data="effective_caller_id_number=${outbound_caller_id_number}"/>
-      <action application="set" data="effective_caller_id_name=${outbound_caller_id_name}"/>
-      <action application="bridge" data="sofia/gateway/${default_gateway}/1${default_areacode}$1"/>
+        <action application="set" data="effective_caller_id_number=${outbound_caller_id_number}"/>
+        <action application="set" data="effective_caller_id_name=${outbound_caller_id_name}"/>
+        <action application="bridge" data="sofia/gateway/${default_gateway}/1${default_areacode}$1"/>
     </condition>
-  </extension>
+</extension>
 
-  <extension name="domestic.example.com">
+<extension name="domestic.example.com">
     <condition field="${toll_allow}" expression="domestic"/>
     <condition field="destination_number" expression="^(\d{11})$">
-      <action application="set" data="effective_caller_id_number=${outbound_caller_id_number}"/>
-      <action application="set" data="effective_caller_id_name=${outbound_caller_id_name}"/>
-      <action application="bridge" data="sofia/gateway/${default_gateway}/$1"/>
+        <action application="set" data="effective_caller_id_number=${outbound_caller_id_number}"/>
+        <action application="set" data="effective_caller_id_name=${outbound_caller_id_name}"/>
+        <action application="bridge" data="sofia/gateway/${default_gateway}/$1"/>
     </condition>
-  </extension>
-
-  <extension name="international.example.com">
-    <condition field="${toll_allow}" expression="international"/>
-    <condition field="destination_number" expression="^(011\d+)$">
-      <action application="set" data="effective_caller_id_number=${outbound_caller_id_number}"/>
-      <action application="set" data="effective_caller_id_name=${outbound_caller_id_name}"/>
-      <action application="bridge" data="sofia/gateway/${default_gateway}/$1"/>
-    </condition>
-  </extension>
+</extension>
 
 </include>
-```
-
-VI can't handle the 7 digit numbers and doesn't at time of writing do International termination, so you can remove the first and third extension sections. We'll alter the second extension as well, leaving you with something like this:
 
 ```xml
-<include>
-
-  <extension name="voipinnovations">
+<extension name="voipinnovations">
     <condition field="destination_number" expression="^(\d{11})$">
-      <action application="set" data="effective_caller_id_number=${outbound_caller_id_number}"/>
-      <action application="set" data="effective_caller_id_name=${outbound_caller_id_name}"/>
-      <action application="bridge" data="sofia/gateway/voipinnovations/$1"/>
+        <action application="set" data="effective_caller_id_number=${outbound_caller_id_number}"/>
+        <action application="set" data="effective_caller_id_name=${outbound_caller_id_name}"/>
+        <action application="bridge" data="sofia/gateway/voipinnovations/$1"/>
     </condition>
-  </extension>
+</extension>
 
 </include>
 ```
 
-Please note that this assumes an 11 digit dialed number from the phone. To allow 10 digit dialing as well, you can modify the condition as follows.
+请注意，此假设来自电话的拨号号码为11位。要允许10位拨号，可以按以下方式修改条件。
 
 ```xml
 <condition field="destination_number" expression="^1?(\d{10})$">
 ```
 
-## Inbound Calling
+## 呼入通话
 
-For inbound calling, we need to add their IP to the ACL rules. The file ${FS Install DIR}/conf/autoload\_configs/acl.conf.xml should have a section like this:
-
-```xml
-   <list name="domains" default="deny">
-      <node type="allow" domain="$${domain}"/>
-    </list> 
-```
-
-Add a line with their IP address like so:
+对于呼入通话，我们需要将其IP地址添加到ACL规则中。文件`${FS Install DIR}/conf/autoload_configs/acl.conf.xml`应该有如下的部分：
 
 ```xml
-    <list name="domains" default="deny">
-      <node type="allow" domain="$${domain}"/>
-      <node type="allow" domain="64.136.174.30"/>
-    </list>
+<list name="domains" default="deny">
+    <node type="allow" domain="$${domain}"/>
+</list>
 ```
 
-Then open up ${FS Install DIR}/conf/sip\_profiles/external.xml and make sure it has these two lines:
+像下面这样添加一行与他们的IP地址：
 
 ```xml
-  <param name="auth-calls" value="false"/>
-  <param name="apply-inbound-acl" value="domains"/>
+<list name="domains" default="deny">
+    <node type="allow" domain="$${domain}"/>
+    <node type="allow" domain="64.136.174.30"/>
+</list>
 ```
 
-If your switch is behind NAT, you may have to add the apply-inbound-acl line to ${FS Install DIR}/conf/sip\_profiles/internal.xml. Watch the FS console for errors about unauthenticated calls being rejected by the internal context before altering it, and leave auth-calls true in the internal profile.
+然后打开`${FS Install DIR}/conf/sip_profiles/external.xml`，确保它有以下两行：
 
-Last, but not least, you'll need to add a section to ${FS Install DIR}/conf/dialplan/public/00\_inbound\_did.xml to route the individual DIDs. The framework of the file is pretty easy to follow. The only thing that should be noted is that by default VI sends the DNIS in E.164 format [\[2\]](http://en.wikipedia.org/wiki/E.164) so you would need to either consider that when making your route, or alter the number of transmit digit in their portal. The example below assumes you're set to receive E.164
+```xml
+<param name="auth-calls" value="false"/>
+<param name="apply-inbound-acl" value="domains"/>
+```
+
+如果您的交换机在NAT后面，则可能需要将apply-inbound-acl行添加到`${FS Install DIR}/conf/sip_profiles/internal.xml`中。在更改之前，请留意FS控制台上关于未经验证的呼叫被内部上下文拒绝的错误信息，并在内部配置文件中保留auth-calls为true。
+
+最后但并非最不重要的，您需要在${FS Install DIR}/conf/dialplan/public/00\_inbound\_did.xml文件中添加一个部分，以路由个别的DID号码。该文件的框架相当易于理解。唯一需要注意的是，默认情况下，VI以E.164格式发送DNIS [\[2\]](http://en.wikipedia.org/wiki/E.164)，因此您需要在制定路由时考虑这一点，或者在他们的门户上更改传输的数字数量。下面的示例假设您已经设置为接收E.164格式的号码。
 
 ```xml
   <extension name="8005551212">
@@ -122,5 +105,3 @@ Last, but not least, you'll need to add a section to ${FS Install DIR}/conf/dial
     </condition>
   </extension> 
 ```
-
-

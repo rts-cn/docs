@@ -1,260 +1,97 @@
+# Sofia配置文件 
 
-# Sofia Configuration Files 
+## 关于
 
- 
+Sofia是一个FreeSWITCH™模块（[mod_sofia](../../Modules/mod_sofia_1048707.mdx#about)），它以用户代理（User Agent）的形式提供与FreeSWITCH之间的SIP连接。
 
-## About
+"用户代理"（User Agent）是用于处理特定网络协议的应用程序；Sofia的网络协议是SIP。Sofia是FreeSWITCH中使用SIP网络协议的任何用户代理的通用名称。
 
-Sofia is a FreeSWITCH™ module ([mod\_sofia](../../Modules/mod_sofia_1048707.mdx#about)) that provides SIP connectivity to and from FreeSWITCH in the form of a User Agent.
+例如，Sofia接收从其他SIP用户代理（UA）发送到FreeSWITCH的呼叫，将呼叫发送到其他UA，充当客户端将FreeSWITCH注册到其他UA，允许客户端在FreeSWITCH上注册，并连接呼叫（例如，连接到本地分机）。
 
-A "User Agent" ("UA") is an application used for handling a certain network protocol; the network protocol in Sofia's case is SIP. Sofia is the general name of any User Agent in FreeSWITCH using the SIP network protocol.
+要添加一个SIP提供者（Sofia用户代理）到您的FreeSWITCH，请参阅[互操作性示例](../../Interoperability/index.mdx#about)并将SIP提供者的信息添加到存储在conf/sip_profiles/目录下的.xml文件中。
 
-For example, Sofia receives calls sent to FreeSWITCH from other SIP User Agents (UAs), sends calls to other UAs, acts as a client to register FreeSWITCH with other UAs, lets clients register with FreeSWITCH, and connects calls (i.e., to local extensions).
+单击此处展开目录
 
-To add a SIP Provider (Sofia User Agent) to your FreeSWITCH, please see the [Interoperability Examples](../../Interoperability/index.mdx#about) and add the SIP Provider information in an .xml file stored under conf/sip\_profiles/
+* 1 [Sofia允许多个用户代理（User Agents）](#sofia-allows-for-multiple-user-agents)
+   * 1.1 [多个用户代理（Profiles）和拨号计划（Dialplan）](#multiple-user-agents-profiles-and-the-dialplan)
+   * 1.2 [SIP配置文件和域之间的关系](#the-relationship-between-sip-profiles-and-domains)
+* 2 [配置文件的结构](#structure-of-a-profile)
+   * 2.1 [网关（Gateway）](#-default-configuration-file-)
+      * 2.1.1 [参数（Parameters）](#-default-configuration-file-)
+         * 2.1.2 [变量（Variables）](#-default-configuration-file-)
+   * 2.2 [参数（Parameters）](#-basic-parameters-)
+      * 2.2.1 [基本参数（Basic Parameters）](#-basic-parameters-)
+         * 2.2.1.1 [别名（alias）](#-default-configuration-file-)
+            * 2.2.1.2 [失败时关闭（shutdown-on-fail）](#-default-configuration-file-)
+               * 2.2.1.3 [用户代理字符串（user-agent-string）](#-default-configuration-file-)
+                  * 2.2.1.4 [日志级别（log-level）](#-default-configuration-file-)
+                  * 2.2.
 
-  
-Click here to expand Table of Contents
+### Sofia 允许多个用户代理
 
-* 1 [Sofia allows for multiple User Agents](#sofia-allows-for-multiple-user-agents)  
-   * 1.1 [Multiple User Agents (Profiles) and the Dialplan](#multiple-user-agents-profiles-and-the-dialplan)  
-   * 1.2 [The Relationship Between SIP Profiles and Domains](#the-relationship-between-sip-profiles-and-domains)
-* 2 [Structure of a Profile](#structure-of-a-profile)  
-   * 2.1 [Gateway](#-default-configuration-file-)  
-      * 2.1.1 [Parameters](#-default-configuration-file-)  
-         * 2.1.2 [Variables](#-default-configuration-file-)  
-   * 2.2 [Parameters](#-basic-parameters-)  
-      * 2.2.1 [Basic Parameters](#-basic-parameters-)  
-         * 2.2.1.1 [alias](#-default-configuration-file-)  
-            * 2.2.1.2 [shutdown-on-fail](#-default-configuration-file-)  
-               * 2.2.1.3 [user-agent-string](#-default-configuration-file-)  
-                  * 2.2.1.4 [log-level](#-default-configuration-file-)  
-                  * 2.2.1.5 [debug](#-default-configuration-file-)  
-                  * 2.2.1.6 [sip-trace](#-default-configuration-file-)  
-                  * 2.2.1.7 [context](#-default-configuration-file-)  
-                  * 2.2.1.8 [sip-port](#-default-configuration-file-)  
-                  * 2.2.1.9 [sip-ip](#-default-configuration-file-)  
-                  * 2.2.1.10 [rtp-ip](#-default-configuration-file-)  
-                  * 2.2.1.11 [ext-rtp-ip](#-default-configuration-file-)  
-                  * 2.2.1.12 [ext-sip-ip](#-default-configuration-file-)  
-                  * 2.2.1.13 [tcp-keepalive](#-default-configuration-file-)  
-                  * 2.2.1.14 [tcp-pingpong](#-default-configuration-file-)  
-                  * 2.2.1.15 [tcp-ping2pong](#-default-configuration-file-)  
-                  * 2.2.1.16 [dialplan](#-default-configuration-file-)  
-         * 2.2.2 [Media related parameters](#-media-related-parameters-)  
-            * 2.2.2.1 [resume-media-on-hold](#-default-configuration-file-)  
-               * 2.2.2.2 [bypass-media-after-att-xfer](#-default-configuration-file-)  
-                  * 2.2.2.3 [bypass-media-after-hold](#-default-configuration-file-)  
-                  * 2.2.2.4 [inbound-bypass-media](#-default-configuration-file-)  
-                  * 2.2.2.5 [inbound-proxy-media](#-default-configuration-file-)  
-                  * 2.2.2.6 [disable-rtp-auto-adjust](#-default-configuration-file-)  
-                  * 2.2.2.7 [ignore-183nosdp](#-default-configuration-file-)  
-                  * 2.2.2.8 [enable-soa](#-default-configuration-file-)  
-                  * 2.2.2.9 [t38-passthru](#-default-configuration-file-)  
-         * 2.2.3 [Codecs related options](#-codecs-related-options-)  
-            * 2.2.3.1 [inbound-codec-prefs](#-default-configuration-file-)  
-               * 2.2.3.2 [outbound-codec-prefs](#-default-configuration-file-)  
-                  * 2.2.3.3 [codec-prefs](#-default-configuration-file-)  
-                  * 2.2.3.4 [inbound-codec-negotiation](#-default-configuration-file-)  
-                  * 2.2.3.5 [inbound-late-negotiation](#-default-configuration-file-)  
-                  * 2.2.3.6 [bitpacking](#-default-configuration-file-)  
-                  * 2.2.3.7 [disable-transcoding](#-default-configuration-file-)  
-                  * 2.2.3.8 [renegotiate-codec-on-reinvite](#-default-configuration-file-)  
-         * 2.2.4 [STUN](#-default-configuration-file-)  
-            * 2.2.4.1 [ext-rtp-ip](#-default-configuration-file-)  
-               * 2.2.4.2 [ext-sip-ip](#-default-configuration-file-)  
-                  * 2.2.4.3 [stun-enabled](#-default-configuration-file-)  
-                  * 2.2.4.4 [stun-auto-disable](#-default-configuration-file-)  
-         * 2.2.5 [NATing](#-default-configuration-file-)  
-            * 2.2.5.1 [apply-nat-acl](#-default-configuration-file-)  
-               * 2.2.5.2 [aggressive-nat-detection](#-default-configuration-file-)  
-         * 2.2.6 [VAD and CNG](#-default-configuration-file-)  
-            * 2.2.6.1 [vad](#-default-configuration-file-)  
-               * 2.2.6.2 [suppress-cng](#-default-configuration-file-)  
-         * 2.2.7 [NDLB (A.K.A. No device left behind)](#-ndlb-aka-no-device-left-behind)  
-            * 2.2.7.1 [NDLB-force-rport](#-default-configuration-file-)  
-               * 2.2.7.2 [NDLB-broken-auth-hash](#-default-configuration-file-)  
-                  * 2.2.7.3 [NDLB-received-in-nat-reg-contact](#-default-configuration-file-)  
-                  * 2.2.7.4 [NDLB-sendrecv-in-session](#-default-configuration-file-)  
-                  * 2.2.7.5 [NDLB-allow-bad-iananame](#-default-configuration-file-)  
-         * 2.2.8 [Call ID](#-default-configuration-file-)  
-            * 2.2.8.1 [inbound-use-callid-as-uuid](#-default-configuration-file-)  
-               * 2.2.8.2 [outbound-use-uuid-as-callid](#-default-configuration-file-)  
-         * 2.2.9 [TLS](#-default-configuration-file-)  
-            * 2.2.9.1 [tls](#-default-configuration-file-)  
-               * 2.2.9.2 [tls-only](#-default-configuration-file-)  
-                  * 2.2.9.3 [tls-bind-params](#-default-configuration-file-)  
-                  * 2.2.9.4 [tls-sip-port](#-default-configuration-file-)  
-                  * 2.2.9.5 [tls-cert-dir](#-default-configuration-file-)  
-                  * 2.2.9.6 [tls-version](#-default-configuration-file-)  
-                  * 2.2.9.7 [tls-passphrase](#-default-configuration-file-)  
-                  * 2.2.9.8 [tls-verify-date](#-default-configuration-file-)  
-                  * 2.2.9.9 [tls-verify-policy](#-default-configuration-file-)  
-                  * 2.2.9.10 [tls-verify-depth](#-default-configuration-file-)  
-                  * 2.2.9.11 [tls-verify-in-subjects](#-default-configuration-file-)  
-         * 2.2.10 [DTMF](#-default-configuration-file-)  
-            * 2.2.10.1 [rfc2833-pt](#-default-configuration-file-)  
-               * 2.2.10.2 [dtmf-duration](#-default-configuration-file-)  
-                  * 2.2.10.3 [dtmf-type](#-default-configuration-file-)  
-                  * 2.2.10.4 [pass-rfc2833](#-default-configuration-file-)  
-                  * 2.2.10.5 [liberal-dtmf](#-default-configuration-file-)  
-         * 2.2.11 [SIP Related options](#-sip-related-options-)  
-            * 2.2.11.1 [enable-timer](#-default-configuration-file-)  
-               * 2.2.11.2 [session-timeout](#-default-configuration-file-)  
-                  * 2.2.11.3 [enable-100rel](#-default-configuration-file-)  
-                  * 2.2.11.4 [minimum-session-expires](#-default-configuration-file-)  
-                  * 2.2.11.5 [sip-options-respond-503-on-busy](#-default-configuration-file-)  
-                  * 2.2.11.6 [sip-force-expires](#-default-configuration-file-)  
-                  * 2.2.11.7 [sip-expires-max-deviation](#-default-configuration-file-)  
-                  * 2.2.11.8 [outbound-proxy](#-default-configuration-file-)  
-                  * 2.2.11.9 [send-display-update](#-default-configuration-file-)  
-         * 2.2.12 [RTP Related options](#-rtp-related-options-)  
-            * 2.2.12.1 [auto-jitterbuffer-msec](#-default-configuration-file-)  
-               * 2.2.12.2 [rtp-timer-name](#-default-configuration-file-)  
-                  * 2.2.12.3 [rtp-rewrite-timestamps](#-default-configuration-file-)  
-                  * 2.2.12.4 [media\_timeout](#-default-configuration-file-)  
-                  * 2.2.12.5 [media\_hold\_timeout](#-default-configuration-file-)  
-                  * 2.2.12.6 [rtp-autoflush-during-bridge](#-default-configuration-file-)  
-                  * 2.2.12.7 [rtp-autoflush](#-default-configuration-file-)  
-         * 2.2.13 [Auth](#-default-configuration-file-)  
-            * 2.2.13.1 [challenge-realm](#-default-configuration-file-)  
-               * 2.2.13.2 [accept-blind-auth](#-default-configuration-file-)  
-                  * 2.2.13.3 [auth-calls](#-default-configuration-file-)  
-                  * 2.2.13.4 [log-auth-failures](#-default-configuration-file-)  
-                  * 2.2.13.5 [auth-all-packets](#-default-configuration-file-)  
-         * 2.2.14 [Registration](#-registration-)  
-            * 2.2.14.1 [disable-register](#-default-configuration-file-)  
-               * 2.2.14.2 [multiple-registrations](#-registration-)  
-                  * 2.2.14.3 [max-registrations-per-extension](#-registration-)  
-                  * 2.2.14.4 [accept-blind-reg](#-default-configuration-file-)  
-                  * 2.2.14.5 [inbound-reg-force-matching-username](#-default-configuration-file-)  
-                  * 2.2.14.6 [force-publish-expires](#-default-configuration-file-)  
-                  * 2.2.14.7 [force-register-domain](#-default-configuration-file-)  
-                  * 2.2.14.8 [force-register-db-domain](#-default-configuration-file-)  
-                  * 2.2.14.9 [send-message-query-on-register](#-default-configuration-file-)  
-                  * 2.2.14.10 [unregister-on-options-fail](#-codecs-related-options-)  
-                  * 2.2.14.11 [nat-options-ping](#-default-configuration-file-)  
-                  * 2.2.14.12 [all-reg-options-ping](#-default-configuration-file-)  
-                  * 2.2.14.13 [registration-thread-frequency](#-registration-)  
-                  * 2.2.14.14 [inbound-reg-in-new-thread](#-default-configuration-file-)  
-                  * 2.2.14.15 [ping-mean-interval](#-default-configuration-file-)  
-         * 2.2.15 [ping-thread-frequency](#-default-configuration-file-)  
-         * 2.2.16 [Subscription](#-subscription-)  
-            * 2.2.16.1 [force-subscription-expires](#-subscription-)  
-               * 2.2.16.2 [force-subscription-domain](#-subscription-)  
-         * 2.2.17 [Presence](#-default-configuration-file-)  
-            * 2.2.17.1 [manage-presence](#-default-configuration-file-)  
-               * 2.2.17.2 [dbname](#-default-configuration-file-)  
-                  * 2.2.17.3 [presence-hold-state](#-default-configuration-file-)  
-                  * 2.2.17.4 [presence-hosts](#-default-configuration-file-)  
-                  * 2.2.17.5 [presence-privacy](#-default-configuration-file-)  
-                  * 2.2.17.6 [send-presence-on-register](#-default-configuration-file-)  
-         * 2.2.18 [CallerID Related options](#-callerid-related-options-)  
-            * 2.2.18.1 [caller-id type](#-default-configuration-file-)  
-               * 2.2.18.2 [pass-callee-id](#-default-configuration-file-)  
-         * 2.2.19 [Other (TO DO)](#-default-configuration-file-)  
-            * 2.2.19.1 [hold-music](#-default-configuration-file-)  
-               * 2.2.19.2 [disable-hold](#-default-configuration-file-)  
-                  * 2.2.19.3 [apply-inbound-acl](#-default-configuration-file-)  
-                  * 2.2.19.4 [apply-register-acl](#-default-configuration-file-)  
-                  * 2.2.19.5 [apply-proxy-acl](#-default-configuration-file-)  
-                  * 2.2.19.6 [record-template](#-default-configuration-file-)  
-                  * 2.2.19.7 [max-proceeding](#-default-configuration-file-)  
-                  * 2.2.19.8 [bind-params](#-default-configuration-file-)  
-                  * 2.2.19.9 [disable-transfer](#-default-configuration-file-)  
-                  * 2.2.19.10 [manual-redirect](#-default-configuration-file-)  
-                  * 2.2.19.11 [enable-3pcc](#-default-configuration-file-)  
-                  * 2.2.19.12 [nonce-ttl](#-default-configuration-file-)  
-                  * 2.2.19.13 [sql-in-transactions](#-default-configuration-file-)  
-                  * 2.2.19.14 [odbc-dsn](#-default-configuration-file-)  
-                  * 2.2.19.15 [mwi-use-reg-callid](#-default-configuration-file-)  
-                  * 2.2.19.16 [username](#-default-configuration-file-)
-* 3 [Directory of Users](#directory-of-users)
-* 4 [Default Configuration File](#-default-configuration-file-)
-* 5 [Reloading](#-default-configuration-file-)
-* 6 [Security Features](#security-features)
+"用户代理" （UA） 是用于运行特定网络协议的应用程序，而 Sofia UA 是相同的，只是在这种情况下使用的协议是 SIP。
 
-### Sofia allows for multiple User Agents
+当 FreeSWITCH 启动时，它会读取 conf/autoload\_configs/sofia.conf.xml 文件。该文件包含一个 "X-PRE-PROCESS" 指令，指示 FreeSWITCH 随后加载并合并任何 conf/sip\_profiles/\*.xml 文件。所加载和合并的每个 \*.xml 文件应包含一个或多个 SIP 配置文件的完整描述。每个被加载的 SIP 配置文件都是 "用户代理" 或 "UA" 的一部分；在 FreeSWITCH 中，UA = 用户代理 = Sofia 配置文件 = SIP 配置文件。
 
-A "User Agent" ("UA") is an application used for running a certain network protocol, and a Sofia UA is the same thing but the protocol in that case is SIP.
+请注意，加载的各个 UA 都会被 FreeSWITCH 合并在一起，不能互相干扰：特别要注意的是，**每个 UA 必须在自己独特的端口上接受连接** （SIP 的默认端口是 5060）。
 
-When FreeSWITCH starts, it reads the conf/autoload\_configs/sofia.conf.xml file. That file contains a "X-PRE-PROCESS" directive which instructs FreeSWITCH to subsequently load and merge any conf/sip\_profiles/\*.xml files. Each \*.xml file so loaded and merged should contain a complete description of one or more SIP Profiles. Each SIP Profile so loaded is part of a "User Agent" or "UA"; in FreeSWITCH terms, UA = User Agent = Sofia Profile = SIP Profile.
+#### 多个用户代理（配置文件）和拨号计划
 
-Note that the individual UAs so loaded are all merged together by FreeSWITCH and must not interfere with each other: In particular, **each UA must have its own unique port on which it accepts connections** (the default port for SIP is 5060).
+为什么要创建多个用户代理？举个例子。
 
-#### Multiple User Agents (Profiles) and the Dialplan
+在我的办公室里，我使用了防火墙。这意味着我打给防火墙外的地方的电话必须使用 STUN 服务器来穿越防火墙的 NAT，而在办公室内部的电话不需要使用 STUN 服务器。为了满足这些要求，我创建了两个不同的用户代理。其中一个使用了 STUN 服务器，并且通过服务提供商连接到 PSTN。另一个用户代理仅用于本地 SIP 通话。
 
-Why might you want to create multiple User Agents? Here's an example.
+现在，我定义了两个由我的配置文件定义的用户代理，每个都可以处理电话。拨打 SIP 地址或电话号码时，使用哪个用户代理？这个决定是在拨号计划中进行的。在拨号计划中通过 Sofia 发起呼叫的一种语法是
 
-In my office, I use a firewall. This means that calls I make to locations outside the firewall must use a STUN server to transverse the NAT in the firewall, while calls within the office don't need to use a STUN server. In order to accommodate these requirements, I've created two different UAs. One of them uses a STUN server and for that matter also connects up to the PSTN through a service provider. The other UA is purely for local SIP calls.
+ sofia/ **profile_name** /destination
 
-Now I've got two UAs defined by my profiles, each of which can handle a call. When dialing a SIP address or telephone number, which UA is used? That determination is made in the dialplan. One syntax for making a call via Sofia in the dialplan is
+所以，这个任务变得相当简单。拨号计划使用模式匹配和其他技巧来确定如何处理电话。我的拨号计划会检查我所拨打的号码，然后确定使用哪个配置文件来处理这个电话。如果我拨打一个电话号码，拨号计划会选择与公共交换电话网相连的用户代理。如果我拨打防火墙外的SIP地址，拨号计划会选择同样的用户代理，因为它使用STUN服务器。但是，如果我拨打一个在防火墙内部的SIP地址，拨号计划会选择"本地"用户代理。
 
- sofia/**profile_name**/destination
+了解如何编写拨号计划，使用模式匹配等，请参见[Dialplan](../../Dialplan/index.mdx#0-about)。
 
-So, the task becomes rather straightforward. Dialplans use pattern matching and other tricks to determine how to handle a call. My dialplan examines what I've dialed and then determines what profile to use with that call. If I dial a telephone number, the dialplan selects the UA that connects up to the PSTN. If I dial a SIP address outside the firewall, the dialplan selects that same UA because it uses the STUN server. But if I dial a SIP address that's inside the firewall, the dialplan selects the "local" UA.
+#### SIP配置文件与域名之间的关系
 
-To understand how to write dialplans, use pattern matching, etc., see [Dialplan](../../Dialplan/index.mdx#0-about)
+以下内容是Anthony Minessale在回答关于SIP配置文件与域名在FreeSWITCH中的关系的问题时，他在[邮件列表主题](http://lists.freeswitch.org/pipermail/freeswitch-users/2012-November/089467.html)中写的。
 
-#### The Relationship Between SIP Profiles and Domains
+最好的方法是从一个更宏观的角度来看待这些问题。
 
-The following content was written in a [mailing list thread](http://lists.freeswitch.org/pipermail/freeswitch-users/2012-November/089467.html) by Anthony Minessale in response to questions about how SIP profiles relate to domain names in FreeSWITCH.
+XML注册表中的域名与互联网上的域名完全不同，而且与SIP数据包中的域名也完全不同。配置文件与以上任何内容都完全不同。你可以选择将它们对齐。
 
-  
-The best thing to do is take a look at these things from a step back.
+FreeSWITCH分发的默认配置设置了最有可能在任何机器上加载并自动运行的场景。这是该配置的主要目标，因此它将目录中的域，全局默认域变量以及内部配置文件的名称设置为与可以访问互联网的主机的IP地址相同。然后它将SIP设置为强制使用该值。当您想要从此行为中分离出来时，您可能会需要做一些多主机设置。
 
-The domains inside the XML registry are completely different from the domains on the internet and again completely different from domains in sip packets. The profiles are again entirely different from any of the above. Its up to you to align them if you so choose.
+在&lt;aliases>标签中的**别名**是一个你想要使用的键的列表，它们指向正在配置的当前配置文件。将其视为Unix中的/etc/hosts文件，仅用于配置文件。当您定义别名以匹配特定配置文件上托管的所有可能域时，当您尝试提取[user@host.com](mailto:user@host.com)标记并确定它来自哪个配置文件时，您可以使用别名来查找它，只要您已将&lt;alias name="[host.com](http://host.com)"/>添加到该配置文件中。
 
-The default configuration distributed with FreeSWITCH sets up the scenario most likely to load on any machine and work out of the box. That is the primary goal of that configuration, so, It sets the domain in both the directory, the global default domain variable and the name of the internal profile to be identical to the IP addr on the box that can reach the internet. Then it sets the sip to force everything to that value. When you want to detach from this behavior, you are probably on a venture to do some kind of multi-home setup.
+&lt;domains>标签是一个指示，告诉配置文件在FreeSWITCH中打开XML注册表并运行其中定义的任何域。它具有两个关键属性：
 
-**Aliases** in the &lt;aliases> tag are a list of keys you want to use to use that lead to the current profile your are configuring. Think of it as the /etc/hosts file in Unix, only for profiles. When you define aliases to match all of the possible domains hosted on a particular profile, then when you try to take a [user@host.com](mailto:user@host.com) notation and decide which profile it came from, you can use the aliases to find it providing you have added &lt;alias name="[host.com](http://host.com)"/> to that profile.
+alias: [true/false]（自动为该域创建一个别名，如上所述）
+parse: [true/false]（扫描域以查找网关条目并将其包含到此配置文件中）
+name: [&lt;string>]（特定域的名称或'all'以表示解析目录中的每个域）
 
-The &lt;domains> tag is an indicator telling the profile to open the XML registry in FreeSWITCH and run through any domains defined therein. The 2 key attributes are:
-
-alias: [true/false]  (automatically create an alias for this domain as mentioned above)
-parse: [true/false] (scan the domain for gateway entries and include them into this profile)
-name: [&lt;string>] (either the name of a specific domain or 'all' to denote parsing every domain in the directory)
-
-As you showed in your question the default config has
+如您在问题中所示， 默认配置如下：
 
 &lt;domain name="all" alias="true" parse="false"/>
 
-If you apply what you have learned above, it will scan for every domain (there is only one by default) and add an alias for it and not parse it for gateways. The default directory uses global config vars to set the domain to match the local IP addr on the box. So now you will have a domain in your config that is your IP addr, and the internal profile will attach to it and add an alias so that value expands to match it.
+如果你应用了上面学到的内容，它将扫描每个域（默认情况下只有一个）并为其添加别名，并且不会将其解析为网关。默认目录使用全局配置变量将域设置为与本地IP地址匹配。现在你的配置中将有一个域，它是你的IP地址，内部配置文件将附加到该域上，并添加一个别名，使得该值能够扩展到匹配它的形式。
 
-  
-This is explained in a comment at the top of directory/default.xml:
+这在directory/default.xml文件的顶部有一条注释中有详细解释：
 
-    FreeSWITCH works off the concept of users and domains just like email.
-    You have users that are in domains for example 1000@domain.com.
+FreeSWITCH的工作原理类似于电子邮件的用户和域的概念。比如，你有一个用户1000@domain.com，在域中。
 
-    When freeswitch gets a register packet it looks for the user in the directory
-    based on the from or to domain in the packet depending on how your sofia profile
-    is configured.  Out of the box the default domain will be the IP address of the
-    machine running FreeSWITCH.  This IP can be found by typing "sofia status" at the
-    CLI.  You will register your phones to the IP and not the hostname by default.
-    If you wish to register using the domain please open vars.xml in the root conf
-    directory and set the default domain to the hostname you desire.  Then you would
-    use the domain name in the client instead of the IP address to register
-    with FreeSWITCH.
+当FreeSWITCH收到注册数据包时，它会根据数据包中的来源或目的域来在目录中查找用户，具体取决于你的sofia配置文件的设置。默认情况下，默认域将是运行FreeSWITCH的机器的IP地址。使用CLI命令“sofia status”可以找到该IP地址。你将将你的电话注册到IP地址而不是主机名。如果你希望使用域名进行注册，请在根目录的vars.xml文件中打开它，并将默认域设置为你需要的主机名。然后在客户端中，你会使用域名而不是IP地址来进行FreeSWITCH的注册。
 
-So having more than one profile with the default of
+所以，如果有多个具有默认设置&lt;domain name="all" alias="true" parse="false"/>的配置文件，它们将会将相同的域添加到所有调用它的配置文件中，并在查找表中导致覆盖，并可能在日志中出现错误。如果你在所有配置文件上都设置了parse="true"，它们将尝试在所有域中注册到网关。
 
-&lt;domain name="all" alias="true" parse="false"/>
+如果查看股票配置，external.xml是辅助配置文件的一个很好的例子，它有：
 
-is going to end up aliasing the same domains into all profiles who call it and cause an overwrite in the lookup table and probably an error in your logs somewhere. If you had parse="true" on all of them, they would all try and register to the gateways in all of your domains.
+&lt;domain name="all" alias="false" parse="true"/ >
 
-  
-If you look at the stock config, external.xml is a good example of a secondary profile, it has
+所以没有别名，而且确实有解析功能......与内部相反，所有的网关都会从外部注册，而内部会绑定到本地 IP 地址。
 
-&lt;domain name="all" alias="false" parse="true"/>
+因此，在更复杂的设置中，你可能想要使用单独的&lt;domain name="[example.com](http://example.com)" />为每个要将其绑定到的配置文件绑定域。
 
-so no aliases, and yes parse ... the exact opposite of the internal so that all the gateways would register from external and internal would bind to the local IP addr.
+### 配置文件的结构
 
-So, you probably want to use separate &lt;domain name="[example.com](http://example.com)"/> per domain per profile you want to bind it to in more complicated setups.
-
-### Structure of a Profile
-
-Each profile may contain several different subsections. At the present time there's no XSD or DTD for sofia.conf.xml — and any volunteer who can create one would be very welcome indeed.
+每个配置文件可以包含几个不同的子部分。目前 sofia.conf.xml 没有 XSD 或 DTD 文件，任何能创建一个的志愿者将非常受欢迎。
 
 &lt;!ELEMENT configuration (global_settings?, profiles)>
 &lt;!ELEMENT global_settings (param+)>
@@ -278,24 +115,24 @@ Each profile may contain several different subsections. At the present time ther
 &lt;!ATTLIST variable name CDATA #REQUIRED data CDATA #REQUIRED direction CDATA #IMPLIED>
 &lt;!ATTLIST domain name CDATA #REQUIRED alias (true | false) #IMPLIED parse (true | false) #IMPLIED>
 
-#### Gateway
+#### 网关
 
-Each profile can have several gateways:
+每个配置文件可以有若干个网关：
 
 &lt;gateways>
  &lt;gateway>
-   _elements..._
+   _元素......_
  &lt;/gateway>
  &lt;gateway>
-   _elements..._
+   _元素......_
  &lt;/gateway>
 &lt;/gateways>
 
-A gateway has an attribute "name" by which it can be referred. A gateway describes how to use a different UA to reach destinations. For example, the gateway may provide access to the PSTN, or to a private SIP network. The reason for defining a gateway, presumably, is because the gateway requires certain information before it will accept a call from the FreeSWITCH User Agent.
+网关有一个属性 "name"，可以通过该属性引用网关。网关描述了如何使用不同的UA来访问目的地。例如，网关可以提供访问PSTN或私有SIP网络的功能。定义网关的原因可能是因为网关在接受FreeSWITCH用户代理的呼叫之前需要某些信息。
 
-Variables can be defined on a gateway. Inbound variables are set on the channel of a call received from a gateway, outbound variables are set on the channel of a call sent to a gateway.
+可以在网关上定义变量。入站变量设置在从网关接收的通话的通道上，出站变量设置在发送到网关的通话的通道上。
 
-An example gateway configuration would be:
+网关的示例配置如下：
 
  &lt;gateway name="gateway012">
    &lt;param name="realm" value="sip.voipcarrier.com" />
@@ -314,94 +151,93 @@ An example gateway configuration would be:
    &lt;/variables>
  &lt;/gateway>
 
-To reach a particular gateway from the dial plan, use
+要从拨号计划中访问特定的网关，请使用
 
 sofia/gateway/&lt;gateway_name>/&lt;dialstring>
 
-FreeSWITCH can also subscribe to receive notification of events from the gateway. For more information see [Presence - Use FreeSWITCH as a Client](../../Examples/Presence/index.mdx#freeswitch-as-a-client)
+FreeSWITCH还可以订阅从网关接收事件的通知。更多信息请参见 [Presence - Use FreeSWITCH as a Client](../../Examples/Presence/index.mdx#freeswitch-as-a-client)
 
-##### Parameters
+##### 参数
 
-The following is a list of param elements that are children of a gateway element:
+以下是网关元素的子元素之一的param元素列表：
 
-&lt;!-- /// account username *required* /// -->
+&lt;!-- /// 帐户用户名 *必填* /// -->
 &lt;param name="username" value="foo"/>
 
-Note: The username param for the gateway is not to be confused with the username param in the Profile settings config!
+注意：网关的用户名参数与配置文件中配置的个人设置用户名参数不要混淆！
 
-&lt;!--/// auth realm: *optional* same as gateway name, if blank ///-->
+&lt;!--/// 认证域：*可选*，如果为空，则与网关名称相同 ///-->
 &lt;!-- realm -->
 &lt;param name="realm" value="sip.example.com[:port]"/>
 
-&lt;!--/// account password *required* ///-->
+&lt;!--/// 帐户密码 *必填* ///-->
 &lt;param name="password" value="a password"/> 
 
-&lt;!--/// username to use in from: *optional* same as  username, if blank ///-->
+&lt;!--/// 用于from字段的用户名：*可选*，如果为空，则与用户名相同 ///-->
 &lt;param name="from-user" value="fooman"/> 
 
-&lt;!--/// domain to use in from: *optional* same as  realm, if blank; can also be set to "auto-aleg-full" or "auto-aleg-domain" ///-->
+&lt;!--/// 用于from字段的域名：*可选*，如果为空，则与认证域相同；也可设置为"auto-aleg-full"或"auto-aleg-domain" ///-->
 &lt;param name="from-domain" value="asterlink.com"/>
 
-&lt;!--/// replace the INVITE from user with the channel's caller-id ///-->
-&lt;!--/// this is false by default because outbound calls generally need username in the INVITE ///-->
-&lt;!--Use the callerid of an inbound call in the from field on outbound calls via this gateway -->
+&lt;!--/// 将INVITE请求的发送方用户替换为通道的呼叫方ID ///-->
+&lt;!--/// 默认情况下，此参数设置为false，因为出站呼叫通常需要在INVITE请求中包含用户名 ///-->
+&lt;!--通过此网关，在出站呼叫中使用呼入呼叫的呼叫方ID作为from字段 -->
 &lt;param name="caller-id-in-from" value="false"/>
 
-&lt;!--/// extension for inbound calls: *optional* Same as username, if blank. To use what's in ${sip_to_user}, set it to the value "auto_to_user" ///-->
+&lt;!--/// 入站呼叫的分机号：*可选*，如果为空，则与用户名相同。要使用${sip_to_user}中的内容，请将其设置为值"auto_to_user" ///-->
 &lt;param name="extension" value=""/>
 
-Note: _extension_ parameter influence the contents of channel variable _Caller-Destination-Number_ and _destination\_number_. If it is blank, _Caller-Destination-Number_ will always be set to gateway's username. If it has a value, _Caller-Destination-Number_ will always be set to this value. If it has value _auto\_to\_user_, _Caller-Destination-Number_ will be populated with value _${sip\_to\_user}_ which means the real dialled number in case of an inbound call.
+注意：**extension**参数会影响**Caller-Destination-Number**和**destination\_number**通道变量的内容。如果参数为空，则**Caller-Destination-Number**始终设置为网关的用户名。如果参数有值，则**Caller-Destination-Number**始终设置为该值。如果参数的值为**auto\_to\_user**，则**Caller-Destination-Number**将使用**${sip\_to\_user}**的值来填充，该值表示呼入电话的真实拨号号码。
 
-&lt;!--/// proxy host: *optional* same as realm, if blank ///-->
+&lt;!--/// 代理主机：*可选*，如果为空，则与领域相同 ///-->
 &lt;param name="proxy" value="proxy.example.com"/>
 
-&lt;!--/// expire in seconds: *optional* 3600, if blank ///-->
+&lt;!--  /// 过期时间（秒）：*可选*，如果为空则为3600 ///-->
 &lt;param name="expire-seconds" value="3600"/>
 
-&lt;!-- suppress CNG on this profile or per call with the 'suppress_cng' variable -->
+&lt;!-- 使用此配置文件或每个通话时抑制CNG的变量 'suppress_cng' -->
 &lt;param name="suppress-cng" value="true"/>
 
-&lt;!--/// false: do not register. true: register (default) ///-->
+&lt;!--/// false: 不注册，true: 注册（默认） ///-->
 &lt;param name="register" value="false"/>
 
-&lt;!-- which transport to use for register -->
+&lt;!-- 注册使用的传输方式 -->
 &lt;param name="register-transport" value="udp"/>
 
-&lt;!--extra sip params to send in the contact-->
+&lt;!-- 在联系人中发送的附加SIP参数 -->
 &lt;param name="contact-params" value="tport=tcp"/>
 
-&lt;!-- check gateway availability: *optional* -->
+&lt;!-- 检查网关可用性：*可选* -->
 &lt;param name="ping" value="15"/>
 
-&lt;!-- *optional* -->
+&lt;!-- *可选* -->
 &lt;param name="ping-max" value="10"/>
 
-&lt;!--  *optional* -->
+&lt;!-- *可选* -->
 &lt;param name="ping-min" value="1"/>
 
-**ping-min** means "how many successful pings we must have before declaring a gateway up".
+**ping-min** 表示“在宣布网关正常之前我们必须有多少次成功的ping”。
 
-The interval between **ping-min** and **ping-max** is the "safe area" where a gateway is marked as UP. So if we have, for example, min 3 and max 6, if the gateway is up and we move counter between 3,4,5,6 the gateway will be up.
+**ping-min** 和 **ping-max** 之间的间隔是“安全区域”，在此区域内将标记网关为正常。所以，例如，如果 min 是 3，max 是 6，如果网关正常，并且我们在 3、4、5、6 之间变动计数器，网关就会被标记为正常。
 
-If from 6 we loose 4 (so counter == 2) pings in a row, the gateway will be declared down.
+如果从 6 开始连续失去 4 次 ping（即计数器 == 2），则会宣布网关已宕机。
 
-Please note that on sofia startup the gateway is always started as UP, so it will be up even if ping-min is > 1 . the "right" way starts when the gateway goes down.
+请注意，在启动Sofia网关时，网关始终处于启动状态，即使ping-min > 1。当网关出现故障时，才会进入“正确”的处理方式。
 
-&lt;!--  *optional* - default is false-->
+&lt;!-- *可选* - 默认值为false -->
 &lt;param name="extension-in-contact" value="true"/>
 
-&lt;!--  *optional* -->
+&lt;!-- *可选* -->
 &lt;param name="cid-type" value="rpid"/>
 
-Param "register," is used when this profile acts as a client to another UA. By registering, FreeSWITCH informs the other UA of its whereabouts. This is generally used when FreeSWITCH wants the other UA to send FreeSWITCH calls, and the other UA expects this sort of registration. If FreeSWITCH uses the other UA only as a gateway (e.g., to the PSTN), then registration is not generally required.
+参数"register"用于当此配置文件作为另一个用户代理（UA）的客户端时使用。通过注册，FreeSWITCH向其他UA通知其位置。通常在FreeSWITCH希望其他UA发送呼叫到FreeSWITCH时使用，并且其他UA期望此类注册。如果FreeSWITCH将其他UA仅用作网关（例如，用于PSTN），通常不需要注册。
 
-  
-Param "distinct-to" is used when you want FS to register using a distict AOR for header To. It requires proper setting of related parameters. For example if you want the REGISTER to go with:
+参数"distinct-to"用于在您希望FS使用不同的To头域进行注册时使用。它需要正确设置相关参数。例如，如果您希望REGISTER请求包含以下内容：
 
    From: &lt;sip:someuser@somedomain.com>
    To: &lt;sip:anotheruser@anotherdomain.com>
 
-Then set the parameters as this:
+那么请将参数设置如下：
 
    &lt;param name="distinct-to" value="true"/>
    &lt;param name="auth-username" value="someuser"/>
@@ -411,13 +247,11 @@ Then set the parameters as this:
    &lt;param name="username" value="anotheruser"/>
    &lt;param name="realm" value="anotherdomain.com"/>
 
-  
-The latter param, "ping" is used to check gateway availability. By setting this option, FreeSWITCH will send SIP OPTIONS packets to gateway. If gateway responds with 200 or 404, gateway is pronounced up, otherwise down. \[N.B. It appears that other error messages can be returned and still result in the gateway being marked as 'up'?\] If any call is routed to gateway with state down, FreeSWITCH will generate NETWORK\_OUT\_OF\_ORDER hangup cause. Ping frequency is defined in seconds (value attribute) and has a minimum value of 5 seconds.
+后面的参数"ping"用于检查网关的可用性。通过设置此选项，FreeSWITCH将向网关发送SIP OPTIONS数据包。如果网关回复为200或404，则宣布网关可用；否则认为网关不可用。 \[注意：似乎可以返回其他错误消息并且仍然会将网关标记为“可用”？\] 如果将呼叫路由到状态为不可用的网关，FreeSWITCH将生成NETWORK\_OUT\_OF\_ORDER挂断原因。Ping频率以秒为单位定义（value属性），并且最小值为5秒。
 
-Param "extension-in-contact" is used to force what the contact info will be in the registration. If you are having a problem with the default registering as gw+gateway\_name@ip you can set this to true to use extension@ip. If extension is blank, it will use username@ip.
+参数"extension-in-contact"用于强制注册中的联系信息。如果默认值注册为gw+gateway_name@ip时出现问题，您可以将其设置为true以使用extension@ip。如果扩展为空，则使用username@ip。
 
-  
-if you need to insert the FROM digits to the Contact URI User Part when sending call to gateway  
+如果您需要在发送呼叫到网关时将FROM数字插入到联系人URI用户部分
 BEFORE
 
 ```xml
@@ -425,7 +259,7 @@ From: "8885551212" <sip:88855512120@8.8.8.8>
 Contact: <sip:gw+mygateway@7.7.7.7:7080>
 ```
 
-try adding these to gateway params
+尝试将以下内容添加到网关参数中
 
 ```xml
 <param name="extension" value="8885551212"/>
@@ -439,556 +273,583 @@ From: "8885551212" <sip:88855512120@8.8.8.8>
 Contact: <sip:8885551212@7.7.7.7:7080>
 ```
 
-##### Variables
+##### 变量
 
-In addition to the parameters you can optionally set variables to set on either incoming or outgoing calls through this gateway. You set a direction, which sets it on both incoming and outgoing calls if omitted.
+除了参数之外，您可以选择在通过此网关进行呼入或呼出呼叫时设置变量。您可以设置一个方向，如果省略，则在呼入和呼出呼叫上都设置它。
 
-&lt;gateway>
-  ...params...
-  &lt;variables>
-    &lt;variable name="inbound_var_name"  value="this is inbound"  direction="inbound"/>
-    &lt;variable name="outbound_var_name" value="this is outbound" direction="outbound"/>
-    &lt;variable name="both_var_name"     value="this on any direction"/>
-  &lt;/variables>
-&lt;/gateway>
+```
+<gateway>
+  ...参数...
+  <variables>
+    <variable name="inbound_var_name" value="这是入站变量" direction="inbound"/>
+    <variable name="outbound_var_name" value="这是出站变量" direction="outbound"/>
+    <variable name="both_var_name" value="这是双向变量"/>
+  </variables>
+</gateway>
 
-These channel variables will be set on all calls going through this gateway in the specified direction.
+这些通道变量将在通过此网关的所有呼叫中设置为指定方向的值。
 
-  
-However, see below for a special syntax to set profile variables rather than channel variables.
+但是，请参见下面的一个特殊语法来设置配置文件变量而不是通道变量。
 
-&lt;variable name="p:caller_id_name" value="Gateway"/>
+<variable name="p:caller_id_name" value="网关"/>
 
-#### Parameters
+#### 参数
 
-Configuration Parameters include other, more general information about the profile, including whether or not STUN is in use.
+配置参数包括有关配置文件的其他更一般的信息，包括是否使用STUN。
 
-Note that configuration parameters use the hyphen "-" between words, whereas channel variables use underscore "\_" between words.
+注意，配置参数在单词之间使用连字符“-”，而通道变量在单词之间使用下划线“_”。
 
-Each profile has its own settings element. Not only is this convenient — it's possible to set up one profile to use STUN and another, with a different gateway or working behind the firewall, not to use STUN — but it's also crucial. That's because each profile defines a SIP User Agent, and each UA must have its own unique "sip-port." By convention, 5060 is the default port, but it's possible to make calls to, e.g., "foo@[sip.example.com](http://sip.example.com):5070", and therefore you can define any port you please for each individual profile.
+每个配置文件都有自己的设置元素。这不仅方便 -- 还可以设置一个配置文件使用STUN，而另一个配置文件可以不使用STUN，它非常重要。这是因为每个配置文件定义了一个SIP用户代理，而每个UA必须有自己独特的"sip-port"。按照惯例，5060是默认端口，但是可以拨打到例如"foo@[sip.example.com](http://sip.example.com):5070"，因此您可以为每个单独的配置文件定义任何端口。
 
-The Vanilla configs contain complete samples of sofia.conf.xml along with comments: [internal](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/sip%5Fprofiles/internal.xml), [external](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/sip%5Fprofiles/external.xml)
+Vanilla配置包含了sofia.conf.xml的完整示例以及注释：[内部](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/sip%5Fprofiles/internal.xml)，[外部](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/sip%5Fprofiles/external.xml)
 
-#####  Basic Parameters 
+##### 基本参数
 
-######  alias 
+###### alias
+```
 
 &lt;param name="alias" value="sip:10.0.1.251:5555"/>
 
-This seems to make the SIP profile bind to this IP & port as well as your SIP / RTP IPs and ports.
+这似乎是将SIP配置文件绑定到此IP和端口，以及您的SIP/RTP IP和端口。
 
-Anthony had this to say about aliases in a [ML thread](http://lists.freeswitch.org/pipermail/freeswitch-users/2012-November/089467.html):
+关于&lt;aliases>标签中的别名，Anthony在[ML thread](http://lists.freeswitch.org/pipermail/freeswitch-users/2012-November/089467.html)中提到：
 
-Aliases in the &lt;aliases> tag are a list of keys you want to use to use that lead 
-to the current profile your are configuring.  Think of it as the /etc/hosts file 
-in unix only for profiles.   When you define aliases to match all of the possible 
-domains hosted on a particular profile, then when you try to take a user@host.com 
-notation and decide which profile it came from, you can use the aliases to find 
-it providing you have added &lt;alias name="host.com"/> to that profile.
+&lt;aliases>标签中的别名是您想要用于导航到当前正在配置的配置文件的键列表。可以将其视为Unix系统中的/etc/hosts文件，仅用于配置文件。当您定义别名以匹配特定配置文件上托管的所有可能域名时，当您尝试使用user@host.com的格式并决定它属于哪个配置文件时，您可以使用这些别名来查找它，前提是您已将&lt;alias name="host.com"/>添加到该配置文件中。
 
-######  shutdown-on-fail 
+###### shutdown-on-fail 
 
 &lt;param name="shutdown-on-fail" value="true"/>
 
-If set to true and the profile fails to load, FreeSWITCH will shut down. This is useful if you are running something like Pacemaker and OpenAIS which manage a pair of FreeSWITCH nodes and automatically monitor, start, stop, restart, and standby-on-fail the nodes. It will ensure that the specific node is not able to be used in a "partially up" situation.
+如果设置为true并且配置文件加载失败，FreeSWITCH将关闭。这在您运行像Pacemaker和OpenAIS这样管理一对FreeSWITCH节点并自动监视、启动、停止、重启和故障备援节点的系统中非常有用。它将确保在“部分启动”的情况下禁止使用特定节点。
 
-######  user-agent-string 
+###### user-agent-string 
 
-This sets the User-Agent header in all SIP messages sent by your server. By default this could be something like "FreeSWITCH-mod\_sofia/1.0.trunk-12805". If you didn't want to advertise detailed version information you could simply set this to "FreeSWITCH" or even "Asterisk PBX" as a joke.
+如果服务器发送的所有SIP消息中都设置了该值，则会设置User-Agent头部。默认情况下，这可能是类似于"FreeSWITCH-mod\_sofia/1.0.trunk-12805"的内容。如果您不想公开详细的版本信息，您可以将其设置为"FreeSWITCH"甚至是"Asterisk PBX"作为玩笑。
 
-Take care when setting this value as certain characters such as '@' could cause other SIP proxies could reject your messages as invalid.
+在设置此值时要小心，因为某些字符（如'@'）可能会导致其他SIP代理拒绝接受您的消息。
 
-&lt;param name="user-agent-string" value="FreeSWITCH Rocks!"/>
+&lt;param name="user-agent-string" value="FreeSWITCH是最棒的！"/>
 
 ###### log-level
 
 &lt;param name="log-level" value="0"/>
 
-###### debug 
+###### 调试
 
 &lt;param name="debug" value="0"/>
 
-######  sip-trace 
+###### sip-trace
 
 &lt;param name="sip-trace" value="no"/>
 
-######  context 
+###### context
 
-Dialplan context in which to dump calls that come in to this profile's ip:port
+拨号计划的上下文，在该配置文件的IP:端口接收到电话时候进行转储。
 
 &lt;param name="context" value="public"/>
 
-######  sip-port 
+###### sip-port
 
-Port to bind to for SIP traffic:
+绑定SIP流量的端口：
 
 &lt;param name="sip-port" value="$${internal_sip_port}"/>
 
-######  sip-ip 
+###### sip-ip
 
-IP address to bind to for SIP traffic. **DO NOT USE HOSTNAMES, ONLY IP ADDRESSES**
+绑定SIP流量的IP地址。**请勿使用主机名，只能使用IP地址**
 
 &lt;param name="sip-ip" value="$${local_ip_v4_or_v6}"/>
 
-Alternatively, since version 1.6 it is possible to specify an interface and an optionnal address family instead of an IP, same for rtp-ip.
+另外，自版本1.6开始，可以指定接口和可选的地址族，而不是IP地址，rtp-ip同样适用。
 
 &lt;param name="sip-ip" value="interface:[auto|ipv4|ipv6|]/eth0"/>
 
-###### rtp-ip 
+###### rtp-ip
 
-IP address to bind to for RTP traffic. **DO NOT USE HOSTNAMES, ONLY IP ADDRESSES**
+绑定RTP流量的IP地址。**请勿使用主机名，只能使用IP地址**
 
- &lt;param name="rtp-ip" value="$${local_ip_v4_or_v6}"/>
+&lt;param name="rtp-ip" value="$${local_ip_v4_or_v6}"/>
 
-* Multiple rtp-ip support: if more rtp-ip parameters are added, they will be used in round-robin as new calls progress.
-* IPv6 addresses **are not supported** under Windows at the time of writing. See [FS-4445](http://jira.freeswitch.org/browse/FS-4445)
+* 多个rtp-ip支持：如果添加了更多的rtp-ip参数，则新的呼叫将按照轮询使用它们。
+* 在撰写本文时，Windows不支持IPv6地址。请参阅[FS-4445](http://jira.freeswitch.org/browse/FS-4445)
 
-######  ext-rtp-ip 
+###### ext-rtp-ip
 
-This is the IP behind which FreeSWITCH is seen from the Internet, so if FreeSWITCH is behind NAT, this is basically the public IP that should be used for RTP.
+这是从互联网看到FreeSWITCH的IP，因此如果FreeSWITCH位于NAT之后，基本上应使用此公共IP进行RTP。
 
-Allowed values are:
+允许的值为：
 
-| ext-rtp-ip value                           | Description                                                                                  | Example                                                       |
+| ext-rtp-ip value                           | 描述                                                                                  | 示例                                                       |
 | ------------------------------------------ | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| $${variable}                               | Any variable from vars.xml                                                                   | &lt;param name="ext-rtp-ip" value="$${external\_rtp\_ip}"/>      |
-| w.x.y.z                                    | Specific numeric IP address                                                                  | &lt;param name="ext-rtp-ip" value="1.2.3.4"/>                    |
-| autonat:w.x.y.z                            | Used for LAN and WAN to avoid errors in the SIP CONTACT sent to LAN devices                  | &lt;param name="ext-rtp-ip" value="autonat:1.2.3.4"/>            |
-| auto                                       | Guessed IP (guessed by looking in the IP routing table which interface is the default route) | &lt;param name="ext-rtp-ip" value="auto"/>                       |
-| auto-nat                                   | FS uses uPNP or NAT-PMP to discover the public IP address it should use                      | &lt;param name="ext-rtp-ip" value="auto-nat"/>                   |
-| stun:DNS name or IP address of STUN server | FS uses the STUN server of your choice to discover the public IP address                     | &lt;param name="ext-rtp-ip" value="stun:stun.freeswitch.org"/>   |
-| host:DNS name                              | FS resolves the DNS name as the public IP address, so you can use a dynamic DNS host         | &lt;param name="ext-rtp-ip" value="host:mypublicIP.dyndns.org"/> |
+| $${variable}                               | 来自vars.xml的任意变量                                                                   | &lt;param name="ext-rtp-ip" value="$${external\_rtp\_ip}"/>      |
+| w.x.y.z                                    | 特定的数值型IP地址                                                                  | &lt;param name="ext-rtp-ip" value="1.2.3.4"/>                    |
+| autonat:w.x.y.z                            | 用于LAN和WAN，以避免向LAN设备发送的SIP CONTACT中出现错误                  | &lt;param name="ext-rtp-ip" value="autonat:1.2.3.4"/>            |
+| auto                                       | 猜测的IP地址（通过查找IP路由表中哪个接口是默认路由来猜测） | &lt;param name="ext-rtp-ip" value="auto"/>                       |
+| auto-nat                                   | FS使用uPNP或NAT-PMP来发现应该使用的公共IP地址                      | &lt;param name="ext-rtp-ip" value="auto-nat"/>                   |
+| stun:STUN服务器的DNS名称或IP地址      | FS使用您选择的STUN服务器来发现公共IP地址                     | &lt;param name="ext-rtp-ip" value="stun:stun.freeswitch.org"/>   |
+| host:DNS名称                             | FS将DNS名称解析为公共IP地址，因此您可以使用动态DNS主机         | &lt;param name="ext-rtp-ip" value="host:mypublicIP.dyndns.org"/> |
 
-params with the 'ext–' prefix cited above when populated with yet-to-be-resolved DNS strings (e.g. `name="ext–sip–ip" value="stun:stun.freeswitch.org"` or `name="ext‑rtp–ip" value="host:mypublicIP.dyndns.org"`) are resolved to IP addresses **once only at FreeSWITCH load time** and remain constant thereafter. FS is blind to (unaware of) any subsequent changes in your environment's IP address. Thus, these ext– vars may become functionally incompatible with the environment's current IP addresses with _unspecified results_ in call flow at the network layer. FS restart is _**required**_ for FS to capture the now-current, working IP address(es).
+在以上引用的以 'ext–' 前缀开头的参数中，当用尚未解析的 DNS 字符串填充时（例如 `name="ext–sip–ip" value="stun:stun.freeswitch.org"` 或 `name="ext‑rtp–ip" value="host:mypublicIP.dyndns.org"`），这些参数**仅在 FreeSWITCH 加载时解析为 IP 地址一次**，之后保持不变。FreeSWITCH 对您环境中 IP 地址的任何后续更改均视而不见（未意识到）。因此，在网络层的呼叫流程中，这些 ext– 变量可能与环境的当前 IP 地址功能不兼容，导致_未指定的结果_。需要_**重新启动**_ FreeSWITCH 来获取当前的有效 IP 地址。
 
-  
-######  ext-sip-ip 
+  ######  ext-sip-ip 
 
-This is the IP behind which FreeSWITCH is seen from the Internet, so if FreeSWITCH is behind NAT, this is basically the public IP that should be used for SIP messages.
+  这是Internet上可见的 FreeSWITCH IP，因此，如果 FreeSWITCH 处于 NAT 后面，这基本上就是应该用于 SIP 消息的公共 IP。
 
-Possibles values are the same as those for ext-rtp-ip, and it is usually set to the same value.
+  可能的值与 ext-rtp-ip 的值相同，通常设置为相同的值。
 
-&lt;param name="ext-sip-ip" value="$${external_sip_ip}"/>
+  &lt;param name="ext-sip-ip" value="$${external_sip_ip}"/>
 
-######  tcp-keepalive 
+  ######  tcp-keepalive 
 
-Set this to interval (in milliseconds) to send keep alive packets to user agents (UAs) registered via TCP; do not set to disable.
+  将此设置为发送保持活动数据包到通过 TCP 注册的用户代理（UA）的间隔时间（以毫秒为单位）；不设置则禁用。
 
-######  tcp-pingpong 
+  ######  tcp-pingpong 
 
-######  tcp-ping2pong 
+  ######  tcp-ping2pong 
 
-######  dialplan 
+  ######  dialplan 
 
-The dialplan parameter is very powerful.
+  dialplan 参数非常强大。
 
-In the simplest configuration, it will use the XML dialplan. This means that it will read data from [mod\_xml\_curl](../../Modules/mod_xml_curl_1049001.mdx) XML dialplans (e.g., callback to your webserver), or failing that, from the XML files specified in freeswitch.xml dialplan section. (e.g. default\_context.xml)
+  在最简单的配置中，它将使用 XML dialplan。这意味着它将从 [mod\_xml\_curl](../../Modules/mod_xml_curl_1049001.mdx) 的 XML dialplan 中读取数据（例如回调到您的 Web 服务器），或者如果失败，则从在 freeswitch.xml 的 dialplan 部分指定的 XML 文件中读取数据（例如 default\_context.xml）。
 
-&lt;param name="dialplan" value="XML"/> 
+  &lt;param name="dialplan" value="XML"/> 
 
-You can also add enum lookups into the picture (since mod\_enum provides dialplan functionality), so enum lookups override the XML dialplan
+  您还可以添加 enum 查找到图像中（因为 mod\_enum 提供了 dialplan 功能），因此 enum 查找将覆盖 XML dialplan。
 
-&lt;param name="dialplan" value="enum,XML"/> 
+```
+<param name="dialplan" value="enum,XML"/>
+或者将顺序倒过来，只有在XML查找失败后才会查找enum。
+<param name="dialplan" value="XML,enum"/>
+也可以指定一个特定的enum根。
+<param name="dialplan" value="enum:foo.com,XML"/>
+或者在自定义文件上使用XML。
+<param name="dialplan" value="XML:/tmp/foo.xml,XML,enum"/>
+首先会检查特定的XML文件，然后再进行正常的XML查找，同时还会执行mod_xml_curl查询（假设您已经配置并且可以正常工作）。
 
-Or reverse the order to enum is only consulted if XML lookup fails
+#####  与媒体相关的参数
 
-&lt;param name="dialplan" value="XML,enum"/> 
+也可参见：代理媒体
 
-It is also possible to specify a specific enum root
+######  resume-media-on-hold
 
-&lt;param name="dialplan" value="enum:foo.com,XML"/> 
+当呼叫处于无媒体状态时，按住按钮将会恢复媒体。在取消保持后，将呼叫返回到绕过媒体状态，请启用bypass-media-after-hold。
 
-Or use XML on a custom file
+<param name="media-option" value="resume-media-on-hold"/>
 
-&lt;param name="dialplan" value="XML:/tmp/foo.xml,XML,enum"/> 
+######  bypass-media-after-att-xfer
 
-Where it will first check the specific XML file, then hit normal XML which also do a [mod\_xml\_curl](../../Modules/mod_xml_curl_1049001.mdx) lookup assuming you have that configured and working.
+将允许呼叫在受监督转移后返回到绕过媒体状态。
 
-#####  Media related parameters 
+<param name="media-option" value="bypass-media-after-att-xfer"/>
 
-See also: [Proxy Media](../Proxy-Media_13173588.mdx#faqs)
+######  bypass-media-after-hold
 
-######  resume-media-on-hold 
+将允许呼叫在保持后返回到绕过媒体状态。只有在设置了resume-media-on-hold选项时才能使用此选项。从git rev 8fa385b起可用。
 
-When calls are in no media this will bring them back to media when you press the hold button. To return the calls to bypass-media after the call is unheld, enable bypass-media-after-hold.
+<param name="media-option" value="bypass-media-after-hold"/>
 
-&lt;param name="media-option" value="resume-media-on-hold"/>
+######  inbound-bypass-media
 
-######  bypass-media-after-att-xfer 
+取消注释以将所有入站呼叫设置为无媒体模式。这意味着FreeSWITCH服务器仅保留SIP消息状态，但RTP流直接从终点到终点。
 
-This will allow a call after an attended transfer go back to bypass media after an attended transfer.
+<param name="inbound-bypass-media" value="true"/>
 
- &lt;param name="media-option" value="bypass-media-after-att-xfer"/>
+######  inbound-proxy-media
+```
 
-######  bypass-media-after-hold 
-
-This will allow a call to go back to bypass media after a hold. This option can be enabled only if resume-media-on-hold is set. Available from git rev 8fa385b.
-
- &lt;param name="media-option" value="bypass-media-after-hold"/>
-
-######  inbound-bypass-media 
-
-Uncomment to set all inbound calls to no media mode. It means that the FreeSWITCH server only keeps the SIP messages state, but have the RTP steam go directly from end-point to end-point
-
-&lt;param name="inbound-bypass-media" value="true"/>
-
-######  inbound-proxy-media 
-
-Uncomment to set all inbound calls to proxy media mode. This means the FreeSWITCH keeps both the SIP and RTP traffic on the server but does not interact with the RTP stream.
+取消注释以将所有入站呼叫设置为代理媒体模式。这意味着FreeSWITCH将保留服务器上的SIP和RTP流量，但不与RTP流进行交互。
 
 &lt;param name="inbound-proxy-media" value="true"/>
 
-######  disable-rtp-auto-adjust 
+###### 禁用RTP自动调整
 
 &lt;param name="disable-rtp-auto-adjust" value="true"/>
 
-######  ignore-183nosdp 
+###### 忽略183无SDP
 
 &lt;param name="ignore-183nosdp" value="true"/>
 
-######  enable-soa 
+###### 启用SOA
 
 &lt;param name="enable-soa" value="true"/>
 
-Set the value to "false" to diable SIP SOA from sofia to tell sofia not to touch the exchange of SDP
+将值设置为"false"以禁用从sofia到sofia的SIP SOA，告诉sofia不要干预SDP的交换。
 
-######  t38-passthru 
+###### t38-passthru
 
 &lt;param name="t38-passthru" value="true"/>
 
-The following options are available
+以下选项可用：
 
-* 'true' enables t38 passthru
-* 'false' disables t38 passthru
-* 'once' enables t38 passthru, but sends t.38 re-invite only once (available since commit 08b25a8 from Nov. 9, 2011)
+* 'true'启用t38透传
+* 'false'禁用t38透传
+* 'once'启用t38透传，但只发送一次T.38重新邀请（自2011年11月9日的提交08b25a8可用）
 
-#####  Codecs related options 
+##### 与编解码器相关的选项
 
-Also see:
+还参阅：
 
-* [Codec Negotiation](../../Codecs-and-Media/Codec-Negotiation_2883752.mdx#about)
-* [Supported Codecs](../../Codecs-and-Media/Audio-Codecs_1048675.mdx#--)
+* [编解码器协商](../../Codecs-and-Media/Codec-Negotiation_2883752.mdx#about)
+* [支持的编解码器](../../Codecs-and-Media/Audio-Codecs_1048675.mdx#--)
 
-######  inbound-codec-prefs 
+###### 入站编解码器偏好
 
-This parameter allows to change the allowed inbound codecs per profile.
+此参数允许更改每个配置文件的允许入站编解码器。
 
- &lt;param name="inbound-codec-prefs" value="$${global_codec_prefs}"/>
+&lt;param name="inbound-codec-prefs" value="$${global_codec_prefs}"/>
 
-######  outbound-codec-prefs 
+###### 出站编解码器偏好
 
-This parameter allows to change the outbound codecs per profile.
+此参数允许更改每个配置文件的出站编解码器。
 
- &lt;param name="outbound-codec-prefs" value="$${outbound_codec_prefs}"/>
+&lt;param name="outbound-codec-prefs" value="$${outbound_codec_prefs}"/>
 
-######  codec-prefs 
+###### 编解码器偏好
 
-This parameter allows to change both inbound-codec-prefs and outbound-codec-prefs at the same time.
+此参数同时更改入站编解码器偏好和出站编解码器偏好。
 
- &lt;param name="codec-prefs" value="$${global_codec_prefs}"/>
+&lt;param name="codec-prefs" value="$${global_codec_prefs}"/>
 
-######  inbound-codec-negotiation 
+###### 入站编解码器协商
 
-set to 'greedy' if you want your codec list to take precedence
+如果希望您的编解码器列表具有优先权，请将其设置为'greedy'。
 
- &lt;param name="inbound-codec-negotiation" value="generous"/>
+&lt;param name="inbound-codec-negotiation" value="generous"/>
 
-if 'greedy' doesn't work for you, try 'scrooge' which has been known to fix misreported ptime issues with DID providers such as CallCentric.
+如果 "贪婪" 对你没用，试试 "吝啬鬼"，它已经被证明可以解决与DID提供商如CallCentric的错误报告的时间问题。
 
-A rule of thumb is:
+一个经验法则是:
 
-* 'generous' permits the remote codec list have precedence and 'win' the codec negotiation and selection process
-* 'greedy' forces a win by the local FreeSWITCH preference list
-* 'scrooge' takes 'greedy' a step further, so that the FreeSWITCH wins even when the far side lies about capabilities during the negotiation process
+- "慷慨" 允许远程编解码器列表优先，并在编解码器协商和选择过程中取胜。
+- "贪婪" 强制由本地FreeSWITCH首选列表取胜。
+- "吝啬鬼" 将 "贪婪" 推向更远的地步，以便在协商过程中，即使远端在能力方面撒谎，FreeSWITCH 仍然取胜。
 
-[sip\_codec\_negotiation](../../../Channel-Variables-Catalog/sip_codec_negotiation_16354240.mdx#comments) is a channel variable version of this setting
+[sip_codec_negotiation](../../../Channel-Variables-Catalog/sip_codec_negotiation_16354240.mdx#comments) 是此设置的通道变量版本。
 
-######  inbound-late-negotiation 
+######  入站迟协商
 
-Uncomment to let calls hit the dialplan \*before\* you decide if the codec is OK.
+去掉注释以使呼叫在您决定编解码器是否正常之前，进入拨号计划。
 
- &lt;param name="inbound-late-negotiation" value="true"/>
+&lt;param name="inbound-late-negotiation" value="true"/>
 
-######  bitpacking 
+######  位打包
 
-This setting is for AAL2 bitpacking on G.726.
+此设置适用于G.726的AAL2位打包。
 
- &lt;param name="bitpacking" value="aal2"/>
+&lt;param name="bitpacking" value="aal2"/>
 
-######  disable-transcoding 
+######  禁用转码
 
-Uncomment if you want to force the outbound leg of a bridge to only offer the codec that the originator is using
+去掉注释，如果您想强制桥接的出站腿只提供发起方使用的编解码器。
 
 &lt;param name="disable-transcoding" value="true"/>
 
-######  renegotiate-codec-on-reinvite 
+######  在呼叫重新邀请时重新协商编解码器
 
 &lt;param name="renegotiate-codec-on-reinvite" value="true"/>
 
-#####  STUN 
+#####  STUN
 
-If you need to use a STUN server, here are common working examples:
+如果您需要使用STUN服务器，这里是常用的工作示例:
 
-######  ext-rtp-ip 
+######  ext-rtp-ip
 
 &lt;param name="ext-rtp-ip" value="stun:stun.fwdnet.net"/>
 
-[stun.fwdnet.net](http://stun.fwdnet.net) is a publicly-accessible STUN server.
+[stun.fwdnet.net](http://stun.fwdnet.net) 是一个公开访问的STUN服务器。
 
-######  ext-sip-ip 
+######  ext-sip-ip
 
 &lt;param name="ext-sip-ip" value="world_reachable.real.numeric.ip"/>
 
-######  stun-enabled 
+######  stun-enabled
 
-Simple traversal of UDP over NATs (STUN), is used to help resolve the problems associated with SIP clients, behind NAT, using private IP address space in their messaging. Use stun when specified (default is true).
+**简单的穿越网络地址转换(NAT)（SUTN）** 用于帮助解决SIP客户端在私有IP地址空间中使用NAT的问题。当指定时，请使用SUTN（默认为true）。
 
-&lt;param name="stun-enabled" value="true"/>
+```xml
+<param name="stun-enabled" value="true"/>
+```
 
-######  stun-auto-disable 
+##### 关于NAT
 
-Set to true to have the profile determine stun is not useful and turn it off globally
+###### 启用NAT自动禁用 
 
-&lt;param name="stun-auto-disable" value="true"/>
-  
-  
-#####  NATing 
+设置为true，让配置文件决定是否关闭全局SUTN，认为它没有用处。
 
-######  apply-nat-acl 
+```xml
+<param name="stun-auto-disable" value="true"/>
+```
 
-When receiving a REGISTER or INVITE, enable [NAT mode](../../Networking/NAT_6587473.mdx#about) automatically if IP address in Contact header matches an entry defined in the [RFC 1918](https://tools.ietf.org/html/rfc1918) [access list](../../Networking/3965687.mdx#-acl-). "acl" is a misnomer in this case because access will not be denied if the user's contact IP doesn't match.
+##### NAT转换
 
-&lt;param name="apply-nat-acl" value="rfc1918"/>
+###### 启用NAT ACL
 
-######  aggressive-nat-detection 
+当接收到REGISTER或INVITE请求时，如果Contact头中的IP地址与RFC 1918定义的条目匹配，则自动启用[NAT模式](../../Networking/NAT_6587473.mdx#about)。在这种情况下，“acl”是一个误导，因为如果用户的联系IP不匹配，访问不会被拒绝。
 
-This will enable NAT mode if the network IP/port from which the request was received differs from the IP/Port combination in the SIP Via: header, or if the Via: header contains the received parameter (regardless of what it contains.) **Note 2009-04-05:** Someone please clarify when this would be useful. It seems to me if someone needed this feature, chances are that things are so broken that they would need to use NDLB-force-rport
+```xml
+<param name="apply-nat-acl" value="rfc1918"/>
+```
 
-&lt;param name="aggressive-nat-detection" value="true"/>
+###### 主动NAT检测
 
-#####  VAD and CNG 
+如果接收请求的网络IP/端口与SIP Via:头中的IP/端口组合有所不同，或者Via:头包含received参数（无论它包含什么），则启用NAT模式。**注 2009-04-05：**有人请解释这种情况何时有用。我觉得如果有人需要此功能，那么很可能情况已经很糟糕，他们需要使用NDLB-force-rport。
 
-VAD stands for [Voice Activity Detector](../../Codecs-and-Media/VAD-and-CNG_7144454.mdx#about). FreeSWITCH is capable of detecting speech and can stop transmitting RTP packets when no voice is detected.
+```xml
+<param name="aggressive-nat-detection" value="true"/>
+```
 
-######  vad
+##### VAD和CNG
 
-&lt;param name="vad" value="in"/>
-&lt;param name="vad" value="out"/>
-&lt;param name="vad" value="both"/>
+VAD是[Voice Activity Detector](../../Codecs-and-Media/VAD-and-CNG_7144454.mdx#about)的缩写。FreeSWITCH能够检测到语音并在未检测到人声时停止传输RTP数据包。
 
-######  suppress-cng
+###### vad
 
-Suppress Comfort Noise Generator (CNG) on this profile or per call with the 'suppress\_cng' variable
+```xml
+<param name="vad" value="in"/>
+<param name="vad" value="out"/>
+<param name="vad" value="both"/>
+```
 
-&lt;param name="suppress-cng" value="true"/>
+###### 抑制CNG
 
-#####  NDLB (A.K.A. No device left behind)
+禁用此配置文件或使用'suppress_cng'变量每次呼叫时压制舒适噪声生成器(CNG)。
+
+```xml
+<param name="suppress-cng" value="true"/>
+```
+
+##### NDLB（即No device left behind，设备无缝切换）
 
 ###### NDLB-force-rport
 
-This will force FreeSWITCH to send SIP responses to the network port from which they were received. **Use at your own risk!** For more information see [NAT Traversal](../../Networking/NAT-Traversal_3375417.mdx#about).
+这会强制FreeSWITCH将SIP响应发送到接收它们的网络端口。**使用需谨慎！** 更多信息请查看[NAT穿越](../../Networking/NAT-Traversal_3375417.mdx#about)。
 
-&lt;param name="NDLB-force-rport" value="true|safe"/>
+```xml
+<param name="NDLB-force-rport" value="true|safe"/>
+```
 
-* safe = param that does force-rport behavior only on endpoints we know are safe to do so on. This is a dirty hack to try to work with certain endpoints behind sonicwall which does not use the same port when it does nat, when the devices do not support rport, while not breaking devices that acutally use different ports that force-rport will break
+* `safe` = 只在已知安全的端点上强制使用force-rport行为。这是一种“肮脏的”hack，目的是使其与sonicwall后面的某些终端兼容，当终端不支持rport时，sonicwall进行nat时会使用不同的端口，同时不会影响会破坏force-rport将破坏的使用其他端口的终端。
 
-######  NDLB-broken-auth-hash
+###### NDLB-broken-auth-hash
 
-Used for when phones respond to a challenged ACK with method INVITE in the hash
+当电话机使用哈希方法回应挑战的ACK时使用。
 
-&lt;param name="NDLB-broken-auth-hash" value="true"/>
+```xml
+<param name="NDLB-broken-auth-hash" value="true"/>
+```
 
-######  NDLB-received-in-nat-reg-contact
+###### NDLB-received-in-nat-reg-contact
 
-add a ;received="&lt;ip>:&lt;port>" to the contact when replying to register for nat handling
+在回复寄存NAT处理时，添加一个';received="&lt;ip>:&lt;port>' 到联系方式。
 
-&lt;param name="NDLB-received-in-nat-reg-contact" value="true"/>
+```xml
+<param name="NDLB-received-in-nat-reg-contact" value="true"/>
+```
 
-######  NDLB-sendrecv-in-session
+###### NDLB-sendrecv-in-session
 
-By default, "a=sendrecv" is only included in the media portion of the SDP. While this is RFC-compliant, it may break functionality for some SIP devices. To also include "a=sendrecv" in the session portion of the SDP, set this parameter to true.
+默认情况下，"a=sendrecv"仅包含在SDP的媒体部分。虽然这是符合RFC的，但可能会破坏某些SIP设备的功能。若要在SDP的会话部分中也包含 "a=sendrecv"，请设置此参数为true。
 
-&lt;param name="NDLB-sendrecv-in-session" value="true"/>
+```xml
+<param name="NDLB-sendrecv-in-session" value="true"/>
+```
 
-######  NDLB-allow-bad-iananame
+###### NDLB-allow-bad-iananame
 
-* Introduced in rev. 15401, this was enabled by default prior to new param.
+* 在版本15401中引入的，默认情况下启用，直到有新参数。
 
-Will allow codecs to match respective name even if the given string is not correct.
+将使得编解码器可以匹配相应的名称，即使给定的字符串不正确。
 
-i.e., Linksys and Sipura phones will pass G.729a by default instead of G.729 as codec string therefore not matching.
+即Linksys和Sipura手机默认会传输G.729a编解码器字符串，而不是G.729，因此不匹配。
 
-If you wish to allow bad IANA names to match respective codec string, add the following param to your SIP profile.
+如果你希望允许不良的IANA名称与相应的编解码器字符串匹配，请将以下参数添加到你的SIP配置文件中。
 
- &lt;param name="NDLB-allow-bad-iananame" value="true"/>
+ <param name="NDLB-allow-bad-iananame" value="true"/>
 
-Refer to [RFC 3551](https://tools.ietf.org/html/rfc3551), [RFC 3555](https://tools.ietf.org/html/rfc3555) and the IANA list(s) for SDP
+请参考[RFC 3551](https://tools.ietf.org/html/rfc3551)，[RFC 3555](https://tools.ietf.org/html/rfc3555)和SDP的IANA列表。
 
-#####  Call ID 
+##### 会话标识（Call ID）
 
-######  inbound-use-callid-as-uuid 
+###### inbound-use-callid-as-uuid
 
-On inbound calls make the uuid of the session equal to the SIP call id of that call.
+对于入站呼叫，使会话的UUID等于该呼叫的SIP呼叫标识符。
 
-&lt;param name="inbound-use-callid-as-uuid" value="true"/>
+ <param name="inbound-use-callid-as-uuid" value="true"/>
 
-######  outbound-use-uuid-as-callid 
+###### outbound-use-uuid-as-callid
 
-On outbound calls set the callid to match the uuid of the session
+对于出站呼叫，将呼叫标识符设置为与会话的UUID相匹配。
 
-&lt;param name="outbound-use-uuid-as-callid" value="true"/>
+ <param name="outbound-use-uuid-as-callid" value="true"/>
 
-This goes in the "..sip\_profiles/external.xml" file.
+这些配置项需要添加到"..sip_profiles/external.xml"文件中。
 
-#####  TLS 
+##### 传输层安全（TLS）
 
-Please make sure to read [SIP TLS](../../Security/SIP-TLS_9634135.mdx#attachments) before enabling certain features below as they may not behave as expected.
+在启用下面的某些功能之前，请务必阅读[SIP TLS](../../Security/SIP-TLS_9634135.mdx#attachments)文档，因为它们可能不会按预期运行。
 
-######  tls 
+###### tls
 
-TLS: disabled by default, set to "true" to enable
+默认情况下禁用TLS，设置为"true"以启用TLS。
 
-   &lt;param name="tls" value="$${internal_ssl_enable}"/>
+ <param name="tls" value="$${internal_ssl_enable}"/>
 
-######  tls-only 
+###### tls-only
 
-disabled by default, when enabled prevents sofia from listening on the unencrypted port for this connection. This can stop many generic brute force scripts and if all your clients connect over TLS then can help decrease the exposure of your FreeSWITCH server to the world.
+默认情况下禁用，启用后，阻止sofia在此连接上侦听未加密端口。这可以阻止许多通用的暴力破解脚本，并且如果所有客户端都通过TLS连接，则可以帮助减少你的FreeSWITCH服务器对外界的暴露。
 
-   &lt;param name="tls-only" value="false"/>
+ <param name="tls-only" value="false"/>
 
-######  tls-bind-params 
+###### tls-bind-params
 
-additional bind parameters for TLS
+用于TLS的附加绑定参数。
 
-   &lt;param name="tls-bind-params" value="transport=tls"/>
+ <param name="tls-bind-params" value="transport=tls"/>
 
-######  tls-sip-port 
+###### tls-sip-port
 
-Port to listen on for TLS requests. (5061 will be used if unspecified)
+用于TLS请求的监听端口。（如果未指定，将使用5061）
 
-   &lt;param name="tls-sip-port" value="$${internal_tls_port}"/>
+ <param name="tls-sip-port" value="$${internal_tls_port}"/>
 
-######  tls-cert-dir 
+###### tls-cert-dir
 
-Location of the agent.pem and cafile.pem ssl certificates (needed for TLS server)
+代理.pem和cafile.pem的SSL证书位置（用于TLS服务器）
 
    &lt;param name="tls-cert-dir" value="$${internal_ssl_dir}"/>
 
 ######  tls-version 
 
-TLS version ("sslv2", "sslv3", "sslv23", "tlsv1", "tlsv1.1", "tlsv1.2"). NOTE: Phones may not work with TLSv1
+TLS版本（"sslv2"、"sslv3"、"sslv23"、"tlsv1"、"tlsv1.1"、"tlsv1.2"）。注意：手机可能无法使用TLSv1
 
    &lt;param name="tls-version" value="$${sip_tls_version}"/>
 
-When not set defaults to: "tlsv1,tlsv1.1,tlsv1.2"
+未设置时默认为："tlsv1,tlsv1.1,tlsv1.2"
 
 ######  tls-passphrase 
 
-If your agent.pem is protected by a passphrase stick the passphrase here to enable FreeSWITCH to decrypt the key.
+如果您的agent.pem受密码保护，请在此处放置密码以启用FreeSWITCH解密密钥。
 
    &lt;param name="tls-passphrase" value=""/>
 
 ######  tls-verify-date 
 
-If the client/server certificate should have the date on it validated to ensure it is not expired and is currently active.
+如果客户端/服务器证书应该具有日期验证，以确保其没有过期并且当前有效。
 
    &lt;param name="tls-verify-date" value="true"/>
 
 ######  tls-verify-policy 
 
-This controls what, if any security checks are done against server/client certificates. Verification is generally checking certificates are valid against the cafile.pem. Set to 'in' to only verify incoming connections, 'out' to only verify outgoing connections, 'all' to verify all connections, also 'subjects\_in', 'subjects\_out' and 'subjects\_all' for subject validation (subject validation for outgoing connections is against the hostname/ip connecting to). Multiple policies can be split with a '|' pipe, for example 'subjects\_in|subjects\_out'. Defaults to none.
+这控制是否以及如何对服务器/客户端证书进行安全检查。验证通常检查证书是否根据cafile.pem是有效的。设置为“in”只验证传入连接，“out”只验证传出连接，“all”验证所有连接，还有“subjects\_in”、“subjects\_out”和“subjects\_all”用于主题验证（对于传出连接，主题验证针对主机名/ IP连接）。多个策略可以使用“|”管道分隔，例如“subjects\_in|subjects\_out”。默认为无。
 
    &lt;param name="tls-verify-policy" value="none"/>
 
 ######  tls-verify-depth 
 
-When certificate validation is enabled (tls-verify-policy) how deep should we try to verify a certificate up the chain again the cafile.pem file. By default only depth of 2.
+当启用证书验证（tls-verify-policy）时，我们应该尝试多深验证针对cafile.pem文件的证书链。默认仅深度为2。
 
    &lt;param name="tls-verify-depth" value="2"/>
 
-######  tls-verify-in-subjects 
+######  tls-verify-in-subjects
 
-If subject validation is enabled for incoming connections (tls-verify-policy set to 'subjects\_in' or 'subjects\_all') this is the list of subjects that are allowed (delimit with a '|' pipe), note this only effects incoming connections for outgoing connections subjects are always checked against hostnames/ips.
+如果启用了来电连接的主体验证（`tls-verify-policy`设置为 `subjects_in` 或 `subjects_all`），允许的主体列表如下（用 `|` 管道分隔），请注意，这仅会影响入站连接，对于出站连接，主体始终会与主机名/IP 地址进行匹配。
 
-   &lt;param name="tls-verify-in-subjects" value=""/>
+```xml
+<param name="tls-verify-in-subjects" value=""/>
+```
 
-#####  DTMF 
+##### DTMF
 
-######  rfc2833-pt
+###### rfc2833-pt
 
-TODO [RFC 2833](https://tools.ietf.org/html/rfc2833) is obsoleted by [RFC 4733](https://tools.ietf.org/html/rfc4733).
+[TODO RFC 2833](https://tools.ietf.org/html/rfc2833) 被 [RFC 4733](https://tools.ietf.org/html/rfc4733) 废弃。
 
-&lt;param name="rfc2833-pt" value="101"/>
+```xml
+<param name="rfc2833-pt" value="101"/>
+```
 
-######  dtmf-duration 
+###### dtmf-duration
 
-&lt;param name="dtmf-duration" value="100"/>
+```xml
+<param name="dtmf-duration" value="100"/>
+```
 
-  
-######  dtmf-type
+###### dtmf-type
 
-TODO [RFC 2833](https://tools.ietf.org/html/rfc2833) is obsoleted by [RFC 4733](https://tools.ietf.org/html/rfc4733).
+[TODO RFC 2833](https://tools.ietf.org/html/rfc2833) 被 [RFC 4733](https://tools.ietf.org/html/rfc4733) 废弃。
 
-Set the parameter in the SIP profile:
+在 SIP 配置文件中设置参数：
 
-&lt;param name="dtmf-type" value="info"/>
+```xml
+<param name="dtmf-type" value="info"/>
+```
 
-or
+或者
 
-&lt;param name="dtmf-type" value="rfc2833"/>
+```xml
+<param name="dtmf-type" value="rfc2833"/>
+```
 
-or
+或者
 
-&lt;param name="dtmf-type" value="none"/>
+```xml
+<param name="dtmf-type" value="none"/>
+```
 
-OR set the variable in the SIP gateway or user profile (NOT in the channel, it must be before CS\_INIT):
+或者在 SIP 网关或用户配置文件中设置变量（不是在通道中，在 CS_INIT 之前设置）：
 
-&lt;variables>
-  &lt;variable direction="inbound|outbound|both" name="dtmf_type" value="info"> 
-&lt;/variables>
+```xml
+<variables>
+  <variable direction="inbound|outbound|both" name="dtmf_type" value="info"> 
+  </variable>
+</variables>
+```
 
-Note the "\_" instead of "-" in profile param (this is var set in dialplan). (24.10.2010: "both" don't seem to me work in my tests, "outbound" does)
+注意在配置文件参数中使用 "\_"（而不是 "-"），这是拨号计划中设置的变量。
 
-Note: for inband DTMF, [Misc. Dialplan Tools start\_dtmf](../../Modules/mod-dptools/6587132.mdx#0-about) must be used in the dialplan.  
-Also, to change the outgoing routing from info or rfc2833 to inband, use [Misc.\_Dialplan\_Tools\_start\_dtmf\_generate](../../Modules/mod-dptools/6587137.mdx#0-about)
+注：对于音频中的 DTMF，必须在拨号计划中使用 [Misc. Dialplan Tools start\_dtmf](../../Modules/mod-dptools/6587132.mdx#0-about)。  
+此外，要将出站路由从 info 或 rfc2833 更改为音频中，
+请使用 [Misc.\_Dialplan\_Tools\_start\_dtmf\_generate](../../Modules/mod-dptools/6587137.mdx#0-about)。
 
 [RFC 2833](http://tools.ietf.org/html/rfc2833)
 
-###### [pass-rfc2833](../../../Channel-Variables-Catalog/pass_rfc2833_16352551.mdx#usage) 
+###### [pass-rfc2833](../../../Channel-Variables-Catalog/pass_rfc2833_16352551.mdx#usage)
 
-TODO [RFC 2833](https://tools.ietf.org/html/rfc2833) is obsoleted by [RFC 4733](https://tools.ietf.org/html/rfc4733).
+[RFC 2833](https://tools.ietf.org/html/rfc2833)已被[RFC 4733](https://tools.ietf.org/html/rfc4733)所取代。
 
 _Default: false_
 
-If true, it passes [RFC 2833](https://tools.ietf.org/html/rfc2833) DTMF's from one side of a bridge to the other, untouched. Otherwise, it decodes and re-encodes them before passing them on.
+如果为true，则将[RFC 2833](https://tools.ietf.org/html/rfc2833) DTMF从一个桥梁传递到另一侧，而不加以修改。否则，在传递前需要解码和重新编码。
 
 `<param name="pass-rfc2833" value="true"/>`
 
-######  liberal-dtmf
+###### liberal-dtmf
 
-TODO [RFC 2833](https://tools.ietf.org/html/rfc2833) is obsoleted by [RFC 4733](https://tools.ietf.org/html/rfc4733).
+[RFC 2833](https://tools.ietf.org/html/rfc2833)已被[RFC 4733](https://tools.ietf.org/html/rfc4733)所取代。
 
 _Default: false_  
-For DTMF negotiation, use this parameter to just always offer 2833 and accept both 2833 and INFO. Use of this parameter is not recommended since its purpose is to try to cope with buggy SIP implementations.
+对于DTMF协商，使用此参数始终提供2833并接受2833和INFO。不推荐使用此参数，因为它的目的是尝试应对有缺陷的SIP实现。
 
 `<param name="liberal-dtmf" value="true"/>`
 
-#####  SIP Related options 
+##### SIP相关选项
 
-###### enable-timer 
+###### enable-timer
 
-This enables or disables support for [RFC 4028](http://tools.ietf.org/html/rfc4028) SIP Session Timers.
+启用或禁用[RFC 4028](http://tools.ietf.org/html/rfc4028) SIP会话计时器的支持。
 
 `<param name="enable-timer" value="false"/>`
 
-######  session-timeout 
+###### session-timeout
 
-session timers for all call to expire after the specified seconds Then it will send another invite (re-invite). If not specified defaults to 30 minutes. Some gateways may reject values less than 30 minutes. This values refers to Session-Expires in [RFC 4028](http://tools.ietf.org/html/rfc4028) (The time at which an element will consider the session timed out, if no successful session refresh transaction occurs beforehand)
+为所有呼叫设置会话计时器，在指定的秒数后过期，然后发送另一个邀请（重新邀请）。如果未指定，默认为30分钟。某些网关可能会拒绝小于30分钟的值。此值指的是[RFC 4028](http://tools.ietf.org/html/rfc4028)中的Session-Expires（如果在此之前没有发生成功的会话刷新事务，则元素将认为会话已超时的时间）。
 
 `<param name="session-timeout" value="1800"/>`
 
-Note: If your switch requires the timer option; for instance, Huawei SoftX3000, it needs this optional field and drops the calls with "Session Timer Check Message Failed", then you may be able to revert back the commit that took away the Require: timer option which is an optional field by:
+注意：如果您的交换机需要计时器选项（例如华为SoftX3000），则需要此可选字段，并且如果呼叫出现“会话计时器检查消息失败”，您可能能够恢复删除Require: timer选项的提交，Require: timer是一个可选字段。
 
+```
 git log -1 -p 58c3c3a049991fedd39f62008f8eb8fca047e7c5 libs/sofia-sip/libsofia-sip-ua | patch -p1 -R
 touch libs/sofia-sip/.update
 
@@ -997,263 +858,282 @@ make mod_sofia-install
 
 ######  enable-100rel 
 
-This enable support for 100rel (100% reliability - PRACK message as defined in [RFC3262](http://tools.ietf.org/html/rfc3262)) This fixes a problem with SIP where provisional messages like "180 Ringing" are not ACK'd and therefore could be dropped over a poor connection without retransmission. \*2009-07-08:\* Enabling this may cause FreeSWITCH to crash, see [FSCORE-392](http://jira.freeswitch.org/browse/FSCORE-392).
+启用支持100rel（100%可靠性 - PRACK消息，如[RFC3262](http://tools.ietf.org/html/rfc3262)中定义）此修复了SIP中的一个问题，即暂态消息，如“180正在响铃”没有ACK并且可能在差劲的连接中被丢弃而不会重传。 *2009-07-08：*启用此选项可能导致FreeSWITCH崩溃，请参见[FSCORE-392](http://jira.freeswitch.org/browse/FSCORE-392)。
 
 `<param name="enable-100rel" value="true"/>`
 
 ######  minimum-session-expires 
 
-This sets the "Min-SE" value (in seconds) from [RFC 4028](http://tools.ietf.org/html/rfc4028). This value must not be less than 90 seconds.
+此参数将“Min-SE”值（以秒为单位）设置为[RFC 4028](http://tools.ietf.org/html/rfc4028)中的值。此值不能小于90秒。
 
 `<param name="minimum-session-expires" value="120"/>`
 
 ######  sip-options-respond-503-on-busy 
 
-When set to true, this param will make FreeSWITCH respond to incoming SIP OPTIONS with 503 "Maximum Calls In Progress" when FS is paused or maximum sessions has been exceeded.
+当设置为true时，此参数将使FreeSWITCH在FS暂停或超过最大会话数时，以503“Maximum Calls In Progress”响应传入的SIP OPTIONS。
 
-When set to false or when not set at all (default behavior), SIP OPTIONS are always responded with 200 "OK".
+当设置为false或未设置（默认行为）时，SIP OPTIONS总是以200“OK”响应。
 
-`<param name="sip-options-respond-503-on-busy" value="false"/>` 
+`<param name="sip-options-respond-503-on-busy" value="false"/>`
 
-Setting this param to true is especially useful if you're using a proxy such as OpenSIPS or Kamailio with dispatcher module to probe your FreeSWITCH servers by sending SIP OPTIONS.
+将此参数设置为true在使用OpenSIPS或Kamailio等代理和调度器模块探测FreeSWITCH服务器时特别有用，可以通过发送SIP OPTIONS来实现。
 
 ######  sip-force-expires 
 
-Setting this param overrides the _expires_ value in the 200 OK in response to all inbound SIP REGISTERs towards this sip\_profile.
+设置此参数会覆盖应答给此sip_profile所有入站SIP REGISTER的200 OK中的_expires_值。
 
-This param can be overridden per individual user by setting a _sip-force-expires_ user directory variable.
+可以通过设置sip_force-expires用户目录变量覆盖此参数。
 
-######  sip-expires-max-deviation 
+######  sip-expires-max-deviation
+```
 
-Setting this param adds a random deviation to the _expires_ value in the 200 OK in response to all inbound SIP REGISTERs towards this sip\_profile.
+设置此参数会在响应所有指向此sip_profile的入站SIP REGISTER时，在200 OK中向_expires_值添加一个随机偏差。
 
-Result will be that clients will not re-register at the same time-interval thus spreading the load on your system.
+结果是，客户端不会以相同的时间间隔重新注册，从而分散系统的负载。
 
-For example, if you set:
+例如，如果设置如下：
 
 `<param name="sip-force-expires" value="1800"/>`
 `<param name="sip-expires-max-deviation" value="600"/>`
 
-then the expires that is responded will be between 1800-600=1200 and 1800+600=2400 seconds.
+那么响应的过期时间将在1800-600=1200秒和1800+600=2400秒之间。
 
-This param can be overridden per individual user by setting a _sip-expires-max-deviation_ user directory variable.
+可以通过设置_sip-expires-max-deviation_用户目录变量来覆盖每个个别用户的此参数。
 
-######  outbound-proxy 
+######  出站代理
 
-Setting this param will send all outbound transactions to the value set by outbound-proxy.
+设置此参数将所有出站事务发送到outbound-proxy指定的值。
 
  `<param name="outbound-proxy" value="127.0.0.1"/>`
 
-######  send-display-update 
+######  发送显示更新
 
-Tells FreeSWITCH not to send display UPDATEs to the leg of the call.
+告诉FreeSWITCH不要将显示更新发送到呼叫的腿。
 
  `<param name="send-display-update" value="false"/>`
 
-#####  RTP Related options 
+#####  RTP相关选项
 
-######  auto-jitterbuffer-msec 
+######  自动混音缓冲区
 
-Set this to the size of the [jitterbuffer](../../Codecs-and-Media/JitterBuffer_6587407.mdx#about) you would like to have on all calls coming through this profile.
+将其设置为您希望在通过此配置文件传递的所有呼叫中具有的[jitterbuffer](../../Codecs-and-Media/JitterBuffer_6587407.mdx#about)的大小。
 
 `<param name="auto-jitterbuffer-msec" value="120"/>`
 
-######  rtp-timer-name 
+######  rtp-timer-name
 
 `<param name="rtp-timer-name" value="soft"/>`
 
-######  rtp-rewrite-timestamps 
+######  重新编写RTP时间戳
 
-If you don't want to pass through timestamps from 1 RTP stream to another, rtp-rewrite-timestamps is a parameter you can set in a SIP Profile (on a per call basis with rtp\_rewrite\_timestamps chanvar in a dialplan).
+如果您不想将一个RTP流的时间戳传递给另一个RTP流，您可以在SIP配置文件中设置rtp-rewrite-timestamps参数（在拨号计划中使用rtp\_rewrite\_timestamps chanvar进行每通话设置）。
 
-The result is that FreeSWITCH will regenerate and rewrite the timestamps in all the RTP streams going to an endpoint using this SIP Profile.
+结果是，FreeSWITCH将重新生成和重写使用此SIP配置文件的端点上所有RTP流的时间戳。
 
-This could be necessary to fix audio issues when sending calls to some paranoid and not RFC-compliant gateways (Cirpack is known to require this).
+为了解决将呼叫发送到一些偏执和不符合RFC标准的网关（已知Cirpack需要此操作）时的音频问题，可能需要进行以下操作: 
 
 `<param name="rtp-rewrite-timestamps" value="true"/>`
 
   
 ######  media_timeout 
 
-was: rtp-timeout-sec (deprecated config parameter)  
+以前拼写为: rtp-timeout-sec（弃用的配置参数）  
 
-This channel variable configures the number of milliseconds of RTP inactivity (no media packets received) before FreeSWITCH considers the call disconnected, and hangs up. It is recommended that you use session timers instead. If this setting is omitted, the default value is "0", which disables the timeout.
+这个通道变量配置了在没有接收到媒体数据包时的RTP非活动时间（毫秒），FreeSWITCH会认为呼叫已断开并挂断。建议使用会话计时器。如果省略此设置，默认值是"0"，表示禁用超时。
 
-Example: set the media timeout to 31 seconds
+示例: 将媒体超时设置为31秒
 
 `<X-PRE-PROCESS cmd="set" data="media_timeout=31000"/>`
 
 ###### media_hold_timeout   
 
-was: rtp_hold_timeout_sec (deprecated config parameter)
+以前拼写为: rtp_hold_timeout_sec（弃用的配置参数）
 
-`rtp_hold_timeout_sec deprecated use media_timeout variable.`
+`rtp_hold_timeout_sec已弃用，请使用media_timeout变量。`
 
-This channel variable configures the number of seconds of RTP inactivity (media silence) for a call placed on hold by an endpoint before FreeSWITCH considers the call disconnected, and hangs up. It is recommended that you use session timers instead, as some phones stop sending media when placed on hold. If this setting is omitted, the default value is "0", which disables the timeout.
+这个通道变量配置了终端将呼叫放置在保持状态时RTP非活动时间（静音）的秒数，在这之后，FreeSWITCH将认为呼叫已断开并挂断。建议使用会话计时器，因为一些电话在被放置在保持状态时停止发送媒体。如果省略此设置，默认值是"0"，表示禁用超时。
 
-Example: set the media timeout to 10 minutes.
+示例: 将媒体超时设置为10分钟
 
 `<X-PRE-PROCESS cmd="set" data="media_hold_timeout=600000"/>`
 
 ######  rtp-autoflush-during-bridge 
 
-Controls what happens if FreeSWITCH detects that it's not keeping up with the RTP media (audio) stream on a bridged call. (This situation can happen if the FreeSWITCH server has insufficient CPU time available.)
+控制着当FreeSWITCH检测到在桥接呼叫中无法跟上RTP媒体（音频）流的情况下会发生什么。（如果FreeSWITCH服务器的CPU时间不足，就会出现这种情况。）
 
-When set to "true" (the default), FreeSWITCH will notice when more than one RTP packet is waiting to be read in the incoming queue. If this condition persists for more than five seconds, RTP packets will be discarded to "catch up" with the audio stream. For example, if there are always five extra 20 ms packets in the queue, 100 ms of audio latency can be eliminated by discarding the packets. This will cause an audio glitch as some audio is discarded, but will improve the latency by 100 ms for the rest of the call.
+当设置为"true"（默认值）时，FreeSWITCH会注意到当输入队列中有多个RTP数据包等待被读取时。如果这种情况持续超过五秒钟，RTP数据包将被丢弃以"追赶"音频流。例如，如果队列中始终有五个额外的20毫秒数据包，则可以通过丢弃这些数据包来消除100毫秒的音频延迟。这会导致音频出现故障，因为一些音频被丢弃，但会为通话的剩余部分改善100毫秒的延迟。
 
-If rtp-autoflush-during-bridge is set to false, FreeSWITCH will instead preserve all RTP packets on bridged calls, even if it increases the latency or "lag" that callers hear.
+如果将rtp-autoflush-during-bridge设置为false，则FreeSWITCH将保留所有在桥接呼叫中的RTP数据包，即使这会增加呼叫者听到的延迟或"滞后"。
 
 `<param name="rtp-autoflush-during-bridge" value="true"/>`
 
 ######  rtp-autoflush 
 
-Has the same effect as "rtp-autoflush-during-bridge", but affects NON-bridged calls (such as faxes, IVRs and the echo test).
+具有与"rtp-autoflush-during-bridge"相同的效果，但影响非桥接呼叫（例如传真、交互式语音应答系统和回音测试）。
 
-Unlike "rtp-autoflush-during-bridge", the default is false, meaning that high-latency packets on non-bridged calls will not be discarded. This results in smoother audio at the possible expense of increasing audio latency (or "lag").
+与"rtp-autoflush-during-bridge"不同，其默认值为false，这意味着非桥接呼叫中的高延迟数据包不会被丢弃。这将导致更平滑的音频，但可能会增加音频延迟（或"滞后"）。
 
-Setting "rtp-autoflush" to true will discard packets to minimize latency when possible. Doing so may cause errors in DTMF recognition, faxes, and other processes that rely on receiving all packets.
+将"rtp-autoflush"设置为true将丢弃数据包以最小化延迟。这样做可能会导致DTMF识别、传真和其他依赖于接收所有数据包的流程发生错误。
 
 `<param name="rtp-autoflush" value="true"/>`
 
 #####  Auth 
 
-These settings deal with authentication: requirements for identifying SIP endpoints to FreeSWITCH.
+这些设置与认证有关：即识别SIP终端以便与FreeSWITCH通信时的要求。
 
 ######  challenge-realm 
 
-Choose the realm challenge key. Default is auto\_to if not set.
+选择要挑战的域。如果未设置，默认为auto\_to。
 
-auto\_from - uses the from field as the value for the SIP realm. auto\_to - uses the to field as the value for the SIP realm. &lt;anyvalue> - you can input any value to use for the SIP realm.
+auto\_from - 使用from字段作为SIP域的值。auto\_to - 使用to字段作为SIP域的值。&lt;anyvalue> - 您可以输入任何值作为SIP域的值。
 
-If you want URL dialing to work you'll want to set this to auto\_from.
+如果您希望建立URL拨号功能，请将其设置为`auto_from`。
 
-If you use any other value besides auto\_to or auto\_from you'll loose the ability to do multiple domains.
+如果您使用除`auto_to`或`auto_from`之外的任何其他值，将无法完成多个域的操作。
 
-Note: comment out to restore the behavior before 2008-09-29
+注意：注释掉此行以恢复2008-09-29之前的行为
 
-&lt;param name="challenge-realm" value="auto_from"/>
+```xml
+<param name="challenge-realm" value="auto_from"/>
+```
 
 ######  accept-blind-auth 
 
-accept any authentication without actually checking (not a good feature for most people)
+接受任何身份验证，而无需进行实际检查（对大多数人来说不是一个好功能）
 
-&lt;param name="accept-blind-auth" value="true"/>
+```xml
+<param name="accept-blind-auth" value="true"/>
+```
    
 ######  auth-calls 
 
-Users in the directory can have "auth-acl" parameters applied to them so as to restrict users access to a predefined ACL or a CIDR.
+目录中的用户可以应用"auth-acl"参数，以限制用户对预定义ACL或CIDR的访问。
 
-&lt;param name="auth-calls" value="$${internal_auth_calls}"/>
+```xml
+<param name="auth-calls" value="$${internal_auth_calls}"/>
+```
 
-Value can be "false" to disable authentication on this profile, meaning that when calls come in the profile will \*not\* send an auth challenge to the caller.
+值可以设置为"false"以禁用此配置文件上的身份验证，这意味着当呼叫进入配置文件时，将\*不会\*向呼叫者发送身份验证挑战。
 
 ######  log-auth-failures 
 
-Write log entries ( Warning ) on authentication failures ( Registration & Invite ). useful for users wishing to use fail2ban. note: Required SVN#15654 or higher
+在身份验证失败（注册和邀请）时写入日志条目（Warning），适用于希望使用fail2ban的用户。注意：需要SVN#15654或更高版本。
 
-&lt;param name="log-auth-failures" value="true"/>
-
+```xml
+<param name="log-auth-failures" value="true"/>
+```
   
 ######  auth-all-packets 
 
-On authed calls, authenticate \*all\* the packets instead of only INVITE and REGISTER(Note: OPTIONS, SUBSCRIBE, INFO and MESSAGE are not authenticated even with this option set to true, see <http://jira.freeswitch.org/browse/FS-2871>)
+在已经通过身份验证的呼叫中，对\*所有\*数据包进行身份验证，而不仅仅是INVITE和REGISTER（注意：即使将此选项设置为true，OPTIONS、SUBSCRIBE、INFO和MESSAGE也不会进行身份验证，请参见<http://jira.freeswitch.org/browse/FS-2871>）
 
-&lt;param name="auth-all-packets" value="false"/>
+```xml
+<param name="auth-all-packets" value="false"/>
+```
 
 #####  Registration 
 
 ######  disable-register 
 
-disable register which may be undesirable in a public switch
+禁用注册功能，对于公开交换机可能不合适。
 
-&lt;param name="disable-register" value="true"/>
+```xml
+<param name="disable-register" value="true"/>
+```
 
-######  multiple-registrations 
+######  multiple-registrations
 
-Valid values for this parameter are "contact", "true", "false". value="true" is the most common use. Setting this value to "contact" will remove the old registration based on sip\_user, sip\_host and contact field as opposed to the call\_id.
+此参数的有效值为“contact”、“true”和“false”。value="true" 是最常用的用法。将该值设置为“contact”将基于 sip\_user、sip\_host 和 contact 字段而不是 call\_id 移除旧的注册。
 
 &lt;param name="multiple-registrations" value="contact"/>
 
 ######  max-registrations-per-extension 
 
-Defines the number of maximum registrations per extension. Valid value for this parameter is an integer greater than 0\. Please note that setting this to 1 would counteract the usage of **multiple-registrations**. When an attempt to register an extension is made after the maximum value has been reached sofia will respond with 403\. The following example will set maximum registrations to 2
+定义每个分机的最大注册数。此参数的有效值是大于 0 的整数。请注意，将其设置为 1 将抵消 **multiple-registrations** 的使用。当达到最大值后再尝试注册分机，sofia 将以 403 回应。以下示例将最大注册数设置为 2。
 
 &lt;param name="max-registrations-per-extension" value="2"/>
 
 ######  accept-blind-reg 
 
-this lets anything register comment the next line and uncomment one or both of the other 2 lines for call authentication
+允许任何注册。注释下一行并取消下面两行的注释来进行呼叫认证。
 
 &lt;param name="accept-blind-reg" value="true"/>
 
 ######  inbound-reg-force-matching-username 
 
-Force the user and auth-user to match.
+强制用户和 auth-user 匹配。
 
 &lt;param name="inbound-reg-force-matching-username" value="true"/>
 
 ######  force-publish-expires 
 
-Force custom presence update expires delta (-1 means endless)
+强制自定义在此更新出现时的过期时间（-1 表示永久）。
 
 &lt;param name="force-publish-expires" value="true"/>
 
 ######  force-register-domain 
 
-all inbound registrations will look in this domain for the users. Comment out to use multiple domains
+所有入站注册将在此域中查找用户。注释掉以使用多个域名。
 
 &lt;param name="force-register-domain" value="$${domain}"/>
 
 ######  force-register-db-domain 
 
-all inbound reg will stored in the db using this domain. Comment out to use multiple domains
+所有入站注册将在数据库中以此域存储。注释掉以使用多个域名。
 
 &lt;param name="force-register-db-domain" value="$${domain}"/>
 
-######  send-message-query-on-register 
+######  send-message-query-on-register
 
-Can be set to 'true', 'false' or 'first-only'. If set to 'true' (this is the default behavior), mod\_sofia will send a message-query event upon registration. [mod\_voicemail](../../Modules/mod_voicemail_6587070.mdx#--) uses this for counting messages.
+可以设置为'true'、'false'或'first-only'。如果设置为'true'（这是默认行为），mod_sofia将在注册时发送一个消息查询事件。[mod_voicemail](../../Modules/mod_voicemail_6587070.mdx#--)使用此功能来计算消息数。
 
-&lt;param name="send-message-query-on-register" value="true"/>
+```xml
+<param name="send-message-query-on-register" value="true"/>
+```
 
-If set to 'first-only', only the first REGISTER will trigger the message-query (it requires the UA to increment the NC on subsequent REGISTERs. Some phones, snom for instance, do not do this).
+如果设置为'first-only'，只有第一个REGISTER将触发消息查询（它需要用户代理在后续的REGISTER上递增NC。例如，一些电话例如snom就没有这样做）。
 
-The final effect of the message-query is to cause a NOTIFY MWI message to be sent to the registering UA (it is used to satisfy terminals that expect MWI without subscribing for it).
+消息查询的最终效果是向注册用户代理发送一个NOTIFY MWI消息（用于满足期望订阅但未实际订阅MWI的终端）。
 
 ######  unregister-on-options-fail 
 
-If set to True with [nat-options-ping](../../Networking/NAT-Traversal_3375417.mdx#nat-options-ping) the endpoint will be unregistered if no answer on OPTIONS packet.
+如果与[nat-options-ping](../../Networking/NAT-Traversal_3375417.mdx#nat-options-ping)设置为True，如果OPTIONS数据包无回应，终端将被取消注册。
 
-&lt;param name="unregister-on-options-fail" value="true"/>
+```xml
+<param name="unregister-on-options-fail" value="true"/>
+```
 
-  
 ######  nat-options-ping 
 
-With this option set FreeSWITCH will periodically send an OPTIONS packet to all NATed registered endpoints to keep alive connection. If set to True with [unregister-on-options-fail](../../Modules/mod_sofia_1048707.mdx#about) the endpoint will be unregistered if no answer on OPTIONS packet.
+此选项设置后，FreeSWITCH将定期向所有NAT注册的终端发送OPTIONS数据包以保持连接。如果与[unregister-on-options-fail](../../Modules/mod_sofia_1048707.mdx#about)设置为True，如果OPTIONS数据包无回应，终端将被取消注册。
 
-&lt;param name="nat-options-ping" value="true"/>
+```xml
+<param name="nat-options-ping" value="true"/>
+```
 
 ######  all-reg-options-ping 
 
-With this option set FreeSWITCH will periodically send an OPTIONS packet to all registered endpoints to keep alive connection. If set to True with [unregister-on-options-fail](../../Modules/mod_sofia_1048707.mdx#about) the endpoint will be unregistered if no answer on OPTIONS packet.
+此选项设置后，FreeSWITCH将定期向所有注册的终端发送OPTIONS数据包以保持连接。如果与[unregister-on-options-fail](../../Modules/mod_sofia_1048707.mdx#about)设置为True，如果OPTIONS数据包无回应，终端将被取消注册。
 
-&lt;param name="all-reg-options-ping" value="true"/>
+```xml
+<param name="all-reg-options-ping" value="true"/>
+```
 
-######  registration-thread-frequency 
+######  registration-thread-frequency
 
-Controls how often registrations in the FreeSWITCH are checked for expiration. 
+控制多久检查一次FreeSWITCH中注册的过期信息。
 
 &lt;param name="registration-thread-frequency" value="30"/>
 
 ######  inbound-reg-in-new-thread 
 
-For each inbound register, launch a new thread to process it, e.g. for when using heavier backends
+对于每个入站注册，启动一个新线程来处理它，例如在使用较重的后端时
 
 &lt;param name="inbound-reg-in-new-thread" value="true"/>
 
 ###### ping-mean-interval
 
-Controls the mean interval FreeSWITCH™ will send OPTIONS packet to registered user, by default 30 seconds.
+控制FreeSWITCH™发送OPTIONS数据包给已注册用户的平均间隔，默认为30秒。
 
 &lt;param name="ping-mean-interval" value="30"/>
 
@@ -1261,137 +1141,155 @@ Controls the mean interval FreeSWITCH™ will send OPTIONS packet to registered 
 ping-thread-frequency
 
   
-Controls the frequency, withn the mean time, in which to send pings. by default is 1 second.
+在平均时间内控制发送ping的频率，默认为1秒。
 
 &lt;param name="ping-thread-frequency" value="1"/>
 
-Example: with interval set to 30, and frequency set to 1, for a 1000 registered users, FS will ping 33 users a second, and start over every 30 seconds. (1000 divided by 30 = 33)
+示例：设置间隔为30，频率为1，对于1000个已注册用户，FS将每秒ping 33个用户，并在每30秒重新开始。（1000除以30等于33）
 
-  
-#####  Subscription 
+#####  订阅
 
 ######  force-subscription-expires 
 
-force suscription expires to a lower value than requested
+将订阅过期时间强制设置为低于请求的值
 
 &lt;param name="force-subscription-expires" value="60"/>
 
 ######  force-subscription-domain 
 
-all inbound subscription will look in this domain for the users. Comment out to use multiple domains
+所有入站订阅将在该域中寻找用户。取消注释以使用多个域
 
 &lt;param name="force-subscription-domain" value="$${domain}"/>
 
-  
-#####  Presence 
+#####  出席状态
 
 ######  manage-presence 
 
-Enable presence.
+启用出席状态。
 
-If you want to share your presence (see dbname and presence-hosts) set this to "true" on the first profile and enable the shared presence database. Then on subsequent profiles that share presence set this variable to "passive" and enable the shared presence database there as well.
+如果您要共享您的出席状态（请参见dbname和presence-hosts），请在第一个配置文件上将其设置为"true"，并启用共享出席状态数据库。然后，在共享出席状态的后续配置文件上，将该变量设置为"passive"，并在那里启用共享出席状态数据库。
 
 &lt;param name="manage-presence" value="true"/>
 
 ######  dbname 
 
-Used to share presence info across sofia profiles
+用于在sofia配置文件之间共享出席信息
 
-Name of the db to use for this profile
+用于此配置文件的数据库名称
 
-&lt;param name="dbname" value="share_presence"/>
+```
+<param name="dbname" value="share_presence"/>
 
 ######  presence-hold-state 
 
-By default when a call is placed on hold, monitoring extensions show that extension as ringing. You can change this behavior by specifying this parameter and one of the following values. Available as of commit 1145905 on April 13, 2012.
+默认情况下，当呼叫被放置等候时，监控扩展会显示该扩展处于振铃状态。您可以通过指定此参数及以下值之一来更改此行为。从2012年4月13日的提交号1145905开始提供。
 
-* confirmed - Extension appears busy.
-* early (default) - Extension appears to be ringing.
-* terminated - Extension appears idle.
+* confirmed - 分机显示繁忙。
+* early（默认）- 分机显示振铃。
+* terminated - 分机显示空闲。
 
-&lt;param name="presence-hold-state" value="confirmed"/>
+<param name="presence-hold-state" value="confirmed"/>
 
 ######  presence-hosts 
 
-A list of domains that have a shared presence in the database specified in dbname. People who use multiple domains per profile can't use this feature anyway, so you'll want to set it to something like "\_DISABLED\_" in this case to avoid getting users from similar domains all mashed together. For multiple domains also known as multi-tenant calling 1001 would call all matching users in all domains. Don't use presence-hosts with multi-tenant.
+在指定的dbname数据库中，此处为具有共享状态的域名列表。使用多个域名的人无法使用此功能，因此，您应将其设置为 "\_DISABLED\_"，以避免将来自相似域的用户混合在一起。对于多个域，也称为多租户呼叫，1001将会呼叫所有匹配的所有域中的用户。不要在多租户中使用presence-hosts。
 
-&lt;param name="presence-hosts" value="$${domain}"/>
+<param name="presence-hosts" value="$${domain}"/>
 
 ######  presence-privacy 
 
-Optionally globally hide the caller ID from presence notes in distributed NOTIFY messages. For example, "Talk 1002" would be the presence note for extension 1001 while it is on a call with extension 1002\. If the presence privacy tag is set to true, then it would distribute the presence note as "On The Phone" (without the extension to which it is connected). So any subscriber's to 1001's presence would not be able to see who he/she is talking to. <http://jira.freeswitch.org/browse/FS-849> This also hides the number in the status "hold", "ring", "call" and perhaps others. <http://jira.freeswitch.org/browse/FS-4420>
+可以选择全局隐藏来自数据库中分布式NOTIFY消息的呼叫者ID。例如，"Talk 1002"将是分机1001与1002通话时的存在记录。如果将presence privacy标签设置为true，则会将存在记录分发为"On The Phone"（不带连接到其上的分机）。因此，任何订阅者无法看到1001的存在记录与谁通话。此外，这也会隐藏状态“hold”，“ring”，“call”以及可能的其他状态。 
 
-&lt;param name="presence-privacy" value="true"/>
+<param name="presence-privacy" value="true"/>
 
 ######  send-presence-on-register 
+```
 
-Specify whether or not to send presence information when users register. Default is not to send presence information. Valid options:
+### 指定用户注册时是否发送在线状态信息。默认不发送在线状态信息。有效选项：
 
 * false
 * true
 * first-only
 
-&lt;param name="send-presence-on-register" value="true"/>
+```xml
+<param name="send-presence-on-register" value="true"/>
+```
 
-#####  CallerID Related options 
+##### 来电 ID 相关选项
 
-######  caller-id type 
+###### 来电 ID 类型
 
-choose one, can be overridden by inbound call type and/or sip\_cid\_type channel variable
+选择其中一个，可以被呼入通话类型和/或 sip_cid_type 通道变量覆盖
 
-  
-Remote-Party-ID header:
+Remote-Party-ID 头部：
 
-   &lt;param name="caller-id-type" value="rpid"/>
+```xml
+<param name="caller-id-type" value="rpid"/>
+```
 
-P-\*-Identity family of headers:
+P-\*-Identity 系列头部：
 
-   &lt;param name="caller-id-type" value="pid"/>
+```xml
+<param name="caller-id-type" value="pid"/>
+```
 
-neither one:
+两者都不是：
 
-   &lt;param name="caller-id-type" value="none"/>
+```xml
+<param name="caller-id-type" value="none"/>
+```
 
-######  pass-callee-id 
+###### 传递被叫 ID
 
-(defaults to true) Disable by setting it to false if you encounter something that your gateway for some reason hates X-headers that it is supposed to ignore
+（默认为 true）如果遇到呼叫网关因某些原因不接受它应该忽略的 X-headers，可以通过将其设置为 false 来禁用
 
-&lt;param name="pass-callee-id" value="false"/>
+```xml
+<param name="pass-callee-id" value="false"/>
+```
 
-  
-#####  Other (TO DO) 
+##### 其他（待处理）
 
-######  hold-music 
+###### 保持音乐（音乐候机）
 
-&lt;param name="hold-music" value="$${hold_music}"/>
+```xml
+<param name="hold-music" value="$${hold_music}"/>
+```
 
-######  disable-hold 
+###### 禁用保持
 
-This allows to disable Music On Hold (added in GIT commit e5cc0539ffcbf660637198c698e90c2e30b05c2f, from Fri Apr 30 19:14:39 2010 -0500).
+这允许禁用呼叫保持音乐（自从 2010 年 4 月 30 日星期五 19:14:39 -0500 提交的 GIT 提交 e5cc0539ffcbf660637198c698e90c2e30b05c2f 中添加）。
 
-This can be useful when the calling device intends to send its own MOH, but nevertheless sends a REINVITE to FreeSWITCH triggering its MOH.
+当呼叫设备打算发送自己的 MOH，但仍然向 FreeSWITCH 发送 REINVITE 以触发其 MOH 时，这可能会很有用。
 
-This can be done from dialplan also with rtp\_disable\_hold channel variable.
+也可以使用 dialplan 中的 rtp_disable_hold 通道变量来完成这个操作。
 
-&lt;param name="disable-hold" value="true"/>
+```xml
+<param name="disable-hold" value="true"/>
+```
 
-######  apply-inbound-acl 
+###### 应用入站访问控制列表
 
-set which access control lists, defined in [acl.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/acl.conf.xml), apply to this profile
+设置应用于此配置文件的访问控制列表，定义在 [acl.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/acl.conf.xml) 中
 
-&lt;param name="apply-inbound-acl" value="domains"/>
+```xml
+<param name="apply-inbound-acl" value="domains"/>
+```
 
-######  apply-register-acl 
+###### 应用注册访问控制列表
 
-&lt;param name="apply-register-acl" value="domains"/>
+```xml
+<param name="apply-register-acl" value="domains"/>
+```
 
-######  apply-proxy-acl 
+###### 应用代理访问控制列表
 
-&lt;param name="apply-proxy-acl" value="myproxies"/>
+```xml
+<param name="apply-proxy-acl" value="myproxies"/>
+```
 
-This allows traffic to be sent to FreeSWITCH via one or more proxy servers.
+这允许通过一个或多个代理服务器将流量发送到FreeSWITCH。
 
-The proxy server should add a header named X-AUTH-IP containing the IP address of the client. FreeSWITCH trusts the proxy because its IP is listed in the proxy server ACL, and uses the value of the IP in this header as the client's IP for ACL authentication (acl defined in apply-inbound-acl).
+代理服务器应添加一个名为X-AUTH-IP的头部，其中包含客户端的IP地址。FreeSWITCH信任代理服务器，因为其IP地址已列在代理服务器ACL中，并使用该头部中的IP值作为ACL身份验证的客户端IP（在apply-inbound-acl中定义的acl）。
 
 ######  record-template 
 
@@ -1399,19 +1297,19 @@ The proxy server should add a header named X-AUTH-IP containing the IP address o
 
 ######  max-proceeding 
 
-max number of open dialogs in proceeding
+正在进行中的打开对话框的最大数量
 
 &lt;param name="max-proceeding" value="1000"/>
 
 ######  bind-params 
 
-if you want to send any special bind params of your own
+如果要发送您自己的任何特殊绑定参数
 
 &lt;param name="bind-params" value="transport=udp"/>
 
 ######  disable-transfer 
 
-disable transfer which may be undesirable in a public switch
+禁用转移可能在公共交换机中是不可取的
 
 &lt;param name="disable-transfer" value="true"/>
 
@@ -1421,44 +1319,44 @@ disable transfer which may be undesirable in a public switch
 
 ######  enable-3pcc 
 
-enable-3pcc determines if third party call control is allowed or not. Third party call control is useful in cases where the SIP invite doesn't include a SDP (late media negotiation).
+enable-3pcc决定是否允许第三方呼叫控制。第三方呼叫控制在SIP邀请不包含SDP（延迟媒体协商）的情况下非常有用。
 
-enable-3pcc can be set to either 'true' or 'proxy', true accepts the call right away, proxy waits until the call has been answered then sends accepts
+enable-3pcc可以设置为'true'或'proxy'，true会立即接受呼叫，proxy会等待呼叫被回答后发送接受
 
 &lt;param name="enable-3pcc" value="true"/>
 
   
 ######  nonce-ttl 
 
-TTL for nonce in sip auth
+SIP认证中nonce的TTL
 
 &lt;param name="nonce-ttl" value="60"/>
 
-This parameter is set to 60 seconds if not set here. It's used to determine how long to store the user registration record in the sip\_authentication table. The expires field in the sip\_authentication table is this value plus the expires set by the user agent.
+如果在此处未设置该参数，则其值将设置为60秒。它用于确定在sip_authentication表中存储用户注册记录的时间长度。sip_authentication表中的expires字段是该值加上用户代理设置的expires的总和。
 
-######  sql-in-transactions 
+######  sql-in-transactions
 
-If set to true (default), it will instruct the profile to wait for 500 SQL statements to accumulate or 500ms to elapse and execute them in a transaction (to boost performance).
+如果设置为true（默认值），它将指示配置文件等待累积500个SQL语句或经过500毫秒然后通过事务执行它们（以提升性能）。
 
-&lt;param name="sql-in-transactions" value="true"/>
+<param name="sql-in-transactions" value="true"/>
 
 ######  odbc-dsn 
 
-If you have [ODBC](../../Databases/ODBC-DSN/Using-ODBC-in-the-core_6586653.mdx) support and a working dsn you can use it instead of SQLite
+如果您具有[ODBC](../../Databases/ODBC-DSN/Using-ODBC-in-the-core_6586653.mdx)支持和有效的dsn，您可以使用它来替代SQLite
 
-&lt;param name="odbc-dsn" value="dsn:user:pass"/>
+<param name="odbc-dsn" value="dsn:user:pass"/>
 
 ######  mwi-use-reg-callid 
 
-&lt;param name="mwi-use-reg-callid" value="false">
+<param name="mwi-use-reg-callid" value="false">
 
 ######  username 
 
-If you wish to hide the fact that you are using FreeSWITCH in the SDP message (Specifically the o= and and s= fields) , then set the username param under the profile. This has no relation whatsoever with the username parameter when we're dealing with gateways. If this value is left unset the system defaults using FreeSWITCH as the username parameter with the o= and s= fields.
+如果您希望在SDP消息中隐藏使用FreeSWITCH的事实（特别是o=和s=字段），则将用户名参数设置到配置文件下。这与处理网关时的用户名参数完全无关。如果未设置此值，则系统默认使用FreeSWITCH作为用户名参数，带有o=和s=字段。
 
-&lt;param name="username" value="AnyValueHere" />
+<param name="username" value="AnyValueHere" />
 
-Example:
+示例：
 
 .
 v=0.
@@ -1472,15 +1370,15 @@ a=rtpmap:101 telephone-event/8000.
 a=fmtp:101 0-16.
 a=ptime:20.
 
-when you set &lt;param name="username" value="root" />
+当您设置<param name="username" value="root" />
 
-### Directory of Users
+### 用户目录
 
-To allow users to register with the server, the user information must be specified in the conf/directory/default/\*xml file. To dynamically specify what users can register, use [mod\_xml\_curl](../../Modules/mod_xml_curl_1049001.mdx)
+为了允许用户在服务器上注册，必须在conf/directory/default/\*xml文件中指定用户信息。要动态指定可以注册的用户，请使用[mod\_xml\_curl](../../Modules/mod_xml_curl_1049001.mdx)
 
-###  Default Configuration File 
+### 默认配置文件
 
-From the FreeSWITCH Github repository's vanilla configurations ([conf/vanilla/autoload\_configs/sofia.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/sofia.conf.xml)):
+从FreeSWITCH Github存储库的原始配置文件([conf/vanilla/autoload\_configs/sofia.conf.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/autoload%5Fconfigs/sofia.conf.xml))：
 
 **conf/autoload\_configs/sofia.conf.xml**
 
@@ -1516,21 +1414,19 @@ From the FreeSWITCH Github repository's vanilla configurations ([conf/vanilla/au
 </configuration>
 ```
 
-### Reloading
+### 重新加载
 
-If you've made a change in sofia.conf.xml, there are two ways to get FreeSWITCH to use the new values.
+如果您在sofia.conf.xml中进行了更改，有两种方法可以使FreeSWITCH使用新的值。
 
-* shutdown and restart FreeSWITCH (or)
-* unload and load mod\_sofia
+* 关闭并重新启动FreeSWITCH（或）
+* 卸载并加载mod_sofia
 
-If you've only made changes to a particular profile, you may simply (**WARNING**: will drop all calls associated with this profile):
+如果您只对特定配置文件进行了更改，您可以简单地执行以下操作（**警告**：将中断与此配置文件关联的所有通话）：
 
-* sofia profile &lt;profilename> restart reloadxml
+* sofia配置文件<profilename>重新加载
 
-### Security Features
+### 安全功能
 
-* [SIP TLS](../../Security/SIP-TLS_9634135.mdx#attachments) for secure signaling.
-* [SRTP](../../../Channel-Variables-Catalog/rtp_secure_media_16353121.mdx#rtp_secure_media) for secure media delivery.
-* The Auth section above for authentication settings.
-
-
+* [SIP TLS](../../Security/SIP-TLS_9634135.mdx#attachments) 用于安全信令。
+* [SRTP](../../../Channel-Variables-Catalog/rtp_secure_media_16353121.mdx#rtp_secure_media) 用于安全媒体传输。
+* 上述身份验证部分用于身份验证设置。

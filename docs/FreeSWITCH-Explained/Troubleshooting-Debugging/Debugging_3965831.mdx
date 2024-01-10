@@ -1,382 +1,379 @@
+# 调试
 
-# Debugging 
+## 关于
 
- 
+欢迎来到 FreeSWITCH 的调试页面！和其他重要软件项目一样，FreeSWITCH 也会偶尔出现问题。您希望能够快速修复您的问题，而我们也希望能够快速修复您的问题。为了尽快解决问题，请按照这里提供的几个步骤进行操作。您需要熟悉以下几个工具：
 
-## About
-
-Welcome to FreeSWITCH debugging! As with all major software projects there will be occasional issues. You want your issue fixed quickly. We want your issue fixed quickly. The best way to quick resolution is to follow a few steps presented here. You will need to familiarize yourself with a few tools:
-
-* The [checklist](../Prototypes/Ostag/index.mdx#about) for reporting issues **PLEASE READ THIS FIRST**
+* [检查清单](../Prototypes/Ostag/index.mdx#about)来报告问题 - **请先读这个**
 * **Git** \- <http://fisheye.freeswitch.org/browse/freeswitch-git>
-* **pastebin** \- [http://pastebin.freeswitch.org](http://pastebin.freeswitch.org/) (username/password displayed in challenge box)
-* **JIRA** \- [http://jira.freeswitch.org](http://jira.freeswitch.org/) (issue tracker, reg req'd)
-* **IRC** \- [irc.freenode.net](http://irc.freenode.net/), channel name #freeswitch
-* **GDB** (possibly)
+* **pastebin** \- [http://pastebin.freeswitch.org](http://pastebin.freeswitch.org/) （用户名/密码显示在挑战框中）
+* **JIRA** \- [http://jira.freeswitch.org](http://jira.freeswitch.org/) （问题跟踪器，需要注册）
+* **IRC** \- [irc.freenode.net](http://irc.freenode.net/)，频道名称 #freeswitch
+* **GDB** （可能需要使用）
 
-  
-Click here to expand Table of Contents
+点击这里展开目录
 
-* [Important Note, Please Read](#important-note-please-read)  
-   * [Standard Disclaimer](#standard-disclaimer)
-* [Fast Tracking your Bugs to Get Fixed Sooner](#fast-tracking-your-bugs-to-get-fixed-sooner)
-* [Debugging Steps](#debugging-steps)  
-   * [Get The Latest Code](#get-the-latest-code)  
-      * [Upgrading From Older Revisions](#upgrading-from-older-revisions)  
-   * [FreeSWITCH Command Line](#freeswitch-command-line)  
-   * [Asking The Community For Assistance](#asking-the-community-for-assistance)  
-   * [Using The Pastebin](#debugging-steps)  
-   * [Using The IRC Channel](#using-the-irc-channel)  
-   * [FreeSWITCH Users Mailing List](#freeswitch-users-mailing-list)  
-      * [Subject Lines](#debugging-steps)  
-         * [Message Body](#message-body)  
-         * [Following Up](#following-up)  
-   * [Calling The FreeSWITCH Conference](#calling-the-freeswitch-conference)
-* [Debugging Specific Technologies](#debugging-specific-technologies)  
+* [重要提示，请阅读](#important-note-please-read)  
+   * [标准免责声明](#standard-disclaimer)
+* [加快修复错误的速度](#fast-tracking-your-bugs-to-get-fixed-sooner)
+* [调试步骤](#debugging-steps)  
+   * [获取最新代码](#get-the-latest-code)  
+      * [从旧版本升级](#upgrading-from-older-revisions)  
+   * [FreeSWITCH 命令行](#freeswitch-command-line)  
+   * [向社区寻求帮助](#asking-the-community-for-assistance)  
+   * [使用 Pastebin](#debugging-steps)  
+   * [使用 IRC 频道](#using-the-irc-channel)  
+   * [FreeSWITCH 用户邮件列表](#freeswitch-users-mailing-list)  
+      * [主题行](#debugging-steps)  
+         * [消息正文](#message-body)  
+         * [跟进事项](#following-up)  
+   * [拨打 FreeSWITCH 会议](#calling-the-freeswitch-conference)
+* [调试特定技术](#debugging-specific-technologies)  
    * [Sofia/SIP](#debugging-steps)  
-      * [Turning On SIP Trace](#turning-on-sip-trace)  
-         * [Capturing RTP With tshark (Advanced)](#capturing-rtp-with-tshark-advanced)  
-         * [Making The pcap File Available](#making-the-pcap-file-available)  
+      * [开启 SIP 跟踪](#turning-on-sip-trace)  
+         * [使用 tshark 捕捉 RTP（高级）](#capturing-rtp-with-tshark-advanced)  
+         * [使 pcap 文件可用](#making-the-pcap-file-available)  
    * [FreeTDM/TDM](#freetdmtdm)  
-      * [Analog](#analog)  
+      * [模拟](#analog)  
          * [CAS/RBS](#debugging-steps)  
          * [ISDN](#debugging-steps)  
-   * [Event Socket](#event-socket)  
-      * [Inbound](#inbound)  
-         * [Outbound](#outbound)  
-   * [Scripting](#debugging-steps)  
-   * [CPU Usage](#debugging-steps)  
+   * [事件套接字](#event-socket)  
+      * [入站](#inbound)  
+         * [出站](#outbound)  
+   * [脚本编写](#debugging-steps)  
+   * [CPU 使用率](#debugging-steps)  
       * [top](#debugging-steps)  
          * [gcore](#debugging-steps)  
-         * [example](#debugging-steps)  
+         * [示例](#debugging-steps)  
    * [XML Curl](#xml-curl)  
-   * [Other Stuff?](#debugging-steps)
-* [Advanced Debugging Techniques](#advanced-debugging-techniques)  
-   * [Creating A Backtrace With gdb (Linux/Unix)](#creating-a-backtrace-with-gdb-linuxunix)  
-      * [How to configure FreeSWITCH to generate coredumps on a crash](#how-to-configure-freeswitch-to-generate-coredumps-on-a-crash)  
-         * [How to load coredump in gdb](#how-to-load-coredump-in-gdb)  
-         * [Getting a Backtrace](#getting-a-backtrace)  
-         * [Simple bash script to make debug easy](#simple-bash-script-to-make-debug-easy)  
-   * [Collecting Debug Information While FreeSWITCH Is Running (Linux/Unix)](#collecting-debug-information-while-freeswitch-is-running-linuxunix)  
-   * [Collection Information With Valgrind (Linux/Unix)](#collection-information-with-valgrind-linuxunix)
-* [Configuring Your System For Remote Access](#configuring-your-system-for-remote-access)  
-   * [Linux Prerequisites](#linux-prerequisites)  
-   * [SSH Tunnel Command For Linux Systems Without Public IP](#ssh-tunnel-command-for-linux-systems-without-public-ip)
-* [See Also](#debugging-steps)
+   * [其他内容？](#debugging-steps)
+* [高级调试技术](#advanced-debugging-techniques)  
+   * [使用 gdb 创建回溯（Linux/Unix）](#creating-a-backtrace-with-gdb-linuxunix)  
+      * [配置 FreeSWITCH 在崩溃时生成核心转储文件](#how-to-configure-freeswitch-to-generate-coredumps-on-a-crash)  
+         * [如何在 gdb 中加载核心转储文件](#how-to-load-coredump-in-gdb)  
+         * [获取回溯信息](#getting-a-backtrace)  
+         * [简单的 bash 脚本使调试更轻松](#simple-bash-script-to-make-debug-easy)  
+   * [在 FreeSWITCH 运行时收集调试信息（Linux/Unix）](#collecting-debug-information-while-freeswitch-is-running-linuxunix)  
+   * [使用 Valgrind 收集信息（Linux/Unix）](#collection-information-with-valgrind-linuxunix)
+* [配置系统进行远程访问](#configuring-your-system-for-remote-access)  
+   * [Linux 先决条件](#linux-prerequisites)  
+   * [Linux 系统无公网 IP 时的 SSH 隧道命令](#ssh-tunnel-command-for-linux-systems-without-public-ip)
+* [参见](#debugging-steps)
 
-## Important Note, Please Read
+## 重要 注意, 请仔细阅读
 
-Please don't report bugs on the mailing list. Please.
+请不要在邮件列表上报告错误。请。
 
-What should you do if you are experiencing unexpected behavior, but you don't know if it's a bug or a configuration issue? Take these steps:
+如果您遇到意外行为，但不确定是bug还是配置问题，应该采取以下步骤：
 
-* Hop on the IRC channel and ask if anyone is familiar with the situation
-* Search the wiki for the symptoms you are experiencing
-* Search the mailing list history for the symptoms you are experiencing
-* Search Jira for the symptoms you are experiencing
+* 进入IRC频道，询问是否有人熟悉您的情况
+* 在维基中搜索您遇到的症状
+* 在邮件列表历史中搜索您遇到的症状
+* 在Jira中搜索您遇到的症状
 
-Here's what not to do: Send an email to the mailing list with lots of information and asking, "Is this a bug?"
+以下是不应该做的事情：给邮件列表发送一封包含大量信息并询问“这是一个bug吗？”的电子邮件。
 
-Do this instead: open a Jira ticket and **then** you can send a message to the list. Say something like, "I opened Jira ticket xxx because I'm having behavior yyy when I do zzz. I don't know if this is really a bug, so I'm open to suggestions."
+应该这样做：打开一个Jira工单，然后您可以给邮件列表发送一条消息。例如：“我打开了一个Jira工单xxx，因为我在做zzz时遇到了行为yyy。我不确定这是否真的是一个bug，所以我愿意听取建议。”
 
-See the rest of this page for more information on how to interact on the IRC, mailing lists and how to file a Jira.
+在本页面的其余部分，您可以了解有关如何在IRC、邮件列表上进行交互以及如何提交Jira工单的更多信息。
 
-### Standard Disclaimer
+### 标准免责声明
 
-Sometimes FreeSWITCH users and experts will offer suggestions on the mailing list ("ML" for short) or the IRC channel. The _standard disclaimer_ goes something like this:
+有时FreeSWITCH用户和专家会在邮件列表（简称ML）或IRC频道上提供建议。标准免责声明大致如下：
 
-* I didn't test this myself, so you need to test thoroughly before telling me it doesn't work
-* It may have typos - please look for them before telling me it doesn't work
-* I may have forgotten something - please research any errors before telling me it doesn't work
-* I may be totally wrong - please research the solution before telling me it doesn't work
+* 我没亲自测试过，请在告诉我不起作用之前进行充分测试
+* 可能有拼写错误，请在告诉我不起作用之前寻找该错误
+* 我可能忘记了某些事情，请在告诉我不起作用之前研究任何错误
+* 我可能完全错误，请在告诉我不起作用之前研究解决思路
 
-In other words, when someone gives you a suggestion and it doesn't work on the first try, please make an attempt to figure out what the person was trying to accomplish and see if you can figure it out yourself. If, after concerted effort, you are unable to get it to work or you hit a roadblock that you cannot overcome only then should you report back that the suggestion did not work. Many times the suggestion may not work but it might get you going in the right direction. When that happens please report back what you found and how you resolved your issue. We like hearing that stuff. :)
+换句话说，当有人给你提出建议并且第一次尝试不起作用时，请试着弄清楚对方试图达到什么目的，并且看看自己能否找到解决办法。如果经过努力，你仍然不能使其正常工作，或者遇到了无法克服的障碍，那么才应该回报告对方的建议不起作用。很多时候，建议可能不起作用，但它可能会帮助你朝正确的方向前进。当这种情况发生时，请回报告你发现了什么以及你是如何解决问题的。我们很喜欢听到这些信息。 :)
 
-## Fast Tracking your Bugs to Get Fixed Sooner
+## 加快缺陷处理速度的方法
 
-If you would like your issue resolved in the fastest manner, without having to pay to have support do it, these are some tips that will help greatly with the process:
+如果你希望尽快解决问题，而不必支付支持费用，以下是一些能够极大帮助你加快处理进程的提示：
 
-* Follow the instructions on this page, make sure to be detailed when possible
-* If it is something that you know worked in the past and doesn't work now see [Using Git Bisect](https://wiki.freeswitch.org/wiki/Git%5FTips#Git%5FBisect%5F-%5FTracking%5Fdown%5Fbreaks%5Fand%5Fbugs%5Fextremely%5Ffast%5Fwith%5Fgit "Git Tips") for helping us track down exactly what commit it broke in. As long as you can use the command line you can test with this method and it will greatly speed up bug fixing.
-* If you know what's wrong and are able to change the code to make the fix then see [Creating Patches With Git](https://wiki.freeswitch.org/wiki/Git%5FTips#Creating%5FPatches%5Fwith%5FGit "Git Tips"). A JIRA issue that has a patch just needs the code reviewed and tested is about the fastest way to have a ticket resolved.
-* Finally when [Reporting A Bug](../Prototypes/Ostag/index.mdx#about) make sure you submit concise repro steps and as much log data as can support the issue. To easily collect and submit log data and sip traces see [fs\_logger.pl](https://github.com/mitchcapper/FSMisc/blob/master/fs%5Flogger.md). It can collect all the log data, sip traces, and even submit individual files up to the pastebin. If needed it can obfuscate log data to remove sensitive information prior to posting. [fs\_logger.pl](https://github.com/mitchcapper/FSMisc/blob/master/fs%5Flogger.md) is very easy to use and doesn't have any dependencies other than fs\_cli on the box. It works in windows and linux and for windows users without perl there is a compiled exe that can be used. For some easy getting started with [fs\_logger.pl](https://github.com/mitchcapper/FSMisc/blob/master/fs%5Flogger.md) see the [Helping Others with fs\_logger.pl](https://github.com/mitchcapper/FSMisc/blob/master/fs%5Flogger.md#helping-others-debug-with-fs%5Floggerpl) section. It is recommended when filing a ticket to attach the raw pastebin content to the ticket rather than linking so it is preserved (as pastebin entries can and do go away after a certain amount of time).
+* 根据本页上的说明操作，尽可能详细地进行操作。
+* 如果你知道有些事情在过去是有效的，但现在无效了，请查看 [使用 Git Bisect](https://wiki.freeswitch.org/wiki/Git%5FTips#Git%5FBisect%5F-%5FTracking%5Fdown%5Fbreaks%5Fand%5Fbugs%5Fextremely%5Ffast%5Fwith%5Fgit "Git Tips") 来帮助我们追踪到具体是哪个提交引起了问题。只要你能使用命令行，就可以使用这种方法进行测试，它能大大加快修复缺陷的速度。
+* 如果你知道问题出在哪，并且能够更改代码进行修复，请参阅 [使用 Git 创建补丁](https://wiki.freeswitch.org/wiki/Git%5FTips#Creating%5FPatches%5Fwith%5FGit "Git Tips")。对于只需要进行代码审查和测试的已有补丁的 JIRA 问题，这是最快解决问题的方式。
+* 最后，在[报告 Bug](../Prototypes/Ostag/index.mdx#about) 时，请确保提供简明扼要的重现步骤和尽可能多的日志数据以支持问题。为了方便地收集和提交日志数据和 sip 跟踪，请查看 [fs\_logger.pl](https://github.com/mitchcapper/FSMisc/blob/master/fs%5Flogger.md)。它可以收集所有的日志数据、sip 跟踪甚至提交个别文件到 pastebin。如果需要，在发布前，它可以模糊日志数据以删除敏感信息。[fs\_logger.pl](https://github.com/mitchcapper/FSMisc/blob/master/fs%5Flogger.md) 的使用非常简单，除了需要在系统上安装 fs\_cli 之外，没有任何其他依赖。它可以在Windows和Linux上使用，对于没有安装 perl 的Windows用户，还有一个可以使用的编译的可执行文件。关于 [fs\_logger.pl](https://github.com/mitchcapper/FSMisc/blob/master/fs%5Flogger.md) 的一些简单入门操作，请参见 [Helping Others with fs\_logger.pl](https://github.com/mitchcapper/FSMisc/blob/master/fs%5Flogger.md#helping-others-debug-with-fs%5Floggerpl) 部分。在提交问题时，建议将原始的 pastebin 内容作为附件附加到问题上，而不是使用链接，以便保留它（pastebin 上的内容会在一段时间后自动删除）。
 
-## Debugging Steps
+## 调试步骤
 
-We need to know if your issue is really a bug, so there are some things to do, like updating to the latest software and getting some captures of the command line.
+我们需要确定您的问题是否真的是一个错误，因此有一些事情要做，比如更新到最新的软件版本以及获取一些命令行的截图。
 
-### Get The Latest Code
+### 获取最新的代码
 
-_Please do not report a bug without trying the latest Git! The very first thing the community will ask you is, "Have you tried it on latest Git?" Save yourself the time and update before reporting the bug._  
+_请在尝试最新的 Git 版本之前不要报告错误！社区会问你的第一句话肯定是：“你试过最新的 Git 了吗？” 在报告错误之前，请先更新，节省时间。_
   
-FreeSWITCH is evolving quickly, so the problem you may be experiencing might already have been fixed.
+FreeSWITCH 发展迅速，所以您可能遇到的问题可能已经被修复了。
 
 * Linux Git  
-   * If installed by using the snapshot or doing a Git clone then updating is extremely simple. In the FreeSWITCH source directory:
+   * 如果是使用快照或者通过 Git 克隆安装的，更新非常简单。在 FreeSWITCH 源代码目录中执行以下命令：
 
+```bash
 make current
+```
 
-* * Now, shutdown FreeSWITCH and start it again. That's it! Wait for the system to refresh, and then see if you can reproduce your symptoms.
+* 现在，关闭 FreeSWITCH 并重新启动。就是这样！等待系统刷新，然后查看是否能够复现您的症状。
 * Windows Git  
-   * Use your Git client (like [TortoiseGit](http://code.google.com/p/tortoisegit/)) to update to the latest Git  
-   * Re-open the solution file and then click Build > Rebuild Solution  
-   * Run FreeSWITCH again and see if you can reproduce the symptoms.
+   * 使用 Git 客户端（如[TortoiseGit](http://code.google.com/p/tortoisegit/)）更新到最新的 Git 版本  
+   * 重新打开解决方案文件，然后点击“生成” > “重新生成解决方案”  
+   * 重新运行 FreeSWITCH，查看是否能够复现症状。
 
-If you are using a pre-compiled binary, such as a DEB or RPM (or MSI file in Windows) then you have some work to do. Your best bet is to do a fresh checkout and see if you can reproduce the symptoms on a clean install. Make a backup of your entire **conf** folder and then clear it out so that you can start with a fresh default configuration. You'll want to get the system working with the default config first, and then add your customizations to see if you can reproduce symptoms.
+如果您使用的是预编译的二进制文件，比如 DEB 或 RPM（或者在 Windows 上的 MSI 文件），那么您需要做一些额外的工作。最好的办法是清空并重新获取代码，并尝试在干净的安装上复现症状。先备份整个 **conf** 文件夹，然后清空它，以便从一个新的默认配置开始。您需要先让系统能够正常工作，然后再添加自定义配置，看是否能够复现症状。
 
-#### Upgrading From Older Revisions
+#### 从旧版本升级
 
-If you are upgrading from an older revision, say from 1.0.1 to the latest Git, then you must do a few things:
+如果您想从旧版本（如从 1.0.1）升级到最新的 Git 版本，那么您需要完成以下几个步骤：
 
-* Copy your conf directory to a safe location, e.g. /usr/local/freeswitch/conf
-* Completely remove the FreeSWITCH install directory, e.g. /usr/local/freeswitch
-* Completely remove the FreeSWITCH source directory
-* Do a fresh checkout and install, including "make samples"
-* **Carefully** copy your configuration changes back to the conf directory  
-   * You may want to launch FreeSWITCH prior to putting your customizations in place and confirm that all is working
+* 将你的 conf 目录复制到一个安全位置，例如 /usr/local/freeswitch/conf
+* 完全删除 FreeSWITCH 的安装目录，例如 /usr/local/freeswitch
+* 完全删除 FreeSWITCH 的源代码目录
+* 进行全新的检出和安装，包括执行 "make samples" 命令
+* **小心地**将你的配置更改复制回 conf 目录  
+   * 你可能想在将自定义配置放置到位之前启动 FreeSWITCH，并确认一切正常运行
 
-If the issue remains then it's time to ask for help, but first you'll need some basic knowledge on how to capture debug information.
+如果问题仍然存在，那么现在是寻求帮助的时候了，但首先你需要一些基本的知识来获取调试信息。
 
-### FreeSWITCH Command Line
+### FreeSWITCH 命令行
 
-Most of your debugging information will come from the FreeSWITCH command line interface (CLI). It is important that you are able to capture the output that is displayed on the command line. This means that you will need to use a terminal program of some sort that can scroll back and copy, or one that can enable capturing of output.   
-To put your console in debug mode, press **F8** or type **console loglevel 7**  
-For more information about the console please see [Mod\_console](https://wiki.freeswitch.org/wiki/Mod%5Fconsole "Mod console")  
-  
-Alternatively you can use the log file to capture specific information. NOTE: SIP trace messages (see "TPORT\_LOG=1" below) will not go to the log files. An easy way to isolate specific debug information with the log files is to use a manual log file rotation. From the FreeSWITCH CLI:
+大部分调试信息都将来自于 FreeSWITCH 的命令行界面（CLI）。重要的是你能够捕获命令行显示的输出。这意味着你需要使用一个可以滚动和复制的终端程序，或者一个可以启用输出捕获的终端程序。 
+要将控制台设置为调试模式，请按下**F8**键或者输入**console loglevel 7**命令
+有关控制台的更多信息，请参阅[Mod\_console](https://wiki.freeswitch.org/wiki/Mod%5Fconsole "Mod console")  
+
+或者，你可以使用日志文件来捕获特定的信息。注意：SIP 追踪消息（参见下方的 "TPORT\_LOG=1"）不会被写入日志文件中。可以通过手动日志文件轮转来隔离特定的调试信息。从 FreeSWITCH CLI 中执行以下命令：
 
 fsctl send_sighup
 
-This will rotate the log files. Reproduce the symptoms you are troubleshooting and then issue a second **fsctl send\_sighup** command. You will have a relatively small log file in the log directory, at which point you can copy and paste that into the [pastebin](https://wiki.freeswitch.org/wiki/Reporting%5FBugs#Using%5FThe%5FPastebin "Reporting Bugs"). More information about log files can be found [here](../Modules/mod_logfile_1048990.mdx#about).
+这将旋转日志文件。重现您正在排除故障的症状，然后发出第二个**fsctl send_sighup**命令。在日志目录中，您将拥有一个相对较小的日志文件，此时您可以将其复制并粘贴到[pastebin](https://wiki.freeswitch.org/wiki/Reporting%5FBugs#Using%5FThe%5FPastebin "Reporting Bugs")中。有关日志文件的更多信息可以在[此处](../Modules/mod_logfile_1048990.mdx#about)找到。
 
-### Asking The Community For Assistance
+### 向社区寻求帮助
 
-The FreeSWITCH community is very welcoming of new members and is ready to assist those who have questions. In return we ask that you take the time and effort to gather all of the information that is needed in order to diagnose your issue.
+FreeSWITCH社区非常欢迎新成员，并愿意帮助那些有问题的人。作为回报，我们要求您花时间和精力收集所有必要的信息，以诊断您的问题。
 
-### Using The Pastebin
+### 使用Pastebin
 
-The FreeSWITCH [pastebin](http://pastebin.freeswitch.org/) is a handy place for users to post information for other users or the developers to access easily. All pastebin posts will have an id. For example, [this post](https://pastebin.freeswitch.org/view/a9ebaf6c) has an entry number of a9ebaf6c. Frequent users will often abbreviate pastebin as "pb" and sometimes you will see notation like "pb a9ebaf6c" which, of course, refers to pastebin post number a9ebaf6c. For the sake of convenience, when submitting information to the mailing list, please paste the entire link and not an abbreviation.   
-Also, if you are posting the output of a FreeSWITCH console log (or freeswitch.log file) then be sure to use "FreeSWITCH log" as the syntax highlighting when creating the pastebin entry. This makes it much easier to read through the logs.
+FreeSWITCH [pastebin](http://pastebin.freeswitch.org/)是一个方便用户发布信息供其他用户或开发人员轻松访问的地方。所有的pastebin帖子都会有一个id。例如，[这个帖子](https://pastebin.freeswitch.org/view/a9ebaf6c)有一个条目编号为a9ebaf6c。经常使用pastebin的用户通常会把它缩写为"pb"，有时您会看到像"pb a9ebaf6c"这样的注释，它当然是指的pastebin帖子编号a9ebaf6c。为了方便起见，当向邮件列表提交信息时，请粘贴整个链接而不是缩写。此外，如果您要发布FreeSWITCH控制台日志（或freeswitch.log文件）的输出，请确保在创建pastebin条目时使用"FreeSWITCH log"作为语法高亮。这样可以更轻松地阅读日志。
 
-Note: If using Jira please attach the file as a .txt file to the Jira rather than referencing [pastebin.freeswitch.org](http://pastebin.freeswitch.org). This helps make sure the reference doesn't get lost because the pastebins timeout.
+注意：如果使用Jira，请将文件作为.txt文件附加到Jira中，而不是引用[pastebin.freeswitch.org](http://pastebin.freeswitch.org)。这有助于确保引用不会因为pastebin超时而丢失。
 
-Pro Tip: Use this URL format to download a pastebin entry as text:
+专业提示：使用以下URL格式下载pastebin条目的文本：
 
 https://pastebin.freeswitch.org/view/raw/####
 
-Where #### is the pastebin entry number (or click the raw link a pastebin).
+其中####是pastebin条目编号（或点击pastebin的原始链接）。
 
-### Using The IRC Channel
+### 使用IRC频道
 
-The #freeswitch channel on [irc.freenode.net](http://irc.freenode.net) is a good place to chat in real-time with FreeSWITCH developers, power users, and other new users. Please use proper chat room etiquette and be mindful that there are many people from around the world in the chat room. Be patient, even when others are not. Be kind, even when others are not. Don't take anything personally.
+在[irc.freenode.net](http://irc.freenode.net)上的#freeswitch频道是与FreeSWITCH开发人员、高级用户和其他新用户实时聊天的好地方。请遵守适当的聊天室礼仪，并注意聊天室中来自世界各地的许多人。即使其他人不是很耐心，也请您保持耐心。即使其他人不友善，也请您友善相待。不要把任何事情都往自己身上揽。
 
-You will need an IRC client, or you can use the link on the main [FreeSWITCH](http://www.freeswitch.org/) page. We recommend you learn some about how to use IRC. Here are some resources:
+您需要一个IRC客户端，或者您可以使用主页上的链接[FreeSWITCH](http://www.freeswitch.org/)。我们建议您了解一些如何使用IRC。以下是一些资源：
 
 * [irc.org](http://www.irc.org/)
 * [irchelp.org](http://www.irchelp.org/)
 
-When you log in to the channel you can ask your question simply by asking it. No need to ask permission to ask a question. Sometimes there is a high volume of traffic, in which case you might be prompted to use the "take-a-number" system. It works like this:
+当您登录到频道时，您可以通过直接提问来询问问题。不需要请求询问问题的许可。有时会有大量的流量，这种情况下，您可能会被提示使用“take-a-number”系统。它的使用方式如下：
 
-~take-a-number Could someone tell me if there is a wiki page that discusses regular expressions?
+~take-a-number 有人能告诉我有没有关于正则表达式的维基页面吗？
 
-In either case, please wait for a response. It could take a few minutes to a few hours depending on the time of day. Most FreeSWITCH developers and power users are are located in the Americas, however there is a growing number of users from around the globe. If you are not in a position to sit on the chat channel and wait then it would be good to ask your question on the user list.  
-One other piece of advice: please be nice to **c888** when in the IRC channel.
+无论哪种情况，请等待回复。根据当天的时间，可能需要几分钟到几个小时。大多数FreeSWITCH开发人员和高级用户都位于美洲，但全球各地的用户数量正在增加。如果你不能在聊天频道上等待，那么最好在用户列表上提问。
 
-### FreeSWITCH Users Mailing List
+还有一个建议：在IRC频道上，请对**c888**友好。
 
-The FreeSWITCH project maintains mailing lists [here](http://lists.freeswitch.org/). Please join the mailing list so that you can send and receive emails along with the rest of the community. Emails to the users list should be addressed to [freeswitch-users@lists.freeswitch.org](mailto:freeswitch-users@lists.freeswitch.org). Please use a descriptive subject name and include as much detail as reasonably possible in the message body. 
+### FreeSWITCH用户邮件列表
 
-#### Subject Lines
+FreeSWITCH项目维护着邮件列表[链接](http://lists.freeswitch.org/)。请加入邮件列表，以便与社区中的其他人一起发送和接收邮件。发送到用户列表的邮件应该发送至[freeswitch-users@lists.freeswitch.org](mailto:freeswitch-users@lists.freeswitch.org)。请使用描述性的主题名，并在消息正文中尽可能详细地包含信息。
 
-##### Some examples of good subject lines
+#### 主题行
 
-* FreeSWITCH Crashes When Calling Application "foo"
-* Feature "xyz" stopped working when I upgraded to latest trunk
-* Dialplan question: how do I use "foo"?
-* Help With xxx Error When Using Gateway
+##### 一些好的主题行示例
 
-##### Some not-so-good subject lines
+* 当调用应用程序 "foo" 时，FreeSWITCH崩溃
+* 升级到最新的主干后，功能 "xyz" 停止工作
+* 拨号计划问题：如何使用 "foo"？
+* 使用网关时出现xxx错误，求助
 
-* HELP!!!!
-* FreeSWITCH crashes!!!
-* What's Wrong?
-* This is broken!
+##### 一些不太好的主题行
 
-#### Message Body
+* 帮帮忙！！！
+* FreeSWITCH崩溃了！！！
+* 出了什么问题？
+* 这是坏了的！
 
-The message body should include as much information as possible. At the very least you should include what is in the [Report Issue Checklist](../Prototypes/Ostag/index.mdx#about). We recommend that you use pastebin for large posts (30+ lines). In some cases it is advantageous to put command line debug output into one pastebin post, dialplan entries in another post, custom scripts in another post, etc. The pastebin supports syntax highlighting so keeping unlike items in separate pastebins will make them easier to read. Also, using pastebin makes it easier to look up information than scrolling through email threads.
+#### 正文内容
 
-#### Following Up
+消息正文应尽可能包含尽可能多的信息。至少可以包含[报告问题检查清单](../Prototypes/Ostag/index.mdx#about)中的内容。我们建议您在发布较长的帖子（30+行）时使用pastebin。在某些情况下，将命令行调试输出放入一个pastebin帖子中，将拨号计划条目放入另一个帖子中，将自定义脚本放入另一个帖子中等等，这样做有利于数据的阅读。 pastebin支持语法高亮显示，因此将不同类型的信息放在不同的pastebin中可以使其更易于阅读。此外，使用pastebin可以更轻松地查找信息，而不必滚动查看电子邮件线程。
 
-Sometimes you might find more information about a bug report, perhaps after it has been filed but before it has been closed. It is quite common for people to open a report and then go back and start digging around. We encourage this! You'll learn a lot by doing so and you will also help the developers by doing some of the research and legwork.
+#### 跟进
 
-##### Reporting More Information
+有时，您可能会在提交错误报告后，在其关闭之前找到更多相关信息。人们经常在提交报告后继续进行调查。我们鼓励这样做！通过这样做，您将学到很多，并且还可以通过进行一些研究和实践来帮助开发人员。
 
-If you have more information on a question that you previously posted to the list then please reply to the thread with the additional information. Also, please DO NOT include the ENTIRE email thread in your reply as that makes it more difficult to find the relevant information.
+##### 报告更多信息
 
-##### Please Be Patient
+如果您有关于之前在列表中发布的问题的更多信息，请在帖子中回复附加信息。此外，请不要在回复中包含整个电子邮件线程，因为这样会使查找相关信息变得更加困难。
 
-You've reported a bug or asked a question and haven't heard anything in a few days. You're itching for a fix. It's okay to post a follow up question, but please be polite. Definitely do NOT accuse the developers of ignoring questions, bug reports or feature requests. Their workload is enormous, and much if it is _pro bono_. If you are in desperate need of a new feature then please send an email to _[consulting@freeswitch.org](mailto:consulting@freeswitch.org)_ where paid support and custom work is available at reasonable rates.
+##### 请耐心等待
 
-### Calling The FreeSWITCH Conference
+你报告了一个 bug 或者提了一个问题，但几天过去了还没有得到任何回复。你迫不及待地想要得到解决方案。发一条追问的问题是可以的，但请一定保持礼貌。绝对不要指责开发者忽视了问题报告或功能请求。他们的工作量非常巨大，而且很大一部分工作是免费的。如果你非常需要一个新的功能，请发送电子邮件至 [consulting@freeswitch.org](mailto:consulting@freeswitch.org)，那里提供有偿支持和定制工作，价格合理。
 
-Occasionally there will be times when users will need to speak live instead of via email or IRC. There are many ways to call the voice conference and they are listed [here](../Community/ClueCon-Weekly-Conference-call_3965594.mdx#about) on the main page. Also, there are times when people call the voice conference just to hang out, so feel free to call in and see what is happening.
+### 拨打 FreeSWITCH 会议
 
-## Debugging Specific Technologies
+有时候用户需要直接打电话而不是通过电子邮件或 IRC 进行交流。在主页面中列出了很多拨打语音会议的方式，你可以在[这里](../Community/ClueCon-Weekly-Conference-call_3965594.mdx#about)找到它们。还有时候人们只是为了闲聊而打电话参与语音会议，所以请随时加入并了解正在发生的事情。
 
-Most of the time you will be debugging some sort of SIP trouble or a crash, but there are also times when you are troubleshooting something more specific, such as analog or digital TDM calls, or the many different "hooks" that FreeSWITCH provides: Lua/Perl/JavaScript/etc., event socket, XML curl, LDAP, etc. Here are some specific guidelines for gathering information on various technologies.
+## 调试特定技术
+
+大多数情况下，你需要调试的是 SIP 相关的问题或者崩溃，但也有时候你可能需要解决一些更具体的问题，比如模拟或数字 TDM 通话，以及 FreeSWITCH 提供的许多不同"钩子"，如 Lua/Perl/JavaScript 等脚本，event socket，XML curl，LDAP 等。下面是针对不同技术的一些获取信息的指南。
 
 ### Sofia/SIP
 
-FreeSWITCH uses the [Sofia-SIP](https://wiki.freeswitch.org/wiki/Sofia-SIP "Sofia-SIP") stack; in many cases **SIP** and **Sofia** are interchangeable. Debugging SIP includes keeping in mind that your voice traffic is going over a data network and therefore devices on the network may affect your VoIP traffic.  
-Here are some things to keep in mind:
+FreeSWITCH 使用 [Sofia-SIP](https://wiki.freeswitch.org/wiki/Sofia-SIP "Sofia-SIP") 栈；在许多情况下，SIP 和 Sofia 是可以互换的。调试 SIP 时需要记住，你的语音流量经过数据网络传输，因此网络上的设备可能会影响你的 VoIP 通信。以下是一些需要注意的事项：
 
-* NAT/Firewalls will cause problems if not [properly configured](https://wiki.freeswitch.org/wiki/NAT "NAT")
-* Routers, Switches, and cabling can affect call quality
-* Network traffic and QoS can also affect call quality
+* 如果没有正确配置，NAT/防火墙会导致问题。
+* 路由器、交换机和布线会影响通话质量。
+* 网络流量和QoS也会影响通话质量。
 
-These are things that aren't voice specific so it may be necessary to get your network administrator.
+这些都是与语音无关的因素，所以可能需要联系您的网络管理员。
 
-#### Turning On SIP Trace
+#### 开启SIP跟踪
 
-In many cases it is critical to see the raw SIP messages. These can be displayed to (and captured from) the console. In Linux/Unix start FreeSWITCH like this:
+在许多情况下，查看原始的SIP消息非常关键。这些消息可以显示在控制台上（并从中捕获）。在Linux/Unix系统中，按如下方式启动FreeSWITCH：
 
 TPORT_LOG=1 /usr/local/freeswitch/bin/freeswitch
 
-To stop the SIP trace you will need to stop and restart FreeSWITCH without the TPORT\_LOG environment variable set. See [Troubleshooting FreeSWITCH](Troubleshooting-Freeswitch_9633933.mdx#about) for more information on SIP tracing.
+要停止SIP跟踪，您需要在不设置TPORT_LOG环境变量的情况下停止并重新启动FreeSWITCH。有关SIP跟踪的更多信息，请参阅[FreeSWITCH故障排除](Troubleshooting-Freeswitch_9633933.mdx#about)。
 
-##### Quick and Easy SIP Trace
+##### 快速且简便的SIP跟踪
 
-The above commands are still available, however since version 1.0.6 there have been some handy sofia commands that make SIP traces easier to get. Without restarting FreeSWITCH you can use these commands:
+上述命令仍然可用，但自1.0.6版本以来，已经添加了一些方便的sofia命令，使获取SIP跟踪更加容易。在不重新启动FreeSWITCH的情况下，您可以使用以下命令：
 
 * sofia profile xxx siptrace on
 * sofia profile xxx siptrace off
 * sofia global siptrace on
 * sofia global siptrace off
 
-The first two commands will enable/disable SIP trace on a specific profile. The second two commands will enable/disable SIP trace on all profiles simultaneously.
+前两个命令将在指定的配置文件上启用/禁用SIP跟踪。后两个命令将同时在所有配置文件上启用/禁用SIP跟踪。
 
-#### Capturing RTP With tshark (Advanced)
+#### 使用tshark进行RTP捕获（高级）
 
 tshark -o "rtp.heuristic_rtp: TRUE" -R sip\|\|rtp\|\|rtcp -w test.pcap
 
-Even more advanced packet capture information is available [here](Packet-Capture/index.mdx).
+更多高级数据包捕获信息请参阅[此处](Packet-Capture/index.mdx)。
 
-#### Making The pcap File Available
+#### 创建可用的pcap文件供使用。
 
-Packet captures are generally large files, so it's best to put them out on a server where we can use a tool like **wget** or a browser to download them. If you don't have access to a server then use a service like [YouSendIt](http://www.yousendit.com/). You can upload the file and then provide us with the link to download it.
+捕获数据包通常是大文件，所以最好将它们放在一个服务器上，这样我们可以使用类似**wget**或浏览器的工具来下载它们。如果您没有服务器访问权限，请使用[YouSendIt](http://www.yousendit.com/)等服务。您可以上传文件，然后向我们提供下载链接。
 
 ### FreeTDM/TDM
 
-Traditional telephony, or Time-Division Multiplexing (TDM), is handled in FreeSWITCH by the [FreeTDM](https://wiki.freeswitch.org/wiki/FreeTDM "FreeTDM") abstraction layer. It is important to provide copies of your FreeTDM configuration files as well as any dialplan entries that use FreeTDM:
+传统电话或时分复用（TDM）在FreeSWITCH中通过 [FreeTDM](https://wiki.freeswitch.org/wiki/FreeTDM "FreeTDM")抽象层来处理。重要的是提供您的FreeTDM配置文件的副本以及使用FreeTDM的任何拨号计划条目：
 
-* freetdm.conf file
-* freetdm.conf.xml file
+* freetdm.conf文件
+* freetdm.conf.xml文件
 
-There are basically three flavors of TDM which are covered in the next section.
+下一节主要介绍了三种TDM的类型。
 
-#### Analog
+#### 模拟
 
-Analog cards, such as the Sangoma A200, Digium TDM400 or clones X100P/X101P, are for traditional POTS lines. There are two types of analog ports:
+模拟卡，如Sangoma A200，Digium TDM400或克隆版本X100P/X101P，用于传统的POTS线路。有两种类型的模拟端口：
 
-* FXS - Supplies dial tone
-* FXO - Accepts dial tone
+* FXS - 提供拨号音
+* FXO - 接受拨号音
 
-Please note which kind of ports you are using when asking for help.
+在寻求帮助时，请备注您使用的端口类型。
 
 #### CAS/RBS
 
-When using CAS/RBS please specify which type of signaling you wish to use. (There is also a nice introductory discussion of this topic in a [Wikipedia article](http://en.wikipedia.org/wiki/Robbed%5Fbit%5Fsignaling).)
+在使用CAS/RBS时，请指定您希望使用的信号类型（在[Wikipedia文章](http://en.wikipedia.org/wiki/Robbed%5Fbit%5Fsignaling)中也有一个关于此主题的简介讨论）。
 
 #### ISDN
 
-ISDN comes in two general forms: PRI and BRI. When reporting issues please make a note of which protocol dialect you are using:
+ISDN有两种常见形式：PRI和BRI。在报告问题时，请记录您使用的协议方言：
 
 * DMS - Nortel DMS100
-* 5ESS - AT&T/Lucent (used for 4ESS also)
-* Q931 - Generic PRI, used for EuroISDN
+* 5ESS - AT&T/Lucent（也用于4ESS）
+* Q931 - 通用PRI，用于EuroISDN
 * National - NI2
 
-### Event Socket
+### 事件套接字
 
-Please specify if you are using inbound or outbound event socket.
+请指定您是使用入站还是出站事件套接字。
 
-#### Inbound
+#### 入站
 
-A key issue with socket programming is receiving the correct events. One thing to try is manually connecting to the event socket and subscribing to all events. The basic procedure on Linux is:
+与套接字编程相关的一个关键问题是接收正确的事件。一个尝试的方法是手动连接到事件套接字并订阅所有事件。在Linux上的基本步骤是：
 
 telnet 127.0.0.1 8021\n
 auth ClueCon\n\n
 events plain all\n\n
 
-Note: "\\n" here means "Press Enter" so don't literally type "\\n"!  
-Now you may watch events, capture the output, etc. If you see something you believe to be unusual, please capture the output and include it with the information that you put into the pastebin.  
-To disconnect from the event socket:
+注意：“\\n”这里表示“按下回车键”，所以不要字面上输入“\\n”！
+现在，您可以观察事件、捕获输出等。如果您看到觉得不寻常的情况，请捕获输出并将其与放入pastebin中的信息一起提供。
+要断开与事件套接字的连接：
 
 exit\n\n
 
-#### Outbound
+#### 呼出
 
-Please provide a copy of the dialplan and script/shell command you are using. Please also describe the symptoms you are experiencing.
+请提供您正在使用的拨号计划和脚本/Shell命令的副本。请还描述您遇到的症状。
 
-### Scripting
+### 脚本编写
 
-To debug scripting it is critical that we be able to reproduce the issue. There are two ways to do this:
+要调试脚本，能够重现问题至关重要。有两种方法可以做到这一点：
 
-* Create the smallest, simplest script that can reproduce the behavior
-* Give us the entire script
+* 创建最小、最简单的脚本以重现行为
+* 提供整个脚本
 
-We do understand that there are proprietary concerns, so the developers and troubleshooters will be happy to keep such proprietary code in strict confidence. However, it is not acceptable that someone reports a bug with a script but then refuses to let us see the script that makes the behavior happen!
+我们确实理解存在专有问题，因此开发人员和故障排除人员将乐意保守保密此类专有代码。但是，如果有人报告了一个带有脚本的问题，却拒绝让我们看到导致行为发生的脚本，这是不可接受的！
 
-### CPU Usage
+### CPU使用率
 
-Occasionally your system may exhibit signs of sluggishness. Sometimes this means that a particular process is misbehaving in some fashion. For Linux systems you have several tools at your disposal.
+偶尔，您的系统可能出现缓慢的迹象。有时，这意味着某个进程在某种程度上表现不当。对于Linux系统，您有几种可用的工具。
 
 #### top
 
-The top utility displays information about CPU, memory and disk usage for each process on the system. Use it to see which processes are using system resources. If a FreeSWITCH instance is using a lot of system resources then use "top -H" to find the particular thread that is acting up. Locate the process ID (PID) of the offender and then get ready to do a gcore...
+顶级实用工具显示了系统上每个进程的 CPU、内存和磁盘使用情况的信息。使用它来查看哪些进程在使用系统资源。如果一个 FreeSWITCH 实例正在使用大量系统资源，那么使用 "top -H" 来查找出问题的特定线程。定位到罪犯的进程 ID（PID），然后准备好执行 gcore...
 
 #### gcore
 
-Run gcore on the PID in question to generate a core file. Then run "thread apply all bt" to see what's going on. Most likely you'll need to capture this information and put it into pastebin and then ask one of the advanced FreeSWITCH users for assistance on the IRC channel. (Don't use the mailing list, please.) Most likely you'll need to open a Jira ticket, so be ready to do that. Also, see the next section ("example") for some specific steps for collecting information to put into the Jira.
+在问题的 PID 上运行 gcore 来生成核心文件。然后运行 "thread apply all bt" 来查看发生了什么。很可能你需要捕获这些信息并将其放入 pastebin，然后询问其中一位高级 FreeSWITCH 用户在 IRC 频道上提供帮助。（请不要使用邮件列表。）很可能你需要打开一个 Jira 工单，所以准备好这样做。此外，请参考下一部分（"example"）中为收集信息并放入 Jira 所做的一些具体步骤。
 
 #### example
 
-To generate core file and backtrace text file output:
+生成核心文件和回溯文本文件输出：
 
-1. update to the latest version of FS
-2. install gdb  
-```xml  
-apt-get update && apt-get install gdb  
+1. 升级到最新版本的FS（FreeSwitch）。
+2. 安装gdb。
+```xml
+apt-get update && apt-get install gdb
 ```
-3. reproduce the issue
-4. visualize FS process. if hung, find the process that is 100% and note its pid  
-```xml  
-top -H `cat /usr/local/freeswitch/run/freeswitch.pid`  
+3. 重现问题。
+4. 可视化FS进程。如果卡住了，找出占用100%的进程，并记录其pid。
+```xml
+top -H `cat /usr/local/freeswitch/run/freeswitch.pid`
 ```
-5. generate core file  
-   1. the core file will be saved in the local directory, so cd to the location you want it saved, and note the file name produced by gcore, such as core.4499  
-   ```xml  
-   gcore $(pidof freeswitch)  
+5. 生成core文件。
+   1. core文件将保存在本地目录中，所以切换到您想要保存的位置，并记录gcore生成的文件名，例如core.4499。
+   ```xml
+   gcore $(pidof freeswitch)
    ```
-6. process core file into a backtrace text file  
-   1. if you have installed from source:  
-         1. simply run the command:  
-         ```xml  
-         /usr/src/freeswitch/scripts/backtrace-from-core /path/to/core/file /usr/local/freeswitch/bin/freeswitch  
-         ```  
-   2. if installed from packages, there are a few extra steps:  
-         1. cd into desired directory  
-         2. get the processing script:  
-         ```xml  
-         wget -O backtrace-from-core 'https://freeswitch.org/stash/projects/FS/repos/freeswitch/browse/scripts/backtrace-from-core?at=e62f2481e89c2b643b088901e964107468c4a5dd&raw'  
-         ```  
-         3. run the processing script:  
-         ```xml  
-         ./backtrace-from-core /path/to/core/file /usr/bin/freeswitch  
+6. 将core文件处理为一个backtrace文本文件。
+   1. 如果您是从源代码安装的：
+         1. 只需运行以下命令：
+         ```xml
+         /usr/src/freeswitch/scripts/backtrace-from-core /path/to/core/file /usr/local/freeswitch/bin/freeswitch
          ```
-7. Create a JIRA ticket, upload the backtrace text file onto the new JIRA
-8. A short script to automate getting a backtrace on stuck calls... This should spit out a link where the info was sent to our pastebin.
+   2. 如果是从软件包安装的，需要进行一些额外的步骤：
+         1. 切换到所需的目录。
+         2. 获取处理脚本：
+         ```xml
+         wget -O backtrace-from-core 'https://freeswitch.org/stash/projects/FS/repos/freeswitch/browse/scripts/backtrace-from-core?at=e62f2481e89c2b643b088901e964107468c4a5dd&raw'
+         ```
+         3. 运行处理脚本：
+         ```xml
+         ./backtrace-from-core /path/to/core/file /usr/bin/freeswitch
+         ```
+7. 创建一个JIRA工单，将backtrace文本文件上传到新的JIRA工单中。
+8. 编写一个简短的脚本来自动获取卡住的呼叫的backtrace信息...... 这将输出一个链接，该链接会将信息发送到我们的pastebin。
 
 ```xml
 apt-get install curl freeswitch-all-dbg libfreeswitch1-dbg
@@ -388,54 +385,52 @@ if [ -f /usr/bin/freeswitch ]; then
     FREESWITCH=/usr/bin/freeswitch;
 elif [ -f /usr/local/freeswitch/bin/freeswitch ]; then
     FREESWITCH=/usr/local/freeswitch/bin/freeswitch;
-else echo "freeswitch binary not found in /usr/bin nor in /usr/local/freeswitch/bin... exiting..."; exit 0;
+else echo "freeswitch二进制文件未在/usr/bin或/usr/local/freeswitch/bin中找到...退出..."; exit 0;
 fi
 if [ $(pidof freeswitch) ]; then
     gdb -ex "set logging file /tmp/backtrace.log" -ex "set logging on" -ex "set pagination off" -ex "bt" -ex "bt full" -ex "info threads" -ex "thread apply all bt" -ex "thread apply all bt full" -ex "quit" $FREESWITCH $(find /tmp/core.$(pidof freeswitch))
 printf "\n\n\n\n"
 curl -d private=1 --data-urlencode text@/tmp/backtrace.log https://pastebin.freeswitch.org/api/create
 fi
-
-
 ```
 
-  
-The output from the backtrace ("bt") will hopefully yield the necessary information about why the CPU usage spiked. As always, open a Jira with this information - don't send it to the -users list. If you wish to discuss the backtrace with other developers you can actually do that on the Jira comments. Those are public, so no need to overrun the mailing lists with these discussions.
+从backtrace ("bt")的输出中，希望能够获得关于CPU使用率突增的必要信息。一如既往，请使用这些信息在Jira中打开一个工单，而不要将其发送到-users列表。如果您希望与其他开发人员讨论backtrace，您可以在Jira评论中进行。这些评论是公开的，因此不需要过多地在邮件列表上讨论这些问题。
 
 ### XML Curl
 
-* TODO
+* 待办事项
 
-### Other Stuff?
+### 其他内容？
 
-* TODO
+* 待办事项
 
-## Advanced Debugging Techniques
+## 高级调试技术
 
-### Creating A Backtrace With gdb (Linux/Unix)
+### 使用gdb创建backtrace (Linux/Unix)
+```
 
-If you are getting core dumps (aka Segmentation Faults or "segfaults") in Linux/Unix then it is important to get a backtrace, which is a tool for developers to examine what happened right up to the point where the program crashes. Any report of a segfault should be accompanied by a backtrace. Once you have a backtrace please attach it as a txt file to the relevant [JIRA](https://freeswitch.org/jira) issue.
+如果在Linux/Unix系统中出现核心转储（也称为段错误或“segfaults”），则获取回溯是非常重要的，回溯是开发人员用来检查程序在崩溃点发生之前发生了什么的工具。任何有关段错误的报告都应该附带回溯信息。一旦你有了回溯，请将其作为txt文件附加到相关的[JIRA](https://freeswitch.org/jira)问题中。
 
-For further information on the very powerful gdb debugger see [debugging-with-gdb](http://betterexplained.com/articles/debugging-with-gdb)
+有关强大的gdb调试器的更多信息，请参阅[debugging-with-gdb](http://betterexplained.com/articles/debugging-with-gdb)
 
-#### How to configure FreeSWITCH to generate coredumps on a crash
+#### 如何配置FreeSWITCH在崩溃时生成核心转储
 
-This is an important step as a coredump is _required_ in order to produce a backtrace.
+这是一个重要的步骤，因为核心转储是生成回溯所必需的。
 
-* You need to set `/proc/sys/fs/suid_dumpable` to a non-zero value (see man 5 proc), to enable core dumping for processes that switch their UID on startup (such as freeswitch with -u option).  
-   * This can be verified by '`sysctl fs.suid_dumpable`'  
-   * 2 is a good setting  
-   * This can be set persistently (if required) in `/etc/sysctl.conf`  
-      * On Debian/Ubuntu it is better to locate the customization in a file in /etc/sysctl.d/
-* With Linux kernel 3.6 or newer (Debian Jessie and newer), the pattern in `/proc/sys/kernel/core_pattern` is required for `suid_dumpable`.
-* With older kernels, the freeswitch process will try to put the core file into the CWD (current working directory).
-* The ulimit settings may also restrict the size of the coredump generated and thus prevent the file being generated. FreeSWITCH will attempt to set this to unlimited if started with the -core option.
+* 您需要将`/proc/sys/fs/suid_dumpable`设置为非零值（请参阅man 5 proc），以便为在启动时切换其UID的进程（例如使用-u选项的freeswitch）启用核心转储。
+   * 可以通过“`sysctl fs.suid_dumpable`”进行验证
+   * 2是一个好的设置
+   * 如果需要，可以在`/etc/sysctl.conf`中设置此项（持久设置）
+      * 在Debian/Ubuntu上最好将定制内容放在`/etc/sysctl.d/`目录中的文件中
+* 对于Linux内核版本大于等于3.6的系统（Debian Jessie及更高版本），`/proc/sys/kernel/core_pattern`文件中的模式对于`suid_dumpable`是必需的。
+* 对于较旧的内核，freeswitch进程将尝试将核心文件放入CWD（当前工作目录）。
+* ulimit设置也可能限制生成的核心转储文件大小，从而阻止文件的生成。如果使用-core选项启动，FreeSWITCH将尝试将此设置为无限制。
 
-It is a good idea to verify on a new installation that coredumps are generated and that you know where to locate them, in the event they are required to debug a crash. You can trigger a crash through fs\_cli using the 'fsctl crash' command. The coredump file will be named 'core', possibly with the numeric process ID as a suffix.
+在新安装上进行验证，确保生成coredump文件，并确保知道如何找到它们，以便在需要调试崩溃时使用。您可以通过使用'fsctl crash'命令在fs_cli上触发崩溃。生成的coredump文件将被命名为'core'，可能还会包含进程ID作为后缀。
 
-You might also want to check out man 5 core, for all the other options (e.g. piping core dumps into a custom handler, with core\_pattern).
+您可能还想查看man 5 core，以了解所有其他选项（例如将coredump导入自定义处理程序，通过core_pattern进行管道处理）。
 
-The following commands will enable coredumps under Debian Jessie or newer:
+以下命令将在Debian Jessie或更高版本中启用coredump：
 
 ```bash
 echo "/var/tmp/core.%e.%p.%h.%t" > /proc/sys/kernel/core_pattern
@@ -443,19 +438,19 @@ echo 2 > /proc/sys/fs/suid_dumpable
 ```
 
   
-#### How to load coredump in gdb
+#### 如何在gdb中加载coredump文件
 
-From /usr/local/freeswitch:
+从/usr/local/freeswitch目录下执行以下命令：
 
 $ gdb bin/freeswitch 
 
-To load with a core file
+要使用core文件加载：
 
 $ gdb bin/freeswitch core.xxx
 
-#### Getting a Backtrace
+#### 获取回溯信息
 
-Once you load the core file into GDB you can collect a backtrace typing:
+在gdb中加载core文件后，您可以键入以下命令来收集回溯信息：
 
   
 ```xml
@@ -466,7 +461,7 @@ thread apply all bt
 thread apply all bt full
 ```
 
-##### To save the output to a logfile
+##### 将输出保存到日志文件中
 
   
 ```xml
@@ -480,70 +475,67 @@ Done logging to /tmp/backtrace.log.
 (gdb) quit
 ```
 
-Backtrace script... for crashes that result in core dumps. Just fill in "core.###" with a pid number (i.e. do "ls /tmp | grep core") to find the pid and adjust script. You should get back a hyper link where the backtrace was uploaded.
+Backtrace脚本...用于导致生成coredump文件的崩溃。只需将"core.###"替换为进程ID号（例如执行"ls /tmp | grep core"来查找进程ID号），然后调整脚本。您将获得一个超链接，指向上传回溯信息的位置。
 
 ```xml
 gdb -ex "set logging file /tmp/backtrace.log" -ex "set logging on" -ex "set pagination off" -ex "bt" -ex "bt full" -ex "info threads" -ex "thread apply all bt" -ex "thread apply all bt full" -ex "quit" /usr/bin/freeswitch /tmp/core.####
 printf "\n\n\n\n"
 curl -d private=1 --data-urlencode text@/tmp/backtrace.log https://pastebin.freeswitch.org/api/create
-
-
 ```
 
-  
-To report a specific thread/pid
+为了报告特定的线程/进程
 
-1) Update to the latest and try to reproduce first;  
-2) If you can reproduce, then:
+1）先升级到最新版并尝试重现；
+2）如果可以重现，则执行以下操作：
 
-cmd: top -H -p `cat /usr/local/freeswitch/run/freeswitch.pid`
+命令：top -H -p `cat /usr/local/freeswitch/run/freeswitch.pid`
 
-Find the process that is 100% and note its pid:
+找到占用100%的进程并记下其pid：
 
-cmd: gcore `cat /usr/local/freeswitch/run/freeswitch.pid`
-cmd: gdb `which freeswitch` &lt;name of resulting file generated by gcore>
-enter: "info threads"
+命令：gcore `cat /usr/local/freeswitch/run/freeswitch.pid`
+命令：gdb `which freeswitch` &lt;由gcore生成的文件的名称>
+输入： "info threads"
 
-Look for the one with the same pid as the one you noted above:
+查找与上述记下的进程相同pid的线程：
 
-enter: thread &lt;thread # that goes with the pid>
-enter: bt
+输入： line &lt;与pid相对应的线程号>
+输入： bt
 
-3) Open a bug report in Jira.
+3）在Jira中提交错误报告。
 
-#### Simple bash script to make debug easy
+#### 一段简单的Bash脚本可以使调试变得简单
 
-In the source directory there is a support-d sub-directory. Inside this directory is a handy shell script called fscore\_pb. The script will collect the appropriate trace (and some other information), post it to [pastebin.freeswitch.org](http://pastebin.freeswitch.org), and then give you the URL to give to the developers.
+在源代码目录中有一个support-d子目录。在该目录下有一个方便的shell脚本叫做fscore_pb。该脚本将收集适当的跟踪信息（和其他一些信息），将其发布到[pastebin.freeswitch.org](http://pastebin.freeswitch.org)，然后给您提供URL以供开发人员使用。
 
-Usage:
+用法：
 
 ```xml
  support-d/fscore_pb gcore [user]
  support-d/fscore_pb [user]
 ```
 
-If gcore is given it will take a gcore of a running instance of FreeSWITCH (this will pause the process during the dump). If gcore is not given it will use the most recent core.\* file in the directory.
+如果给出了gcore，它将获取运行中的FreeSWITCH实例的gcore（在转储过程中会暂停进程）。如果未给出gcore，则将使用目录中的最新core.\*文件。
 
-User is optional, and is the name given when submitting the pastebin. If it is omitted it will use your local username.
+User是可选的，并且是提交pastebin时提供的名称。如果省略，则使用您的本地用户名。
 
-### Collecting Debug Information While FreeSWITCH Is Running (Linux/Unix)
+### 在FreeSWITCH运行时收集调试信息（Linux/Unix）
+```
 
-Occasionally FreeSWITCH will become unresponsive. To help determine what is happening you can do a "g-core" and report the results. Please follow these steps: 
+偶尔FreeSWITCH会变得无响应。为了帮助确定发生了什么，您可以执行“g-core”并报告结果。请按照以下步骤操作：
 
-Open a terminal window and cd to the FreeSWITCH source dir.
+打开终端窗口并切换到FreeSWITCH源目录。
 
-Type this:
-
+输入以下内容：
 ```xml
 sh scripts/freeswitch-gcore > core.trace 
 ```
 
-Attach the resulting file, named _core.trace_, to a JIRA ticket (see [Reporting Bugs to JIRA](../Prototypes/Ostag/index.mdx#about))
+将生成的名为_core.trace_的文件附加到一个JIRA工单中（请参阅[向JIRA报告错误](../Prototypes/Ostag/index.mdx#about)）
 
-### Collection Information With Valgrind (Linux/Unix)
+### 使用Valgrind（Linux/Unix）收集信息
 
-Valgrind is a debugging tool that helps identify memory usage issues, such as memory leaks.  
-To run FreeSWITCH in valgrind please follow these steps at the Linux command line:
+Valgrind是一种用于识别内存使用问题（如内存泄漏）的调试工具。
+在Linux命令行上运行FreeSWITCH之前，请按照以下步骤操作：
 
 ```xml
 cd /usr/src/freeswitch.trunk
@@ -551,26 +543,24 @@ ulimit -s 240
 valgrind --tool=memcheck --log-file-exactly=vg.log --leak-check=full --leak-resolution=high --show-reachable=yes .libs/freeswitch -vg
 ```
 
-FreeSWITCH will start in valgrind. You will probably notice that things move more slowly - this is normal. Please wait for FreeSWITCH to exhibit the behavior being studied - including a core dump if that is what is being investigated. 
+FreeSWITCH将在valgrind下启动。您可能会注意到事物的执行速度变慢了，这是正常的。请等待FreeSWITCH表现出要研究的行为，包括核心转储（如果正在进行调查）。
 
-  
-Once the behavior has been exhibited, stop FreeSWITCH (unless it has crashed) and then look for a file named **vg.log** in your source directory. This file should be attached to the JIRA issue. _Please do not try to interpret the contents of the vg.log file._ Leave that to the developers as they are eminently qualified to do so. After sending the vg.log to JIRA please notify the developers and wait for further instructions.
+一旦表现出所需行为，请停止FreeSWITCH（除非它崩溃），然后在源目录中查找一个名为**vg.log**的文件。将此文件附加到JIRA问题上。_请不要试图解释vg.log文件的内容_，将其留给开发人员，因为他们完全有资格这样做。在将vg.log发送至JIRA后，请通知开发人员并等待进一步的指示。
 
-  
-## Configuring Your System For Remote Access
+## 配置您的系统以实现远程访问
 
-Occasionally there are extreme, curious, and downright weird scenarios that the developers must "see for themselves," so it is nice for them to have direct access to your FreeSWITCH server in these cases. Here's a checklist of things to consider:
+偶尔会出现一些极端、好奇和奇怪的情况，开发人员必须"亲眼看看"，所以让他们直接访问您的FreeSWITCH服务器是很好的。以下是一些需要考虑的事项：
 
-* Public IP address
-* Firewall issues
-* Your company's IT security policy
-* SSH server, ssh keys
+* 公共IP地址
+* 防火墙问题
+* 公司的IT安全政策
+* SSH服务器，ssh密钥
 
-The absolute easiest way for the developers to access your system is via direct ssh connection. (If you do not have a public IP address on your system then there is a second option: ssh tunnel command; see below.)  
-  
-### Linux Prerequisites
+开发人员最简单的访问您的系统的方式是通过直接的ssh连接。（如果您的系统没有公共IP地址，则有第二种选择：ssh隧道命令；请参阅下文。）
 
-On Linux systems please do this:
+### Linux先决条件
+
+在Linux系统上，请执行以下操作：
 
 ```xml
 cd /path/to/freeswitch/source
@@ -578,24 +568,22 @@ make support
 ./support-d/prereq.sh
 ```
 
-These will install the necessary prerequisites for the developers to log in and work on your system.
+这些操作将安装开发人员登录和操作您的系统所需的必备条件。
 
-### SSH Tunnel Command For Linux Systems Without Public IP
+### Linux系统无公共IP地址的SSH隧道命令
 
-If your system is behind a firewall and NAT then it will require an alternate means of giving remote access to the developers. The prerequisites are still applicable, so definitely get those in place.
+如果您的系统位于防火墙和NAT之后，则需要一种替代的方式来远程访问开发人员。先决条件仍然适用，因此请务必将其准备好。
 
-To do the ssh tunnel command, go to the command prompt:
+要执行ssh隧道命令，请打开命令提示符：
 
 ```xml
 ssh -N -p222 -R xxxxx:127.0.0.1:22 guest@yoda.ostag.org
 ```
 
-In this case, xxxxx is the TCP port number. Please ask a developer to suggest a port number for you so that there isn't a collision with an existing port. If this is the first time connecting you will need to accept the RSH key by typing 'yes' at the prompt. At this point the developer will tell you what to do next.
+在此情况下，xxxxx是TCP端口号。请向开发人员询问一个可用的端口号，以免与现有端口发生冲突。如果这是第一次连接，您需要在提示符处键入"yes"来接受RSH密钥。此时，开发人员将告诉您下一步该怎么做。
 
-## See Also
+## 参见
 
-* [Debugging FreeSWITCH](Debugging-Freeswitch_9633850.mdx#about)
-* [Error Codes](https://wiki.freeswitch.org/wiki/Error%5FCodes "Error Codes")
-* [Submitting Patches](https://wiki.freeswitch.org/wiki/Submitting%5FPatches "Submitting Patches")
-
-
+* [调试FreeSWITCH](Debugging-Freeswitch_9633850.mdx#about)
+* [错误代码](https://wiki.freeswitch.org/wiki/Error%5FCodes "Error Codes")
+* [提交补丁](https://wiki.freeswitch.org/wiki/Submitting%5FPatches "Submitting Patches")

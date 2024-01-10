@@ -1,88 +1,83 @@
+# 操纵通道变量
 
-# Manipulating Channel Variables 
+单击此处展开目录
 
- 
+* 1 [基本拨号计划用法](#basic-dialplan-usage)
+* 2 [修剪和子字符串](#trimming-and-substrings)
+* 3 [搜索和替换](#search-and-replace)
+* 4 [将变量设置为未定义](#setting-a-variable-as-undefined)
 
-Click here to expand Table of Contents
+## 基本拨号计划用法
 
-* 1 [Basic Dialplan Usage](#basic-dialplan-usage)
-* 2 [Trimming and Substrings](#trimming-and-substrings)
-* 3 [Search and replace](#search-and-replace)
-* 4 [Setting a variable as undefined](#setting-a-variable-as-undefined)
-
-## Basic Dialplan Usage
-
-It's easy to use the pre-existing value of a variable to change call flow, an example, found in the [default configuration](../Configuration/Default-Configuration_6587388.mdx#mod_vp8):
+使用预定义的变量值来改变呼叫流程非常简单，例如，在 [默认配置](../Configuration/Default-Configuration_6587388.mdx#mod_vp8) 中可以找到以下示例：
 
 ```xml
- <condition field="${call_debug}" expression="^true$" break="never">
+<condition field="${call_debug}" expression="^true$" break="never">
    <action application="info"/>
- </condition>
+</condition>
 ```
 
-This will run the [info](../Modules/mod-dptools/6587023.mdx#about) app anytime a call hits this extension with the [call\_debug](./Variables-Master-List_16352570.mdx#memory_debug) variable set to `true`.
+这将在 [call\_debug](./Variables-Master-List_16352570.mdx#memory_debug) 变量设置为 `true` 时，在任何呼叫命中此扩展时运行 [info](../Modules/mod-dptools/6587023.mdx#about) 应用程序。
 
-## Trimming and Substrings
+## 修剪和子字符串
 
-You can select a portion of a variable's value, (just like a substr function) like this:
+您可以像使用子字符串函数一样选择变量的部分值，例如：
 
 ```text
- var = 1234567890
- ${var:offset:length} 
- ${var:0:1}  // 1
- ${var:1}    // 234567890
- ${var:-4}   // 7890
- ${var:-4:2} // 78
- ${var:4:2}  // 56
+var = 1234567890
+${var:offset:length} 
+${var:0:1}  // 1
+${var:1}    // 234567890
+${var:-4}   // 7890
+${var:-4:2} // 78
+${var:4:2}  // 56
 ```
 
-Using anything `<= 0` as the length will return from the specified position to the end of the string.
+将长度设为`<= 0`将返回从指定位置到字符串结尾的部分。
 
-## Search and replace
+## 搜索和替换
 
-Using an [inline Lua](../Modules/mod_lua_1048944.mdx#cli-usage-lua-and-luarun-) command, you can perform a search and replace against a text string:
+使用内联的 Lua 命令，您可以对一个文本字符串执行搜索和替换操作：
 
-From the dialplan:
+从拨号计划中：
 
 ```xml
 <action application="set" data="RETURN_STRING=${lua(~stream:write(tostring(string.gsub('STRING_TO_SEARCH', 'STRING_TO_FIND', 'REPLACEMENT_STRING'))))}"/>
 ```
 
-From the CLI:
+从 CLI 中：
 
 ```text
- lua ~stream:write(tostring(string.gsub("STRING_TO_SEARCH", "STRING_TO_FIND", "REPLACEMENT_STRING")))
+lua ~stream:write(tostring(string.gsub("STRING_TO_SEARCH", "STRING_TO_FIND", "REPLACEMENT_STRING")))
 ```
 
-## Setting a variable as undefined
+## 将变量设置为未定义
 
-You can set a variable to `_undef_`.
+您可以将变量设置为 `_undef_`。
 
-by default you might see
+默认情况下，您可能会看到以下内容：
 
 ```text
 From: "sipp" <sip:199098@192.168.199.81>;tag=c8BKQ1ta440Hj.
 Remote-Party-ID: "sipp" <sip:199098@192.168.199.81>;party=calling;screen=yes;privacy=off.
 ```
 
-if you set
+如果您设置为：
 
 ```xml
 <action application="set" data="effective_caller_id_name=_undef_"/>
 ```
 
-you get
+您将会得到：
 
 ```text
 From: <sip:199098@192.168.199.81>;tag=c8BKQ1ta440Hj.
 Remote-Party-ID: <sip:199098@192.168.199.81>;party=calling;screen=yes;privacy=off.
 ```
 
-FYI: in Version 1.0.4 (exported) this will result in
+顺便提一下：在1.0.4版本（导出版本）中将显示如下内容：
 
 ```text
 From: <sip:199098@192.168.199.81>;tag=c8BKQ1ta440Hj.
 Remote-Party-ID: "_undef_" <sip:199098@192.168.199.81>;party=calling;screen=yes;privacy=off.
 ```
-
-

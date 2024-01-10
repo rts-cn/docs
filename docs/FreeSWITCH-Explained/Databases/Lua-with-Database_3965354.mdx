@@ -1,47 +1,44 @@
+# 在Lua中使用数据库
 
-# Lua with Database 
+## 关于
 
- 
+Lua脚本允许连接数据库和外部资源。
 
-## About
+在开发与DBMS接口的FreeSWITCH应用程序时，有两种Lua选项可用。
 
-Lua scripts allow one to connect to databases and external resources.
+点击展开目录
 
-Two Lua options are available if you are developing a FreeSWITCH application interfacing with a DBMS.
+* 1 [访问数据库](#访问数据库)
+* 2 [LuaSQL](#luasql)
+   * 2.1 [LuaSQL示例](#luasql-示例)
+* 3 [freeswitch.Dbh](#freeswitchdbh)
+   * 3.1 [freeswitch.Dbh示例](#freeswitchdbh-示例)
+* 4 [参见](#参见)
 
-Click to expand Table of Contents
+## 访问数据库
 
-* 1 [Accessing a Database](#accessing-a-database)
-* 2 [LuaSQL](#luasql)  
-   * 2.1 [LuaSQL Example](#luasql-example)
-* 3 [freeswitch.Dbh](#freeswitchdbh)  
-   * 3.1 [freeswitch.Dbh example](#freeswitchdbh-example)
-* 4 [See Also](#see-also)
+有两种方法可以从Lua访问数据库：LuaSQL和freeswitch.Dbh。因为它使用数据库句柄池，所以推荐使用Dbh方法，这样可以提高效率和速度。
 
-## Accessing a Database
-
-There are two ways to access databases from Lua: LuaSQL and freeswitch.Dbh. The Dbh method is preferred because it uses database handle pooling which results in greater efficiency and speed.
-
-With LuaSQL, you can query not only an ODBC data source, but also PostgreSQL, Oracle, or MySQL via native drivers. The LuaSQL module itself will make the connection to your database. LuaSQL does not provide connection pooling as is possible with freeswitch.Dbh.
+通过LuaSQL，您不仅可以查询ODBC数据源，还可以通过本机驱动程序查询PostgreSQL、Oracle或MySQL。LuaSQL模块本身将连接到您的数据库。但是，与freeswitch.Dbh一样，LuaSQL不提供连接池功能。
 
 ## LuaSQL
 
-The most common alternative for Lua developers is to use LuaSQL (<http://keplerproject.org/luasql/>). With Luasql you can easily connect to ODBC, ADO, Oracle, MySQL, SQLite and PostgreSQL databases.
+Lua开发人员最常见的替代方法是使用LuaSQL（<http://keplerproject.org/luasql/>）。使用LuaSql，您可以轻松连接到ODBC、ADO、Oracle、MySQL、SQLite和PostgreSQL数据库。
 
-### LuaSQL Example
+### LuaSQL示例
 
-**LuaSQL Example**
+**LuaSQL示例**
 
 ```xml
---  this example of how to connect to postgres from Lua
+-- 这是一个连接到Lua的PostgreSQL数据库的示例
 local luasql = require "luasql.postgres"
 --
--- Database connection settings
+-- 数据库连接设置
 --
 DBHOST = '127.0.0.1'
-DBNAME = 'dbname'
-DBUSER = 'dbusername'
-DBPASS = 'dbpassword'
+DBNAME = '数据库名称'
+DBUSER = '数据库用户名'
+DBPASS = '数据库密码'
 DBPORT = 5432
 
 local env = assert (luasql.postgres())
@@ -54,31 +51,31 @@ env:close()
 
 ## freeswitch.Dbh
 
-The FreeSWITCH Database Handler
+FreeSWITCH数据库处理程序
 
-The second solution is using the freeswitch.Dbh
+第二种解决方案是使用freeswitch.Dbh
 
-Advantage of this method is that it makes use of connection pooling provided by FreeSWITCH which gives a nice increase in speed when compared to creating a new TCP connection for each LuaSQL env:connect()
+这种方法的优点是它利用了FreeSWITCH提供的连接池，与为每个LuaSQL env:connect()创建新的TCP连接相比，速度有了明显的提高。
 
-It works as follows:
+它的工作原理如下：
 
 ```xml
-local dbh = freeswitch.Dbh("dsn","user","pass") -- when using ODBC (deprecated)
+local dbh = freeswitch.Dbh("dsn","user","pass") -- 使用ODBC时（已废弃）
 -- OR --
-local dbh = freeswitch.Dbh("core:my_db") -- when using sqlite (deprecated, if you have to use this to make it work you should upgrade your FS installation)
+local dbh = freeswitch.Dbh("core:my_db") -- 使用SQLite时（已废弃，如果您必须使用此方式使其工作，请升级您的FS安装）
 -- OR --
-local dbh = freeswitch.Dbh("sqlite://my_db") -- sqlite database in subdirectory "db"
+local dbh = freeswitch.Dbh("sqlite://my_db") -- 子目录“db”中的SQLite数据库
 -- OR --
-local dbh = freeswitch.Dbh("odbc://my_db:uname:passwd") -- connect to ODBC database 
+local dbh = freeswitch.Dbh("odbc://my_db:uname:passwd") -- 连接到ODBC数据库 
 
-assert(dbh:connected()) -- exits the script if we didn't connect properly
+assert(dbh:connected()) -- 如果连接失败，则退出脚本
 
 dbh:test_reactive("SELECT * FROM my_table",
                   "DROP TABLE my_table",
                   "CREATE TABLE my_table (id INTEGER(8), name VARCHAR(255))")
 
-dbh:query("INSERT INTO my_table VALUES(1, 'foo')") -- populate the table
-dbh:query("INSERT INTO my_table VALUES(2, 'bar')") -- with some test data
+dbh:query("INSERT INTO my_table VALUES(1, 'foo')") -- 填充表格
+dbh:query("INSERT INTO my_table VALUES(2, 'bar')") -- 添加一些测试数据
 
 dbh:query("SELECT id, name FROM my_table", function(row)
   stream:write(string.format("%5s : %s\n", row.id, row.name))
@@ -87,35 +84,33 @@ end)
 dbh:query("UPDATE my_table SET name = 'changed'")
 stream:write("Affected rows: " .. dbh:affected_rows() .. "\n")
 
-dbh:release() -- optional
+dbh:release() -- 可选的
 ```
 
-* _freeswitch.Dbh(odbc://my\_db:uname:passwd)_ gets an ODBC db handle from the pool.
-* _freeswitch.Dbh("sqlite://my\_db")_ gets a core db (sqlite) db handle from the pool (this automatically creates the db if it didn't exist yet).
-* _dbh:connected()_ checks if the handle is still connected to the database, returns true if connected, false otherwise.
-* _dbh:test\_reactive("test\_sql", "drop\_sql", "reactive\_sql")_ performs test\_sql and if it fails performs drop\_sql and reactive\_sql (handy for initial table creation purposes)
-* _dbh:query("query", function())_ takes the query as a string and an optional Lua callback function that is called on each row returned by the db.
-* The callback function is passed a table representation of the current row for each iteration of the loop.
-* Syntax of each row is: { \["column\_name\_1"\] = "value\_1", \["column\_name\_2"\] = "value\_2" }.
-* If you (optionally) return a number other than 0 from the callback-function, you'll break the loop.
-* _dbh:affected\_rows()_ returns the number of rows affected by the last run INSERT, DELETE or UPDATE on the handle. It does not respond to SELECT operations.
-* _dbh:release()_ (optional) releases the handle back to the pool so it can be re-used by another thread. This is also automatically done when the dbh goes out of scope and is garbage collected (for example when your script returns). Useful for long-running scripts to release the connection sooner.
+* `freeswitch.Dbh(odbc://my_db:uname:passwd)` 从连接池获取一个ODBC数据库句柄。
+* `freeswitch.Dbh("sqlite://my_db")` 从连接池获取一个核心数据库（SQLite）句柄（如果数据库不存在，则会自动创建）。
+* `dbh:connected()` 检查句柄是否仍然连接到数据库，如果连接返回true，否则返回false。
+* `dbh:test_reactive("test_sql", "drop_sql", "reactive_sql")` 执行`test_sql`，如果失败执行`drop_sql`和`reactive_sql`（用于初始表创建的方便操作）。
+* `dbh:query("query", function())` 接受查询字符串和可选的Lua回调函数作为参数，该函数在数据库返回的每一行上被调用。
+* 回调函数在每次循环迭代时，以表格形式传递当前行的表示。
+* 每行的语法为：{ ["column_name_1"] = "value_1", ["column_name_2"] = "value_2" }。
+* 如果从回调函数中返回的数字不为0（可选），将会中断循环。
+* `dbh:affected_rows()` 返回上一次INSERT、DELETE或UPDATE操作对句柄影响的行数。它不响应SELECT操作。
+* `dbh:release()`（可选）将句柄释放回连接池，以便其他线程可以重新使用。当dbh超出范围并被垃圾回收时（例如，当脚本返回时），也会自动执行此操作。对于长时间运行的脚本来说，及时释放连接非常有用。
 
-### freeswitch.Dbh example
+### freeswitch.Dbh示例
 
 ```xml
---  this is an example of how to connect to Postgres using ODBC from Lua
-local dbh = freeswitch.Dbh("odbc://my_db:uname:passwd") -- connect to ODBC database 
-assert(dbh:connected()) -- exits the script if we didn't connect properly
+-- 这是一个使用Lua从ODBC连接到Postgres的示例
+local dbh = freeswitch.Dbh("odbc://my_db:uname:passwd") -- 连接到ODBC数据库
+assert(dbh:connected()) -- 如果连接失败，退出脚本
 dbh:query("SELECT pin, name FROM customer", function(row)
   stream:write(string.format("%5s : %s\n", row.id, row.name))
 end)
-dbh:release() -- optional
+dbh:release() -- 可选
 
 ```
 
-## See Also
+## 另请参阅
 
 [Lua FreeSWITCH Dbh](./Lua-FreeSWITCH-Dbh_3965358.mdx#about)
-
-

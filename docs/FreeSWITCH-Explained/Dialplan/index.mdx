@@ -1,35 +1,32 @@
-
-# Dialplan 
-
- 
+# 拨号计划
 
 ---
 
-Table of Contents (click to expand)
+目录（点击展开）
 
-* [0\. About](#0-about)
-* [1\. Introduction](#1-introduction)
-* [2\. Modules](#2-modules)
-* [3\. Tools](#3-tools)
-* [4\. See Also](#4-see-also--)
+* [0\. 关于](#0-about)
+* [1\. 介绍](#1-introduction)
+* [2\. 模块](#2-modules)
+* [3\. 工具](#3-tools)
+* [4\. 参见](#4-see-also--)
 
 ---
 
-## 0\. About
+## 0\. 关于
 
-The FreeSWITCH dialplan is a decision tree that provides routing services to bridge call legs together, execute dialplan applications, and invoke custom scripts that you write, among other things.
+FreeSWITCH拨号计划是一个决策树，提供路由服务以连接呼叫会话、执行拨号计划应用程序和调用您编写的自定义脚本等功能。
 
-Much of your effort will be focused on configuring a dialplan to suit your application, whether it is the built–in [XML dialplan](./XML-Dialplan/index.mdx#about), a database lookup query sent to a web server via [mod\_xml\_curl](../Modules/mod_xml_curl_1049001.mdx) or via PostgreSQL using [freeswitch.dbh](../Databases/Lua-FreeSWITCH-Dbh_3965358.mdx#about) connection pooling.
+您的大部分工作将集中在配置拨号计划以适应您的应用程序上，无论是内置的[XML拨号计划](./XML-Dialplan/index.mdx#about)，还是通过[mod_xml_curl](../Modules/mod_xml_curl_1049001.mdx)将查询发送到Web服务器或者通过使用[freeswitch.dbh](../Databases/Lua-FreeSWITCH-Dbh_3965358.mdx#about)进行PostgreSQL查询。
 
-**The FreeSWITCH dialplan is NOT a scripting language.**
+**FreeSWITCH拨号计划不是一种脚本语言。**
 
-## 1\. Introduction
+## 1\. 介绍
 
-**The FreeSWITCH dialplan is not a single entity**. You have the option to run different dialplan subsystems natively. These are not all translated into the same back–end as other systems may be employed. Instead each is a unique, independent method through which you can access information.
+**FreeSWITCH拨号计划不是一个单独的实体**。您可以选择本机运行不同的拨号计划子系统。它们并非都被转换为与其他系统相同的后端。相反，每个子系统都是一种独特而独立的方法，通过它您可以访问信息。
 
-Enter the **`show dialplan`** command on [fs\_cli](../Client-and-Developer-Interfaces/1048948.mdx#or) to see what other dialplans are loaded.
+在[fs_cli](../Client-and-Developer-Interfaces/1048948.mdx#or)上输入 **`show dialplan`** 命令以查看加载的其他拨号计划。
 
-For example:
+例如：
 
 ```xml
 freeswitch@your_host> show dialplan
@@ -40,57 +37,54 @@ dialplan,asterisk,mod_dialplan_asterisk
 dialplan,inline,mod_dptools
 dialplan,signalwire,mod_signalwire
 
-5 total.
+总计 5 个。
 
 ```
 
-See [mod\_commands](../Modules/mod_commands_1966741.mdx#--) for all the commands available on FreeSWITCH's [command line interface](../Client-and-Developer-Interfaces/1048948.mdx#or).
+请参见[mod_commands](../Modules/mod_commands_1966741.mdx#--)以了解FreeSWITCH的[命令行界面](../Client-and-Developer-Interfaces/1048948.mdx#or)上的所有可用命令。
 
-Unlike some other switches, the dialplan is not designed to be a be-all and end-all configuration language that you put a bunch of logic into. The dialplan, quite simply, is designed to take a call request, decide where it should be handled, and then forward it to that application (or, in FreeSWITCH parlance, [modules](../Modules/index.mdx#about)). 
+与其他一些开关不同，接驳计划并非旨在成为一个包含大量逻辑的全能配置语言。简而言之，接驳计划的设计是为了接收呼叫请求，确定处理该呼叫的位置，然后将呼叫转发给相应的应用程序（或者在FreeSWITCH术语中称为[模块](../Modules/index.mdx#about)）。
 
-FreeSWITCH modules
+FreeSWITCH模块
 
-[Modules](../Modules/index.mdx#about) are applications that extend FreeSWITCH with extra functionality. In the context, the most used commands / applications are in [mod\_dptools](../Modules/mod_dptools_1970333.mdx#-c) (i.e., dialplan tools), but check out [the rest of the modules](../Modules/index.mdx#about) as well.
+[模块](../Modules/index.mdx#about)是扩展FreeSWITCH功能的应用程序。在此上下文中，最常用的命令/应用程序在[mod\_dptools](../Modules/mod_dptools_1970333.mdx#-c)（即接驳计划工具）中，但是还可以查看[其他模块](../Modules/index.mdx#about)。
 
-For example, routing a call to the [mod\_dptools:bridge](../Modules/mod-dptools/6586484.mdx#45-user) application will spawn a new channel and connect it to the incoming one.
+例如，将呼叫路由到[mod\_dptools:bridge](../Modules/mod-dptools/6586484.mdx#45-user)应用程序将生成一个新的通道并将其连接到传入通道。
 
-The design allowing for multiple dialplan processing modules, as well as routing calls to applications which do all the hard work, gives you the flexibility to do what you need, the way that you need it to work. It does not force you to adapt your infrastructure around FreeSWITCH™, but lets FreeSWITCH™ more readily mesh with your existing infrastructure.
+多个接驳计划处理模块的设计，以及将呼叫路由到完成所有繁重工作的应用程序，使您能够按照自己的需求进行操作。它不会强迫您调整基础架构以适应FreeSWITCH™，而是让FreeSWITCH™更容易与现有基础架构融合。
 
-IMPORTANT
+重要提示
 
-**Contexts**
+**上下文**
 
-FreeSWITCH uses multiple **context**s to prevent internal extensions from being exposed to the world. The two contexts in the [vanilla FreeSWITCH configuration](../Configuration/Default-Configuration_6587388.mdx#mod_vp8) are called **`public`** and **`default`**, but these names are arbitrary and can be carefully changed. New contexts can also be added.
+FreeSWITCH使用多个**上下文**以防止内部分机被公开。[纯净的FreeSWITCH配置](../Configuration/Default-Configuration_6587388.mdx#mod_vp8)中有两个上下文，分别称为**`public`**和**`default`**，但这些名称是任意的并且可以小心地更改。还可以添加新的上下文。
 
-Everything in the **`public`** context is available to the world, while everything in the **`default`** context is only available to users who have registered with FreeSWITCH.
+**`public`**上下文中的所有内容对外界可用，而**`default`**上下文中的内容仅对已在FreeSWITCH中注册的用户可用。
 
-Contexts can be used in
+可以在以下场景中使用上下文：
 
-* the [Directory](../Directory/index.mdx#about) (usually in [conf/directory/](../Configuration/Default-Configuration_6587388.mdx#6-configuration-files)), to assign each user (i.e., registered devices) to a context
-* SIP profiles to route calls to a specific context (related pages/articles: [Configuring FreeSWITCH#SIPProfilessip-profiles](../Configuration/Configuring-FreeSWITCH/index.mdx#configuration-files), [Sofia Configuration Files](../Configuration/Sofia-SIP-Stack/Sofia-Configuration-Files_7144453.mdx#--), [Sofia SIP Stack](../Configuration/Sofia-SIP-Stack/index.mdx#faq), [mod\_sofia](../Modules/mod_sofia_1048707.mdx#about))
+* [目录](../Directory/index.mdx#about)（通常在[conf/directory/](../Configuration/Default-Configuration_6587388.mdx#6-configuration-files)中）用于将每个用户（即注册设备）分配到一个上下文中。
+* SIP配置文件用于将呼叫路由到特定上下文（相关页面/文章：[配置FreeSWITCH#SIP配置文件](../Configuration/Configuring-FreeSWITCH/index.mdx#configuration-files)、[Sofia配置文件](../Configuration/Sofia-SIP-Stack/Sofia-Configuration-Files_7144453.mdx#--)、[Sofia SIP堆栈](../Configuration/Sofia-SIP-Stack/index.mdx#faq)、[mod\_sofia](../Modules/mod_sofia_1048707.mdx#about)）
 
-Anywhere you can specify a dialplan to route calls (such as [mod\_sofia](../Modules/mod_sofia_1048707.mdx#about)'s configuration), you may specify multiple ones by separating them with commas.
+您可以在任何可以指定拨号计划以路由呼叫的地方（例如[mod\_sofia](../Modules/mod_sofia_1048707.mdx#about)的配置）使用逗号分隔它们以指定多个拨号计划。
 
-## 2\. Modules
+## 2. 模块
 
 ---
 
-* [Dialplan XML](./XML-Dialplan/index.mdx#about) \- XML Dialplan Module (the most common).
-* [LDAP Directory](../Directory/LDAP-Directory_1048997.mdx#about) \- LDAP Directory Dialplan Module
-* [mod\_dialplan\_asterisk](../Modules/mod_dialplan_asterisk_3966416.mdx#about) \- Asterisk compatible dialplan module.
+* [拨号计划XML](./XML-Dialplan/index.mdx#about) \- XML拨号计划模块（最常见）。
+* [LDAP目录](../Directory/LDAP-Directory_1048997.mdx#about) \- LDAP目录拨号计划模块
+* [mod\_dialplan\_asterisk](../Modules/mod_dialplan_asterisk_3966416.mdx#about) \- Asterisk兼容的拨号计划模块。
 
-## 3\. Tools
+## 3. 工具
 
 ---
 
 * [blue.box](http://www.2600hz.org/)
 * [FusionPBX](http://www.fusionpbx.com/)
 
-## 4\. See Also  
+## 4. 参见  
 
 ---
 
-* [Freeswitch IVR Originate](./Freeswitch-IVR-Originate_9634753.mdx#channel-variables)
-
-  
-
+* [Freeswitch IVR 发起](./Freeswitch-IVR-Originate_9634753.mdx#channel-variables)

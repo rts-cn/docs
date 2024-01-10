@@ -1,94 +1,88 @@
+# mod_signalwire
 
-# mod_signalwire 
-
- 
-
-  
 ---
 
-Table of Contents (click to expand)
+目录（点击展开）
 
-* [0\. About](#21-mod_signalwire)
-* [1\. Capabilities](#1-capabilities)
-* [2\. mod\_signalwire configuration (autoload\_conf/signalwire.conf.xml)](#2-mod_signalwire-configuration-autoload_confsignalwireconfxml)  
-   * [2.1 After FreeSWITCH release 1.10.5](#21-after-freeswitch-release-1105)  
-   * [2.2 Before FreeSWITCH release 1.10.5](#22-before-freeswitch-release-1105)
-* [3\. Dialplan sample](#3-dialplan-sample)
-* [4\. Components](#4-components)  
+* [0\. 关于](#21-mod_signalwire)
+* [1\. 功能](#1-capabilities)
+* [2\. mod\_signalwire 配置 (autoload\_conf/signalwire.conf.xml)](#2-mod_signalwire-configuration-autoload_confsignalwireconfxml)  
+   * [2.1 在 FreeSWITCH 1.10.5 版本之后](#21-after-freeswitch-release-1105)  
+   * [2.2 在 FreeSWITCH 1.10.5 版本之前](#22-before-freeswitch-release-1105)
+* [3\. 拨号计划示例](#3-dialplan-sample)
+* [4\. 组件](#4-components)  
    * [2.1 mod\_signalwire](#21-mod_signalwire)  
-   * [2.2 SignalWire CLOUD Resources](#22-signalwire-cloud-resources)  
+   * [2.2 SignalWire CLOUD 资源](#22-signalwire-cloud-resources)  
    * [2.3 CLOUD APIs](#23-cloud-apis-)  
    * [2.4 CLOUD Integration UI/UX](#24-cloud-integration-uiux)
-* [5\. Connect to SignalWire by creating a new Integration/Connector](#5-connect-to-signalwire-by-creating-a-new-integrationconnector)  
-   * [Summary of the steps below](#summary-of-the-steps-below)  
-   * [Step 0\. Load mod\_signalwire](#step-0-load-mod_signalwire)  
-   * [Step 1\. Get a connection token](#step-1-get-a-connection-token)  
-   * [Step 2\. Connect your instance to SignalWire (using the Dashboard)](#step-2-connect-your-instance-to-signalwire-using-the-dashboard)  
-   * [Step 3\. OUTBOUND CALLS: set up a purchased phone number to be used with your integration/connector](#step-3-outbound-calls-set-up-a-purchased-phone-number-to-be-used-with-your-integrationconnector)  
-   * [Step 4\. INCOMING CALLS: associate a connector with a purchased number to handle incoming calls](#step-4-incoming-calls-associate-a-connector-with-a-purchased-number-to-handle-incoming-calls)
-* [6\. Generating a new token](#6-generating-a-new-token)  
-   * [Step 1\. Delete the current token and associated auth file](#step-1-delete-the-current-token-and-associated-auth-file-)  
-   * [Step 2\. Reload mod\_signalwire or restart FreeSWITCH](#step-2-reload-mod_signalwire-or-restart-freeswitch)  
-   * [Step 3\. Input new token into your SignalWire integrations dashboard for adoption.](#step-3-input-new-token-into-your-signalwire-integrations-dashboard-for-adoption)  
-   * [Settings & Caller ID](#settings--caller-id)  
-   * [Associating Phone Numbers with Integrations](#associating-phone-numbers-with-integrations)
-* [Pricing and Fees](#pricing-and-fees)
-* [Support](#21-mod_signalwire)
+* [5\. 通过创建新的集成/连接器连接到 SignalWire](#5-connect-to-signalwire-by-creating-a-new-integrationconnector)  
+   * [下面是步骤的摘要](#summary-of-the-steps-below)  
+   * [步骤 0\. 载入 mod\_signalwire](#step-0-load-mod_signalwire)  
+   * [步骤 1\. 获取连接令牌](#step-1-get-a-connection-token)  
+   * [步骤 2\. 将您的实例连接到 SignalWire（使用仪表板）](#step-2-connect-your-instance-to-signalwire-using-the-dashboard)  
+   * [步骤 3\. 呼出电话：设置购买的电话号码以供您的集成/连接器使用](#step-3-outbound-calls-set-up-a-purchased-phone-number-to-be-used-with-your-integrationconnector)  
+   * [步骤 4\. 接入电话：将连接器与购买的号码关联以处理呼入电话](#step-4-incoming-calls-associate-a-connector-with-a-purchased-number-to-handle-incoming-calls)
+* [6\. 生成新的令牌](#6-generating-a-new-token)  
+   * [步骤 1\. 删除当前令牌及相关的授权文件](#step-1-delete-the-current-token-and-associated-auth-file-)  
+   * [步骤 2\. 重新加载 mod\_signalwire 或重新启动 FreeSWITCH](#step-2-reload-mod_signalwire-or-restart-freeswitch)  
+   * [步骤 3\. 将新令牌输入到您的 SignalWire 集成仪表板中进行采用。](#step-3-input-new-token-into-your-signalwire-integrations-dashboard-for-adoption)  
+   * [设置和呼叫者 ID](#settings--caller-id)  
+   * [将电话号码与集成关联](#associating-phone-numbers-with-integrations)
+* [定价和费用](#pricing-and-fees)
+* [支持](#21-mod_signalwire)
 
----
+## 0. 关于
 
-## 0\. About
+允许通过_集成（integrations）_，以前称为_连接器（connectors）_，与SignalWire电信服务提供商建立外部服务连接。有关更多信息，请参阅[官方连接器产品说明](https://docs.google.com/document/d/1YMFKdkR6i7%5FXgnDslarKY%5FkGrWNG6T8TXiDn%5FhPD%5FbE/edit)。
 
-Allows external service connections to SignalWire telecommunications provider via _integrations,_ formerly known as _connectors_. See the [official connector product description](https://docs.google.com/document/d/1YMFKdkR6i7%5FXgnDslarKY%5FkGrWNG6T8TXiDn%5FhPD%5FbE/edit) for more info. 
+在[普通安装中默认启用](https://github.com/signalwire/freeswitch/blob/a5cecbfc2a5e0ea2d3f45489f2681a67e32ce955/conf/vanilla/autoload%5Fconfigs/modules.conf.xml)。
 
-Enabled by default in [modules.conf.xml for vanilla installations](https://github.com/signalwire/freeswitch/blob/a5cecbfc2a5e0ea2d3f45489f2681a67e32ce955/conf/vanilla/autoload%5Fconfigs/modules.conf.xml).
-
-Supported services:
+支持的服务：
 
 * SignalWire STACK
 * FreeSWITCH
 * Agora
 * Zapier
 
-## 1\. Capabilities
+## 1. 功能
 
-Enables several valuable functions that will automate configuration and connect services. Without any additional configuration in the FreeSWITCH instance, FreeSWITCH can be connected to SignalWire CLOUD. When doing so the FreeSWITCH configuration will be automagically modified based on what CLOUD services are assembled under the Integration.
+提供了多个有价值的功能，可以自动配置和连接服务。在FreeSWITCH实例中没有任何额外配置的情况下，可以将FreeSWITCH与SignalWire CLOUD连接。在这样做时，FreeSWITCH的配置将根据集成环境下组装的CLOUD服务自动进行修改。
 
-* **Voice**  
-Voice resources including DIDs, Toll Free numbers can be purchased through CLOUD and directed to your FreeSWITCH Integration, which will automatically configure your FreeSWITCH instance to work with the Voice resources.
-* **Messaging**  
-Not yet available.
+* **语音**  
+可以通过CLOUD购买语音资源，包括DIDs、免费电话号码，并将其指向您的FreeSWITCH集成环境。这将自动配置您的FreeSWITCH实例以与语音资源配合工作。
+* **消息**  
+尚不可用。
 
-## 2\. `mod_signalwire` configuration (`autoload_conf/signalwire.conf.xml`)
+## 2. `mod_signalwire`配置（`autoload_conf/signalwire.conf.xml`）
 
-### 2.1 After FreeSWITCH release 1.10.5
+### 2.1 在 FreeSWITCH 版本 1.10.5 之后
 
 **autoload\_conf/signalwire.conf.xml**
 
 ```xml
 <configuration name="signalwire.conf" description="SignalWire">
   <settings>
-    <!-- on/off/file-path -->
+    <!-- 打开/关闭/文件路径 -->
     <!--param name="kslog" value="on"/-->
     <!--param name="blade-bootstrap" value="blade://switchblade:2100"/-->
     <!--param name="adoption-service" value="https://adopt.signalwire.com/adoption"/-->
     <!--param name="stun-server" value="stun.freeswitch.org"/-->
     <!-- <authentication></authentication> -->
-    <!-- override dialplan context for calls on connector -->
+    <!-- 重写连接器上的呼叫拨号计划上下文 -->
     <!--<param name="override-context" value="signalwire"/>-->
   </settings>
 </configuration>
 ```
 
-(source: <https://github.com/signalwire/freeswitch/issues/786>)
+（来源：<https://github.com/signalwire/freeswitch/issues/786>）
 
-### 2.2 Before FreeSWITCH release 1.10.5
+### 2.2 在 FreeSWITCH 版本 1.10.5 之前
 
-​Just in case, because before release 1.10.1 (and somewhere between 1.10.1 and 1.10.5..) there has been no `signalwire.conf.xml` and `mod_signalwire` configuration settings were saved in memory of the FreeSWITCH instance, but also cached in the storage directory, in case it can't connect to SignalWire CLOUD on restart.
+以防万一，在版本 1.10.1 发布之前（以及 1.10.1 和 1.10.5 之间的某个版本..），没有 `signalwire.conf.xml` 文件，并且 `mod_signalwire` 的配置设置保存在 FreeSWITCH 实例的内存中，并且在存储目录中缓存，以防在重启时无法连接到 SignalWire CLOUD。
 
-To find the storage directory, use one of the following:
+要查找存储目录，请使用以下方法之一：
 
-**Linux terminal**
+**Linux 终端**
 
 ```xml
 $ fs_cli -x 'eval $${db_dir}'
@@ -100,83 +94,85 @@ $ fs_cli -x 'eval $${db_dir}'
 freeswitch@vm> eval $${db_dir}
 ```
 
-For vanilla installations, the location is `**/var/lib/freeswitch/db/sofia_reg_signalwire.db**`
+对于标准安装来说，位置是 `**/var/lib/freeswitch/db/sofia_reg_signalwire.db**`
 
-TODO This is a binary file, and so instructions would be welcome.
+TODO 这是一个二进制文件，因此需要一些说明。
 
-## 3\. Dialplan sample
+## 3\. 拨号计划示例
 
-**/etc/freeswitch/dialplan/default.xml (for example)**
+**/etc/freeswitch/dialplan/default.xml（例如）**
 
 ```xml
     <extension name="SignalWire INTEGRATIONS incoming call">
-      <condition field="destination_number" expression="^(\+18005551212)$"> <!-- the number you assigned in your dashboard -->
+      <condition field="destination_number" expression="^(\+18005551212)$"> <!-- 在仪表板上分配的号码 -->
         <action application="bridge" data="user/1000"/>
-      </condition>
-    </extension>
-
-    <extension name="signalwire INTEGRATIONS outgoing call">
-      <condition field="destination_number" expression="^(\+?\d{11})$">
-        <action application="answer"/>
-        <action application="bridge" data="sofia/gateway/signalwire/$1"/>
       </condition>
     </extension>
 ```
 
-## 4\. Components
+```xml
+<extension name="signalwire INTEGRATIONS outgoing call">
+  <condition field="destination_number" expression="^(\+?\d{11})$">
+    <action application="answer"/>
+    <action application="bridge" data="sofia/gateway/signalwire/$1"/>
+  </condition>
+</extension>
+```
+
+## 4. 组件
 
 ### 2.1 `mod_signalwire`
 
-This is official SignalWire module is part of FreeSWITCH v1.8.3 and later (check [Release Notes](../Release-Notes/index.mdx#-freeswitch--release-notes-)) and STACK v 20.18.2 which can be obtained from SignalWire STACK repositories. Contact SignalWire Sales ([sales@signalwire.com](mailto:sales@signalwire.com)) for more information. `mod_signalwire` installs as part of the default package and windows installs, and will loaded by default on new installs. See below for installation / loading instructions on existing installations.
+这是官方的SignalWire模块，是FreeSWITCH v1.8.3及更高版本（请查看[发布说明](../Release-Notes/index.mdx#-freeswitch--release-notes-)）和STACK v20.18.2的一部分，可以从SignalWire STACK存储库中获取。有关更多信息，请联系SignalWire销售部门（[sales@signalwire.com](mailto:sales@signalwire.com)）。`mod_signalwire`作为默认包和Windows安装的一部分进行安装，并且在新安装上默认加载。有关现有安装的安装/加载说明，请参见下文。
 
-### 2.2 SignalWire CLOUD Resources
+### 2.2 SignalWire CLOUD资源
 
-The CLOUD APIs and dashboard can be used together to enable a FreeSWITCH Integration for voice. The intuitive dashboard will allow users to create the Integration that is associated with your FreeSWITCH instance. APIs take it to another level and allow for quite a bit of flexibility.
+CLOUD API和仪表板可一起使用，用于启用用于语音的FreeSWITCH集成。直观的仪表板将允许用户创建与您的FreeSWITCH实例相关联的集成。 API将其带到另一个水平，并允许相当多的灵活性。
 
-SignalWire does not publish a list of IP's for public consumption as IP's may change. Customers can periodically run a command, or create a service to update firewalls regularly:
+SignalWire不公开IP列表供公众使用，因为IP可能会更改。客户可以定期运行命令或创建服务以定期更新防火墙：
 
 `dig sip.signalwire.com | egrep ^sip | awk '{ print $5 }' | xargs -n1 -I{} iptables -A INPUT -s {} -j ACCEPT`
 `dig relay.signalwire.com | egrep ^sip | awk '{ print $5 }' | xargs -n1 -I{} iptables -A INPUT -s {} -j ACCEPT`
 
-It is highly recommended to use domain-based authorizing as those are subject to change! Media comes from a wide variety of locations and is non-deterministic.
+强烈建议使用基于域的授权，因为这些是可能会发生变化的！媒体来自各种各样的位置，并且是非确定性的。
 
-### 2.3 CLOUD APIs 
+### 2.3 CLOUD API
 
-SignalWire Cloud APIs are defined here: <https://docs.signalwire.com/>
+SignalWire云API在这里定义：<https://docs.signalwire.com/>
 
-RELAY APIs can be found here: <https://docs.signalwire.com/relay-rest/>
+RELAY API可以在这里找到：<https://docs.signalwire.com/relay-rest/>
 
-### 2.4 CLOUD Integration UI/UX
+### 2.4 云集成界面
 
-Go to **Integrations** in your SignalWire Dashboard.
+在SignalWire仪表板中转到**集成**。
 
-## 5\. Connect to SignalWire by creating a new Integration/Connector
+## 5. 通过创建新的集成/连接器连接到SignalWire
 
-Only from FreeSWITCH 1.8.3
+仅适用于FreeSWITCH 1.8.3及以上版本
 
-You will need to be running at least FreeSWITCH 1.8.3, or STACK 20.18.2 in order to load the SignalWire module.
+您将需要至少运行FreeSWITCH 1.8.3版本或STACK 20.18.2版本以加载SignalWire模块。
 
-### Summary of the steps below
+### 下面是步骤摘要
 
-Step 0\. Load `mod_signalwire` .
+步骤0. 加载`mod_signalwire`。
 
-Step 1\. Get a connection token.
+步骤1. 获取连接令牌。
 
-Step 2\. Connect your instance to SignalWire (using the Dashboard).
+步骤2. 将您的实例连接到SignalWire（使用仪表板）。
 
-Step 3\. OUTBOUND CALLS: set up a purchased phone number to be used with your integration/connector.
+步骤3. 建立出站呼叫：设置已购买的电话号码与您的集成/连接器一起使用。
 
-Step 4\. INCOMING CALLS: associate a connector with a purchased number to handle incoming calls.
+步骤4. 建立入站呼叫：将连接器与已购买的号码关联，以处理入站呼叫。
 
-If **Step 4.** is omitted, any calls to the purchased number(s) will disconnect with busy signal.
+如果省略**步骤4**，则对已购买的号码进行的任何呼叫将以忙音断开。
 
-### Step 0\. Load `mod_signalwire`
+### 步骤0. 加载`mod_signalwire`
 
-Is it already loaded?
+已加载吗？
 
-`mod_signalwire` is enabled by default on new installations, but to check:
+新安装默认启用`mod_signalwire`，但可以进行以下检查：
 
-**fs\_cli**
+**fs_cli**
 
 ```xml
 freeswitch@vm> module_exists mod_signalwire
@@ -184,20 +180,20 @@ true
 ```
 
   
-1. Add (or uncomment) the line to your `modules.conf.xml` configuration file:  
+1. 在`modules.conf.xml`配置文件中添加（或取消注释）以下行：  
 **modules.conf.xml**  
 ```xml  
 <load module="mod_signalwire"/>  
 ```
-2. Use **`load mod_signalwire`** on `fs_cli`  
-**fs\_cli**  
+2. 在`fs_cli`上使用**`load mod_signalwire`**  
+**fs_cli**  
 ```xml  
 freeswitch@vm> load mod_signalwire  
 ```
 
-### Step 1\. Get a connection token
+### 步骤1. 获取连接令牌
 
-Issue the command **`signalwire token`** on `fs_cli` or, if the module had to be loaded, it is automatically generated by **`load mod_signalwire`** .
+在`fs_cli`上输入命令**`signalwire token`**，如果需要加载模块，则自动由**`load mod_signalwire`**生成。
 
 ```xml
 freeswitch@vm> signalwire token
@@ -209,45 +205,45 @@ freeswitch@vm> signalwire token
          /____/
 
  /=====================================================================\
-| Connection Token: abcdef12-1234-abcd-ef56-abcdef123456               |
+| 连接令牌: abcdef12-1234-abcd-ef56-abcdef123456               |
  \=====================================================================/
- Go to https://signalwire.com to set up your Connector now!
+ 点击此处 [https://signalwire.com] 设置您的连接器！
 ```
 
-### Step 2\. Connect your instance to SignalWire (using the Dashboard)
+### 步骤 2\. 将您的实例连接到 SignalWire（使用控制面板）
 
-1. Click on **Integrations**, and then to **Connect to FreeSwitch**  
-    
+1. 点击 **Integrations**，然后点击 **Connect to FreeSwitch**
+  
 ![](/attachments/19595544/27591656.jpeg)
-2. Fill out the form by adding a name and pasting the **connection token** from Step 1.  
-    
+2. 填写表格，添加一个名称，并将步骤 1 中的 **连接令牌** 粘贴进来
+
 ![](/attachments/19595544/27591661.jpeg)
 
-### Step 3\. OUTBOUND CALLS: set up a purchased phone number to be used with your integration/connector
+### 步骤 3\. 外呼电话：设置一个已购买的电话号码与您的集成/连接器一起使用
 
-Click on your newly created connector, specify your caller ID, and enter the one of your purchased phone numbers. (I had to copy-paste it for now from **Purchased Numbers** menu.)
+点击您新创建的连接器，指定您的来电显示号码，并输入您已购买的电话号码之一。（此时，我必须从 **已购买的号码** 菜单中复制粘贴。）
 
 ![](/attachments/19595544/27591828.jpeg)
 
-### Step 4\. INCOMING CALLS: associate a connector with a purchased number to handle incoming calls
+### 步骤 4\. 来电：将一个连接器关联到一个已购买的号码以处理来电
 
-Click **Edit** on the purchased phone number,
+点击已购买的电话号码的 **编辑**，
 
 ![](/attachments/19595544/27591829.jpeg)
 
-and, depending on your use case, choose "Voice Calls" or "Fax" at "HANDLE INCOMING CALLS AS", select "a FreeSwitch Connector" at "HANDLE CALLS USING", and finally, select the connector that you desire.
+然后，根据您的用例，在 "处理来电方式" 选择 "语音来电" 或 "传真" ，在 "处理来电时使用" 选择 "一个 FreeSwitch 连接器" ，最后，选择您想要的连接器。
 
 ![](/attachments/19595544/27591830.jpeg)
 
-## 6\. Generating a new token
+## 6\. 生成新的令牌
 
-In case a new token needs to be generated you may do so by deleting a couple of token related files in the storage folder. Location will depend on how FreeSWITCH was installed but for vanilla installations the location is `**/var/lib/freeswitch/storage**`
+如果需要生成一个新的令牌，可以通过删除存储文件夹中与令牌相关的一些文件来实现。具体的位置取决于FreeSWITCH的安装方式，但对于标准的安装方式，位置是 `**/var/lib/freeswitch/storage**` 。
 
-For best security practices be sure to delete any unassociated tokens from your SignalWire integrations dashboard.
+为了遵循最佳的安全实践，请务必从SignalWire集成仪表板中删除任何未关联的令牌。
 
-### Step 1\. Delete the current token and associated auth file 
+### 步骤 1. 删除当前的令牌和相关的认证文件
 
-**Bash or other CLI**
+**使用Bash或其他CLI命令行**
 
 ```bash
 root@fs_playground:/var/lib/freeswitch/storage# ls
@@ -257,43 +253,44 @@ root@fs_playground:/var/lib/freeswitch/storage# rm adoption-*.dat
 root@fs_playground:/var/lib/freeswitch/storage#
 ```
 
-### Step 2\. Reload mod_signalwire or restart FreeSWITCH
+### 步骤 2. 重新加载`mod_signalwire` 或重启FreeSWITCH
 
-**fs\_cli**
+**使用fs\_cli**
 
 ```text
-freeswitch@fs_playground> reload mod_signalwire
-2020-04-08 14:42:14.595274 [ERR] switch_xml.c:175 stun-set failed.
-2020-04-08 14:42:14.635211 [NOTICE] switch_loadable_module.c:1230 Deleting Dialplan 'signalwire'
-2020-04-08 14:42:14.635211 [NOTICE] switch_loadable_module.c:1318 Deleting API Function 'signalwire'
-2020-04-08 14:42:14.635211 [DEBUG] switch_loadable_module.c:1320 Write lock interface 'signalwire' to wait for existing references.
-2020-04-08 14:42:14.635211 [CONSOLE] switch_loadable_module.c:2398 Stopping: mod_signalwire
-2020-04-08 14:42:14.635211 [INFO] mod_signalwire.c:964 Disconnecting from SignalWire
-2020-04-08 14:42:14.635211 [INFO] mod_enum.c:884 ENUM Reloaded
-2020-04-08 14:42:14.635211 [INFO] switch_time.c:1433 Timezone reloaded 1750 definitions
-2020-04-08 14:42:14.635211 [NOTICE] switch_event.c:2134 Event Binding deleted for mod_signalwire:MODULE_LOAD
-2020-04-08 14:42:14.635211 [NOTICE] switch_event.c:2134 Event Binding deleted for mod_signalwire:MODULE_UNLOAD
-2020-04-08 14:42:14.635211 [NOTICE] switch_event.c:2134 Event Binding deleted for mod_signalwire:CUSTOM
-2020-04-08 14:42:14.755186 [CONSOLE] switch_loadable_module.c:2414 mod_signalwire stopping runtime thread.
-2020-04-08 14:42:14.935234 [NOTICE] switch_loadable_module.c:125 Thread ended for mod_signalwire
-2020-04-08 14:42:14.935234 [CONSOLE] switch_loadable_module.c:2418 mod_signalwire unloaded.
-2020-04-08 14:42:14.955214 [DEBUG] ks_thread.c:771 Allocating new thread, current active and attached count: 1, current active and detatched count: 0
+freeswitch@fs_playground> 重新加载mod_signalwire
+2020-04-08 14:42:14.595274 [错误] switch_xml.c:175 stun-set 失败。
+2020-04-08 14:42:14.635211 [注意] switch_loadable_module.c:1230 删除Dialplan 'signalwire'
+2020-04-08 14:42:14.635211 [注意] switch_loadable_module.c:1318 删除API函数 'signalwire'
+2020-04-08 14:42:14.635211 [调试] switch_loadable_module.c:1320 写锁定接口 'signalwire' 等待现有引用。
+2020-04-08 14:42:14.635211 [控制台] switch_loadable_module.c:2398 停止: mod_signalwire
+2020-04-08 14:42:14.635211 [信息] mod_signalwire.c:964 断开与SignalWire的连接
+2020-04-08 14:42:14.635211 [信息] mod_enum.c:884 ENUM 已重载
+2020-04-08 14:42:14.635211 [信息] switch_time.c:1433 时区重新加载了1750个定义
+2020-04-08 14:42:14.635211 [注意] switch_event.c:2134 删除了mod_signalwire的事件绑定:MODULE_LOAD
+2020-04-08 14:42:14.635211 [注意] switch_event.c:2134 删除了mod_signalwire的事件绑定:MODULE_UNLOAD
+2020-04-08 14:42:14.635211 [注意] switch_event.c:2134 删除了mod_signalwire的事件绑定:CUSTOM
+2020-04-08 14:42:14.755186 [控制台] switch_loadable_module.c:2414 mod_signalwire 停止运行时线程。
+2020-04-08 14:42:14.935234 [注意] switch_loadable_module.c:125 mod_signalwire 的线程已终止
+2020-04-08 14:42:14.935234 [控制台] switch_loadable_module.c:2418 mod_signalwire 已卸载。
+2020-04-08 14:42:14.955214 [调试] ks_thread.c:771 分配新线程，当前活动和已连接计数: 1，当前活动和已分离计数: 0
 
-2020-04-08 14:42:14.955214 [DEBUG] ks_thread.c:786 Thread state change: KS_THREAD_CALLER_STATE_INIT => KS_THREAD_STARTING, address: 0x7f86bd1ad2d8, tid: 00000000
+2020-04-08 14:42:14.955214 [调试] ks_thread.c:786 线程状态变化: KS_THREAD_CALLER_STATE_INIT => KS_THREAD_STARTING，地址: 0x7f86bd1ad2d8，tid: 00000000
+```
 
-2020-04-08 14:42:14.955214 [DEBUG] ks_thread.c:789 Thread state change: KS_THREAD_CALLER_STATE_INIT => KS_THREAD_CALLER_STATE_START_REQUESTED, address: 0x7f86bd1ad2d8, tid: 00000000
+2020-04-08 14:42:14.955214 [调试] ks_thread.c:789 线程状态变更: KS_THREAD_CALLER_STATE_INIT => KS_THREAD_CALLER_STATE_START_REQUESTED, 地址: 0x7f86bd1ad2d8, 线程ID: 00000000
 
-2020-04-08 14:42:14.955214 [DEBUG] ks_thread.c:797 Waiting for thread thread to set running, with address: 0x7f86e821ba38, tid: 00000000
+2020-04-08 14:42:14.955214 [调试] ks_thread.c:797 等待线程 thread 设置为运行中, 地址: 0x7f86e821ba38, 线程ID: 00000000
 
-2020-04-08 14:42:14.955214 [DEBUG] ks_thread.c:206 Thread has launched with address: 0x7f86e821ba38, tid: 00000000
+2020-04-08 14:42:14.955214 [调试] ks_thread.c:206 线程已启动， 地址: 0x7f86e821ba38, 线程ID: 00000000
 
-2020-04-08 14:42:14.955214 [DEBUG] ks_thread.c:220 Marking thread as running, with address: 0x7f86e821ba38, tid: 00000000
+2020-04-08 14:42:14.955214 [调试] ks_thread.c:220 将线程标记为运行中, 地址: 0x7f86e821ba38, 线程ID: 00000000
 
-2020-04-08 14:42:14.955214 [DEBUG] ks_thread.c:227 Thread state change: KS_THREAD_STARTING => KS_THREAD_RUNNING, address: 0x7f8708d8ec30, tid: 00000000
+2020-04-08 14:42:14.955214 [调试] ks_thread.c:227 线程状态变更: KS_THREAD_STARTING => KS_THREAD_RUNNING, 地址: 0x7f8708d8ec30, 线程ID: 00000000
 
-2020-04-08 14:42:14.955214 [DEBUG] ks_thread.c:824 Allocated (attached) thread context ptr: 0x7f86e821ba38, tid: 00000655
+2020-04-08 14:42:14.955214 [调试] ks_thread.c:824 分配（附加）线程上下文指针: 0x7f86e821ba38, 线程ID: 00000655
 
-2020-04-08 14:42:14.955214 [CONSOLE] mod_signalwire.c:915 Welcome to
+2020-04-08 14:42:14.955214 [CONSOLE] mod_signalwire.c:915 欢迎来到
      _____ _                   ___       ___
     / ___/(_)___ _____  ____ _/ / |     / (_)_______
     \__ \/ / __ `/ __ \/ __ `/ /| | /| / / / ___/ _ \
@@ -302,46 +299,39 @@ freeswitch@fs_playground> reload mod_signalwire
          /____/
 2020-04-08 14:42:14.955214 [INFO] mod_signalwire.c:616
  /=====================================================================\
-| Connection Token: aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee               |
+| 连接令牌: aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee               |
  \=====================================================================/
- Go to https://signalwire.com to set up your Connector now!
-2020-04-08 14:42:14.955214 [CONSOLE] switch_loadable_module.c:1804 Successfully Loaded [mod_signalwire]
-2020-04-08 14:42:14.955214 [NOTICE] switch_loadable_module.c:292 Adding Dialplan 'signalwire'
-2020-04-08 14:42:14.955214 [NOTICE] switch_loadable_module.c:412 Adding API Function 'signalwire'
-2020-04-08 14:42:15.175186 [NOTICE] mod_signalwire.c:379 Go to https://signalwire.com to set up your Connector now! Enter connection token aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee
-2020-04-08 14:42:15.175186 [INFO] mod_signalwire.c:1009 Next SignalWire adoption check in 1 minutes
-```
-
-### Step 3\. Input new token into your SignalWire integrations dashboard for adoption.
-
-Login to your project space and create a new integration. A few moments later you should get something similar to this on your console.
-
-**fs\_cli**
+ 立即前往 https://signalwire.com 设置您的连接器！
+2020-04-08 14:42:14.955214 [CONSOLE] switch_loadable_module.c:1804 成功加载 [mod_signalwire]
+2020-04-08 14:42:14.955214 [NOTICE] switch_loadable_module.c:292 添加拨号计划 'signalwire'
+2020-04-08 14:42:14.955214 [NOTICE] switch_loadable_module.c:412 添加 API 函数 'signalwire'
+2020-04-08 14:42:15.175186 [NOTICE] mod_signalwire.c:379 立即前往 https://signalwire.com 设置您的连接器！输入连接令牌 aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee
+2020-04-08 14:42:15.175186 [INFO] mod_signalwire.c:1009 下一次 SignalWire 采纳检查将在 1 分钟后进行
 
 ```text
-2020-04-08 14:52:15.915221 [INFO] mod_signalwire.c:404 SignalWire adoption of this FreeSWITCH completed
-2020-04-08 14:52:17.235212 [INFO] mod_signalwire.c:524 SignalWire Session State Change: [Normal=>Online] Status: 0 Reason: Manager completed state change request
-2020-04-08 14:52:19.015190 [INFO] mod_signalwire.c:1030 Connected to SignalWire
+2020-04-08 14:52:15.915221 [INFO] mod_signalwire.c:404 SignalWire采用这个FreeSWITCH已经完成
+2020-04-08 14:52:17.235212 [INFO] mod_signalwire.c:524 SignalWire会话状态更改：[正常=>在线] 状态：0 原因：管理器完成状态更改请求
+2020-04-08 14:52:19.015190 [INFO] mod_signalwire.c:1030 已连接到SignalWire
 2020-04-08 14:52:20.255213 [DEBUG] mod_signalwire.c:1103 "<?xml version="1.0"?> < SNIP >
 2020-04-08 14:52:20.255213 [INFO] mod_signalwire.c:1142 gwlist = ""
 2020-04-08 14:52:20.255213 [INFO] mod_signalwire.c:1115 profile MD5 = ""
-2020-04-08 14:52:20.255213 [INFO] mod_signalwire.c:1129 Received configuration from SignalWire
+2020-04-08 14:52:20.255213 [INFO] mod_signalwire.c:1129 从SignalWire接收配置
 2020-04-08 14:52:21.255207 [INFO] mod_signalwire.c:1142 gwlist = ""
-2020-04-08 14:52:21.295190 [INFO] switch_stun.c:897 External ip address detected using STUN: 
-2020-04-08 14:52:21.315175 [INFO] switch_stun.c:897 External ip address detected using STUN: 
-2020-04-08 14:52:21.355181 [DEBUG] mod_signalwire.c:558 Received XML lookup for SignalWire SIP profile
-2020-04-08 14:52:21.355181 [DEBUG] sofia.c:4606 debug [0]
-2020-04-08 14:52:21.355181 [DEBUG] sofia.c:4606 dialplan [signalwire]
-2020-04-08 14:52:21.355181 [DEBUG] sofia.c:4606 context [default]
+2020-04-08 14:52:21.295190 [INFO] switch_stun.c:897 使用STUN检测到外部IP地址： 
+2020-04-08 14:52:21.315175 [INFO] switch_stun.c:897 使用STUN检测到外部IP地址： 
+2020-04-08 14:52:21.355181 [DEBUG] mod_signalwire.c:558 收到了SignalWire SIP配置的XML查找
+2020-04-08 14:52:21.355181 [DEBUG] sofia.c:4606 调试 [0]
+2020-04-08 14:52:21.355181 [DEBUG] sofia.c:4606 拨号计划 [signalwire]
+2020-04-08 14:52:21.355181 [DEBUG] sofia.c:4606 上下文 [default]
 2020-04-08 14:52:21.355181 [DEBUG] sofia.c:4606 rtp-timer-name [soft]
 2020-04-08 14:52:21.355181 [DEBUG] sofia.c:4606 rtp-ip []
 2020-04-08 14:52:21.355181 [DEBUG] sofia.c:4606 sip-ip []
 2020-04-08 14:52:21.355181 [DEBUG] sofia.c:4606 ext-rtp-ip []
 2020-04-08 14:52:21.355181 [DEBUG] sofia.c:4606 ext-sip-ip []
 2020-04-08 14:52:21.355181 [DEBUG] sofia.c:4606 rtp-timeout-sec [300]
-2020-04-08 14:52:21.355181 [WARNING] sofia.c:5203 rtp-timeout-sec deprecated use media_timeout variable.
+2020-04-08 14:52:21.355181 [WARNING] sofia.c:5203 rtp-timeout-sec已弃用，请使用media_timeout变量。
 2020-04-08 14:52:21.355181 [DEBUG] sofia.c:4606 rtp-hold-timeout-sec [1800]
-2020-04-08 14:52:21.355181 [WARNING] sofia.c:5210 rtp-hold-timeout-sec deprecated use media_hold_timeout variable.
+2020-04-08 14:52:21.355181 [WARNING] sofia.c:5210 rtp-hold-timeout-sec已弃用，请使用media_hold_timeout变量。
 2020-04-08 14:52:21.355181 [DEBUG] sofia.c:4606 sip-port [6051]
 2020-04-08 14:52:21.355181 [DEBUG] sofia.c:4606 tls [True]
 2020-04-08 14:52:21.355181 [DEBUG] sofia.c:4606 tls-only [true]
@@ -355,103 +345,62 @@ Login to your project space and create a new integration. A few moments later yo
 2020-04-08 14:52:21.355181 [DEBUG] sofia.c:4606 inbound-late-negotiation [true]
 2020-04-08 14:52:21.355181 [DEBUG] sofia.c:4606 manage-presence [false]
 2020-04-08 14:52:21.355181 [DEBUG] sofia.c:4606 auth-calls [false]
-2020-04-08 14:52:21.355181 [INFO] sofia.c:6004 Setting MAX Auth Validity to 0 Attempts
-2020-04-08 14:52:21.355181 [INFO] mod_enum.c:884 ENUM Reloaded
-2020-04-08 14:52:21.355181 [WARNING] sofia.c:3708 Ignoring duplicate gateway 'signalwire'
-2020-04-08 14:52:21.355181 [DEBUG] mod_signalwire.c:1216 SignalWire SIP profile rescanned
-2020-04-08 14:52:21.375180 [INFO] switch_time.c:1433 Timezone reloaded 1750 definitions
+2020-04-08 14:52:21.355181 [INFO] sofia.c:6004 将最大授权有效性设置为0尝试
+2020-04-08 14:52:21.355181 [INFO] mod_enum.c:884 已重新加载ENUM
+2020-04-08 14:52:21.355181 [WARNING] sofia.c:3708 忽略重复的网关'signalwire'
+2020-04-08 14:52:21.355181 [DEBUG] mod_signalwire.c:1216 SignalWire SIP配置重新扫描
+2020-04-08 14:52:21.375180 [INFO] switch_time.c:1433 时区已重新加载，共1750个定义
 2020-04-08 14:52:22.375215 [INFO] mod_signalwire.c:1142 gwlist = ""
-2020-04-08 14:52:27.395173 [ERR] switch_stun.c:900 STUN Failed! [Timeout]
-2020-04-08 14:52:27.395173 [ERR] switch_xml.c:175 stun-set failed.
-2020-04-08 14:52:32.415176 [ERR] switch_stun.c:900 STUN Failed! [Timeout]
-2020-04-08 14:52:32.415176 [ERR] switch_xml.c:175 stun-set failed.
-2020-04-08 14:52:32.455207 [DEBUG] mod_signalwire.c:558 Received XML lookup for SignalWire SIP profile
-2020-04-08 14:52:32.455207 [INFO] mod_enum.c:884 ENUM Reloaded
-2020-04-08 14:52:32.455207 [DEBUG] sofia.c:4606 debug [0]
-2020-04-08 14:52:32.455207 [DEBUG] sofia.c:4606 dialplan [signalwire]
-2020-04-08 14:52:32.455207 [DEBUG] sofia.c:4606 context [default]
-2020-04-08 14:52:32.455207 [DEBUG] sofia.c:4606 rtp-timer-name [soft]
-2020-04-08 14:52:32.455207 [DEBUG] sofia.c:4606 rtp-ip []
-2020-04-08 14:52:32.455207 [DEBUG] sofia.c:4606 sip-ip []
-2020-04-08 14:52:32.455207 [DEBUG] sofia.c:4606 ext-rtp-ip []
-2020-04-08 14:52:32.455207 [DEBUG] sofia.c:4606 ext-sip-ip []
-2020-04-08 14:52:32.455207 [DEBUG] sofia.c:4606 rtp-timeout-sec [300]
-2020-04-08 14:52:32.455207 [WARNING] sofia.c:5203 rtp-timeout-sec deprecated use media_timeout variable.
-2020-04-08 14:52:32.455207 [DEBUG] sofia.c:4606 rtp-hold-timeout-sec [1800]
-2020-04-08 14:52:32.455207 [WARNING] sofia.c:5210 rtp-hold-timeout-sec deprecated use media_hold_timeout variable.
-2020-04-08 14:52:32.455207 [DEBUG] sofia.c:4606 sip-port [6051]
-2020-04-08 14:52:32.455207 [DEBUG] sofia.c:4606 tls [True]
-2020-04-08 14:52:32.455207 [DEBUG] sofia.c:4606 tls-only [true]
-2020-04-08 14:52:32.455207 [DEBUG] sofia.c:4606 tls-bind-params [transport=tls]
-2020-04-08 14:52:32.455207 [DEBUG] sofia.c:4606 tls-sip-port [6051]
-2020-04-08 14:52:32.455207 [DEBUG] sofia.c:4606 tls-verify-date [true]
-2020-04-08 14:52:32.455207 [DEBUG] sofia.c:4606 tls-verify-policy [none]
-2020-04-08 14:52:32.455207 [DEBUG] sofia.c:4606 tls-verify-depth [2]
-2020-04-08 14:52:32.455207 [DEBUG] sofia.c:4606 codec-prefs [OPUS,G722,PCMU,PCMA,G729,VP8,H264]
-2020-04-08 14:52:32.455207 [DEBUG] sofia.c:4606 inbound-codec-negotiation [generous]
-2020-04-08 14:52:32.455207 [DEBUG] sofia.c:4606 inbound-late-negotiation [true]
-2020-04-08 14:52:32.455207 [DEBUG] sofia.c:4606 manage-presence [false]
-2020-04-08 14:52:32.455207 [DEBUG] sofia.c:4606 auth-calls [false]
-2020-04-08 14:52:32.455207 [INFO] sofia.c:6004 Setting MAX Auth Validity to 0 Attempts
-2020-04-08 14:52:32.455207 [WARNING] sofia.c:3708 Ignoring duplicate gateway 'signalwire'
-2020-04-08 14:52:32.455207 [DEBUG] mod_signalwire.c:1245 SignalWire SIP gateway started
-2020-04-08 14:52:32.455207 [INFO] switch_time.c:1433 Timezone reloaded 1750 definitions
-```
-  
-  
-Manage Connectors/Integrations
+2020-04-08 14:52:27.395173 [ERR] switch_stun.c:900 STUN失败！[超时]
+2020-04-08 14:52:27.395173 [ERR] switch_xml.c:175 STUN设置失败。
+2020-04-08 14:52:32.415176 [ERR] switch_stun.c:900 STUN失败！[超时]
+2020-04-08 14:52:32.415176 [ERR] switch_xml.c:175 STUN设置失败。
+2020-04-08 14:52:32.455207 [DEBUG] mod_signal
 
-Outdated images
+过时的图片
 
-The images still have Connectors on them, but the principles are the same.
+这些图片上仍然带有连接器，但原则是相同的。
 
-### Settings & Caller ID
+### 设置和呼叫方ID
 
-Once the setup is complete, you can now enter the outbound Caller ID for this Integration which DID / Phone Number you would like to send calls as.
+一旦设置完成，您现在可以为此集成输入外拨呼叫方ID，选择您希望以哪个DID/电话号码发送呼叫。
 
 ![](https://lh6.googleusercontent.com/dOcXMoqj83CWFKehYGoZyck6XUF_tFHRSyjH2_TIOWPu0RgkOhxAX2gN9nxcyON6rJea_XYLFKzzTE26D_2bRfgqwzHDuX0ppnVpRntzP9VbHR1jNxsPbNI3_M70LCPV0I-Q8UEH)
 
-### Associating Phone Numbers with Integrations
+### 将电话号码与集成关联起来
 
-* Select Phone Numbers from the left navigation bar
-* Then select the Number you wish to associate with your Integration.
-* Select Integration, and the Integration type you wish to associate with your SignalWire service.
+* 从左侧导航栏选择电话号码
+* 然后选择要与您的集成关联的号码。
+* 选择集成，并选择您希望与SignalWire服务关联的集成类型。
 
 ![](https://lh6.googleusercontent.com/kmw0p4pWZjxIQhdlsz_4-oixpPYv6vjbNTFKBtmZwRfbfKYddtX3lG_B49CgNpSCeagMQNdj2UXW6mLe-xop0ZMf0ScUNvmvWu2M4hOnN8Z4dJOspwZR4IPc_W17AW8D4xZ4kb7f)
 
 ![](https://lh4.googleusercontent.com/QbvOom6KiZV9HhN8pWMvyC9Ofw4IWeHuViRdQe63CnZ27IFlZ68i9h2vW56680CvVmYs5JoFCk3Lb4E_BuMT4yvc5lhW7Ma57juoRHVmmq29ZCAIzx82Ng5q-BccLbHz6FQSk85x)
 
-## Pricing and Fees
+## 定价和费用
 
-  
-SignalWire Cloud fees are based on what our customers consume. There is no cost associated with the mod\_signalwire module itself.
+SignalWire Cloud的费用基于我们的客户消费情况。mod\_signalwire模块本身没有额外费用。
 
 <https://signalwire.com/disruptive-pricing>
 
-## Support
+## 支持
 
-  
-API Documentation
+API文档
 
 <https://docs.signalwire.com/relay-rest>
 
-  
-Slack Community
+Slack社区
 
 <https://slack.signalwire.community>
 
-  
-instructions for setting up mod\_signalwire on FreeSWITCH and creating a CLOUD Integration (private)
+在FreeSWITCH上设置mod\_signalwire和创建一个云集成的指南（私有）
 
 <https://freeswitch.org/confluence/display/FREESWITCH/mod%5Fsignalwire>
 
-  
-## Attachments:
+## 附件：
 
-![](/images/icons/bullet_blue.gif) [sw-integrations-new.jpeg](/attachments/19595544/27591656.jpeg) (image/jpeg)  
-![](/images/icons/bullet_blue.gif) [sw-integrations-new-form.jpeg](/attachments/19595544/27591661.jpeg) (image/jpeg)  
-![](/images/icons/bullet_blue.gif) [sw-edit-connection.jpeg](/attachments/19595544/27591828.jpeg) (image/jpeg)  
-![](/images/icons/bullet_blue.gif) [sw-purchased-numbers.jpeg](/attachments/19595544/27591829.jpeg) (image/jpeg)  
-![](/images/icons/bullet_blue.gif) [sw-purchased-numbers-edit.jpeg](/attachments/19595544/27591830.jpeg) (image/jpeg)  
-
-
+![](/images/icons/bullet_blue.gif) [sw-integrations-new.jpeg](/attachments/19595544/27591656.jpeg) （图片/图片格式：jpeg) 
+![](/images/icons/bullet_blue.gif) [sw-integrations-new-form.jpeg](/attachments/19595544/27591661.jpeg) （图片/图片格式：jpeg)
+![](/images/icons/bullet_blue.gif) [sw-edit-connection.jpeg](/attachments/19595544/27591828.jpeg) （图片/图片格式：jpeg) 
+![](/images/icons/bullet_blue.gif) [sw-purchased-numbers.jpeg](/attachments/19595544/27591829.jpeg) （图片/图片格式：jpeg) 
+![](/images/icons/bullet_blue.gif) [sw-purchased-numbers-edit.jpeg](/attachments/19595544/27591830.jpeg) （图片/图片格式：jpeg)

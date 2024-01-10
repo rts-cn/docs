@@ -1,89 +1,86 @@
+# OpenWrt
 
-# OpenWrt 
+## 关于
 
- 
+本页面旨在帮助其他人将FreeSWITCH配置到基于OpenWrt的路由器上运行。
 
-## About
+点击此处展开目录
 
-This page exists to help others configure FreeSWITCH to run on their OpenWrt based routers.
+* 1 [硬件](#硬件)
+* 2 [小注意事项](#小注意事项)
+* 3 [串口连接](#串口连接)
+* 4 [固件位置](#固件位置)
+* 5 [项目文件](#项目文件)
+* 6 [编译FreeSWITCH](#编译freeswitch)
+* 7 [内存消耗](#内存消耗)
+* 8 [当前编译模块列表](#当前编译模块列表)
+* 9 [样例启动/关闭脚本](#样例启动关闭脚本)
+* 10 [待办事项](#待办事项)
 
-Click here to expand Table of Contents
+## 硬件
 
-* 1 [Hardware](#hardware)
-* 2 [Small Caveat](#small-caveat)
-* 3 [Serial connection](#serial-connection)
-* 4 [Location of Firmware](#location-of-firmware)
-* 5 [Project Files](#project-files)
-* 6 [Compiling FreeSWITCH](#compiling-freeswitch)
-* 7 [Memory Consumption](#memory-consumption)
-* 8 [List of currently compiled modules](#list-of-currently-compiled-modules)
-* 9 [Sample startup/shutdown scripts](#sample-startupshutdown-scripts)
-* 10 [To Do](#to-do)
+开发工作是在一台Planex MZK-W04NU 802.11bgn 2.4GHz路由器上完成的。这款路由器在OpenWrt社区中得到了高度推荐，因为它在最新的OpenWrt发行版Kamikaze中得到了全面支持。这款路由器的一些优点包括：
 
-## Hardware
+* 对于这个级别的路由器来说，它拥有相对较大的内存，32MB，以及较大的闪存（8MB）。
+* USB 2.0接口。这为扩展提供了很多选择（闪存驱动器、外部硬盘、以太网和无线网卡、网络摄像头）。
+* Atheros的MIPS实现是与Linksys WRT54路由器相比较新的架构。AR9130是一款基于400MHz MIP32 24Kc处理器的芯片。
+* 构建该路由器的串口电缆非常容易。
+* 它相对便宜。在美国网上以约60美元的价格可购得。
 
-Development work was done on a Planex MZK-W04NU 802.11bgn 2.4ghz router. This router comes highly recommended from the OpenWrt community as it has gained full support within Kamikaze, the latest OpenWrt release. Some of the benefits of this router:
+在OpenWrt [论坛](http://forum.openwrt.org/viewtopic.php?id=18434&p=1)上有一个活跃的帖子讨论了这款路由器。
 
-* It has a relatively large amount of memory for a router of this class, 32MB and a good size flash (8MB).
-* USB 2.0 port. This provides many options for expansion (flash drives, external hard drives, ethernet and wifi dongles, web cams).
-* Atheros' MIPS implementation is a more recent architecture compared to the Linksys WRT54 routers. The AR9130 is a 400Mhz MIP32 24Kc based processor.
-* Very easy to build a serial cable for this router.
-* It's relatively inexpensive. Available online in the US for about 60 bucks.
+请记住，您应该能够在Kamikaze交叉编译环境下为任何受支持的路由器构建FreeSWITCH。
 
-There is an active thread on the OpenWrt [forums](http://forum.openwrt.org/viewtopic.php?id=18434&p=1) which discuss this router.
+## 小注意事项
 
-Keep in mind you should be able to build FreeSWITCH for any router that that is supported under a Kamikaze cross compile environment.
+尽管这款路由器具有诸多优点，但我必须指出一个关注点：
 
-## Small Caveat
+这个路由器里面的Atheros wifi无线电依赖于Linux的ath9k驱动程序。该驱动程序仍处于早期阶段，因此存在一些已知问题。其中一个最大的问题是被丢弃的SSID（[网址](http://forum.openwrt.org/viewtopic.php?pid=84464#p84464)）问题。参考文章中提到了一种解决方法。目前临时解决的方法是我不依赖于这个路由器的无线连接，并且在问题解决之后会重新使用。
 
-With all the benefits of this router I must state a concern:
+话虽这样，但我可以保证Linux系统的其他部分相当稳定。我一直使用r15083已经有一个多星期了，而且在使用FreeSWITCH时没有遇到任何问题。
 
-The Atheros wifi radio inside this router depends on the ath9k driver for Linux. This driver is still in its early stages and as such has some known issues. One of the biggest is the dropped [SSID](http://forum.openwrt.org/viewtopic.php?pid=84464#p84464) issue. The post referenced does document a workaround. In the interim I currently not do rely on the wireless connection from this router and will revisit this once the issue is remedied.
+## 串口连接
 
-With that said I can vouch the rest of the Linux system is quite STABLE. I've been running r15083 for over a week now with FreeSWITCH without any problems.
+如果你计划自己构建固件，我**强烈**建议你为这个路由器购买/自制一个串口电缆（[网址](http://www.nslu2-linux.org/wiki/HowTo/AddASerialPort)）。与WRT54系列等其他一些路由器不同，Planex不会在没有串口干预（uboot访问）的情况下接受tftp上传。如果在启动过程中内核反复崩溃，或者忘记包含任何网络驱动程序，那么直到你连接到串口之前，你将无法解决这个问题。
 
-## Serial connection
+另外，请记住，你不能直接将DB9串口电缆连接到主板上的接触点，因为PC串口的工作电压为12V，而大多数家用路由器（如这款）的电压为3.3V。你需要一个电缆逻辑转换器。上面的页面提供了一些有用的信息。我建议你在Ebay上购买一根Nokia DKU-5的电缆，价格低于4美元，这是你最简单的选择。
 
-If you plan to build your own firmware I **highly** recommend you acquire/build a [serial cable](http://www.nslu2-linux.org/wiki/HowTo/AddASerialPort) for this router. Unlike some other routers such as the WRT54 series, the Planex will not accept a tftp upload without serial intervention (uboot access). If you get in a situation where the kernel panics repeatedly during startup or you forgot to include any network drivers, you'll be SOL until you connect to the serial port.
+## 固件位置
 
-Also, keep in mind you cannot just directly connect your DB9 serial cable to the contacts on the board as PC serial ports operate at 12V. Most home routers such as this one have 3.3V connections. You will need a cable logic converter. The page above has some good information. I would suggest a Nokia DKU-5 cable on ebay for &lt; $4US as your easiest option.
+RoundSparrow很贴心地为这个[路由器](http://forum.openwrt.org/viewtopic.php?id=19475)提供了预编译的镜像。  
+他的直接[链接](http://sites.google.com/a/roundsparrow.com/openwrt%5Fap81/)
 
-## Location of Firmware
+## 项目文件
 
-RoundSparrow has been considerate enough to provide precompiled images for this [router: ](http://forum.openwrt.org/viewtopic.php?id=19475)  
-His direct [link](http://sites.google.com/a/roundsparrow.com/openwrt%5Fap81/)
+文件[freeswitch-openwrt.tar.gz](http://files.freeswitch.org/freeswitch-openwrt.tar.gz)包含几个文件：
 
-## Project Files
+- Makefile（自解释）
+- freeswitch-modules.conf（在编译时复制到构建文件夹）
+- 几个用于在交叉编译环境中构建所需的补丁文件
 
-The file [freeswitch-openwrt.tar.gz](http://files.freeswitch.org/freeswitch-openwrt.tar.gz) consists of several files:
+## 编译FreeSWITCH
 
-\- Makefile (self explanatory)   
-\- freeswitch-modules.conf (this gets copied to the build folder during compile)   
-\- several patch files required for building in a cross compile environment 
+在交叉编译FreeSWITCH之前，您需要一个OpenWrt构建系统。请记住，OpenWrt的交叉编译环境可能需要几个千兆字节的存储空间，所以您的Linux主机应该有足够的空间！这个帖子中的第一个[帖子](http://forum.openwrt.org/viewtopic.php?id=9180)是一个很好的阅读材料，可以了解如何从头开始构建Kamikaze。在完成步骤2.3并喝了几杯咖啡后，您可以准备提取tar文件。从trunk目录中提取tar文件。它应该将文件放在trunk/package/freeswitch下。
 
-## Compiling FreeSWITCH
+从trunk目录运行**make menuconfig**，选择Networking菜单，向下滚动直到找到**freeswitch**。将其选择为一个模块（M），这样将会构建一个ipk包，或者（\*）将其放在固件映像中。
 
-Before you can cross compile FreeSWITCH you'll need an OpenWrt build system. Keep in mind a cross compile environment for OpenWrt can take several gigabytes of storage so your Linux host should have plenty of space! The first [post](http://forum.openwrt.org/viewtopic.php?id=9180) in this thread is a good place to read on how to build Kamikaze from scratch. After following the steps up to 2.3 and have grabbed several cups of coffee :) you're ready to extract the tar file. Extract the tar file from the trunk directory. It should place the files under trunk/package/freeswitch
+此时，您可以键入：**make V=99 package/freeswitch-compile**。最后，您将在trunk/bin目录下找到一个freeswitch-snapshot.ipk文件。
 
-From the trunk directory, run **make menuconfig**, select Networking menu, scroll down until you see **freeswitch**. Select it as a module(M) which will build an ipk package or (\*) to be placed in the firmware image.
+如果您不想自己构建FreeSWITCH，可以尝试安装预打包的文件[freeswitch-openwrt.ipk](http://files.freeswitch.org/freeswitch-openwrt%5Fmips.ipk)。这仅适用于使用MIP32r2指令集的路由器（如上述的Planex）。传递给交叉编译器的GCC字符串为：“-mips32r2 -mtune=mips32r2”。
 
-At this point you can type: **make V=99 package/freeswitch-compile**. In the end you should end up with a freeswitch-snapshot.ipk file under trunk/bin.
+此软件包有几个依赖项：libncurses、libreadline、libpthread、libpcre、libgnutls
 
-If you don't want to build your own copy of FreeSWITCH you can attempt to install the prepackaged file, [freeswitch-openwrt.ipk](http://files.freeswitch.org/freeswitch-openwrt%5Fmips.ipk). This will ONLY work on routers that use the MIP32r2 instruction set (such as the Planex above). GCC strings that were passed to the cross compiler: "-mips32r2 -mtune=mips32r2"
+如果你对内容感到好奇，你可以用tar进行提取，因为它只是一个gzip tar文件。
 
-This package has several dependencies: libncurses, libreadline, libpthread, libpcre, libgnutls 
+## 内存消耗
 
-If you're curious about the contents you can just extract it with tar as it's just a gzip tar file.
-
-## Memory Consumption
-
-On average with FreeSWITCH running I see about 18MB memory (Virtual)
+平均而言，当FreeSWITCH在运行时，我看到大约18MB的内存被使用（虚拟）。
 
 ```xml
-Mem: 28536K used, 1296K free, 0K shrd, 488K buff, 7440K cached
+内存：使用了28536K，剩余1296K，共享0K，缓冲区488K，缓存7440K
 ```
 
-CPU: 9% usr 9% sys 0% nice 0% idle 81% io 0% irq 0% softirq Load average: 0.41 0.59 0.61
+CPU：usr 9% sys 9% nice 0% idle 0% io 0% irq 0% softirq 负载平均值：0.41 0.59 0.61
 
 ```xml
  PID  PPID USER     STAT   VSZ %MEM %CPU COMMAND
@@ -112,11 +109,11 @@ CPU: 9% usr 9% sys 0% nice 0% idle 81% io 0% irq 0% softirq Load average: 0.41 0
 1103     1 root     S     2792   9%   0% hostapd -P /var/run/wifi-wlan0.pid -B
 ```
 
-I strongly advise configuring a swap partition as you will most likely see the dreaded oom-killer (followed by a kernel panic) without it. I am currently using a USB flash drive partitioned for swap and an ext3 volume (for /usr/local/freeswitch). The faster the flash the better. I'm using a 200X flash (Patriot Xporter XT - best rating on newegg).
+我强烈建议配置交换分区，否则你很可能会遇到可怕的oom-killer（随之而来的是内核恐慌）。我目前使用的是一个分区的USB闪存作为交换分区，并且还有一个ext3分区（用于/usr/local/freeswitch）。闪存的速度越快越好。我正在使用一个200倍的闪存（Patriot Xporter XT - 在newegg上评分最高）。
 
-If you're use to running the FreeSWITCH console via a screen session on other unix systems (in order to disconnect and reconnect at a later time) you might be interested in running the console from the serial port session. This will allow you to detach/attach to the serial port without affecting the FreeSWITCH console session.
+如果你习惯于在其他UNIX系统上通过screen会话运行FreeSWITCH控制台（以便以后断开和重新连接），那么你可能会对通过串口会话运行控制台感兴趣。这样，你可以在不影响FreeSWITCH控制台会话的情况下分离/连接到串口。
 
-## List of currently compiled modules
+## 目前已编译的模块列表
 
 ```bash
 root@OpenWrt:/usr/local/freeswitch/mod# ls
@@ -131,7 +128,7 @@ mod_dptools.so            mod_g729.so               mod_say_en.so             mo
 mod_enum.so               mod_h26x.so               mod_sndfile.so            mod_xml_rpc.so
 ```
 
-## Sample startup/shutdown scripts
+## 示例启动/关闭脚本
 
  **startfs.sh**
 
@@ -143,26 +140,28 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PREFIX/lib
 $PREFIX/bin/freeswitch -conf $PREFIX/conf -db $PREFIX/db -log $PREFIX/log 
 
 ```
-
   
 **stopfs.sh**
 
 ```bash
- #!/bin/sh
+#!/bin/sh
 export PREFIX=/usr/local/freeswitch
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PREFIX/lib
 $PREFIX/bin/freeswitch -stop
 ```
   
   
-## To Do
+## 待办事项
 
-* Get NSPR/spider\_monkey compiled (doesn't play nice in a cross compiled environment)
-* Get lame/mod\_shout compiled (similar issue)
+* 编译NSPR/spider\_monkey（在交叉编译环境中遇到问题）
+* 编译lame/mod\_shout（类似的问题）
 
- ### Comments:
+ ### 评论:
 
-| Hello all,This page seems out of date. There are references to Kamikaze, which is an end-of-life release from way-back-when. And then there is information about a Planex MZK-W04NU router and a serial connection - which feel like they don't belong here. For one there are hundreds of routers supported by OpenWrt (if they all provide the minimum system requirements is another question). And the serial connection stuff is a topic of its own altogether ![(smile)](/images/icons/emoticons/smile.svg)On the OpenWrt Wiki there is an intro to FreeSWITCH on OpenWrt ([here](https://openwrt.org/docs/guide-user/services/voip/freeswitch)). Packages are created automatically by the OpenWrt build bots and can be easily installed with opkg. Init and hotplug script are provided by the main package.Kind regards,Seb ![](/images/icons/contenttypes/comment_16.png) Posted by Sebastian at Nov 17, 2018 09:09 |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+大家好，这个页面似乎已经过时了。有关于Kamikaze的引用，这是一个相当古老的版本。还有有关Planex MZK-W04NU路由器和串口连接的信息，感觉不适合放在这里。首先，OpenWrt支持数百种路由器（它们是否都满足最低系统要求是另一个问题）。而且串口连接的内容本身就是一个独立的主题！[(微笑)](/images/icons/emoticons/smile.svg)
 
+在OpenWrt Wiki上，有一篇介绍OpenWrt上FreeSWITCH的简介（[链接](https://openwrt.org/docs/guide-user/services/voip/freeswitch)）。OpenWrt的构建机器人会自动生成软件包，并且可以通过opkg轻松安装。初始化和热插拔脚本由主要的软件包提供。
 
+祝好，
+
+Seb ![](/images/icons/contenttypes/comment_16.png) Sebastian 于2018年11月17日 09:09发布

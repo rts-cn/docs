@@ -1,63 +1,60 @@
+# 第三方库
 
-# Third Party Libraries 
+## 关于
 
- 
-
-## About
-
-We will explain here how you can use luarocks to install third party libraries and use them in your Lua application
+我们将在这里解释如何使用luarocks安装第三方库并在Lua应用程序中使用它们。
 
 ### Luarocks
 
-Luarocks is a package/library manager for lua. It can install libraries into a systemwide directory and then you can Freeswitch's LUA to use them. You may have to install a systemwide lua just to keep the luarocks installer happy...
+Luarocks是Lua的一个包/库管理器。它可以将库安装到系统级目录，然后您可以在Freeswitch的LUA中使用它们。您可能需要安装一个系统级LUAT来让luarocks安装程序正常运行...
 
-For example if you want the LuaXML library in Ubuntu 12.04:
+例如，如果您想要在Ubuntu 12.04中使用LuaXML库：
 
 ```xml
 sudo apt-get install lua5.2 luarocks
 luarocks install luaxml
 ```
 
-Then edit /usr/local/freeswitch/conf/autoload\_configs/lua.conf.xml, de-comment lines to leave the following:
+然后编辑/usr/local/freeswitch/conf/autoload\_configs/lua.conf.xml，取消注释以留下以下内容：
 
 ```xml
 <param name="module-directory" value="/usr/lib/lua/5.2/?.so"/>
 <param name="module-directory" value="/usr/local/lib/lua/5.2/?.so"/>
 ```
 
-You may also add it manually in a script:
+您还可以在脚本中手动添加：
 
 ```xml
 package.path = package.path .. ";" .. [[/usr/share/lua/5.2/?.lua]]
 ```
 
-A lua script in your dialplan can now use the XML functions. A trivial example:
+现在，在您的拨号计划中，Lua脚本可以使用XML函数了。一个简单的示例：
 
 ```xml
 require("LuaXml")
 local xobj = xml.eval('<Cmd Message="Hello"/>')
-freeswitch.consoleLog("INFO","The message in the XML is "..xobj["Message"].."\n")
+freeswitch.consoleLog("INFO","XML中的消息是"..xobj["Message"].."\n")
 ```
 
-## Where to put third party Lua scripts/modules
+## 如何放置第三方Lua脚本/模块
 
-Where do I need to stick my Lua classes for FreeSWITCH to see them. I am running a Lua script from within the /scripts folder, but it includes (requires) another Lua file. FreeSWITCH.
+我应该把我的Lua类放在哪里，让FreeSWITCH能够找到它们。我在/scripts文件夹中运行Lua脚本，但它包括（需要）另一个Lua文件。FreeSWITCH.
 
-The short answer is /usr/local/share/lua/5.1/
+简单来说，答案是/usr/local/share/lua/5.1/
 
-Alternatively, you can install a system Lua (think apt-get or yum), and the Lua embedded in freeswitch will look in the add-ons directory.
+或者，您可以安装一个系统级Lua（例如apt-get或yum），freeswitch中的Lua将在附加目录中查找它们。
 
-To do this in the mod\_lua.conf file (currently not possible), the following development would be needed.
+要在mod\_lua.conf文件中执行此操作（当前无法实现），需要进行以下开发：
 
-* Install them to a nonstandard.
-* Push a nonstandard place into the path of where it looks.
+* 将它们安装到非标准位置。
+* 将非标准位置加入它查找的路径中。
 
-**NOTE:** Assuming you have &lt;param name="module-directory" value="$${base\_dir}/scripts/?.so"/> in lua.conf.xml, in the scripts, require statements in the form of:
+**注意：** 假设在 lua.conf.xml 文件中有 `<param name="module-directory" value="$${base\_dir}/scripts/?.so"/>` ，在脚本中，`require` 语句的形式如下： 
 
+```lua
 require "luasql.mysql"
+```
 
-This will look for the shared object ${base\_dir}/scripts/luasql/mysql.so
+这将在 `${base\_dir}/scripts/luasql/mysql.so` 中寻找共享对象。
 
-**NOTE:** The native MySQL driver for Lua has a very bad memory leak. Do not use it.
-
-
+**注意：** Lua 的原生 MySQL 驱动器存在非常严重的内存泄漏问题。请勿使用它。

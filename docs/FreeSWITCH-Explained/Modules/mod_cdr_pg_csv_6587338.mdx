@@ -1,50 +1,46 @@
-
 # mod_cdr_pg_csv 
 
- 
+## 关于
 
-## About
+该模块直接将通话详单记录（CDR）日志存储到一个PostgreSQL数据库中，使用在配置文件(`_freeswitch_/conf/autoload_configs/cdr_pg_csv.conf.xml`)中定义的模式。
 
-This module logs call detail records (CDRs) directly to a PostgreSQL database, using the schema defined in the config file (_freeswitch_/conf/autoload\_configs/cdr\_pg\_csv.conf.xml).
+如果由于任何原因插入记录失败，记录将被本地暂存到磁盘上，以CSV或者SQL格式（可由用户配置）。
 
-If a record insert fails for whatever reason, the record will be locally spooled to disk, in either CSV or SQL format (user-configurable).
+点击这里展开目录
 
-Click here to expand Table of Contents
+* 1 [安装](#installing)  
+   * 1.1 [数据库设置](#database-setup)
+* 2 [模式定义](#schema-definition)  
+   * 2.1 [定义字段](#defining-a-field)
 
-* 1 [Installing](#installing)  
-   * 1.1 [Database Setup](#database-setup)
-* 2 [Schema Definition](#schema-definition)  
-   * 2.1 [Defining a Field](#defining-a-field)
-
-## Installing
+## 安装
 
 **Debian:**
 
-To compile/install the module on Debian the PostgreSQL-Server-Devs are needed.
+在Debian上编译/安装该模块需要使用PostgreSQL-Server-Devs。
 
-On Squeeze/Wheezy/Jessie use PostgresSQL packages to install. You can use:
+在Squeeze/Wheezy/Jessie上使用PostgresSQL包进行安装。可以使用以下链接：
 
 <http://www.postgresql.org/download/linux/debian/>
 
-PostgresSQL maintains Debian packages for Postgres for (currently) Debian Squeeze (6.x), Debian Wheezy (7.x) and Debian Jessie (8.x). Their packages will likely be more modern and up to date than what's in the Debian packages.
+PostgresSQL为Debian Squeeze (6.x), Debian Wheezy (7.x)和Debian Jessie (8.x)维护Debian包。他们的包可能比Debian包中的版本更现代和更新。
 
-Read the link above and carefully add the packages to your system.
+请阅读上面的链接并仔细将包添加到您的系统中。
 
-Or
+或者
 
 ```xml
 aptitude install libpq-dev libpq5
 ```
 
-For compiling the module from Freeswitch uncomment the module in modules.conf and add the module to _freeswitch_/conf/autoload\_configs/modules.conf.xml for autoload:
+要从Freeswitch编译该模块，请取消注释modules.conf中的模块，并将模块添加到`_freeswitch_/conf/autoload_configs/modules.conf.xml`中以自动加载：
 
-**conf/autoload\_configs/modules.conf.xml**
+**conf/autoload_configs/modules.conf.xml**
 
 ```bash
 <load module="mod_cdr_pg_csv"/>
 ```
 
-  
 **CentOS 6.x:**
 
 ```xml
@@ -52,11 +48,11 @@ rpm -ivh http://yum.postgresql.org/9.1/redhat/rhel-6-i386/pgdg-centos91-9.1-4.no
 yum -y install postgresql91-devel postgresql91-server postgresql91-odbc postgresql91-plperl
 ```
 
-Link your pg\_config like this: ln -s /usr/pgsql-9.1/bin/pg\_config /usr/bin
+将`pg_config`链接到以下位置: ln -s /usr/pgsql-9.1/bin/pg_config /usr/bin
 
-**For CentOS to use PG 9.X instead of 8.3 (Standard w/git pull version) Series:**
+**对于CentOS使用PG 9.X代替8.3（标准的w/git pull版本）系列:**
 
-Modify Makefile for mod\_cdr\_pg\_csv to look like this:
+将 Makefile 修改为如下所示：
 
 ```xml
 UNAME := $(shell uname -s)
@@ -75,60 +71,60 @@ endif
 include ../../../../build/modmake.rules
 ```
 
-### Database Setup
+### 数据库设置
 
-Edit conf/autoload\_configs/cdr\_pg\_csv.conf.xml
+编辑 conf/autoload\_configs/cdr\_pg\_csv.conf.xml
 
 ```xml
 <param name="db-info" value="host=localhost dbname=DBname user=DBuser password=DBpass connect_timeout=10" />
 ```
 
-make sure postgresql is set as md5 login in the pg\_hba.conf.
+确保将 postgresql 设置为在 pg\_hba.conf 中以 md5 登录。
 
 ```xml
 host     all      all    127.0.0.1/32 md5 
 local    all      all                 md5
 ```
 
-## Schema Definition
+## 模式定义
 
-The _schema_ section of the config tells the module which channel variable to grab from the call's session, and how to handle them. The SQL INSERT query will be constructed using parameters defined in the schema section, and fields will be in the order they are listed in the config file. 
+配置文件中的 _schema_ 部分告诉模块从呼叫会话中获取哪些通道变量以及如何处理它们。SQL INSERT 查询将使用模式部分中定义的参数构建，并且字段的顺序将与配置文件中列出的顺序一致。
 
-* All fields are treated as strings (eg. they will have single quotes around them in the SQL query), unless specified otherwise.
-* If a channel variable resolves to an empty string, it will be cast to a SQL null, unless specified otherwise.  
-   * The reason for this is to be able to use more efficient, native PostgreSQL column types, such as _timestamp_ (optionally with timezone), _inet_ for storing IPv4/IPv6 addresses, and _uuid_ for natively storing a UUID as a 128 bit binary value. PostgreSQL will not automatically cast empty strings for such fields, and therefore the values need to be handled by the module.
+* 所有字段都被视为字符串（例如，在SQL查询中，它们将用单引号括起来），除非另有规定。
+* 如果通道变量解析为空字符串，则会将其转换为SQL空值，除非另有规定。
+   * 这样做的原因是为了能够使用更高效、本地的PostgreSQL列类型，如_timestamp_（可选带有时区）、_inet_ 用于存储IPv4/IPv6地址，以及_uuid_ 用于原生存储128位二进制值的UUID。PostgreSQL不会自动将空字符串转换为此类字段，因此需要模块处理这些值。
 
-### Defining a Field
+### 定义字段
 
-The absolute minimum required to define a field is the channel variable name. Fields that do not specify a _var_ attribute will be ignored. The following example will attempt to get a value for the channel variable_caller\_id\_number_, and will treat it as a string.
+定义字段的绝对最低要求是通道变量名称。没有指定_var_属性的字段将被忽略。以下示例将尝试获取通道变量_caller\_id\_number_的值，并将其视为字符串。
 
 ```xml
- <field var="caller_id_number"/>
+<field var="caller_id_number"/>
 ```
 
-To use a column name that is different to the channel variable name, simply override it in the field definition:
+如果要使用不同于通道变量名称的列名，只需在字段定义中进行覆盖：
 
 ```xml
 <field var="local_ip_v4" column="server_address"/>
 ```
 
-**Sample CDR table schema**
+**样本CDR表架构**
 
 ```sql
-create table cdr (
-    id                        serial primary key,
-    local_ip_v4               inet not null,
+创建表cdr (
+    id                        serial 主键,
+    local_ip_v4               inet 非空,
     caller_id_name            varchar,
     caller_id_number          varchar,
-    destination_number        varchar not null,
-    context                   varchar not null,
-    start_stamp               timestamp with time zone not null,
+    destination_number        varchar 非空,
+    context                   varchar 非空,
+    start_stamp               timestamp with time zone 非空,
     answer_stamp              timestamp with time zone,
-    end_stamp                 timestamp with time zone not null,
-    duration                  int not null,
-    billsec                   int not null,
-    hangup_cause              varchar not null,
-    uuid                      uuid not null,
+    end_stamp                 timestamp with time zone 非空,
+    duration                  int 非空,
+    billsec                   int 非空,
+    hangup_cause              varchar 非空,
+    uuid                      uuid 非空,
     bleg_uuid                 uuid,
     accountcode               varchar,
     read_codec                varchar,
@@ -137,5 +133,3 @@ create table cdr (
     ani                       varchar
 );
 ```
-
-

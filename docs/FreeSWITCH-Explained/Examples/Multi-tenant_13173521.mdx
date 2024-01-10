@@ -1,41 +1,38 @@
+# 多租户
 
-# Multi-tenant 
+## 关于
 
- 
+**注意**: _关于[多公司](../Auxiliary-Knowledge-and-Utilities/Multi-home-tutorial/Multiple-Companies_13173524.mdx#about)页面还有一些有用的信息需要合并。_
 
-## About
+FreeSWITCH可以配置为在多租户场景中托管多个独立的公司和客户，例如由单个FreeSWITCH实例服务的多租户建筑，或者为众多公司和客户提供服务的商业提供商，它们都需要在分机、拨号计划、网关等方面相互隔离。
 
-**Note**: _There is also some useful information on the [Multiple Companies](../Auxiliary-Knowledge-and-Utilities/Multi-home-tutorial/Multiple-Companies_13173524.mdx#about) page, which needs merging._
+这样的配置很简单：SIP域是关键。使用SIP域将每个租户分离到自己的域中，可以重用相同的拨号计划。只有当一些租户的前端是IVR，以及一些租户将DID直接映射到分机时，才会有例外。
 
-FreeSWITCH can be configured to host multiple separate companies and clients in a multi-tenant scenario, such as a multi-tenant building served by a single FreeSWITCH instance, or commercial providers serving numerous companies and clients, all of which require isolation from one another regarding extensions, dialplans, gateways, etc.
+**免责声明**：FreeSWITCH是一个非常灵活的平台，有很多方法可以完成同样的任务。在某个时间点上，最佳实践将出现，但这是我使用的强制方法。
 
-Such configuration is simple: SIP Domains are the key. Separating each tenant into its own domain using SIP domains offers the advantage of being able to reuse the same dialplan for every tenant. Exceptions to this are when some tenants have an IVR as their front end, and some tenants map DIDs directly to extensions.
+点击这里展开目录
 
-**Disclaimer:** FreeSWITCH is a VERY flexible platform, and with that flexibility, you get many ways to achieve the same task. At some point best practices will emerge, but this is the brute force method I used.
+* 1 [SIP域背景](#sip-domain-background)
+* 2 [要编辑的文件](#files-to-edit)
+* 3 [目录](#directory)
+* 4 [呼入路由](#inbound-call-routing)
+* 5 [呼出路由](#outbound-call-routing)
+* 6 [SIP配置文件](#sip-profiles)
+* 7 [网关](#gateways)
 
-Click here to expand Table of Contents
+## SIP域背景
 
-* 1 [SIP Domain background](#sip-domain-background)
-* 2 [Files to edit](#files-to-edit)
-* 3 [Directory](#directory)
-* 4 [Inbound Call Routing](#inbound-call-routing)
-* 5 [Outbound Call Routing](#outbound-call-routing)
-* 6 [SIP Profiles](#sip-profiles)
-* 7 [Gateways](#gateways)
+要理解SIP路由的概念，可以使用电子邮件地址作类比。考虑一个电子邮件地址：joe.smith@company-a.com。这个地址由两部分组成：用户ID在@左边，域名在@右边。互联网DNS系统有一种简单但有效的方法来确定如何将邮件发送到company-a.com的用户Joe Smith。它涉及向DNS层次结构询问一组将接受company-a.com邮件的主机名。DNS会回复一份接受该邮件的主机名列表。这些机器不一定要处于company-a.com命名空间。任何具有company-a.com的有效MX（邮件交换器）记录的机器都可以接受邮件。发送主机然后从列表的顶部开始，逐个尝试连接主机，直到有一个响应。还有更多细节，但这种程度的解释已足够。SIP域没有DNS MX记录，因为这些记录是保留给互联网邮件使用的。DNS SRV（Service记录）可以起到相同的作用。SRV记录可用于在互联网上路由多协议数据。有关DNS SRV和SIP的更多信息，请参阅[RFC 3263](http://tools.ietf.org/html/rfc3263)。
 
-## SIP Domain background
+记录域配置的最佳方式是直接进入XML配置文件中。下面展示的配置使用了默认的XML配置，并添加了域支持。可以删除默认拨号计划的几个部分，因为它们是不需要的。文档记录了一个基本的、没有花哨功能的多租户系统，每个租户（域）的确定都是根据呼叫的来源。传入呼叫直接路由到具有1:1映射的分机。
 
-To understand the concept of SIP routing, the analogy is email addresses. Consider the email address joe.smith@company-a.com. This address is composed of two parts: the user id, on the left of the @, and the domain name, on the right of the @. The Internet DNS system has a simple but effective way of determining how to get email addressed to user Joe Smith, at company-a.com. It involves asking the DNS hierarchy for a list of host names that will accept mail for company-a.com. DNS responds with a list of host names that will accept the mail. The machines do not have to live in the company-a.com namespace. Any machine that has a valid MX (mail exchanger) record for company-a.com is acceptable to send mail to. The sending host then starts at the top of the list, and starts trying to connect to the hosts, one by one, until one responds. There are more intricate details, but this level of explanation will do. SIP domains do not have DNS MX records, as those are reserved for internet mail. DNS SRV records serve the same purpose. SRV records can be used for routing multi-protocol data around the internet. For more information on DNS SRV and SIP, refer to [RFC 3263](http://tools.ietf.org/html/rfc3263)
+## 需要编辑的文件
 
-The best way to document the configuration of domains is to dive right into the XML config files. The configuration shown below uses the stock XML default configuration, with domain support added. Several sections of the default dialplan can be ripped out, because they are not needed. Documented is a basic, no frills multi-tenant system with each tenant(domain) determined from where the call originated. Inbound calls are routed directly to extensions with a 1:1 mapping.
+我们将配置拆分为四个部分：[目录](../Directory/XML-User-Directory/index.mdx#about)，呼入和呼出路由，SIP配置文件和网关。
 
-## Files to edit
+## 目录
 
-We will break down the configuration into four sections: [Directory](../Directory/XML-User-Directory/index.mdx#about), Inbound and Outbound call routing, SIP profiles, and gateways.
-
-## Directory
-
-First, lets start by building the directory. under conf/directory, you'll notice a default.xml and default/ folder. Copy both of these to company-a.com.xml, and company-a.com, respectively. The names of the files and folder are arbitrary, but it makes sense to name them to match the domain you are creating. The configuration I desired was for each domain to receive and send calls to it's own external gateways via upstream ITSPs, with a unique account per domain, but you can just as easily use one upstream ITSP account to terminate and originate all calls.
+首先，我们从构建目录开始。在conf/directory下，您会注意到有一个default.xml文件和一个default文件夹。分别将这两个文件复制到company-a.com.xml和company-a.com。这些文件和文件夹的名称是任意的，但是将它们命名为与您正在创建的域名相匹配是有意义的。我所希望的配置是每个域名都能够通过上游ITSP与自己的外部网关进行通话，并拥有一个独特的帐户，但您也可以很容易地使用一个上游ITSP帐户来终止和发起所有通话。
 
 **/directory/company-a.com.xml**
 
@@ -52,16 +49,15 @@ First, lets start by building the directory. under conf/directory, you'll notice
       <variable name="record_stereo" value="true"/>
 
       <!-- 
-       Defines the area code for this customers local calling area.
-       You can also define this per user, or per site, since some 
-       companies' have multiple offices in different area codes 
+       为这个客户的本地呼叫区域定义区号。
+       您还可以根据用户或站点来定义这个，因为有些公司在不同的区号下有多个办公室。
       -->
       <variable name="area_code" value="251"/>
       <variable name="transfer_fallback_extension" value="operator"/>
 
       <!-- 
-       define the outbound gateway to for dialing outside the domain 
-       defined per domain to allow different gateways for every domain
+       定义用于拨打域外电话的出站网关
+       每个域都可以定义一个不同的网关
       -->
       <variable name="outbound_gateway" value="company-a.com-outbound"/>
     </variables>
@@ -74,97 +70,92 @@ First, lets start by building the directory. under conf/directory, you'll notice
 </include>
 ```
 
-In `conf/directory/company-a.com/`, you will have the normal directory entries for each UA/user, just as in the default configuration. There is nothing special about those files.
+在`conf/directory/company-a.com/`目录下，您将拥有每个UA/用户的正常目录条目，就像默认配置中那样。这些文件没有什么特别之处。
 
-## Inbound Call Routing
+## 呼入路由
 
-The method I used to route inbound calls is very simple: Match the inbound DID, set the domain, then transfer the call into the default dialplan. The advantage of this is a single dialplan handles ALL inbound calls. If you restrict your UAs to specific extension ranges, like the default 1000-1nnn, the dialplan can be very simple. To take advantage of larger scale solutions, such as curl\_xml, etc for call routing, that's best left to your own experimentation. The example here is the most basic that makes use of as much of the sample default dialplan as possible, so as to make it easy for you to get multi-tenant working, then deal with scalability and redundancy issues later.
+我用来路由呼入通话的方法非常简单：匹配呼入DID，设置域名，然后将通话转移到默认拨号计划中。这样做的好处是单个拨号计划处理所有呼入通话。如果您将您的UA限制为特定的分机范围，比如默认的1000-1nnn，那么拨号计划可以非常简单。要利用更大规模的解决方案，比如curl\_xml等进行呼叫路由，最好是自行进行实验。这里的示例是最基本的示例，尽可能多地使用示例默认拨号计划，以便让您轻松实现多租户工作，然后再处理可扩展性和冗余性问题。
 
-This example uses the default diaplan context for all domains. It assumes each tenant uses the same dialplan. Separating each tenant into its own dialplan context is a best practice.
+此示例使用所有域的默认拨号计划上下文。它假设每个租户都使用相同的拨号计划。将每个租户分隔到自己的拨号计划上下文中是一种最佳实践。
 
 **dialplan/public/00\_inbound.xml**
 
 ```xml
 <include>
 <extension name="company-a.com 1000">   
-         <condition field="destination_number" expression="1235551212"> 
-          <action application="set" data="domain_name=company-a.com"/>
-          <action application="transfer" data="1000 XML default"/>
-         </condition>
-         
-         
-        </extension> 
- <extension name="company-b.com 1000">
-  <condition field="destination_number" expression="1235551213"> 
-                
-         <action application="set" data="domain_name=company-b.com"/>
-         <action application="set" data="domain=company-b.com"/>
-          <action application="transfer" data="1000 XML default"/>
-         </condition>
-     </extension>
+    <condition field="destination_number" expression="1235551212"> 
+        <action application="set" data="domain_name=company-a.com"/>
+        <action application="transfer" data="1000 XML default"/>
+    </condition>
+</extension> 
+
+<extension name="company-b.com 1000">
+    <condition field="destination_number" expression="1235551213"> 
+        <action application="set" data="domain_name=company-b.com"/>
+        <action application="set" data="domain=company-b.com"/>
+        <action application="transfer" data="1000 XML default"/>
+    </condition>
+</extension>
+
 </include>
 ```
 
-Also note, IVRs and DIDs can all be handled in the dialplan with multiple tenants. If domain wishes to use an IVR, just build an extension like:
+还要注意，IVR和DID都可以在拨号计划中处理，并且可以用于多个租户。如果域要使用IVR，只需建立一个类似以下的分机：
 
 ```xml
 <extension name="company-b.com IVR">
-  <condition field="destination_number" expression="1235551213"> 
-                
-         <action application="set" data="domain_name=company-b.com"/>
-         <action application="set" data="domain=company-b.com"/>
-          <action application="transfer" data="company_b_ivr XML default"/>
-         </condition>
-     </extension>
+    <condition field="destination_number" expression="1235551213"> 
+        <action application="set" data="domain_name=company-b.com"/>
+        <action application="set" data="domain=company-b.com"/>
+        <action application="transfer" data="company_b_ivr XML default"/>
+    </condition>
+</extension>
 </include>
 ```
 
-and then in the default dialplan, create an extension called `company_b_ivr`that launches the IVR. Again, this is just one method, your mileage may vary.
+然后在默认的拨号计划中创建一个名为`company_b_ivr`的分机，用于启动IVR。再次强调，这只是一种方法，您可以根据实际情况进行调整。
 
-## Outbound Call Routing
+## 呼出路由
 
-Outbound call routing is also easy; it's just like the default configuration. A good place to put your outbound dial plans in conf/dialplan/default/yourdomain.xml
+呼出路由也很简单，就像默认配置一样。将您的呼出拨号计划放在conf/dialplan/default/yourdomain.xml中的合适位置。
 
-## SIP Profiles
+## SIP配置文件
+```
 
-In one of the 1.0.4pre releases, the default internal SIP profile (conf/sip\_profiles/internal.xml) was significantly edited and commented up. In this file you will find the params "force-register-domain" and "force-register-db-domain" as shown here:
+在其中一次1.0.4pre版本的发布中，对默认的内部SIP配置文件（conf/sip\_profiles/internal.xml）进行了重大编辑和注释。在此文件中，你会发现以下参数 "force-register-domain" 和 "force-register-db-domain"，如下所示：
 
 ```xml
 <!--
-        These are enabled to make the default config work better out of the box.
-        If you need more than ONE domain you'll need to not use these options.
+        这些参数已启用，以便默认配置能更好地运行。
+        如果你需要多个域名，你需要不使用这些选项。
 
     -->
-    <!--all inbound reg will look in this domain for the users -->
+    <!--所有入站注册都将在此域名下查找用户 -->
     <param name="force-register-domain" value="$${domain}"/>
-    <!--all inbound reg will stored in the db using this domain -->
+    <!--所有入站注册都将使用此域名存储在数据库中 -->
     <param name="force-register-db-domain" value="$${domain}"/>
 ```
 
-Also, modified
+同时也进行了修改
 
 ```xml
-    <!--force the domain in subscriptions to this value -->
+    <!--强制订阅的域名设置为此值 -->
     <param name="force-subscription-domain" value="$${domain}"/>
 ```
 
-To,
+至
 
 ```xml
-    <!--force the domain in subscriptions to this value -->
+    <!--强制订阅的域名设置为此值 -->
     <!--<param name="force-subscription-domain" value="$${domain}"/>-->
 ```
 
-Go ahead and comment out both of these options to enable multi-tenant/multi-domain registrations. If you fail to do so, your users will register as "1001@", where 1001 is the extension, with no domain after the @ symbol.
+继续注释掉这两个选项，以启用多租户/多域名注册。如果你未能这样做，你的用户将注册为"1001@"，其中1001是分机号码，@号后面没有域名。
 
-## Gateways
+## 网关
 
-Gateways are mentioned here, because you have several options when defining connections to other SDPs, or Gateways; let your imagination be your guide. If you 'think' you can do it, you probably can. Gateways can be defined in a profile, or in a domain (in the directory). Take your pick. Defining gateways in a domain allows you to have different gateways per domain. This is helpful for accounting purposes. Some providers allow you to create sub-accounts, and one use case may be to define a sub account per domain, to be able to separate out your CDRs, etc.
+在这里提到了网关，因为在定义与其他SDP或网关的连接时，你有几个选项；让你的想象力引导你。如果你“认为”你能做到，那么你可能真的能做到。可以在一个配置文件中或在一个域中（在目录中）定义网关，随你选择。在域中定义网关可以让你每个域使用不同的网关。这对于会计目的很有帮助。一些供应商允许你创建子账户，其中一个用例是为每个域定义一个子账户，以便能够分开CDR等记录。
 
-  
-### Comments:
+### 评论：
 
-| if you are using this, please be care and DO NOT put the address or domains you are using in the acl.conf.xml or you ACL any where. this makes it to your endpoints dont really auth, and thereby causing the user\_context to not be honored, and instead dumping them into the context defined inside of the sofia profile that the devices register against ![](/images/icons/contenttypes/comment_16.png) Posted by akp at Apr 29, 2020 14:41 |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-
-
+如果您在使用此功能，请小心，**切勿**在`acl.conf.xml`或任何地方加入您正在使用的地址或域名。这样会导致您的终端设备无法真正进行授权，因此无法遵守用户上下文，并将其转至设备注册所在的 Sofia 配置文件中定义的上下文！发布者：akp，发布于2020年4月29日14:41。

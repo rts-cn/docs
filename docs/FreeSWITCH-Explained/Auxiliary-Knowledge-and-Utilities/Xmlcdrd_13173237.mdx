@@ -1,56 +1,53 @@
+# Xmlcdrd
 
-# Xmlcdrd 
+点击此处展开目录
 
- 
-
-Click here to expand Table of Contents
-
-* 1 [Xmlcdrd FastCGI CDR Logger](#xmlcdrd-fastcgi-cdr-logger)  
-   * 1.1 [Overview](#overview)  
-   * 1.2 [How does it work](#how-does-it-work)  
-   * 1.3 [Requirements](#requirements)  
-   * 1.4 [Configuration overview](#configuration-overview)  
-      * 1.4.1 [Mod\_xml\_cdr Configuration](#xmlcdrd-fastcgi-cdr-logger)  
-         * 1.4.2 [mysqlcdr plugin](#xmlcdrd-fastcgi-cdr-logger)  
-         * 1.4.3 [luaexec plugin](#--)  
-   * 1.5 [Build](#--)  
-   * 1.6 [More complex example of radius accounting with stop packets](#xmlcdrd-fastcgi-cdr-logger)
+* 1 [Xmlcdrd FastCGI CDR Logger](#xmlcdrd-fastcgi-cdr-logger)
+   * 1.1 [概述](#概述)
+   * 1.2 [工作原理](#工作原理)
+   * 1.3 [需求](#需求)
+   * 1.4 [配置概述](#配置概述)
+      * 1.4.1 [Mod\_xml\_cdr 配置](#xmlcdrd-fastcgi-cdr-logger)
+         * 1.4.2 [mysqlcdr 插件](#xmlcdrd-fastcgi-cdr-logger)
+         * 1.4.3 [luaexec 插件](#--)
+   * 1.5 [构建](#--)
+   * 1.6 [带有停止数据包的半径计费更复杂示例](#xmlcdrd-fastcgi-cdr-logger)
 
 ## Xmlcdrd FastCGI CDR Logger
 
-### Overview
+### 概述
 
-Xmlcdrd is a FastCGI daemon that works together with [mod\_xml\_cdr](../Modules/mod_xml_cdr_6587377.mdx#faq) to process CDR records. Right now xmlcdrd can store CDR fields into MySQL tables, submit Radius accounting (stop) packets and run custom Lua scripts on CDR. Functionality of xmlcdrd could be extended by writing plugins for other databases or different script languages,so expect ODBC plugin soon.
+Xmlcdrd 是一个与 [mod\_xml\_cdr](../Modules/mod_xml_cdr_6587377.mdx#faq) 配合处理 CDR 记录的 FastCGI 守护程序。目前，xmlcdrd 可以将 CDR 字段存储到 MySQL 表中，提交半径计费（停止）数据包，并在 CDR 上运行自定义 Lua 脚本。可以通过为其他数据库编写插件或使用不同的脚本语言扩展 xmlcdrd 的功能，因此很快就会有 ODBC 插件。
 
-### How does it work
+### 工作原理
 
-Xmlcdrd is run with FastCGI compliant web server. It has been tested with lighttpd version 1.4, but could work with any server which supports FastCGI. When fcgi receives the CDR, it parses it and stores the configured XML entries (variables) into a hash table. Then it matches variables against "plugin metrics" and passes that hash table to plugins main function on successful match. Serveral instances of xmlcdrd can be started if one instance is not enough for CDR processing. All xmlcdrd logging goes to the stderr, so it's inside web servers error logs.
+Xmlcdrd 是与 FastCGI compliant 网络服务器一起运行的。它已在 1.4 版的 lighttpd 上进行了测试，但也可以在支持 FastCGI 的任何服务器上使用。当 FastCGI 接收到 CDR 时，它会解析并将配置的 XML 条目（变量）存储到哈希表中。然后它会将变量与 "插件指标" 进行匹配，并在成功匹配时将该哈希表传递给插件的主函数。如果单个实例无法处理 CDR，则可以启动多个 xmlcdrd 实例。所有 xmlcdrd 日志都写入 stderr，因此在 web 服务器的错误日志中。
 
-### Requirements
+### 需求
 
-Mandatory:
+必需的:
 
-* FastCGI compliant web server. Lighttpd 1.4 is highly recommended.
-* Apache libraries: apreq2 and aprutil1
-* Libconfig library
-* Fast-CGI library
-* Glib2 library
-* GNOME libxml2 library
+* 快速CGI兼容的Web服务器。强烈推荐使用Lighttpd 1.4。
+* Apache库：apreq2和aprutil1
+* Libconfig库
+* Fast-CGI库
+* Glib2库
+* GNOME libxml2库
 
-Optional:
+可选：
 
-* Database Server: Mysql server / mysql C client libs for mysqlcdr plugin. Luaexec can use virtually any database via luasql.odbc and unix-odbc.
+* 数据库服务器：Mysql服务器/用于mysqlcdr插件的mysql C客户端库。通过luasql.odbc和unix-odbc，Luaexec可以使用几乎任何数据库。
 
-### Configuration overview
+### 配置概述
 
-Variables and plugins are configured in a main configuraton file xmlcdr.conf. You can declare as many variables as you want.
+变量和插件在主配置文件xmlcdr.conf中配置。您可以声明尽可能多的变量。
 
-Variables are defined using XPATH expressions.
+变量是使用XPath表达式定义的。
 
-Example Variables section:
+示例变量部分：
 
 ```xml
-#Variables definition
+#变量定义
 Variables = (
  {
   name = "uuid";
@@ -64,62 +61,61 @@ Variables = (
   xpath = "/cdr/variables/effective_caller_id_number";
  }
 );
-#End of variables section
+#变量部分结束
 ```
 
-Plugins are executed depending on plugin metrics and can access CDR variables. Metrics are defined using regexps. Each plugin may have a multiple metrics. All metrics must evaluate to true for successful execution. Plugin with no metrics will be executed everytime data is received. Each plugin might be loaded several times with a different config file. This could be useful when logging to a different tables/schemas.
+插件根据插件指标执行，并可以访问CDR变量。指标使用正则表达式定义。每个插件可能有多个指标。所有指标必须计算为true才能成功执行。没有指标的插件将在每次接收到数据时执行。每个插件可以加载多次，每次使用不同的配置文件。当记录到不同的表/模式时，这可能很有用。
 
 ```xml
-#Plugins section
+#插件部分
 Plugins = (
 
-#Plugin declaration
+#插件声明
 {
-  #name is a name of so file without the extension
+  #name是没有扩展名的so文件的名称
   name="mysqlcdr";
 
-  #config file for plugin
+  #插件的配置文件
   options = "/etc/xmlcdrd/db1.conf";
   priority = 10;
 
-  #Metrics control plugin execution
-  #Plugin with no metrics defined will be executed everytime
+  #指标控制插件的执行
+  #没有定义指标的插件每次都会执行
   Metrics = (
         {
        metric = "destination_number";
        regexp = "^6969.*";
         }
   );
-  #end of metrics
+  #指标部分结束
 
 },
 {
-  #This plugin is executed on all CDRs because it has no metrics
+  #这个插件会在所有CDR上执行，因为它没有度量指标
 
   name="luaexec";
-  #config file for plugin
+  #插件的配置文件
   options="/etc/xmlcdrd/luaexec.conf";
   priority=20;
 }
 
-#End of plugin declaration
-#You could define multiple plugins
-#Plugin declarations are separated with comma. See libconfig manual for details.
+#插件声明结束
+#你可以定义多个插件
+#插件声明之间用逗号分隔。详情请参阅libconfig手册。
 
 );
-```
 
 ####   
-Mod\_xml\_cdr Configuration
+Mod_xml_cdr 配置
 
-Make sure that encode and disable-100-continue are active in xml_cdr.conf.xml
+确保 xml_cdr.conf.xml 中的 encode 和 disable-100-continue 是激活状态
 
 ```xml
 <param name="encode" value="true"/>
 <param name="disable-100-continue" value="true"/>
 ```
 
-Enable the fast cgi in lighttpd config:
+在 lighttpd 配置中启用 fast cgi：
 
 ```xml
 "xmlcdr.fcgi" =>
@@ -134,12 +130,12 @@ Enable the fast cgi in lighttpd config:
 ```
 
 ####   
-mysqlcdr plugin
+mysqlcdr 插件
 
-Mysqlcdr plugin fills configured variables into a SQL statement and then executes it. All variables are escaped with mysql\_real\_escape\_string function. Plugin accepts single initialization option - name of a configuration file. Example configuration file:
+Mysqlcdr 插件将配置的变量填充到SQL语句中并执行。所有变量都使用 mysql_real_escape_string 函数进行转义。插件接受单个初始化选项-配置文件的名称。以下是示例配置文件：
 
 ```xml
-#mysqlcdr example config file
+#mysqlcdr示例配置文件
 dbuserid="ddp";
 dbpasswd="password";
 dbschema="schema";
@@ -148,65 +144,59 @@ dbipport=3306;
 
 stmt_template="insert into cdr (caller_id_number, effective_caller_id_number, destination_number, billsec) values ('$<caller_id_number>','$<effective_caller_id_number>', '$<destination_number>', $<billsec>)";
 
-#end of mysqlcdr config file
+#mysqlcdr配置文件结束
 ```
 
 ####   
-luaexec plugin
+luaexec 插件
 
-Luaexec plugin allows you to write a custom scripts for CDR processing. Lua has a rich set of addon libraries for accessing file system, databases, e.t.c. You need a Lua shared library to build the plugin. If you don’t like the idea of CDR processing with interpreter, “configure" the build with –disable-luaexec parameter. Lua is fast and can be precompiled into a byte-code for faster execution. Right now Luaexec is not very optimized for speed, but I’m able to make around 100 inserts per second with a single instance of xmlcdrd and luasql.odbc addon. Inserts should run even faster on a fine tuned database and descent hardware. Lua script must define following functions: function luaexec\_init(), luaexec\_main() and luaexec\_free(). luaexec\_init() and luaexec\_free() are called only once on initialization and destruction of plugin. Function luaexec\_main() is called every time plugin is executed. Luaexec exports two functions: xcdr\_varget("name\_of\_variable") - returns the value of variable given the name of variable or NULL if variable was not found. xcdr\_prn\_debug ("debug str") - sends the string to syslog with DEBUG level.
+Luaexec插件允许您编写自定义脚本来处理CDR。Lua具有丰富的附加库，可用于访问文件系统、数据库等等。您需要一个Lua共享库才能构建该插件。如果您不喜欢使用解释器进行CDR处理的想法，请使用–disable-luaexec参数来配置构建。Lua执行速度很快，并且可以预编译成字节码以实现更快的执行。目前，Luaexec对于速度方面还不是很优化，但是使用xmlcdrd和luasql.odbc附加库的单个实例能够每秒插入约100条记录。在经过优化的数据库和良好的硬件上，插入速度应该更快。Lua脚本必须定义以下函数：function luaexec_init()、luaexec_main()和luaexec_free()。luaexec_init()和luaexec_free()只在插件初始化和销毁时调用一次。函数luaexec_main()在每次执行插件时调用。Luaexec导出了两个函数：xcdr_varget("variable_name")-根据变量名返回变量的值，如果找不到变量则返回NULL。xcdr_prn_debug("debug str")-将字符串以DEBUG级别发送到syslog。
 
 ```xml
-#Dumb example of Lua script
+#Lua脚本的简单示例
 require "luasql.odbc"
 
 env = nil
 db_conn = nil
 count = 0
 
-function luaexec_init ()
+function luaexec_init()
   env = assert(luasql.odbc())
-  db_conn = assert(env:connect("mysqlconnection") )
+  db_conn = assert(env:connect("mysqlconnection"))
   count = 1
 end
 
-
-function luaexec_free ()
+function luaexec_free()
   db_conn:close()
   env:close()
 end
 
-function luaexec_main ()
-
+function luaexec_main()
   uuid = xcdr_varget("uuid")
   billsec = xcdr_varget("billsec")
-
-  db_conn:execute(string.format("insert into cdr (uuid,billsec) values ('%s', %d)", uuid, billsec + count))
-  -- notice that billsec will grow
+  
+  db_conn:execute(string.format("insert into cdr (uuid, billsec) values ('%s', %d)", uuid, billsec + count))
+  -- 注意billsec会增长
   count = count + 1
 end
 
-#End of example Lua script
+#示例Lua脚本结束
 
-
-radcdr plugin
-Radcdr plugin is based upon Tihomir Culjagas mod_rad_auth. It creates radius stop packets out of FreeSWITCH cdrs. Radcdr depends on freeradius-client library, you may find it here: http://freeradius.org/freeradius-client/ Below is an example configuration file for radcdr plugin.
-
+radcdr插件
+Radcdr插件基于Tihomir Culjagas的mod_rad_auth。它将FreeSWITCH的cdr转换为radius停止包。Radcdr依赖于freeradius-client库，您可以在这里找到它：http://freeradius.org/freeradius-client/ 下面是radcdr插件的示例配置文件。
 
 dictionary="/etc/xmlcdrd/radius/dictionary";
 seq_file="/tmp/radcdr_seq";
 config_file="/usr/local/etc/radiusclient/radiusclient.conf";
 
-
-#servers section
+#服务器部分
 servers = (
 
 {
 host = "172.16.31.8:1813:password";
 }
 );
-#End of servers
-
+#服务器结束
 
 vsas = (
    {
@@ -236,34 +226,34 @@ vsas = (
 ```
 
 ###   
-Build
+构建
 
-Code is located under freeswitch-contrib Git tree nazim/xmlcdrd.
+代码位于freeswitch-contrib Git树nazim/xmlcdrd下。
 
-To pool entire tree use: git clone &lt;git://git.freeswitch.org/freeswitch-contrib.git>
+要获取整个树，请使用：git clone &lt;git://git.freeswitch.org/freeswitch-contrib.git>
 
-To build use ./bootstrap.sh; ./configure; make; make install
+要构建，请使用./bootstrap.sh; ./configure; make; make install
 
-To disable the compilation of particual plugin use --disable switch when running configure.
+要禁用特定插件的编译，请使用运行configure时的--disable开关。
 
 ```xml
- --disable-mysqlcdr      Disable building of mysqlcdr plugin
- --disable-luaexec       Disable building of luaexec plugin
- --disable-radcdr        Disable building of radcdr plugin
+ --disable-mysqlcdr      禁用mysqlcdr插件的构建
+ --disable-luaexec       禁用luaexec插件的构建
+ --disable-radcdr        禁用radcdr插件的构建
 ```
 
 ###   
-More complex example of radius accounting with stop packets
+更复杂的radius会计示例和停止包
 
-This is an example of radius accounting with radcdr plugin. Please note that this configuration sends only "stop" radis accounting packets "start" packets are not supported. A lot of billing systems support accounting in that way, so absent "start" packets is not an issue in most cases. Xmlcdrd allows you to include different VSA's in a "stop" packets, depending on a call CDR variables.
+这是使用radcdr插件的半径计费示例。请注意，此配置仅发送“停止”半径计费数据包，“启动”数据包不受支持。许多计费系统都支持这种方式的计费，因此在大多数情况下，缺少“启动”数据包并不是一个问题。Xmlcdrd允许您在“停止”数据包中根据呼叫CDR变量包含不同的VSA。
 
-Let's assume you have to process calls coming to a three extensions: "national", "international" and "disa".
+让我们假设您需要处理呼叫到三个分机号：“国内”，“国际”和“DISA”。
 
-For A-leg Xmlcdrd must generate a radius "stop" packets with a slightly different VSA set, depending on which extension call was landed. A-leg "stop" packets must not include h323-remote-address (vsa\_id = 23 / vsa\_pec = 9)
+对于A-leg，Xmlcdrd必须根据被接通的分机号生成一个包含稍微不同VSA设置的半径“停止”数据包。A-leg的“停止”数据包不能包含h323-remote-address（vsa_id = 23 / vsa_pec = 9）。
 
-For B-leg stop packets must not include user-name (vsa\_id = 1/ vsa\_pec = 0) VSA, but h323-remote-address must be set, otherwise your supper-billing solution will not process that "stop". Note, "log-b-leg" must be enabled in xml\_cdr.conf, otherwise cdr will not be generated for a B-leg.
+对于B-leg，停止数据包不能包含user-name（vsa_id = 1 / vsa_pec = 0）VSA，但h323-remote-address必须被设置，否则您的超级计费解决方案将无法处理该“停止”。请注意，在xml_cdr.conf中必须启用“log-b-leg”，否则不会为B-leg生成CDR。
 
-First we have to declare a variable "extension\_name" in a variables section, this variable will contain the extension name for each incoming call. Note, extension\_name is meaningful for A-leg only, for B-leg it will be empty.
+首先，我们需要在variables部分中声明一个名为“extension_name”的变量，该变量将包含每个呼叫的分机号。请注意，extension_name对于A-leg而言是有意义的，对于B-leg而言将为空。
 
 ```xml
 {
@@ -271,8 +261,9 @@ name = "extension_name";
 var_id = "extension_name";
 xpath = "/cdr/callflow[@profile_index='1']/extension/@name";
 }
+```
 
-Then we will be able to match the extensions name for any plugin.
+然后我们将能够为任何插件匹配分机号的名称。
 ...
 	,
         {
@@ -281,160 +272,160 @@ Then we will be able to match the extensions name for any plugin.
         }
 ...
 
-Sample xmlcdrd.conf
+示例xmlcdrd.conf
 
 ----
 
-#Variables section
-Variables = (
+#变量部分
+变量 = (
 {
-name = "direction";
-var_id = "direction";
-xpath = "/cdr/channel_data/direction";
+名称 = "方向";
+变量ID = "direction";
+路径 = "/cdr/channel_data/direction";
 }
 ,
 {
-name = "uuid";
-var_id = "uuid";
-xpath = "/cdr/callflow[@profile_index='1']/caller_profile/uuid";
+名称 = "uuid";
+变量ID = "uuid";
+路径 = "/cdr/callflow[@profile_index='1']/caller_profile/uuid";
 }
 ,
 {
-name = "context";
-var_id = "context";
-xpath = "/cdr/callflow[@profile_index='1']/caller_profile/context";
+名称 = "上下文";
+变量ID = "context";
+路径 = "/cdr/callflow[@profile_index='1']/caller_profile/context";
 }
 ,
 {
-name = "effective_caller_id_number";
-var_id = "effective_caller_id_number";
-xpath = "/cdr/variables/effective_caller_id_number";
+名称 = "有效主叫号码";
+变量ID = "effective_caller_id_number";
+路径 = "/cdr/variables/effective_caller_id_number";
 }
 ,
 {
-name = "caller_id_number";
-var_id = "caller_id_number";
-xpath = "/cdr/callflow[@profile_index='1']/caller_profile/caller_id_number";
+名称 = "主叫号码";
+变量ID = "caller_id_number";
+路径 = "/cdr/callflow[@profile_index='1']/caller_profile/caller_id_number";
 }
 ,
 {
-name = "destination_number";
-var_id = "destination_number";
-xpath = "/cdr/callflow[@profile_index='1']/caller_profile/destination_number";
+名称 = "目的地号码";
+变量ID = "destination_number";
+路径 = "/cdr/callflow[@profile_index='1']/caller_profile/destination_number";
 }
 ,
-#extension_name is for matching extensions name on an inbound call leg
-#It's empty on outbound call leg
+#extension_name用于匹配入站呼叫链上的分机名称
+#在出站呼叫链上为空
 {
-name = "extension_name";
-var_id = "extension_name";
-xpath = "/cdr/callflow[@profile_index='1']/extension/@name";
-}
-,
-{
-name = "callgroup";
-var_id = "callgroup";
-xpath = "/cdr/variables/planeta_callgroup";
+名称 = "分机名称";
+变量ID = "extension_name";
+路径 = "/cdr/callflow[@profile_index='1']/extension/@name";
 }
 ,
 {
-name = "service_type";
-var_id = "service_type";
-xpath = "/cdr/variables/service_type";
+名称 = "呼叫组";
+变量ID = "callgroup";
+路径 = "/cdr/variables/planeta_callgroup";
 }
 ,
 {
-name = "startep";
-var_id = "startep";
-xpath = "/cdr/variables/start_epoch";
+名称 = "业务类型";
+变量ID = "service_type";
+路径 = "/cdr/variables/service_type";
 }
 ,
 {
-name = "answep";
-var_id = "answep";
-xpath = "/cdr/variables/answer_epoch";
+名称 = "开始时间戳";
+变量ID = "startep";
+路径 = "/cdr/variables/start_epoch";
 }
 ,
 {
-name = "endep";
-var_id = "endep";
-xpath = "/cdr/variables/end_epoch";
+名称 = "应答时间戳";
+变量ID = "answep";
+路径 = "/cdr/variables/answer_epoch";
 }
 ,
 {
-name = "h323-call-type";
-var_id = "h323_call_type";
-xpath = "/cdr/variables/h323_call_type";
+名称 = "结束时间戳";
+变量ID = "endep";
+路径 = "/cdr/variables/end_epoch";
 }
 ,
 {
-name = "h323-call-origin";
-var_id = "h323_call_origin";
-xpath = "/cdr/variables/h323_call_origin";
+名称 = "h323呼叫类型";
+变量ID = "h323_call_type";
+路径 = "/cdr/variables/h323_call_type";
 }
 ,
 {
-name = "USERNAME";
-var_id = "USERNAME";
-xpath = "/cdr/variables/USERNAME";
+名称 = "h323呼叫来源";
+变量ID = "h323_call_origin";
+路径 = "/cdr/variables/h323_call_origin";
 }
 ,
 {
-name = "CALLINGNUMBER";
-var_id = "CALLINGNUMBER";
-xpath = "/cdr/variables/CALLINGNUMBER";
+名称 = "用户名";
+变量ID = "USERNAME";
+路径 = "/cdr/variables/USERNAME";
 }
 ,
 {
-name = "ORIGDEST";
-var_id = "ORIGDEST";
-xpath = "/cdr/variables/ORIGDEST";
+名称 = "呼叫号码";
+变量ID = "CALLINGNUMBER";
+路径 = "/cdr/variables/CALLINGNUMBER";
 }
 ,
 {
-name = "startstamp";
-var_id = "startstamp";
-xpath = "/cdr/variables/start_stamp";
+名称 = "起点";
+变量ID = "ORIGDEST";
+路径 = "/cdr/variables/ORIGDEST";
 }
 ,
 {
-name = "endstamp";
-var_id = "endstamp";
-xpath = "/cdr/variables/end_stamp";
+名称 = "开始时间戳";
+变量ID = "startstamp";
+路径 = "/cdr/variables/start_stamp";
 }
 ,
 {
-name = "billid";
-var_id = "billid";
-xpath = "/cdr/variables/billid";
+名称 = "结束时间戳";
+变量ID = "endstamp";
+路径 = "/cdr/variables/end_stamp";
 }
 ,
 {
-name = "h323-remote-address";
-var_id = "h323-remote-address";
-xpath = "/cdr/variables/h323-remote-address";
+名称 = "计费ID";
+变量ID = "billid";
+路径 = "/cdr/variables/billid";
+}
+,
+{
+名称 = "h323远程地址";
+变量ID = "h323-remote-address";
+路径 = "/cdr/variables/h323-remote-address";
 }
 
 );
 #End of Variables
 
 
-#Plugins directory
+#插件目录
 plugin_dir = "/usr/local/lib/xmlcdrd";
 
 
-#Plugins section
+#插件部分
 Plugins = (
 
 
 {
- #Retail international traffic (SIP acct)
- #match only incomin calls landed on an "international" extension
- #international is a name of the extension
+ #零售国际流量（SIP账户）
+ #仅匹配着陆在 "国际" 分机上的呼入呼叫
+ #international 是分机的名称
 
   name="radcdr";
 
-  #config file for plugin
+  #插件的配置文件
   options = "/etc/xmlcdrd/radcdr.conf";
   priority = 100;
   Metrics = (
@@ -449,7 +440,7 @@ Plugins = (
 	}
 	,
         {
-		#match A-leg only
+		#仅匹配A-leg
 		metric = "direction";
 		regexp = "^inbound$";
         }
@@ -463,13 +454,13 @@ Plugins = (
 }
 ,
 {
-  #Retail national traffic (SIP)
-  #matches numbers beginning with 0
+  #零售国内流量（SIP）
+  #匹配以0开头的号码
   #extension_name = national 
 
   name="radcdr";
   
-  #config file for plugin
+  #插件的配置文件
   options = "/etc/xmlcdrd/radcdr.conf";
   priority = 110;
   Metrics = (
@@ -479,7 +470,7 @@ Plugins = (
         }
         ,
         {
-                #match A-leg only
+                #仅匹配A-leg
                 metric = "direction";
                 regexp = "^inbound$";
         }
@@ -493,141 +484,129 @@ Plugins = (
 }
 ,
 {
-  #Retail traffic (DISA script)
-  #matches numbers beginning with 0 and extension name "disa"
+  #零售流量（DISA脚本）
+  #匹配以0开头和分机名称为 "disa" 的号码
 
   name="radcdr";
 
-  #config file for plugin
+# 插件的配置文件
+
   options = "/etc/xmlcdrd/radcdrdisa.conf";
   priority = 103;
   Metrics = (
         {
-                #ORIGDEST is exported from a dialplan extension
+                # ORIGDEST 从拨号方案扩展中导出
                 metric = "ORIGDEST";
-                #regexp = "^0[1-9]\d\d\d\d\d\d$|^00.*";
+                # regexp = "^0[1-9]\d\d\d\d\d\d$|^00.*";
                 regexp = "^0.*";
-        }
-        ,
+        },
         {
-                #match A-leg only
+                # 仅匹配 A-leg
                 metric = "direction";
                 regexp = "^inbound$";
-        }
-        ,
+        },
         {
                 metric = "extension_name";
                 regexp = "^disa$";
         }
-
   );
 }
 ,
 #########
-#########      Outbound traffic
+#########      出站流量
 ##########
 {
-  #Upstream1 national traffic, origination
+  # 国内上行1，origination
   name="radcdr";
 
-  #config file for plugin
+  # 插件的配置文件
   options = "/etc/xmlcdrd/radcdrupstream1.conf";
   priority = 210;
   Metrics = (
         {
-                #match B-leg only
+                # 仅匹配 B-leg
                 metric = "direction";
                 regexp = "^outbound$";
-        }
-	,
+        },
         {
                 metric = "destination_number";
                 regexp = "^001431380.*";
-        }
-        ,
+        },
         {
                 metric = "h323-remote-address";
                 regexp = "^1.1.1.1$";
         }
   );
-
 }
 ,
 {
-  #Upstream2 traffic (origination), operator2
-  #7 or more digits, first digit non 0, outbound
+  # 上行2 流量（origination），运营商 2
+  # 7 个或以上位数，首位非 0，出站
 
   name="radcdr";
 
-  #config file for plugin
+  # 插件的配置文件
   options = "/etc/xmlcdrd/radcdrupstream2.conf";
   priority = 220;
   Metrics = (
         {
-                #match B-leg only
+                # 仅匹配 B-leg
                 metric = "direction";
                 regexp = "^outbound$";
-        }
-	,
+        },
         {
                 metric = "destination_number";
                 regexp = "^[1-9]\d\d\d\d\d\d.*";
-        }
-        ,
+        },
         {
                 metric = "h323-remote-address";
                 regexp = "^2.2.2.2$";
         }
   );
-
 }
 
 );
 
+现在让我们来看一下"B-leg"半径停止的示例配置。请注意，在radcdrupstream2.conf中未定义"user-name"（vsa_id = 1/ vsa_pec = 0），因此不会发送该字段。对于A-leg配置文件，将定义"user-name" VSA，但不会定义"h323-remote-address"。
 
-Now lets look at the sample configuration for a B-leg radius "stop". Note that "user-name" (vsa_id = 1/ vsa_pec = 0) is not defined in radcdrupstream2.conf, so it will not be sent. For A-leg configuration files, "user-name" VSA will be defined, but not the "h323-remote-address".
- 
-/etc/xmlcdrd/radcdrupstream2.conf (Config for a B-leg)
+/etc/xmlcdrd/radcdrupstream2.conf（B-leg的配置）
 
 ----
 
-
-#USERNAME metric MUST NOT present in a resulting packet!
-#h323-remote-address MUST present in a resulting packet!
-
+#USERNAME度量不得在结果数据包中呈现！
+#h323-remote-address必须在结果数据包中呈现！
 
 dictionary="/etc/xmlcdrd/radius/dictionary";
 seq_file="/var/tmp/radcdr_seq";
 config_file="/usr/local/etc/radiusclient/radiusclient.conf";
 
-
-#servers section
+#服务器部分
 servers = (
-
 {
 host = "172.6.1.8:1813:aQe3dfl";
 }
 );
-#End of servers
-
+#服务器部分结束
 
 vsas = (
-   {
-        var_name = "service_type";
-        vsa_name = "service_type";
-        vsa_id = 6;
-        vsa_pec = 0;
-        vsa_type = "integer";
-   },
-   {
-        var_name = "h323_call_origin";
-        vsa_name = "h323-call-origin";
-        vsa_id = 26;
-        #9 Cisco
-        vsa_pec = 9;
-        vsa_type = "string";
-   },
+{
+var_name = "service_type";
+vsa_name = "service_type";
+vsa_id = 6;
+vsa_pec = 0;
+vsa_type = "integer";
+},
+{
+var_name = "h323_call_origin";
+vsa_name = "h323-call-origin";
+vsa_id = 26;
+#9 Cisco
+vsa_pec = 9;
+vsa_type = "string";
+},
 
+```json
+[
    {
         var_name = "h323-remote-address";
         vsa_name = "h323-remote-address";
@@ -652,35 +631,35 @@ vsas = (
         vsa_pec = 9;
         vsa_type = "string";
    },
- {
+   {
         var_name = "h323_connect_time";
         vsa_name = "h323-connect-time";
         vsa_id = 28;
         vsa_pec = 9;
         vsa_type = "string";
    },
-  {
+   {
         var_name = "h323_diconnect_time";
         vsa_name = "h323-disconnect-time";
         vsa_id = 29;
         vsa_pec = 9;
         vsa_type = "string";
    },
- {
+   {
         var_name = "billsec";
         vsa_name = "acct_session_time";
         vsa_id = 46;
         vsa_pec = 0;
         vsa_type = "integer";
    },
-  {
+   {
         var_name = "destination_number";
         vsa_name = "called_station_id";
         vsa_id = 30;
         vsa_pec = 0;
         vsa_type = "string";
    },
-  {
+   {
         var_name = "CALLINGNUMBER";
         #vsa_name = "calling_station_id";
         vsa_name = "calling_station_id";
@@ -688,8 +667,5 @@ vsas = (
         vsa_pec = 0;
         vsa_type = "string";
    }
-
 );
 ```
-
-

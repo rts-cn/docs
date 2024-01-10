@@ -1,33 +1,30 @@
+# mod_rayo
 
-# mod_rayo 
+## 关于
 
- 
+mod\_rayo 是一个用于 FreeSWITCH 的 [Rayo 协议](http://rayo.org) 的服务器实现。像 [Adhearsion](http://adhearsion.com) 这样的 Rayo 客户端使用这个协议来控制呼叫。
 
-## About
-
-mod\_rayo is a server implementation of the [Rayo protocol](http://rayo.org) for FreeSWITCH. Rayo clients, like [Adhearsion](http://adhearsion.com) use this protocol to control calls.
-
-* [Installing](#installing-)
-* [Configuration](#configuration-)  
-   * [Core Settings](#core-settings)  
-   * [Recording Settings](#recording-settings)  
-   * [Input Settings](#input-settings)  
-   * [Fax Settings](#fax-settings)  
-   * [Call Progress Analysis Settings](#call-progress-analysis-settings)  
-      * [XMPP settings](#xmpp-settings)  
-         * [Dial gateways](#dial-gateways)  
-         * [Aliases](#aliases)  
+* [安装](#安装-)
+* [配置](#配置-)  
+   * [核心设置](#核心设置)  
+   * [录音设置](#录音设置)  
+   * [输入设置](#输入设置)  
+   * [传真设置](#传真设置)  
+   * [呼叫进程分析设置](#呼叫进程分析设置)  
+      * [XMPP 设置](#XMPP设置)  
+         * [拨号网关](#拨号网关)  
+         * [别名](#别名)  
    * [rayo APP](#-rayo-app-)  
    * [rayo API](#-rayo-api-)  
       * [rayo &lt;alias> &lt;jid>](#-rayo-alias-jid-)  
-         * [rayo status](#-rayo-status-)  
-         * [rayo cmd &lt;jid> &lt;XMPP request>](#-rayo-cmd-jid-xmpp-request-)  
-         * [rayo presence &lt;jid> online|offline](#-rayo-presence-jid-onlineoffline-)  
-         * [rayo msg &lt;jid> &lt;text message>](#-rayo-msg-jid-text-message-)
+         * [rayo 状态](#-rayo-状态-)  
+         * [rayo 命令 &lt;jid> &lt;XMPP 请求>](#-rayo-命令-jid-xmpp请求-)  
+         * [rayo 在线状态 &lt;jid> online|offline](#-rayo-在线状态-jid-onlineoffline-)  
+         * [rayo 消息 &lt;jid> &lt;文本消息>](#-rayo-消息-jid-文本消息-)
 
-## Installing 
+## 安装
 
-To use mod\_rayo tell FreeSWITCH to compile in this module by editing modules.conf in /usr/src/freeswitch and adding:
+要使用 mod\_rayo，请编辑 /usr/src/freeswitch 中的 modules.conf 并添加以下内容，以告诉 FreeSWITCH 编译此模块：
 
 **modules.conf**
 
@@ -36,117 +33,117 @@ event_handlers/mod_rayo
 formats/mod_ssml
 ```
 
-[mod\_ssml](./mod_ssml_3375453.mdx#about) is REQUIRED by mod\_rayo
+mod\_rayo 需要 mod\_ssml（[点击此处了解更多](./mod_ssml_3375453.mdx#about)）
 
-Now recompile FreeSWITCH.
+重新编译 FreeSWITCH。
 
 make
 make install
 
-Tell FreeSWITCH to use the modules when running by adding them to modules.conf.xml in /usr/local/freeswitch/conf/autoload\_configs:
+在运行 FreeSWITCH 时，请在 /usr/local/freeswitch/conf/autoload\_configs 中的 modules.conf.xml 中添加这些模块：
 
 **modules.conf.xml**
 
 ```xml
 <load module="mod_rayo"/>
-<load module="mod_ssml"/> 
+<load module="mod_ssml"/> 
 ```
 
-## Configuration 
+## 配置
 
-The conf/autoload\_configs/rayo.conf.xml file contains the following configuration settings. An example configuration is located in conf/rayo and can be installed with
+conf/autoload\_configs/rayo.conf.xml 文件包含以下配置设置。示例配置位于 conf/rayo，并可通过以下命令安装：
 
 make config-rayo
 
-It is recommended that you start with the example rayo config and adjust the xmpp settings as needed
+建议您从示例rayo配置开始，并根据需要调整xmpp设置
 
-### Core Settings
+### 核心设置
 
 **rayo.conf.xml**
 
 ```xml
 <settings>
-  <!-- maximum time in seconds to allow a call controlled by rayo to be idle.  Idle time is time measured since the last 
-       command executed on the call.  Bridged (or conferenced) calls do not count as idle.  Increase this value as needed -->
+  <!-- 允许由rayo控制的呼叫空闲的最长时间（秒）。空闲时间是指自上次在呼叫上执行的命令以来的时间。桥接（或会议）呼叫不算作空闲。根据需要增加此值 -->
   <param name="max-idle-sec" value="300"/>
-  <!-- leave unchanged - this defines the mod_conference profile to use for mixers -->
+  <!-- 请勿更改此项 - 这定义了用于混音器的mod_conference配置文件 -->
   <param name="mixer-conf-profile" value="sla"/>
-  <!-- if true (default), to attribute in offer has URI instead of destination number -->
+  <!-- 如果为true（默认），那么在offer中的属性将是URI，而不是目标号码 -->
   <param name="offer-uri" value="true"/>
-  <!-- if true (false is default), channel variables are added to rayo client offer -->
+  <!-- 如果为true（默认为false），则将通道变量添加到rayo客户端的offer中 -->
   <param name="add-variables-to-offer" value="false"/>
 </settings>
 
 ```
 
-### Recording Settings
+### 录音设置
 
 **rayo.conf.xml**
 
 ```xml
 <record>
-  <!-- This is the location to store recordings -->
+  <!-- 录音文件存储位置 -->
   <param name="record-file-prefix" value="$${recordings-dir}"/>
 </record>
 ```
 
-### Input Settings
+### 输入设置
 
 **rayo.conf.xml**
 
 ```xml
 <input>
-  <!-- This is the name of the ASR engine to use if none is specified by the Rayo client -->
+  <!-- 如果Rayo客户端未指定ASR引擎，则使用此名称的ASR引擎 -->
   <param name="default-recognizer" value="pocketsphinx"/>
 </input>
 ```
 
-### Fax Settings
+### 传真设置
 
 ```xml
 <fax>
-  <!-- Location to store incoming faxes.  Can be a filesystem directory or an HTTP URL to PUT -->
+  <!-- 存储传入传真的位置。可以是文件系统目录或要放置的HTTP URL -->
   <param name="receivefax-file-prefix" value="/tmp/"/>
 </fax>
 ```
 
-### Call Progress Analysis Settings
+### 呼叫进度分析设置
 
-Call progress analysis allows the client to request FS to monitor for dtmf, call progress tones, fax tones, voicemail beeps, etc. This feature works by mapping the dialplan applications and their detection events to Rayo CPA signal-types (fax-ced, fax-cng, beep, speech, dtmf, etc). If you have an alternative detector for specific tones, simply specify the new detector's dialplan start/stop app and the events emitted.
+呼叫进程分析允许客户请求FS监视DTMF、呼叫进程音调、传真音调、语音邮箱提示等。该功能通过将拨号计划应用和其检测事件映射到Rayo CPA信号类型（传真CED、传真CNG、蜂鸣、语音、DTMF等）来实现。如果您有特定音调的替代检测器，只需指定新检测器的拨号计划启动/停止应用程序和发出的事件。
 
-The only restriction is that no detector may detect the same event/subclass as previously defined detector.
+唯一的限制是，没有检测器可以检测与先前定义的检测器相同的事件/子类。
 
-  &lt;cpa>
-    &lt;!-- map DTMF events to CPA -->
-    &lt;detector name="core_dtmf_event">
-      &lt;!-- map the FS core DTMF event to the Rayo dtmf signal-type -->
-      &lt;event class="DTMF" value-header="DTMF-Digit" duration-header="DTMF-Duration">
-        &lt;signal-type value="dtmf"/>
-      &lt;/event>
-    &lt;/detector>
+<cpa>
+    <!-- 将DTMF事件映射到CPA -->
+    <detector name="core_dtmf_event">
+        <!-- 将FS核心DTMF事件映射到Rayo DTMF信号类型 -->
+        <event class="DTMF" value-header="DTMF-Digit" duration-header="DTMF-Duration">
+            <signal-type value="dtmf"/>
+        </event>
+    </detector>
 
-    &lt;!-- map mod_spandsp fax detector to the Rayo CPA events. Fires DETECTED_FAX_* event once and quits. -->
-    &lt;detector name="mod_spandsp_fax_ced">
-      &lt;start application="spandsp_start_fax_detect" data="event 'Event-Name=CUSTOM,Event-Subclass=DETECTED_FAX_CED' 500 ced"/>
-      &lt;stop application="spandsp_stop_fax_detect" data=""/>
-      &lt;event class="CUSTOM" subclass="DETECTED_FAX_CED">
-        &lt;signal-type value="fax-ced"/>
-      &lt;/event>
-    &lt;/detector>
+    <!-- 将mod_spandsp传真检测器映射到Rayo CPA事件。检测到传真CED事件后触发并退出。 -->
+    <detector name="mod_spandsp_fax_ced">
+        <start application="spandsp_start_fax_detect" data="event 'Event-Name=CUSTOM,Event-Subclass=DETECTED_FAX_CED' 500 ced"/>
+        <stop application="spandsp_stop_fax_detect" data=""/>
+        <event class="CUSTOM" subclass="DETECTED_FAX_CED">
+            <signal-type value="fax-ced"/>
+        </event>
+    </detector>
 
-    &lt;detector name="mod_spandsp_fax_cng">
-      &lt;start application="spandsp_start_fax_detect" data="event 'Event-Name=CUSTOM,Event-Subclass=DETECTED_FAX_CNG' 500"/>
-      &lt;stop application="spandsp_stop_fax_detect" data=""/>
-      &lt;event class="CUSTOM" subclass="DETECTED_FAX_CNG">
-        &lt;signal-type value="fax-cng"/>
-      &lt;/event>
-    &lt;/detector>
+    <detector name="mod_spandsp_fax_cng">
+        <start application="spandsp_start_fax_detect" data="event 'Event-Name=CUSTOM,Event-Subclass=DETECTED_FAX_CNG' 500"/>
+        <stop application="spandsp_stop_fax_detect" data=""/>
+        <event class="CUSTOM" subclass="DETECTED_FAX_CNG">
+            <signal-type value="fax-cng"/>
+        </event>
+    </detector>
+</cpa>
 
-    &lt;!-- map mod_spandsp call progress tone detector to Rayo CPA signal events.  Fires DETECTED_TONE events until stopped. -->
+&lt;!-- 将 mod_spandsp 呼叫进度音调探测器映射到 Rayo CPA 信号事件。持续触发 DETECTED_TONE 事件，直到停止。 -->
     &lt;detector name="mod_spandsp_tone">
       &lt;start application="start_tone_detect" data="1"/>
       &lt;stop application="stop_tone_detect" data=""/>
-      &lt;!-- map tone events to Rayo CPA signal type -->
+      &lt;!-- 将音调事件映射到 Rayo CPA 信号类型 -->
       &lt;event class="CUSTOM" subclass="DETECTED_TONE" type-header="Detected-Tone">
         &lt;signal-type header-value="SIT" value="sit"/>
         &lt;signal-type header-value="BUSY_TONE" value="busy"/>
@@ -155,7 +152,7 @@ The only restriction is that no detector may detect the same event/subclass as p
       &lt;/event>
     &lt;/detector>
 
-    &lt;!-- map mod_avmd detector to Rayo CPA beep event.  Fires avmd::beep event once. -->
+    &lt;!-- 将 mod_avmd 探测器映射到 Rayo CPA 响铃事件。只触发一次 avmd::beep 事件。 -->
     &lt;detector name="mod_avmd">
       &lt;start application="avmd" data=""/>
       &lt;stop application="avmd" data="stop"/>
@@ -164,7 +161,7 @@ The only restriction is that no detector may detect the same event/subclass as p
       &lt;/event>
     &lt;/detector>
 
-    &lt;!-- Alternative beep detector using mod_vmd.  Fires vmd::beep events until stopped. -->
+    &lt;!-- 使用 mod_vmd 的备用 beep 探测器。持续触发 vmd::beep 事件，直到停止。 -->
     &lt;!--detector name="mod_vmd">
       &lt;start application="vmd" data=""/>
       &lt;stop application="vmd" data="stop"/>
@@ -174,139 +171,141 @@ The only restriction is that no detector may detect the same event/subclass as p
     &lt;/detector-->
   &lt;cpa>
 
-#### XMPP settings
+#### XMPP 设置
 
-mod\_rayo is an XMPP server. mod\_rayo currently only supports serving a single XMPP domain.
+mod_rayo 是一个 XMPP 服务器。mod_rayo 目前只支持服务于一个 XMPP 域。
 
-insecure XMPP client connection example (use only on private networks!!!)
+不安全的 XMPP 客户端连接示例（仅在私有网络中使用！！！）
 
-  &lt;!-- Set up server for rayo.example.com.  Accept client connections to 10.50.0.10 from usera@rayo.example.com.  -->
+```xml
+  &lt;!--为rayo.example.com设置服务器。接受来自usera@rayo.example.com的客户端连接到10.50.0.10。-->
   &lt;domain name="rayo.example.com" shared-secret="ClueCon">
     &lt;listen type="c2s" port="5222" address="10.50.0.10" acl=""/>
-    &lt;!-- Authorized users -->
+    &lt;!--授权用户-->
     &lt;users>
        &lt;user name="usera" password="1"/>
     &lt;/users>
   &lt;/domain>
 
-Secure XMPP client connection example. This example requires TLS when connecting to mod\_rayo. You will need to generate a certificate and private key and store them in the certs directory.
+安全的XMPP客户端连接示例。当连接到mod_rayo时，此示例要求使用TLS。您需要生成证书和私钥，并将它们存储在certs目录中。
 
-  &lt;!-- Set up server for rayo.example.com.  Accept secure client connections to 10.50.0.10 from usera@rayo.example.com. -->
+  &lt;!--为rayo.example.com设置服务器。接受来自usera@rayo.example.com的安全客户端连接到10.50.0.10。-->
   &lt;domain name="rayo.example.com" shared-secret="ClueCon" cert="$${base_dir}/certs/rayo.example.com.crt" 
        key="$${base_dir}/certs/rayo.example.com.key">
     &lt;listen type="c2s" port="5222" address="10.50.0.10" acl=""/>
-    &lt;!-- Authorized users -->
+    &lt;!--授权用户-->
     &lt;users>
       &lt;user name="usera" password="1"/>
     &lt;/users>
   &lt;/domain>
 
-The acl param is also available for an added layer of security. When enabled, only XMPP clients in approved networks will be accepted. Create a "rayo-clients" acl in conf/autoload\_configs/acl.conf.xml and set the acl param:
+acl参数也可用于增加额外的安全层级。启用后，仅接受来自已批准网络的XMPP客户端。在conf/autoload_configs/acl.conf.xml中创建一个名为"rayo-clients"的acl，并设置acl参数：
 
    &lt;listen type="c2s" port="5222" address="10.50.0.10" acl="rayo-clients"/>
 
-#### Dial gateways
+#### 拨号网关
 
-Dial gateways define call endpoint routes by mapping URI prefixes to FreeSWITCH dialstring prefixes. This allows Rayo to do things like route a call addressed by phone number to the PSTN over a FreeTDM endpoint vs. routing a call with a SIP URI over a mod\_sofia gateway.
+拨号网关通过将URI前缀映射到FreeSWITCH拨号字符串前缀来定义呼叫终端路由。这使得Rayo可以将通过电话号码寻址的呼叫路由到FreeTDM端点的PSTN，而将通过SIP URI寻址的呼叫路由到mod_sofia网关。
 
-"default" is a reserved dial prefix that matches when all other matches fail.
+"default"是一个保留的拨号前缀，当所有其他匹配失败时匹配。
+```
 
-  &lt;dial-gateways>
-    &lt;!-- default gateway - calls sent to outbound gateway if no dialprefix match is found -->
+&lt;dial-gateways>
+    &lt;!-- 默认网关 - 如果找不到拨号前缀匹配，则将呼叫发送到出站网关 -->
     &lt;dial-gateway uriprefix="default" dialprefix="sofia/gateway/outbound/" strip="0"/>
 
-    &lt;!-- send SIP URI to mod_sofia -->
+    &lt;!-- 将SIP URI发送给mod_sofia -->
     &lt;dial-gateway uriprefix="sip:" dialprefix="sofia/external/" strip="0"/>
 
-    &lt;!-- send tel:+16171234567 to mod_sofia after removing the tel: -->
+    &lt;!-- 在删除tel:之后，将tel:+ 16171234567发送给mod_sofia -->
     &lt;dial-gateway uriprefix="tel:" dialprefix="sofia/gateway/outbound/" strip="4"/>
 
-    &lt;!-- Some examples of how to allow Rayo client to specify the FreeSWITCH dialstring -->
-    &lt;!-- pass through user and sofia unaltered -->
+    &lt;!-- 一些允许Rayo客户端指定FreeSWITCH拨号字符串的示例 -->
+    &lt;!-- 将用户和sofia原样传递 -->
     &lt;dial-gateway uriprefix="user" dialprefix="" strip=""/>
     &lt;dial-gateway uriprefix="sofia" dialprefix="" strip=""/>
- &lt;/dial-gateways>
+&lt;/dial-gateways>
 
-#### Aliases
+#### 别名
 
-Aliases are useful for testing. They allow you to map XMPP IQ requests to a short command. If the command is an IQ set command, you can omit the IQ from the alias as it is assumed by default.
+别名对于测试非常有用。它们允许您将XMPP IQ请求映射到一个简短的命令。如果该命令是IQ设置命令，则可以省略别名中的IQ，因为默认情况下会自动假定。
 
-An alias requires a "target". This target is used to assist with command autocompletion. That is, if the alias target is "call", then the alias will only suggest active calls when you tab autocomplete.
+别名需要一个“目标”。该目标用于辅助命令自动完成。也就是说，如果别名目标是“call”，那么在进行标签自动完成时，别名将只建议活动呼叫。
 
-The possible targets are:
+可能的目标有：
 
 * all
 * call
-* component (any component input/output/record/prompt)
-* external (clients and peer servers)
-* input (input components)
-* internal (anything not external)
-* server (mod\_rayo server)
-* output (output components)
-* record (record components)
+* component（任何组件输入/输出/记录/提示）
+* external（客户端和对等服务器）
+* input（输入组件）
+* internal（非外部的任何内容）
+* server（mod\_rayo服务器）
+* output（输出组件）
+* record（记录组件）
 
-  &lt;aliases>
-    &lt;!-- Answer a call offered to a Rayo client -->
-    &lt;alias name="answer" target="call">&lt;![CDATA[&lt;answer xmlns="urn:xmpp:rayo:1"/>]]>&lt;/alias>
-    &lt;!-- Stop an active component -->
-    &lt;alias name="stop" target="component">&lt;![CDATA[&lt;stop xmlns="urn:xmpp:rayo:ext:1"/>]]>&lt;/alias>
-    &lt;!-- Pause output -->
-    &lt;alias name="pause" target="output">&lt;![CDATA[&lt;pause xmlns="urn:xmpp:rayo:output:1"/>]]>&lt;/alias>
-    &lt;!-- Resume recording -->
-    &lt;alias name="record_resume" target="record">&lt;![CDATA[&lt;resume xmlns="urn:xmpp:rayo:record:1"/>]]>&lt;/alias>
-  &lt;/aliases>
+```xml
+  &lt;别名>
+    &lt;!-- 接听 Rayo 客户端的来电 -->
+    &lt;别名名称="接听" 目标="呼叫">&lt;![CDATA[&lt;answer xmlns="urn:xmpp:rayo:1"/>]]>&lt;/别名>
+    &lt;!-- 停止一个活动组件 -->
+    &lt;别名名称="停止" 目标="组件">&lt;![CDATA[&lt;stop xmlns="urn:xmpp:rayo:ext:1"/>]]>&lt;/别名>
+    &lt;!-- 暂停输出 -->
+    &lt;别名名称="暂停" 目标="输出">&lt;![CDATA[&lt;pause xmlns="urn:xmpp:rayo:output:1"/>]]>&lt;/别名>
+    &lt;!-- 恢复录音 -->
+    &lt;别名名称="恢复录音" 目标="录音">&lt;![CDATA[&lt;resume xmlns="urn:xmpp:rayo:record:1"/>]]>&lt;/别名>
+  &lt;/别名>
 
-###  rayo APP 
+### rayo 应用程序
 
-Offer call to Rayo client. This is similar to the [Outbound Event Socket](../Client-and-Developer-Interfaces/Event-Socket-Library/Event-Socket-Outbound_3375460.mdx#faq) "socket" application. If there are no Rayo clients connected to FreeSWITCH when the call is offered, the call is rejected.
+向 Rayo 客户端提供来电。这类似于 [Outbound Event Socket](../Client-and-Developer-Interfaces/Event-Socket-Library/Event-Socket-Outbound_3375460.mdx#faq) "socket" 应用程序。如果在呼叫被提供时，没有 Rayo 客户端连接到 FreeSWITCH，那么呼叫将被拒绝。
 
-  &lt;extension name="rayo">
-     &lt;condition>
-       &lt;!-- Offer call to rayo client -->
-       &lt;action application="rayo"/>
-     &lt;/condition>
-  &lt;/extension>
+  &lt;扩展名称="rayo">
+     &lt;条件>
+       &lt;!-- 向 Rayo 客户端提供呼叫 -->
+       &lt;操作应用程序="rayo"/>
+     &lt;/条件>
+  &lt;/扩展>
 
-###  rayo API 
+### rayo API
 
-Rayo admin console
+Rayo 管理控制台
 
-This API is primarily for testing or checking the status of calls offered to Rayo clients.
+此 API 主要用于测试或检查提供给 Rayo 客户端的呼叫的状态。
 
-####  rayo &lt;alias> &lt;jid> 
+#### rayo &lt;别名> &lt;jid>
 
-Execute an alias on a target JID
+在目标 JID 上执行别名
 
   rayo answer a12dg45-123ffg-2314f@rayo.example.com
 
-####  rayo status 
+#### rayo status
 
-Show current status of all XMPP entities. This lists all active clients/calls/mixers/servers/components.
+显示所有 XMPP 实体的当前状态。这将列出所有活动的客户端/呼叫/混音器/服务器/组件。
 
   rayo status
 
-####  rayo cmd &lt;jid> &lt;XMPP request> 
+#### rayo cmd &lt;jid> &lt;XMPP 请求>
 
-Send an XMPP &lt;iq> request to an XMPP entity.
+向 XMPP 实体发送一个 XMPP &lt;iq> 请求。
 
-The IQ request is automatically filled with the proper from and to JIDs (Jabber IDs).
+IQ 请求会自动填充正确的发送方和接收方 JID（Jabber ID）。
 
   rayo cmd 10.50.0.10 &lt;iq type="get">&lt;ping xmlns="urn:xmpp:ping"/>&lt;/iq>
+```
 
-####  rayo presence &lt;jid> online|offline 
+####  rayo 状态 &lt;jid> online|offline 
 
-Send admin console &lt;presence> to mod\_rayo server.
+将管理控制台的&lt;presence>发送到mod\_rayo服务器。
 
-By default, the admin console is offline and will not be offered calls. If you wish to test a call over via the console, you must send online presence to the mod\_rayo server.
+默认情况下，管理控制台处于离线状态，并且不会接受呼叫。如果您想通过控制台测试呼叫，必须向mod\_rayo服务器发送在线状态。
 
   rayo presence 10.50.0.10 online
 
-Now calls will be offered to the console client. "rayo answer &lt;jid>" will take control of the call.
+现在呼叫将被发送到控制台客户端。"rayo answer &lt;jid>"将接管呼叫。
 
-####  rayo msg &lt;jid> &lt;text message> 
+####  rayo 消息 &lt;jid> &lt;文本消息> 
 
-Send a &lt;message> to an XMPP entity
+将&lt;message>发送到一个XMPP实体
 
-  rayo msg c888@rayo.example.com How are you today?
-
-
+  rayo msg c888@rayo.example.com 今天你好吗？

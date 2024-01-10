@@ -1,39 +1,36 @@
+# 客户端和开发者接口
 
-# Client and Developer Interfaces 
+## 关于
 
- 
+许多语言直接构建FreeSWITCH模块，或者直接从拨号计划或fs_cli中运行。
 
-## About
-
-Many languages can directly build FreeSWITCH modules or be run directly from the dialplan or from the fs\_cli.
-
-There are a few ways that you can connect your own applications with FreeSWITCH:
+以下是您将自己的应用程序与FreeSWITCH连接的几种方式：
 
 ## mod_xml_curl
 
-The curl module is used to provide FreeSWITCH with information such as configuration, dialplans and users.
+curl模块用于提供FreeSWITCH的信息，如配置、拨号计划和用户。
 
-[mod\_xml\_curl](../Modules/mod_xml_curl_1049001.mdx)
+[mod_xml_curl](../Modules/mod_xml_curl_1049001.mdx)
 
 ## mod_xml_rpc
 
-Connect to FreeSWITCH from your own application RPC client and issue commands.
+从您自己的应用程序RPC客户端连接到FreeSWITCH并发送命令。
 
-[mod\_xml\_rpc](../Modules/mod_xml_rpc_1048928.mdx#about)
+[mod_xml_rpc](../Modules/mod_xml_rpc_1048928.mdx#about)
 
-## Script languages
+## 脚本语言
 
-The first and simplest one is to use one of the scripting languages.
+第一种也是最简单的方法是使用脚本语言之一。
 
-[Script Language Choice](./Script-Language-Choice_1048942.mdx#about)
+[脚本语言选择](./Script-Language-Choice_1048942.mdx#about)
 
-## Event socket
+## 事件套接字
 
-The event socket is the most advanced interface to use. It's also the most powerful interfance. It let's you control almost everything in FreeSWITCH.
+事件套接字是使用最先进的接口。它也是最强大的接口。它让您几乎可以控制FreeSWITCH的所有内容。
 
-[Event Socket Library](./Event-Socket-Library/index.mdx#-new-)   
+[事件套接字库](./Event-Socket-Library/index.mdx#-new-)
 
-## Current directly supported languages
+## 当前直接支持的语言
 
 * C/C++
 * [Java](./Java-ESL/index.mdx#about)
@@ -43,51 +40,48 @@ The event socket is the most advanced interface to use. It's also the most power
 * [Python](https://wiki.freeswitch.org/wiki/Mod%5Fpython "Mod python")
 * [Perl](https://wiki.freeswitch.org/wiki/Perl "Perl")
 
-Any language not directly supported can still interact with and control FreeSWITCH via these several options: 
+任何不被直接支持的语言仍然可以通过以下几种选项与FreeSWITCH进行交互和控制：
 
-* [Event Socket Library](./Event-Socket-Library/index.mdx#-new-) \- a generic socket to watch for events and issue commands to FreeSWITCH - bindings are available in many languages.
-* [mod\_xml\_curl](../Modules/mod_xml_curl_1049001.mdx) \- to serve the dialplan, directory, ACL, configuration.
-* [mod\_xml\_cdr](../Modules/mod_xml_cdr_6587377.mdx#faq) \- to process CDRs upon call completion.
+* [事件套接字库](./Event-Socket-Library/index.mdx#-new-) - 一个通用的套接字库，用于监听事件并向FreeSWITCH发送命令 - 提供了许多语言的绑定。
+* [mod\_xml\_curl](../Modules/mod_xml_curl_1049001.mdx) - 用于提供拨号计划、目录、ACL、配置。
+* [mod\_xml\_cdr](../Modules/mod_xml_cdr_6587377.mdx#faq) - 用于在通话完成时处理CDR。
 
-### Previously supported languages
+### 先前支持的语言
 
 * [PHP](https://wiki.freeswitch.org/wiki/Mod%5Fphp "Mod php")
 * [Ruby](https://wiki.freeswitch.org/wiki/Mod%5Fruby "Mod ruby")
 
-## Distilled Wisdom
+## 精华智慧
 
-It is generally best to do most telephony processing in the dialplan, not in your script. The FS team has put a great deal of effort into making sofia handle many edge cases of SIP processing, so trying to do all that in your script would prove hopeless. 
+通常最好将大部分电话处理放在拨号计划中，而不是在脚本中处理。FS团队在使sofia处理许多SIP处理的边缘情况方面付出了很大的努力，因此在脚本中尝试做所有这些工作可能是无望的。
 
-From a core developer:
+来自核心开发者的建议：
 
-**Bridge inside script**
+**脚本内部的桥接**
 
-From: Anthony Minessale &lt;anthony.minessale@[gmail.com](http://gmail.com)\>  
-Date: Mon, 22 Sep 2014 13:20:29 -0500
+发件人：Anthony Minessale &lt;anthony.minessale@[gmail.com](http://gmail.com)\>  
+日期：星期一，2014年9月22日，下午1:20:29 -0500
 
-uuid\_bridge is a "transfer to" type of bridge so if you want to use it and your script is running on one of the legs involved, you need to allow your script to exit so the bridge can begin.
+uuid\_bridge 是一种“转接”类型的桥接，所以如果你想使用它并且你的脚本正在其中一个相关分支上运行，你需要允许脚本退出，以便桥接可以开始。
 
-If you have the uuid of another leg and you want to bridge this leg to it you can use:
+如果你有另一个分支的UUID，并且你想将此分支桥接到它，你可以使用：
 
 session:execute("intercept", "&lt;other uuid>")
 
-If you are manually creating legs inside Lua scripts just to bridge them, it's generally overkill. You can just do
+如果你只是为了将它们桥接而在Lua脚本中手动创建分支，一般来说是过度的。你可以只执行
 
 session:execute("bridge", "&lt;dial string>")
 
-which is a blocking call that will dial and bridge and return to your script when it's done.
+这是一个阻塞调用，它将拨号并桥接并在完成后返回到你的脚本。
 
-If you don't need to remain in your script you should set a custom variable to the destination you want to dial, exit the script, and use the bridge app from the xml dialplan.
+如果你不需要保持在脚本中，你应该设置一个自定义变量为你想要拨号的目的地，退出脚本，并在xml拨号计划中使用桥接应用。
 
-Calling out to somewhere is a bridge, transfer is to take your inbound call and go run some different script for example
+呼叫到某处是一座桥梁，转接是接听您的呼入电话并运行一些不同的脚本，例如
 
-From an add-on developer:
+来自附加程序开发者：
 
-**Script threads**
+**脚本线程**
 
-crienzo: any dialplan application that executes runs inside the same session thread that handles RTP media  
-crienzo: so a Lua script can stall RTP processing if you do silly things  
-crienzo: however, luarun is an API that runs in its own thread
-  
-  
-
+crienzo：执行的任何拨号计划应用将在处理 RTP 媒体的同一会话线程内运行  
+crienzo：因此，如果您做了一些愚蠢的事情，Lua 脚本可能会阻止 RTP 处理  
+crienzo：然而，luarun 是一个在自己的线程中运行的 API

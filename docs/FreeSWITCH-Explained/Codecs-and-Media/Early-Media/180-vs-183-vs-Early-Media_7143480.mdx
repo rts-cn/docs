@@ -1,51 +1,43 @@
+# 180 vs 183 vs Early Media（进展中 vs 振铃 vs 预录媒体）
 
-# 180 vs 183 vs Early Media 
+## 关于
 
- 
+180 vs. 183 vs. Early Media（进展中 vs 振铃 vs 预录媒体）
 
-## About
+点击此处展开目录
 
-180 vs. 183 vs. Early Media
+* 1 [讨论](#discussion)
+* 2 [RFC 信息](#rfc-information)
+* 3 [参见](#see-also)
 
-Click here to expand Table of Contents
+## 讨论
 
-* 1 [Discussion](#discussion)
-* 2 [RFC Information](#rfc-information)
-* 3 [See Also](#see-also)
+如果你知道电话正在响铃（例如 ALERT Q.931 消息），你发送一个 180 Ringing（振铃）。
 
-## Discussion
+如果你收到通知表示通话正在进行中，但不确定用户是否已被提醒，你发送一个 183 Session Progress（进展中）消息。
 
-  
-If you know that the phone is ringing (an ALERT Q.931 message, for instance) you send a 180 Ringing.
+两者都可以使用 SDP（会话描述协议）来表示预录媒体。如果没有 SDP，则终端设备（软电话/网关/等等）必须生成回铃音或进展音。
 
-If you receive a notification indicating that the call is progressing, but you do not know for sure whether the user is being alerted or not, you send a 183 Session Progress message.
+通常情况下，180 的时候没有 SDP，而 183 的时候有 SDP。最好的做法是将铃声的生成留给终端设备。
 
-Both can indicate early media with SDP. If there is no SDP, the end device (softphone/gateway/etc.) has to generate the ringback tone or progress tone.
+如果收到了 183，则应打开媒体连接，因为双方已准备好可以听到的音频。
 
-Usually you will see 180 without SDP while 183 with SDP. It is a good practice to leave the tone generation for the endpoints.
+如果设置了 ringback 变量，并且 ignore\_early\_media，那么无论是 180 还是 183 都会触发你的伪响铃。如果设置 instant\_ringback=true，则不会等待 18x，而是立即开始伪响铃（呼叫模式）。
 
-If you get 183 you should open media connection because there is audio ready for them to hear.
+## RFC 信息
 
-If you set ringback var and ignore\_early\_media, both 180 and 183 will trigger your fake ringing. If you set instant\_ringback=true then it will not wait for 18x it will start fake ringback instant (asterisk mode).
+[RFC 3261](https://tools.ietf.org/html/rfc3261)：
 
-## RFC Information
+21.1.2 180 Ringing（振铃）
 
-[RFC 3261](https://tools.ietf.org/html/rfc3261):
-
-21.1.2 180 Ringing
-
-   The UA receiving the INVITE is trying to alert the user.  This
-   response MAY be used to initiate local ringback.
+   收到 INVITE 的 UA 正在尝试提醒用户。可以使用此响应来启动本地回铃。
 ...
-21.1.5 183 Session Progress
+21.1.5 183 Session Progress（进展中）
 
-   The 183 (Session Progress) response is used to convey information
-   about the progress of the call that is not otherwise classified. 
+   使用 183（进展中）响应来传达除其他分类之外的呼叫进展信息。
 
-## See Also
+## 参见
 
-* [Early Media](./index.mdx#about)
+* [预录媒体](./index.mdx#about)
 * [Misc.\_Dialplan\_Tools\_pre\_answer](../../Modules/mod-dptools/6586998.mdx#about)
 * [Misc.\_Dialplan\_Tools\_ring\_ready](../../Modules/mod-dptools/6586994.mdx#about)
-
-

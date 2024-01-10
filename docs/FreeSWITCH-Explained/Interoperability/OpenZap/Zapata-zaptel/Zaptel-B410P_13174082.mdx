@@ -1,41 +1,46 @@
-
 # Zaptel B410P 
 
  
 
-Click here to expand Table of Contents
+点击这里展开目录
 
-* 1 [HOW TO INSTALL DIGIUM B410P ON UBUNTU FOR FREESWITCH](#how-to-install-digium-b410p-on-ubuntu-for-freeswitch)
+* 1 [在Ubuntu上为FREESWITCH安装DIGIUM B410P](#how-to-install-digium-b410p-on-ubuntu-for-freeswitch)
 
-All the text below was last edited in 2009, it is therefore likely out-of-date, inaccurate and in dire need of a refresh 
+以下所有文本均于2009年最后编辑，因此很可能已过时、不准确且急需更新。
 
-## HOW TO INSTALL DIGIUM B410P ON UBUNTU FOR FREESWITCH
+## 在Ubuntu上为FREESWITCH安装DIGIUM B410P
 
-At the moment FreeSWITCH does not work with the new dahdi drivers from Digium, which provides native support for the B410P (BRI) card. In order to use that card, it's necessary to install Bristuff and apply a patch:
+目前，FreeSWITCH无法与Digium提供的新dahdi驱动程序一起使用，该驱动程序提供对B410P（BRI）卡的原生支持。要使用该卡，需要安装Bristuff并应用一个补丁：
 
- 1\. Download bristuff from: <http://www.junghanns.net/downloads/bristuff-0.4.0-RC3d.tar.gz> and extract the files;
+1. 从以下网址下载bristuff：<http://www.junghanns.net/downloads/bristuff-0.4.0-RC3d.tar.gz>并解压文件；
 
- 2\. Replace qozap/qozap.c and qozap/qozap.h with the files from: <http://svn.digium.com/view/zaptel/team/mattf/bri-related/>
+2. 使用以下网址的文件替换qozap/qozap.c和qozap/qozap.h：<http://svn.digium.com/view/zaptel/team/mattf/bri-related/>；
 
- 3\. If using a kernel version newer than 2.6.23, replace "SA\_INTERRUPT | SA\_SHIRQ" at qozap.c:1630 with "IRQF\_DISABLED | IRQF\_SHARED";
+3. 如果使用的内核版本高于2.6.23，在qozap.c的1630行将"SA\_INTERRUPT | SA\_SHIRQ"替换为"IRQF\_DISABLED | IRQF\_SHARED"；
 
- 4\. Compile and install the driver:
+4. 编译并安装驱动程序：
 
- ./compile.sh -m 'qozap zaphfc'
+```bash
+./compile.sh -m 'qozap zaphfc'
+```
 
- 5\. Edit /etc/default/zaptel (or /etc/sysconfig/zaptel depending on your distribution) and comment all the modules, leaving only the qozap driver:
+5. 编辑/etc/default/zaptel文件（或者根据您的发行版编辑/etc/sysconfig/zaptel），并注释掉所有的模块，只保留qozap驱动程序：
 
- MODULES="$MODULES qozap"
+```bash
+MODULES="$MODULES qozap"
+```
 
- 6\. Load the driver:
+6. 加载驱动程序：
 
- /etc/init.d/zaptel start
+```bash
+/etc/init.d/zaptel start
+```
 
- 7\. Make sure the drivers are loaded: ztcfg -vvv
+7. 确保驱动程序已加载：ztcfg -vvv
 
- 8\. Compile OpenZAP for FreeSWITCH and edit the following files:
+8. 为FreeSWITCH编译OpenZAP并编辑以下文件：
 
- conf/zt.conf:
+conf/zt.conf：
 
 ```xml
 [defaults]
@@ -43,11 +48,11 @@ codec_ms => 20
 wink_ms => 150
 flash_ms => 750
 echo_cancel_level => 64
+```
 
+conf/openzap.conf：
 
-conf/openzap.conf:
-
-
+```xml
 [span zt]
 trunk_type => bri
 b-channel => 1-2
@@ -84,5 +89,3 @@ conf/autoload\_configs/openzap.conf.xml:
   </pri_spans>
 </configuration>
 ```
-
-

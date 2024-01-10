@@ -1,245 +1,225 @@
+# RTP问题
 
-# RTP Issues 
+## 关于
 
- 
+在没有足够的数据包捕获和其他故障排除信息的情况下，RTP问题可能很难诊断。
 
-## About
+此文档编写于2008年，可能已经不适用。
 
-RTP issues can be difficult to diagnose without a healthy amount of packet captures and other troubleshooting information.
+## 存在问题的设备
 
-This document was written in 2008 and is likely no longer applicable.
+### Sonus设备
 
-## Devices with Issues
+#### 运营商信息
 
-### Sonus
+已知使用此设备的运营商：L3、WilTel、Bandwidth.com、Broadvox、Global Crossing、XO、Qwest和T-Systems（德国电信的一个部门）。
 
-#### Carrier Info
+* 2008年12月9日（PST）19:40
+* 已知支持只有rfc2833或者带有DTMF inband的G.711u的G.729。如果您正在使用FreeSWITCH，则可以购买G.729许可证或使用带有DTMF inband的G.711u（PCMU）。（也可以参考下面的RFC2833）
+* 偶尔会出现语音中断。Anthony发现，如果停止向运营商传输RTP数据，他们的响应时间会延迟500毫秒。
 
-Carriers known to be using this device: L3, WilTel, Bandwidth.com, Broadvox, Global Crossing, XO, Qwest and T-Systems (a division of Deutsche Telekom).
+无论使用的硬件是什么，都有一系列原因会导致它们复位。
 
-* 19:40, 9 December 2008 (PST)
-* Known to support exactly G.729 with rfc2833 OR G.711u with DTMF inband. If you're using FreeSWITCH then you can purchased a license for G.729 or use G.711u (PCMU) with DTMF inband. ( also RFC2833 look below how )
-* Dropped audio infrequently. Anthony discovered that they have a +500ms response time if you STOP streaming RTP data to the carrier.
+原因：
 
-Whatever hardware they use has a list of reasons to reset.
+* 如果您的FreeSWITCH安装希望更改时间戳基准并发送标记位，它们将会在发送2秒静音后复位。
+* 如果你单独在RFC2833上发送时间戳基准，它会进行复位。
 
-Causes:
+#### 语音中断
 
-* If your installation of FreeSWITCH wants to change timestamp base and send them mark bit, they reset with 2 seconds of silence.
-* If you send RFC2833 on it's own timestamp base it resets.
-
-#### Dropped Audio
-
-If you are suffering from dropped audio, specifically regarding the first 2-3 seconds of a single audio stream then try the following:
+如果您遇到语音中断问题，特别是在单一音频流的前2-3秒钟内，请尝试以下操作：
 
 **conf/vars.xml**
 
 ```xml
-<!-- This will continue a steady stream of RTP to the Sonus device and your dropped audio will nearly vanish -->
+<!-- 这将持续向Sonus设备发送稳定的RTP流，您的语音中断问题几乎会消失 -->
 <X-PRE-PROCESS cmd="set" data="send_silence_when_idle=400"/>
 ```
 
-Take care when using this parameter, as it may suppress ringback tones by actually sending early media.
+在使用此参数时要小心，因为它可能会通过实际发送早期媒体来抑制回铃音。
 
 **conf/sip\_profiles/external.xml**
 
 ```xml
-<!--This will rewrite all new timestamps instead of passing them from the other leg.-->
+<!-- 这将重写所有新的时间戳，而不是从另一条通路传递它们。-->
 <param name="rtp-rewrite-timestamps" value="true"/>
 ```
 
-#### DTMF Problems
+#### DTMF问题
 
-If you are having DTMF problems and **Sonus is in your media path**, you should make sure you are using the latest version of FreeSWITCH. As of FreeSWITCH revision 10744, FreeSWITCH auto-detects Sonus end-points and applies a hack to "fix" the issue. The hack is described as follows (from switch\_types.h):
+如果您在使用 DTMF（双音多频）时遇到问题，并且**Sonus 在您的媒体路径中**，您应该确保使用的是最新版本的 FreeSWITCH。从 FreeSWITCH 修订版本 10744 开始，FreeSWITCH 可自动检测 Sonus 终端点，并应用一种“修复”这个问题的方法。这个修复方法如下所述（来自 switch\_types.h）：
 
-Sonus wrongly expects that, when sending a multi-packet 2833 DTMF event, the sender should
-increment the RTP timestamp in each packet when, in reality, the sender should send the
-same exact timestamp and increment the duration field in the 2833 payload. This allows a
-reconstruction of the duration if any of the packets are lost.
+Sonus 错误地期望，在发送多包 2833 DTMF 事件时，发送方每个包都应该增加 RTP 时间戳。而实际上，发送方应该发送完全相同的时间戳，并在 2833 负载的持续时间字段中递增。这样，如果其中任何一个包丢失，就可以重构持续时间。
 
 final_duration - initial_timestamp = total_samples
 
-However, if the duration value exceeds the space allocated (16 bits), the sender should
-increment the timestamp one unit and reset the duration to 0.
+但是，如果持续时间值超过了分配的空间（16 位），发送方应该将时间戳递增一个单位，并将持续时间重置为 0。
 
-Always sending a duration of 0 with a new timestamp should be tolerated but is rarely
-intentional and is mistakenly done by many devices. The issue is that the Sonus expects
-everyone to do it this way instead of tolerating either way. Sonus will actually ignore
-every packet with the same timestamp before concluding if it's DTMF.
+始终使用新时间戳发送持续时间为 0 应该是可以容忍的，但很少有人故意这样做，许多设备做的其实都是错误的。问题在于 Sonus 希望每个人都这样做，而不是容忍两种方式。实际上，Sonus 在确定是否为 DTMF 之前会忽略掉具有相同时间戳的每个包。
 
-Note that the version of FreeSWITCH which has this patch auto-detects Sonus, so you don't need to configure anything.
+请注意，具有此补丁的 FreeSWITCH 版本将自动检测 Sonus，因此您无需进行任何配置。
 
-  
- If you are going through a provider who uses Sonus **only as an SBC and not in your media path** FreeSWITCH may incorrectly identify your call as going through Sonus and actually corrupt your media stream's DTMF. You can override FreeSWITCH's auto-detection of end-user agents with a flag in profiles stored under $FS\_ROOT/sip\_profiles/ . Just add:
+如果您通过一个将 Sonus 仅用作 SBC 而不在您的媒体路径中的供应商，则 FreeSWITCH 可能会错误地识别您的通话经过 Sonus，并导致媒体流的 DTMF 损坏。您可以通过在存储位置为 $FS\_ROOT/sip\_profiles/ 的配置文件中添加一个标志，来覆盖 FreeSWITCH 对终端用户代理的自动检测。只需添加以下内容：
 
-**Override FS user agent detection**
+**覆盖 FS 终端用户代理检测**
 
 ```xml
 <param name="auto-rtp-bugs" value="clear"/>
 ```
 
-  
- In some cases, you may have the reverse situation where Sonus or Cisco equipment sits in your media path, but FreeSWITCH can't auto-identify it. In that case, try these settings:
+在某些情况下，您可能会遇到反向情况，即Sonus或Cisco设备位于您的媒体路径上，但FreeSWITCH无法自动识别它。在这种情况下，请尝试以下设置：
 
-**Cisco workaround**
+**Cisco解决方法**
 
 ```xml
 <param name="auto-rtp-bugs" value="CISCO_SKIP_MARK_BIT_2833"/>
 ```
 
-**Sonus workaround**
+**Sonus解决方法**
 
 ```xml
 <param name="auto-rtp-bugs" value="SONUS_SEND_INVALID_TIMESTAMP_2833"/>
-
 ```
 
-![FreeSWITCH to Sonus testing paths](/attachments/1048973/2162692.png "FreeSWITCH to Sonus testing paths")
+![FreeSWITCH 到 Sonus 测试路径](/attachments/1048973/2162692.png "FreeSWITCH 到 Sonus 测试路径")
 
-FreeSWITCH to Sonus testing paths
+FreeSWITCH 到 Sonus 测试路径
 
-### If your call to a Sonus still won't work
+### 如果您的呼叫无法与 Sonus 通话
 
-For those of you who have tried the auto-rtp-bugs and still cannot get DTMF to work for G711 negotiated calls, there appears to be an issue with the Sonus using Fax treatment which drops the out of band DTMF packets that come from FreeSWITCH (and other platforms). Some more in-depth information for Sonus users (at least for 5.0 and 5.1 users, I can't speak for those who may have the latest and greatest code revisions which might fix this) is below.
+对于那些已经尝试了自动 rtp-bugs 但仍然无法使 G711 协商呼叫的 DTMF 正常工作的人来说，似乎 Sonus 存在一个使用传真处理的问题，会丢弃来自 FreeSWITCH（和其他平台）的带外 DTMF 包。对于 Sonus 用户（至少对于 5.0 和 5.1 用户，我不能对那些可能有最新和最好代码修正的人说话），以下是一些更详细的信息。
 
-In the GSX Navigator (Sonus Insight), go to Sonus→Profiles→Packet Service Profiles→default. You may have some changes made to the Fax Treatment/Failure section. To resolve the DTMF you will have to change that to match the below examples.
+在 GSX 导航程序（Sonus Insight）中，转到 Sonus→Profiles→Packet Service Profiles→default。您可能对传真处理/故障部分进行了一些更改。要解决 DTMF 的问题，您需要将其更改为与以下示例匹配。
 
-An example of a base profile that will not work:
+一个无法工作的基本配置文件示例：
 
-Audio Encodings:          G.711      DTMF      Modem        Fax             
-                Pkt Size/ Law/       Relay/    Treatment/   Treatment/      
-Priority Codec  Code Rate Send SID   Remove    Failure      Failure         
-3        G711SS 20        LAWFROMCIR NONE      G711FALLBACK G711FALLBACK    
+音频编码：          G.711      DTMF      Modem        Fax             
+                数据包大小/  法律/       中继/      错误处理/     错误处理/      
+优先级   编解码器   码率       发送SID   移除       失败处理     失败处理         
+3       G711SS   20        LAWFROMCIR 无         G711FALLBACK  G711FALLBACK    
                 0BPS      DISABLED   DISABLED  CONTINUE     CONTINUE        
-4        G711   20        LAWFROMCIR NONE      G711FALLBACK G711FALLBACK    
+4       G711     20        LAWFROMCIR 无         G711FALLBACK  G711FALLBACK    
                 0BPS      DISABLED   DISABLED  CONTINUE     CONTINUE    
 
-What you would need to change it to, to fix the DTMF:
+要更改以修复DTMF问题，您需要更改如下：
 
-Audio Encodings:          G.711      DTMF      Modem        Fax             
-                Pkt Size/ Law/       Relay/    Treatment/   Treatment/      
-Priority Codec  Code Rate Send SID   Remove    Failure      Failure         
-3       G711SS  20        LAWFROMCIR NONE      G711FALLBACK **FAXRELAYORG711FA**
+音频编码：          G.711      DTMF      Modem        Fax             
+                数据包大小/ 法律/       中继/      错误处理/     错误处理/      
+优先级   编解码器   码率       发送SID   移除       失败处理     失败处理         
+3       G711SS   20        LAWFROMCIR 无         G711FALLBACK **FAXRELAYORG711FA**
                 0BPS      DISABLED   DISABLED  CONTINUE     CONTINUE        
-4       G711    20        LAWFROMCIR NONE      G711FALLBACK **FAXRELAYORG711FA**
+4       G711     20        LAWFROMCIR 无         G711FALLBACK **FAXRELAYORG711FA**
                 0BPS      DISABLED   DISABLED  CONTINUE     CONTINUE        
 
-The above profile will work if you are sending direct to the GSX using the dtg=TRUNKGROUP protocol. If you are routing your calls to the PSX, then you would make the appropriate changes to the Preferred Packet Service Profile that is attached to the trunk group that you are a) sending from or b) sending to.
+如果您直接通过dtg=TRUNKGROUP协议发送给GSX，则上述配置将起作用。如果您将呼叫路由到PSX，则需要对附加到发送源或接收源的干线组的首选数据包服务配置文件进行相应更改。
 
-#### Other Options
+#### 其他选项
 
-**conf/sip\_profiles/external.xml** Expand source 
+**conf/sip\_profiles/external.xml** 扩展源 
 
 ```xml
- <!-- This will use the async timer (this one you can also set to none if you don't want asynchronous RTP traffic) --> 
+<!-- 这将使用异步定时器（如果您不想要异步RTP流量，也可以设置为"none"） --> 
 <param name="rtp-timer-name" value="soft"/>
 
 <!--
-	RTP_BUG_CISCO_SKIP_MARK_BIT_2833 = (1 << 0),
-	   Some Cisco devices get mad when you send the mark bit on new 2833 because it makes
-	   them flush their jitterbuffer and the dtmf along with it.
+	`RTP_BUG_CISCO_SKIP_MARK_BIT_2833` = (1 << 0),
+	   有些思科设备在发送新的2833时，如果携带了标记位（mark bit），会导致它们刷新它们的抖动缓冲区和DTMF信号。
 
-	   This flag will disable the sending of the mark bit on the first DTMF packet.
+	   此标志将禁止在第一个DTMF包上发送标记位。
 
+	`RTP_BUG_SONUS_SEND_INVALID_TIMESTAMP_2833` = (1 << 1),
+	   Sonus错误地期望在发送多个2833的DTMF事件时，发送方应在每个包中递增RTP时间戳，而实际上，发送方应发送完全相同的时间戳，并递增2833载荷中的持续时间字段。这样，即使有任何一个数据包丢失，也能重建持续时间。
 
-	RTP_BUG_SONUS_SEND_INVALID_TIMESTAMP_2833 = (1 << 1),
-	   Sonus wrongly expects that, when sending a multi-packet 2833 DTMF event, The sender
-	   should increment the RTP timestamp in each packet when, in reality, the sender should
-	   send the same exact timestamp and increment the duration field in the 2833 payload.
-	   This allows a reconstruction of the duration if any of the packets are lost.
+	   最终持续时间 - 初始时间戳 = 总样本数
 
-		   final_duration - initial_timestamp = total_samples
+	   但是，如果持续时间值超过了分配的空间（16位），发送方应递增时间戳一个单位并将持续时间重置为0。
 
-	   However, if the duration value exceeds the space allocated (16 bits), The sender should increment
-	   the timestamp one unit and reset the duration to 0. 
+	   总是使用一个新的时间戳发送持续时间为0应该是可以接受的，但很少是有意为之的，并且许多设备错误地这样做了。
 
-	   Always sending a duration of 0 with a new timestamp should be tolerated but is rarely intentional
-	   and is mistakenly done by many devices.  
+	   问题在于Sonus期望每个数据包都这样做，而不是容忍两种方式。
 
-	   The issue is that the Sonus expects everyone to do it this way instead of tolerating either way.
-	   Sonus will actually ignore every packet with the same timestamp before concluding if it's DTMF.
+	   在确定是否为DTMF之前，Sonus实际上会忽略每个具有相同时间戳的数据包。
 
-	   This flag will cause each packet to have a new timestamp.
+	   此标志将导致每个数据包都有一个新的时间戳。
 
-	RTP_BUG_IGNORE_MARK_BIT = (1 << 2),
-	  A Huawei SBC has been discovered that sends the mark bit on every single RTP packet.
-	  Since this causes the RTP stack to flush it's buffers, it horribly messes up the timing on the channel.
+	`RTP_BUG_IGNORE_MARK_BIT` = (1 << 2),
+	  发现了一款华为SBC发送了每个RTP包上的标记位。
 
-	  This flag will do nothing when an inbound packet contains the mark bit.
+	  由于这会导致RTP栈刷新其缓冲区，这会严重干扰通道的计时。
 
-	
-	RTP_BUG_SEND_LINEAR_TIMESTAMPS = (1 << 3),
-	  Our friends at Sonus get real mad when the timestamps are not in perfect sequence even during periods of silence.
-	  With this flag, we will only increment the timestamp when write packets even if they are eons apart.
-	  
+	  当传入的数据包包含标记位时，此标志将不做任何处理。
 
-	RTP_BUG_START_SEQ_AT_ZERO = (1 << 4),
-	  Our friends at Sonus also get real mad if the sequence number does not start at 0.  
-	  Typically, we set this to a random starting value for your saftey.
-	  This is a security risk you take upon yourself when you enable this flag.
+```markdown
+RTP_BUG_SEND_LINEAR_TIMESTAMPS = (1 << 3)
+  当静音期间时间戳不是完美顺序时，我们的朋友Sonus会非常生气。
+  使用此标志，即使写入的数据包时间间隔非常长，我们也只会在写入数据包时递增时间戳。
 
+RTP_BUG_START_SEQ_AT_ZERO = (1 << 4)
+  我们的朋友Sonus也会非常生气，如果序列号不从0开始。
+  通常，我们会为了你的安全将其设置为随机起始值。
+  当你启用此标志时，这是你自己承担的风险。
 
-	RTP_BUG_NEVER_SEND_MARKER = (1 << 5),
-	  Our friends at Sonus are on a roll, They also get easily dumbfounded by marker bits.
-	  This flag will never send any. Sheesh....
-	
-	RTP_BUG_IGNORE_DTMF_DURATION = (1 << 6),
-	  Guess Who? ... Yep, Sonus (and who know's who else) likes to interweave DTMF with the audio stream making it take
-	  2X as long as it should and sending an incorrect duration making the DTMF very delayed.
-	  This flag will treat every dtmf as if it were 50ms and queue it on recipt of the leading packet rather than at the end.
+RTP_BUG_NEVER_SEND_MARKER = (1 << 5)
+  我们的朋友Sonus尽管不断受挫，但还是会因为标记位而糊涂。
+  此标志将永远不发送任何标记位。唉....
 
+RTP_BUG_IGNORE_DTMF_DURATION = (1 << 6)
+  猜猜是谁？...没错，是Sonus（或者是其他人）喜欢将DTMF与音频流交织在一起，导致所需时间是正常情况的两倍，并发送错误的持续时间，导致DTMF非常延迟。
+  此标志将把每个DTMF都视为50ms，并在接收到第一个数据包时将其排队，而不是在最后。
 
-	RTP_BUG_ACCEPT_ANY_PACKETS = (1 << 7),
-	  Oracle's Contact Center Anywhere (CCA) likes to use a single RTP socket to send all its outbound audio.
-	  This messes up our ability to auto adjust to NATTED RTP and causes us to ignore its audio packets.
-	  This flag will allow compatibility with this dying product.
-
-
-	RTP_BUG_GEN_ONE_GEN_ALL = (1 << 8),
-	  Some RTP endpoints (and by some we mean *cough* _SONUS_!) do not like it when the timestamps jump forward or backwards in time.
-	  So say you are generating a file that says "please wait for me to complete your call, or generating ringback"
-	  Now you place and outbound call and you are bridging.  Well, while you were playing the file, you were generating your own RTP timestamps.
-	  But, now that you have a remote RTP stream, you'd rather send those timestamps as-is in case they will be fed to a remote jitter buffer......
-	  Ok, so this causes the audio to completely fade out despite the fact that we send the mark bit which should give them heads up its happening.
-
-	  Sigh, This flag will tell FreeSWITCH that if it ever generates even one RTP packet itself, to continue to generate all of them and ignore the
-	  actual timestamps in the frames.
-
-
-	RTP_BUG_CHANGE_SSRC_ON_MARKER = (1 << 9),
-	  By default FS will change the SSRC when the marker is set and it detects a timestamp reset.
-	  If this setting is enabled it will NOT do this (old behaviour).
-
-	RTP_BUG_FLUSH_JB_ON_DTMF = (1 << 10)
-	  Flush jitterbuffer when getting RFC2833 to reduce bleed through
-
-Examples usage in profile parameters:
-<param name="manual-rtp-bugs" value="SEND_LINEAR_TIMESTAMPS|START_SEQ_AT_ZERO|NEVER_SEND_MARKER|IGNORE_DTMF_DURATION|ACCEPT_ANY_PACKETS|GEN_ONE_GEN_ALL"/>
-
--->
+RTP_BUG_ACCEPT_ANY_PACKETS = (1 << 7)
+  Oracle's Contact Center Anywhere（CCA）喜欢使用单个RTP套接字发送所有出站音频。
+  这会影响我们自动适应NATTED RTP的能力，并导致我们忽略其音频数据包。
+  此标志将允许与这个即将消亡的产品兼容。
 ```
 
-## Voice Operator Panel (VOP)
+## 语音运营商面板（VOP）
 
-VOP-Softclients don't like changes in the RTP timestamp, e.g. when a REFER to the VOP-client occurs and the RTP-stream is replaced by the stream from a different call with a different timestamp. This leads to one-way audio for the callee, the VOP Softphone doesn't process the incoming RTP packets with the "new" timestamp and the callee will not hear the caller.
+RTP_BUG_GEN_ONE_GEN_ALL = (1 << 8),
 
-Setting [rtp-rewrite-timestamps](https://wiki.freeswitch.org/wiki/Sofia.conf.xml#rtp-rewrite-timestamps "Sofia.conf.xml") to True in the affected SIP-profile eventually solves the problem.
+有些RTP终端（我们是指*咳咳* _SONUS_！）不喜欢时间戳向前或向后跳跃。
 
-##  See also 
+假设你正在生成一个文件，文件中提示“请等待我完成您的通话，或者正在生成回铃音”。
 
-For more information on these and other Sonus issues:
+现在你拨号并进行呼叫桥接。当你播放文件时，你正在生成自己的RTP时间戳。
 
-* <http://www.submityoursip.com/wiki/Sonus%5FNBS> or <http://web.archive.org/web/20100121175135/http://www.submityoursip.com/wiki/Sonus%5FNBS>
+但是，现在你有了一个远程的RTP流，你更愿意将这些时间戳原样发送，以防它们会被传输到远程的抖动缓冲区......
+
+好的，所以这导致音频完全消失，尽管我们发送了标记位，但它应该提醒他们正在发生这种情况。
+
+唉，这个标志将告诉FreeSWITCH，即使它只生成一个RTP数据包，也要继续生成所有数据包，并忽略帧中的实际时间戳。
+
+RTP_BUG_CHANGE_SSRC_ON_MARKER = (1 << 9),
+
+默认情况下，当设置标记并检测到时间戳重置时，FS会更改SSRC。
+
+如果启用此设置，则不会更改SSRC（旧行为）。
+
+RTP_BUG_FLUSH_JB_ON_DTMF = (1 << 10)
+
+当接收到RFC2833信号时，清除抖动缓冲区以减少混叠声。
+
+在配置文件参数中的示例用法：
+<param name="manual-rtp-bugs" value="SEND_LINEAR_TIMESTAMPS|START_SEQ_AT_ZERO|NEVER_SEND_MARKER|IGNORE_DTMF_DURATION|ACCEPT_ANY_PACKETS|GEN_ONE_GEN_ALL"/>
+
+```
+
+VOP-Softclients 不喜欢 RTP 时间戳的变化，比如当 VOP-客户端出现 REFER 并且 RTP 流被来自不同呼叫的流替换时，这会导致被叫方只有单向音频，VOP Softphone 不会处理带有“新”时间戳的传入 RTP 包，被叫方将听不到来电者的声音。
+
+在受影响的 SIP-配置文件中将 [rtp-rewrite-timestamps](https://wiki.freeswitch.org/wiki/Sofia.conf.xml#rtp-rewrite-timestamps "Sofia.conf.xml") 设为 True，最终解决该问题。
+
+## 参见
+
+有关这些和其他 Sonus 问题的更多信息：
+
+* <http://www.submityoursip.com/wiki/Sonus%5FNBS> 或者 <http://web.archive.org/web/20100121175135/http://www.submityoursip.com/wiki/Sonus%5FNBS>
 * <http://blog.krisk.org/2009/02/update-youve-been-waiting-for.html>
 * <http://www.freeswitch.org/node/160>
 
-### Attachments:
+### 附件：
 
-![](/images/icons/bullet_blue.gif) [FStoSONUStestingpaths.png](/attachments/1048973/2162692.png) (image/png)  
+![](/images/icons/bullet_blue.gif) [FStoSONUStestingpaths.png](/attachments/1048973/2162692.png) (image/png)
 
-### Comments:
+### 评论：
 
-| SonusOrder of parameters causes Tenor to not encode Telephone Event 101 in forwarded InviteLack of RTP telephone-event causes DTMF need to fallback to SIP INFO or In-Band fixed in _P108 Maintenance Release_<https://support.sonus.net/display/ALLDOC/Tenor+P108+Maintenance+Release+Notes>When a Tenor received an Invite with SDP parameters, the forwarded invite from the Tenor was properly encoded. However, if the incoming parameters were not in irder \[sic\], the forwarded invite from the Tenor was incorrect. This has been resolved.See also [mod\_dptools: start\_dtmf](../Modules/mod-dptools/6587132.mdx#0-about) and [mod\_dptools: start\_dtmf\_generate](../Modules/mod-dptools/6587137.mdx#0-about). ![](/images/icons/contenttypes/comment_16.png) Posted by asiplas at May 07, 2021 12:29 |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-
-
+| Sonus参数顺序导致Tenor在转发的邀请中不编码电话事件101缺少RTP电话事件导致DTMF需要回退到SIP INFO或In-Band修复在_P108维护发布_<https://support.sonus.net/display/ALLDOC/Tenor+P108+Maintenance+Release+Notes>当Tenor收到带有SDP参数的邀请时，Tenor转发的邀请将正确编码。但是，如果传入的参数不按顺序\[sic\]，Tenor转发的邀请将不正确。这个问题已经解决。另请参阅[mod_dptools: start_dtmf](../Modules/mod-dptools/6587132.mdx#0-about)和[mod_dptools: start_dtmf_generate](../Modules/mod-dptools/6587137.mdx#0-about)。![](/images/icons/contenttypes/comment_16.png)由asiplas于2021年5月7日12:29发布|

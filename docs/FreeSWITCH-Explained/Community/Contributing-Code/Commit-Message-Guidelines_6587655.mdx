@@ -1,97 +1,88 @@
-
 # Commit Message Guidelines 
 
- 
+## 关于
 
-## About
+如何更好地格式化您的提交消息，以符合FreeSWITCH项目的标准。
 
-How to better format your commit messages to meet the standards of the FreeSWITCH project.
+单击此处展开目录
 
-Click here to expand Table of Contents
+* 1 [良好提交的准则](#良好提交的准则)
+* 2 [编写良好的提交消息](#编写良好的提交消息)
+* 3 [与JIRA问题相关的补丁](#与JIRA问题相关的补丁)
+* 4 [避免合并](#避免合并)
+* 5 [言行一致](#言行一致)
 
-* 1 [Guidelines for a Good Commit](#guidelines-for-a-good-commit)
-* 2 [Writing a Good Commit Message](#writing-a-good-commit-message)
-* 3 [Patches Related to JIRA Issues](#patches-related-to-jira-issues)
-* 4 [Avoid Merges](#avoid-merges)
-* 5 [Do As We Say...](#do-as-we-say)
+#### 良好提交的准则
 
-#### Guidelines for a Good Commit
+在尽可能合适的情况下，每个提交只解决一个问题。当我们审查您的提交时，不需要的内容只会引起混乱。
 
-To the extent possible and appropriate, address only one issue per commit. When we review your commit, anything that doesn't need to be there will only create confusion.
+这意味着，例如，无关的重构或空白清理通常应在单独的提交中进行。空格清理提交不应更改除空格以外的任何内容，重构提交应努力保持相同的行为。
 
-This means that, for example, unrelated refactoring or whitespace cleanups should generally happen in separate commits. Whitespace cleanup commits should not change anything other than whitespace, and refactoring commits should strive to preserve identical behavior.
+然而，也不要过分。每个提交应该完全完成一个可识别的目标。如果您正在添加一个新的模块，那么该模块的构建更改应该在添加该模块的提交中。如果您正在添加一个功能，应该在应用该提交后使该功能正常工作。
 
-However, don't go overboard. A commit should do some identifiable thing completely. If you're adding a new module, the build changes for that module should go in the commit that adds the module itself. If you're adding a feature, the feature should work after applying that commit.
-
-We don't need to see your missteps and corrections. Use `git rebase -i` to squash those out of your history before submitting the commit series to us. It should look like you got everything right the first time. Eg.:
+我们不需要看到您的失误和更正。在将提交系列提交给我们之前，请使用`git rebase -i`将它们从历史中压缩掉。它应该看起来像您第一次就做得完美。例如：
 
 ```xml
 git rebase -i <last_upstream_commit>
 ```
 
-Verify that each diff is correct and minimal, and that your git author name is correct and complete:
+验证每个diff是否正确和最小，并且您的git作者名称是否正确和完整：
 
 ```xml
 git log -p
 ```
 
-#### Writing a Good Commit Message
+#### 编写良好的提交消息
 
-Your commit message consists of two parts: the subject and the body.
+您的提交消息由两部分组成：主题和正文。
 
-The subject is like the subject in an email message. It should be short -- typically less than 50 characters -- and it should concisely describe the purpose or effect of your change. If you're having a difficult time writing a short subject for your commit, perhaps your commit should be broken into smaller separate commits.
+主题类似于电子邮件中的主题。它应该很简短——通常少于50个字符——并简洁地描述您更改的目的或影响。如果您在为提交编写简短的主题时遇到困难，也许您的提交应该分解为较小的单独提交。
 
-The commit body can be longer and can consist of multiple paragraphs. The text of the body should be hard wrapped to 68-72 characters. (In Emacs you can hard wrap text with \`M-q\`.)
+提交正文可以更长，可以由多个段落组成。正文的文本应按照 68-72 个字符进行硬换行（在Emacs中，您可以使用 `M-q` 进行硬换行）。
 
-When writing the commit body, describe in detail the problem that your commit aims to solve, how your commit solves the problem, and any changes in behavior that result from your change, such as new variables, command flags, or breaks in backward compatibility.
+在编写提交正文时，详细描述您的提交旨在解决的问题，您的提交如何解决问题，以及由您的更改引起的任何行为变化，例如新的变量、命令标志或向后兼容性断裂。
 
-Your commit message should be written in the present tense in imperative style. Your message should talk about what the patch _does_, not what you _did_ to write it.
+您的提交消息应以现在时的祈使句写成。您的消息应该讲述补丁所“做”的事情，而不是您为了编写它所“做”的事情。
 
-The commit subject is the first line of your commit message, then there is an empty line, then your commit body starts. A good commit message might look like this:
+提交主题是提交消息的第一行，然后是一个空行，然后是您的提交正文。一个好的提交消息可能是这样的：
 
-commit b5c64234ea5d4417abe02b282d6f41c019f2252f  
- Author: John Doe &lt;johndoe@[example.com](http://example.com/)>  
- Date: Tue Jan 19 03:14:07 2014 +0000
+提交 b5c64234ea5d4417abe02b282d6f41c019f2252f  
+作者：John Doe &lt;johndoe@[example.com](http://example.com/)>  
+日期：2014年1月19日星期二 03:14:07 +0000
 
- FS-XXXX: [mod_foo] Add frobinator support to mod_sofia
+FS-XXXX: [mod_foo] 将frobinator支持添加到mod_sofia
 
- #comment Without proper frobinator support users had to make multiple calls  
- to shell scripts to do the sort of frobbing needed in high call  
- volume environments.  
-   
- With this change, we now link to libfrob and support the IETF  
- draft-cross-voip-frobbing API.  
-   
- After appropriate amounts of frobbing have been done, a new variable  
- `frobbing_done` is set in the caller's channel.  
- 
-#### Patches Related to JIRA Issues
+#comment 在没有适当的frobinator支持的情况下，用户不得不对脚本进行多次调用，以完成在高呼叫量环境中所需的frobbing操作。
 
-When your patch is related to an issue logged in JIRA, add the identifier for the issue (e.g. FS-XXXX) to the body of your commit message at the beginning of a line, typically the last line or just before "Signed-off-by:" and "Thanks-to:" lines. This helps our JIRA bot do useful things by relating the commit to the issue.
+通过此更改，我们现在链接到libfrob并支持IETF draft-cross-voip-frobbing API。
 
-If you believe your patch resolves the issue in question, follow the issue number with a space and the "#resolve" directive as in the example above.
+完成适当数量的frobbing后，将在调用者的通道中设置一个新变量 `frobbing_done`。
 
-#### Avoid Merges
+#### 与JIRA问题相关的补丁
 
-When you've created a local git branch to make and test your changes, it can be tempting to merge that branch periodically against our git HEAD, particularly if the branch lingers for some time. Don't do this. Random "update branch to master" merges make our history hard to understand and make it more difficult to isolate regressions with `git-bisect`. Instead, please rebase your branch onto our tree before submitting the commits to us:
+当您提交的补丁与在JIRA中记录的问题相关联时，在提交消息的正文中添加问题标识符（例如，FS-XXXX）。通常，将其添加到一行的开头，通常是最后一行或者在“Signed-off-by:”和“Thanks-to:”行之前。这样做可以帮助我们的JIRA机器人将提交与问题相关联，从而进行有用的操作。
+
+如果您认为您的补丁解决了相应的问题，请在问题编号之后加上一个空格，然后加上"#resolve"指令，就像上面的示例一样。
+
+#### 避免合并操作
+
+当您创建了一个本地的git分支来进行修改和测试时，很容易会有想要定期将该分支与我们的git HEAD合并的冲动，特别是当该分支存在一段时间时。请不要这样做。随机的“update branch to master”合并会导致我们的历史记录难以理解，并且会使使用`git-bisect`隔离回归变得更加困难。相反，提交给我们之前，请将您的分支重新基于我们的代码树：
 
 ```xml
 git fetch && git rebase origin/master
 ```
 
-If you already ran [scripts/setup-git.sh](https://freeswitch.org/stash/projects/FS/repos/freeswitch/browse/scripts/setup-git.sh), `git pull` will be equivalent to the command above.
+如果您已经运行过[scripts/setup-git.sh](https://freeswitch.org/stash/projects/FS/repos/freeswitch/browse/scripts/setup-git.sh)，`git pull`命令将等同于上述命令。
 
-#### Do As We Say...
+#### 言行一致
 
-When you look in our git history, you'll find not all commits follow the guidelines here. Don't be fooled by this. These guidelines are what we want, and your commits should follow them.
+当您查看我们的git历史记录时，您会发现并不是所有的提交都遵循这里的准则。不要被误导。这些准则正是我们所希望的，您的提交应该遵循它们。
 
-It's always difficult to counsel, "do as we say and not as we do," but the truth is that the format of your commits will be held to a different standard than the commits of people who have written the majority of the code in FS. For one thing, your commits will be reviewed, so following a careful format helps us to review and merge your patches quickly and efficiently.
+告诉别人“我们说的要这么做，但自己却不这么做”始终是困难的。但事实是，您的提交的格式将被对比于那些在FS中编写了大部分代码的人们的提交，并将被抱有更高的要求。首先，您的提交将被审查，因此遵循仔细的格式可以帮助我们快速高效地审查和合并您的补丁。
 
-We want a clean and sensible git history, and over time more contributors will be following the guidelines here.
+我们希望一个整洁而明智的git历史记录，在未来会有更多的贡献者遵循这里的指南。
 
-### Comments:
+### 评论:
 
-| "Avoid Merges"Instead, please rebase your branch onto our tree **before** submitting the commits to usAnd what if the commit has already been submitted and never evaluated, and a week later there are merge conflicts? What's the proper way of dealing with this situation? Drop the branch and start over (as I'm doing)? ![](/images/icons/contenttypes/comment_16.png) Posted by saumar at May 18, 2017 17:56 |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-
-
+| 「避免合并」相反，请在向我们提交提交之前，将您的分支重新基于我们的树桩上。如果提交已经被提交但没有被评估，一周后出现合并冲突该怎么办呢？处理这种情况的正确方式是什么？是否应该放弃分支并重新开始（就像我正在做的那样）？ Posted by saumar, 2017年5月18日, 17:56 |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |

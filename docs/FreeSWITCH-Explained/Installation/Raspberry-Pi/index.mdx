@@ -1,26 +1,23 @@
+# 树莓派
 
-# Raspberry Pi 
+## 关于
 
- 
+在Raspberry PI上安装、构建或运行FreeSWITCH™没有太大的区别，只是我们为此准备了一个特殊的Debian仓库。
 
-## About
+## 简介
 
-There is no big difference in how to install, build or run FreeSWITCH™ on a Raspberry PI except that we have a special Debian repo for that.
+树莓派通常运行Linux，但由于它有另外的处理器架构，我们为其准备了不同仓库的Debian软件包。
 
-## Introduction 
+**简单方法**
 
-The Raspberry PI usually runs Linux, but because it has another processor architecture, we prepared Debian packages for it in a different repo.
+## 从Debian 11 "BullsEye"、10 "Buster"或Debian 9 "Stretch"软件包安装
 
-**Easy Way**
+### 最新发行版:
 
-## Installing From Debian 11 "BullsEye", 10 "Buster" or Debian 9 "Stretch" Packages
-
-### Latest Release Branch:
-
-**Release package**
+**发行软件包**
 
 ```bash
-TOKEN=YOURSIGNALWIRETOKEN
+TOKEN=YOURIGNALWIRETOKEN
 
 apt-get update && apt-get install -y gnupg2 wget lsb-release apt-transport-https
 wget --http-user=signalwire --http-password=$TOKEN -O /usr/share/keyrings/signalwire-freeswitch-repo.gpg https://freeswitch.signalwire.com/repo/deb/rpi/debian-release/signalwire-freeswitch-repo.gpg
@@ -28,17 +25,17 @@ wget --http-user=signalwire --http-password=$TOKEN -O /usr/share/keyrings/signal
 echo "machine freeswitch.signalwire.com login signalwire password $TOKEN" > /etc/apt/auth.conf
 chmod 600 /etc/apt/auth.conf
 
-# This is universal for all Debian distros
-# `lsb_release -sc` returns buster or stretch
+# 这对于所有的Debian发行版都是通用的
+# `lsb_release -sc` 返回 buster 或 stretch
 echo "deb [signed-by=/usr/share/keyrings/signalwire-freeswitch-repo.gpg] https://freeswitch.signalwire.com/repo/deb/rpi/debian-release/ `lsb_release -sc` main" > /etc/apt/sources.list.d/freeswitch.list
 echo "deb-src [signed-by=/usr/share/keyrings/signalwire-freeswitch-repo.gpg] https://freeswitch.signalwire.com/repo/deb/rpi/debian-release/ `lsb_release -sc` main" >> /etc/apt/sources.list.d/freeswitch.list
 
-# you may want to populate /etc/freeswitch at this point.
-# if /etc/freeswitch does not exist, the standard vanilla configuration is deployed
+# 你可能想在这一点上填充 /etc/freeswitch。
+# 如果 /etc/freeswitch 不存在，将部署标准原始配置。
 apt-get update && apt-get install -y freeswitch-meta-all
 ```
 
-FreeSWITCH™ is now installed and can be accessed with
+FreeSWITCH™ 现在已安装，并可通过以下方式访问
 
 **FreeSwitch CLI**
 
@@ -46,11 +43,11 @@ FreeSWITCH™ is now installed and can be accessed with
 fs_cli -rRS
 ```
 
-Master Branch ("git"):
+主分支("git"):
 
-WARNING not suitable for production
+警告：不适用于生产环境
 
-**Master Test Package**
+**主要测试套件**
 
 ```bash
 TOKEN=YOURSIGNALWIRETOKEN
@@ -61,29 +58,73 @@ wget --http-user=signalwire --http-password=$TOKEN -O /usr/share/keyrings/signal
 echo "machine freeswitch.signalwire.com login signalwire password $TOKEN" > /etc/apt/auth.conf
 chmod 600 /etc/apt/auth.conf
 
-# This is universal for all Debian distros
-# `lsb_release -sc` returns buster or stretch
+# 这对于所有Debian发行版都是通用的
+# `lsb_release -sc` 返回 buster 或 stretch
 echo "deb [signed-by=/usr/share/keyrings/signalwire-freeswitch-repo.gpg] https://freeswitch.signalwire.com/repo/deb/rpi/debian-dev/ `lsb_release -sc` main" > /etc/apt/sources.list.d/freeswitch.list
 echo "deb-src [signed-by=/usr/share/keyrings/signalwire-freeswitch-repo.gpg] https://freeswitch.signalwire.com/repo/deb/rpi/debian-dev/ `lsb_release -sc` main" >> /etc/apt/sources.list.d/freeswitch.list
 
-# you may want to populate /etc/freeswitch at this point.
-# if /etc/freeswitch does not exist, the standard vanilla configuration is deployed
+# 在这一点上，您可能想填充 /etc/freeswitch。
+# 如果 /etc/freeswitch 不存在，则部署标准版配置
 apt-get update && apt-get install -y freeswitch-meta-all
 ```
 
-## Building the binaries yourself.
+## 自行构建二进制文件。
 
-  
-Please see the Debian from source installation instructions.  
+请参考Debian源码安装说明。
 
-  
-### Comments:
+### 评论：
 
-| The instructions above do not work with Raspbian Lite. A working script, in a pull request, is at:<https://freeswitch.org/stash/projects/FS/repos/freeswitch-contrib/browse/bmiller793/raspbianlite/pilitefs.sh?at=8df8aa0dc5d5ac44c7cc74e1274e9bff8d820c7f>You just need the rpilitefs.sh script, and you're good. It will install prerequisites, get source, build, and then install to /usr/local/freeswitch. Once it's done, you can start FreeSWITCH, and connect a phone to the default accounts.The script builds and installs for the minimum configuration. This, of course, can be easily changed to build the vanilla configuration, if you just want to let the Pi chug overnight. Yes, you can immediately connect VOIP clients to it at the default extensions of 1000-1019\. This has been tested with Linphone. ![](/images/icons/contenttypes/comment_16.png) Posted by bmiller793 at Apr 21, 2016 01:26 |
+| 上面的说明对于Raspbian Lite无效。在以下链接中，有一个有效来源的脚本，可以在一个pull request中找到：<https://freeswitch.org/stash/projects/FS/repos/freeswitch-contrib/browse/bmiller793/raspbianlite/pilitefs.sh?at=8df8aa0dc5d5ac44c7cc74e1274e9bff8d820c7f>。你只需获取rpilitefs.sh脚本，一切都会变顺利。它将安装先决条件，获取源代码，编译，然后安装到/usr/local/freeswitch。完成后，你可以启动FreeSWITCH，并连接手机到默认账号。该脚本适用于最小配置。当然，如果你只想让Raspberry Pi一夜悠闲的工作，你可以轻松地将其更改为构建原版配置。是的，你可以立即将VOIP客户端连接到默认扩展号码1000-1019。这已经在Linphone上测试通过。 ![](/images/icons/contenttypes/comment_16.png) 由bmiller793在Apr 21, 2016 01:26发布 |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Thank you very much for this. I have added you to the confluence-editors group if you would care to improve these instructions as your time allows. I think this is a great application for the RPi, myself.Thanks again. ![](/images/icons/contenttypes/comment_16.png) Posted by boteman at Apr 27, 2016 18:37                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| One caution, however: the FreeSWITCH team can only permit links to their own repository or those of Debian and others that are trusted. If these updated instructions link to an untrusted source such as another developer's repo, then they won't allow it for security reasons. ![](/images/icons/contenttypes/comment_16.png) Posted by boteman at Apr 27, 2016 18:45                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| I've created a bug indicating a few issues with the script. For the time being, I build from souce. ![(smile)](/images/icons/emoticons/smile.svg) ![](/images/icons/contenttypes/comment_16.png) Posted by jungleboogie at Apr 28, 2016 15:51                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| Cool, thanks. Ultimately the core dev team hopes to use their build system to create packages that do most of what is needed to get an RPi up and running quickly. ![](/images/icons/contenttypes/comment_16.png) Posted by boteman at May 13, 2016 13:33                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| 非常感谢你。如果你有时间，我已经将你添加到便于改进这些说明的confluence-editors组。对我来说，我认为这对树莓派是一个很好的应用。再次感谢。![](/images/icons/contenttypes/comment_16.png) 由boteman在Apr 27, 2016 18:37发布                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| 然而，需要注意的是：FreeSWITCH团队只允许链接到他们自己的仓库或那些受信任的Debian和其他仓库。如果这些更新的说明链接到一个不受信任的源，比如另一个开发者的仓库，出于安全原因，他们将不会允许。![](/images/icons/contenttypes/comment_16.png) 由boteman在Apr 27, 2016 18:45发布                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| 我创建了一个bug，指明了脚本的一些问题。就目前而言，我从源代码构建。![(smile)](/images/icons/emoticons/smile.svg) ![](/images/icons/contenttypes/comment_16.png) 由jungleboogie在Apr 28, 2016 15:51发布                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| 很酷，谢谢。最终，核心开发团队希望使用他们的构建系统来创建大部分所需的软件包，以快速启动和运行树莓派。![](/images/icons/contenttypes/comment_16.png) 由boteman在May 13, 2016 13:33发布                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 
+###### Title: 使用Python编写自动化测试脚本
 
+自动化测试在软件开发过程中起着至关重要的作用。它可以帮助开发人员在编写代码并进行更改时，快速检测系统的功能是否正常。本教程将介绍如何使用Python编写自动化测试脚本。
+
+### 什么是自动化测试？
+
+自动化测试是一种使用脚本或程序自动执行的测试过程。与手动测试相比，自动化测试可以提高测试效率并节省时间。通过自动执行测试脚本，可以减少人工错误，提高测试的准确性和一致性。
+
+### 为什么使用Python？
+
+Python是一种简单、易学和功能强大的编程语言。它拥有丰富的第三方库和模块，可以轻松实现各种测试需求。Python还具有可读性强、易于维护和调试的特点，适合编写自动化测试脚本。
+
+### 设置测试环境
+
+在开始编写自动化测试脚本之前，我们需要准备好测试环境。首先，确保已经安装了Python解释器和测试相关的库。其次，确保已经设置好适当的测试数据和环境配置。
+
+### 编写测试脚本
+
+编写测试脚本的第一步是导入所需的库和模块。Python的unittest库是一个流行的测试框架，可以用于编写和运行测试用例。
+
+```
+import unittest
+
+class MyTestCase(unittest.TestCase):
+    def test_addition(self):
+        result = 2 + 2
+        self.assertEqual(result, 4)
+
+if __name__ == '__main__':
+    unittest.main()
+```
+
+上述示例演示了如何编写一个简单的测试用例。我们可以使用`assertEqual()`方法来断言两个值是否相等。在本例中，我们验证了2 + 2的结果是否等于4。
+
+### 运行测试脚本
+
+要运行测试脚本，只需在命令行中执行以下命令：
+
+```
+python test_script.py
+```
+
+执行测试脚本后，我们可以根据测试结果来判断系统是否正常工作。自动化测试脚本可以被集成到持续集成（CI）系统中，以在代码提交时自动运行测试并提供测试反馈。
+
+### 总结
+
+自动化测试是软件开发过程中必不可少的一部分。使用Python编写自动化测试脚本可以提高测试效率和测试覆盖率。通过在测试过程中自动执行测试案例，可以减少人工错误和提高测试准确性。

@@ -1,23 +1,20 @@
+# 呼叫群组拦截
 
-# Call Group intercept 
+## 关于
 
- 
+呼叫群组是指一组以某种逻辑方式归属在一起的用户。例如，所有会计部门的用户可以属于一个呼叫群组。呼叫群组中的用户可以拦截另一个也在呼叫群组中的用户的响铃电话，进行"呼叫拦截"（或称“拦截”）。
 
-## About
+* 注意：不要将"呼叫群组"与"响铃群组"搞混。在这个上下文中，我们只是在讨论一组用户。如果您想了解更多有关如何使组中的所有电话响铃的信息，请参阅[group\_call](../Modules/mod_commands_1966741.mdx#group_call) API 命令。
 
-A callgroup refers to a group of users who belong together in some logical way. For example, all the users in the accounting department can be in a callgroup. A user in a callgroup can perform a "call pickup" (or an "intercept") of a ringing phone belonging to another user who is also in the callgroup.
+点击此处展开目录
 
-* Note: do not mistake "callgroup" for "ring group." In this context, we simply are talking about a group of users. If you want to learn more about how to cause all the phones in a group to ring then look at the [group\_call](../Modules/mod_commands_1966741.mdx#group_call) API command.
+* 1 [拨号计划配置](#dialplan-configuration)
+* 2 [目录配置](#directory-configuration)
+* 3 [参见](#see-also)
 
-Click here to expand Table of Contents
+## 拨号计划配置
 
-* 1 [Dialplan Configuration](#dialplan-configuration)
-* 2 [Directory configuration](#directory-configuration)
-* 3 [See Also](#see-also)
-
-## Dialplan Configuration
-
-I'm using FreeSWITCH mostly as a PBX, and I found that I need a callgroup (call group) configuration similar to one in Asterisk (you need to answer a call for someone else in your department while he/she is out to lunch). Bear in mind, that callgroup variable is not the same as group pointer (group refers to ring groups where you can define what phones to ring and how to ring for a certain DID/DDI). Default examples show intercepting a global call, but with the help of the "db" application, one can easily configure "intercept" to work with a specific callgroup (also called a pickup group). FreeSWITCH sets the "uuid" variable for every call. It is a unique value representing that call. We get the called user's "callgroup" value and store the value of the "uuid" in a database entry named with the "callgroup".
+我通常将FreeSWITCH用作私有交换机，并发现我需要一个与Asterisk中相似的呼叫群组（call group）配置（当同事们外出午餐时，您需要代接他人的电话）。请注意，呼叫群组变量与群组指针不同（群组是指可以定义哪些电话以及如何为特定DID/DDI响铃的响铃群组）。默认示例展示了如何拦截全局呼叫，但是借助"db"应用程序，我们可以轻松配置"拦截"以与特定的呼叫群组（也称为接听组）一起工作。FreeSWITCH在每次呼叫时都会设置"uuid"变量。这是一个表示该呼叫的唯一值。我们获取被呼叫用户的"callgroup"值，并将"uuid"的值存储在以"callgroup"命名的数据库条目中。
 
 ```xml
 <action application="set" data="called_party_callgroup=${user_data(${dialed_ext}@${domain} var callgroup)}"/>
@@ -25,7 +22,7 @@ I'm using FreeSWITCH mostly as a PBX, and I found that I need a callgroup (call 
 <action application="bridge" data="user/${dialed_ext}@$${domain}"/>
 ```
 
-Dialing the extension below looks up the user's "callgroup" in the db and intercepts the call using the uuid that is returned:
+通过拨打下面的分机，查找数据库中用户的"callgroup"，使用返回的uuid拦截呼叫：
 
 ```xml
 <extension name="group-intercept">
@@ -37,9 +34,9 @@ Dialing the extension below looks up the user's "callgroup" in the db and interc
 </extension>
 ```
 
- ## Directory configuration
+ ## 目录配置
 
-We add a "callgroup" variable inside the user's directory xml file.
+我们在用户目录的xml文件中添加了一个"callgroup"变量。
 
 ```xml
 <user id="1001" mailbox="1001">
@@ -57,10 +54,8 @@ We add a "callgroup" variable inside the user's directory xml file.
 </user>
 ```
 
-## See Also
+## 参见
 
-* [Examples](../Examples/index.mdx#about)
-* [Groups](../Directory/XML-User-Directory/index.mdx#groups)
-* [group\_call at mod\_commands](../Modules/mod_commands_1966741.mdx#group_call)
-
-
+* [示例](../Examples/index.mdx#about)
+* [分组](../Directory/XML-User-Directory/index.mdx#groups)
+* [mod\_commands的group\_call](../Modules/mod_commands_1966741.mdx#group_call)

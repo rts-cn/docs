@@ -1,152 +1,168 @@
+# Lua目录示例
 
-# Lua Directory example 
+## 关于
 
- 
+输入一个FreeSWITCH用户姓氏的前三个字符，并让呼叫者选择要连接的返回结果。您需要[mod\_lua](../../../Modules/mod_lua_1048944.mdx#--)来执行此操作。
 
-## About
-
-Takes input of the first 3 chars of a FreeSWITCH user's last name and lets the caller choose which returned result to connect. You will need [mod\_lua](../../../Modules/mod_lua_1048944.mdx#--) working for this.
-
-## Example
+## 示例
 
 ```xml
 -- directory.lua
--- written by Brian Snipes <bsnipes_@_snipes.org>
---   on 2008/07/03
--- Purpose
---  to create a 'directory' app that takes input of the first 3 chars of a persons last name
---   and lets the user choose which returned result to transfer to
--- Notes
---  inside the custom_sounds_path are 5 sound files taken from an * box and converted to wav
---  FS currently has no equivalent of these files
---  the files are: dir-instr.wav  dir-intro-fn.wav  dir-intro.wav  dir-nomatch.wav  dir-nomore.wav
--- the following must be set correctly
--- used for logging info
+-- 由 Brian Snipes <bsnipes_@_snipes.org> 撰写
+-- 于 2008/07/03
+-- 目的
+-- 创建一个“directory”应用程序，接受人姓的前三个字母作为输入，并让用户选择要转接的返回结果
+-- 注意事项
+-- 在 custom_sounds_path 目录下有 5 个声音文件，从一个 * box 中取出并转换成 wav 格式
+-- FS 目前没有这些文件的等效物
+-- 这些文件是：dir-instr.wav、dir-intro-fn.wav、dir-intro.wav、dir-nomatch.wav、dir-nomore.wav
+-- 必须正确设置下列字段
+-- 用于记录信息
 script_name = "directory.lua"
--- extension the script runs on... we call back to this if no matches
+-- 脚本运行的扩展名...如果没有匹配项，我们会回调到这个扩展名
 directory_extension = 799
 custom_sounds_path = "/usr/local/freeswitch/sounds/custom/"
 voicemail_path = "/usr/local/freeswitch/storage/voicemail/default/192.168.5.4/"
--- the 'names' table contains names in a CamelCase format with the first and last names separated
---  by an underscore
--- the table contains only dictionary entries
--- the key is the name and the value is the extension number
+-- 'names' 表中包含以驼峰命名格式表示的姓名，名字和姓氏之间用下划线分隔
+-- 该表仅包含字典条目
+-- 键为姓名，值为分机号码
 names = {
     Ash_George= 1001,
     Jones_Jerry= 1002,
     Smith_John= 1003
 }
--- the following are used to generate digits sequences for the name/extension lookup
+-- 用于生成姓名/分机号码查找的数字序列的函数
 alphabet = "abcdefghijklmnopqrstuvwxyz"
 numbers = "22233344455566677778889999"
--- function used to check for the existence of a file
---  returns true if fname exists
+-- 用于检查文件是否存在的函数
+-- 如果 fname 存在，则返回 true
 function exists(fname)
     local f = io.open(fname, "r")
     if (f and f:read()) then return true end
 end
--- function used to spell a name letter by letter
+-- 按字母逐个拼写姓名的函数
 function sayname(full_name)
-    -- find the center space then reverse the first and last names
+    -- 寻找中间空格，然后反转名字的顺序
     middle = string.find(full_name, ' ')
     first_name = string.sub(full_name, middle + 1, string.len(full_name))
     last_name = string.sub(full_name, 1, middle -1)
-    freeswitch.consoleLog("info", script_name .. " : Now spelling out " .. first_name .. " " .. last_name .. "\n")
+    freeswitch.consoleLog("info", script_name .. " : 现在拼写 " .. first_name .. " " .. last_name .. "\n")
     session:execute("phrase", "spell," .. first_name .. " " .. last_name);
 end
--- function used to check if an extension already has a recorded name
+-- 检查分机号码是否已经有录音名字的函数
 function checkforname(extension)
-    --check the actual voicemail directory for recorded_name.wav
+    -- 检查实际的语音信箱目录中是否存在 recorded_name.wav
     vmpath = voicemail_path .. extension .. "/recorded_name.wav"
     if exists(vmpath) then
-        freeswitch.consoleLog("info", script_name .. " : recorded_name.wav for " .. extension .. " exists.\n")
+        freeswitch.consoleLog("info", script_name .. " : " .. extension .. " 的 recorded_name.wav 存在。\n")
         return vmpath
     else
-        freeswitch.consoleLog("info", script_name .. " : recorded_name.wav for " .. extension .. " does not exist.\n")
+        freeswitch.consoleLog("info", script_name .. " : " .. extension .. " 的 recorded_name.wav 不存在。\n")
         return false
     end
 end
--- create an all lowercase names table
+-- 创建一个全小写的姓名表
 lower_names = {}
 for k,v in pairs(names)
 do
     lower_names[string.lower(k)] =  v
 end
--- create lookup tables
+-- 创建查找表
 code_to_names = {}
 for k,v in pairs(lower_names)
 do
     first_three_chars = string.sub(k, 1, 3)
     code = ""
-    -- for each char in first_three_chars find the matching number
+    -- 对于每个 first_three_chars 中的字符，找到相应的数字
     for i=1,3
     do
         code = code .. string.sub(numbers, string.find(alphabet, string.sub(first_three_chars,i,i)))
     end
-    -- at this point code will be 3 numbers
-    -- see if the 3 digits are in our lookup table or not
+    -- 此时代码将会是 3 个数字
+    -- 查看这 3 个数字是否在我们的查找表中
     if code_to_names[code] == nil then
         code_to_names[code] = { k }
     else
         table.insert(code_to_names[code], k)
     end
 end
--- code_to_names will look like the following at this point
+-- 此时 code_to_names 的内容如下
 --   code_to_names[566]={ "jones_jerry" }
--- next we need to start the session and play the greeting
+-- 现在我们需要启动会话并播放问候语
 session:answer()
 session:execute( "sleep", "2000" )
-freeswitch.consoleLog("info", script_name .. " : playing intro message and waiting for digits.\n")
+freeswitch.consoleLog("info", script_name .. " : 播放介绍信息并等待按键。\n")
 digits = session:playAndGetDigits(3, 3, 10, 5000, "*#", custom_sounds_path .. "dir-intro.wav", "", "");
--- log to console what was input
-freeswitch.consoleLog("info", script_name .. " : captured the following digits - " .. digits .. "\n")
--- if it was 3 digits then process it
+-- 在控制台记录输入内容
+freeswitch.consoleLog("info", script_name .. " : 捕获到以下按键 - " .. digits .. "\n")
+-- 如果是 3 个按键，则处理它们
 if (string.len(digits) == 3) then
-    if (code_to_names[digits] ~= nil) then -- we have matches
-        freeswitch.consoleLog("info", script_name .. " : found " .. digits .. " in the code_to_names table\n")
-        -- sort the table so it comes out in good order
+    if (code_to_names[digits] ~= nil) then -- 我们找到了匹配项
+        freeswitch.consoleLog("info", script_name .. " : 在 code_to_names 表中找到了 " .. digits .. "\n")
+        -- 对表进行排序以保证良好的顺序
         table.sort(code_to_names[digits])
-        -- get the # of items in code_to_names[digits]
+        -- 获取 code_to_names[digits] 中的项数
         for count = 1,table.getn(code_to_names[digits])
         do
-            freeswitch.consoleLog("info", script_name .. " : processing match found for " .. digits .. ". It is ".. code_to_names[digits][count] .. "\n")
+            freeswitch.consoleLog("info", script_name .. " : 处理找到的匹配项 " .. digits .. "。它是 " .. code_to_names[digits][count] .. "\n")
             full_name = string.gsub(code_to_names[digits][count], "_", " ")
             extension = lower_names[code_to_names[digits][count]]
             recorded_name = checkforname(extension)
             if (recorded_name == false) then
                 sayname(full_name)
             else
-                freeswitch.consoleLog("info", script_name .. " : playing the recorded_name.wav for extension " .. extension .. "\n")
+                freeswitch.consoleLog("info", script_name .. " : 播放分机号码 " .. extension .. " 的 recorded_name.wav\n")
                 session:streamFile(recorded_name)
             end
             session:execute("phrase", "spell," .. extension)
             session:execute( "sleep", "1000" )
-            -- give the option press 1 to accept this person or * to go to the next
-            freeswitch.consoleLog("info", script_name .. " : playing 'press 1 or *' acceptance message and waiting for digit\n")
+            -- 提供选项，按 1 接听此人或者按 * 进入下一个
+            freeswitch.consoleLog("info", script_name .. " : 播放 “按 1 或 *” 接听消息并等待按键\n")
             accept_digit = session:playAndGetDigits(1, 1, 3, 2000, "#", custom_sounds_path .. "dir-instr.wav", "", "")
-            freeswitch.consoleLog("info", script_name .. " : acceptance digit is " .. accept_digit .. "\n")
+            freeswitch.consoleLog("info", script_name .. " : 接听按键是 " .. accept_digit .. "\n")
             if (accept_digit == "1") then
                 accepted_extension = true
                 session:transfer(extension, "XML", "default")
                 break
             end
         end
-        -- we've played them all and if nothing was accepted
-        -- play the nomore matches wav and transfer back to the ivr
+        -- 播放完所有录音后，如果没有接受，播放 nomore 匹配项的 wav，并返回 IVR
         if (accepted_extension ~= true) then
-            freeswitch.consoleLog("info", script_name .. " : no more matches found. playing message and transferring back to directory\n")
-            session:streamFile( custom_sounds_path .. "dir-nomatch.wav" )
+            freeswitch.consoleLog("info", script_name .. " : 未找到更多匹配项。播放消息并返回到目录\n")
+            session:streamFile(custom_sounds_path .. "dir-nomatch.wav")
             session:transfer(directory_extension, "XML", "default")
         end
     else
-        -- no matches found at all
-        -- transfer back when done
-        freeswitch.consoleLog("info", script_name .. " : did not find " .. digits .. " in the code_to_names table\n")
-        freeswitch.consoleLog("info", script_name .. " : transferring back to directory\n")
+        -- 未找到匹配项
+        -- 结束后返回
+        freeswitch.consoleLog("info", script_name .. " : 在 code_to_names 表中未找到 " .. digits .. "\n")
+        freeswitch.consoleLog("info", script_name .. " : 返回到目录\n")
         session:streamFile( custom_sounds_path .. "dir-nomatch.wav" )
         session:transfer(directory_extension, "XML", "default")
     end
 end
 ```
 
+**Title:**
 
+# 使用机器学习进行预测的新方法
+
+**Introduction:**
+
+机器学习是一种强大的工具，可以帮助我们从数据中提取有价值的信息。近年来，随着技术的进步和数据的增加，机器学习在各个领域中得到了广泛的应用。在这篇文章中，我们将介绍一种新的机器学习方法，可以用于预测各种现象和趋势。
+
+**主要思想:**
+
+这种新的机器学习方法结合了几个常用的预测算法，包括线性回归、决策树和神经网络。它的主要思想是从历史数据中学习模式，并使用这些模式来预测未来的趋势。通过对不同算法的结合使用，我们可以获得更准确、稳定的预测结果。
+
+**应用领域:**
+
+这种机器学习方法可以应用于各个领域，例如金融、市场营销、医疗、交通等。在金融领域，它可以用于预测股票价格的变动；在市场营销领域，它可以帮助企业预测产品销量；在医疗领域，它可以用于疾病的早期预测和诊断；在交通领域，它可以用于交通流量的预测和优化。
+
+**优势和挑战:**
+
+这种机器学习方法的优势在于能够处理大量的数据，并从中学习出准确的模式。它可以适应不同的数据类型和不同的问题，具有较强的灵活性。然而，挑战也是存在的。一个挑战是如何选择合适的算法，并确定合适的参数。另一个挑战是如何处理缺失数据和噪声，以及如何避免过拟合的问题。
+
+**总结:**
+
+这种使用机器学习进行预测的新方法可以帮助我们从数据中获取有价值的信息，并预测各种现象和趋势。它在各个领域都有广泛的应用前景，但也面临一些挑战。随着技术的进一步发展，我们相信这种方法将会越来越成熟，并为我们带来更多的好处和突破。

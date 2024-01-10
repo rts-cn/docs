@@ -1,51 +1,45 @@
+# mod_dptools：wait_for_silence
 
-# mod_dptools: wait_for_silence 
+## 关于
 
- 
+本页面描述了wait_for_silence应用的工作原理。
 
-## About
+点击此处展开目录
 
-This page describes how the application wait\_for\_silence works.
+* 1 [用法](#-freeswitch--mod_dptools-wait_for_silence-)
+* 2 [描述](#-freeswitch--mod_dptools-wait_for_silence-)
+* 3 [拨号计划示例](#dialplan-example)
 
-Click here to expand Table of Contents
-
-* 1 [Usage](#-freeswitch--mod_dptools-wait_for_silence-)
-* 2 [Description](#-freeswitch--mod_dptools-wait_for_silence-)
-* 3 [Dialplan Example](#dialplan-example)
-
-## Usage
+## 用法
 
 ```xml
 wait_for_silence <silence_thresh> <silence_hits> <listen_hits> <timeout_ms> [<file>]
 ```
 
-## Description
+## 描述
 
-  
-Pause dialplan execution while waiting for a certain length of silence on the channel. When silence is detected, or when the timeout period has expired, dialplan processing will continue.
+在等待通道上持续一定时间的静默之间，暂停拨号计划的执行。当检测到静默，或者超时期限已过，拨号计划将继续进行处理。
 
-"Silence" is determined by a combination of the &lt;silence\_thresh> value and the &lt;silence\_hits> value.
+"静默"由&lt;silence_thresh>值和&lt;silence_hits>值的组合来确定。
 
-* The silence\_thresh value is the silence threshold. The lower the value, the "quieter" the channel must be in order to be considered in a silent state. the numbers have to be \*bigger\* not smaller to make it harder to detect silence
-* The silence\_hits value represents the number of consecutive frames received with an "energy level" below the silence\_thresh value that must be seen before the channel is considered in a silent state. The higher this value, the longer the channel must be in a "silent" state before silence is detected.
-* The &lt;listen\_hits> value represents the number of frames of non-silence to be counted on the channel prior to engaging the silence detection. The higher this value, the more "noisy" frames that must be seen before silence detection begins.
-* The &lt;timeout\_ms> value represents the number of milliseconds that the wait\_for\_silence app will attempt to detect silence before giving up and moving on with the dialplan processing.
-* &lt;file> is an optional sound file that can be read and analyzed for silence detection.
+* `silence_thresh` 值是静默阈值。值越低，通道在被认为处于静默状态时需要更加“安静”。数字必须要**更大**而不是更小，以便更难检测到静默。
+* `silence_hits` 值表示在静默阈值以下连续接收到的帧数，用于将通道视为处于静默状态。该值越大，通道在静默状态下需要更长时间才能检测到静默。
+* `<listen_hits>` 值表示在启用静默检测之前，在通道上需要计数的非静默帧数。该值越大，需要观察到更多的“有声”帧才能开始检测静默。
+* `<timeout_ms>` 值表示等待静默检测尝试检测静默的毫秒数，如果超过该时间还没有检测到静默，则放弃并继续进行拨号计划处理。
+* `<file>` 是一个可选的音频文件，可以被读取和分析以进行静默检测。
 
-## Dialplan Example
+## 拨号计划示例
 
-  
 ```xml
 <action application="wait_for_silence" data="200 15 10 5000"/>
 ```
 
-  
-* The above example will do the following:
-* Wait for 10 "noisy" frames to be heard, then
-* Wait for 15 consecutive "silent" frames (energy score less than 200) to be heard, then
-* Continue with dialplan processing
+以上示例将执行以下操作：
+* 等待听到 10 个“有声”帧，然后
+* 等待连续听到 15 个“静默”帧（能量分数低于 200），然后
+* 继续进行拨号计划处理
 
-To emulate the behavior of the Asterisk WaitForSilence, which allows one to specify the number of iterations of the wait for silence process, simply stack as many wait\_for\_silence calls as desired. The following dialplan snippet will generally do a good job of waiting for an answering machine to finish its outgoing message before continuing:
+为了模拟 Asterisk 的 WaitForSilence 行为，允许指定等待静默过程的迭代次数，只需堆叠多个 wait_for_silence 调用即可。以下拨号计划片段通常会很好地等待答录机完成其传出消息后继续进行：
 
 ```xml
 <action application="wait_for_silence" data="200 15 15 5000"/>
@@ -56,8 +50,4 @@ To emulate the behavior of the Asterisk WaitForSilence, which allows one to spec
 <action application="sleep" data="1000"/>
 ```
 
-Also see [detect\_silence](../mod_dptools_1970333.mdx#-c) for silence detection without requiring noise first.
-
-
-
-
+另请参阅 [detect_silence](../mod_dptools_1970333.mdx#-c) 以进行无需先要噪音的静音检测。

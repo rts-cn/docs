@@ -1,281 +1,277 @@
+# mod_lcr
 
-# mod_lcr 
+## 关于
 
- 
+mod\_lcr 实现了 FreeSWITCH 的最低成本路由（LCR）。您可以使用多个配置文件 - 这些配置文件使用不同的方法进行排序，例如根据质量而不是价格。
 
-## About
+可以以多种方式调用该模块：可以在拨号计划中进行呼转，进行桥接，保存结果并进行桥接，或从命令行或 ESL 中调用。
 
-mod\_lcr implements LCR (Least Cost Routing) for FreeSWITCH. You can use multiple profiles - that sort using different methods, e.g. quality rather than price.
+最好将 LCR 表存储为 E.164 格式，没有任何 00 或 011 前缀。如果某个运营商需要这样的前缀，请为该运营商设置前缀字段。
 
-It can be called in many ways: transferred to in the dial plan, bridged to, save the results and bridge to it, or invoked from the command line or ESL.
+因此，北美号码将是11位数字（12145551212 而不是 2145551212），而印度将是 91 而不是 01191。
 
-It's best to store the lcr table in E.164 format, without any 00 or 011 prefix. If you need that for a particular carrier, you can set the prefix field for that carrier.
+注意：在这里放置操作原理。基本上按照最长数字然后按照成本排序。返回正确格式的拨号字符串。
 
-Therefore, NANP numbers would be 11 digits (12145551212 not 2145551212) and India would be 91 not 01191.
+有关 mod\_lcr 的更多信息，请查看 Rupa Schomaker 的这篇[讨论](https://web.archive.org/web/20130412135412/http://wiki.freeswitch.org/files/Rupa%5Fmod%5Flcr.mpg)。
 
-NOTE: Put theory of operation here. Basically, order by longest digits and then by cost. Return a properly formatted dialstring.
+在[Examples](../Examples/index.mdx#about) 中的以下页面中查看更多示例：
 
-  
-For more information about mod\_lcr check out this discussion by Rupa Schomaker ([MPEG](https://web.archive.org/web/20130412135412/http://wiki.freeswitch.org/files/Rupa%5Fmod%5Flcr.mpg), [Ogg](https://web.archive.org/web/20130412125333/http://wiki.freeswitch.org/files/Rupa%5Fmod%5Flcr.ogg)).
+- [mod\_lcr 解析脚本](../Examples/mod_lcr-parse-scripts_13173918.mdx#--)
+- [使用 mod\_lcr 和 mod\_easyroute 的高级 SBC](../Examples/Advanced-SBC-with-mod_lcr-and-mod_easyroute_13173623.mdx)
 
-See more examples on pages
+点击此处展开目录
 
-* [mod\_lcr parse scripts](../Examples/mod_lcr-parse-scripts_13173918.mdx#--)
-* [Advanced SBC with mod\_lcr and mod\_easyroute](../Examples/Advanced-SBC-with-mod_lcr-and-mod_easyroute_13173623.mdx)
+* 1 [使用摘要](#usage-summary)
+* 2 [要求](#requirements)
+* 3 [安装](#installing)
+* 4 [使用方式](#usage)
+   * 4.1 [命令行/ API](#cli--api)
+   * 4.2 [拨号计划，终端转接](#dialplan-endpoint-transfer)
+   * 4.3 [拨号计划，桥接](#dialplan-bridge)
+   * 4.4 [拨号计划应用程序](#dialplan-application)
+   * 4.5 [通道变量/CDR日志](#channel-variables--cdr-logs)
+   * 4.6 [配置](#configuration)
+   * 4.7 [配置 LCR 表](#configuring-lcr-tables)
+   * 4.8 [示例数据](#sample-data)
+      * 4.8.1 [MySQL 的示例数据](#sample-data-for-mysql)
+         * 4.8.2 [PostgreSQL 的示例数据](#sample-data-for-postgresql)
+* 5 [高级使用方式](#advanced-usage)
+   * 5.1 [配置文件](#profiles)
+   * 5.2 [自定义 SQL](#custom-sql)
+   * 5.3 [带子查询的自定义 SQL - 用于实际费率表复杂性](#custom-sql-with-sub-query---for-real-life-ratesheet-complexities)
+   * 5.4 [添加额外的通道变量](#adding-extra-channel-variables)
+   * 5.5 [与 Limit 集成](#integrating-with-limit)
+   * 5.6 [与 mod_nibblebill 集成](#integrating-with-mod_nibblebill)
+   * 5.7 [PostgreSQL 和 contrib 前缀](#postgresql-and-contrib-prefix)
+   * 5.8 [市内/州内评级](#intralata--intrastate-rating)
+   * 5.9 [覆盖主叫号码](#overriding-the-caller-id)
+   * 5.10 [用户费率](#user-rates)
+   * 5.11 [LRN](#lrn)
+   * 5.12 [LRN 缓存表占位符](#lrn-caching-table-placeholder)
+* 6 [使用 mysql with mod_lcr](#using-mysql-with-mod_lcr)
+* 7 [使用 sqlite with mod_lcr](#using-sqlite-with-mod_lcr)
+* 8 [ODBC 相关问题](#problems-with-odbc)
 
-in [Examples](../Examples/index.mdx#about). 
+## 使用摘要
 
-  
-Click here to expand Table of Contents
+命令行：
 
-* 1 [Usage Summary](#usage-summary)
-* 2 [Requirements](#requirements)
-* 3 [Installing](#installing)
-* 4 [Usage](#usage)  
-   * 4.1 [CLI / API](#cli--api)  
-   * 4.2 [Dialplan, Endpoint Transfer](#dialplan-endpoint-transfer)  
-   * 4.3 [Dialplan, Bridge](#dialplan-bridge)  
-   * 4.4 [Dialplan Application](#dialplan-application)  
-   * 4.5 [Channel Variables / CDR Logs](#channel-variables--cdr-logs)  
-   * 4.6 [Configuration](#configuration)  
-   * 4.7 [Configuring LCR tables](#configuring-lcr-tables)  
-   * 4.8 [Sample Data](#sample-data)  
-      * 4.8.1 [Sample data for MySQL](#sample-data-for-mysql)  
-         * 4.8.2 [Sample data for PostgreSQL](#sample-data-for-postgresql)
-* 5 [Advanced Usage](#advanced-usage)  
-   * 5.1 [Profiles](#profiles)  
-   * 5.2 [Custom SQL](#custom-sql)  
-   * 5.3 [Custom SQL with sub-query - for real-life ratesheet complexities](#custom-sql-with-sub-query---for-real-life-ratesheet-complexities)  
-   * 5.4 [Adding extra channel variables](#adding-extra-channel-variables)  
-   * 5.5 [Integrating with Limit](#integrating-with-limit)  
-   * 5.6 [Integrating with mod\_nibblebill](#integrating-with-mod_nibblebill)  
-   * 5.7 [PostgreSQL and contrib prefix](#postgresql-and-contrib-prefix)  
-   * 5.8 [intralata / intrastate rating](#intralata--intrastate-rating)  
-   * 5.9 [overriding the Caller ID](#overriding-the-caller-id)  
-   * 5.10 [User Rates](#user-rates)  
-   * 5.11 [LRN](#lrn)  
-   * 5.12 [LRN caching table placeholder](#lrn-caching-table-placeholder)
-* 6 [Using mysql with mod\_lcr](#using-mysql-with-mod_lcr)
-* 7 [Using sqlite with mod\_lcr](#using-sqlite-with-mod_lcr)
-* 8 [Problems with ODBC](#problems-with-odbc)
+lcr <digits> [<lcr profile>] [caller_id] [intrastate] [as xml]
+例如：lcr 12145551111
 
-## Usage Summary
+桥接
 
-CLI:
+lcr/[$profile/]$number（可选项$profile是从b70ac96 2013-02-28开始添加的，但如果为空，则使用默认配置文件。）
+例如：<action application="bridge" data="lcr/[$profile/]$number"/> 
 
-lcr &lt;digits> [&lt;lcr profile>] [caller_id] [intrastate] [as xml]
-e.g. lcr 12145551111
+应用（可选的配置文件）
 
-Bridge
+<action application="lcr" data="$1 [$profile]"/>
+<action application="bridge" data="${lcr_auto_route}"/>
 
-lcr/[$profile/]$number (optional $profile added as of b70ac96 2013-02-28, but uses default profile if empty.)
-e.g. &lt;action application="bridge" data="lcr/[$profile/]$number"/> 
+传输
 
-Application (profile optional)
+<action application="transfer" data="$1 lcr"/>（配置文件？）
 
-&lt;action application="lcr" data="$1 [$profile]"/>
-&lt;action application="bridge" data="${lcr_auto_route}"/>
+## 要求
 
-Transfer
+mod_lcr使用FreeSWITCH ODBC核心功能实时读取数据库。在尝试安装此模块之前，您需要具备该支持。有关更多信息，请参阅[在核心中使用ODBC](https://wiki.freeswitch.org/wiki/Using%5FODBC%5Fin%5Fthe%5Fcore)。
 
-&lt;action application="transfer" data="$1 lcr"/> (profile?)
+## 安装
 
-## Requirements
+要使用LCR：
 
-mod\_lcr uses FreeSWITCH ODBC core functions to read from your database in real time. You need to have that support before trying to install this module. For more information, see [Using ODBC in the core](https://wiki.freeswitch.org/wiki/Using%5FODBC%5Fin%5Fthe%5Fcore "Using ODBC in the core").
-
-## Installing
-
-To use LCR:
-
-Tell FreeSWITCH to compile in this module by editing modules.conf in /usr/src/freeswitch and uncomment:
+通过编辑/usr/src/freeswitch中的modules.conf，告诉FreeSWITCH编译此模块，并取消注释：
 
 #applications/mod_lcr
 
-Now go recompile FreeSWITCH.
+然后重新编译FreeSWITCH。
 
 make
 make install
 
-Or compile individually:
+或者单独编译：
 
 make mod_lcr-install
 
-Tell FreeSWITCH to actually use the LCR module when running by adding the module to modules.conf.xml in /usr/local/freeswitch/conf/autoload\_configs:
+通过将该模块添加到/usr/local/freeswitch/conf/autoload\_configs的modules.conf.xml中，告诉FreeSWITCH在运行时实际使用LCR模块：
 
-&lt;load module="mod_lcr"/>
+<load module="mod_lcr"/>
 
-If FreeSWITCH is already running, you can load it now:
+如果FreeSWITCH已经在运行，可以现在加载它：
 
 load mod_lcr
 
-Edit the default configs for your profiles and database connection information
+编辑默认配置文件以更改您的配置文件和数据库连接信息
 
- /usr/local/freeswitch/conf/autoload_configs/lcr.conf.xml
+/usr/local/freeswitch/conf/autoload_configs/lcr.conf.xml
 
-  
-Note: When you load/reload mod\_lcr, there might be an error which is below. Don't worry about this it is just trying to figure out if it should use rand() or random() with the database this is normal since there are differences between mysql and postgresql.
+注意：当加载/重新加载mod_lcr时，可能会出现以下错误。不用担心，它只是尝试确定是否应该在数据库中使用rand()还是random()，这是正常的，因为mysql和postgresql之间存在差异。
 
 2010-09-23 13:23:50.314665 [ERR] switch_odbc.c:427 ERR: [SELECT rand();]
 [STATE: 01000 CODE 4294967295 ERROR: Error while executing the query (non-fatal);
 ERROR:  function rand() does not exist at character 8]
 
-## Usage
+## 使用方法
 
-### CLI / API
+### 命令行 / API
 
-USAGE: lcr &lt;digits> \[&lt;lcr profile>\] \[caller\_id\] \[intrastate\] \[as xml\]
+用法：lcr &lt;数字> \[&lt;lcr配置文件>\] \[呼叫者ID\] \[本地通话\] \[以xml格式输出\]
 
-From the command line or ESL issue something similar to:
+从命令行或ESL中执行类似以下的命令：
 
 lcr 12145551111
 
-Which would respond with something like:
+将会返回类似以下的结果：
 
-API CALL [lcr(12145551111)] output:
-| Digit Match | Carrier  | Rate     | Dialstring                         |
-| 1214        | carrier1 | 0.01000  | sofia/gateway/carrier1/12145551111 |
-| 1           | carrier2 | 0.01440  | sofia/gateway/carrier2/12145551111 |
+API调用 [lcr(12145551111)] 输出：
+| 数字匹配 | 运营商   | 价格        | 拨号字符串                                  |
+| 1214   | carrier1 | 0.01000  | sofia/gateway/carrier1/12145551111 |
+| 1          | carrier2 | 0.01440  | sofia/gateway/carrier2/12145551111 |
 
-The "as xml" output is suitable for use from a event socket application.
+"as xml" 格式的输出适用于事件套接字应用程序的使用。
 
-### Dialplan, Endpoint Transfer
+### 拨号计划，终端转接
 
-To use as a dialplan, just transfer to:
+作为拨号计划的一部分，只需转接至以下内容：
 
 &lt;action application="transfer" data="$1 lcr"/>
 
-### Dialplan, Bridge
+### 拨号计划，桥接
 
-Use the format:
+使用以下格式：
 
-lcr/[$profile/]$number (optional $profile added as of b70ac96 2013-02-28 - uses default profile if empty.)
-&lt;action application="bridge" data="lcr/[$profile/]$number"/> 
+lcr/[$配置文件/]$号码 (可选 $配置文件，从 b70ac96 2013-02-28 开始添加 - 如果为空，则使用默认配置文件。)
+&lt;action application="bridge" data="lcr/[$配置文件/]$号码"/>
 
-### Dialplan Application
+### 拨号计划应用程序
 
-The LCR application can be called from the dialplan by executing it from within your condition as follows:
+可以通过在条件中执行以下方式将LCR应用程序从拨号计划中调用：
 
-&lt;action application="lcr" data="$1 [profile]"/>
+&lt;action application="lcr" data="$1 [配置文件]"/>
 
-It will return a value suitable for use with the bridge application in the variable ${lcr\_auto\_route}.
+它将返回适用于桥接应用程序的变量 ${lcr\_auto\_route}。
 
-It will also populate the variables lcr\_route\_N (where N is 1 to route count) and lcr\_route\_count for more flexible use of the lcr information in scripts.
+它还将填充变量 lcr\_route\_N（其中 N 是路由计数，从 1 开始）和 lcr\_route\_count，以在脚本中更灵活地使用LCR信息。
 
-&lt;extension name="Outbound to PSTN 11 Digits">
-  &lt;condition field="destination_number" expression="^(1[2-9][0-9]{2}[2-9]{7})$">
-    &lt;action application="lcr" data="$1 [profile]"/>
-    &lt;action application="bridge" data="${lcr_auto_route}"/>
-  &lt;/condition>
-&lt;/extension>
+```xml
+<extension name="Outbound to PSTN 11 Digits">
+  <condition field="destination_number" expression="^(1[2-9][0-9]{2}[2-9]{7})$">
+    <action application="lcr" data="$1 [profile]"/>
+    <action application="bridge" data="${lcr_auto_route}"/>
+  </condition>
+</extension>
+```
 
-  
 ### Channel Variables / CDR Logs
 
-LCR will create some channel variables that document which route was actually used to complete the call. **lcr\_carrier** contains the carrier name and **lcr\_rate** contains the rate.
+LCR将创建一些通道变量，记录实际使用的路由完成呼叫。**lcr_carrier**包含运营商名称，**lcr_rate**包含费率。
 
-These variables show up automatically on the a and b legs for the XML CDRs. You can include them in your CSV CDRs by editing the template.
+这些变量会自动显示在XML CDR的a和b legs上。您可以通过编辑模板将它们包含在CSV CDR中。
 
-In addition the following channel variables are set on the a leg:
+此外，以下通道变量设置在a leg上：
 
-lcr_query_digits: digits passed to lcr
-lcr_query_profile: profile id used by lcr
-lcr_query_expanded_digits: expanded version of digits suitable for use in an IN list
+lcr_query_digits：传递给lcr的数字
+lcr_query_profile：lcr使用的配置文件ID
+lcr_query_expanded_digits：适用于IN列表的数字的扩展版本
 
-### Configuration
+### 配置
 
-* Ensure FreeSWITCH is compiled with ODBC support.
-* Ensure your system is setup for ODBC support.
-* Ensure your odbcinst.ini and odbc.ini file is in /etc it doesn't matter what your OS is mod\_lcr only looks in /etc
-* Import the appropriate database schema for your database. (PostgreSQL and MySQL schema included) -> contrib/intralanman/C/lcr/sql or /src/mod/applications/mod\_lcr/sql
-* Load sample data.
-* Modify BASE/conf/autoload\_configs/lcr.conf.xml to reflect your DSN.
-* Modify BASE/conf/modules.conf.xml to load mod\_lcr.
-* Try it out from the CLI.
+* 确保FreeSWITCH已编译并支持ODBC。
+* 确保您的系统已设置为支持ODBC。
+* 确保您的odbcinst.ini和odbc.ini文件位于/etc目录中，无论您的操作系统是什么，mod_lcr都会在/etc目录中查找。
+* 导入适合您的数据库的相应数据库模式。（包括PostgreSQL和MySQL模式） -> contrib/intralanman/C/lcr/sql 或 /src/mod/applications/mod_lcr/sql
+* 加载样品数据。
+* 修改 BASE/conf/autoload_configs/lcr.conf.xml，以反映您的DSN。
+* 修改 BASE/conf/modules.conf.xml，加载mod_lcr。
+* 从CLI中尝试一下。
 
-### Configuring LCR tables
+### 配置LCR表
 
-* Someone come up with a layout that works here:
+* 在这里提供一个可行的布局：
 
-Table: carriers
-Purpose: Defines your carriers
-Field: carrier_name - name of the carrier
-Field: enabled - whether the carrier (thus all it's gateways/lcr entries) are enabled
+Table：carriers
+目的：定义您的运营商
+Field：carrier_name - 运营商名称
+Field：enabled - 运营商是否启用（以及它的所有网关/lcr条目是否启用）
 
-Table: carrier_gateway
-Purpose: Defines gateway information for a given carrier
-Field: carrier_id - maps to carrier
-Field: prefix - the value to put before the phone number after any translation
-Field: suffix - the value to put after the phone number after any translation
-Field: codec - codec to use for absolute_codec_string.  Leave empty/null for default.
-Field: enabled - whether the gateway (thus all it's lcr entries) are enabled
+表格：carrier_gateway
+用途：为给定运营商定义网关信息
+字段：carrier_id - 映射到运营商
+字段：prefix - 在任何翻译后的手机号码前放置的值
+字段：suffix - 在任何翻译后的手机号码后放置的值
+字段：codec - 用于absolute_codec_string的编解码器。留空/空值表示默认值。
+字段：enabled - 网关（以及其所有的lcr条目）是否启用
 
-Table: lcr
-Purpose: Defines rules for a given digit sequence
-Field: digits - matching digits
-Field: rate - rate
-Field: intrastate_rate - rate for intrastate calls
-Field: intralata_rate - rate for intralata calls
-Field: carrier_id - which carrier for this entry
-Field: lead_strip - how many digits to strip off front of passed in number
-Field: trail_strip - how many digits to strip of end of passed in number
-Field: prefix - value to add to front of passed in number
-Field: suffix - vaulue to add to end of passed in number
-Field: lcr_profile - profile_id
-Field: date_start - when this LCR entry becomes valid
-Field: date_end - when this LCR entry becomes invalid
-Field: quality - alternate field to order by
-Field: reliability - alternate field to order by
-Field: cid - regular expression to modify the callers caller id number - channel variables are also valid when called from the dial plan
-Field: enabled - true/false - whether this LCR entry is enabled
+表格：lcr
+用途：为给定的数字序列定义规则
+字段：digits - 匹配的数字
+字段：rate - 费率
+字段：intrastate_rate - 国内长途电话的费率
+字段：intralata_rate - 市内长途电话的费率
+字段：carrier_id - 此条目的运营商
+字段：lead_strip - 去除传入号码前面的数字位数
+字段：trail_strip - 去除传入号码末尾的数字位数
+字段：prefix - 添加到传入号码前面的值
+字段：suffix - 添加到传入号码末尾的值
+字段：lcr_profile - profile_id
+字段：date_start - 此LCR条目生效日期
+字段：date_end - 此LCR条目失效日期
+字段：quality - 用于排序的备用字段
+字段：reliability - 用于排序的备用字段
+字段：cid - 用于修改呼叫方呼叫方的正则表达式 - 当从拨号计划中调用时，通道变量也是有效的
+字段：enabled - true/false - 此LCR条目是否启用
 
-### Sample Data
+### 示例数据
 
-#### Sample data for MySQL
+#### MySQL示例数据
 
--- insert two carriers
+-- 插入两个运营商
 
 INSERT INTO carriers (id, carrier_name, enabled) VALUES (1, 'carrier1', 1);
 INSERT INTO carriers (id, carrier_name, enabled) VALUES (2, 'carrier2', 1);
 
--- insert some gateway info
+-- 插入一些网关信息
 
+```sql
 INSERT INTO carrier_gateway (id, carrier_id, prefix, suffix) VALUES (1, 1, 'sofia/gateway/carrier1/', '');
 INSERT INTO carrier_gateway (id, carrier_id, prefix, suffix) VALUES (2, 2, 'sofia/external/', '@proxy.carrier2.net:5060');
 
 -- insert some lcr data
 
 INSERT INTO lcr (id, digits, rate, carrier_id, lead_strip, trail_strip, prefix, suffix, date_start, date_end, quality, reliability)
- VALUES (1, '1', 0.15, 1, 0, 0, '', '', current_timestamp - interval 1 year, current_timestamp + interval 1 year , 0, 0);
+VALUES (1, '1', 0.15, 1, 0, 0, '', '', current_timestamp - interval 1 year, current_timestamp + interval 1 year , 0, 0);
 INSERT INTO lcr (id, digits, rate, carrier_id, lead_strip, trail_strip, prefix, suffix, date_start, date_end, quality, reliability)
- VALUES (2, '1', 0.12, 2, 1, 0, '0', '', current_timestamp - interval 1 year, current_timestamp + interval 1 year , 0, 0);
+VALUES (2, '1', 0.12, 2, 1, 0, '0', '', current_timestamp - interval 1 year, current_timestamp + interval 1 year , 0, 0);
 INSERT INTO lcr (id, digits, rate, carrier_id, lead_strip, trail_strip, prefix, suffix, date_start, date_end, quality, reliability)
- VALUES (3, '1234', 0.05, 1, 0, 0, '', '', current_timestamp - interval 1 year, current_timestamp + interval 1 year , 0, 0);
+VALUES (3, '1234', 0.05, 1, 0, 0, '', '', current_timestamp - interval 1 year, current_timestamp + interval 1 year , 0, 0);
 INSERT INTO lcr (id, digits, rate, carrier_id, lead_strip, trail_strip, prefix, suffix, date_start, date_end, quality, reliability)
- VALUES (4, '1234', 0.02, 2, 1, 0, '0', '', current_timestamp - interval 1 year, current_timestamp + interval 1 year , 0, 0);
+VALUES (4, '1234', 0.02, 2, 1, 0, '0', '', current_timestamp - interval 1 year, current_timestamp + interval 1 year , 0, 0);
 
-#### Sample data for PostgreSQL
+#### PostgreSQL 示例数据
 
-First import the schema and data (since we rely on sequences, drop your existing tables / sequences)
+首先导入架构和数据（由于我们依赖于序列，删除现有表/序列）
 
 $ psql phone -f postgres-8.3.sql
 $ psql phone -f sample_data.sql
 
-Contents of sample\_data.sql:
+sample_data.sql的内容：
 
--- insert two carriers
+-- 插入两个运营商
 
 INSERT INTO carriers (carrier_name) VALUES ('carrier1');
 INSERT INTO carriers (carrier_name) VALUES ('carrier2');
 
--- insert some gateway info
+-- 插入一些网关信息
+```
 
+```sql
 INSERT INTO carrier_gateway (carrier_id, prefix, suffix) VALUES
   (1, 'sofia/gateway/carrier1/', '');
 INSERT INTO carrier_gateway (carrier_id, prefix, suffix) VALUES
   (2, 'sofia/external/', '@proxy.carrier2.net:5060');
 
--- insert some lcr data
+-- 插入一些LCR数据
 
 INSERT INTO lcr (digits, rate, carrier_id, lead_strip, trail_strip,
                  prefix, suffix,
@@ -306,58 +302,59 @@ INSERT INTO lcr (digits, rate, carrier_id, lead_strip, trail_strip,
         current_timestamp + interval 1 year
         , 0, 0);
 
-Now run some lookups:
+现在运行一些查询：
 
-Number that matches only on first digit. You can see that for carrier 2, the first number is stripped and prepended with 0 based on the LCR rules.
+只匹配第一个数字的号码。从LCR规则可以看出，对于carrier 2，第一个数字将被去除，并在前面添加0。
+```
 
-API CALL [lcr(12)] output:
- | Digit Match | Carrier  | Rate     | Dialstring                                |
- | 1           | carrier2 | 0.12000  | sofia/external/02@proxy.carrier2.net:5060 |
- | 1           | carrier1 | 0.15000  | sofia/gateway/carrier1/12                 |
+API调用[lcr(12)] 输出：
+ | 匹配数字 | 运营商   | 费率     | 拨号字符串                                   |
+ | 1           | 运营商2 | 0.12000  | sofia/external/02@proxy.carrier2.net:5060 |
+ | 1           | 运营商1 | 0.15000  | sofia/gateway/carrier1/12                 |
 
-Number that matches more specific. Again, same rule applies for carrier2.
+数字匹配得更精确。同样的规则适用于运营商2。
 
-API CALL [lcr(12345678)] output:
- | Digit Match | Carrier  | Rate     | Dialstring                                      |
- | 1234        | carrier2 | 0.02000  | sofia/external/02345678@proxy.carrier2.net:5060 |
- | 1234        | carrier1 | 0.05000  | sofia/gateway/carrier1/12345678                 |
+API调用[lcr(12345678)] 输出：
+ | 匹配数字 | 运营商   | 费率     | 拨号字符串                                           |
+ | 1234        | 运营商2 | 0.02000  | sofia/external/02345678@proxy.carrier2.net:5060 |
+ | 1234        | 运营商1 | 0.05000  | sofia/gateway/carrier1/12345678                 |
 
-Finally, a number that doesn't match:
+最后，一个不匹配的号码：
 
-API CALL [lcr(987)] output:
-No Routes To Display
+API调用[lcr(987)] 输出：
+无可显示路由
 
-## Advanced Usage
+## 高级用法
 
-### Profiles
+### 配置文件
 
-**mod\_lcr** also has the concept of a profile. This allows one to have alternate rule sets for different customers. Profiles can also be used to modify the field(s) that are used to order the results from the database lookup.
+**mod\_lcr** 还有一个配置文件的概念。这允许为不同的客户具有备用的规则集。配置文件还可以用于修改用于从数据库查询结果排序的字段。
 
-To reload changes to the config, do the following:
+要重新加载配置的更改，请执行以下操作：
 
 reloadxml
 reload mod_lcr
 
-CLI:
+命令行界面（CLI）：
 
 lcr number profile_name
 lcr_admin show profiles
 
-Or dialplan:
+或拨号计划（dialplan）：
 
       &lt;action application="lcr" data="$1 profile"/>
 
-Parameters
+参数
 
-* order\_by - controls the ordering of results.
-* id - additional parameter to limit query to record with id specified.
-* reorder\_by\_rate - Forces the LCR module to re-order the query strictly on rate basis. By default this is turned off, but enabling this will always prefer rate over anything else.
-* quote\_in\_list - will quote the prefixes in the IN() list passed to the database. May be necessary for MySQL.
-* enable\_sip\_redir - Modifies the default behavior so that ${lcr\_auto\_route} is suitable for use with [Misc.\_Dialplan\_Tools\_redirect](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Fredirect "Misc. Dialplan Tools redirect").
+- `order_by` - 控制结果的排序方式。
+- `id` - 附加参数，用于限制查询只返回指定id的记录。
+- `reorder_by_rate` - 强制 LCR 模块根据费率基础重新排序查询。默认情况下，此功能关闭，但启用后将始终优先考虑费率。
+- `quote_in_list` - 在传递给数据库的 IN() 列表中引用前缀。可能对于 MySQL 是必要的。
+- `enable_sip_redir` - 修改默认行为，使 `${lcr_auto_route}` 适用于 [Misc._Dialplan_Tools_redirect](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Fredirect "Misc. Dialplan Tools redirect")。
 
-Profiles are defined in the lcr.conf.xml file.
+配置文件 lcr.conf.xml 中定义了个配置文件。
 
-For discussion, consider the following:
+讨论时，请考虑以下内容：
 
   &lt;profiles>
     &lt;profile name="rate">
@@ -374,49 +371,50 @@ For discussion, consider the following:
       &lt;param name="order_by" value="rate"/>
     &lt;/profile>
     &lt;profile name=reorder_rate">
-      &lt;param name="reorder_by_rate" value="true"/> &lt;!-- default false -->
+      &lt;param name="reorder_by_rate" value="true"/> &lt;!-- 默认为 false -->
     &lt;/profile>
   &lt;/profiles>
 
-This defines five profiles. The first three are the default shipped. They return records ordered by rate, quality, and reliability respectively. The Fourth defines a profile that orders by rate but also selects lcr records that have a profile id of 2.
+这定义了五个配置文件。前三个是默认提供的。它们分别按费率、质量和可靠性对记录进行排序。第四个定义了一个按费率排序的配置文件，并选择具有配置文件 id 为 2 的 lcr 记录。
 
-**NOTE:** The \`lcr\_profile\` column corresponds to the value of the id parameter for the profile name defined in lcr.conf.xml
+**注意：**`lcr_profile` 列对应于 lcr.conf.xml 中定义的配置文件名称的 id 参数值。
 
-i.e.
+即：
 
 &lt;param name="id" value="200"/>
 
-The fifth defines the parameter "reorder\_by\_rate" to true which will reorder the list ONLY by rate. **Warning:** I would generally recommend against this. All LCR modules I know of always use a primary sort order of the prefix.
+第五个定义了参数"reorder\_by\_rate"为true，这将仅按照费率重新排序列表。**注意：**我通常建议不要这样做。在我知道的所有LCR模块中，都始终使用前缀作为主要排序顺序。
 
-mod\_lcr is table driven. The rules for populating rate, quality, and reliability are up to you in your data load / maintenance scripts. The order\_by parameter is really any valid sql clause in the order\_by clause and is inserted after "ORDER BY digits" in the sql. "reliability" and "quality" are special in that they are recognized by the module and ordered in descending order automatically.
+mod\_lcr是基于表的驱动。填充费率、质量和可靠性的规则由您在数据加载/维护脚本中决定。order\_by参数实际上是在sql中"ORDER BY digits"之后插入的任何有效的sql子句。 "reliability"和"quality"是特殊的，因为模块会识别它们并自动按降序排序。
 
-### Custom SQL
+### 自定义SQL
 
-If the above does not give you enough flexibility, then you can also define a custom sql statement to do "whatever you want". But, you must keep in mind the following:
+如果上述内容无法给您足够的灵活性，您也可以定义自定义的sql语句来做"任何您想做的事"。但是，请记住以下事项：
 
-* The sql **must** return the following fields with the proper field name. Use SQL "AS" syntax to rename your existing field names to the appropriate ones.
-* The sql **may** have %q where you want the dialed number to be inserted into the query.
-* The sql **may** use channel variables.
+* sql必须返回具有正确字段名称的以下字段。请使用SQL的"AS"语法将现有字段重命名为正确的字段名。
+* sql中可以使用%q，您可以在查询中插入拨号号码。
+* sql可以使用通道变量。
 
-The SQL is supplied on a per-profile basis using the custom-sql parameter:
-
-   &lt;profile name="rate">
-     &lt;param name="custom_sql" value="mysql goes %q here;"/>
-   &lt;/profile>
-
-or,
+可以使用custom-sql参数为每个配置文件提供SQL语句：
 
    &lt;profile name="rate">
-     &lt;param name="custom_sql" value="mysql goes here where prefix IN (${lcr_query_expanded_digits});"/>
+     &lt;param name="custom_sql" value="mysql在这里插入%q；"/>
    &lt;/profile>
 
-Here is another sample
+或者，
 
-    &lt;profile name="test">
-      &lt;param name="order_by" value="rate"/>
-      &lt;param name="reorder_by_rate" value="true"/>
-      &lt;param name="export_fields" value="gw_extra_field"/>
-      &lt;param name="custom_sql" value="
+   &lt;profile name="rate">
+     &lt;param name="custom_sql" value="mysql在这里插入 where prefix IN (${lcr_query_expanded_digits});"/>
+   &lt;/profile>
+
+以下是另一个示例。
+
+```xml
+<profile name="test">
+  <param name="order_by" value="rate"/>
+  <param name="reorder_by_rate" value="true"/>
+  <param name="export_fields" value="gw_extra_field"/>
+  <param name="custom_sql" value="
 SELECT l.digits AS lcr_digits,
        c.carrier_name AS lcr_carrier_name,
        l.${lcr_rate_field} as lcr_rate_field,
@@ -431,117 +429,120 @@ SELECT l.digits AS lcr_digits,
     AND digits IN (${lcr_query_expanded_digits})
     AND CURRENT_TIMESTAMP BETWEEN date_start AND date_end
   ORDER BY digits DESC, ${lcr_rate_field}, random();
-      "/>
+  "/>
+</profile>
 
-lcr_digits - the prefix that matched
-lcr_carrier_name - name of the carrier
-lcr_rate_field - rate
-lcr_gw_prefix - data to prepend to the dial string
-lcr_gw_suffix - data to append to the dial string
-lcr_lead_strip - number of chars to remove from the left of the dialed #
-lcr_trail_strip - number of chars to remove from the right of the dialed #
-lcr_prefix - data to prepend to the dialed number
-lcr_suffix - data to append to the dialed number
-lcr_codec - codec to use for aboslute_codec_string - optional
-lcr_cid - the regular expression used to modify the user's caller_id_number - optional
-lcr_user_rate - the end-user rate for the call (refer to user rate section below) - optional
-lcr_limit_realm - realm to use if using limit - optional
-lcr_limit_id - id to use if using limit - optional
-lcr_limit_max - max limit if using limit - optional
+lcr_digits - 匹配的前缀
+lcr_carrier_name - 运营商名称
+lcr_rate_field - 费率
+lcr_gw_prefix - 添加到拨号字符串前面的数据
+lcr_gw_suffix - 添加到拨号字符串后面的数据
+lcr_lead_strip - 要从被拨打号码左侧删除的字符数
+lcr_trail_strip - 要从被拨打号码右侧删除的字符数
+lcr_prefix - 要添加到被拨打号码前面的数据
+lcr_suffix - 要添加到被拨打号码后面的数据
+lcr_codec - 用于绝对编解码字符串的编解码器 - 可选
+lcr_cid - 修改用户的呼叫者ID号码所使用的正则表达式 - 可选
+lcr_user_rate - 通话的最终用户费率（参见下面的用户费率部分） - 可选
+lcr_limit_realm - 如果使用限制，使用的域 - 可选
+lcr_limit_id - 如果使用限制，使用的ID - 可选
+lcr_limit_max - 如果使用限制，最大限制 - 可选
 
-The dialstring is composed of:
+拨号字符串由以下部分组成：
+```
 
-lcr\_gw\_prefix lcr\_prefix dialed\_number (after strip processing) lcr\_suffix lcr\_gw\_suffix
+### 使用子查询的自定义SQL - 适用于实际费率表的复杂性
 
-### Custom SQL with sub-query - for real-life ratesheet complexities
+根据运营商和NPA的不同，费率通常可以在每个NPA或每个NPANXX级别上给出。此外，某些运营商的NPANXX费率可能低于相应的NPA费率，而其他运营商则相反。这一证据超出了WiKi文章的范畴，但事实是，简单的按费率、前缀排序或按前缀、费率排序都无法给出真正最便宜的路由。LCR逻辑应该是一个两步过程来适应这一点：
 
-Rates rates can often be given both on per-NPA or per-NPANXX level depending on the carrier and on the NPA. Moreover, some carriers may have NPANXX rate lower than the corresponding NPA rate, while others will have it inverse. Proof of this is beyond WiKi article, but the fact is that neither simple ORDER BY rate, prefix; nor ORDER BY prefix, rate; give the truly cheapest route. The LCR logic should be two-step process to accomodate this:
+* 对于每个运营商，仅选择一个前缀（最长的前缀=最特定的匹配）
+* 为每个预选的前缀选择路由和费率，并按您喜欢的顺序对结果进行排序。
 
-* For each carrier, select only one prefix (longest prefix = most specific match)
-* Select routes and rates for each of the pre-selected prefixes and sort results in the order you like.
+下面的SQL查询对我在PostgreSQL上有效。它比mod_lcr或简单自定义SQL查询背后的排序逻辑更好地工作。
 
-SQL query below works for me on PostgreSQL. It works better that the sorting logic behind mod\_lcr or behind simple custom SQL queries.
+```
+<!-- 这个 SQL 查询有些诡异。我们从 lcr 表中选择两次重复的数据。如果有变化一定要注意。 -->
+<profile name="test">
+  <param name="custom_sql" value="SELECT
+    l.digits_prefix AS lcr_digits,
+    c.carrier_name AS lcr_carrier_name,
+    l.rate AS lcr_rate_field,
+    cg.prefix AS lcr_gw_prefix,
+    cg.suffix AS lcr_gw_suffix,
+    l.lead_strip AS lcr_lead_strip,
+    l.trail_strip AS lcr_trail_strip,
+    l.prefix AS lcr_prefix,
+    l.suffix AS lcr_suffix
+    FROM lcr l JOIN
+                              (SELECT carrier_id, max (digits_integer) digits_integer 
+                              FROM lcr
+                              WHERE digits_prefix @> '%q' 
+                              GROUP BY carrier_id) tmp on l.digits_integer = tmp.digits_integer and l.carrier_id = tmp.carrier_id
+                           JOIN carriers c ON l.carrier_id=c.id JOIN carrier_gateway cg ON c.id=cg.carrier_id
+    WHERE c.enabled = 'TRUE' AND cg.enabled = 'TRUE' AND l.enabled = 'TRUE'
+    ORDER BY l.rate, random();"/>
+</profile>
 
-    &lt;!-- This SQL is tricky. The lcr table we select from repeats twice. Don't miss if ever changing. -->
-    &lt;profile name="test">
-      &lt;param name="custom_sql" value="SELECT
-       l.digits_prefix AS lcr_digits,
-       c.carrier_name AS lcr_carrier_name,
-       l.rate AS lcr_rate_field,
-       cg.prefix AS lcr_gw_prefix,
-       cg.suffix AS lcr_gw_suffix,
-       l.lead_strip AS lcr_lead_strip,
-       l.trail_strip AS lcr_trail_strip,
-       l.prefix AS lcr_prefix,
-       l.suffix AS lcr_suffix
-       FROM lcr l JOIN
-                                (SELECT carrier_id, max (digits_integer) digits_integer 
-                                FROM lcr
-                                WHERE digits_prefix @> '%q' 
-                                GROUP BY carrier_id) tmp on l.digits_integer = tmp.digits_integer and l.carrier_id = tmp.carrier_id
-                             JOIN carriers c ON l.carrier_id=c.id JOIN carrier_gateway cg ON c.id=cg.carrier_id
-       WHERE c.enabled = 'TRUE' AND cg.enabled = 'TRUE' AND l.enabled = 'TRUE'
-       ORDER BY l.rate, random();"/>
-    &lt;/profile>
+注释：
 
-Notes:
+- 表 lcr 包含 digits_prefix (prefix_range) 和 digits_integer (bigint)。最初，我将它们都定义为 prefix_range 类型... 但是，aggregate 函数无法与 prefix_range 类型一起使用，因此需要将这一列复制为 bigint 类型
+- SQL 子查询和 GROUP_BY 用于解决“greatest-n-per-group”问题： <http://stackoverflow.com/questions/tagged/greatest-n-per-group>
+- 这个查询只是一个示例。我省略了 WHERE 子句的一些部分，因为我不需要它们。我没有选择不需要的大量数据。
 
-* Table lcr has digits\_prefix (prefix\_range) and digits\_integer (bigint). Originally, I had everythign as prefix\_range.....however aggregate funtion max() doesn't work with prefix\_range type, that's why this colum has to be duplictaed as bigint
-* SQL sub-query and GROUP\_BY are needed to solve "greatest-n-per-group": <http://stackoverflow.com/questions/tagged/greatest-n-per-group>
-* This query is just an example. It has some parts of WHERE clause removed as I don't need them. I don't select a bunch of stuff I don't need.
 
-  
-### Adding extra channel variables
+### 添加额外的通道变量
 
-It is possible to add extra variables to the dial string, such as absolute\_codec\_string.
+可以向拨号字符串中添加额外的变量，例如 absolute_codec_string。
+```
 
-* Add the extra field to the appropriate table. Each field should have only one key/value pair. Your job is to determine where the field goes based on the specificity of the data. eg: is it something that varies per prefix? Per carrier?
-* Add the data in the field.
-* Change the custom\_sql param to include the field in your sql. You can alias the field to whatever you want the channel variable to be named.
-* Change the export\_fields param to include the extra field(s) you want to be included.
+*在适当的表中添加额外的字段。每个字段应该只有一个键/值对。根据数据的具体性，你的任务是确定字段应该放在什么位置。例如：它是每个前缀都会变化的东西吗？还是每个运营商都会变化的东西？
+*将数据添加到字段中。
+*将custom\_sql参数更改为在您的sql中包含字段。您可以将字段别名为您希望通道变量命名的任何内容。
+*将export\_fields参数更改为包括要包含的额外字段。
 
-If you are having problems with this make sure you are using the svn or git version of freeswitch.
+如果您遇到问题，请确保您使用的是FreeSWITCH的svn或git版本。
 
-Refer to the nibblebill section of this wiki for a concrete example of how to do this.
+请参阅本wiki的nibblebill部分，了解如何实现此操作的具体示例。
 
-### Integrating with Limit
+### 与Limit集成
 
-mod\_lcr can set a [Limit](https://wiki.freeswitch.org/wiki/Limit "Limit") on a per-route basis.
+mod\_lcr可以对每个路由设置[Limit](https://wiki.freeswitch.org/wiki/Limit "Limit")。
 
-You can use limit in the dialplan before bridging to LCR to limit concurrent or CPS per user.
+您可以在呼叫计划中在连接到LCR之前使用limit来限制每个用户的并发或CPS。
 
-However, to limit per carrier, that can't be done before the bridge or even in the dialplan, but must be done special by mod\_lcr.
+然而，要限制每个运营商，这不能在桥接之前或甚至在呼叫计划中完成，而是必须由mod\_lcr进行特殊处理。
 
-* To use limit per carrier, this **requires** that one transfers, bridges, or execute\_extension to the lcr/ end-point.
+*要使用每个运营商限制，**必须**将呼叫转接、桥接或execute\_extension到lcr/终点。
 
 &lt;action application="transfer" data="$1 lcr any_custom_profile"/> OR
-&lt;action application="bridge" data="lcr/$1"/> (You couldn't pass in a profile to bridge)
-&lt;action application="bridge" data="lcr/$profile/$1"/> -- works as of b70ac96 2013-02-28, but uses default if empty.
+&lt;action application="bridge" data="lcr/$1"/>  (无法将配置文件传递给bridge)
+&lt;action application="bridge" data="lcr/$profile/$1"/> -- as of b70ac96 2013-02-28 已可用，但如果为空则使用默认值。
 
-It also **requires** that one uses custom\_sql. Limit policy is up to the user and it is not clear whether the limit applies at the gateway or lcr level so instead I leave it to the user to configure based on custom\_sql.
+这还**需要**使用custom\_sql。限制政策由用户决定，并不清楚限制是在网关还是lcr级别应用，因此我将其留给用户根据custom\_sql进行配置。
 
-* Add to custom\_sql:
+*添加到custom\_sql中：
 
 'carriers' AS lcr_limit_realm, c.carrier_name AS lcr_limit_id, 5 AS lcr_limit_max
 
-This hard-codes the realm to the string carriers, the id to the actual carrier name and the limit to 5\. Both of those could just as easily be pulled from the database as well.
+这样做会将realm硬代码为字符串"carrier"，将id硬代码为实际的运营商名称，将limit限制为5。这两个都可以从数据库中轻松获取。
 
-The three variable that must exist:
+必须存在三个变量：
 
-* * lcr\_limit\_realm for the broad hash category  
-   * lcr\_limit\_id for each group that gets limited  
-   * lcr\_limit\_max for the max of that group.
-* Define which limit backend to use, in lcr.conf.xml per LCR profile. (As of 2012-10-22 there seems to be a bug making it impossible to use the DB backend, see [FS-4761](http://jira.freeswitch.org/browse/FS-4761))
+* `lcr_limit_realm`，用于广泛的哈希分类
+* `lcr_limit_id`，每个被限制的组
+* `lcr_limit_max`，该组的最大值
 
-     &lt;param name="limit_type" value="hash"/>
+定义使用哪个限制后端，在每个LCR配置文件（lcr.conf.xml）中进行设置。（截至2012年10月22日，似乎存在一个错误，导致无法使用DB后端，请参见[FS-4761](http://jira.freeswitch.org/browse/FS-4761)）
 
-### Integrating with mod_nibblebill
+&lt;param name="limit_type" value="hash"/>
 
-mod\_lcr supports b-leg [nibblebill](https://wiki.freeswitch.org/wiki/Mod%5Fnibblebill "Mod nibblebill") usage. This allows one to lookup the user-rate and use it in your routes without additional dialplan scripting. To configure nibblebill one **must** use custom\_sql. Again, this is because there is no clear policy for defining how a user\_rate should be determined. If it can be expressed in SQL (including perhaps the use of a stored procedure, view, etc) then it can be retrieved by mod\_lcr and passed to mod\_nibblebill.
+### 与mod_nibblebill集成
 
-To setup:
+mod_lcr支持b-leg [nibblebill](https://wiki.freeswitch.org/wiki/Mod%5Fnibblebill "Mod nibblebill")的使用。这使得我们可以在路由中查找用户费率并使用它，而无需额外的拨号计划脚本。要配置nibblebill，必须使用custom_sql。这是因为没有明确的定义如何确定用户费率的政策。如果可以用SQL表达（包括可能使用存储过程、视图等），那么mod_lcr可以检索它，并将其传递给mod_nibblebill。
 
-* Modify your custom\_sql. In my case, I added the following:
+设置步骤：
+
+* 修改您的custom_sql。在我的情况下，我添加了以下内容：
 
       a.account_code AS nibble_account,
       l.${lcr_rate_field} * 2 AS nibble_rate,
@@ -551,27 +552,30 @@ To setup:
 
    JOIN accounts a ON a.account_code = '${account_code}'
 
-2) Add the parameter "export\_fields" to add them to the b-leg channel vars:
+* 添加参数"export_fields"，将它们添加到b-leg通道变量中：
 
       &lt;param name="export_fields" value="nibble_account,nibble_rate,lowbal_amt,nobal_amt"/>
 
-### PostgreSQL and contrib prefix
+### PostgreSQL和contrib前缀
 
-There is a third-party module available for PostgreSQL 8.1+ called [prefix](https://github.com/dimitri/prefix) which provides a custom, GiST indexable column type for prefix matching. This module makes it possible to query a rate table with hundreds of thousands of entries in less than a millisecond.
+PostgreSQL 8.1+有一个名为[prefix](https://github.com/dimitri/prefix)的第三方模块，提供了一个可自定义的、可使用GiST索引的前缀匹配列类型。该模块使得在查询包含数十万个条目的费率表时，查询时间可以在毫秒级别内完成。
 
-Edit (10-05-2010): I haven't tested this personally but I read a blog that said PostgreSQL 9.0 was compatible with prefix and mod\_lcr.
+编辑（2010年10月5日）：我个人没有亲自测试过，但我读过一篇博客说PostgreSQL 9.0与prefix和mod\_lcr兼容。
 
-Example usage:
+使用示例：
 
+```sql
 create table rates (id serial not null, digits_prefix prefix_range, [...]);
 create index rates_prefix_idx on rates using gist (digits_prefix gist_prefix_range_ops);
 insert [...]
 select * from rates where digits_prefix @> '16666666666';
+```
 
-A sample query that "works for me" is the following:
+我测试通过的查询示例如下：
 
-    &lt;profile name="use_prefix">
-      &lt;param name="custom_sql" value="
+```xml
+<profile name="use_prefix">
+  <param name="custom_sql" value="
 SELECT l.digits, c.carrier_name, l.${lcr_rate_field}, cg.prefix AS gw_prefix, cg.suffix AS gw_suffix,
        l.lead_strip, l.trail_strip, l.prefix, l.suffix, cg.codec, l.cid
 FROM lcr l 
@@ -581,115 +585,117 @@ WHERE c.enabled = '1' AND cg.enabled = '1' AND l.enabled = '1'
       AND digits_prefix @> '%q'
       AND CURRENT_TIMESTAMP BETWEEN date_start AND date_end
 ORDER BY digits DESC, ${lcr_rate_field} asc, random();
-      "/>
-    &lt;/profile>
+  "/>
+</profile>
+```
 
-And can be called by typing at the CLI:
+可以通过在命令行界面输入以下命令来调用：
 
+```
 lcr 12145551212 use_prefix
+```
 
-* **Note (2009-03-25)** You may need to install prefix from CVS for PostgreSQL 8.1 and 8.2 support.
+* **注意（2009年3月25日）** 您可能需要从CVS安装prefix，以支持PostgreSQL 8.1和8.2。
 
-### intralata / intrastate rating
+### intralata / intrastate计费
 
-**Note:** this is NANP (North American Numbering Plan) specific.
+**注意：**这是针对北美号码计划（NANP）的特定内容。
 
-Some carriers will rate intralata and intrastate calls differently than normal long distance. mod\_lcr supports querying a table to determine if the call is intralata or intrastate and provide alternate rates for those calls. This is done by using the caller id number and the called number.
+一些运营商会对市内通话和州内通话进行与正常长途通话不同的计费。mod\_lcr支持查询表格以确定通话是市内通话还是州内通话，并为这些通话提供备用费率。这是通过使用呼叫者ID号码和被叫号码来实现的。
 
-If you plan to use intra type rating you need to have the intrastate\_rate or intralata\_rate fields defined in the lcr table. Do NOT leave the field null or 0 for carriers that don't distinguish between regular LD and intra style routing. Instead set them to the same value as rate. However, if you have some digit matches that only have intrastate or interstate but not both, then leave the blank one as NULL and mod\_lcr will properly handle it.
+如果您计划使用市内类型的计费，您需要在lcr表中定义intrastate\_rate或intralata\_rate字段。不要将字段留空或设置为0，以便区分常规长途和市内类型路由之间的运营商。相反，将它们设置为与费率相同的值。然而，如果您有一些数字匹配只有市内或州内，而不是同时拥有市内和州内，那么将空白的字段保留为空值，mod\_lcr将正确处理它。
 
-intra lata/state selection is done manually by setting the channel variables **intrastate** or **intralata** to the value **true**.
+市内通话/州内通话的选择通过将通道变量intrastate或intralata设置为true来手动完成。
 
-Automatic selection requires the npanxx table loaded into the table **npa\_nxx\_company\_ocn**. This is the same table as used by [Mod\_cidlookup#Falling\_back\_to\_.22City\_State.22\_in\_the\_absense\_of\_a\_name](https://wiki.freeswitch.org/wiki/Mod%5Fcidlookup#Falling%5Fback%5Fto%5F.22City%5FState.22%5Fin%5Fthe%5Fabsense%5Fof%5Fa%5Fname "Mod cidlookup") and refer to that for data loading.
+自动选择需要将npanxx表加载到表npa_nxx_company_ocn中。这是与[Mod\_cidlookup#Falling\_back\_to\_.22City\_State.22\_in\_the\_absense\_of\_a\_name](https://wiki.freeswitch.org/wiki/Mod%5Fcidlookup#Falling%5Fback%5Fto%5F.22City%5FState.22%5Fin%5Fthe%5Fabsense%5Fof%5Fa%5Fname "Mod cidlookup")所使用的相同的表格，有关数据加载，请参阅该文档。
 
-### overriding the Caller ID
+### 覆盖来电显示号码
 
-The field **cid** allows one to override the CID value on a per-route basis. Sometimes your different carriers have different rules as to what to pass for CID.
+字段cid允许根据每个线路的基础上覆盖CID值。有时，您的不同运营商有不同的规则来确定应传递什么样的CID。
 
-The field takes a regular expression of the form:
+该字段采用如下形式的正则表达式：
 
 /search/replace/
 
-In search you put parenthesis '()' around the data you wish to capture. Each () is assigned a $n value which you can use in the replace string.
+您可以在search中将括号“()”放在要捕获的数据周围。每个()都被分配一个$n值，您可以在replace字符串中使用。
 
-If you wanted to strip a leading 1 from a #:
+如果您想从号码中去掉前导的1：
 
 /^1(\d+)/$1/
 
-Using channel variables in the regular expression is also valid, and they will be expanded to the appropriate session values when called from the dial plan. For example, it's possible to use a custom channel variable to specify the outbound CLI (or just a prefix/suffix) for a specific route, usually when the effective outbound CLI set in the user directory can not be directly related to the outgoing numbers for a specific route. This example will add the area code defined in the channel variable "my\_outbound\_caller\_area\_code" to the effective caller ID number:
+在正则表达式中使用通道变量也是有效的，当从拨号计划中调用时，它们将会被扩展为相应会话的值。例如，可以使用自定义通道变量来指定特定路由的呼出CLI（或只是前缀/后缀），通常是因为用户目录中设置的有效呼出CLI与特定路由的去电号码无直接关联。以下示例将在通道变量"my_outbound_caller_area_code"定义的区号添加到有效主叫号码中：
 
 /(\d+)/${my_outbound_caller_area_code}$1/
 
-Channel variables can also be used in the matching part of the regular expression.
+通道变量还可以在正则表达式的匹配部分中使用。
 
-### User Rates
+### 用户费率
 
-In general, calls should be rated "after the fact" using an actual billing engine. There are times, however, where one may want an idea of what the end-user rate is. This can be used in concert with mod\_nibblebill for instance.
+一般来说，通话应该在实际计费引擎中进行"事后"计费。然而，有时候，我们可能想要知道最终用户费率是多少。可以与mod_nibblebill一起使用。
 
-User Rates require one to use custom sql. The reason is that user rates really should not be part of the lcr tables. Instead, one should be retrieving the user rates from some other table based on information on the caller (eg: account code). The user rate may even be a calculated value based on the real rate (eg: 20% markup). The logic is up to you and can be anything expressed in sql (or even a stored procedure call if it is very complex).
+用户费率需要使用定制的sql。原因是用户费率实际上不应该成为lcr表的一部分。相反，应该根据主叫方的信息（例如：账户代码）从其他表中获取用户费率。用户费率甚至可以是基于实际费率的计算值（例如：20%的加价）。逻辑由您决定，可以用sql表示任何内容（甚至是存储过程调用，如果它非常复杂）。
 
-The user rate is in the 12th position in the returned data from the custom sql query (right after CID).
+用户费率位于自定义sql查询返回数据中的第12个位置（紧跟在CID之后）。
 
-If one wants different user\_rates based on intrastate/intralata/interstate then one can use the ${lcr\_user\_rate} variable in the query. This variable will be set to one of "user\_rate", "user\_intralata\_rate" or "user\_intrastate\_rate".
+如果想基于州内/局域内/州际使用不同的用户费率，可以在查询中使用${lcr_user_rate}变量。该变量将设置为"user_rate"、"user_intralata_rate"或"user_intrastate_rate"之一。
 
-  
 ### LRN
 
-mod\_lcr supports feeding an LRN in for the callee but not caller.
+mod\_lcr支持给被叫方传递一个LRN，但不支持给主叫方传递。
 
-mod\_lcr will use the LRN to look up inter/intra properly, and to pull the correct rate from the carrier.
+mod\_lcr将使用LRN来正确查找国际/国内路由，并从运营商中获取正确的费率。
 
-The schema has been expanded to let you set if the LCR rate should be looked up as a direct match to the callee, or based on the LRN. It is done per-row so you can turn on LRN only for certain locations, rather than for the entire carrier.
+模式已被扩展，以允许您设置LCR费率是根据被叫方的直接匹配还是基于LRN进行查找。这是基于每一行来完成的，因此您可以选择仅为特定地点打开LRN，而不是为整个运营商打开。
 
-### LRN caching table placeholder
+### LRN缓存表占位符 
 
-I have this schema for my lrn cache info -[Avi Marcus](https://wiki.freeswitch.org/wiki/User:Avi%5FMarcus "User:Avi Marcus")
+下面是我为lrn缓存信息的模式-[Avi Marcus](https://wiki.freeswitch.org/wiki/User:Avi%5FMarcus "User:Avi Marcus")
 
-id	int(10)	UNSIGNED	Primary key AUTO_INCREMENT	 	 	 	 	 	 	
+id	int(10)	UNSIGNED	主键自增	 
 digits	bigint(11) UNSIGNED
 lrn	bigint(11) UNSIGNED
 date_lrn	timestamp
-sip	varchar(60) (why not do an ENUM for carriers while we are at it?)
+sip	varchar(60) (既然这样，为什么不为运营商设一个枚举值呢？)
 date_sip	timestamp
 
-So a (fake) entry might like this this:
+所以一个（虚假的）条目可能是这样的：
 
 Digits: 12019359999 lrn: 19084411234 date_lrn 2010-11-19 02:55:52 sip: 12019359999@in.callcentric.com date_sip: 2010-11-19 02:55:52
 
-We could even have it set /sofia/external/number@provider for the enum, as the first string.
+甚至我们可以将/sofia/external/number@provider设置为枚举的第一个字符串。
 
-## Using mysql with mod_lcr
+## 使用mysql与mod\_lcr
 
-mod\_lcr passes the number to check to mysql. If you don't enclose them in quotes, mysql may take upto 22 times longer than is necessary. Add
+mod\_lcr将将要检查的号码传递给mysql。如果您不将它们加上引号，mysql可能需要花费多达22倍的时间。将以下内容添加到配置文件的每个配置文件中：
 
 &lt;param name="quote_in_list" value="yes"/>
 
-to each profile in your configuration file and see if the performance improves.
+并查看性能是否有所改善。
 
-**Update** This is debatable - [the opposite is more likely to be the case](http://pento.net/2009/03/03/dont-quote-your-numbers/##)
+**更新** 这个问题存在争议 - [很可能正好相反](http://pento.net/2009/03/03/dont-quote-your-numbers/##)
 
-## Using sqlite with mod_lcr
+## 使用sqlite与mod\_lcr
 
-This installation assumes a debian based system, for other distributions please adapt as necessary.
+这个安装假设您使用基于debian的系统，在其他发行版上请根据需要进行调整。
 
-Install the pre-requisite packages:
+安装预先要求的软件包：
 
 apt-get install libsqliteodbc unixodbc-bin sqlite3 sqlite
 
-Add the following to /opt/freeswitch/.odbc.ini:
+将以下内容添加到/opt/freeswitch/.odbc.ini文件中：
 
 [fslcrdb]
-Description=Freeswitch LCR SQLite database
+Description=FreeSwitch LCR SQLite数据库
 Driver=SQLite3
 Database=/opt/freeswitch/conf/databases/fslcr.db
-# optional lock timeout in milliseconds
+# 可选的锁定超时时间（以毫秒为单位）
 Timeout=2000
 
-Create sqlite3.sql:
+创建sqlite3.sql：
 
--- SQL Lite 3 tables
+-- SQL Lite 3表格
 
--- Table: carriers
+-- 表格：carriers
 
 -- DROP TABLE carriers;
 
@@ -700,21 +706,21 @@ CREATE TABLE carriers
   enabled INTEGER NOT NULL DEFAULT '1'
 );
 
--- Table: carrier_gateway
+-- 表格：carrier_gateway
 
 -- DROP TABLE carrier_gateway;
 
 CREATE TABLE carrier_gateway
 (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  carrier_id integer REFERENCES carriers(id),
+  carrier_id INTEGER REFERENCES carriers(id),
   prefix VARCHAR(128) NOT NULL DEFAULT '',
   suffix VARCHAR(128) NOT NULL DEFAULT '',
   codec VARCHAR(128) NOT NULL DEFAULT '',
   enabled INTEGER NOT NULL DEFAULT '1'
 );
 
--- Index: gateway
+-- 索引：gateway
 
 -- DROP INDEX gateway;
 
@@ -723,7 +729,7 @@ CREATE UNIQUE INDEX gateway
   (prefix, suffix);
 
 
--- Table: lcr
+-- 表格：lcr
 
 -- DROP TABLE lcr;
 
@@ -731,22 +737,22 @@ CREATE TABLE lcr
 (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   digits NUMERIC(20, 0),
-  rate numeric(11,5) NOT NULL,
-  carrier_id integer NOT NULL REFERENCES carriers(id),
-  lead_strip integer NOT NULL DEFAULT 0,
-  trail_strip integer NOT NULL DEFAULT 0,
+  rate NUMERIC(11,5) NOT NULL,
+  carrier_id INTEGER NOT NULL REFERENCES carriers(id),
+  lead_strip INTEGER NOT NULL DEFAULT 0,
+  trail_strip INTEGER NOT NULL DEFAULT 0,
   prefix VARCHAR(16) NOT NULL DEFAULT '',
   suffix VARCHAR(16) NOT NULL DEFAULT '',
   lcr_profile INTEGER NOT NULL DEFAULT 0,
-  date_start timestamp with time zone NOT NULL DEFAULT '1970-01-01',
-  date_end timestamp with time zone NOT NULL DEFAULT '2030-12-31',
-  quality numeric(10,6) NOT NULL DEFAULT 0,
-  reliability numeric(10,6) NOT NULL DEFAULT 0,
+  date_start TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT '1970-01-01',
+  date_end TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT '2030-12-31',
+  quality NUMERIC(10,6) NOT NULL DEFAULT 0,
+  reliability NUMERIC(10,6) NOT NULL DEFAULT 0,
   cid VARCHAR(32) NOT NULL DEFAULT '',
   enabled INTEGER NOT NULL DEFAULT '1'
 );
 
--- Index: digits_rate
+-- 索引：digits_rate
 
 -- DROP INDEX digits_rate;
 
@@ -755,38 +761,43 @@ CREATE INDEX digits_rate
   -- not supported -- USING btree
   (digits, rate);
 
--- Index: profile_digits_15
+-- 索引：profile_digits_15
 
 -- DROP INDEX profile_digits_15;
 
-CREATE INDEX profile_digits_15
+```sql
+创建索引：profile_digits_15
   ON lcr
   (digits, lcr_profile);
+  
+-- 索引：unique_route
 
--- Index: unique_route
+-- 删除索引：unique_route;
 
--- DROP INDEX unique_route;
-
-CREATE INDEX unique_route
+创建索引：unique_route
   ON lcr
   (digits, carrier_id);
 
-Create sample\_data.sql:
+创建 sample_data.sql 文件：
 
--- insert two carriers
+-- 插入两个运营商
 
 INSERT INTO carriers (carrier_name) VALUES ('carrier1');
 INSERT INTO carriers (carrier_name) VALUES ('carrier2');
 
--- insert some gateway info
+-- 插入一些网关信息
 
 INSERT INTO carrier_gateway (carrier_id, prefix, suffix) VALUES
   (1, 'sofia/gateway/carrier1/', '');
 INSERT INTO carrier_gateway (carrier_id, prefix, suffix) VALUES
   (2, 'sofia/external/', '@proxy.carrier2.net:5060');
 
--- insert some lcr data
+-- 插入一些 LCR 数据
+```
 
+将以下内容插入lcr表中：
+
+```sql
 INSERT INTO lcr (digits, rate, carrier_id, lead_strip, trail_strip,
                  prefix, suffix,
                  date_start, date_end, quality, reliability) VALUES
@@ -794,6 +805,7 @@ INSERT INTO lcr (digits, rate, carrier_id, lead_strip, trail_strip,
 	datetime(current_timestamp,'-1 year'),
 	datetime(current_timestamp,'+1 year')
         , 0, 0);
+        
 INSERT INTO lcr (digits, rate, carrier_id, lead_strip, trail_strip,
                  prefix, suffix,
                  date_start, date_end, quality, reliability) VALUES
@@ -801,6 +813,7 @@ INSERT INTO lcr (digits, rate, carrier_id, lead_strip, trail_strip,
 	datetime(current_timestamp,'-1 year'),
 	datetime(current_timestamp,'+1 year')
         , 0, 0);
+        
 INSERT INTO lcr (digits, rate, carrier_id, lead_strip, trail_strip,
                  prefix, suffix,
                  date_start, date_end, quality, reliability) VALUES
@@ -808,6 +821,7 @@ INSERT INTO lcr (digits, rate, carrier_id, lead_strip, trail_strip,
 	datetime(current_timestamp,'-1 year'),
 	datetime(current_timestamp,'+1 year')
         , 0, 0);
+        
 INSERT INTO lcr (digits, rate, carrier_id, lead_strip, trail_strip,
                  prefix, suffix,
                  date_start, date_end, quality, reliability) VALUES
@@ -815,15 +829,16 @@ INSERT INTO lcr (digits, rate, carrier_id, lead_strip, trail_strip,
 	datetime(current_timestamp,'-1 year'),
 	datetime(current_timestamp,'+1 year')
         , 0, 0);
+```
 
-Load in these two SQL files into the DB:
+在数据库中加载这两个SQL文件：
 
+```bash
 sqlite3 /opt/freeswitch/conf/databases/fslcr.db
 .read sqlite3.sql
 .read sample_data.sql
+```
 
-## Problems with ODBC
+## ODBC的问题
 
-If you have a problem with odbc not working when it works with other mods double check that your odbc.ini file is in /etc, that is where mod\_lcr looks for the files. It does not matter what OS you are using.
-
-
+如果你在ODBC上遇到问题，而在其他模块上却可以工作，请仔细检查odbc.ini文件是否位于/etc目录中，因为mod_lcr是在该目录中查找文件的。无论使用什么操作系统，这都是无关紧要的。

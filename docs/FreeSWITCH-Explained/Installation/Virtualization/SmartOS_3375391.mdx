@@ -1,66 +1,65 @@
+# SmartOS
 
-# SmartOS 
+## 关于
 
- 
+本页面列出了准备SmartOS虚拟化程序安装FreeSWITCH的步骤。
 
-## About
+点击展开目录
 
-This page lists steps to prepare the SmartOS hypervisor for the installation of FreeSWITCH.
-
-Click to expand Table of Contents
-
-* 1 [Initialization](#initialization)
-* 2 [Import VM Image](#import-vm-image)
-* 3 [Solaris Privileges](#solaris-privileges)
-* 4 [Zone Definition](#zone-definition)
-* 5 [Create the Zone](#create-the-zone)
+* 1 [初始化](#initialization)
+* 2 [导入虚拟机镜像](#import-vm-image)
+* 3 [Solaris权限](#solaris-privileges)
+* 4 [区域定义](#zone-definition)
+* 5 [创建区域](#create-the-zone)
 * 6 [UUID](#uuid)
-* 7 [Login](#login)
-* 8 [Build FreeSWITCH](#build-freeswitch)
-* 9 [Manifest](#manifest)
-* 10 [References](#references)
+* 7 [登录](#login)
+* 8 [构建FreeSWITCH](#build-freeswitch)
+* 9 [清单](#manifest)
+* 10 [参考资料](#references)
 
-## Initialization
+## 初始化
 
-Get SmartOS up and running. If using desktop virtualization, be forewarned that the KVM features of SmartOS will not be available (they're not needed in this case). This is rather like installing ESXi under virtualbox, it's a wonder it works at all.
+启动SmartOS。如果使用桌面虚拟化，请注意SmartOS的KVM功能将不可用（在此情况下不需要）。这就像在VirtualBox下安装ESXi一样，不过真的能工作。
 
-An automated script for doing this on virtualbox under some kind of \*nix is available from:  
+有一个针对VirtualBox在某些*nix系统下的自动脚本可以使用，链接如下：  
 <http://www.perkin.org.uk/posts/automated-virtualbox-smartos-installs.html>
 
-Instructions for installing in other ways (including under vmware) can be found here:  
+其他安装方法的说明（包括在vmware下安装）可以在这里找到：  
 <http://wiki.smartos.org/display/DOC/Getting+Started+with+SmartOS>
 
-The key items here are: Boot from the live CD (image) or USB key, then follow the instructions on screen to do the initial setup of any attached hard drive(s). If you only give it one hard drive, this is as simple as just retyping the disk name back in when it displays it and asks you which drives to use.
+关键要点如下：从光盘（映像）或USB密钥启动，在屏幕上按照指示完成任何连接的硬盘的初始设置。如果您只有一个硬盘，只需在显示出硬盘名称并询问要使用哪些驱动器时重新输入磁盘名称即可。
 
-The default root password changes with each release and will be in the text file linked on this page:  
+默认的root密码会随每个发布版本而更改，并且可以在此页面上的文本文件中找到链接：  
 <https://us-east.manta.joyent.com/Joyent%5FDev/public/SmartOS/latest.html>
 
-## Import VM Image
+## 导入虚拟机镜像
 
-After the install is done, login to the console and import the 64 bit basic VM root image (assume $# is the root prompt from now on). "`imgadm avail`" will show you the latest available image for base-64, and you copy the image UUID from its output.
+安装完成后，登录到控制台，并导入64位基础虚拟机根镜像（假设`$#`是根提示符）。使用"`imgadm avail`"命令可以显示最新可用的base-64镜像，并从其输出中复制镜像UUID。
 
+```
 $# imgadm avail | grep base-64
 
-1f32508c-e6e9-11e6-bc05-8fea9e979940 base-64-lts 16.4.1 smartos  zone-dataset  2017-01-30
+1f32508c-e6e9-11e6-bc05-8fea9e979940 base-64-lts 16.4.1 smartos  zone-dataset  2017-01-30
 
 $# imgadm import 1f32508c-e6e9-11e6-bc05-8fea9e979940
+```
 
-## Solaris Privileges
+## Solaris特权
 
-The following privileges are used by FreeSWITCH daemon, and some of them are not available by default in a SmartOS zone:
+FreeSWITCH守护进程使用以下特权，其中一些在SmartOS区域中默认不可用：
 
-| Name or alias        | ID                         | Description                                                                                                                                                                                                                | Available by default in a zone      |
-| -------------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
-| basic                |                            | Basic set of privileges, as output by ppriv -l basic command                                                                                                                                                               | yes                                 |
-| proc\_clock\_highres | PRIV\_PROC\_CLOCK\_HIGHRES | Access to the high-resolution clock. FreeSWITCH will refuse to start without this privilege.                                                                                                                               | no, needs to be added by host admin |
-| sys\_resource        | PRIV\_SYS\_RESOURCE        | Allow a process to exceed the resource limits                                                                                                                                                                              | yes                                 |
-| file\_dac\_search    | PRIV\_FILE\_DAC\_SEARCH    | Allow a process to read directories belonging to other uid                                                                                                                                                                 | yes                                 |
-| proc\_priocntl       | PRIV\_PROC\_PRIOCNTL       | Allow a process to control its scheduler. If granted, this allows FreeSWITCH to set the real-time priority scheduler for itself. Otherwise, it tries to use proc\_prioup privilege and sets a higher-than-normal priority. | no, needs to be added by host admin |
-| proc\_prioup         | PRIV\_PROC\_PRIOUP         | Allow a process to elevate its priority. This privilege is used if \-rp flag is specified and proc\_priocntl is not available                                                                                              | yes                                 |
+| 名称或别名            | ID                          | 描述                                                                                                                                                              | 在区域中默认可用                   |
+| -------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| 基本权限 (basic)               |                            | ppriv -l basic 命令所输出的基本权限集合                                                                                                                             | 是                                  |
+| 高分辨率进程时钟 (proc\_clock\_highres) | PRIV\_PROC\_CLOCK\_HIGHRES | 访问高分辨率时钟。如果没有此权限，FreeSWITCH将拒绝启动。                                                                                                                     | 否，需要由主机管理员添加                |
+| 系统资源 (sys\_resource)        | PRIV\_SYS\_RESOURCE        | 允许进程超过资源限制                                                                                                                                                 | 是                                  |
+| 文件 DAC 搜索 (file\_dac\_search)    | PRIV\_FILE\_DAC\_SEARCH    | 允许进程读取属于其他 uid 的目录                                                                                                                                       | 是                                  |
+| 进程调度控制 (proc\_priocntl)       | PRIV\_PROC\_PRIOCNTL       | 允许进程控制其调度程序。如果获得此权限，FreeSWITCH将为自身设置实时优先级调度程序。否则，它尝试使用 proc\_prioup 权限并设置高于正常优先级。                                                               | 否，需要由主机管理员添加                |
+| 进程优先级提升 (proc\_prioup)         | PRIV\_PROC\_PRIOUP         | 允许进程提升优先级。如果指定了 -rp 标志并且(proc\_priocntl)不可用，则使用此权限。                                                                                    | 是                                  |
 
-## Zone Definition
+## 区域定义
 
-Create a "Zone definition" JSON file in a folder under `/opt` (remember that `/root` is mounted on ramdisk and will be flushed after reboot). The zone should receive the `proc_clock_highres` privilege in order to get use of high-resolution timer. FreeSWITCH would crash immediately at start if this privilege is not available within the zone. This means that hosting at Joyent is problematic.
+在 `/opt` 目录下创建一个名为 "Zone definition" 的 JSON 文件夹（记住 `/root` 被挂载在内存盘上，在重启后会被清空）。该区域应该具有 `proc_clock_highres` 特权以便使用高分辨率定时器。如果该特权在区域内不可用，FreeSWITCH 在启动时将立即崩溃。这意味着在 Joyent 上托管是有问题的。
 
 **/opt/vm-def.json**
 
@@ -95,32 +94,32 @@ Create a "Zone definition" JSON file in a folder under `/opt` (remember that `/r
 }
 ```
 
-## Create the Zone
+## 创建区域
 
-Create your virtual zone within smartos:
+在 smartos 中创建您的虚拟区域：
 
 $# vmadm create -f /opt/vm-def.json
 
 ## UUID
 
-Find the UUID assigned to your new VM:
+查找分配给您的新虚拟机的 UUID：
 
 $# vmadm list
 
-## Login
+## 登录
 
-Using the UUID from the above list ( refered to as &lt;UUID> ):
+使用上述列表中的 UUID（记作&lt;UUID>）：
 
 $# zlogin &lt;UUID>
 
-## Build FreeSWITCH
+## 构建 FreeSWITCH
 
-We are now inside the VM and we can execute all the commands to set up for building freeswitch:
+现在我们已经进入虚拟机，可以执行所有设置 FreeSWITCH 构建所需的命令：
 
-**Build FS**
+**构建 FS**
 
 ```bash
- 
+
 pkgin up && pkgin -y ug && pkgin -y in git gcc49 gmake \
 autoconf gettext gettext-m4 automake libtool pkg-config \
 unixodbc speex speexdsp libogg libvorbis libshout ldns editline libjpeg-turbo \
@@ -131,7 +130,6 @@ cd /opt/local/src
 git clone -b v1.6 https://freeswitch.org/stash/scm/fs/freeswitch.git freeswitch
 cd freeswitch
 
-
 ./bootstrap.sh -j && \
 sed -i -e 's,^.*/mod_fsv$,\#&,' -e 's,^.*/mod_png$,\#&,' -e 's,^.*/mod_vpx$,\#&,' modules.conf  && \
 ./configure -C \
@@ -140,11 +138,11 @@ make && \
 make install
 ```
 
-## Manifest
+## 指南
 
-Contributed by [Kim Culhan](https://freeswitch.org/confluence/display/~kimc) 2017.01.12
+由[Kim Culhan](https://freeswitch.org/confluence/display/~kimc)提供 2017.01.12
 
-I've hacked together this manifest which appears to work well on smartos:
+我已经将这个指南拼凑在一起，在smartos上运行良好：
 
 [![](/images/placeholder-medium-code.png)freeswitch.xml](/confluence/download/attachments/3375391/freeswitch.xml?version=1&modificationDate=1526994251516&api=v2)
 
@@ -179,63 +177,60 @@ I've hacked together this manifest which appears to work well on smartos:
 </service_bundle>
 ```
 
-  
-In your FreeSWITCH smartos zone you could copy this to `/opt/local/lib/svc/manifest/freeswitch.xml`
+在您的 FreeSWITCH smartos 区域中，您可以将此文件复制到 `/opt/local/lib/svc/manifest/freeswitch.xml`
 
-This is based on having the FreeSWITCH executable installed at `/opt/local/bin/freeswitch` and running as user 'freeswitch'
+前提是：FreeSWITCH 可执行文件已安装在 `/opt/local/bin/freeswitch`，并且以用户 'freeswitch' 运行
 
-You could create a user 'freeswitch' with:
+您可以使用以下命令创建一个名为 'freeswitch' 的用户：
 
-useradd -d /opt/local/etc/freeswitch -m -c "freeswitch user" freeswitch
+useradd -d /opt/local/etc/freeswitch -m -c "freeswitch 用户" freeswitch
 
-After installing freeswitch with 'make install' it will be necessary to set the ownership of some file locations
+在使用`make install`安装freeswitch之后，需要设置一些文件位置的所有权，否则freeswitch无法启动，并使服务状态保持在"maintenance"状态。 在接下来的几个步骤中设置服务配置之后，才能启用服务之前，请确保正确设置了所有权。
 
-or freeswitch will fail to start, leaving the service status in 'maintenance' state. This will be true after setting
+使用以下命令进行验证:
 
-the service configurations in the next few steps, so before attempting to enable the service
+```
+svccfg validate freeswitch.xml
+```
 
-with: 'svcadm enable freeswitch' you will need to set ownership correctly.
+使用以下命令导入文件:
 
-Validate with:
+```
+svccfg import freeswitch.xml
+```
 
-  svccfg validate freeswitch.xml
+启用freeswitch:
 
-Import the manifest with:
+```
+svcadm enable freeswitch
+```
 
-  svccfg import freeswitch.xml
+检查服务是否已经在线:
 
-Enable freeswitch:
+```
+svcs -a | grep freeswitch
+```
 
-  svcadm enable freeswitch
+注意事项:
 
-Check that it is online:
+1. 如果进程没有`proc_clock_highres`权限，将会拒绝启动FreeSWITCH。这意味着必须在区域清单中配置该权限。如果将其添加到现有的区域中，请执行"`vmadm update`"然后重启区域。同时，强烈推荐也配置`proc_priocntl`权限。
+2. 在Freeswitch 1.6中，经过测试：`mod_eventsocket`无法绑定到IPv6 loopback，"listen-ip"中的"::"不起作用。需要在其中指定"127.0.0.1"。
+3. 我使用的是最新的Joyent zone-dataset创建的Smartos区域(base-64 18.1.0 2018-04-08)，没有对IPv6进行特殊调整，截至到2018年5月22日，在~/freeswitch/autoload_configs/event_socket.conf.xml中，设置&lt;param name="listen-ip" value="127.0.0.1"/>作为IPv6 loopback "::"不起作用的替代方式。如果不对原始的freeswitch值进行修改，将无法运行fs_cli和freeswitch控制台等功能。
 
-  svcs -a|grep freeswitch
+## 参考资料
 
-Caveats
+[FS-6561](https://freeswitch.org/jira/browse/FS-6561?src=confmacro) - [请先登录](https://freeswitch.org/confluence/plugins/servlet/applinks/oauth/login-dance/authorize?applicationLinkID=c4b15fa3-ad57-3c05-af05-8c167cb92266) 查看问题详情
 
-1. FreeSWITCH will refuse to start if the process does not have the `proc_clock_highres` privilege. This means, the zone manifest should be configured to receive this privilege. If you add it to an existing zone, do "`vmadm update`" and then reboot the zone. Also `proc_priocntl` privilege is highly recommended.
-2. `Fixed, please test: ` ~~`mod_eventsocket`~~ ~~cannot bind to IPv6 loopback, and "::" in "listen-ip" does not work. You need to specify "127.0.0.1" in it.~~
-3. As of 05-22-18 with Freeswith 1.6 it is necessary to set, in \~/freeswitch/autoload\_configs/event\_socket.conf.xml, &lt;param name="listen-ip" value="127.0.0.1"/> as IPv6 loopback "::" does not work on my setup. I'm using a Smartos zone created with the latest Joyent zone-dataset available at the moment: base-64 18.1.0 2018-04-08 with nothing special adjusted for IPv6.  
-Without modifying the as-shipped freeswitch value, it would not be possible to run fs\_cli and the freeswitch console, amonst other things.
+[FS-7967](https://freeswitch.org/jira/browse/FS-7967?src=confmacro) - [请先登录](https://freeswitch.org/confluence/plugins/servlet/applinks/oauth/login-dance/authorize?applicationLinkID=c4b15fa3-ad57-3c05-af05-8c167cb92266) 查看问题详情
 
-## References
+[FS-8195](https://freeswitch.org/jira/browse/FS-8195?src=confmacro) - [请先登录](https://freeswitch.org/confluence/plugins/servlet/applinks/oauth/login-dance/authorize?applicationLinkID=c4b15fa3-ad57-3c05-af05-8c167cb92266) 查看问题详情
 
-[FS-6561](https://freeswitch.org/jira/browse/FS-6561?src=confmacro)  \-[Authenticate](https://freeswitch.org/confluence/plugins/servlet/applinks/oauth/login-dance/authorize?applicationLinkID=c4b15fa3-ad57-3c05-af05-8c167cb92266) to see issue details 
+### 附件:
 
-[FS-7967](https://freeswitch.org/jira/browse/FS-7967?src=confmacro)  \-[Authenticate](https://freeswitch.org/confluence/plugins/servlet/applinks/oauth/login-dance/authorize?applicationLinkID=c4b15fa3-ad57-3c05-af05-8c167cb92266) to see issue details 
+![](/images/icons/bullet_blue.gif) [freeswitch.xml](/attachments/3375391/17694857.xml) (text/xml)
 
-[FS-8195](https://freeswitch.org/jira/browse/FS-8195?src=confmacro)  \-[Authenticate](https://freeswitch.org/confluence/plugins/servlet/applinks/oauth/login-dance/authorize?applicationLinkID=c4b15fa3-ad57-3c05-af05-8c167cb92266) to see issue details 
-  
-  
-### Attachments:
+### 评论:
 
-![](/images/icons/bullet_blue.gif) [freeswitch.xml](/attachments/3375391/17694857.xml) (text/xml)  
-
-### Comments:
-
-| I have added your contribution under the Manifest header. I also added you to the confluence-editors group so feel free to maintain this as needed.The editing guidelines can be found (currently) under the Community link in the Table of Contents pane.Thanks! Happy New Year! ![](/images/icons/contenttypes/comment_16.png) Posted by boteman at Jan 13, 2017 13:07                                |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Freeswitch remains unable to do outbound TCP as per [FS-7991](https://freeswitch.org/jira/browse/FS-7991?src=confmacro)  \-[Authenticate](https://freeswitch.org/confluence/plugins/servlet/applinks/oauth/login-dance/authorize?applicationLinkID=c4b15fa3-ad57-3c05-af05-8c167cb92266) to see issue details ![](/images/icons/contenttypes/comment_16.png) Posted by digitaldaz at Mar 16, 2017 06:58 |
-
-
+| 我已将您的贡献添加到清单头部。我还将您加入到了合作编辑组，所以随时可以根据需要进行维护。目前，编辑指南可以在“目录”窗格的“社区”链接下找到。谢谢！祝您新年快乐！![](/images/icons/contenttypes/comment_16.png) 由 boteman 于2017年1月13日13:07发表 |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 按照[FS-7991](https://freeswitch.org/jira/browse/FS-7991?src=confmacro) 还无法在Freeswitch中进行出站TCP认证。请-[验证]（https://freeswitch.org/confluence/plugins/servlet/applinks/oauth/login-dance/authorize?applicationLinkID=c4b15fa3-ad57-3c05-af05-8c167cb92266）以查看问题详情！![](/images/icons/contenttypes/comment_16.png) 由 digitaldaz 于2017年3月16日06:58张贴 |

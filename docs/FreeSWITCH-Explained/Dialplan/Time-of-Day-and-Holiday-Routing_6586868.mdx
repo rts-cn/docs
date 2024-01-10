@@ -1,102 +1,96 @@
+# 时间和节假日路由
 
-# Time of Day and Holiday Routing 
+## 关于
 
- 
+时间路由允许根据时间、星期几，以及某些情况下节假日来将呼叫发送到不同的分机。从 SVN 修订版 14385 开始，FreeSWITCH 支持多个可匹配的变量来处理时间和日期元素。这些变量在 Dialplan XML 页面中有详细介绍。这些新的匹配变量省去了使用 strftime API 的需要（如果您愿意或者确有特殊需求只有 strftime 才能满足，您仍可使用 strftime）。
 
-## About
+单击此处展开目录
 
-Time of day routing allows calls to be sent to different extensions based upon the time of day, day of week and in some cases, holidays. As of SVN revision 14385, FreeSWITCH supports a number of matchable variables for time and date elements. These are discussed in the Dialplan XML wiki page. The new matching variables obviate the need for using the strftime API. (You may still use strftime if you so choose or if you have a specific need that only strftime meets.)
-
-  
-Click here to expand Table of Contents
-
-* 1 [Variables](#holiday-routing)  
-   * 1.1 [Wrap-Around](#holiday-routing)  
-   * 1.2 [Blocks](#holiday-routing)
-* 2 [Time Zone Manipulation](#time-zone-manipulation)  
-   * 2.1 [timezone](#holiday-routing)  
+1. [变量](#holiday-routing)
+   * 1.1 [环绕](#holiday-routing)
+   * 1.2 [块](#holiday-routing)
+2. [时区处理](#time-zone-manipulation)
+   * 2.1 [timezone](#holiday-routing)
    * 2.2 [tod\_tz\_offset](#tod_tz_offset)
-* 3 [Usage](#holiday-routing)
-* 4 [Examples](#holiday-routing)  
-   * 4.1 [Office Hours](#holiday-routing)  
-   * 4.2 [Holiday Routing](#holiday-routing)  
-      * 4.2.1 [Memorial Day](#holiday-routing)
+3. [用法](#holiday-routing)
+4. [示例](#holiday-routing)
+   * 4.1 [办公时间](#holiday-routing)
+   * 4.2 [节假日路由](#holiday-routing)
+      * 4.2.1 [阵亡将士纪念日](#holiday-routing)
 
-## Variables
+| 属性             | 可接受值      | 描述                       |
+| --------------- | ------------ | ------------------------- |
+| year            | 0 \- 9999    | 年份                       |
+| yday            | 1 \- 366     | 年中的第几天               |
+| mon             | 1 \- 12      | 月份（1表示一月，以此类推） |
+| mday            | 1 \- 31      | 月份中的第几天             |
+| week            | 1 \- 53      | 年中的第几周               |
+| mweek           | 1 \- 6       | 月份中的第几周             |
+| wday            | 1 \- 7       | 星期几，数字表示（星期日为1，星期一为2，依次类推） |
+| sunmontuewedthufrisat | 星期几 | |
+| hour            | 0 \- 23      | 小时                       |
+| minute          | 0 \- 59      | 分钟（小时内的分钟数）     |
+| minute-of-day   | 1\-1440      | 一天中的分钟数（午夜为1，凌晨1点为60，中午为720等） |
+| time-of-day     | hh:mm-hh:mm  | 时间范围示例：08:00-17:00   |
+| hh:mm:ss-hh:mm:ss | 带秒的时间范围 | |
+| date-time       | YYYY-MM-DD hh:mm**\~**YYYY-MM-DD hh:mm | 日期时间范围，注意使用\~分隔符，示例：2010-10-01 00:00:01**\~**2010-10-15 23:59:59 |
+| YYYY-MM-DD hh:mm:ss**\~**YYYY-MM-DD hh:mm:ss | 带秒的日期时间范围，注意使用\~分隔符 | |
 
-| Attribute                                    | Acceptable Values                                    | Description                                                                                 |
-| -------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| year                                         | 0 \- 9999                                            | calendar year                                                                               |
-| yday                                         | 1 \- 366                                             | day of year                                                                                 |
-| mon                                          | 1 \- 12                                              | month (Jan = 1, etc.)                                                                       |
-| mday                                         | 1 \- 31                                              | day of month                                                                                |
-| week                                         | 1 \- 53                                              | week of year                                                                                |
-| mweek                                        | 1 \- 6                                               | week of month                                                                               |
-| wday                                         | 1 \- 7                                               | day of week, numeric (sun = 1, mon = 2, etc.)                                               |
-| sunmontuewedthufrisat                        | day of week                                          |                                                                                             |
-| hour                                         | 0 \- 23                                              | hour                                                                                        |
-| minute                                       | 0 \- 59                                              | minute (of the hour)                                                                        |
-| minute-of-day                                | 1-1440                                               | minute of the day (midnight = 1, 1am = 60, noon = 720, etc)                                 |
-| time-of-day                                  | hh:mm-hh:mm                                          | time rangeExample: 08:00-17:00                                                              |
-| hh:mm:ss-hh:mm:ss                            | time range, with seconds                             |                                                                                             |
-| date-time                                    | YYYY-MM-DD hh:mm**\~**YYYY-MM-DD hh:mm               | date time range, note the \~ delimiterExample: 2010-10-01 00:00:01**\~**2010-10-15 23:59:59 |
-| YYYY-MM-DD hh:mm:ss**\~**YYYY-MM-DD hh:mm:ss | date time range, with seconds, note the \~ delimiter |                                                                                             |
-
-These can be combined in the same condition, e.g:
+这些可以在同一个条件下组合使用，例如：
 
 ```xml
 <condition wday="6" hour="8-12"> 
 ```
 
-### Wrap-Around
+### 环绕
 
-Time and date variables support wrap-around to span the changing of the days, months, or years:
+时间和日期变量支持环绕，以跨越日期、月份或年份的变化：
 
 ```xml
-<condition mon="10-2"> <!-- from October of year 1 to February of year 2 -->
+<condition mon="10-2"> <!-- 从第1年的10月到第2年的2月 -->
 ```
 
 ```xml
-<condition time-of-day="17:00:00-07:00:00"> <!-- from 5PM of day 1 to 7AM of day 2 -->
+<condition time-of-day="17:00:00-07:00:00"> <!-- 从第1天的下午5点到第2天的上午7点 -->
 ```
 
-![(warning)](/images/icons/emoticons/warning.svg) If you use wrap-around then the from and to date/time need to be one value lower so `5:00:00-5:00:00` will read as 0 and needs to be `5:00:00-4:59:59` which would then read as 5AM from today to 4:59AM tomorrow.
+![(warning)](/images/icons/emoticons/warning.svg) 如果使用环绕，则起始和结束日期/时间需要低于一个值，因此`5:00:00-5:00:00`将读作0，应改为`5:00:00-4:59:59`，这将读作从今天的上午5点到明天的上午4点59分。
 
-### Blocks
+### 块
 
-Comma–separated values allow discrete blocks of time to be specified:
+逗号分隔的值允许指定离散的时间块：
 
 ```xml
-<condition time-of-day="08:00-12:00,13:00-17:00"> <!-- from 8AM to 12AM and 1PM to 5PM -->
+<condition time-of-day="08:00-12:00,13:00-17:00"> <!-- 从上午8点到中午12点和下午1点到下午5点 -->
 ```
 
 ```xml
-<condition date-time="2015-03-01 00:00:00~2015-03-01 23:59:59,2015-06-05 00:00:00~2015-07-01 23:59:59"> <!-- day 2015-03-01 and range from 2015-06-05 to 2015-07-01 -->
+<condition date-time="2015-03-01 00:00:00~2015-03-01 23:59:59,2015-06-05 00:00:00~2015-07-01 23:59:59"> <!-- 2015-03-01日期和2015-06-05到2015-07-01日期范围 -->
 ```
 
-![(warning)](/images/icons/emoticons/warning.svg) the tilde `~` character is used to delimit the starting date time and the ending date time
+![(warning)](/images/icons/emoticons/warning.svg) 波浪线`~`字符用于分隔起始日期时间和结束日期时间。
 
-## Time Zone Manipulation
+## 时区操作
 
-By default, time–based routing uses the local time kept by FreeSWITCH. If you want to use a different time zone, you have 2 options (as of 2012-11-01 in master, see [FS-4741](https://freeswitch.org/jira/browse/FS-4741?src=confmacro)  \-[Authenticate](https://freeswitch.org/confluence/plugins/servlet/applinks/oauth/login-dance/authorize?applicationLinkID=c4b15fa3-ad57-3c05-af05-8c167cb92266) to see issue details ).
+默认情况下，基于时间的路由使用FreeSWITCH保留的本地时间。如果要使用不同的时区，有2个选项（截至2012-11-01在master中，详见[FS-4741](https://freeswitch.org/jira/browse/FS-4741?src=confmacro)  \-[认证](https://freeswitch.org/confluence/plugins/servlet/applinks/oauth/login-dance/authorize?applicationLinkID=c4b15fa3-ad57-3c05-af05-8c167cb92266) 查看问题详情）。
 
-### timezone
+### 时区
 
-string Sets the timezone for this particular call. Can be used, e.g., to set the timezone for a caller who is checking his/her voicemail. The value is expressed in Linux timezone format (ex. America/New\_York -- see `/usr/share/zoneinfo/zone.tab` for the standard list of Linux timezones).
+设置此特定呼叫的时区。例如，可用于设置查收语音邮件的呼叫方的时区。此值以Linux时区格式表示（例如 America/New_York -- 可参阅 `/usr/share/zoneinfo/zone.tab` 获取Linux时区的标准列表）。
 
-![(warning)](/images/icons/emoticons/warning.svg) this variable must actually be set before the comparison, so either set it inline, transfer, or set it in the user directory.
+![(warning)](/images/icons/emoticons/warning.svg) 在比较之前，必须实际设置此变量，因此可以内联设置、传输或在用户目录中设置。
 
-See also: [Time of Day and Holiday Routing](Time-of-Day-and-Holiday-Routing_6586868.mdx#about).
+另请参阅：[时间和节假日路由](Time-of-Day-and-Holiday-Routing_6586868.mdx#about)。
 
-**Usage**
+**用法**
 
-You can set the time zone globally for Freeswitch in `/conf/vars.xml`
+您可以在 `/conf/vars.xml` 中为Freeswitch全局设置时区：
 
 ```xml
 <X-PRE-PROCESS cmd="set" data="timezone=America/Toronto"/>
 ```
 
-Specify the timezone in the dialplan:
+在拨号计划中指定时区：
 
 ```xml
 <action application="set" data="timezone=Asia/Seoul"/>
@@ -110,7 +104,7 @@ Specify the timezone in the dialplan:
 <action application="set" data="timezone=America/New_York"/>
 ```
 
-In the directory:
+在目录中：
 
 ```xml
 <param name="timezone" value="America/New_York"/>
@@ -118,13 +112,13 @@ In the directory:
 
 ### tod_tz_offset
 
-integer Sets the GMT offset to be used on this call for [time of day](Time-of-Day-and-Holiday-Routing_6586868.mdx#about) conditions.
+整数 设置用于此呼叫的 GMT 偏移量，用于 [时间](Time-of-Day-and-Holiday-Routing_6586868.mdx#about) 条件。
 
-![(warning)](/images/icons/emoticons/warning.svg) this variable must actually be set before the comparison, so either set it inline, transfer, or set it in the user directory.
+![(warning)](/images/icons/emoticons/warning.svg) 在比较之前，必须实际设置此变量，因此可以内联设置、传输或在用户目录中设置。
 
-**Usage**
+**用法**
 
-To set the offset global in `conf/vars.xml`:
+在 `conf/vars.xml` 中全局设置偏移量：
 
 ```xml
 <X-PRE-PROCESS cmd="set" data="tod_tz_offset=5"/>
@@ -134,11 +128,11 @@ To set the offset global in `conf/vars.xml`:
 <action application="set" data="tod_tz_offset=5"/>
 ```
 
-## Usage
+## 用法
 
-The examples presented here can be added to the conf/dialplan/default.xml file or you can create a new file in conf/dialplan/default/ to be included in the default dialplan (see the bottom of the vanilla default dialplan).
+这里提供的示例可以添加到 `conf/dialplan/default.xml` 文件中，或者您可以在 `conf/dialplan/default/` 中创建一个新文件，以便包含在默认拨号计划中（请参阅香草默认拨号计划的底部）。
 
-Provision an internal extension # for Sales to route calls dialed for 2002.
+为销售部门提供一个内部分机号码以路由拨打的2002号码。
 
 **conf/dialplan**
 
@@ -150,7 +144,7 @@ Provision an internal extension # for Sales to route calls dialed for 2002.
    </extension>
 ```
 
-Setup variables prior to transferring to call handler for sales. This sets the variables so that they will be available to the condition test during the next pass through the dialplan initiated by the transfer app.
+在转接给销售部门的呼叫处理程序之前设置变量。这将设置变量，以便它们在下一次通过由转接应用程序发起的呼叫计划时可用于条件测试。
 
 **conf/dialplan**
 
@@ -168,9 +162,9 @@ Setup variables prior to transferring to call handler for sales. This sets the v
    </extension>
 ```
 
-Handle Sales Call
+处理销售呼叫
 
-If Sales is open then route to extension first, then vMail; else send call directly to vMail. In this example, Sales have their own mailbox (#2001) - the configuration of that box forwards all vMail to email and does not store a local copy.
+如果销售部门开放，则先路由到分机，然后转移到语音邮件；否则直接将呼叫发送到语音邮件。在此示例中，销售部门有自己的邮箱（#2001）-该邮箱的配置将所有语音邮件转发到电子邮件，不会存储本地副本。
 
 **conf/dialplan**
 
@@ -182,78 +176,40 @@ If Sales is open then route to extension first, then vMail; else send call direc
        <action application="answer"/>
        <action application="sleep" data="2000"/>
        <action application="voicemail" data="default ${domain_name} 2001"/>
-
-       <anti-action application="voicemail" data="default ${domain_name} 2001"/>
-     </condition>
-   </extension>
 ```
 
-VoiceMail Config (in conf/directory/default/2001.xml)
-
-**Voicemail config**
-
-```xml
- <user id="2001" number-alias="2001">
-   <params>
-     <param name="password" value="2001"/>
-     <param name="vm-password" value="2001"/>
-     <param name="vm-email-all-messages" value="true"/>
-     <param name="vm-notify-email-all-messages" value="true"/>
-     <param name="vm-attach-file" value="true"/>
-     <param name="vm-mailto" value="sales@foo.com"/>
-     <param name="vm-notify-mailto" value="chris@foo.com"/>
-     <param name="vm-keep-local-after-email" value="false"/>
-   </params>
-   <variables>
-     <variable name="toll_allow" value="domestic,international,local"/>
-     <variable name="accountcode" value="2001"/>
-     <variable name="user_context" value="default"/>
-     <variable name="effective_caller_id_name" value="sales"/>
-     <variable name="effective_caller_id_number" value="2001"/>
-     <variable name="outbound_caller_id_name" value="$${outbound_caller_name}"/>
-     <variable name="outbound_caller_id_number" value="$${outbound_caller_id}"/>
-     <variable name="callgroup" value="fga"/>
-   </variables>
- </user>
-```
-
-## Examples
-
-### Office Hours
-
-Example for office open 09:00-16:00
-
-Has inbound DID routed to extension 5001\. Because the office\_status variable is set with the inline attribute, the variable takes effect immediately with no need to transfer to another extension definition. The following dialplan extension will always be executed and continue after matching.
-
-**Time and day evaluation**
+​```
+< anti-action application = "voicemail" data = "默认$ {domain_name} 2001"/>
+  </condition>
+</extension>
 
 ```xml
- <extension name="Time of day, day of week setup" continue="true">
+<extension name="设置时间和星期几" continue="true">
    <condition wday="2-6" minute-of-day="540-960" break="never">
       <action application="set" data="office_status=open" inline="true"/>
       <anti-action application="set" data="office_status=closed" inline="true"/>
    </condition>
- </extension>
+</extension>
 ```
 
-This extension will be evaluated if 5001 is the destination number and will build a final destination consisting of 5001\_open or 5001\_closed.
+如果目的号码为5001，则评估该扩展，并构建由5001_open或5001_closed组成的最终目的地。
 
-**Ext. 5001**
+**分机5001**
 
 ```xml
- <extension name="tod route, x5001">
+<extension name="设置时间和星期几路由，x5001">
    <condition field="destination_number" expression="^(5001)$">
        <action application="execute_extension" data="5001_${office_status}"/>
     </condition>
- </extension>
+</extension>
 ```
 
-Now the call is handled.
+现在处理呼叫。
 
-**Open/closed call handler**
+**开放/关闭呼叫处理程序**
 
 ```xml
- <extension name="office is open">
+<extension name="办公室开放">
    <condition field="destination_number" expression="^(5001_open)$">
        <action application="set" data="domain_name=$${domain}"/>
        <action application="answer"/>
@@ -263,67 +219,66 @@ Now the call is handled.
        <action application="set" data="ringback=local_stream://moh"/>
        <action application="set" data="transfer_ringback=local_stream://moh"/>
        <action application="pre_answer"/>
-       <action application="bridge" data="{ignore_early_media=true,origination_caller_id_number=XXXXXXXX}sofia/gateway/<gateway name>/XXXXXXXX,sofia/gateway/<gateway name>/XXXXXXXX"/>
+       <action application="bridge" data="{ignore_early_media=true,origination_caller_id_number=XXXXXXXX}sofia/gateway/<网关名称>/XXXXXXXX,sofia/gateway/<网关名称>/XXXXXXXX"/>
    </condition>
- </extension>
+</extension>
+```
 
- <extension name="office is closed">
+```xml
+<extension name="办公室关闭">
   <condition field="destination_number" expression="^(5001_closed)$">
-     <action application="answer"/>
-     <action application="sleep" data="1000"/>
-     <action application="playback" data="/usr/local/freeswitch/recordings/9-16.wav"/>
-     <action application="sleep" data="500"/>
-     <action application="hangup" data="NORMAL_CLEARING"/>
+    <action application="answer"/>
+    <action application="sleep" data="1000"/>
+    <action application="playback" data="/usr/local/freeswitch/recordings/9-16.wav"/>
+    <action application="sleep" data="500"/>
+    <action application="hangup" data="NORMAL_CLEARING"/>
   </condition>
- </extension>
+</extension>
 ```
 
-### Holiday Routing
+### 节假日路由
 
-Similar to time of day routing, holiday routing can be used to route calls when your office is closed due to various company or national holidays.
+与日夜路由类似，节假日路由可用于在办公室因公司或国家假日而关闭时进行呼叫路由。
 
-Often these holidays fall on consistent dates and you can use the mday and mon attributes to detect them. Here is Christmas for example:
+通常这些假日都在固定日期上，您可以使用mday和mon属性来检测它们。以下是圣诞节的例子：
 
-**Fixed date**
+**固定日期**
 
 ```xml
- <!-- Christmas day -->
- <condition mday="25" mon="12">
+<!-- 圣诞节 -->
+<condition mday="25" mon="12">
 ```
 
-However, some holidays don't fall on consistent dates and are instead something like 'the third Monday in February'. You can use the mweek (week of month) condition parameter (added in r15723) to help with this:
+然而，有些假日并不在固定日期上，而是类似于“二月的第三个星期一”。您可以使用mweek（月的第几个星期）条件参数（从r15723版本开始添加）来帮助解决这个问题：
 
-**Third Monday**
+**第三个星期一**
 
 ```xml
- <!-- president's day is the 3rd Monday in February -->
- <condition wday="2" mweek="3" mon="2">
+<!-- 总统节是2月的第三个星期一 -->
+<condition wday="2" mweek="3" mon="2">
 ```
 
-Sometimes, again, a holiday is specified as something like the 'last Monday in October' and you have to do something like this:
+有时，假日被指定为例如“十月的最后一个星期一”，您需要使用类似以下的方式：
 
 ```xml
- <condition wday="2" mon="10" mday="25-31">
+<condition wday="2" mon="10" mday="25-31">
 ```
 
-This works because the last Monday in October is guaranteed to fall in the last 7 days of the month (the 25th to the 31st) and this condition doesn't pass unless everything evaluates to true.
+这是因为十月的最后一个星期一肯定在月份的最后7天（25日至31日）内，只有在所有条件都评估为true时，该条件才会通过。
 
-Using these three patterns you can match almost any holiday date, however, there are complicated ones like Easter and Inauguration Day that are more complicated and would require some custom coding to detect.
+使用这三种模式，几乎可以匹配任何假日日期，但是，有一些比较复杂的假期如复活节和就职典礼日会更复杂，需要一些定制编码来检测。
 
-#### Memorial Day
+#### 阵亡将士纪念日
 
-**Memorial Day**
+**阵亡将士纪念日**
 
 ```xml
- <extension name="2012_memorial_day_weekend_routing">
-   <condition date-time="2012-05-25 17:00:01~2012-05-29 08:00:00"/>
-   <condition field="destination_number" expression="^1(2135551212)$">
-     <action application="bridge" data="sofia/external/18185551212@1.2.3.4"/>
-   </condition>
- </extension>
+<extension name="2012_memorial_day_weekend_routing">
+  <condition date-time="2012-05-25 17:00:01~2012-05-29 08:00:00"/>
+  <condition field="destination_number" expression="^1(2135551212)$">
+    <action application="bridge" data="sofia/external/18185551212@1.2.3.4"/>
+  </condition>
+</extension>
 ```
 
-There are more examples in the default dialplan that cover all US federal holidays except for inauguration day.
-
-  
-
+在默认的拨号计划中还有更多示例，涵盖了除就职典礼日之外的所有美国联邦节日。

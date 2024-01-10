@@ -1,41 +1,34 @@
+# mod_dptools: detect_silence
 
-# mod_dptools: detect_silence 
+## 关于
 
- 
+在通道上等待一定长度的静音时暂停拨号计划的执行。当检测到静音或者超时时间已过，拨号计划处理将会继续。
 
-## About
+点击此处展开目录
 
-Pause dialplan execution while waiting for a certain length of silence on the channel. When silence is detected, or when the timeout period has expired, dialplan processing will continue.
+* 1 [使用方法](#-freeswitch--mod_dptools-detect_silence-)
+* 2 [描述](#description)
+* 3 [拨号计划示例](#dialplan-example)
 
-Click here to expand Table of Contents
-
-* 1 [Usage](#-freeswitch--mod_dptools-detect_silence-)
-* 2 [Description](#description)
-* 3 [Dialplan Example](#dialplan-example)
-
-## Usage
+## 使用方法
 
 ```xml
 detect_silence <silence_thresh> <silence_hits> <timeout> [<file>]
 ```
 
-  
-## Description
+## 描述
 
-This function is similar to the [wait\_for\_silence](./6586879.mdx#about) function except this does not require noise hits before listening for silence
+这个函数与 [wait\_for\_silence](./6586879.mdx#about) 函数类似，不过它不需要在监听静音之前有噪声。
 
-"Silence" is determined by a combination of the &lt;silence\_thresh> value and the &lt;silence\_hits> value.
+"静音" 是由 &lt;silence\_thresh> 值和 &lt;silence\_hits> 值的组合来确定的。
 
-* The silence\_thresh value is the silence threshold. The lower the value, the "quieter" the channel must be in order to be considered in a silent state. A larger value allows louder sound received from the endpoint to be treated as silence.
-* The silence\_hits value represents the number of consecutive frames received with an "energy level" below the silence\_thresh value that must be seen before the channel is considered in a silent state. The higher this value, the longer the channel must be in a "silent" state before silence is detected.
-* The &lt;timeout\_ms> value represents the overall time in milliseconds that the wait\_for\_silence app will attempt to detect silence before ending the wait and moving on to the next dialplan line.
-* &lt;file> is an optional sound file that can be read and analyzed for silence detection.
+* silence\_thresh 值是静音的阈值。值越低，通道被认为处于静音状态的要求越"安静"。较大的值允许从终端接收到的声音被视为静音。
+* silence\_hits 值表示在静音阈值以下的"能量水平"连续接收到的帧的数量，必须在通道被认为处于静音状态之前看到。该值越高，则通道在静音检测之前必须处于"静默"状态的时间越长。
+* timeout\_ms 值表示 wait\_for\_silence 应用程序在结束等待并继续到下一个拨号计划行之前，尝试检测静音的总时间，以毫秒为单位。
+* &lt;file> 是一个可选的声音文件，可以进行读取和分析以进行静音检测。
 
-## Dialplan Example
+## 拨号计划示例
 
 ```xml
 <action application="detect_silence" data="200 15 5000"/>
 ```
-  
-  
-

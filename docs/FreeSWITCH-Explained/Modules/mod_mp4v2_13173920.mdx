@@ -1,74 +1,70 @@
+# mod_mp4v2
 
-# mod_mp4v2 
+## 关于
 
- 
+mod\_mp4v2 实现了一个 record\_mp4 应用和 mp4 文件格式。
 
-## About
+点击这里展开目录
 
-mod\_mp4v2 implemented a record\_mp4 APP and the mp4 file format.
+* 1 [配置](#configuration)
+* 2 [CPU 负载](#cpu-load)
+* 3 [状态](#status)
+* 4 [编译](#compile)
 
-Click here to expand Table of Contents
+## 配置
 
-* 1 [Configuration](#configuration)
-* 2 [CPU Load](#cpu-load)
-* 3 [Status](#status)
-* 4 [Compile](#compile)
+mod\_mp4v2 实现了一个 record\_mp4 应用和 mp4 文件格式。
 
-## Configuration
-
-mod\_mp4v2 implemented a record\_mp4 APP and the mp4 file format.
-
-So you could do (with video echoed back like record\_fsv)
+所以你可以这样做（与 record\_fsv 一样回显视频内容）：
 
 ```xml
 <action application="record_mp4" data="/tmp/test.mp4"/>
 ```
 
-or the record APP (without video echoed back, and need code in the video-media-bug branch to work), be sure to disable file write buffering, needed for audio/video(ear-mouth) sync.
+或者使用 record 应用（不回显视频内容，并且需要在 video-media-bug 分支中的代码工作），确保禁用文件写入缓冲，用于音/视频（耳-口）同步。
 
 ```xml
 <action application="export" data="enable_file_write_buffering=false"/>
 <action application="record" data="/tmp/test.mp4"/>
 ```
 
-Also uuid\_record should work
+还可以通过 uuid\_record 实现：
 
 ```xml
 uuid_record <uuid> start /tmp/test.mp4
 ```
 
-## CPU Load
+## CPU 负载
 
-A few parameters may be prepended to the record file path inside braces to indicate video encoding speed/quality and which video profile to use. This affects CPU load since slower encoding yields better video quality at the cost of greater CPU computation load.
+有一些参数可以在大括号中添加到记录文件路径前面，以指示视频编码速度/质量以及使用哪个视频配置文件。这会影响 CPU 负载，因为较慢的编码可以获得更好的视频质量，但会增加 CPU 计算负载。
 
 ```xml
 {vencspd=fast,vprofile=baseline}/path/to/file.mp4
 ```
 
-`vencspd` \- one of fast, medium, slow
+`vencspd` \- 快速、中等、慢三选一
 
-`vprofile` \- baseline, main, high
+`vprofile` \- baseline、main、high
 
-For other parameters see `/usr/src/freeswitch/src/switch_core_file.c`
+其他参数请参考 `/usr/src/freeswitch/src/switch_core_file.c`
 
-  
-## Status
+## 状态
 
-It's currently in the video-media-bug branch.
+目前位于 video-media-bug 分支。
 
-Audio codec using PCMU and video is H264 only.
+音频编解码器仅支持 PCMU，视频编解码器仅支持 H264。
 
-There's a mod\_mp4 which implemented play\_mp4\. However it need the mp4 file be probably "hinted". I haven't find a tool that can hint an existing mp4 file so I never get it work.
+还有一个 mod\_mp4 实现了 play\_mp4。不过它需要 mp4 文件被正确地 "hinted"。我还没有找到可以对现有 mp4 文件进行 "hint" 的工具，所以我从未使它工作过。
 
-I tried to contact the original author but got no response. And also because mod\_mp4 is C++ and I'm more happy to C, so I created mod\_mp4v2\. And also because I added the file format interface, I think it's more reasonable to put it under mod/formats.
+我试过联系原始作者，但没有得到回应。并且由于mod\_mp4是用C++编写的，而我更喜欢C语言，所以我创建了mod\_mp4v2。此外，由于我添加了文件格式接口，我认为将其放在mod/formats下更合理。
 
-Video has tons of params and most are hard coded. To make everything work still need a lot of work...
+视频有很多参数，大部分都是硬编码的。为了使一切正常运作，仍然需要大量工作...
 
-## Compile
+## 编译
 
-The current Makefile need mp4v2-2.0.0 in the current(mod\_mp4v2) directory.
+当前的Makefile需要在当前目录（mod\_mp4v2）下安装mp4v2-2.0.0。
 
-Download from <http://code.google.com/p/mp4v2/downloads/list>
+从<http://code.google.com/p/mp4v2/downloads/list>下载。
 
 ```xml
 git checkout video-media-bug
@@ -79,7 +75,4 @@ cd ..
 make install
 ```
 
-Have fun.
-  
-  
-
+玩得开心。

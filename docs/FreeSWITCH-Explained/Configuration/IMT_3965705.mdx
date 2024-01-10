@@ -1,103 +1,101 @@
+# IMT
 
-# IMT 
+## 关于
 
- 
+互连机器中继将来自一个FreeSWITCH™盒子的呼叫转发到另一个盒子。所有呼叫都通过目标服务器上的公共上下文进行路由。每个服务器允许通过[访问控制列表(ACL)](../Networking/3965687.mdx#-acl-)进行对其他服务器的访问。
 
-## About
+点击展开目录
 
-An Inter-Machine Trunk sends calls from one FreeSWITCH™ box to another. All calls get routed through the public context on the destination server. Each server allows the other access via the [Access Control List (ACL)](../Networking/3965687.mdx#-acl-). 
+* 1 [IP认证](#-ip-authentication-)
+* 2 [拨号计划](#dialplan)  
+   * 2.1 [传出](#outbound)  
+   * 2.2 [传入](#inbound)
+* 3 [参见](#-see-also-)
 
-Click to expand Table of Contents
+## IP认证
 
-* 1 [IP authentication](#-ip-authentication-)
-* 2 [Dialplan](#dialplan)  
-   * 2.1 [Outbound](#outbound)  
-   * 2.2 [Inbound](#inbound)
-* 3 [See Also](#-see-also-)
+假设您有BoxA(10.0.0.1)，其分机范围为1000-1019，而BoxB(10.2.2.2)的分机范围为1100-1119。
 
-##  IP authentication 
+首先，我们需要确保这两个盒子可以相互通话。这是在ACL(访问控制列表)部分(autoload\_configs/acl.conf.xml)中完成的。
 
-Let us assume you have BoxA (10.0.0.1) with extensions 1000-1019 and BoxB (10.2.2.2) has extensions 1100-1119.
-
-First we need to make sure that the boxes have access to talk to each other. This is done in the ACL (access control list) section (autoload\_configs/acl.conf.xml).
-
-On BoxA add the following in the node &lt;list name="domains" ...>
+在BoxA中，在&lt;list name="domains" ...>节点中添加以下内容：
 
    &lt;node type="allow" cidr="10.2.2.2/32"/>
 
-On BoxB add the following in the node &lt;list name="domains" ...>
+在BoxB中，在&lt;list name="domains" ...>节点中添加以下内容：
 
    &lt;node type="allow" cidr="10.0.0.1/32"/>
 
-## Dialplan
+## 拨号计划
 
-### Outbound
+### 传出
 
-Now that the boxes are allowed to talk to each other, they still don't know about the extensions each FreeSWITCH is serving nor how to reach the other FS box. Therefore you need to tell FreeSWITCH where to send which calls. This is called "routing" and is performed by the dialplan using the bridge application. This example uses the internal sofia profile (sip\_profiles/internal.xml). Despite the name internal, it will handle calls destined for another switch just fine.
+既然这两个盒子可以相互通话了，它们仍然不知道对方的FreeSWITCH正在提供哪些分机，也不知道如何到达对方的FS盒子。因此，您需要告诉FreeSWITCH在哪里发送哪些呼叫。这就是所谓的"路由"，由拨号计划使用桥接应用程序执行。此示例使用内部sofia配置文件(sip\_profiles/internal.xml)。尽管名称为internal，但它可以很好地处理发送到另一个交换机的呼叫。
 
-On BoxA add the following lines to the dialplan (dialplan/default.xml)
+在BoxA中，在拨号计划(dialplan/default.xml)中添加以下行：
 
-**BoxA Outbound Dialplan**
+**BoxA传出拨号计划**
 
 ```xml
-<extension name="Dial to BoxB">
+<extension name="拨打到BoxB">
   <condition field="destination_number" expression="^(11\d\d)$">
     <action application="bridge" data="sofia/internal/$1@10.2.2.2"/>
   </condition>
-</extension> 
-```
+</extension> 
 
-On BoxB add the following lines to the dialplan (dialplan/default.xml)
+在BoxB上的拨号计划（dialplan/default.xml）中添加以下行。 
 
-**BoxB Outbound Dialplan**
+**BoxB出局拨号计划**
 
 ```xml
-<extension name="Dial to BoxA">
+<extension name="拨打到BoxA">
   <condition field="destination_number" expression="^(10\d\d)$">
     <action application="bridge" data="sofia/internal/$1@10.0.0.1"/>
   </condition>
-</extension> 
+</extension> 
 ```
 
-### Inbound
+### 入局
 
-Now calls are sent (routed) from the originating switch to the destination switch and thanks to the ACL, it is allowed. However the destination switch does not know what to do with the call as for him it is a public call. Therefore an inbound dialplan entry is needed to make it work. We tell FreeSWITCH to route it through the normal default dialplan.
+现在来电从起始交换机路由到目标交换机，并且通过访问控制列表（ACL）进行通信。但是目标交换机不知道如何处理呼叫，因为对于它来说这是一个公共呼叫。因此，需要添加一个入局拨号计划条目才能使其正常工作。我们告诉FreeSWITCH将其路由通过默认通常的拨号计划。
 
-On BoxA add the following lines in the public dialplan (dialplan/public.xml)
+在BoxA的公共拨号计划（dialplan/public.xml）中添加以下行。
 
-**BoxA Inbound Dialplan**
+**BoxA入局拨号计划**
 
 ```xml
-<extension name="Calls from BoxB">
+<extension name="来自BoxB的呼叫">
   <condition field="destination_number" expression="^(10\d\d)$">
     <action application="transfer" data="$1 XML default"/>
   </condition>
 </extension>
 ```
 
-On BoxB add the following lines in the public dialplan (dialplan/public.xml)
+在BoxB的公共拨号计划（dialplan/public.xml）中添加以下行。
 
-**BoxB Inbound Dialplan**
+**BoxB入局拨号计划**
 
 ```xml
-<extension name="Calls from BoxA">
+<extension name="来自BoxA的呼叫">
   <condition field="destination_number" expression="^(11\d\d)$">
     <action application="transfer" data="$1 XML default"/>
   </condition>
 </extension>
 ```
 
-On both machines, run the following commands:
+在两台机器上运行以下命令：
 
 reloadacl  
 reloadxml
 
-You should now be able to call 11xx extensions of BoxB correctly from extensions on BoxA and vice-versa.
+现在，您应该能够正确地从BoxA上的分机拨打到BoxB的11xx分机，反之亦然。
 
-##  See Also 
+## 参见
 
 * [Configuration Examples](http://wiki.freeswitch.org/wiki/Examples "Examples")
 * [ACL configuration](../Networking/3965687.mdx#-acl-)
 * [XML Dialplan](../Dialplan/XML-Dialplan/index.mdx#about)
 
-
+- [配置示例](http://wiki.freeswitch.org/wiki/Examples "Examples")
+- [ACL配置](../Networking/3965687.mdx#-acl-)
+- [XML拨号计划](../Dialplan/XML-Dialplan/index.mdx#about)

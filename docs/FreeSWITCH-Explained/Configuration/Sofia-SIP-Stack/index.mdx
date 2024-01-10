@@ -1,239 +1,239 @@
+# Sofia SIP Stack
 
-# Sofia SIP Stack 
 
- 
+## 关于
 
-## About  
 
-  
-Sofia is a SIP stack used by FreeSWITCH. When you see "sofia" anywhere in your configuration, think "This is SIP stuff." It takes a while to master it all, so please be patient with yourself. SIP is a crazy protocol and it will make you crazy too if you aren't careful. Read on for information on setting up SIP/Sofia in your FreeSWITCH configuration.
+Sofia是FreeSWITCH使用的SIP堆栈。当您在配置中看到"sofia"时，请理解为"SIP相关的内容"。要掌握它需要一些时间，所以请耐心对待自己。SIP是一个疯狂的协议，如果不小心使用的话，它也会让您疯狂。请继续阅读，了解如何在FreeSWITCH配置中设置SIP/Sofia的相关信息。
 
-  
-mod\_sofia exposes the Sofia API and sets up the FreeSWITCH SIP endpoint.
 
-  
-Click to expand Table of Contents
+mod_sofia提供了Sofia API并设置了FreeSWITCH的SIP端点。
 
-* 1 [Endpoint](#endpoint)
-* 2 [Configuration Files](#configuration-files)
-* 3 [SIP profiles](#sip-profiles)
-* 4 [What if these commands don't work for me?](#what-if-these-commands-dont-work-for-me)
-* 5 [Sofia Recover](#-sofia-recover-)
-* 6 [Flushing and rebooting registered endpoints](#flushing-and-rebooting-registered-endpoints)
-* 7 [Starting a new profile](#starting-a-new-profile)
-* 8 [Reloading profiles and gateways](#reloading-profiles-and-gateways)
-* 9 [Deleting gateways](#deleting-gateways)
-* 10 [Restarting gateways](#restarting-gateways)
-* 11 [Adding / Changing Existing Gateways](#adding--changing-existing-gateways)
-* 12 [View SIP Registrations](#view-sip-registrations)
-* 13 [List the status of gateways](#-list-the-status-of-gateways)
-* 14 [List gateway data](#-list-gateway-data-)
-* 15 [View User Presence Data](#-view-user-presence-data-)
-* 16 [Debugging Sofia-SIP](#debugging-sofia-sip)  
-   * 16.1 [Debugging presence and SLA](#-debugging-presence-and-sla-)  
-   * 16.2 [Sample Export (Linux/Unix)](#sample-export-linuxunix)  
-   * 16.3 [Sample Set (Windows)](#sample-set-windows)
-* 17 [Profile Configurations](#-profile-configurations-)  
-   * 17.1 [Track Call](#-track-call-)  
-   * 17.2 [Sofia SIP Stack Watchdog](#-sofia-sip-stack-watchdog-)  
-   * 17.3 [ACL](#-sofia-sip-stack-watchdog-)  
-   * 17.4 [Disabling Hold](#-disabling-hold-)  
-   * 17.5 [Using A Single Domain For All Registrations](#-using-a-single-domain-for-all-registrations-)  
-   * 17.6 [Forcing SIP profile to use a static IP address](#-forcing-sip-profile-to-use-a-static-ip-address-)
-* 18 [Syntax](#syntax)  
-   * 18.1 [Call an extension on a Remote SIP Server](#-call-an-extension-on-a-remote-sip-server-)  
-   * 18.2 [Call a locally registered endpoint](#-call-a-locally-registered-endpoint-)  
-   * 18.3 [Multiple Registrations](#multiple-registrations)  
-   * 18.4 [Registration Count](#registration-count)  
-   * 18.5 [sofia\_dig](#-sofia-sip-stack-watchdog-)  
-   * 18.6 [Flushing Inbound Registrations](#-flushing-inbound-registrations-)  
-   * 18.7 [Dial out of a gateway](#-dial-out-of-a-gateway-)  
-   * 18.8 [Modifying the To: header](#-modifying-the-to-header-)  
-   * 18.9 [Specifying SIP Proxy With fs\_path](#-specifying-sip-proxy-with-fs_path-)  
-   * 18.10 [Safe SIP URI Formatting](#safe-sip-uri-formatting)
-* 19 [Channel Variables](#channel-variables)  
-   * 19.1 [Adding Request Headers](#-adding-request-headers-)  
-   * 19.2 [Adding Response Headers](#-adding-response-headers-)  
-   * 19.3 [Adding Custom Headers](#-adding-custom-headers-)  
-   * 19.4 [Strip Individual SIP Headers](#strip-individual-sip-headers-)  
-   * 19.5 [Strip All custom SIP Headers](#strip-all-custom-sip-headers)  
-   * 19.6 [Additional Channel variables](#additional-channel-variables)
-* 20 [Transcoding Issues](#transcoding-issues)
-* 21 [Custom Events](#-custom-events-)
-* 22 [FAQ](#-sofia-sip-stack-watchdog-)  
-   * 22.1 [Does it use UDP or TCP?](#does-it-use-udp-or-tcp)
-* 23 [See Also](#-sofia-sip-stack-watchdog-)
-* 24 [External links](#external-links)
 
-### Endpoint
+单击展开目录
 
-A FreeSWITCH endpoint represents a full user agent and controls the signaling protocol and media streaming necessary to process calls. The endpoint is analogous to a physical VoIP telephone sitting on your desk. It speaks a particular protocol such as SIP or Verto, to the outside world and interprets that for the FreeSWITCH core.
+* 1 [端点](#endpoint)
+* 2 [配置文件](#configuration-files)
+* 3 [SIP配置](#sip-profiles)
+* 4 [如果这些命令对我无效怎么办？](#what-if-these-commands-dont-work-for-me)
+* 5 [Sofia 恢复](#-sofia-recover-)
+* 6 [刷新和重启已注册的端点](#flushing-and-rebooting-registered-endpoints)
+* 7 [启动新配置](#starting-a-new-profile)
+* 8 [重新加载配置和网关](#reloading-profiles-and-gateways)
+* 9 [删除网关](#deleting-gateways)
+* 10 [重启网关](#restarting-gateways)
+* 11 [添加/更改现有网关](#adding--changing-existing-gateways)
+* 12 [查看SIP注册信息](#view-sip-registrations)
+* 13 [列出网关状态](#-list-the-status-of-gateways)
+* 14 [列出网关数据](#-list-gateway-data-)
+* 15 [查看用户出席数据](#-view-user-presence-data-)
+* 16 [调试Sofia-SIP](#debugging-sofia-sip)  
+   * 16.1 [调试出席和SLA](#-debugging-presence-and-sla-)  
+   * 16.2 [样本导出（Linux/Unix）](#sample-export-linuxunix)  
+   * 16.3 [样本设置（Windows）](#sample-set-windows)
+* 17 [配置文件设置](#-profile-configurations-)  
+   * 17.1 [跟踪呼叫](#-track-call-)  
+   * 17.2 [Sofia SIP堆栈看门狗](#-sofia-sip-stack-watchdog-)  
+   * 17.3 [访问控制列表(ACL)](#-sofia-sip-stack-watchdog-)  
+   * 17.4 [禁用保持(Hold)](#-disabling-hold-)  
+   * 17.5 [为所有注册使用单个域名](#-using-a-single-domain-for-all-registrations-)  
+   * 17.6 [强制SIP配置使用静态IP地址](#-forcing-sip-profile-to-use-a-static-ip-address-)
+* 18 [语法](#syntax)  
+   * 18.1 [呼叫远程SIP服务器上的分机](#-call-an-extension-on-a-remote-sip-server-)  
+   * 18.2 [呼叫本地注册的终端](#-call-a-locally-registered-endpoint-)  
+   * 18.3 [多重注册](#multiple-registrations)  
+   * 18.4 [注册计数](#registration-count)  
+   * 18.5 [sofia_dig](#-sofia-sip-stack-watchdog-)  
+   * 18.6 [清除传入的注册](#-flushing-inbound-registrations-)  
+   * 18.7 [通过网关拨打电话](#-dial-out-of-a-gateway-)  
+   * 18.8 [修改To:标头](#-modifying-the-to-header-)  
+   * 18.9 [使用fs_path指定SIP代理](#-specifying-sip-proxy-with-fs_path-)  
+   * 18.10 [安全的SIP URI格式](#safe-sip-uri-formatting)
+* 19 [通道变量](#channel-variables)  
+   * 19.1 [添加请求标头](#-adding-request-headers-)  
+   * 19.2 [添加响应标头](#-adding-response-headers-)  
+   * 19.3 [添加自定义标头](#-adding-custom-headers-)  
+   * 19.4 [清除单个SIP标头](#strip-individual-sip-headers-)  
+   * 19.5 [清除所有自定义SIP标头](#strip-all-custom-sip-headers)  
+   * 19.6 [其他通道变量](#additional-channel-variables)
+* 20 [转码问题](#transcoding-issues)
+* 21 [自定义事件](#-custom-events-)
+* 22 [常见问题](#-sofia-sip-stack-watchdog-)  
+   * 22.1 [使用UDP还是TCP？](#does-it-use-udp-or-tcp)
+* 23 [参见](#-sofia-sip-stack-watchdog-)
+* 24 [外部链接](#external-links)
 
-### Configuration Files
+### 终端
 
-sofia.conf.xml contains the configuration settings for mod\_sofia
+FreeSWITCH的终端代表一个完整的用户代理，负责控制处理呼叫所需的信令协议和媒体流传输。这个终端类似于放在你桌上的物理VoIP电话。它使用特定的协议（如SIP或Verto）与外部世界通信，并将数据解释给FreeSWITCH核心。
 
-See [Sofia Configuration Files](./Sofia-Configuration-Files_7144453.mdx#--).
+### 配置文件
 
-### SIP profiles
+sofia.conf.xml包含了mod\_sofia的配置设置。
 
-See [**SIP profiles**](../Configuring-FreeSWITCH/index.mdx#configuration-files) section in [Configuring FreeSWITCH](../Configuring-FreeSWITCH/index.mdx#set). 
+请查看 [Sofia配置文件](./Sofia-Configuration-Files_7144453.mdx#--)。
 
-### What if these commands don't work for me?
+### SIP配置文件
 
-Make sure that you are not running another SIP server at the same time as FreeSWITCH. It is not always obvious that another SIP server is running. If you type in Sofia commands such as 'sofia status profile default' and it doesn't work then you may have another SIP server running. Stop the other SIP server and restart FreeSWITCH.
+请见[**SIP配置文件**](../Configuring-FreeSWITCH/index.mdx#configuration-files)部分，位于[配置FreeSWITCH](../Configuring-FreeSWITCH/index.mdx#set)页面。
 
-On Linux, you may wish to try, as a superuser (often "root"):
+### 如果这些命令对我无效怎么办？
 
+确保您在运行FreeSWITCH的同时，没有运行其他SIP服务器。有时候另一个SIP服务器正在运行并不明显。如果您输入了类似 'sofia status profile default' 的Sofia命令，但是它没有生效，那么可能是有其他SIP服务器在运行。停止其他SIP服务器并重新启动FreeSWITCH。
+
+在Linux上，您可以尝试以超级用户（通常为"root"）运行以下命令：
+
+```shell
 netstat -lunp | less
-# -l show listeners, -u show only UDP sockets,
-# -n numeric output (do not translate addresses or UDP port numbers)
-# -p show process information (PID, command).  Only the superuser is allowed to see this info
+# -l 显示监听器, -u 仅显示UDP套接字,
+# -n 数值输出(不翻译地址或UDP端口号)
+# -p 显示进程信息 (PID, 命令). 只有超级用户可以查看此信息
+```
 
-With the less search facility (usually the keystroke "/"), look for :5060 which is the usual SIP port.
+通过less的搜索功能（通常是按下"/"键），寻找常用的SIP端口5060。
 
-To narrow the focus, you can use grep. In the example configs, port 5060 is the "internal" profile. Try this:
+为了缩小焦点，您可以使用grep命令。在示例配置中，端口5060是“内部”配置文件。请尝试运行以下命令：
 
+```shell
 netstat -lnp | grep 5060
+```
 
-See if something other than FreeSWITCH is using port 5060.
+看看除FreeSWITCH之外是否有其他进程在使用端口5060。
 
-###  Sofia Recover 
+###  Sofia 恢复
 
 sofia recover
 
-You can ask Sofia to recover calls that were up, after crashing (or other scenarios).
+你可以请求Sofia恢复在崩溃（或其他情况）后停止的通话。
 
-Sofia recover can also be used, if your core db uses ODBC to achieve HA / failover.
+Sofia恢复还可以使用，如果您的核心数据库使用ODBC实现HA /故障转移。
 
-For FreeSWITCH HA configuration, see [Freeswitch HA](../High-Availability/index.mdx#about).
+有关FreeSWITCH HA配置，请参阅[Freeswitch HA](../High-Availability/index.mdx#about)。
 
-### Flushing and rebooting registered endpoints
+### 刷新和重启已注册的端点
 
-You can flush a registration or reboot specific registered endpoint by issuing a flush\_inbound\_reg command from the console.
+您可以通过从控制台发出flush\_inbound\_reg命令来刷新注册或重新启动特定的已注册端点。
 
 freeswitch> sofia profile &lt;profile_name> flush_inbound_reg [&lt;call_id>|&lt;user@host>] [reboot]
 
-If you leave out &lt;call\_id> and/or &lt;user@host>, you will flush/reboot every registered endpoint on a profile.
+如果省略&lt;call\_id>和/或&lt;user@host>，则将刷新/重新启动配置文件上的每个已注册端点。
 
-* Note: For polycom phone, the command causes the phone to check its configuration from the server. If the file is different (you may add extra space at the end of file), the phone will reboot. You should not change the value of voIpProt.SIP.specialEvent.checkSync.alwaysReboot="0" to "1" in sip.cfg as that allows potential a DOS attack on the phone.
+* 注意：对于Polycom电话，该命令会导致电话从服务器检查其配置。如果文件不同（您可能在文件末尾添加了额外的空格），电话将重新启动。请不要将voIpProt.SIP.specialEvent.checkSync.alwaysReboot的值从"s1更改为"0"1"，因为这将允许对电话进行潜在的DOS攻击。
 
-You can also use the check\_sync command:
+您还可以使用check\_sync命令：
 
 sofia profile &lt;profile_name> check_sync &lt;call_id> | &lt;user@domain>
 
-* Note: The polycom phones do not reload &lt;mac>-directory.xml configuration in response to either of these commands, they only reload the configuration. If you want new speed dials to take effect, you'll need to do a full reboot of the phone or enable the alwaysReboot option. (Suggestions from anyone with more detailed PolyCom knowledge would be appreciated here.)
+* 注意：Polycom电话不会在对这些命令的任何响应中重新加载&lt;mac>-directory.xml配置，它们只会重新加载配置。如果您希望新的快速拨号生效，则需要完全重新启动电话或启用alwaysReboot选项（如果对PolyCom有更详细的了解，请提供建议）。
 
-### Starting a new profile
+### 启动新的配置文件
 
-If you have created a new profile you need to start it from the console:
+如果您创建了一个新的配置文件，您需要从控制台启动它：
 
 freeswitch> sofia profile &lt;new_profile_name> start
 
-### Reloading profiles and gateways
+### 重新加载配置文件和网关
 
-You can reload a specific SIP profile by issuing a rescan/restart command from the console
+您可以通过从控制台发出rescan/restart命令来重新加载特定的SIP配置文件。
 
 freeswitch> sofia profile &lt;profile_name> [&lt;rescan>|&lt;restart>] reloadxml
 
-The difference between rescan and restart is that rescan will just load new config and not stop FreeSWITCH from processing any more calls on a profile. Some config options like IP address and (UDP) port are not reloaded with rescan.
+重新扫描（rescan）和重新启动（restart）的区别在于，重新扫描只会加载新的配置，而不会停止FreeSWITCH处理与配置文件相关的呼叫。某些配置选项，如IP地址和（UDP）端口，并不会在重新扫描时重新加载。
 
-### Deleting gateways
+### 删除网关
 
-You can delete a specific gateway by issuing a killgw command from the console. If you use **\_all\_** as gateway name, all gateways will be killed
+您可以通过在控制台中输入killgw命令来删除特定的网关。如果您使用了**\_all\_**作为网关名称，则会删除所有网关。
 
-freeswitch> sofia profile &lt;profile_name> killgw &lt;gateway_name>
+freeswitch> sofia profile \<profile_name> killgw \<gateway_name>
 
-### Restarting gateways
+### 重新启动网关
 
-You can force a gateway to restart ( good for forcing a re-registration or similar ) by issuing a killgw command from the console followed by a profile rescan. This is safe to perform on a profile that has active calls.
+您可以通过在控制台中先输入killgw命令，然后再输入profile rescan命令来强制重启网关（这对于强制重新注册等操作非常有用）。在活动呼叫的情况下，执行这个操作是安全的。
 
-freeswitch> sofia profile &lt;profile_name> killgw &lt;gateway_name>
-freeswitch> sofia profile &lt;profile_name> rescan
+freeswitch> sofia profile \<profile_name> killgw \<gateway_name>
+freeswitch> sofia profile \<profile_name> rescan
 
-### Adding / Changing Existing Gateways
+### 添加/更改现有网关
 
-It will be assumed that you have all your gateways in the /usr/local/freeswitch/conf/sip\_profiles/external directory and that you have just created a new entry. You can add a new gateway to FreeSWITCH by issuing a rescan reloadxml command from the console as seen in the example below. This will load the newly created gateway and not affect any calls that are currently up.
+假设您已经在`/usr/local/freeswitch/conf/sip_profiles/external`目录中拥有所有网关，并且刚刚创建了一个新网关。您可以通过在控制台中输入rescan reloadxml命令，如下例所示，将新创建的网关添加到FreeSWITCH中。这样可以加载新创建的网关，而不会对当前正在进行的呼叫产生影响。
 
 freeswitch> sofia profile external rescan reloadxml
 
-  
-You now realize that you have screwed up the IP address in the new gateway and need to change it. So you edit your gateway file and make any changes that you want. You will then need to issue the following commands to destroy the gateway, and then have FreeSWITCH reload the changes with affecting any existing calls that are currently up.
+现在您意识到在新网关中搞错了IP地址，需要进行更改。所以您编辑了网关文件并进行了所需的更改。然后，您需要执行以下命令来销毁网关，并要求FreeSWITCH重新加载更改内容，而不会影响当前正在进行的呼叫。
 
-  
-freeswitch> sofia profile external killgw &lt;gateway_name> 
+freeswitch> sofia profile external killgw \<gateway_name> 
 freeswitch> sofia profile external rescan reloadxml
 
-### View SIP Registrations
+### 查看SIP注册信息
 
-You can view all the devices that have registered by running the following from the console.
+您可以通过在控制台中运行以下命令来查看所有已注册设备的信息。
 
 freeswitch> sofia status profile &lt;profile name> reg
 freeswitch> sofia status profile default reg
 freeswitch> sofia status profile outbound reg
 
-You can also use the xmlstatus key to retrieve statuses in XML format. This is specially useful if you are using mod\_xml\_rpc.
+您还可以使用xmlstatus关键字以XML格式检索状态。如果您正在使用mod\_xml\_rpc，则会非常有用。
 
-Commands are as follows:
+命令如下：
 
 freeswitch> sofia xmlstatus profile &lt;profile name> reg
 freeswitch> sofia xmlstatus profile default reg
 freeswitch> sofia xmlstatus profile outbound reg
 
-###  List the status of gateways
+### 网关状态列表
 
-For the gateways that are in-service:
+查看处于服务状态的网关：
 
 freeswitch> sofia profile &lt;profile> gwlist up
 
-For the gateways that are out-of-service:
+查看处于停用状态的网关：
 
 freeswitch> sofia profile &lt;profile> gwlist down
 
-**Notes:**
+**注意:**
 
-* It should be used together with &lt;param name="ping" value="&lt;sec>"/>. See [Sofia\_Configuration\_Files](./Sofia-Configuration-Files_7144453.mdx#--)
-* It can also be used to feed into mod distributor to exclude dead gateways.
+* 它应与&lt;param name="ping" value="&lt;sec>"/>一起使用。参见[Sofia\_Configuration\_Files](./Sofia-Configuration-Files_7144453.mdx#--)
+* 它还可用于提供给mod distributor以排除无效网关。
 
-###  List gateway data 
+### 查看网关数据
 
-To retrieve the value of an inbound variable:
+检索入站变量的值：
 
 sofia_gateway_data &lt;gateway_name> ivar &lt;name>
 
-To retrieve the value of an outbound variable:
+检索出站变量的值：
 
 sofia_gateway_data &lt;gateway_name> ovar &lt;name>
 
-To retrieve the value of either use:
+检索两者的值：
 
 sofia_gateway_data &lt;gateway_name> var &lt;name>
 
-This first checks for an inbound variable, then checks for an outbound variable if there's no matching inbound.
+首先检查入站变量，如果没有匹配的入站变量，则检查出站变量。
 
-###  View User Presence Data 
+### 查看用户在线状态数据
 
-Displays presence data from registered devices as seen by the server
+显示服务器所见的已注册设备的在线状态数据
 
-Usage:
+用法：
 
 sofia_presence_data [list|status|rpid|user_agent] [profile/]&lt;user>@domain
 
-sofia_presence_data list */2005
-status|rpid|user_agent|network_ip|network_port
-Away|away|Bria 3 release 3.5.1 stamp 69738|192.168.20.150|21368
+sofia_presence_data列表 */2005
+状态|rpid|用户代理|网络IP|网络端口
+离开|离开|Bria 3 发行版 3.5.1 版本 69738|192.168.20.150|21368
 +OK 
 
-Its possible to retrieve only one value
+可以仅检索一个值
 
-sofia_presence_data status */2005
-Away 
+sofia_presence_data状态 */2005
+离开
 
-You can use this value in the dialplan, e.g.
+可以将此值用于拨号计划，例如：
 
     &lt;extension name="12005">
      &lt;condition field="destination_number" expression="^(12005)$" require-nested="false">
-        &lt;condition field="${sofia_presence_data status */2005@${domain}}" expression="^(Busy)$">
+        &lt;condition field="${sofia_presence_data状态 */2005@${domain}}" expression="^(忙碌)$">
                 &lt;action application="playback" data="ivr/8000/ivr-user_busy.wav"/>
                 &lt;action application="hangup"/>
         &lt;/condition>
@@ -241,44 +241,44 @@ You can use this value in the dialplan, e.g.
      &lt;/condition>
     &lt;/extension>
 
-### Debugging Sofia-SIP
+### 调试 Sofia-SIP
 
-The Sofia-SIP components can output various debugging information. The detail of the debugging output is determined by the debugging level. The level is usually module-specific and it can be modified by module-specific environment variable. There is also a default level for all modules, controlled by environment variable #SOFIA\_DEBUG.
+Sofia-SIP 组件可以输出各种调试信息。调试输出的详细程度由调试级别确定。该级别通常是模块特定的，并且可以通过模块特定的环境变量进行修改。还有一个适用于所有模块的默认级别，由环境变量 #SOFIA\_DEBUG 控制。
 
-The environment variables controlling the logging and other debug output are as follows:
+控制日志记录和其他调试输出的环境变量如下：
 
-- #SOFIA_DEBUG Default debug level (0..9)
-- #NUA_DEBUG User Agent engine (&lt;a href="nua/index.html">nua&lt;/a>) debug level (0..9)
-- #SOA_DEBUG SDP Offer/Answer engine (&lt;a href="soa/index.html">soa&lt;/a>) debug level (0..9)
-- #NEA_DEBUG Event engine (&lt;a href="nea/index.html">nea&lt;/a>) debug level (0..9)
-- #IPTSEC_DEBUG HTTP/SIP authentication module debug level (0..9)
-- #NTA_DEBUG Transaction engine debug level (0..9)
-- #TPORT_DEBUG Transport event debug level (0..9)
-- #TPORT_LOG  If set, print out all parsed SIP messages on transport layer
-- #TPORT_DUMP Filename for dumping unparsed messages from transport
-- #SU_DEBUG &lt;a href="nea/index.html">su&lt;/a> module debug level (0..9)
+- #SOFIA_DEBUG 默认调试级别（0..9）
+- #NUA_DEBUG 用户代理引擎（&lt;a href="nua/index.html">nua&lt;/a>）调试级别（0..9）
+- #SOA_DEBUG SDP Offer/Answer引擎（&lt;a href="soa/index.html">soa&lt;/a>）调试级别（0..9）
+- #NEA_DEBUG 事件引擎（&lt;a href="nea/index.html">nea&lt;/a>）调试级别（0..9）
+- #IPTSEC_DEBUG HTTP/SIP身份验证模块调试级别（0..9）
+- #NTA_DEBUG 事务引擎调试级别（0..9）
+- #TPORT_DEBUG 传输事件调试级别（0..9）
+- #TPORT_LOG 如果设置，打印传输层中的所有解析的SIP消息
+- #TPORT_DUMP 用于转储传输中的未解析消息的文件名
+- #SU_DEBUG &lt;a href="nea/index.html">su&lt;/a>模块调试级别（0..9）
 
-The defined debug output levels are:
+已定义的调试输出级别为：
 
-- 0 SU_DEBUG_0() - fatal errors, panic
-- 1 SU_DEBUG_1() - critical errors, minimal progress at subsystem level
-- 2 SU_DEBUG_2() - non-critical errors
-- 3 SU_DEBUG_3() - warnings, progress messages
-- 5 SU_DEBUG_5() - signaling protocol actions (incoming packets, ...)
-- 7 SU_DEBUG_7() - media protocol actions (incoming packets, ...)
-- 9 SU_DEBUG_9() - entering/exiting functions, very verbatim progress
+- 0 SU_DEBUG_0() - 致命错误，严重故障
+- 1 SU_DEBUG_1() - 关键错误，子系统级别的最小进展
+- 2 SU_DEBUG_2() - 非关键错误
+- 3 SU_DEBUG_3() - 警告，进展消息
+- 5 SU_DEBUG_5() - 信令协议动作（接收的数据包，...）
+- 7 SU_DEBUG_7() - 媒体协议动作（接收的数据包，...）
+- 9 SU_DEBUG_9() - 进入/退出函数，非常详尽的进展
 
-Starting with 1.0.4, those parameters can be controlled from the console by doing
+从1.0.4开始，可以通过控制台来控制这些参数，具体操作如下：
 
 freeswitch> sofia loglevel &lt;all|default|tport|iptsec|nea|nta|nth_client|nth_server|nua|soa|sresolv|stun> [0-9]
 
-"all" Will change every component's loglevel
+"all"会改变每个组件的日志级别
 
-A log level of 0 turns off debugging, to turn them all off, you can do
+日志级别为0表示关闭调试，如果要全部关闭，可以执行以下操作：
 
 freeswitch> sofia loglevel all 0
 
-To report a bug, you can turn on debugging with more verbose
+要报告bug，可以开启更详细的调试：
 
 sofia global siptrace on
 sofia loglevel all 9
@@ -286,19 +286,19 @@ sofia tracelevel alert
 console loglevel debug
 fsctl debug_level 10
 
-####  Debugging presence and SLA 
+#### 调试存在感和服务级别协议
 
-As of Jan 14, 2011, sofia supports a new debugging command: sofia global debug. It can turn on debugging for SLA, presence, or both. Usage is:
+截至2011年1月14日，Sofia支持了一个新的调试命令：sofia global debug。它可以开启SLA、presence或两者的调试。用法如下：
 
 sofia global debug sla
 sofia global debug presence
 sofia global debug none
 
-The first two enable debugging SLA and presence, respectively. The third one turns off SLA and/or presence debugging.
+前两个分别开启SLA和presence的调试，第三个关闭SLA和/或presence的调试。
 
-#### Sample Export (Linux/Unix)
+#### 示例导出（Linux/Unix）
 
-Alternatively, the levels can also be read from environment variables. The following bash commands turn on all debugging levels, and is equivalent to "sofia loglevel all 9"
+另外，这些级别也可以从环境变量读取。以下bash命令开启了所有调试级别，相当于 "sofia loglevel all 9"。
 
 \export SOFIA_DEBUG=9
 \export NUA_DEBUG=9
@@ -311,13 +311,13 @@ Alternatively, the levels can also be read from environment variables. The follo
 \export TPORT_DUMP=/tmp/tport_sip.log
 \export SU_DEBUG=9
 
-To turn this debugging off again, you have to exit FreeSWITCH and type unset. For example:
+要再次关闭这个调试，您需要退出FreeSWITCH并键入unset。例如：
 
 unset TPORT_LOG
 
-#### Sample Set (Windows)
+#### 示例设置（Windows）
 
-The following bash commands turn on all debugging levels.
+以下bash命令开启了所有调试级别。
 
 set SOFIA_DEBUG=9
 set NUA_DEBUG=9
@@ -330,35 +330,34 @@ set TPORT_LOG=9
 set TPORT_DUMP=/tmp/tport_sip.log
 set SU_DEBUG=9
 
-To turn this debugging off again, you have to exit FreeSWITCH and type unset. For example:
+要再次关闭这个调试，您需要退出FreeSWITCH并键入unset。例如：
 
 set TPORT_LOG=
 
-You can also control SIP Debug output within fs\_cli, the FreeSWITCH client app.
+您还可以在fs_cli（FreeSWITCH客户端应用程序）中控制SIP Debug输出。
 
 freeswitch> sofia profile &lt;profilename> siptrace on|off
 
-On newer software release, you can now be able to issue siptrace for all profiles:
+在较新的软件版本中，您现在可以对所有配置文件执行siptrace操作：
 
 sofia global siptrace [on|off]
 
-  
-To have the SIP Debug details put in the /usr/local/freeswitch/log/freeswitch.log file, use
+要将SIP Debug详细信息放入/usr/local/freeswitch/log/freeswitch.log文件中，请使用如下命令：
 
-freeswitch> sofia tracelevel info           (or any other loglevel name or number)
+freeswitch> sofia tracelevel info           （或者任何其他日志级别的名称或数字）
 
-To have the SIP details put into the log file automatically on startup, add this to sofia.conf.xml:
+要在启动时自动将SIP详细信息放入日志文件中，请在sofia.conf.xml中添加以下内容：
 
-&lt;global_settings>
+&lt;全局设置>
   ...
   &lt;param name="tracelevel" value="DEBUG"/>
   ...
-&lt;/global_settings>
+&lt;/全局设置>
 
 
-and the following to the sip profile xml file:
+并将以下内容添加到sip配置文件中:
 
-&lt;profiles>
+&lt;配置文件>
   ...
   &lt;profile name="...">
     ...
@@ -366,174 +365,174 @@ and the following to the sip profile xml file:
     ...
   &lt;/profile>
   ...
-&lt;/profiles>
+&lt;/配置文件>
 
-###  Profile Configurations 
+###  配置文件设定 
 
-####  Track Call 
+####  追踪通话 
 
 &lt;param name="track-calls" value="true"/>
 
-This will make FreeSWITCH track call state using the call database.
+这将使FreeSWITCH使用通话数据库追踪通话状态。
 
-This can be stored in your ODBC database if you have that configured, allowing you to share call state between multiple FreeSWITCH instances.
+如果您已配置了ODBC数据库，这些状态可以存储在其中，使您能够在多个FreeSWITCH实例之间共享通话状态。
 
-For FreeSWITCH HA configuration, See [Freeswitch HA](../High-Availability/index.mdx#about)
+有关FreeSWITCH HA配置，请参阅[Freeswitch HA](../High-Availability/index.mdx#about)
 
-####  Sofia SIP Stack Watchdog 
+####  Sofia SIP堆栈看门狗 
 
-As of October 6, 2010, the Sofia profiles now support a watchdog on the Sofia SIP stack.
+从2010年10月6日起，Sofia配置文件现在支持Sofia SIP堆栈上的一个看门狗。
 
 &lt;param name="watchdog-enabled" value="no"/>
 &lt;param name="watchdog-step-timeout" value="30000"/>
 &lt;param name="watchdog-event-timeout" value="30000"/>
 
-Sometimes, in extremely rare edge cases, the Sofia SIP stack may stop responding. These options allow you to enable and control a watchdog on the Sofia SIP stack so that if it stops responding for the specified number of milliseconds, it will cause FreeSWITCH to shut down immediately. This is useful if you run in an HA environment and need to ensure automated recovery from such a condition. Note that if your server is idle a lot, the watchdog may fire due to not receiving any SIP messages. Thus, if you expect your system to be idle, you should leave the watchdog disabled.
+有时，在极少数情况下，Sofia SIP堆栈可能停止响应。这些选项允许您启用和控制Sofia SIP堆栈上的一个看门狗，如果它在指定的毫秒数内停止响应，将立即导致FreeSWITCH关闭。这对于运行在HA环境中并需要确保自动从这种情况中恢复的系统非常有用。请注意，如果您的服务器空闲时间很长，看门狗可能会因为未接收到任何SIP消息而触发。因此，如果您预计系统会处于空闲状态，应该禁用看门狗。
 
-The watchdog can be toggled on and off through the FreeSWITCH CLI either on an individual profile basis or globally for all profiles. So, if you run in an HA environment with a master and slave, you should use the CLI to make sure the watchdog is only enabled on the master.
+监视程序可以通过FreeSWITCH CLI在单个配置文件或全局配置文件中切换开启或关闭。因此，如果您在主从高可用环境中运行，应使用CLI确保仅在主节点上启用监视程序。
 
 sofia profile internal watchdog off
 sofia profile internal watchdog on
 sofia global watchdog off
 sofia global watchdog on
 
-Generally, when running in an HA environment, you will have some sort of resource agent that manages which FreeSWITCH node is the master and which is the slave. You will also likely have demote and promote actions that are performed to switch states. When the demote action is called, it should execute the 'sofia global watchdog off' command. When the promote action is called, it should execute the 'sofia global watchdog on' command.
+一般来说，在高可用环境中运行时，您会有一种资源代理来管理哪个FreeSWITCH节点是主节点，哪个是从节点。您还可能有降权和晋升操作用于切换状态。当执行降权操作时，应执行"sofia global watchdog off"命令。当执行晋升操作时，应执行"sofia global watchdog on"命令。
 
-  
 ####  ACL 
 
-You can restrict access by IP address for either REGISTERs or INVITEs (or both) by using the following options in the sofia profile.
+您可以通过在sofia配置文件中使用以下选项来限制根据IP地址进行注册或邀请（或两者）的访问。
 
 &lt;param name="apply-inbound-acl" value="&lt;acl_list|cidr>"/>
 &lt;param name="apply-register-acl" value="&lt;acl_list|cidr>"/>
 
-See [ACL](https://confluence.freeswitch.org/display/FREESWITCH/ACL) for other access controls
+有关其他访问控制，请参见[ACL](https://confluence.freeswitch.org/display/FREESWITCH/ACL)。
 
-See [acl.conf.xml](https://freeswitch.org/stash/projects/FS/repos/freeswitch/browse/conf/vanilla/autoload%5Fconfigs/acl.conf.xml) for list configuration
+有关列表配置，请参见[acl.conf.xml](https://freeswitch.org/stash/projects/FS/repos/freeswitch/browse/conf/vanilla/autoload%5Fconfigs/acl.conf.xml)。
 
-####  Disabling Hold 
+####  禁用通话保持 
 
-Disable all calls on this profile from putting the call on hold:
+禁用该配置文件上的所有通话保持功能：
 
 &lt;param name="disable-hold" value="true"/>
 
-* See also: [rtp\_disable\_hold](../../Dialplan/Variables-Archive/x__Channel-Variables_1048892.mdx#rtp_disable_hold) variable
+* 另请参阅：[rtp\_disable\_hold](../../Dialplan/Variables-Archive/x__Channel-Variables_1048892.mdx#rtp_disable_hold)变量。
 
-####  Using A Single Domain For All Registrations 
+####  使用单一域名进行所有注册
 
-You can force all registrations in a particular profile to use a single domain. In other words, you can ignore the domain in the SIP message. You will need to modify several sofia profile settings.
+您可以强制使特定配置文件中的所有注册使用单个域名。换句话说，您可以忽略SIP消息中的域名。您需要修改几个sofia配置文件的设置。
 
-#####  challenge realm 
+#### **challenge realm** 
 
 &lt;param name="challenge-realm" value="auto_from"/> 
 
-Defaults to "auto\_to" if not set; default config specifies "auto\_from"  
-Possible Values:
+如果未设置，默认为"auto\_to"；默认配置指定为"auto\_from"  
+可能的值：
 
-* auto\_from - uses the from field as the value for the SIP realm.
-* auto\_to - uses the to field as the value for the SIP realm.
-* &lt;anyvalue> - you can input any value to use for the SIP realm.
+* auto\_from - 使用from字段作为SIP realm的值。
+* auto\_to - 使用to字段作为SIP realm的值。
+* &lt;任何值> - 您可以输入任何值作为SIP realm的值。
 
-#####  force-register-domain 
+#### **force-register-domain** 
 
 &lt;param name="force-register-domain" value="$${domain}"/>
 
-This will force the profile to ignore the domain in the to or from packet and force it to the value listed here for this parameter.
+这将强制配置文件忽略to或from数据包中的域，并将其强制为此参数所列的值。
 
-This will store the info into the database with the user@&lt;from domain in SIP packet>
+此信息将与用户@&lt;在SIP数据包中的from域名>一起存储在数据库中。
 
-#####  force-subscription-domain 
+#### **force-subscription-domain** 
 
 &lt;param name="force-subscription-domain" value="$${domain}"/>
 
-This will force the profile to ignore the domain in the to or from packet and force it to the value listed here for this parameter.
+这将强制配置文件忽略to或from数据包中的域，并将其强制为此参数所列的值。
 
-This will store the info into the database with the user@&lt;from domain in SIP packet>
+此信息将与用户@&lt;在SIP数据包中的from域名>一起存储在数据库中。
 
-#####  force-register-db-domain 
+#### **force-register-db-domain** 
 
 &lt;param name="force-register-db-domain" value="$${domain}"/>
 
-This will work in conjunction with force-register-domain so that the forced domain is stored in the database also.
+这将与force-register-domain一起工作，以便将强制的域名也存储在数据库中。
 
-####  Forcing SIP profile to use a static IP address 
+#### 强制SIP配置文件使用静态IP地址 
 
-The default FreeSWITCH configuration will automatically determine the IP address of your local network interface. If you want to manually set the IP (for example, if you have multiple network interfaces on a single machine), you can set the following parameters in the Sofia profile:
+默认的FreeSWITCH配置将自动确定本地网络接口的IP地址。如果您想手动设置IP地址（例如，在单台机器上有多个网络接口），您可以在Sofia配置文件中设置以下参数：
 
+```
 &lt;param name="rtp-ip" value="192.168.1.3"/>
 &lt;param name="sip-ip" value="192.168.1.3"/>
 
-where 192.168.1.3 is the IP you want it to bind to.
+这里的 192.168.1.3 是您希望绑定的 IP 地址。
 
-and also in the sofia.conf.xml file:
+在 sofia.conf.xml 文件中：
 
 &lt;param name="auto-restart" value="false"/>
 
-This will prevent the profile from automatically restarting when it detects a network address change.
+这将防止在检测到网络地址更改时自动重新启动配置文件。
 
-### Syntax
+### 语法
 
-####  Call an extension on a Remote SIP Server 
+#### 呼叫远程 SIP 服务器上的分机
 
-Basic form:
+基本形式：
 
 sofia/_&lt;profile>_/_&lt;extension>_@_&lt;remoteserver>_
 
-Example 1:
+示例 1：
 
 sofia/$${profile}/$1@example.org
 
-Example 2:
+示例 2：
 
 sofia/foo/0@sipphone.com
 
-Where _&lt;profile>_ is the name of one of the profiles defined in sofia.conf.xml. By default, there is one profile defined as name="$${domain}", where the $${domain} variable is defined in freeswitch.xml, and defaults to mydomain.com.
+其中 _&lt;profile>_ 是在 sofia.conf.xml 中定义的配置文件名称。默认情况下，会定义一个名为 "$${domain}" 的配置文件，其中 $${domain} 变量在 freeswitch.xml 中定义，并默认为 mydomain.com。
 
-Therefore, if you have not changed these config files and are dialing an extension on a remote server, the config would be
+因此，如果您没有更改这些配置文件并且要拨打远程服务器上的分机，配置将为
 
-sofia/_mydomain.com_/_&lt;extension>_@_&lt;remoteserver>_  
+sofia/_mydomain.com_/_&lt;extension>_@_&lt;remoteserver>_
 
-To list all profiles defined, type **sofia status** on the CLI.
+要列出所有定义的配置文件，请在 CLI 中输入 **sofia status**。
 
-####  Call a locally registered endpoint 
+#### 呼叫本地注册的终端
 
-Basic form:
+基本形式：
 
 sofia/_&lt;profile>_/_&lt;extension>_%_&lt;localserver>_
 
-Example 1:
+示例 1：
 
 sofia/$${profile}/$1%$${domain}
 
-Example 2:
+示例 2：
 
 sofia/foo/101%192.168.1.1
 
-where foo is the SIP profile, 101 is the userid of the registered endpoint, and 192.168.1.1 is the IP address of FreeSWITCH.
+其中，foo 是 SIP 配置文件的名称，101 是已注册终端的用户 ID，192.168.1.1 是 FreeSWITCH 的 IP 地址。
 
-If your SIP profile name is set to your domain, or the domain attribute is set in the profile (e.g., &lt;profile name="internal" domain="$${domain}">), you can originate with the following:
+如果您的 SIP 配置文件名称设置为您的域，或者配置文件中设置了 domain 属性（例如 &lt;profile name="internal" domain="$${domain}">），则可以使用以下方式进行呼叫发起：
 
 sofia/&lt;profile>/&lt;extension>
 
-And fore-go the domain when dialing local extensions.
+并在拨打本地分机时省略域名部分。
 
-#### Multiple Registrations
+#### 多个注册
 
-Call one extension and ring several phones
+呼叫一个分机并同时响铃多个电话
 
-You must enable multiple registrations in **conf/sip\_profiles/internal-ipv6.xml** and **conf/sip\_profiles/internal.xml** (enabling the setting in conf/autoload\_configs/switch.conf.xml had no effect).
+你必须在 **conf/sip\_profiles/internal-ipv6.xml** 和 **conf/sip\_profiles/internal.xml** 中启用多次注册（在 conf/autoload\_configs/switch.conf.xml 中启用该设置没有效果）。
 
-Valid values for this parameter are "contact", "true", "false", "call-id".
+此参数的有效值为 "contact"、"true"、"false"、"call-id"。
 
 ```xml
 <param name="multiple-registrations" value="contact"/>
 ```
 
-Setting this value to "contact" will remove the old registration based on sip\_user, sip\_host and contact field as opposed to the call\_id.
+将此值设置为 "contact" 将基于 sip\_user、sip\_host 和 contact 字段来删除旧的注册，而不是基于 call\_id。
 
-**Ringing All Registered Extensions**
+**响铃所有已注册分机**
 
-In your dialplan (**conf/dialplan/default.xml**) you can now use the _sofia\_contact_ lookup function to return all registered sip profiles; for example in the _default.xml_ in sections _&lt;extension name="Local\_Extension">_ and _&lt;extension name="extension-intercom">_ replace:
+在你的拨号计划（conf/dialplan/default.xml）中，你现在可以使用 _sofia\_contact_ 查找函数来返回所有已注册的 SIP 配置文件。例如，在 _default.xml_ 的 _&lt;extension name="Local\_Extension">_ 和 _&lt;extension name="extension-intercom">_ 部分中，将以下内容替换为：
 
 ```xml
 <extension name="extension-intercom">
@@ -547,161 +546,155 @@ In your dialplan (**conf/dialplan/default.xml**) you can now use the _sofia\_con
 </extension>
 ```
 
-With the following:
+改为以下内容：
 
 ```xml
 <action application="bridge" data="${sofia_contact(${dialed_extension})}"/>
 ```
 
-This will ring all devices currently registered to the dialed extension. Do note that _sofia\_contact_ also works at the CLI, so you can test before you add it to your dialplan
+这将响铃所有当前注册到所拨号码的设备。请注意，_sofia\_contact_ 在 CLI 中也可以工作，所以你可以在将其添加到拨号计划之前进行测试。
 
-See [Function sofia contact](../../Modules/mod-sofia/Function-sofia_contact_13173302.mdx#about) for more information.
+更多信息请参见[函数 sofia contact](../../Modules/mod-sofia/Function-sofia_contact_13173302.mdx#about)。
 
-**Note (this applies to FreeSWITCH 1.0.1 and later):** you can disable multiple registrations on a per-user basis by setting the variable "sip-allow-multiple-registrations" to "false" in the directory. In this case, that single user won't be allowed to use multiple registrations.
+**注意（适用于FreeSWITCH 1.0.1及更高版本）：** 您可以通过在目录中将变量"sip-allow-multiple-registrations"设置为"false"来在每个用户的基础上禁用多重注册。在这种情况下，该用户将不被允许使用多个注册。
 
-#### Registration Count
+#### 注册计数
 
-This api is used to return the count of registration of a user of a domain, or just of a domain.
+此API用于返回域中用户或域的注册计数。
 
 ```xml
 freeswitch@internal> sofia_count_reg [user]@domain
 ```
 
-####  sofia_dig 
+#### sofia_dig
 
-You can use sofia\_dig to check DNS A and SRV records for a given domain from the fs\_cli. If there isn't a SRV record freeswitch uses A records. The use of SRV allows graceful fail overs.
+您可以使用sofia_dig从fs_cli检查给定域的DNS A和SRV记录。如果没有SRV记录，FreeSWITCH将使用A记录。使用SRV记录可以实现优雅的故障转移。
 
-**Usage:**
+**用法：**
 
 ```xml
- sofia_dig voicenetwork.ca
+sofia_dig voicenetwork.ca
 
- Preference          Weight       Transport            Port         Address
- ================================================================================
-          1           0.500             udp            5060      74.51.38.15
-          1           0.500             tcp            5060      74.51.38.15
+首选项           权重         传输协议         端口         地址
+============================================================
+   1            0.500              udp            5060           74.51.38.15
+   1            0.500              tcp            5060           74.51.38.15
 ```
 
-####  Flushing Inbound Registrations 
+#### 刷新入站注册
 
-From time to time, you may need to kill a registration.
+有时，您可能需要终止一个注册。
 
-You can kill a registration from the CLI, or anywhere that accepts API commands with a command similar to the following:
+您可以从CLI或任何接受API命令的地方使用类似下面的命令来终止一个注册：
 
 ```xml
 sofia profile <profile_name_here> flush_inbound_reg [optional_callid]
 ```
 
-  
-####  Dial out of a gateway 
+#### 拨打网关外呼
 
-Basic form:
+基本形式：
 
 ```xml
 sofia/gateway/<gateway>/<number_to_dial>
 ```
 
-Example 1:
+示例1：
 
 ```xml
 sofia/gateway/asterlink/18005551212
 ```
 
-gateway: is a keyword and not a "gateway" name. It has special meaning and tells the stack which credentials to use when challenged for the call.
+gateway: 是一个关键词，而不是一个"gateway"名称。它具有特殊的含义，并告诉栈在呼叫要求时要使用哪些凭据。
 
-&lt;gateway> is the actual name of the gateway through which you want to send the call
+&lt;gateway>是您要通过的网关的实际名称。
 
-  
-Your available gateways (usually configured in conf/sip\_profiles/external/\*.xml) will show up in **sofia status**:
+你的可用网关（通常在conf/sip_profiles/external/\*.xml中配置）将显示在**sofia status**命令的输出中：
 
 ```xml
 freeswitch#> sofia status
 
-                    Name      Type	                             Data      State
+                    名称         类型	                             数据       状态
 =================================================================================================
-                 default      profile          sip:mod_sofia@2.3.4.5:5060      RUNNING (2)
-               mygateway      gateway	             sip:username@1.2.3.4      NOREG
-  phonebooth.example.com      alias                               default      ALIASED
+                 default      profile         sip:mod_sofia@2.3.4.5:5060    正在运行 (2)
+               mygateway     网关	                 sip:username@1.2.3.4     未注册
+  phonebooth.example.com     别名                                default     已别名
 =================================================================================================
-1 profile 1 alias
+1 个配置文件，1 个别名
 ```
 
-####  Modifying the To: header 
+#### 修改To:头部
 
-You can override the To: header by appending ^_&lt;toheader>_.
+你可以通过追加^_&lt;toheader>来覆盖To：头部。
 
-Example 1:
+示例 1:
 
 sofia/foo/user%192.168.1.1^101@$${domain}
 
-  
-####  Specifying SIP Proxy With fs_path 
+#### 使用fs_path指定SIP代理
 
-You can route a call through a specific SIP proxy by using the "fs\_path" directive. Example:
+你可以通过使用"fs_path"指令将呼叫路由到特定的SIP代理。示例:
 
 sofia/foo/user@that.domain;fs_path=sip:proxy.this.domain 
 
-#### Safe SIP URI Formatting
+#### 安全的SIP URI格式
 
-  
-As of commit <https://freeswitch.org/stash/projects/FS/repos/freeswitch/commits/76370f4d1767bb0dcf828a3d6cde6e015b2cfa03> the User part of the SIP URI has been "safely" encoded in the case where spaces or other special characters appear.  
+从<https://freeswitch.org/stash/projects/FS/repos/freeswitch/commits/76370f4d1767bb0dcf828a3d6cde6e015b2cfa03>提交开始，“SIP URI”的用户部分在出现空格或其他特殊字符时已被“安全”编码。 
 
-### Channel Variables
+### 通道变量
 
-####  Adding Request Headers 
+#### 添加请求头部
 
-You can add arbitrary headers to outbound SIP calls by prefixing the string '**sip\_h\_**' to any channel variable, for example:
+你可以通过在任何通道变量前缀字符串"sip\_h\_"来向出站的SIP呼叫添加任意头部，例如：
 
 ```xml
 <action application="set" data="sip_h_X-Answer=42"/>
 <action application="bridge" data="sofia/mydomain.com/1000@example.com"/>
 ```
 
-Note that for BYE requests, you will need to use the prefix '**sip\_bye\_h\_**' on the channel variable.
+注意，在BYE请求中，你需要在通道变量前缀上使用"sip\_bye\_h\_"。
 
 ---
 
-While not required, you should prefix your headers with "X-" to avoid issues with interoperability with other SIP stacks.
+虽然不是必需的，但你应该使用“X-”作为前缀来给你的头部，以避免与其他SIP堆栈的互操作性问题。
 
-All inbound SIP calls will install any X- headers into local variables.
-This means you can easily bridge any X- header from one FreeSWITCH instance to another.
-To access the header above on a 2nd box, use the channel variable ${sip_h_X-Answer}
-It is important to note that the syntax ${sip_h_custom-header} can't be used to retrieve any custom header not starting with X-.
-It is because Sofia only reads and puts into variables custom headers starting with X-.
+所有传入的SIP呼叫都会将任何X-头部安装到本地变量中。
+这意味着你可以轻松地将一个FreeSWITCH实例中的X-头部桥接到另一个实例中。
+要在第二个盒子上访问上面的头部，请使用通道变量`${sip_h_X-Answer}`
+需要注意的是，语法`${sip_h_custom-header}`无法用于检索以X-开头的任何自定义头部。
+这是因为Sofia只会读取和将以X-开头的自定义头部放入变量中。
 
-  
-####  Adding Response Headers 
+#### 添加响应头部
 
-There are three types of response header prefixes that can be set:
+可以设置三种类型的响应头部前缀：
 
-* Response header  
+* 响应头部  
 sip\_rh\_
-* Provisional response header  
+* 临时响应头部  
 sip\_ph\_
-* Bye response header  
+* 挂机响应头部  
 sip\_bye\_h\_
 
-Each prefix will exclusively add headers for their given types of requests - there is no "global" response header prefix that will add a header to all response messages.
+每个前缀都会为给定类型的请求专门添加头部，没有一个"全局"响应头部前缀可以添加到所有响应消息中。
 
-For example:
+例如：
 
 ```xml
-<action application="set" data="sip_rh_X-Reason=Destination Number Not in Footprint"/>
-<action application="set" data="sip_bye_h_X-Accounting=Some Accounting Data"/>
+<action application="set" data="sip_rh_X-Reason=宿主机号码不在覆盖范围内"/>
+<action application="set" data="sip_bye_h_X-Accounting=一些计费数据"/>
 ```
 
-  
-####  Adding Custom Headers 
+#### 添加自定义头部
 
-For instance, you may need **P-Charge-Info** to append to your INVITE header, you may do as follows:
+例如，你可能需要将**P-Charge-Info**附加到你的INVITE头部上，你可以按以下方式操作：
 
 ```xml
 <action application="set"><![CDATA[sip_h_P-Charge-Info=<sip:${caller_id_number}@${domain_name}>;npi=0;noa=3]]></action>
 ```
 
-Then, you would see it in SIP message:
+然后，你会在SIP消息中看到它：
 
-Expand source 
+扩展源码
 
 ```xml
 INVITE sip:19099099099@1.2.3.4 SIP/2.0
@@ -724,9 +717,9 @@ X-FS-Support: update_display,send_info.
 Remote-Party-ID: "DJB" <sip:2132132132@5.6.7.8>;party=calling;screen=yes;privacy=off
 ```
 
-#### Strip Individual SIP Headers 
+#### 去除单独的SIP头信息
 
-Sometimes a SIP provider will add extra header information. Most of the time they do that for their own use (tracking calls). But that extra information can cause a lot of problems. For example: I get a call from the PSTN via a DID provider (provider1). Since im not in the office the call gets bridged to my cell phone (provider2). Provider1 add's extra information to the sip packet like displayed below:
+有时，SIP提供商会添加额外的头信息。大多数情况下，他们这样做是为了自己的用途（跟踪呼叫）。但是这些额外的信息会引起很多问题。例如：我通过DID提供商（provider1）从PSTN接到一个电话。由于我不在办公室，呼叫被桥接到我的手机（provider2）。Provider1在SIP数据包中添加了额外的信息，如下所示：
 
 ```xml
 X-voipnow-did: 01234567890
@@ -734,9 +727,9 @@ X-voipnow-extension: 987654321
 ...
 ```
 
-In some scenario, we bridge this call directly to provider2 the calls get dropped since provider2 doesnt accept the X-voipnow header, so we have to strip off those SIP headers.
+在某些情况下，如果我们直接将此电话传给provider2，呼叫会被丢弃，因为provider2不接受X-voipnow头。因此，我们必须去除这些SIP头。
 
-To strip them off, use the application UNSET in the dialplan (the inverse of SET):
+要去除它们，请在拨号计划中使用UNSET应用程序（SET的反向操作）：
 
 ```xml
 <action application="unset" data="sip_h_X-voipnow-did"/>
@@ -744,9 +737,9 @@ To strip them off, use the application UNSET in the dialplan (the inverse of SET
 ...
 ```
 
-#### Strip All custom SIP Headers
+#### 剥离所有自定义SIP头
 
-If you wish to strip all custom headers while keeping only those defined in dialplan:
+如果您希望剥离所有自定义头信息，只保留在拨号计划中定义的头信息：
 
 ```xml
 <action application="set" data="sip_copy_custom_headers=false"/>
@@ -754,23 +747,23 @@ If you wish to strip all custom headers while keeping only those defined in dial
 ...
 ```
 
-#### Additional Channel variables
+#### 附加通道变量
 
-Additional variables may also be set to influence the way calls are handled by sofia.
+还可以设置其他变量来影响Sofia处理呼叫的方式。
 
-For example, contacts can be filtered by setting the 'sip\_exclude\_contact' variable. Example:
+例如，可以通过设置'sip\_exclude\_contact'变量来筛选联系人。示例：
 
 ```xml
 <anti-action application="set" data="sip_exclude_contact=${network_addr}"/>
 ```
 
-Or you can perform SIP Digest authorization on outgoing calls by setting **sip\_auth\_username** and **sip\_auth\_password** variables to avoid using Gateways to authenticate. Example:
+或者，可以通过设置**sip\_auth\_username**和**sip\_auth\_password**变量，在拨出呼叫时执行SIP摘要授权，以避免使用网关进行验证。示例：
 
 ```xml
 <action application="bridge" data="[sip_auth_username=secretusername,sip_auth_password=secretpassword]sofia/external/00123456789@sip.example.com"/>
 ```
 
-Changing the SIP Contact user FreeSWITCH normally uses mod\_sofia@[ip:port](http://ipport) for the internal SIP contact. To change this to foo@[ip:port](http://ipport), there is a variable, sip\_contact\_user:
+更改SIP联系人用户FreeSWITCH通常使用mod\_sofia@[ip:port](http://ipport)作为内部SIP联系人。要将其更改为foo@[ip:port](http://ipport)，有一个变量sip\_contact\_user：
 
 ```xml
 {sip_contact_user=foo}sofia/my_profile/1234@192.168.0.1;transport=tcp
@@ -784,16 +777,15 @@ true|false
 
 true|false
 
-### Transcoding Issues
+### 转码问题
 
-G729 and G723 will not let you transcode because of licensing issues. Calls will fail if for example originating endpoint has set G729 with higher priority and receiving endpoint has G723 with highest priority. The logic is to fail the call rather than attempt to find a codec match. If you are having issues due to transcoding you may disable transcoding and both endpoints will negotiate the compatible codec rather than just fail the call.
+由于许可问题，G729和G723将不允许您进行转码。例如，如果起始端点设置了较高优先级的G729，而接收端点设置了最高优先级的G723，则呼叫将失败。逻辑是失败呼叫而不是尝试查找匹配的编解码器。如果由于转码而出现问题，您可以禁用转码，这样两个端点将协商使用兼容的编解码器，而不仅仅是失败呼叫。
 
-disable-transcoding will take the preferred codec from the inbound leg of your call and only offer that codec on the outbound leg.
+disable-transcoding操作将采用呼入通话的首选编解码器，并仅在呼出通话时才使用该编解码器。
 
-Add the following command &lt;param name="disable-transcoding" value="true"/> along with &lt;param name="inbound-late-negotiation" value="false"/> to your sofia profile
+将以下命令&lt;param name="disable-transcoding" value="true"/>与&lt;param name="inbound-late-negotiation" value="false"/>添加到您的sofia配置文件中。
 
-  
-Example:
+示例：
 
 ```xml
 <configuration name="sofia.conf" description="sofia Endpoint">
@@ -804,81 +796,78 @@ Example:
          <param name="inbound-late-negotiation" value="false"/>
 ```
 
-  
-###  Custom Events 
+### 自定义事件
 
-The following are events that can be subscribed to via [Event Socket](../../Client-and-Developer-Interfaces/Event-Socket-Library/index.mdx#-new-)
+以下是可以通过[Event Socket](../../Client-and-Developer-Interfaces/Event-Socket-Library/index.mdx#-new-)订阅的事件：
 
-* Registration
+* 注册
 
 * sofia::register
 * sofia::pre_register
 * sofia::register_attempt
 * sofia::register_failure
-* sofia::unregister - explicit unregister calls
-* sofia::expire - when a user registration expires
+* sofia::unregister - 显式注销呼叫
+* sofia::expire - 当用户注册到期时
 
-* Gateways
+* 网关
 
 * sofia::gateway_add
 * sofia::gateway_delete
-* sofia::gateway_state - when a gateway is detected as down or back up
+* sofia::gateway_state - 当网关检测为断开或重新连接时
 
-* Call recovery
+* 呼叫恢复
 
 * sofia::recovery_send
 * sofia::recovery_recv
 * sofia::recovery_recovered
 
-* Other
+* 其他
 
 * sofia::notify_refer
 * sofia::reinvite
 * sofia::error
 
-### FAQ
+### 常见问题解答
 
-#### Does it use UDP or TCP?
+#### 使用UDP还是TCP？
 
-By default it uses both, but you can add ;transport=tcp to the Sofia URL to force it to use TCP.
+默认情况下同时使用UDP和TCP，但您可以在Sofia URL中添加;transport=tcp来强制使用TCP。
 
-For example:
+例如：
 
 ```xml
 sofia/profile/foo@bar.com;transport=tcp
 ```
 
-Also there is a parameter in the gateway config:
+此外，在网关配置中还有一个参数：
 
 ```xml
 <param name="register-transport" value="tcp"/>
 ```
 
-That will cause it to use the TCP transport for the registration and all subsequent SIP messages.
+这将导致它在注册和所有后续SIP消息中使用TCP传输。
 
-Not sure if this is needed or what it does, but the following can also be used in gateway settings:
+不确定是否需要该参数或其作用，但在网关设置中还可以使用以下内容：
 
 ```xml
-<!--extra sip params to send in the contact-->
+<!--在联系方式中发送额外的SIP参数-->
 <param name="contact-params" value="tport=tcp"/>
 ```
 
-### See Also
+### 另请参阅
 
 * [mod\_sofia](../../Modules/mod_sofia_1048707.mdx#about)
-* [Debugging Freeswitch](../../Troubleshooting-Debugging/Debugging-Freeswitch_9633850.mdx#about)
-* [SIP Protocol Messages](../../Troubleshooting-Debugging/SIP-Protocol-Messages_1048971.mdx#about)
-* [Authentication](./Sofia-Gateway-Authentication-Params_7143510.mdx#about) params for gateways.
-* [RTP Issues](../../Troubleshooting-Debugging/RTP-Issues_1048973.mdx#about)
-* [Multi-Homed Example How To](../../Auxiliary-Knowledge-and-Utilities/Multi-home-tutorial/Multi-Homed-Dual-NIC-How-To_13174221.mdx#about)
+* [调试Freeswitch](../../Troubleshooting-Debugging/Debugging-Freeswitch_9633850.mdx#about)
+* [SIP协议消息](../../Troubleshooting-Debugging/SIP-Protocol-Messages_1048971.mdx#about)
+* [网关身份验证](./Sofia-Gateway-Authentication-Params_7143510.mdx#about) 网关的参数。
+* [RTP问题](../../Troubleshooting-Debugging/RTP-Issues_1048973.mdx#about)
+* [多首页例子](../../Auxiliary-Knowledge-and-Utilities/Multi-home-tutorial/Multi-Homed-Dual-NIC-How-To_13174221.mdx#about)
 
-### External links
+### 外部链接
 
 * <http://opensource.nokia.com/projects/sofia-sip/>
 
-### Comments:
+### 注释:
 
-| <http://sofia-sip.sourceforge.net/> ![](/images/icons/contenttypes/comment_16.png) Posted by livem at Nov 09, 2016 04:01 |
+| <http://sofia-sip.sourceforge.net/> ![](/images/icons/contenttypes/comment_16.png) 于 2016年11月9日04:01发布，作者为livem |
 | ----------------------------------------------------------------------------------------------------------------------- |
-
-

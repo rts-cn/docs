@@ -1,58 +1,61 @@
+# 在NAT后面配置Audiocodes
 
-# Configuring Audiocodes Behind NAT 
+## 关于
 
- 
+关于文本。
 
-## About
+单击此处展开目录
 
-About text.
+* 1 [在NAT后面配置Audiocodes](#configuring-audiocodes-behind-nat)
 
-Click here to expand Table of Contents
+## 在NAT后面配置Audiocodes
 
-* 1 [Configuring Audiocodes Behind NAT](#configuring-audiocodes-behind-nat)
+如果有更好的方法来实现此目标，请更新此页面！
 
-## Configuring Audiocodes Behind NAT
+情景如下：
 
-If there is a better way to accomplish this, please update this page!
+FS具有公共IP &lt;----- 互联网 -----> NAT &lt;----- Audiocodes -----> PSTN
 
-The scenario is this:
+Audiocodes是连接PSTN的网关，但它位于NAT后面，并且NAT设备的公共IP地址是动态的，这意味着ISP随时可以更改。根据我所知，我无法在<gateway>部分注册Audiocodes，因为我甚至没有它的IP地址（动态DNS对我不可行）。解决方案是将Audiocodes注册为一个用户。在这种情况下，Audiocodes的用户名将是"audiocodesgw"，因此您需要在directory/default/audiocodesgw.xml中创建一个用户部分，并设置密码为"secret"。
 
-FS with public IP &lt;----- Internet -----> NAT &lt;----- Audiocodes -----> PSTN
+```
+<include>
+  <user id="audiocodesgw">
+    <params>
+      <param name="password" value="secret"/>
+    </params>
+    <variables>
+      <variable name="user_context" value="default"/>
+    </variables>
+  </user>
+</include>
+```
 
-The audiocodes is a gateway to the PSTN but is behind a NAT and the public IP address of the NAT device is dynamic, which means it can change in any moment the ISP wants it. I cannot register the audiocodes in a &lt;gateway> section AFAIK since I don't even have its IP address (dynamic DNS was not an option for me). The solution is register the audiocodes as a user. In this case, the user name of the audiocodes is gonna be "audiocodesgw", so you need to create a user section in directory/default/audiocodesgw.xml and the password is "secret".
+现在，根据您的Audiocodes设置，您可能需要向您将使用的SIP配置文件添加参数"force-register-domain"。我使用了internal (sip_profiles/internal.xml)，我在其中添加了：
 
-&lt;include>
-  &lt;user id="audiocodesgw">
-    &lt;params>
-      &lt;param name="password" value="secret"/>
-    &lt;/params>
-    &lt;variables>
-      &lt;variable name="user_context" value="default"/>
-    &lt;/variables>
-  &lt;/user>
-&lt;/include>
+```
+<param name="force-register-domain" value="$${domain}"/>
+```
 
-Now, depending on your audiocodes settings you may need to add the parameter "force-register-domain" to the SIP profile you are going to use. I used internal (sip\_profiles/internal.xml), where I added:
+这样，即使Audiocodes尝试使用IP地址进行注册，用户也能在FS域中找到它。
 
-    &lt;param name="force-register-domain" value="$${domain}"/>
+至此，您应该能够使您的Audiocodes注册到FS。通过输入以下内容验证：
 
-This way, even if the audiocodes try to register with the IP address, the user will be found in the FS domain.
-
-At this point you should be able to get your audiocodes to register with FS. Verify it by typing:
-
+```
 sofia status profile internal
+```
 
-That's assuming you also used the internal profile. The audiocodes registration should be shown there.
+这是假设您使用了内部配置文件。audiocodes的注册应该显示在那里。
 
-Registrations:
+注册信息:
 =================================================================================================
-Call-ID         53438138331200085019@192.168.0.240
-User            audiocodesgw@63.80.191.86
-Contact         "user" &lt;sip:audiocodesgw@189.140.92.153>
-Agent           Audiocodes-Sip-Gateway-MP-118 FXS_FXO/v.5.20A.027.004
-Status          Registered(UDP)(unknown) EXP(2008-12-03 02:22:07)
+通话ID        53438138331200085019@192.168.0.240
+用户            audiocodesgw@63.80.191.86
+联系方式         "user" &lt;sip:audiocodesgw@189.140.92.153>
+代理           Audiocodes-Sip-Gateway-MP-118 FXS_FXO/v.5.20A.027.004
+状态          注册成功（UDP）（未知）EXP(2008-12-03 02:22:07)
 
-At this point, the audiocodes is registered. However, since we need to send calls to route to the PSTN to the audiocodes we cannot just bridge with SOFIA/internal/audiocodesgw. We need something like SOFIA/internal/12345678@189.146.92.153 to send the number "12345678" to the audiocodes to route to the PSTN.We just used the audiocodes register as a trick to get the IP address of the NAT device of the audiocodes. Now we will use the sofia\_contact function to send the call to the proper IP. In your dial plan you will need something like this:
+此时，audiocodes已经注册成功。然而，由于我们需要将呼叫路由到PSTN到audiocodes，我们不能只用SOFIA/internal/audiocodesgw 进行桥接。我们需要类似SOFIA/internal/12345678@189.146.92.153 这样的形式，将号码"12345678"发送给audiocodes，以便进行PSTN路由。我们只是利用了audiocodes的注册，来获取audiocodes的NAT设备的IP地址。现在，我们将使用sofia\_contact函数将呼叫发送到正确的IP地址。在您的拨号计划中，您需要添加如下内容:
 
 ```xml
     <extension name="audiocodes">
@@ -65,6 +68,4 @@ At this point, the audiocodes is registered. However, since we need to send call
     </extension>
 ```
 
-What this does is to define a condition that I know beforehand is gonna be true in order to get the IP address provided by the sofia_contact function and store it in the $audiocodes variable using the set application. After that, if the number starts with "55" (this is of course up to you) and followed by 8 digits it will call the bridge application sending the last 8 digits to the $audiocodes IP that was provided with the sofia_contact function.
-
-
+这段代码的作用是先定义一个预先已知为真的条件，以便获取由sofia_contact函数提供的IP地址，并使用set应用程序将其存储在$audiocodes变量中。之后，如果号码以"55"开头（当然可以根据您的需求修改），接着是8位数字，它将调用bridge应用程序，将最后8位数字发送到由sofia_contact函数提供的$audiocodes IP地址。

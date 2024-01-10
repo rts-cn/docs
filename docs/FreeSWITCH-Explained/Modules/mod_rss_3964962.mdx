@@ -1,43 +1,40 @@
+# mod_rss
 
-# mod_rss 
+## 关于
 
- 
+mod_rss将解析和读取基于XML的RSS订阅源，然后通过TTS引擎（如mod_cepstral）大声朗读条目。在朗读过程中，您可以快进或倒转文章等。
 
-## About
+请确保使用最新的Git版本，因为1.0.0版存在一个错误，无论按键如何，它都只会播放列表中的第一个订阅源。此外，不要忘记在conf/autoload_configs/modules.conf.xml中启用mod_rss模块。
 
-mod\_rss will parse and read an XML based RSS feed, then read the entries aloud via a TTS engine such as [mod\_cepstral](https://70.169.193.216/wiki/Mod%5Fcepstral "Mod cepstral"). While its reading you can fast forward through articles, rewind, etc.
+* [设置和配置](#设置和配置)
+  * [设置脚本以获取RSS](#设置脚本以获取RSS)
+* [在拨号计划中的使用（调用news.js）](#在拨号计划中的使用调用newsjs)
+* [常见问题解答](#常见问题解答)
+  * [我收到以下错误mod_spidermonkey.c:2495 js_fetchurl_file()错误！](#我收到以下错误mod_spidermonkeyc2495-js_fetchurl_file-error)
+  * [我有一个德语Cepstral语音引擎，但菜单是英文的](#我有一个德语cepstral语音引擎但菜单是英文的)
 
-Make sure you are using the most recent Git as 1.0.0 had a bug which would only play the first feed on the list regardless of key press. Also, don't forget to enable the mod\_rss module in conf/autoload\_configs/modules.conf.xml.
+## 设置和配置
 
-* [Setup & Configuration](#setup--configuration)  
-   * [Setup script to fetch RSS](#setup-script-to-fetch-rss)
-* [Usage in dialplan (call to news.js)](#usage-in-dialplan-call-to-newsjs)
-* [FAQ](#faq)  
-   * [I receive the following error mod\_spidermonkey.c:2495 js\_fetchurl\_file() Error!](#i-receive-the-following-error-mod_spidermonkeyc2495-js_fetchurl_file-error)  
-   * [I have a German Cepstral speech engine, but the menus are in English](#i-have-a-german-cepstral-speech-engine-but-the-menus-are-in-english)
-
-## Setup & Configuration
-
-Configure rss.conf.xml (in conf/autoload\_configs):
+配置rss.conf.xml（位于conf/autoload_configs）：
 
 ```xml
-<configuration name="rss.conf" description="RSS Parser">
+<configuration name="rss.conf" description="RSS解析器">
   <feeds>
-    <!-- Just download the files to wherever and refer to them here -->
-    <feed name="Local Weather">rss/weather.rss</feed>
-    <feed name="Yahoo Top Stories">rss/yahootop.rss</feed>
-    <feed name="Yahoo Science">rss/yahoosci.rss</feed>
-    <feed name="Yahoo Business">rss/yahoobus.rss</feed>
-    <feed name="Yahoo Entertainment">rss/yahooent.rss</feed>
+    <!--只需将文件下载到适当的位置，然后在此引用它们-->
+    <feed name="本地天气">rss/weather.rss</feed>
+    <feed name="雅虎头条新闻">rss/yahootop.rss</feed>
+    <feed name="雅虎科学新闻">rss/yahoosci.rss</feed>
+    <feed name="雅虎商业新闻">rss/yahoobus.rss</feed>
+    <feed name="雅虎娱乐新闻">rss/yahooent.rss</feed>
     <feed name="Slash Dot">rss/slashdot.rss</feed>
-    <feed name="Free Switch">rss/freeswitch.rss</feed>
+    <feed name="FreeSwitch">rss/freeswitch.rss</feed>
   </feeds>
 </configuration>
 ```
 
-The RSS subdirectory paths are relative to the FreeSWITCH base directory (e.g. /opt/freeswitch).
+RSS子目录路径相对于FreeSWITCH的基目录（例如/opt/freeswitch）。
 
-Below is a sample JavaScript that'll populate the RSS files above. Make sure you create this directory and assign proper rights to the FreeSWITCH user account.
+以下是一个示例 JavaScript，它将填充上面的 RSS 文件。确保您创建该目录并分配适当的权限给 FreeSWITCH 用户账户。
 
 ```xml
 mkdir /opt/freeswitch/rss
@@ -45,28 +42,28 @@ chown freeswitch.freeswitch /opt/freeswitch/rss
 chmod 755 /opt/freeswitch/rss
 ```
 
-### Setup script to fetch RSS
+### 设置脚本以获取 RSS
 
-Sample news.js (should be placed in scripts folder - i.e. /opt/freeswitch/scripts)
+示例 news.js（应放置在脚本文件夹中 - 即 /opt/freeswitch/scripts）
 
 ```xml
 if (session.ready()) {
     session.answer();
-    session.speak("cepstral","David","Please wait while we refresh the RSS feeds.")
+    session.speak("cepstral", "David", "请等待我们刷新 RSS 订阅。")
 
-    fetchURLFile("http://weather.yahooapis.com/forecastrss?p=60610","rss/weather.rss");
-    fetchURLFile("http://rss.news.yahoo.com/rss/topstories","rss/yahootop.rss");
-    fetchURLFile("http://rss.news.yahoo.com/rss/science","rss/yahoosci.rss");
-    fetchURLFile("http://rss.news.yahoo.com/rss/business","rss/yahoobus.rss");
-    fetchURLFile("http://rss.news.yahoo.com/rss/entertainment","rss/yahooent.rss");
-    fetchURLFile("http://rss.slashdot.org/Slashdot/slashdot","rss/slashdot.rss");
-    fetchURLFile("http://www.freeswitch.org/xml.php","rss/freeswitch.rss");
+    fetchURLFile("http://weather.yahooapis.com/forecastrss?p=60610", "rss/weather.rss");
+    fetchURLFile("http://rss.news.yahoo.com/rss/topstories", "rss/yahootop.rss");
+    fetchURLFile("http://rss.news.yahoo.com/rss/science", "rss/yahoosci.rss");
+    fetchURLFile("http://rss.news.yahoo.com/rss/business", "rss/yahoobus.rss");
+    fetchURLFile("http://rss.news.yahoo.com/rss/entertainment", "rss/yahooent.rss");
+    fetchURLFile("http://rss.slashdot.org/Slashdot/slashdot", "rss/slashdot.rss");
+    fetchURLFile("http://www.freeswitch.org/xml.php", "rss/freeswitch.rss");
 }
 ```
 
-## Usage in dialplan (call to news.js)
+## 在拨号计划中的使用（调用 news.js）
 
-Add the following to your default dialplan and dial 9333\. The first application line calls the javascript above to populate the rss files in the rss folder. The second line will call out mod\_rss.
+将以下内容添加到您的默认拨号计划并拨打 9333。第一行应用程序调用上面的 JavaScript 来填充 rss 文件夹中的 rss 文件。第二行将调用 mod_rss。
 
 ```xml
   <extension name="rss">
@@ -77,24 +74,22 @@ Add the following to your default dialplan and dial 9333\. The first application
    </extension>
 ```
 
-## FAQ
+## 常见问题
 
-### I receive the following error mod_spidermonkey.c:2495 js_fetchurl_file() Error!
+### 我收到以下错误 mod_spidermonkey.c:2495 js_fetchurl_file() Error!
 
-Check whether your directory /usr/local/freeswitch/rss (or /opt/freeswitch/rss) exists and is accessible by the user who runs FreeSWITCH. If this doesn't work, try to use the full path above:
+检查您的目录/usr/local/freeswitch/rss（或/opt/freeswitch/rss）是否存在，并且由运行FreeSWITCH的用户可以访问。如果这不起作用，请尝试使用上面的完整路径：
 
-e.g.
+例如：
 
 ```xml
  <feed name="Yahoo Business">/usr/local/freeswitch/rss/yahoobus.rss</feed>
  fetchURLFile("http://rss.news.yahoo.com/rss/business","/usr/local/freeswitch/rss/yahoobus.rss");
 ```
 
-### I have a German Cepstral speech engine, but the menus are in English
+### 我有一个德语Cepstral语音引擎，但是菜单是英文的
 
-Solution:
+解决方案：
 
-* Change /usr/src/freeswitch/src/mod/applications/mod\_rss/mod\_rss.c . Replace the English announcement strings with your localized string.
-* In the directory /usr/src/freeswitch/src/mod/applications/mod\_rss/ do a "make" and "make install" then.
-
-
+* 修改/usr/src/freeswitch/src/mod/applications/mod_rss/mod_rss.c。将英语公告字符串替换为您的本地化字符串。
+* 在目录/usr/src/freeswitch/src/mod/applications/mod_rss/中执行"make"和"make install"。

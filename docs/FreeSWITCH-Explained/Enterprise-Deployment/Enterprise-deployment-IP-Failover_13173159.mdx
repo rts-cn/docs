@@ -1,41 +1,38 @@
+# 企业部署 IP 故障转移
 
-# Enterprise deployment IP Failover 
+## 关于
 
- 
+为了提供高可用性，以保护免受单个服务器的崩溃、死机或最小化停机维护（例如，丢失1-4秒的音频，没有丢失的通话），请使用此配置。
 
-## About
+注意：这不是一个集群，每台单独的机器必须能够独自处理整个负载。
 
-To provide high availability to protect from a single server meltdown, crash, or to have minimum downtime maintenance e.g. (1-4 seconds of lost audio, with no dropped calls) , use this configuration.
+除了系统 IP 配置文件（具有静态的内部/外部 IP）和心跳监视 IP 之外，整个系统应该是相同的，特别是所有的 FreeSWITCH 文件。这意味着您可以在备份上升级 FreeSWITCH，进行一些测试，转移流量，然后将整个 FreeSWITCH 目录通过 rsync 同步到另一台服务器。
 
-NOTE: This is not a cluster, each single machine must be able to handle the entire load itself.
+单击此处展开目录
 
-Other than the system IP configuration file (with static internal / external IPs), and the heartbeat monitoring IP, the entire system should be identical, especially all of FreeSWITCH's files. That means you can upgrade FreeSWITCH on the backup, do a little testing, move over the traffic, and then rsync the entire FreeSWITCH directory to the other server.
-
-Click here to expand Table of Contents
-
-**Error rendering macro 'toc'**
+**错误渲染宏“toc”。**
 
 null
 
-### Hardware requirements
+### 硬件要求
 
-* 2 servers (or VPS, preferably different physical machines)
-* a 3rd, Floating IP
+* 2 台服务器（或 VPS，最好是不同的物理机器）
+* 第三个，浮动 IP
 
-### Software requirements
+### 软件要求
 
-* IP Failover  
-   * Heartbeat to monitor the other server is responding  
-   * Pacemaker to monitor and move resources (floating IP, starting/restarting FreeSWITCH profiles, e.g. triggering "sofia recover"  
-      * FreeSWITCH monitoring OCF script  
-   * OR uCARP
-* ODBC for the database for anything to be saved, with replication. For core, voicemail, and all profiles and mods. I'm using MySQL in master-master mode.
+* IP 故障转移
+   * 心跳监控其他服务器是否响应
+   * Pacemaker 监控和移动资源（浮动 IP，启动/重新启动 FreeSWITCH 配置文件，例如触发“sofia recover”）
+      * FreeSWITCH 监控 OCF 脚本
+   * 或者使用 uCARP
+* ODBC 数据库用于保存任何内容的复制，包括核心、语音邮件和所有配置文件和模块。我使用的是 MySQL 主-主模式。
 
-### Configuration
+### 配置
 
-#### HeartBeat/Pacemaker
+#### 心跳/Pacemaker
 
-/etc/init.d/freeswitch Add this to the list.. start, stop..
+/etc/init.d/freeswitch 在列表中添加以下内容.. start, stop..
 
 ```xml
   status)
@@ -43,17 +40,16 @@ null
         ;;
 ```
 
-/etc/init.d/FSSofia - the "start" part might be a bad idea...
+/etc/init.d/FSSofia - "start" 部分可能不太好...
 
 ```xml
 #!/bin/sh
 #
-# Description:  Starting / stopping FreeSWITCH Sofia SIP profiles
-#                 and send a 'sofia recover' after all profiles are started
+# 描述：启动/停止FreeSWITCH Sofia SIP配置文件，并在所有配置文件启动后发送 `sofia recover`
 #
-# Author:       Leon de Rooij <leon@scarlet-internet.nl>
-# License:      BSD
-# Copyright:    (C) 2010 Leon de Rooij
+# 作者：Leon de Rooij <leon@scarlet-internet.nl>
+# 许可证：BSD
+# 版权所有：(C) 2010 Leon de Rooij
 
 #set -x
 
@@ -64,7 +60,7 @@ FS_CLI_PASS='ClueCon'
 PROFILES='internal external'
 
 usage() {
-  echo "Usage: $0 profile1[,profile2[,etc]] {start|stop|status}"
+  echo "用法：$0 配置文件1[,配置文件2[,等等]] {启动|停止|状态}"
   exit 1
 }
 
@@ -106,11 +102,11 @@ case "$CMD" in
   'status')
      for p in $PROFILES; do
        if [ `sofia_profile_started "$p"` -eq 0 ]; then
-         echo "$p DOWN"
+         echo "$p 已停止"
          exit 3
        fi
      done
-     echo "OK"
+     echo "正常"
      ;;
   *)
      usage
@@ -118,94 +114,67 @@ case "$CMD" in
 esac
 ```
 
-My current "crm configure edit"
+我的当前“crm configure edit”
 
-```xml
-node $id="astarstt-e939-srat-870c-rastartsarsr" server1 \
-        attributes standby="off"
-node $id="astarstt-7203-arst-b5a7-esintsireant" server2 \
-        attributes standby="off"
-primitive fs lsb:FSSofia \
-        op monitor interval="2" timeout="8" \
-        meta target-role="Started"
-primitive ip_shared ocf:heartbeat:IPaddr2 \
-        params ip="$floating_ip" nic="eth0" \
-        meta target-role="Started"
-group HAServices ip_shared fs \
-        meta target-role="Started"
-property $id="cib-bootstrap-options" \
-        dc-version="1.0.8-042548a451fce8400660f6031f4da6f0223dd5dd" \
-        cluster-infrastructure="Heartbeat" \
-        expected-quorum-votes="1" \
-        stonith-enabled="false" \
-        no-quorum-policy="ignore" \
-        last-lrm-refresh="1299964019"
-rsc_defaults $id="rsc-options" \
-        resource-stickiness="100"
 ```
+```xml
+在核心中设置ODBC(https://wiki.freeswitch.org/wiki/Using%5FODBC%5Fin%5Fthe%5Fcore "Using ODBC in the core")
+如果您打算使用限制，请在limit.conf.xml中设置DSN
 
-####   
-ODBC
+#### Sofia配置文件
 
-* Please set up [ODBC in the core](https://wiki.freeswitch.org/wiki/Using%5FODBC%5Fin%5Fthe%5Fcore "Using ODBC in the core")
-* Also, set up the DSN in limit.conf.xml if you plan on using limits
-
-#### Sofia Profiles
-
-In each profile that you want to be able to failover, you need to tell FreeSWITCH to track all channel states in the database...
+在您希望能够故障转移的每个配置文件中，您需要告诉FreeSWITCH跟踪数据库中的所有通道状态...
 
 ```xml
 <param name="track-calls" value="true"/> 
 ```
 
-And tell it which database to use that will be replicated.
+并告诉它要使用的将被复制的数据库。
 
 ```xml
 <param name="odbc-dsn" value="dsn:username:password"/>
 ```
 
-Also, you'll have to specify the SIP, RTP bind IP etc to be the floating IP, rather than the machine's auto-detected IP.
+此外，您还需要将SIP、RTP绑定IP等设置为浮动IP，而不是机器的自动检测IP。
 
 ```xml
-rtp-ip, sip-ip, presence-hosts, ext-rtp-ip, ext-sip-ip
+rtp-ip、sip-ip、presence-hosts、ext-rtp-ip、ext-sip-ip
 ```
 
-You can leave the profile running binded to the floating IP that's not yet there. However, your OS may not allow it until you do:
-
-```xml
-On ubuntu: sysctl net.ipv4.ip_nonlocal_bind=1
-Others:
-sysctl to set net.ipv4.ip_nonlocal_bind = 1
-or
-echo 1 > /proc/sys/net/ipv4/ip_nonlocal_bind
+您可以将配置文件绑定到尚未存在的浮动IP上继续运行。但是，您的操作系统可能不允许直到您完成以下步骤：
 ```
 
-#### Voicemail
+在 Ubuntu 上: `sysctl net.ipv4.ip_nonlocal_bind=1`
 
-Specify the ODBC-DSN to store the voicemail preferences and messages:
+其他系统:
+设置 `net.ipv4.ip_nonlocal_bind = 1`：
+
+- 通过 `sysctl` 命令
+- 或者执行命令 `echo 1 > /proc/sys/net/ipv4/ip_nonlocal_bind`
+
+#### 语音邮件
+
+指定用于存储语音邮件偏好和消息的 ODBC-DSN：
+
+在 `voicemail.conf.xml` 中：
 
 ```xml
-in: voicemail.conf.xml
 <param name="odbc-dsn" value="dsn:username:password"/>
 ```
 
-  
-And, make sure that either
+并确保：
 
-* Both servers have the same domain name in their configuration (will be if you rsync them, but the default may be the machine's IP)
-* OR change the default voicemail storage location.
+- 两个服务器在配置中具有相同的域名（如果通过 rsync 复制，会具有相同的域名），或者
+- 修改默认的语音邮件存储位置。
 
-NOTE: There needs to be a mechanism to sync the voicemail greetings and messages. An rsync --update from both sides will keep it current, but will keep deleted voicemail files. A one-way rsync from the master with --delete is better, perhaps triggered with a hangup hook from the dialplan after transferring to voicemail, OR some sort of cron set up in pacemaker. Remember, this needs to be asynchronous-able, so that you can push updates to a server that was down and comes back up.
+注意：需要确保存在一种机制来同步语音邮件的问候语和消息。通过双方进行 `rsync --update` 可以保持同步，但是已删除的语音邮件文件仍然会保留。通过主服务器进行单向 `rsync --delete` 更好，可以在传输到语音邮件后通过拨号计划的挂机钩子触发，或者在 pacemaker 中设置某种形式的 cron。请记住，需要异步进行，这样您可以将更新推送到一个已关闭并重新启动的服务器。
 
-#### XML_CDR Logs
+#### XML_CDR 日志
 
-If you just write the log, that can be easily rsync'd without worry of deletions.
+如果只是写日志，则可以轻松进行 `rsync` 而无需担心删除。
 
-If you use FusionPBX, please make sure you are using the web submission, so that the CDRs get written once directly into the archive folder, rather than getting written to the archive folder and THEN moved. That would make things confusing because we would need to keep track of the master to keep the xml logs in sync.
+如果使用 FusionPBX，请确保使用 web 提交，这样 CDR 将直接写入存档文件夹，而不是先写入存档文件夹然后再移动。如果这样做，会使事情变得混乱，因为我们需要追踪主服务器以保持 xml 日志同步。
 
-## See Also
+## 参见
 
-[High Availability](../Configuration/High-Availability/index.mdx#about)
-
-  
-
+[高可用性](../Configuration/High-Availability/index.mdx#about)

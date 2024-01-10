@@ -1,17 +1,14 @@
+# 外部电话示例
 
-# Example Offsite phones 
+## 关于
 
- 
+以下是远程分机20xx之间互相通话以及拨打内部电话的步骤。
 
-## About
+点击此处展开目录
 
-Below are steps to get remote Exts 20xx able to call one another and call on-site telephones.
+* 1 [参考资料](#see-also)
 
-Click here to expand Table of Contents
-
-* 1 [See Also](#see-also)
-
-In the default directory, register the phones as normal:
+在默认目录中，按照正常流程注册电话：
 
 **freeswitch/conf/directory/default/2001.xml**
 
@@ -32,47 +29,18 @@ In the default directory, register the phones as normal:
   </include>
 ```
 
-Next, create a new profile. The example is a doublenat profile set to port 5090:
+接下来，创建一个新的配置文件。以下示例是一个设置为5090端口的双重NAT配置文件：
 
 **freeswitch/conf/sip\_profiles/doublenat.xml**
 
 ```xml
-     <profile name="doublenat">
-     <gateways>
-     <X-PRE-PROCESS cmd="include" data="doublenat/*.xml"/>
-     </gateways>
-     <settings>
-     <param name="debug" value="0"/>
-     <param name="sip-trace" value="no"/>
-     <param name="rfc2833-pt" value="101"/>
-     <param name="sip-port" value="5090"/>
-     <param name="dialplan" value="XML"/>
-     <param name="context" value="public"/>
-     <param name="dtmf-duration" value="100"/>
-     <param name="codec-prefs" value="$${outbound_codec_prefs}"/>
-     <param name="use-rtp-timer" value="true"/>
-     <param name="hold-music" value="$${hold_music}"/>
-     <param name="rtp-timer-name" value="soft"/>
-     <param name="manage-presence" value="false"/>
-     <param name="aggressive-nat-detection" value="true"/>
-     <param name="apply-nat-acl" value="rfc1918"/> 
-     <param name="inbound-codec-negotiation" value="generous"/>
-     <param name="nonce-ttl" value="60"/>
-     <param name="auth-calls" value="false"/>
-     <param name="rtp-timeout-sec" value="1800"/>
-     <param name="rtp-ip" value="$${local_ip_v4}"/>
-     <param name="sip-ip" value="$${local_ip_v4}"/>
-     <param name="ext-rtp-ip" value="$${external_rtp_ip}"/>
-     <param name="ext-sip-ip" value="$${external_sip_ip}"/>
-     <param name="rtp-timeout-sec" value="300"/>
-     <param name="rtp-hold-timeout-sec" value="1800"/>
-     </settings>
-     </profile> 
+<extension name="doublenat">
+    <condition field="destination_number" expression="^doublenat$">
+        <action application="export" data="sip_profile=doublenat"/>
+        <action application="bridge" data="{context}"/> 
+    </condition>
+</extension>
 ```
-
-Finally, inside the //freeswitch/conf/dialplan/public.xml, you can put the following. You can add other features the same as the default.xml but this will get the phones going.
-
-**freeswitch/conf/dialplan/public.xml**
 
 ```xml
       <extension name="public_extensions"> 
@@ -82,9 +50,7 @@ Finally, inside the //freeswitch/conf/dialplan/public.xml, you can put the follo
      </extension>
 ```
 
- ### See Also
+ ### 请参阅
 
-* [Dialplan Recipes](../../Dialplan-Recipes_9634252.mdx#about)
-* [NAT Traversal](../../../Networking/NAT-Traversal_3375417.mdx#about)
-
-
+* [拨号计划示例](../../Dialplan-Recipes_9634252.mdx#about)
+* [NAT穿透](../../../Networking/NAT-Traversal_3375417.mdx#about)

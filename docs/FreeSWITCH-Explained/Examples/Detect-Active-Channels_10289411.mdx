@@ -1,51 +1,44 @@
+# 检测活动通道
 
-# Detect Active Channels 
+## 关于
 
- 
+列出活动呼叫会话的方法。
 
-## About
-
-Methods to list active call sessions.
-
-## Heartbeat
+## 心跳
 
 \>From: bkw\_\_
 
-Even more efficient is to subscribe to the HEARTBEAT, as it has the session count in there. This fires every few seconds.
+订阅心跳消息可能更加高效，因为它包含了会话计数。这个消息每几秒钟触发一次。
 
-## Lua Script
+## Lua脚本
 
 \>From: Marcel Haldemann  
- Sent: Tuesday, 26 January, 2016 09:38  
- To: FreeSWITCH Users Help  
- Subject: Re: \[Freeswitch-users\] DETECT ACTIVE CHANNELS
+发送时间: 2016年1月26日星期二 09:38  
+收件人: FreeSWITCH用户帮助  
+主题: Re: \[Freeswitch-users\] 检测活动通道
 
-For LUA it's (FS 1.6):
-
-**Lua active channel display**
+对于LUA（FS 1.6）来说，可以使用以下代码来显示活动通道：
 
 ```xml
 api = freeswitch.API();
 num_channels = api:executeString("show channels count");
 digits = api:execute("regex", num_channels  .. "|/([0-9]*)/|$1");
-freeswitch.consoleLog("info", "num channels is: " .. digits .. "\n")
+freeswitch.consoleLog("info", "活动通道数为: " .. digits .. "\n")
 ```
 
-to get the number of active channels.
+可以通过这段代码获取活动通道的数量。
 
-## XML Dialplan
+## XML拨号计划
 
-In the XML Dialplan it could be done like this:
+在XML拨号计划中可以这样实现：
 
 ```xml
 <action application="set" data="foo=${regex(${show channels count}|/([0-9]*)/|%1)}"/>
 <action application="log" data="INFO foo: ${foo}" />
 ```
 
-Note: If you only want outbound calls you could try:
+注意：如果你只想要出站呼叫，可以尝试使用以下命令：
 
 show channels like external 
 
-as the command, you then however must have a SIP profile that is only for outbound (in this case named 'external').
-
-
+并且你还必须有一个仅用于出站的SIP配置文件（在这种情况下命名为'external'）。

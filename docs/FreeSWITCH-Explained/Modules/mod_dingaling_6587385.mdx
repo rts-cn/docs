@@ -1,51 +1,49 @@
-
 # mod_dingaling 
 
  
 
-## About
+## 关于
 
-mod\_dingaling is a generic xmpp registration that can be used for Google talk or any other XMPP integration.
+mod\_dingaling是一个通用的xmpp注册模块，可用于Google Talk或任何其他XMPP集成。
 
-More information about Jingle can be found here: [Wikipedia Jingle Protocol](http://en.wikipedia.org/wiki/Jingle%5F%28protocol%29)
+关于Jingle的更多信息可以在这里找到：[维基百科Jingle协议](http://en.wikipedia.org/wiki/Jingle%5F%28protocol%29)
 
-As of 2022.08.29 mod\_dingaling was removed from FreeSWITCH tree and placed in <https://github.com/freeswitch>   
+截至2022年08月29日，mod\_dingaling已从FreeSWITCH树中移除，并放置在<https://github.com/freeswitch>上。
 
-  
-It has been announced that Google Voice over xmpp service, which is a dependency of several of the below examples, will be discontinued on May 15th, 2014\. Keep that in mind when planning any deployments using GV.
+已宣布Google Voice通过xmpp服务将于2014年5月15日停止运营，这是下面示例中几个依赖项，请在规划任何使用GV的部署时考虑到这一点。
 
-Click here to expand Table of Contents
+点击此处展开目录
 
-* 1 [Getting it working](#getting-it-working)  
-   * 1.1 [OpenSSL](#openssl)  
-      * 1.1.1 [CentOS 5.x](#centos-5x)  
+* 1 [开始运行](#getting-it-working)
+   * 1.1 [OpenSSL](#openssl)
+      * 1.1.1 [CentOS 5.x](#centos-5x)
          * 1.1.2 [Ubuntu 10.x / Debian](#ubuntu-10x--debian)
-* 2 [Build Module](#build-module)  
-   * 2.1 [Windows using MSVC 2008](#windows-using-msvc-2008)  
-   * 2.2 [Enable Module](#enable-module)  
-   * 2.3 [Sample Configuration (Google)](#sample-configuration-google)  
-   * 2.4 [Sample Configuration w/ Jingle & Video support (Google)](#sample-configuration-w-jingle--video-support-google)  
-   * 2.5 [Sample Configuration (Openfire)](#sample-configuration-openfire-)  
-   * 2.6 [Sample Configuration (ejabberd)](#sample-configuration-ejabberd)
-* 3 [Reference](#reference)  
-   * 3.1 [Variables](#variables)  
-   * 3.2 [Events](#events)
-* 4 [FAQ](#faq)  
-   * 4.1 [What is Component (server to server) mode?](#what-is-component-server-to-server-mode)  
-   * 4.2 [How do I call the FreeSWITCH conference?](#how-do-i-call-the-freeswitch-conference)  
-   * 4.3 [Why do I get messed up sound when I try to connect Google Talk to echo or delay\_echo?](#why-do-i-get-messed-up-sound-when-i-try-to-connect-google-talk-to-echo-or-delay_echo)  
-   * 4.4 [How do I send DTMF with Googletalk?](#how-do-i-send-dtmf-with-googletalk)  
-   * 4.5 [Tell me more about mod\_conference integration](#tell-me-more-about-mod_conference-integration)
-* 5 [Troubleshooting](#troubleshooting)  
-   * 5.1 [The FreeSWITCH conference does not respond to my invites?](#the-freeswitch-conference-does-not-respond-to-my-invites)  
-   * 5.2 [FreeSWITCH and Google Talk can't get connected to each other after a successful ringing and answering](#freeswitch-and-google-talk-cant-get-connected-to-each-other-after-a-successful-ringing-and-answering)
-* 6 [See also](#see-also)
+* 2 [构建模块](#build-module)
+   * 2.1 [使用MSVC 2008在Windows上](#windows-using-msvc-2008)
+   * 2.2 [启用模块](#enable-module)
+   * 2.3 [示例配置（Google）](#sample-configuration-google)
+   * 2.4 [示例配置带有Jingle和视频支持（Google）](#sample-configuration-w-jingle--video-support-google)
+   * 2.5 [示例配置（Openfire）](#sample-configuration-openfire-)
+   * 2.6 [示例配置（ejabberd）](#sample-configuration-ejabberd)
+* 3 [参考](#reference)
+   * 3.1 [变量](#variables)
+   * 3.2 [事件](#events)
+* 4 [常见问题](#faq)
+   * 4.1 [什么是组件（服务器到服务器）模式？](#what-is-component-server-to-server-mode)
+   * 4.2 [如何调用FreeSWITCH会议？](#how-do-i-call-the-freeswitch-conference)
+   * 4.3 [为什么在将Google Talk连接到回声或延迟回声时声音会混乱？](#why-do-i-get-messed-up-sound-when-i-try-to-connect-google-talk-to-echo-or-delay_echo)
+   * 4.4 [如何在Googletalk中发送DTMF？](#how-do-i-send-dtmf-with-googletalk)
+   * 4.5 [告诉我关于mod_conference集成的更多信息](#tell-me-more-about-mod_conference-integration)
+* 5 [故障排除](#troubleshooting)
+   * 5.1 [FreeSWITCH会议不响应我的邀请？](#the-freeswitch-conference-does-not-respond-to-my-invites)
+   * 5.2 [成功响铃和接听后，FreeSWITCH和Google Talk无法连接](#freeswitch-and-google-talk-cant-get-connected-to-each-other-after-a-successful-ringing-and-answering)
+* 6 [也可参考](#see-also)
 
-## Getting it working
+## 开始运行
 
 ### OpenSSL
 
-OpenSSL is required to ensure that your XMPP stanzas are encrypted as required by the specifications. Before running, make sure you have the ssl package installed.
+OpenSSL是必需的，以确保按照规范要求对XMPP数据包进行加密。在运行之前，请确保已安装了ssl软件包。
 
 #### CentOS 5.x
 
@@ -59,67 +57,72 @@ yum install openssl-devel
 sudo apt-get install libssl-dev
 ```
 
-## Build Module
+## 构建模块
 
-Make sure the following line is present and uncommented in /usr/src/freeswitch/modules.conf
+请确保以下行在 /usr/src/freeswitch/modules.conf 中存在且未被注释掉
 
 ```xml
 endpoints/mod_dingaling
 ```
 
-Then build and install mod\_dingaling:
+然后构建并安装 mod_dingaling：
 
 ```xml
 make mod_dingaling-install
 ```
 
-For freeBSD, use gmake. 
+在freeBSD上，请使用gmake。
 
-If you have installed SSL after building the dingaling module, you will need to re-bootstrap, re-configure and re-build freeswitch.
+如果您在构建dingaling模块后安装了SSL，则需要重新引导、重新配置和重新构建freeswitch。
 
-Run 'fs\_cli'.
+运行 'fs\_cli'。
 
 ```xml
 load mod_dingaling
 ```
 
-#### Windows using MSVC 2008
+#### 使用MSVC 2008的Windows系统
 
-* Since October 17,2011 this is no longer needed now OpenSSL is used. Mod\_dingaling will now build with ssl out of the box.
-* Install [GnuTls for windows](http://josefsson.org/gnutls4win/). Take gnutls-2.9.9.exe, maybe more recent will work.
-* Build libgnutls-26.lib. This file will be used as a import library for Visual Studio projects. Open visual studio command prompt (**not** your normal console) and type in GnuTls bin folder:  
-```xml  
-lib /def:libgnutls-26.def  
+*自从2011年10月17日以后，现在不再需要这个了，现在使用OpenSSL。Mod\_dingaling现在能直接构建带有ssl的版本。*
+
+*安装[Windows的GnuTls](http://josefsson.org/gnutls4win/)。选择gnutls-2.9.9.exe，也许更新的版本也能工作。*
+
+*编译libgnutls-26.lib。这个文件将作为Visual Studio项目的导入库。在Visual Studio命令提示符（不是普通控制台）中打开，然后在GnuTls的bin目录中输入以下命令：*
+```xml
+lib /def:libgnutls-26.def
 ```
-* Configure ixemel library to work with TLS library. [Example](https://wiki.freeswitch.org/wiki/Ixemel%5FMSVS%5Fproject%5Fexample "Ixemel MSVS project example")  
-   * Add additional include directory.  
-   * Add additional dependency
-* If you have problems with the iksemel compilation process try:  
-   * for "syntax error: type" because of va\_arg: include &lt;starg.h> in config.h  
-   * for ENOENT errors: include &lt;errno.h> - now found that the reason was config.h in libs/win32/iksemel was not included - to be checked  
-   * for ssize\_t errors: add typedef long ssize\_t in gnutls.h
-* If you have problems linking iksemel.lib because of strcasecmp errors, add the following in iksemel/utility.c  
-   * #define strcasecmp(s1, s2) stricmp(s1, s2)  
+*配置ixemel库以与TLS库一起使用。[示例](https://wiki.freeswitch.org/wiki/Ixemel%5FMSVS%5Fproject%5Fexample "Ixemel MSVS project example")*
+   * 添加额外的包含目录。
+   * 添加额外的依赖项。
+
+*如果在iksemel编译过程中遇到问题，请尝试：*
+   * 对于"语法错误：type"，由于va\_arg: 在config.h中包含&lt;starg.h>。
+   * 对于ENOENT错误：包含&lt;errno.h> - 现在发现问题是libs/win32/iksemel中未包含config.h - 需要检查一下。
+   * 对于ssize\_t错误：在gnutls.h中添加typedef long ssize\_t。
+
+*如果由于strcasecmp错误而导致无法链接iksemel.lib，在iksemel/utility.c中添加以下内容：*
+   * #define strcasecmp(s1, s2) stricmp(s1, s2)
    * #define strncasecmp(s1, s2, n) strnicmp(s1, s2, n)
-* Make sure the TLS dlls are copied to the configuration environment. For example, if you’re running on debug mode, you should have the following files in &lt;your freeswitch root>/Debug:  
-   * libgcrypt-11.dll  
-   * libgnutls-26.dll  
-   * libgnutls-extra-26.dll  
-   * libgnutls-openssl-26.dll  
-   * libgpg-error-0.dll  
+
+*确保将TLS的DLL文件复制到配置环境中。例如，如果您在调试模式下运行，您应该在&lt;your freeswitch root>/Debug目录中有以下文件：*
+   * libgcrypt-11.dll
+   * libgnutls-26.dll
+   * libgnutls-extra-26.dll
+   * libgnutls-openssl-26.dll
+   * libgpg-error-0.dll
    * libtasn1-3.dll
 
-#### Enable Module
+#### 启用模块
 
-Uncomment the following in [Modules.conf.xml](./index.mdx#about).
+取消在[Modules.conf.xml](./index.mdx#about)中的以下注释。
 
 ```xml
 <load module="mod_dingaling"/>
 ```
 
-#### Sample Configuration (Google)
+#### 示例配置（谷歌）
 
-Settings similar to the following should work for A basic gtalk account:
+以下类似的设置应该适用于基本的gtalk账户：
 
 ```xml
 <profile type="client">
@@ -128,24 +131,24 @@ Settings similar to the following should work for A basic gtalk account:
    <param name="password" value="myPassWord"/>
    <param name="server" value="talk.google.com"/>
    <param name="dialplan" value="XML"/>
-   <param name="message" value="FreeSwitch (The Future of Telephony)"/> <!-- You must specify a message for the profile to be valid -->
+   <param name="message" value="FreeSwitch（电话的未来）"/> <!-- 你必须为配置文件指定一条消息 -->
    <param name="rtp-ip" value="auto"/>
-   <!-- if you are behind NAT, you should probably use STUN -->
+   <!-- 如果你在NAT后面，你可能需要使用STUN -->
    <param name="ext-rtp-ip" value="$${external_rtp_ip}"/>
    <param name="auto-login" value="true"/>
-   <param name="auto-reply" value="Press *Call* to join my conference"/>
+   <param name="auto-reply" value="按*Call*加入我的会议"/>
    <param name="sasl" value="plain"/>
    <param name="tls" value="true"/>
    <param name="use-rtp-timer" value="true"/>
-   <param name="exten" value="1000"/> <!-- The extension you want a call in to connect to -->
- </profile>
+   <param name="exten" value="1000"/> <!-- 你想要将呼叫连接到的分机 -->
+</profile>
 ```
 
-You may also want to enable debug mode in Dingaling.conf.xml. This will enable you to see XMPP messages.
+你可能还想在Dingaling.conf.xml中启用调试模式，这将使你能够看到XMPP消息。
 
-#### Sample Configuration w/ Jingle & Video support (Google)
+#### 支持Jingle和视频的示例配置（谷歌）
 
-Settings similar to the following will enable Jingle support:
+类似以下的设置将启用Jingle支持：
 
 ```xml
 <profile type="client">
@@ -154,21 +157,21 @@ Settings similar to the following will enable Jingle support:
    <param name="password" value="myPassWord"/>
    <param name="server" value="talk.google.com"/>
    <param name="dialplan" value="XML"/>
-   <param name="message" value="FreeSwitch (The Future of Telephony)"/> <!-- You must specify a message for the profile to be valid -->
+   <param name="message" value="FreeSwitch (The Future of Telephony)"/> <!-- 需要指定配置文件的消息内容 -->
    <param name="rtp-ip" value="auto"/>
-   <!-- if you are behind NAT, you should probably use STUN -->
+   <!-- 如果您在NAT后面，请使用STUN -->
    <param name="ext-rtp-ip" value="$${external_rtp_ip}"/>
    <param name="auto-login" value="true"/>
-   <param name="auto-reply" value="Press *Call* to join my conference"/>
+   <param name="auto-reply" value="按*Call*加入我的会议"/>
    <param name="sasl" value="plain"/>
    <param name="tls" value="true"/>
    <param name="use-jingle" value="true"/> 
    <param name="use-rtp-timer" value="true"/>
-   <param name="exten" value="1000"/> <!-- The extension you want a call in to connect to -->
+   <param name="exten" value="1000"/> <!-- 您要接通呼叫的分机号 -->
  </profile>
 ```
 
-To enable Video support, edit dingaling.conf.xml as follows (video does NOT work with GVoice):
+要启用视频支持，请编辑dingaling.conf.xml如下（视频与GVoice不兼容）：
 
 ```xml
 <configuration name="dingaling.conf" description="XMPP Jingle Endpoint">
@@ -180,18 +183,19 @@ To enable Video support, edit dingaling.conf.xml as follows (video does NOT work
 </configuration>
 ```
 
-H264 codec is now enabled by default however it results in all outbound calls through Google Talk to fail immediately with a 'Fast Busy', removing it fixes issue. - [Daniel Sokolowski](https://wiki.freeswitch.org/wiki/User:Daniel%5FSokolowski "User:Daniel Sokolowski") 01:24, 13 January 2013 (EST)
+现在，默认情况下启用了H264编解码器，但这会导致通过Google Talk进行的所有呼出电话立即失败并显示“忙”，删除H264编解码器可以解决这个问题。- [Daniel Sokolowski](https://wiki.freeswitch.org/wiki/User:Daniel%5FSokolowski "User:Daniel Sokolowski") 01:24, 2013年1月13日(东部标准时间)
 
-#### Sample Configuration (Openfire) 
+#### 示例配置 (Openfire)
+```
 
-1. **In Openfire:**  
-   * * Navigate to Server -> Server Settings -> External Components Enable and set port + secret
-2. **In freeswitch**  
-   * Make a copy of the included server.xml (in conf/jingle\_profiles/) and configure the password and server parameters (tweak the others as applicable for your situation).
+1. **在 Openfire 中：**  
+   * 导航到服务器 -> 服务器设置 -> 启用外部组件并设置端口+密钥
+2. **在 freeswitch 中：**  
+   * 复制已包含的 server.xml（位于 conf/jingle_profiles/ 目录下），并配置密码和服务器参数（根据您的情况调整其他参数）。
 
-One "reloadxml" and "reload mod\_dingaling" later and you should have a successful connection!
+执行"reloadxml" 和 "reload mod_dingaling"命令后，您应该成功建立连接！
 
-#### Sample Configuration (ejabberd)
+#### 示例配置（ejabberd）：
 
 ```xml
 <profile type="component">
@@ -206,25 +210,25 @@ One "reloadxml" and "reload mod\_dingaling" later and you should have a successf
  </profile>
 ```
 
-## Reference
+## 参考资料
 
-### Variables
+### 变量
 
-mod\_dingaling sets the following variables:
+mod_dingaling 设置以下变量：
 
 ```xml
-variable_dl_from_user: accessed as 'dl_from_user' using the getVariable API call
-variable_dl_from_host: accessed as 'dl_from_host' using the getVariable API call
+variable_dl_from_user：使用 getVariable API 调用访问为 'dl_from_user'
+variable_dl_from_host：使用 getVariable API 调用访问为 'dl_from_host'
 ```
 
 ```xml
-Lua Example:
-freeswitch.consoleLog("info", "Receiving call from " .. session:getVariable('dl_from_user') .. " at the domain " .. session:getVariable('dl_from_host') .. "\n")
+Lua 示例：
+freeswitch.consoleLog("info", "来自 " .. session:getVariable('dl_from_user') .. " 的呼叫正在 " .. session:getVariable('dl_from_host') .. " 域中进行\n")
 ```
 
-### Events
+### 事件
 
-Custom events:
+自定义事件：
 
 ```xml
 dingaling::login_success
@@ -232,56 +236,54 @@ dingaling::login_failure
 dingaling::connected
 ```
 
-## FAQ
+## 常见问题
 
-### What is Component (server to server) mode?
+### 什么是组件（服务器对服务器）模式？
 
-Component mode means you can log in as a server component so you can get all of the messages for the whole domain, allowing you to use any random user id at the given domain.
+组件模式意味着您可以以服务器组件的身份登录，以便获取整个域中的所有消息，从而允许您使用给定域中的任意随机用户 ID。
 
-### How do I call the FreeSWITCH conference?
+### 如何调用 FreeSWITCH 会议？
 
-* Add a new buddy to your buddy list: **[conf+888@conference.freeswitch.org](mailto:conf+888@conference.freeswitch.org)**
-* Click the entry and choose Call
+* 将新的好友添加到好友列表中：**[conf+888@conference.freeswitch.org](mailto:conf+888@conference.freeswitch.org)**
+* 点击条目，选择呼叫
 
-### Why do I get messed up sound when I try to connect Google Talk to echo or delay_echo?
+### 当我尝试将Google Talk连接到回音或延迟回音时，为什么声音会混乱？
 
-This will happen when FreeSWITCH is configured to use speex with Dingaling.
+这种情况会在FreeSWITCH配置为使用Dingaling的speex时发生。
 
-There is a bug in the current version of Google Talk (1.0.0.104) that causes it to send G.711 PCMU instead of speex audio even though it signals that speex is accepted and will be used. Many softphones are able to deal with this, but it happens so that Google Talk itself is not! It will expect speex, but will receive its own G.711 PCMU data back causing it to produce messy sounds (and even crash after a while in some cases).
+当前版本的Google Talk（1.0.0.104）存在一个错误，导致它发送G.711 PCMU而不是speex音频，尽管它表明接受并将使用speex。许多软电话能处理这个问题，但是Google Talk本身却不能！它将期望speex，但会收到自己的G.711 PCMU数据，导致产生杂乱的声音（在某些情况下甚至会崩溃）。
 
-To use echo or delay\_echo you should use G.711 PCMU. Versions down to 1.0.0.96 are verified to have this bug too.
+要使用回音或延迟回音，您应该使用G.711 PCMU。版本1.0.0.96及更低的版本也经过验证存在此错误。
 
-### How do I send DTMF with Googletalk?
+### 如何在Google Talk中发送DTMF？
 
-The Gtalk client does not support sending DTMF codes. As a workaround, DTMF from within GTtalk can be sent by sending a chat message and prefixing the DTMF code with a '+' sign.
+Gtalk客户端不支持发送DTMF代码。作为一种解决方法，可以通过发送聊天消息，并在DTMF代码前加上“+”号来发送Gtalk中的DTMF。
 
-So to send \*1, enter +\*1 in the messaging box
+因此，要发送\*1，请在消息框中输入+\*1
 
-### Tell me more about mod_conference integration
+### 告诉我更多关于mod_conference集成的内容
 
-mod\_dingaling muc support is limited to non-existent at the present time (January 2012).
+目前（2012年1月），mod_dingaling muc支持非常有限甚至不存在。
 
-Watch this space for the ability to list/kick users etc.
+请关注此处以了解相关的用户列表/踢出用户等功能。
 
-(Information gleaned from "bougyman")
+（信息来源："bougyman"）
 
-## Troubleshooting
+## 故障排除
 
-### The FreeSWITCH conference does not respond to my invites?
+### FreeSWITCH会议无响应我的邀请？
 
-If you use [Google Apps](https://www.google.com/a/) for your email domain hosting, and you are logging in with an email address from this domain, it may not work unless you enable S2S properly using the information provided in the URL below:
+如果您使用[Google Apps](https://www.google.com/a/)作为您的电子邮件域托管平台，并且您使用该域的电子邮件地址登录，可能无法正常工作，除非您按照以下URL中提供的信息正确启用S2S：
 
 <http://www.google.com/support/a/bin/answer.py?answer=34143>
 
-### FreeSWITCH and Google Talk can't get connected to each other after a successful ringing and answering
+### FreeSWITCH 和 Google Talk 在鸣响和接听成功后无法互相连接
 
-It appears that there are some localised versions of Google Talk that are very old even though they report to be version 1.0.0.105\. Those versions do not even support Speex yet and also lack other features found in the latest version. These versions also do not connect to FreeSWITCH. To see if you are dealing with a problem caused by an old version of Google Talk, please test everything with the latest English version! If you still have problems, there is something else going on.
+看起来有些本地化版本的 Google Talk 非常古老，即使它们声称是 1.0.0.105 版本。这些版本甚至不支持 Speex，并且缺少最新版本中的其他功能。这些版本也无法连接到 FreeSWITCH。如果您遇到与老版本 Google Talk 相关的问题，请尝试使用最新的英文版本进行测试！如果仍然存在问题，那么可能是其他原因造成的。
 
-Known localisations to have this problem: Dutch, Russian
+已知会有此问题的本地化版本：荷兰语，俄语
 
-## See also
+## 另请参阅
 
 * [dingaling.conf.xml](https://wiki.freeswitch.org/wiki/Dingaling.conf.xml "Dingaling.conf.xml")
 * [Google Voice](http://wiki.freeswitch.org/wiki/Google%5FVoice)
-
-

@@ -1,44 +1,38 @@
+# mod_opal
 
-# mod_opal 
+## 关于
 
- 
+mod_opal 是一个基于 [Opal](http://www.opalvoip.org/) 电话通信库的多协议能力的端点模块。它为 FreeSWITCH 添加了 H.323 和 IAX2 支持。
 
-## About
+该模块仍被视为测试版质量。它可能正常工作，也可能不正常工作，并且可能缺少某些功能。
 
-mod\_opal is a multi-protocol capable endpoint module, based on the [Opal](http://www.opalvoip.org/) telephony library. It adds H.323 and IAX2 support to FreeSWITCH.
+点击此处展开目录
 
-This module is still considered beta quality. It may or may not work as expected and some features may be missing.
+* 1 [状态](#status)
+* 2 [安装](#installation)
+* 3 [手动构建](#manual-build)
+* 4 [配置](#configuration)
+* 5 [使用方法](#usage)
+* 6 [应用程序](#applications)
+* 7 [API 命令](#api-commands)
+* 8 [事件](#events)
+* 9 [通道变量](#channel-variables)
+* 10 [已知问题](#known-bugs)
+* 11 [参考资料](#see-also)
 
-  
-Click here to expand Table of Contents
+## 状态
 
-* 1 [Status](#status)
-* 2 [Installation](#installation)
-* 3 [Manual Build](#manual-build)
-* 4 [Configuration](#configuration)
-* 5 [Usage](#usage)
-* 6 [Applications](#applications)
-* 7 [API commands](#api-commands)
-* 8 [Events](#events)
-* 9 [Channel Variables](#channel-variables)
-* 10 [Known Bugs](#known-bugs)
-* 11 [See Also](#see-also)
+测试版。该模块自 FreeSWITCH 1.0.2 (svn revision #10734, 2008-12-12) 版本开始可用。
 
-## Status
+## 安装
 
-Beta. This module is available since FreeSWITCH 1.0.2 (svn revision #10734, 2008-12-12)
+如果您想尝试 mod_opal，请确保使用 FreeSWITCH 源代码目录下的 'buildopal.sh' 脚本。此脚本将安装 OPAL 和所需的 PTLIB。此外，请确保将您的 FreeSWITCH 安装更新到最新的 Git 版本。[Michael S Collins, 2009-05-04](http://www.freeswitch.org/node/179)
 
-## Installation
+## 手动构建
 
-If you would like to try mod\_opal be sure to use the 'buildopal.sh' script in the build subdirectory of the FreeSWITCH source directory. This script will install OPAL and the required PTLIB. Also, be sure to update your FreeSWITCH installation to the latest Git. [Michael S Collins, 2009-05-04](http://www.freeswitch.org/node/179)
+在安装 mod_opal 之前，您需要先安装 Opal 及其依赖项。以下是一份简短的说明列表：
 
-## Manual Build
-
-You need to install Opal and it's dependencies first, before you can install mod\_opal. Here's a short list of instructions:
-
-mod\_opal needs the current svn versions of ptlib and Opal
-
-Install ptlib first:
+首先安装 ptlib：
 
 ```xml
 cd /root
@@ -49,7 +43,7 @@ make
 make install
 ```
 
-Opal is next:
+然后是 Opal：
 
 ```xml
 cd ..
@@ -60,68 +54,24 @@ make
 make install
 ```
 
-Now you're ready to build mod\_opal:
+现在您已经准备好构建 mod_opal 了：
 
 ```xml
-cd freeswitch # or whatever your freeswitch source directory is called
-make mod_opal
-make mod_opal-install
+<extension name="call_to_cisco_cucm">
+  <condition field="destination_number" expression="^26(\d{2})$">
+    <action application="bridge" data="h323/foo@\${domain_name}"/>
+  </condition>
+</extension>
 ```
 
-## Configuration
-
-  
-The configuration is separated into a global ("settings") and a listener section.
-
-opal.conf.xml:
-
-```xml
-<configuration name="opal.conf" description="Opal Endpoints">
-  <settings>
-    <param name="trace-level" value="4"/>
-    <param name="context" value="default"/>
-    <param name="dialplan" value="XML"/>
-    <param name="codec-prefs" value="PCMU"/>
-  </settings>
-  <listeners>
-    <listener name="default">
-      <param name="h323-ip" value="$${local_ip_v4}"/>
-      <param name="h323-port" value="1720"/>
-    </listener>
-  </listeners>
-</configuration>
-```
-
-This configuration creates a new H.323 listener for the host's main ip detected by FreeSWITCH on port 1720 (the H.323 default port).
-
-To permit incoming calls to the FS server edit the vars.xml file and set the var domain\_name which will use opal/h323 to redirect calls to extensions.
-
-Add this into vars.xml files:
-
-```xml
-<X-PRE-PROCESS cmd="set" data="domain_name=$${local_ip_v4}"/>
-```
-
-The FS server is now ready and knows who sent the h323 calls from the external equipment.
-
-## Usage
-
-These examples may be wrong
-
-```xml
-originate opal/h323:foo@bar.com &echo
-originate opal/iax2:foo@bar.com &echo
-```
-
-Example: call to extensions 26xx into the Server Cisco Call Manager that support H.323.  
-Add this into /opt/freeswitch/conf/dialplan/default.xml:
+This dialplan extension allows you to call extensions in the Cisco Call Manager server that support H.323 by dialing numbers starting with "26" followed by two digits.
 
 ```xml
 <extension name="ext-26xx">
   <condition field="destination_number" expression="^(26\d{2})$">
     <action application="set" data="dialed_extension=$1"/>
     <action application="export" data="dialed_extension=$1"/>
-    <!-- bind_meta_app can have these args <key> [a|b|ab] [a|b|o|s] <app> -->
+    <!-- bind_meta_app可以有以下参数 <key> [a|b|ab] [a|b|o|s] <app> -->
     <action application="bind_meta_app" data="1 b s execute_extension::dx XML features"/>
     <action application="bind_meta_app" data="2 b s record_session::$${base_dir}/recordings/${caller_id_number}.${strftime(%Y-%m-%d-%H-%M-%S)}.wav"/>
     <action application="bind_meta_app" data="3 b s execute_extension::cf XML features"/>
@@ -143,30 +93,28 @@ Add this into /opt/freeswitch/conf/dialplan/default.xml:
 </extension>
 ```
 
-## Applications
+## 应用程序
 
-none
+无
 
-## API commands
+## API 命令
 
-none
+无
 
-## Events
+## 事件
 
-none
+无
 
-## Channel Variables
+## 通道变量
 
-none
+无
 
-## Known Bugs
+## 已知问题
 
-Features missing etc.
+缺少功能等。
 
-## See Also
+## 参见
 
-* [Freeswitch Endpoints](https://freeswitch.org/confluence/label/FREESWITCH/endpoints)
+* [Freeswitch 终端](https://freeswitch.org/confluence/label/FREESWITCH/endpoints)
 * [h323plus](http://www.h323plus.org/)
 * [opal](http://www.opalvoip.org/wiki/index.php)
-
-

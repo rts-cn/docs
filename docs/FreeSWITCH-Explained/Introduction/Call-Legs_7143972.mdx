@@ -1,138 +1,131 @@
-
-# Call Legs 
-
- 
+# 呼叫通路
 
 ---
 
-Table of Contents (click to expand)
+目录（点击展开）
 
-* [0\. About](#0-about)
-* [1\. Call legs](#1-call-legs)  
-   * [1.1 A leg vs B leg](#11-a-leg-vs-b-leg)
-* [2\. Channels](#2-channels)
-* [3\. Calls](#3-calls)  
-   * [3.1 One legged calls](#31-one-legged-calls)  
-   * [3.2 Bridged call](#32-bridged-call)  
-      * [3.2.1 What happens when one side hangs up?](#321-what-happens-when-one-side-hangs-up)  
-         * [3.2.2 Can legs be bridged if they use different protocols?](#322-can-legs-be-bridged-if-they-use-different-protocols)
-* [4\. Channels vs Calls](#4-channels-vs-calls)
-* [5\. Propagating variables from the A leg to the B leg](#5-propagating-variables-from-the-a-leg-to-the-b-leg)
+* [0. 关于](#0-关于)
+* [1. 呼叫通路](#1-呼叫通路)  
+   * [1.1 A leg与B leg](#11-a-legvsb-leg)
+* [2. 通道](#2-通道)
+* [3. 通话](#3-通话)  
+   * [3.1 单腿通话](#31-单腿通话)  
+   * [3.2 桥接通话](#32-桥接通话)  
+      * [3.2.1 当一方挂断电话时会发生什么？](#321-当一方挂断电话时会发生什么)  
+         * [3.2.2 如果两个通路使用不同的协议，能够进行桥接吗？](#322-如果两个通路使用不同的协议能够进行桥接吗)
+* [4. 通道vs通话](#4-通道vs通话)
+* [5. 从A leg传递变量至B leg](#5-从a-leg传递变量至b-leg)
 
 ---
 
-## 0\. About
+## 0. 关于
 
-You will frequently find the terms **Channel**, **Call**, **Call Leg**  (the **A leg** and the **B Leg**) and **Bridged Call**. We will explain these terms here.
+在交换机处理电话呼叫时，您经常会遇到**通道（Channel）**、**通话（Call）**、**呼叫通路（Call Leg）**（**A leg**和**B Leg**）以及**桥接通话（Bridged Call）**这些术语。我们将在这里解释这些术语。
 
-## 1\. Call legs
+## 1. 呼叫通路
 
-When you place a phone call to another phone number, from the perspective of the switch that's handling the call, there are 2 parts to the call.
+当您拨打另一个电话号码时，从处理呼叫的交换机的角度来看，呼叫包含两个部分。
 
-1. First, when you dial the number, your phone starts a connection with the switch, and notifies the switch of the number you are trying to reach.
-2. Next, the switch will process the dialplan for the dialed number, and start a connection to the other party.
+1. 首先，当您拨号时，您的手机会与交换机建立连接，并向交换机通知您要拨打的号码。
+2. 接下来，交换机将处理拨打号码的拨号计划，并建立与对方的连接。
 
-So there are now 2 separate connections to the switch:
+因此，现在有两个单独的连接到交换机：
 
-1. The first one is the incoming connection from the **originator** (caller), this is sometimes called an **ingress.**
-2. The second connection is the outbound connection to the **recipient of the call** (callee), this is sometimes called the **egress**.
+1. 第一个是来自**发起人（主叫方）**的连接，有时称为**入口（ingress）**。
+2. 第二个连接是与**呼叫接收方（被叫方）**的连接，有时称为**出口（egress）**。
 
-Each of these 2 connections is referred to as a **call leg**.
+这两个连接都被称为**呼叫通路（call leg）**。
 
-A **call leg** is an inbound or outbound connection between the phone switch and an external party.
+**呼叫通路（call leg）**指的是与电话交换机和外部方之间的入站或出站连接。
 
-TODO Can the source and the destination of a call leg be the same?
+TODO 一个电话呼叫的源和目的地可以相同吗？
 
-See [this post](https://www.certificationkits.com/cisco-certification/ccna-voice-certification-topics-a-labs/ccna-voice-configuring-and-supporting-pstn/ccna-voice-what-are-call-legs/) for a more elaborate explanation.
+更详细的解释请参考[这篇文章](https://www.certificationkits.com/cisco-certification/ccna-voice-certification-topics-a-labs/ccna-voice-configuring-and-supporting-pstn/ccna-voice-what-are-call-legs/)。
 
-### 1.1 A leg vs B leg
+### 1.1 A leg和B leg
 
-The terminology of **A leg** and **B leg** can sometimes be confusing. In the strictest technical sense,
+术语**A leg**和**B leg**有时可能令人困惑。在严格的技术意义上，
 
-* the **A leg** represents _ingress (the incoming call leg)_ to the switch, while
-* the **B leg** represents _egress (the outgoing call leg)_ from the switch.
+* **A leg**代表了呼叫进入交换机的_ingress（呼入呼叫）_，而
+* **B leg**代表了呼叫从交换机出去的_egress（呼出呼叫）_。
 
-In most cases, this means that
+在大多数情况下，这意味着
 
-* the originator of the call is the **A leg**, and
-* the recipient of the call is the **B leg**.
+* 呼叫的发起者是**A leg**，而
+* 呼叫的接收者是**B leg**。
 
-## 2\. Channels
+## 2. 通道
 
-In FreeSWITCH, a **channel** represents a _call leg_.
+在FreeSWITCH中，**通道**表示呼叫的一个_leg_。
 
-Channels are controlled using the [dialplan](../Dialplan/index.mdx#0-about). In addition, each channel has a [UUID](http://en.wikipedia.org/wiki/Uuid) that can be used to programatically manipulate the call, or report on in [call detail records](../Configuration/CDR/index.mdx#about). 
+通道是使用[dialplan](../Dialplan/index.mdx#0-about) 控制的。此外，每个通道都有一个[UUID](http://en.wikipedia.org/wiki/Uuid) ，可以用于编程地操纵呼叫，或者在[通话详单](../Configuration/CDR/index.mdx#about)中进行报告。
 
-## 3\. Calls
+## 3. 呼叫
 
-The term **call** refers to the end-to-end connection from the _originator_ to the _recipient_.
+术语**呼叫**指的是从_发起者_到_接收者_的端到端连接。
 
-### 3.1 One legged calls
+### 3.1 单腿呼叫
 
-As a corollary, technically 
+作为推论，在技术上，每个_leg_也算作一个**呼叫**。
 
-each _call leg_ also counts as a **call**.
+在这种情况下，当有人正在查看他们的语音邮件时，拨号者是_发起者_，而_接收者_是交换机。由于该呼叫完全在交换机上处理，不需要将呼叫桥接到另一方，因此没有B leg。
 
-In this scenario, when someone is checking their voicemail, the caller is the _originator_, and the _recipient_ is the switch. There is no B leg as the call is handled entirely on the switch with no need to bridge the call to another party.
-
-Examples for **one legged calls**:
+**单腿呼叫**的示例包括:
 
 * [IVR](../IVR_13173361.mdx#about)
-* [voicemail](../Modules/mod-voicemail/Voicemail_13174041.mdx#--)
-* [conference](../Modules/mod_conference_3965534.mdx#list)
+* [语音邮件](../Modules/mod-voicemail/Voicemail_13174041.mdx#--)
+* [会议](../Modules/mod_conference_3965534.mdx#list)
 
-### 3.2 Bridged call
+### 3.2 桥接呼叫
 
-When the [dialplan](../Dialplan/index.mdx#0-about) sets up a call that connects an _**A leg**_ (an _inbound channel_) with a _**B leg**_ (an _outbound channel_), we call this a **bridged call.**
+当[dialplan](../Dialplan/index.mdx#0-about)建立一个连接_A腿_(一个入站通道)与_B腿_(一个出站通道)的呼叫时，我们称之为**桥接呼叫**。
 
-Therefore, in a bridged call, the 2 legs will be counted as 1 call. 
+因此，在桥接呼叫中，这两个腿将被视为一个呼叫。
 
-When calling internal extensions in a office, there is usually only 1 switch involved.
+在办公室拨打内部分机时，通常只涉及一个交换机。
 
-In a real world scenario, most often you will receive the phone call from your SIP Provider not directly from the _originator_, as a FreeSWITCH instance is only aware of the call legs it handles directly. So there might be multiple switches involved in getting the call from the _originator_ to the _recipient_. However the same concept applies: In this case, the incoming leg (_A leg_) would be the connection from your SIP provider to your FreeSWITCH instance.
+在现实世界的场景中，你通常会通过SIP提供商而不是直接从_发起方_接收电话，因为FreeSWITCH实例只知道它直接处理的呼叫腿。所以可能涉及多个交换机将呼叫从_发起方_发送到_接收方_。然而，相同的概念适用：在这种情况下，传入腿（_A腿_）将是从SIP提供商到FreeSWITCH实例的连接。
 
-#### 3.2.1 What happens when one side hangs up?
+#### 3.2.1 当一方挂断时会发生什么？
 
-Usually this means that if one leg hangs up, the other leg continues with the dialplan (unless it doesn't have any more actions, or a [dialplan](../Dialplan/index.mdx#0-about) at all). Bridges can be broken in other ways too, such as
+通常情况下，如果一个腿挂断，另一个腿会继续执行拨号计划（除非没有其他操作或者根本没有[dialplan](../Dialplan/index.mdx#0-about)）。桥接还可以通过其他方式中断，例如：
 
-* [intercept](../Modules/mod_dptools_1970333.mdx#-c)
-* [transfer](../Modules/mod-dptools/6586616.mdx#about)ring one leg somewhere else
-* [bridging](../Modules/mod-dptools/6586484.mdx#45-user) a leg to something else
-* and so on.
+* [拦截](../Modules/mod_dptools_1970333.mdx#-c)
+* [转接](../Modules/mod-dptools/6586616.mdx#about)一个腿到其他地方
+* [桥接](../Modules/mod-dptools/6586484.mdx#45-user)一个腿到其他内容
+* 等等
 
-Variables, that affect what happens to the other leg when the bridge ends, include
+影响桥接结束时对另一个腿发生的情况的变量包括：
 
 * [hangup\_after\_bridge](../../Channel-Variables-Catalog/hangup_after_bridge_16352708.mdx#-freeswitch--hangup_after_bridge-)
-* [park\_after\_bridge](../../Channel-Variables-Catalog/park_after_bridge_16352736.mdx#park_after_bridge), and
-* [transfer\_after\_bridge](../../Channel-Variables-Catalog/transfer_after_bridge_16353470.mdx#transfer_after_bridge).
+* [park\_after\_bridge](../../Channel-Variables-Catalog/park_after_bridge_16352736.mdx#park_after_bridge)
+* [transfer\_after\_bridge](../../Channel-Variables-Catalog/transfer_after_bridge_16353470.mdx#transfer_after_bridge)。
 
-#### 3.2.2 Can legs be bridged if they use different protocols?
+#### 3.2.2 如果使用不同协议，是否可以桥接呼叫双方的腿？
 
-As FreeSWITCH supports many different protocols, the 2 legs of a call can be using different ones. For example, if you are using [FreeTDM](../Client-and-Developer-Interfaces/FreeTDM/index.mdx#--) with a Digium board for PRI, you can have the incoming leg on SIP, and the outgoing leg on TDM. Some protocols can also connect using the web browser instead of a phone. One of the powerful features of FreeSWITCH is that it bridges 2 channels even if they are using different protocols.
+由于FreeSWITCH 支持多种不同的协议，呼叫的两条腿可以使用不同的协议。例如，如果您使用 FreeTDM 和 Digium 建立的 PRI 业务板，您可以通过 SIP 接收呼入腿，并通过 TDM 发送呼出腿。有些协议甚至可以使用 Web 浏览器代替电话进行连接。FreeSWITCH 的一个强大功能是即使两个腿使用不同的协议，它也会将它们桥接在一起。
 
-## 4\. Channels vs Calls
+## 4. 通道与呼叫
 
-To recapitulate, 
+简单回顾一下：
 
-* the term **channel** in FreeSWITCH refers to a _call leg_, and
-* the term **call** refers to the end-to-end connection from the _originator_ to the _recipient_.
+* 在 FreeSWITCH 中，术语**通道**指的是一个**呼叫腿**，
+* 而 **呼叫**指的是从**发起者**到**接收者**的端对端连接。
 
-When you see different values when you run `show calls` and `show channels` from the [CLI](../Client-and-Developer-Interfaces/1048948.mdx#or), it is because `show calls` only counts _bridged calls_. So, dialing from one phone to another phone will yield 2 channels and 1 call. This also explains why `show calls` may return 0 while there are active calls.
+当您在 CLI 中运行 `show calls` 和 `show channels` 命令时，看到的数值不同是因为 `show calls` 仅计算**已桥接呼叫**。因此，从一个电话向另一个电话拨打电话将产生 2 个通道和 1 个呼叫。这也解释了为什么在存在活动呼叫的情况下，`show calls` 可能返回 0。
 
-You homework assignment tonight is to make several calls and experiment with these commands:
+今晚的作业是进行几个电话呼叫，并尝试以下命令：
 
 * `show calls`
 * `show channels`
 
-Try calling from phone to phone as well as trying things like calling [voicemail](../Modules/mod-voicemail/Voicemail_13174041.mdx#--).
+尝试进行电话机对电话机的呼叫，以及尝试呼叫[语音邮件](../Modules/mod-voicemail/Voicemail_13174041.mdx#--)等其他操作。
 
-## 5\. Propagating variables from the A leg to the B leg
+## 5. 从 A 腿传播变量到 B 腿
 
-Sometimes you want to propagate variables from the A leg to the B leg or set new variables there. From the [dialplan](../Dialplan/index.mdx#0-about) this can be done via the [export](../Modules/mod-dptools/6586592.mdx#about) command.
+有时，您可能希望将 A 腿的变量传播到 B 腿，或在 B 腿上设置新变量。在[拨号计划](../Dialplan/index.mdx#0-about)中，可以通过使用 [export](../Modules/mod-dptools/6586592.mdx#about) 命令来实现这一点。
 
-## Comments:
+## 评论：
 
-| When you see different values when you run show calls and show channels from the CLI, it is because show calls only counts bridged callsNot quite true. A call that is ringing shows up multiple times in "show calls", once for the inbound channel and once each for all the outbound channels. ![](/images/icons/contenttypes/comment_16.png) Posted by SMart at May 05, 2021 11:30 |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-
-
+| 当您从CLI中运行show calls和show channels命令时，如果出现不同的值，那是因为show calls只计数桥接呼叫而不包括其他类型的呼叫。这并不完全准确。一个正在响铃的呼叫在"show calls"中会出现多次，一次是表示呼入通道，每一个外呼通道都会单独显示一次。Posted by SMart于2021年5月5日 11:30。|
+| --- |

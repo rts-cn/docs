@@ -1,17 +1,14 @@
-
-# Provider Callcentric (USA) 
-
- 
+# Callcentric服务提供商（美国）
 
 ## [Callcentric.com](http://www.callcentric.com/)
 
-Update: 23 June 2022 - Change domain from callcentric.com to sip.callcentric.net
+更新：2022年6月23日 - 将域名从callcentric.com更改为sip.callcentric.net
 
-Update: 26 March 2022 - Add ACL requirement
+更新：2022年3月26日 - 添加ACL要求
 
-Note that the acl requirement started with FreeSWITCH 1.10.7 due to security changes in FreeSWITCH. Callcentric has tested without acl on FreeSWITCH 1.10.8 successfully. See issue [#1511](https://github.com/signalwire/freeswitch/issues/1511) for more information.
+请注意，由于FreeSWITCH中的安全更改，acl要求始于FreeSWITCH 1.10.7。Callcentric已经在FreeSWITCH 1.10.8上成功测试过无需acl。详细信息请参见问题[#1511](https://github.com/signalwire/freeswitch/issues/1511)。
 
-Callcentric has a Callcentric Freeswitch guide upon request. Although it may be slightly different from content here, this example is what was tested on a production system as of the date above.
+Callcentric可以根据请求提供Callcentric Freeswitch指南。虽然可能与此处的内容略有不同，但此示例是以上日期在生产系统上测试过的。
 
 conf/sip_profiles/external/callcentric.xml
 
@@ -30,19 +27,17 @@ conf/sip_profiles/external/callcentric.xml
 </include> 
 ```
 
-  
-Callcentric IP addresses/subnets can be found on the [Callcentric FAQ](https://www.callcentric.com/faq/9/254).  
-  
+Callcentric的IP地址/子网可以在[Callcentric常见问题](https://www.callcentric.com/faq/9/254)中找到。
+
 conf/autoload\_configs/acl.conf.xml
 
 ```xml
     <list name="callcentric" default="allow">
-      <node type="allow" cidr="204.11.192.0/22"/>  <!-- Use FAQ link above for latest info -->
+      <node type="allow" cidr="204.11.192.0/22"/>  <!-- 使用上述常见问题链接获取最新信息 -->
       <node type="allow" cidr="199.87.144.0/21"/>
     </list>
 ```
 
-  
 conf/dialplan/public/callcentric_did.xml
 
 ```xml
@@ -54,20 +49,19 @@ conf/dialplan/public/callcentric_did.xml
 </extension> 
 ```
 
-  
 conf/dialplan/default/01_callcentric.com.xml
 
 ```xml
-<extension name="Local Dial">
+<extension name="本地拨号">
    <condition field="destination_number" expression="^([0-9]{7})$">
      <action application="set" data="effective_caller_id_name=YOURNAMEHERE"/>
      <action application="set" data="effective_caller_id_number=YOURDIDHERE"/>
-     <!-- This allows 9 digit dialing to area code 206 for example -->
+     <!-- 这允许拨打9位数的电话号码，例如206区号 -->
      <action application="bridge" data="sofia/gateway/sip.callcentric.net/1206$1@sip.callcentric.net"/>
    </condition>
 </extension>
 
-<extension name="Long Distance">
+<extension name="长途拨号">
   <condition field="destination_number" expression="^1?([2-9]\d{2}[2-9]\d{6})$">
      <action application="set" data="effective_caller_id_name=YOURNAMEHERE"/>
      <action application="set" data="effective_caller_id_number=YOURDIDHERE"/>
@@ -76,16 +70,12 @@ conf/dialplan/default/01_callcentric.com.xml
 </extension> 
 ```
 
-  
 ---
 
-  
-**The information below is many years old and likely obsolete. It has not been needed for some time.**
+以下信息已经多年没有更新了，很可能已经过时。很长时间以来都没有需要这些信息。
 
-  
-**If you notice that Cepstral is having problems with a ptime of 30 vs 20, and you're getting errors like this:**
+如果你注意到 Cepstral 在 ptime 为 30 和 20 之间有问题，出现以下错误：
 
-  
 ```text
 2009-03-13 18:13:28 [WARNING] mod_sofia.c:739 sofia_read_frame() We were told to use ptime 30 but what they meant to say was 20
 This issue has so far been identified to happen on the following broken platforms/devices:
@@ -93,26 +83,21 @@ Linksys/Sipura aka Cisco
 blah blah ...
 ```
 
-**You will need to set this in the sofia profile that you've configured to register with CallCentric:**
+**您需要在已配置为与CallCentric注册的sofia配置文件中设置以下内容：**
 
-  
 ```xml
-<!-- There are two other options such as generous, greedy, but scrooge seems to work with CallCentric -->
-<param name="inbound-codec-negotiation" value="scrooge"/> 
+<!-- 其他两个选项是generous、greedy，但scrooge似乎在CallCentric上有效 -->
+<param name="inbound-codec-negotiation" value="scrooge"/>
 ```
 
-**DID Forwarding Works.**
+**DID转发功能可正常使用。**
 
-  
-The fix below is no longer required! Left here in case it comes up for another provider.
+以下修复已不再需要！只是为了以防万一其他服务提供商遇到类似问题。
 
-In 2009 users had issues when making outbound calls using FreeSWITCH on CallCentric. The issue was usually a fast-busy, Call Rejected, or Proxy Auth Required. You could usually get 3 or so calls and then the next call might give one of those errors. CallCentric has fixed the issue with DNS Weight with their DNS SRV so the change below shouldn't be required, but if you do start to experience the above mentioned issues try this:
+在2009年，使用FreeSWITCH在CallCentric上进行出站呼叫时，用户遇到了问题。通常的问题是快速忙音、呼叫被拒绝或需要代理身份验证。通常情况下，您可以进行3个或更多通话，然后下一个通话可能会出现上述错误之一。CallCentric通过使用DNS SRV解决了与DNS权重相关的问题，因此不再需要下面的更改。但如果您遇到了上述问题，请尝试以下操作：
 
 /usr/local/freeswitch/conf/sip_profiles/external.xml
 
 ```xml
- <param name="disable-srv" value="true" />
+<param name="disable-srv" value="true" />
 ```
-
-  
-

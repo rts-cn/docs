@@ -1,33 +1,30 @@
+# 绕过媒体概述
 
-# Bypass Media Overview 
+## 关于
 
- 
+无媒体模式是一个SDP直通功能，允许可以互相看到对方（没有奇怪的N.A.T.）的两个端点在保持FreeSWITCH对SIP信令的控制下直接连接其媒体会话。如果您有两个端点需要使用当前在FreeSWITCH中不支持的编解码器（视频），或者如果您正在一个高性能的有限网络中使用FreeSWITCH并希望最大程度地减少FreeSWITCH正在进行的RTP处理以最大化通话流量，这将非常有用。
 
-## About
+启用后，起始端点的媒体（RTP）直接发送到目标端点，反之亦然。这两个端点的信令（SIP）仍经过FreeSWITCH，但媒体是点对点的。
 
-No media mode is an SDP Passthrough feature that permits two endpoints that can see each other (no funky N.A.T.) to connect their media sessions directly while FreeSWITCH maintains control of the SIP signaling. This is useful if you have two end-points that need to use a codec that is currently not supported in FreeSWITCH (video) or if you are using FreeSWITCH in a high performance walled garden network and want to minimize the RTP handling FreeSWITCH is doing to maximize call traffic.
+参见[bypass\_media\_after\_bridge](../../Introduction/Variables/index.mdx#0-about)
 
-When set, the media (RTP) from the originating endpoint is sent directly to the destination endpoint and vice versa. The signaling (SIP) for both endpoints still goes through FreeSWITCH, but the media is point-to-point. 
+点击此处展开目录
 
-See also [bypass\_media\_after\_bridge](../../Introduction/Variables/index.mdx#0-about)
+* 1 [图示](#diagram)
+* 2 [如何启用它](#how-to-enable-it)
+* 3 [如何验证它是否正常工作](#how-to-verify-that-it-is-working)
+* 4 [相关功能](#related-features)
+* 5 [高级功能](#advanced-features)  
+   * 5.1 [广播命令使Freeswitch恢复媒体路径](#broadcast-command-puts-freeswitch-back-in-media-path)
+* 6 [常见问题解答](#-freeswitch--bypass-media-overview-)  
+   * 6.1 [如果我的终端设备中有任何一个处在NAT后面，我可以使用吗？](#can-i-use-it-if-any-of-my-endpoints-are-behind-nat)  
+   * 6.2 [是否可以全局设置以使所有通道都使用bypass_media？](#can-it-be-set-globally-so-that-all-channels-use-bypass_media)  
+   * 6.3 [如何在运行时禁用/启用它？](#how-to-disableenable-it-on-the-fly)  
+      * 6.3.1 [我可以在bypass media模式下录制会话吗？](#can-i-record-sessions-in-bypass-media-mode)  
+         * 6.3.2 [当从javascript执行bridge应用程序时，我可以使用bypass media吗？](#can-i-use-bypass-media-when-executing-the-bridge-application-from-a-javascript)  
+         * 6.3.3 [我可以在vars.xml中或作为全局变量中设置bypass_media=true吗？](#can-i-set-bypass_mediatrue-in-varsxml-or-as-a-global-variable)
 
-Click here to expand Table of Contents
-
-* 1 [Diagram](#diagram)
-* 2 [How to enable it](#how-to-enable-it)
-* 3 [How to verify that it is working](#how-to-verify-that-it-is-working)
-* 4 [Related Features](#related-features)
-* 5 [Advanced Features](#advanced-features)  
-   * 5.1 [Broadcast command puts freeswitch back in media path](#broadcast-command-puts-freeswitch-back-in-media-path)
-* 6 [FAQ](#-freeswitch--bypass-media-overview-)  
-   * 6.1 [Can I use it if any of my endpoints are behind NAT](#can-i-use-it-if-any-of-my-endpoints-are-behind-nat)  
-   * 6.2 [Can it be set globally so that all channels use bypass\_media?](#can-it-be-set-globally-so-that-all-channels-use-bypass_media)  
-   * 6.3 [How to disable/enable it on the fly?](#how-to-disableenable-it-on-the-fly)  
-      * 6.3.1 [Can I record sessions in bypass media mode?](#can-i-record-sessions-in-bypass-media-mode)  
-         * 6.3.2 [Can I use bypass media when executing the bridge application from a javascript?](#can-i-use-bypass-media-when-executing-the-bridge-application-from-a-javascript)  
-         * 6.3.3 [Can I set bypass\_media=true in vars.xml or as a global variable?](#can-i-set-bypass_mediatrue-in-varsxml-or-as-a-global-variable)
-
-## Diagram
+## 图示
 
 ```xml
                                         +------------+
@@ -45,76 +42,74 @@ Click here to expand Table of Contents
                          192.168.1.100                   192.168.1.110
 ```
 
-## How to enable it
+## 如何启用
 
-Before executing the bridge action you must set the "bypass\_media" flag to true.
+在执行桥接操作之前，您必须将"bypass_media"标志设置为true。
 
 ```xml
 <action application="set" data="bypass_media=true"/> 
 ```
 
-## How to verify that it is working
+## 如何验证它是否正常工作
 
-If the endpoints are on a different IP than freeswitch, it is very easy. Just run wireshark on the machine running freeswitch and make sure you either see no traffic, or the RTP traffic is only going between the endpoints and not through freeswitch.
+如果终端与FreeSWITCH位于不同的IP上，那么非常简单。只需在运行FreeSWITCH的设备上运行Wireshark，并确保要么看不到任何流量，要么RTP流量仅在终端之间传递，而不经过FreeSWITCH。
 
-## Related Features
+## 相关功能
 
-See also: [Proxy Media Mode](../../Configuration/Proxy-Media_13173588.mdx#faqs)
+另请参阅：[代理媒体模式](../../Configuration/Proxy-Media_13173588.mdx#faqs)
 
-## Advanced Features
+## 高级功能
 
-### Broadcast command puts freeswitch back in media path
+### 广播命令将FreeSWITCH放回媒体路径
 
-Doing a broadcast command on a channel that is in "bypass media" mode will cause freeswitch to put itself back in the media path of both legs of the call, and then take itself out again once the playback has finished.
+在处于"bypass media"模式的通道上执行广播命令将导致FreeSWITCH将自身放回通话的两个方向的媒体路径中，然后在播放完成后再将自身移出该路径。
 
-## FAQ
+## 常见问题
 
-### Can I use it if any of my endpoints are behind NAT
+### 如果我的某个终端位于NAT后，是否可以使用它
 
-Probably not. If the endpoints send external IP/port of the RTP media streams it will increase the chances of this working.
+可能不行。如果终端发送RTP媒体流的外部IP/端口，这将增加使其工作的机会。
 
-### Can it be set globally so that all channels use bypass_media?
+### 是否可以全局设置，以便所有通道使用bypass_media？
 
-Yes. There is a global variable that can be set (TODO: doc this) and "inbound no media" can be set on the SIP profile:
+是的。可以设置一个全局变量（待办：记录此项），并在SIP配置文件上设置“inbound no media”：
 
 ```xml
 <param name="inbound-bypass-media" value="true"/>
 ```
 
-(see example in conf/sip\_profiles/internal.xml)
+（请参考conf/sip\_profiles/internal.xml中的示例）
 
-### How to disable/enable it on the fly?
+### 如何实时禁用/启用bypass_media？
 
-There is a media api command
+有一个媒体API命令
 
 ```py
 uuid_media <uuid>
 ```
 
-will put freeswitch back in the media path and disable bypass media mode.
+将使FreeSWITCH回到媒体路径并禁用bypass_media模式。
 
-Likewise:
+同样：
 
 ```py
 uuid_media off <uuid> 
 ```
 
-will take freeswitch out of the path and activate bypass media mode.
+将使FreeSWITCH离开路径并激活bypass_media模式。
 
-#### Can I record sessions in bypass media mode?
+#### 在bypass_media模式下，我可以录制会话吗？
 
-session\_record will fail if the call is in bypass media or proxy media mode, you need to manually move the call into media.
+如果呼叫处于bypass_media或proxy_media模式中，session_record将失败，您需要手动将呼叫移入媒体。
 
-#### Can I use bypass media when executing the bridge application from a javascript?
+#### 在使用JavaScript执行桥接应用程序时，我可以使用bypass_media吗？
 
-Of course you can, all it takes is setting the bypass\_media session variable to true before the bridge:
+当然可以，只需要在桥接之前将bypass_media会话变量设置为true：
 
 ```js
 session.setVariable('bypass_media', 'true');
 ```
 
-#### Can I set bypass_media=true in vars.xml or as a global variable?
+#### 我可以在vars.xml或作为全局变量中设置bypass_media=true吗？
 
-no, there are cases where this variable is unset, if you set it as a global it can never unset, and will result in unexpected behaviors.
-
-
+不可以，有些情况下会取消设置此变量，如果将其设置为全局变量，则无法取消设置，并会导致意外行为。

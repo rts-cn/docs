@@ -1,75 +1,72 @@
-
 # Google Voice API 
 
  
 
-Click here to expand Table of Contents
+点击这里展开目录
 
-**Error rendering macro 'toc'**
+**“error rendering macro 'toc'” 无法渲染**
 
-null
+### 将Google Voice添加为呼出目的地
 
-### Adding Google Voice as an outgoing destination
-
-## Create yourself a Google Voice account (or reconfigure an existing one)
+## 创建一个Google Voice账户（或重新配置现有账户）
 
 ```xml
-a) Go to www.google.com/voice 
-b) Login to Google voice, creating a new Google voice number if you don't have one yet
-c) Add a destination number which would be a DID inbound to your PBX (this will be the number google voice calls back on when establishing the outbound call)
+a) 打开www.google.com/voice 
+b) 登录Google Voice，如果还没有账户，创建一个新的Google Voice号码
+c) 添加一个目的地号码，这个号码是指向您的PBX的传入号码（当建立呼出通话时，Google Voice将回拨到此号码上）
 ```
 
-Install pygooglevoice API utility
+安装pygooglevoice API实用程序
 
 ```xml
-a) Install python, python-setuptools and mercurial system packages
-b) easy_install simplejson 
-c) hg clone https://pygooglevoice.googlecode.com/hg/ pygooglevoice
-d) cd pygooglevoice/
-e) sudo python setup.py install
-f) sudo -u freeswitch HOME=/opt/freeswitch gvoice # this will create /opt/freeswitch/.gvoice
-g) Setup your email and password in /opt/freeswitch/.gvoice
-h) Setup the forwardingNumber to be the DID inbound number, with the appropriate phoneType
+a) 安装python、python-setuptools和mercurial系统包
+b) 使用easy_install命令安装simplejson 
+c) 使用hg clone命令克隆https://pygooglevoice.googlecode.com/hg/ pygooglevoice存储库
+d) 进入pygooglevoice目录：cd pygooglevoice/
+e) 使用sudo python setup.py install命令进行安装
+f) 使用sudo -u freeswitch HOME=/opt/freeswitch gvoice命令创建/opt/freeswitch/.gvoice文件夹
+g) 在/opt/freeswitch/.gvoice文件夹中设置您的电子邮件和密码
+h) 将forwardingNumber设置为传入号码，同时设置合适的phoneType
 ```
 
-Create the outbound dialplan
+创建呼出拨号计划
 
 ```xml
-a) Create freeswitch/conf/dialplan/default/02_googlevoice.xml with the following contents (replacing DIDNUMBER with the number above):
+a) 在freeswitch/conf/dialplan/default/目录下创建02_googlevoice.xml文件，内容如下（将DIDNUMBER替换为上述的号码）：
 
-<!-- dial via googlevoice callback -->
+<!-- 使用 Google Voice 回拨拨号 -->
 <extension name="googlevoice">
 	<condition field="destination_number" expression="^33(\d+)$">
 		<action application="hash" data="insert/googlevoice/uuidDIDNUMBER/${uuid}" />
 		<action application="set" data="tts_engine=flite"/>                                                                                                     
 		<action application="set" data="tts_voice=rms"/>                                                                                                        
-		<action application="speak" data="Please wait while we connect you via Google Voice"/>
-		<!-- do gvoice call here -->
+		<action application="speak" data="请稍候，我们正在通过 Google Voice 为您接通电话" />
+		<!-- 在此处进行 Google Voice 电话拨打 -->
 		<action application="system" data="HOME=/opt/freeswitch gvoice call $1" />
 		<action application="park" />
 	</condition>
 </extension>
 ```
 
-Modification: nttranbao on Nov 21 2011 Thanks for the great tutorial. Based on this, I can do multi trunks of google voices properly. Below is a nicer outbound dialplan that generates connecting tone for caller, and explicitly specify all required parameters for gvoice script. (Note that a "&" at the end of gvoice command is to let Freeswich continue IMMEDIATELY without having to wait for the SYSTEM() command to finish)
+Modification: nttranbao on Nov 21 2011 感谢您的优秀教程。基于此，我可以正确地同时使用多个 Google Voice。下面是一个更好的外拨拨号计划，用于为呼叫者生成连接音，并明确指定所有 gvoice 脚本所需的参数。（请注意，gvoice 命令末尾的 "&" 是为了让 Freeswitch 立即继续执行，而无需等待 SYSTEM() 命令完成）
 
 ```xml
 <condition field="destination_number" expression="^33(\d+)$">
-	<!-- dial via googlevoice callback -->
-		<action application="hash" data="insert/googlevoice/uuidDIDNUMBER/${uuid}" />
-		<!-- do gvoice call here -->
-		<action application="system" data="gvoice -e google-voice-email -p google-voice-password call $1 10-digit-callback-No &" />
-		<action application="playback" data="tone_stream://%(50,50,350);loops=-1" />	
+	<!-- 使用 Google Voice 回拨拨号 -->
+	<action application="hash" data="insert/googlevoice/uuidDIDNUMBER/${uuid}" />
+	<!-- 在此处进行 Google Voice 电话拨打 -->
+	<action application="system" data="gvoice -e google-voice-email -p google-voice-password call $1 10-digit-callback-No &" />
+	<action application="playback" data="tone_stream://%(50,50,350);loops=-1" />	
 </condition>
 
 
 ```
 
-Modify your DID inbound extension to add the intercept call
+将您的 DID 呼入分机进行修改以添加截获呼叫功能。
 
 ```xml
-a) Replace DIDNUMBER with your configured Google Voice callback number
-b) Replace GOOGLEVOICEEXT with the extension to answer any google voice calls to the DIDNUMBER that don't have an attached outgoing call.
+a) 用您配置的谷歌语音回拨号码（DIDNUMBER）替换它
+b) 用于回答任何未附带传出呼叫的谷歌语音呼叫（到DIDNUMBER的呼叫），用扩展号（GOOGLEVOICEEXT）替换它。
 
 <extension name="DIDNUMBER">
   <condition field="destination_number" expression="^DIDNUMBER$">
@@ -78,5 +75,3 @@ b) Replace GOOGLEVOICEEXT with the extension to answer any google voice calls to
   </condition>
  </extension>
 ```
-
-

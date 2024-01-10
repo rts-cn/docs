@@ -1,24 +1,21 @@
+# 来电者身份识别 (Caller ID) LDAP 查询
 
-# Caller ID LDAP Lookup 
+## 关于
 
- 
+这是一个简单的脚本，根据 LDAP 条目对来电进行排序，有点像自己定制的 Grand Central。这个脚本有些粗糙：例如，我（滥用）了`destinationIndicator`字段-这是一个古老的字段，原本用于指导电报，但我不想担心影响我的 LDAP 模式。脚本直接从`destinationIndicator`字段中获取分机名，并将来电转接到那里。我提供这个脚本主要是为了记录在编写它时遇到的一些东西，希望能帮助其他人避免一些困惑。结果可能因人而异。
 
-## About
+初始作者：Sud0er
 
-A simple script to sort incoming calls based on an LDAP entry,sort of a roll-your-own Grand Central. This is rather hackish: for example, I (ab)used the destinationIndicator field- this is an old field meant for directing telegraphs, but I didn't want to mess with my LDAP schema. The script pulls an extension name directly out of the destinationIndicator field and transfers the call there. I'm providing this script as much as anything to document some of the stuff I came across in putting it together in the hopes I can save other folks some confusion. YMMV.
+要求：[mod_perl](../Modules/mod_perl_1048930.mdx#about)
 
-Initial author: Sud0er
+## Perl 脚本
 
-Requirements: [mod\_perl](../Modules/mod_perl_1048930.mdx#about)  
-
-## The Perl Script
-
-**ldaplookup.pl** Expand source 
+**ldaplookup.pl** 扩展源码
 
 ```perl
-  use Net::LDAP;
+ use Net::LDAP;
  
- # Set LDAP bind information here. Start with http://search.cpan.org/~gbarr/perl-ldap/lib/Net/LDAP.pod for more info on Net::LDAP
+ # 在这里设置LDAP绑定信息。[to_be_replace[然后参考http://search.cpan.org/~gbarr/perl-ldap/lib/Net/LDAP.pod获取更多关于Net::LDAP的信息]]
  
  my $ldapserver = "localhost";
  my $ldapversion = 3;
@@ -35,40 +32,27 @@ Requirements: [mod\_perl](../Modules/mod_perl_1048930.mdx#about)
    );
  }
  
- # This is where you would specify a different search field 
+ # 这里可以指定不同的搜索字段 
  my @attribs = ('cn', 'destinationIndicator');
  
- # One of the first things I ran into was whether to call my script from an extension or at the 
- # dialplan. From the dialplan, you return a full XML dialplan in $XML_STRING as it is in the 
- # mod_perl docs. Try as I might, I never got Freeswitch to act on my dialplan, so I call the
- # script from my dialplan as shown later in this wiki page. But, the takeaway is, 
- # if you generate a dialplan and call the script from perl.conf.xml, you have to use 
- # $params->getHeader. If you call the script as an application from an exception, you have to 
- # use $session->getVariable. 
+ # 我刚开始遇到的一个问题是要从扩展或拨号计划中调用我的脚本。从拨号计划中，你需要将完整的XML拨号计划作为 $XML_STRING 返回，与 mod_perl 文档中一样。尽管我尝试过很多次，但我从未使Freeswitch执行我的拨号计划，因此我从拨号计划中调用脚本，如下所示。但是，关键是，如果你生成一个拨号计划并从 perl.conf.xml 中调用脚本，你需要使用 $params->getHeader。如果你从异常中调用脚本作为一个应用程序，你需要使用 $session->getVariable。
  #my $number=$params->getHeader("Caller-Caller-ID-Number");
  my $number=$session->getVariable("caller_id_number");
  
- # I log the incoming number to the console to be sure my script is being called
+ # 我将呼入号码记录到控制台，以确保我的脚本被调用
  freeswitch::console_log("info", "Handling call from $number\n");
  
- # This will match on homePhone, mobile and telephoneNumber records in LDAP. You could also add 
- # the relevant fields for FAX numbers, or anything else that's in your schema. I used loose
- # matching because that handles the case where a number appears as 1234567890 to Freeswitch, but 
- # could be entered as 123-456-7890 in LDAP. 
+ # 这将匹配LDAP中的homePhone、mobile和telephoneNumber记录。你也可以添加与传真号码或其他在架构中的相关字段。我使用了宽松的匹配，因为它可以处理Freeswitch中的号码显示为1234567890，但在LDAP中可能是123-456-7890的情况。 
  my $searchstring="(|(homePhone~=$number)(mobile~=$number)(telephoneNumber~=$number))";
  
- # Connect to the LDAP server and run our query
+ # 连接到LDAP服务器并运行我们的查询
  my $ldap = Net::LDAP->new ( $ldapserver ) or die "$@";
  $ldap->bind ( $ldapuser, password => $ldappass, version => $ldapversion ) or die "$@";
  my $search = LDAPsearch ($ldap, $searchstring, \@attribs, $ldapbase ) or die "$@";
  my @entries = $search->entries;
  my ($name, $dest);
  
- # This could be done better - we simply grab the name of an extension out of LDAP, 
- # and transfer the call there. There's no handling of oddities in the LDAP search result
- # and executing on data straight out of LDAP probably isn't the safest thing ever. 
- # If we have an extension listed in the contact's entry, we send the caller there, 
- # otherwise we send it to the greylist extension. 
+ # 这部分可以做得更好——我们只是从LDAP中获取一个扩展的名称，并将呼叫传输到那里。对于LDAP搜索结果中的异常情况，没有进行处理，而且直接执行LDAP中的数据可能不是最安全的方式。如果联系人的条目中有扩展号码，我们就将呼叫发送到那里，否则我们将它发送到灰名单扩展。
  if (@entries) {
        $name=$entries[0]->get_value('cn');
        $dest=$entries[0]->get_value('destinationIndicator');
@@ -77,22 +61,21 @@ Requirements: [mod\_perl](../Modules/mod_perl_1048930.mdx#about)
        $dest="greylist";
  }
  
- # Freeswitch picks up the call here, sets the CID name and number (which doesn't seem to have 
- # an effect for me, and transfers the call to the extension the script picked.  
+ # Freeswitch在这里接听呼叫，设置呼叫方ID名称和号码（对我来说似乎没有什么影响），并将呼叫转移给脚本选定的扩展。
  $session->answer();
  $session->setVariable("effective_caller_id_number", $number);
  $session->setVariable("effective_caller_id_name", $name);
  $session->transfer($dest, "XML", "default");
  
- # Freeswitch will be mad if you don't return a true value. 
+ # 如果不返回一个真值，Freeswitch会出问题。
  1;
 ```
 
-## Dialplan
+## 拨号计划
 
-### Public
+### 公共
 
-Now, we need to add entries to the XML files. Starting with the default configuration files from when I compiled Freeswitch, I added this to `conf/dialplan/public.xml`:
+现在，我们需要向XML文件中添加条目。从我编译Freeswitch时的默认配置文件开始，我将以下内容添加到 `conf/dialplan/public.xml`:
 
 ```xml
  <extension name="ldap_switched_in">
@@ -102,11 +85,11 @@ Now, we need to add entries to the XML files. Starting with the default configur
  </extension>
 ```
 
-For this to work, Freeswitch has to match the condition - in this case, "MYDID" would have to exactly match the DID number I get from my SIP provider (in my case, Gizmo). Also, the script above has to live in the Freeswitch scripts directory (you can also provide a fully-qualified path on the filesystem).
+为了使其工作，Freeswitch必须满足条件 - 在这种情况下，“MYDID”必须完全匹配我从SIP提供商（在我的情况下是Gizmo）获得的DID号码。此外，上述脚本必须存放在Freeswitch脚本目录中（您还可以在文件系统上提供全限定路径）。
 
-### Default
+### 默认
 
-Since I hard-coded the script to transfer calls to an extension in the default context, the rest goes in `conf/dialplan/default.xml`:
+由于我将脚本硬编码为在默认上下文中转移呼叫至一个分机，其余部分将添加到 `conf/dialplan/default.xml`:
 
 ```xml
  <extension name="greylist">
@@ -128,8 +111,6 @@ Since I hard-coded the script to transfer calls to an extension in the default c
  </extension>
 ```
 
-These extensions define what Freeswitch does with a call; I have three possibilities, whitelist, greylist and blacklist. Whitelist and blacklist have to be specifically set in the LDAP database, otherwise the script defaults to sending calls to the greylist. Here, the greylist extension drops the call right into the voicemail for "myid"; whitelist transfers the call to the "myid" directory entry in the default context; blacklist hangs up immediately.
+这些扩展定义了Freeswitch对呼叫的处理方式；我有三种可能性：白名单、灰名单和黑名单。要在LDAP数据库中特别设置白名单和黑名单，否则脚本将默认将呼叫发送到灰名单。在这里，灰名单将呼叫直接转到"myid"的语音信箱；白名单将呼叫转接到默认上下文中"myid"的目录条目；黑名单将立即挂断呼叫。
 
-The extension name parameter is, as far as I can tell, arbitrary; Freeswitch matches the call's destination based on the condition expressions for each extension, not the name, and the destination\_number we match on is what the perl script sets.
-
-
+根据我的了解，扩展名参数是任意的；Freeswitch根据每个扩展的条件表达式，而不是名称，进行呼叫目标的匹配，我们匹配的是perl脚本设置的destination_number。

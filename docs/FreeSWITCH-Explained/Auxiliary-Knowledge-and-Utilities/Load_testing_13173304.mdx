@@ -1,74 +1,69 @@
+# 负载测试
 
-# Load_testing 
+## 关于
 
- 
+本文档涵盖了有关负载测试工具的信息。
 
-## About
+点击此处展开目录
 
-This document covers information about load testing tools.
-
-Click here to expand Table of Contents
-
-* 1 [Load testing](#load-testing)  
-   * 1.1 [Load testing tools](#load-testing-tools)  
+* 1 [负载测试](#load-testing)  
+   * 1.1 [负载测试工具](#load-testing-tools)  
       * 1.1.1 [SIPp](#load-testing)  
          * 1.1.2 [WinSIP](#load-testing)  
          * 1.1.3 [Back-to-back](#load-testing)  
-   * 1.2 [How to count calls?](#load-testing-tools)  
-   * 1.3 [Examples of load tests](#examples-of-load-tests)
+   * 1.2 [如何计算呼叫量？](#load-testing-tools)  
+   * 1.3 [负载测试示例](#examples-of-load-tests)
 
-## Load testing
+## 负载测试
 
-Load testing is a **dark art**. If you don't have extensive experience with load testing in a telephony environment then nothing on this page will be of any use to you. You are **much** better off doing real-world tests.
+负载测试是一门**黑暗的艺术**。如果您在电信环境下没有广泛的负载测试经验，那么本页面上的任何内容都对您没有任何帮助。进行真实世界的测试会更好。
 
-An example of this can be found in this email thread from the freeswitch-users list:
+您可以在freeswitch-users列表的电子邮件线程中找到一个例子：
 
-* [SIPp thread](http://lists.freeswitch.org/pipermail/freeswitch-users/2009-August/thread.html#18226)
+* [SIPp线程](http://lists.freeswitch.org/pipermail/freeswitch-users/2009-August/thread.html#18226)
 
-Notice how the OP asked questions, hinting that he thought "something was wrong with FreeSWITCH." When we asked more questions it turns out that he was using a 32-bit OS on 64-bit hardware. When he took the advice of Tony and loaded CentOS 5.3 64-bit on his hardware and re-ran his tests... well, let's just say that the results were stellar.
+请注意，OP在提问中暗示他认为"FreeSWITCH出了问题"。当我们问了更多问题后，事实证明他在64位硬件上使用32位操作系统。当他接受了Tony的建议，在他的硬件上安装了CentOS 5.3 64位操作系统并重新运行测试...嗯，结果可以说是非常出色。
 
-The moral of the story is this: Don't load test if you don't know what you're doing. Do REAL WORLD tests. Unless you make your money by running SIPp all day then just get reliable hardware, a solid 64-bit OS like CentOS, install FS from git trunk and you'll be doing dozens of CPS (or more) and 100's (or more) simultaneous calls with media.
+故事的寓意就是：如果你不知道你在做什么，就不要进行负载测试。进行真实世界的测试。除非您通过全天运行SIPp来赚钱，否则请获取可靠的硬件、一个稳定的64位操作系统(如CentOS)，从git主干安装FS，这样您将可以做出数十个CPS(或更多)和数百个(或更多)的同时通话带媒体。
 
-### Load testing tools
+### 负载测试工具
 
 #### SIPp
 
-The open source tool, SIPp, has apparently been used extensively by the FreeSWITCH community, see [\[1\]](http://www.freeswitch.org/eg/load%5Ftest). The tool can be compiled with different options, and with the standard option, there is no support for authentication. To make calls to FS, the with SIP profile for the port used must have the parameter "auth-calls" set to false. The documentation of the tool is not aimed at newbies. Take some hours to get under the skin of it! The tool is highly flexible and test calls are controlled by a XML script. Error injection and tailor made SIP headers is supported.
+开源工具SIPp显然已被FreeSWITCH社区广泛使用，请参见[【\[1\]】](http://www.freeswitch.org/eg/load%5Ftest)。该工具可以使用不同选项进行编译，标准选项不支持身份验证。要拨打FS电话，使用的SIP配置文件的"auth-calls"参数必须设置为false。该工具的文档不适合新手。花点时间去了解它吧！该工具非常灵活，测试呼叫由一个XML脚本控制。支持错误注入和定制的SIP头。
 
 #### WinSIP
 
-WinSIP by Touchstone Technologies is Windows based with a nice GUI. It support authentication and can be used to make calls as well as for receiving calls. Errors can be injected. Its easy to use but expensive - 4-8 thousands USD. A limited time trial license can be acquired free of charge but the number of simultaneous calls is limited to 50 calls.
+Touchstone Technologies的WinSIP是基于Windows的带有漂亮图形界面的工具。它支持身份验证，可以用于拨打电话和接收电话。可以注入错误。它易于使用但价格昂贵-4-8千美元。免费获取限时试用许可证，但同时呼叫数量限制为50个。
 
 #### Back-to-back
 
-Back-to-back tests could be an easy way if you are familiar with an existing switch such as Asterisk. One of the unit can be controlled by an appropriate API, or the dial plan can be set up to make a chain of calls forth and back. Remember to answer the calls to be sure that the RTP is anchored on the switch - if that's what you want. The main drawback is the lack of error reporting. Further, errors or capacity limits may relate to the testing switch, not the tested switch.
+如果您熟悉现有交换机（例如Asterisk），则Back-to-back测试可能是一种简单的方法。其中一个单元可以由适当的API控制，或者可以设置拨号计划进行前后呼叫链。请记住接听电话，以确保RTP集中在交换机上-如果那是您想要的。主要缺点是缺乏错误报告。此外，错误或容量限制可能与测试交换机而非被测试交换机有关。
 
-### How to count calls?
+### 如何计算呼叫数量？
 
-In order to make tests comparable, calls must be counted in the same way. It is suggested that a "call" should consist of two legs, as this is the case when two people have a conversation through the switch. Remember to include details about servers and network.
+为了使测试具有可比性，呼叫必须以相同的方式计数。建议一个"呼叫"应包括两个通路，因为这是两个人通过交换机进行对话的情况。请记住包括有关服务器和网络的详细信息。
 
-### Examples of load tests
+### 负载测试示例
 
-Feel free to include your own tests below.
+请自由添加您自己的测试结果如下。
 
 ---
 
-Server: Fujitsu-Siemens Econel 100 S with Intel(R) Pentium(R) Dual CPU, Fedora 9 64bit. 1 GB RAM. Gbis/s network between servers. Back-back test against Asterisk on same server, but 32 bit version. Using the top command, load of 100, 200 and 300 calls, 64 kbit/s alaw with 20 ms packets. Rtp through the switch, no transcoding. The other server was an Asterisk, and tests have been made with Asterisk on a 32 and a 64 bit OS (Fedora):
+服务器: 富士通西门子 Econel 100 S，搭载 Intel(R) Pentium(R) Dual CPU，Fedora 9 64位操作系统。1 GB 内存。服务器之间采用 Gbis/s 网络连接。在相同的服务器上使用 Asterisk 进行回环测试，但使用的是32位版本。使用 top 命令进行测试，负载分别为 100、200 和 300 通话，采用 64 kbit/s alaw 编码和20 ms 数据包大小。 RTP 通过交换机传输，无需转码。另一台服务器也是 Asterisk，测试分别在 Fedora 的 32位和64位操作系统上进行:
 
-| | cpu  | sy | ni | id | wa | hi | si | total | OS-bit |    |
-| ------ | -- | -- | -- | -- | -- | -- | ----- | ------ | -- |
-| \* 100 | 3  | 10 | 0  | 82 | 1  | 0  | 4     | 100    | 64 |
-| \* 100 | 3  | 10 | 0  | 84 | 1  | 0  | 2     | 100    | 32 |
-| FS100  | 7  | 8  | 0  | 82 | 1  | 0  | 2     | 100    | 64 |
-| |      |    |    |    |    |    |    |       |        |    |
-| \* 200 | 6  | 20 | 0  | 57 | 2  | 1  | 14    | 100    | 64 |
-| \* 200 | 7  | 18 | 0  | 67 | 0  | 1  | 7     | 100    | 32 |
-| FS200  | 14 | 17 | 0  | 62 | 0  | 0  | 7     | 100    | 64 |
-| |      |    |    |    |    |    |    |       |        |    |
-| \* 300 | 8  | 26 | 0  | 45 | 4  | 0  | 17    | 100    | 64 |
-| \* 300 | 10 | 30 | 0  | 33 | 0  | 2  | 25    | 100    | 32 |
-| FS300  | 22 | 28 | 0  | 39 | 0  | 0  | 11    | 100    | 64 |
+|      | CPU | SY | NI | ID | WA | HI | SI  | 总计  | OS位数 |     |
+| ---- | --- | -- | -- | -- | -- | -- | --- | ----- | ------ | --- |
+| \* 100 | 3  | 10 | 0  | 82 | 1  | 0  | 4     | 100    | 64  |
+| \* 100 | 3  | 10 | 0  | 84 | 1  | 0  | 2     | 100    | 32  |
+| FS100   | 7  | 8  | 0  | 82 | 1  | 0  | 2     | 100    | 64  |
+|        |     |    |    |    |    |    |       |        |       |     |
+| \* 200 | 6  | 20 | 0  | 57 | 2  | 1  | 14    | 100    | 64  |
+| \* 200 | 7  | 18 | 0  | 67 | 0  | 1  | 7     | 100    | 32  |
+| FS200   | 14 | 17 | 0  | 62 | 0  | 0  | 7     | 100    | 64  |
+|        |     |    |    |    |    |    |       |        |       |     |
+| \* 300 | 8  | 26 | 0  | 45 | 4  | 0  | 17    | 100    | 64  |
+| \* 300 | 10 | 30 | 0  | 33 | 0  | 2  | 25    | 100    | 32  |
+| FS300   | 22 | 28 | 0  | 39 | 0  | 0  | 11    | 100    | 64  |
 
-The same test have been completed with the dial plan line which makes the FS listen to DTMF during the conversation ([f.in](http://f.in): &lt;action application="bind\_meta\_app" data="1 b s execute\_extension::dx XML features"/>) with no difference in the load.
-
-
+在相同的测试中，还进行了与拨号计划行相同的测试，即在通话期间让 FS 监听 DTMF 信号（[f.in](http://f.in): &lt;action application="bind\_meta\_app" data="1 b s execute\_extension::dx XML features"/>），但负载没有任何变化。

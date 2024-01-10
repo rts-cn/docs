@@ -1,131 +1,126 @@
+# 罗塞塔石雕
 
-# Rosetta Stone 
+* 1 [Asterisk到FreeSWITCH罗塞塔石雕](#asterisk-to-freeswitch-rosetta-stone)
+   * 1.1 [配置文件](#configuration-files)
+   * 1.2 [控制台命令](#console-commands)
+   * 1.3 [其他](#miscellaneous)
+      * 1.3.1 [sip.conf参数](#sipconf-params)
+   * 1.4 [拨号计划](#dialplan)
+   * 1.5 [参考资料](#see-also)
 
- 
+## Asterisk到FreeSWITCH罗塞塔石雕
 
-* 1 [Asterisk to FreeSWITCH Rosetta Stone](#asterisk-to-freeswitch-rosetta-stone)  
-   * 1.1 [Configuration Files](#configuration-files)  
-   * 1.2 [Console Commands](#console-commands)  
-   * 1.3 [Miscellaneous](#miscellaneous)  
-      * 1.3.1 [sip.conf params](#sipconf-params)  
-   * 1.4 [Dialplan](#dialplan)  
-   * 1.5 [See Also](#see-also)
+虽然FreeSWITCH不能完全替代Asterisk，但它能实现与Asterisk相似的许多功能。本页面旨在帮助那些熟悉Asterisk的人利用他们的知识，并快速找到在FreeSWITCH中等价或类似的功能。在大多数情况下，并没有直接的一对一翻译，而是存在相似之处。例如，extensions.conf 的"对应"（大体上）是conf/dialplan/default.xml；但也有features.xml、public.xml以及/conf/dialplan/extensions/\*xml。
 
-## Asterisk to FreeSWITCH Rosetta Stone
+* 如果有人对此有想法，请尽管分享你所知道的内容。
 
-While FreeSWITCH is not a drop-in replacement for Asterisk, it does many of the same things that Asterisk does. This page is an attempt to help those familiar with Asterisk to leverage that knowledge and quickly locate that which is equivalent or analogous in FreeSWITCH. In most cases there isn't a direct, one-to-one translation, but rather similarities. For example, the "equivalent" of extensions.conf is (mostly) conf/dialplan/default.xml; but there are also features.xml, public.xml and /conf/dialplan/extensions/\*xml.
-
-* If anyone has thoughts on this then by all means add what you know.
-
-### Configuration Files
+### 配置文件
 
 | Asterisk        | FreeSWITCH                                                                                                                 |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| extensions.conf | conf/dialplan/default.xml; also features.xml, public.xml, extensions/\*xml                                                 |
-| logger.conf     | [mod\_console](../../../Modules/mod_console_1048950.mdx#about) and mod\_syslog                                                               |
+| extensions.conf | conf/dialplan/default.xml；还有features.xml, public.xml, extensions/\*xml                                                 |
+| logger.conf     | [mod\_console](../../../Modules/mod_console_1048950.mdx#about) 和 mod\_syslog                                                               |
 | rtp.conf        | conf/autoload\_configs/switch.conf.xml                                                                                     |
-| sip.conf        | conf/directory/\*.xml (see [mod\_sofia](../../../Modules/mod_sofia_1048707.mdx#about))                                                       |
+| sip.conf        | conf/directory/\*.xml (见 [mod\_sofia](../../../Modules/mod_sofia_1048707.mdx#about))                                                       |
 | voicemail.conf  | mod\_voicemail - voicemail.conf.xml, conf/directory/\*xml                                                                  |
 | zapata.conf     | conf/autoload\_configs/openzap.conf.xml                                                                                    |
-| _Realtime_      | Use [mod\_xml\_curl](../../../Modules/mod_xml_curl_1049001.mdx) to fetch the user and/or dialplan in XML, mod\_ldap for LDAP backend |
+| _Realtime_      | 使用 [mod\_xml\_curl](../../../Modules/mod_xml_curl_1049001.mdx) 获取XML格式的用户和/或拨号计划，模块mod\_ldap为LDAP后端 |
 
-### Console Commands
+### 控制台命令
 
-| Asterisk Console                                            | FreeSWITCH [Fs cli](https://wiki.freeswitch.org/wiki/Fs%5Fcli "Fs cli")                                               | Shortcut Key |
-| ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------ |
-| core show help                                              | help                                                                                                                  | F1           |
-| core show uptime                                            | status                                                                                                                | F2           |
-| core show channels                                          | show channels                                                                                                         | F3           |
-| core show calls                                             | show calls                                                                                                            | F4           |
-| sip show settings                                           | sofia statussofia status profile internal                                                                             | F5F9         |
-| core reload                                                 | reloadxml                                                                                                             | F6           |
-| core set verbose 0                                          | /log 0                                                                                                                | F7           |
-| core set verbose 9                                          | /log 7                                                                                                                | F8           |
-| core set debug 9                                            | /debug 7                                                                                                              |              |
-| core show version                                           | version                                                                                                               | F12          |
-| channel originate sip/_source_ extension _destination_      | originate user/_source_ _destination_ xml default                                                                     |              |
-| channel originate sip/_source_ application _appname_ _data_ | originate user/_source_ &_appname_(_data_)                                                                            |              |
-| console dial 1000                                           | pa call 1000 _(see [mod\_portaudio](https://wiki.freeswitch.org/wiki/Mod%5Fportaudio))_                               |              |
-| database get _family key_                                   | db select/_family_/_key_                                                                                              |              |
-| dialplan show                                               | xml\_locate dialplan                                                                                                  |              |
-| hangup request _channel_                                    | uuid\_kill _uuid_                                                                                                     |              |
-| module load app\_queue.so                                   | load mod\_callcenter                                                                                                  |              |
-| queue show                                                  | callcenter\_config queue listcallcenter\_config tier list                                                             |              |
-| queue show _queue\_name_                                    | callcenter\_config queue list agents _queue\_name_@defaultcallcenter\_config queue list members _queue\_name_@default |              |
-| sip reload                                                  | sofia profile internal rescan                                                                                         |              |
-| sip set debug on                                            | sofia global siptrace onsofia global debug (presence\|sla|none)sofia loglevel all \[0-9\]                             |              |
-| sip set debug (ip\|peer)                                    | sofia profile (internal\|external) siptrace on                                                                        |              |
-| sip show peers                                              | list\_userssofia status profile internal reg                                                                          |              |
-| sip show peer _sip\_provider_                               | sofia status gateway _sip\_provider_                                                                                  |              |
+| Asterisk 控制台 | FreeSWITCH [Fs cli](https://wiki.freeswitch.org/wiki/Fs%5Fcli "Fs cli") | 快捷键   |
+| --------------- | ----------------------------------------------------------- | -------- |
+| core show help  | help                                                        | F1       |
+| core show uptime | status                                                      | F2       |
+| core show channels | show channels                                              | F3       |
+| core show calls   | show calls                                                 | F4       |
+| sip show settings | sofia statussofia status profile internal                   | F5F9     |
+| core reload       | reloadxml                                                   | F6       |
+| core set verbose 0 | /log 0                                                      | F7       |
+| core set verbose 9 | /log 7                                                      | F8       |
+| core set debug 9   | /debug 7                                                    |          |
+| core show version  | version                                                     | F12      |
+| channel originate sip/_source_ extension _destination_      | originate user/_source_ _destination_ xml default         |          |
+| channel originate sip/_source_ application _appname_ _data_ | originate user/_source_ &_appname_(_data_)                |          |
+| console dial 1000 | pa call 1000 _(see [mod\_portaudio](https://wiki.freeswitch.org/wiki/Mod%5Fportaudio))_                               |          |
+| database get _family key_                                   | db select/_family_/_key_                                   |          |
+| dialplan show                                               | xml\_locate dialplan                                       |          |
+| hangup request _channel_                                    | uuid\_kill _uuid_                                          |          |
+| module load app\_queue.so                                   | load mod\_callcenter                                       |          |
+| queue show                                                  | callcenter\_config queue listcallcenter\_config tier list |          |
+| queue show _queue\_name_                                    | callcenter\_config queue list agents _queue\_name_@defaultcallcenter\_config queue list members _queue\_name_@default |          |
+| sip reload                                                  | sofia profile internal rescan                             |          |
+| sip set debug on                                            | sofia global siptrace onsofia global debug (presence\|sla|none)sofia loglevel all \[0-9\]                             |          |
+| sip set debug (ip\|peer)                                    | sofia profile (internal\|external) siptrace on            |          |
+| sip show peers                                              | list\_userssofia status profile internal reg              |          |
+| sip show peer _sip\_provider_                               | sofia status gateway _sip\_provider_                      |          |
 
-### Miscellaneous
+### 其他
 
 | Asterisk               | FreeSWITCH                                                       |
 | ---------------------- | ---------------------------------------------------------------- |
 | AMI                    | [mod\_event\_socket](../../../Modules/mod_event_socket_1048924.mdx#11-acl)        |
-| asterisk -r            | [Command Line Interface (fs\_cli)](../../../Client-and-Developer-Interfaces/1048948.mdx#or)                 |
+| asterisk -r            | [命令行界面（fs\_cli）](../../../Client-and-Developer-Interfaces/1048948.mdx#or)                 |
 | asterisk -rx "command" | fs\_cli -x "command"                                             |
-| chan\_local            | [Loopback](https://wiki.freeswitch.org/wiki/Loopback "Loopback") |
-| stop gracefully        | shutdown or ...                                                  |
+| chan\_local            | [回环（Loopback）](https://wiki.freeswitch.org/wiki/Loopback "Loopback") |
+| stop gracefully        | 关闭或...                                                  |
 
-#### sip.conf params
+#### sip.conf 参数
 
 | Asterisk | FreeSWITCH                                                                                                                             |
 | -------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| dtmfmode | In dialplan: [start\_dtmf](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Fstart%5Fdtmf "Misc. Dialplan Tools start dtmf") |
+| dtmfmode | 在拨号计划中使用: [start\_dtmf](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Fstart%5Fdtmf "Misc. Dialplan Tools start dtmf") |
 
-Asterisk experts: please add more information
+Asterisk专家：请添加更多信息
 
-### Dialplan
+### 拨号计划
 
-| Asterisk                   | FreeSWITCH                                                                                                                                                                                                                                                                                           |
-| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| exten =>                   | &lt;extension>&lt;/extension> tags                                                                                                                                                                                                                                                                         |
-| include =>                 | [Misc.\_Dialplan\_Tools\_transfer](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Ftransfer "Misc. Dialplan Tools transfer")                                                                                                                                                             |
-| Realtime                   | [Mod xml curl](https://wiki.freeswitch.org/wiki/Mod%5Fxml%5Fcurl "Mod xml curl") to fetch the dialplan in XML                                                                                                                                                                                        |
-| Answer                     | [Misc.\_Dialplan\_Tools\_answer](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Fanswer "Misc. Dialplan Tools answer")                                                                                                                                                                   |
-| AGI                        | [Event Socket Outbound](https://wiki.freeswitch.org/wiki/Event%5FSocket%5FOutbound "Event Socket Outbound")[ivrd](https://wiki.freeswitch.org/wiki/Ivrd "Ivrd")                                                                                                                                      |
-| Background                 | Usually used for:[IVR](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Fivr "Misc. Dialplan Tools ivr")[play\_and\_get\_digits](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Fplay%5Fand%5Fget%5Fdigits "Misc. Dialplan Tools play and get digits")                         |
-| ChanSpy                    | [Misc.\_Dialplan\_Tools\_eavesdrop](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Feavesdrop "Misc. Dialplan Tools eavesdrop")                                                                                                                                                          |
-| DB                         | [Mod\_db](https://wiki.freeswitch.org/wiki/Mod%5Fdb "Mod db")                                                                                                                                                                                                                                        |
-| Dial                       | see [bridge](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Fbridge "Misc. Dialplan Tools bridge") app                                                                                                                                                                                   |
-| Dial(\||L(x\[:y\]\[:z\])   | Limiting call time, use [sched\_hangup](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Fsched%5Fhangup "Misc. Dialplan Tools sched hangup") for the x and [sched\_broadcast](https://wiki.freeswitch.org/wiki/FreeSwitch%5FScheduler%5FAPI "FreeSwitch Scheduler API") for the :y and :z |
-| Dial(SIP/${EXTEN}/sipuser) | bridge with data="{sip\_route\_uri=sipuser}user/whatever" or data="sofia/whatever%domain.com^sipuser"                                                                                                                                                                                                |
-| DumpChan                   | [Misc.\_Dialplan\_Tools\_info](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Finfo "Misc. Dialplan Tools info")                                                                                                                                                                         |
-| Echo                       | [Misc.\_Dialplan\_Tools\_echo](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Fecho "Misc. Dialplan Tools echo")                                                                                                                                                                         |
-| Goto                       | [Misc.\_Dialplan\_Tools\_transfer](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Ftransfer "Misc. Dialplan Tools transfer")                                                                                                                                                             |
-| GotoIf                     | Conditions in dialplan (&lt;condition field="blah" expression="foo">)                                                                                                                                                                                                                                   |
-| GotoIfTime                 | Conditions in dialplan with [Misc.\_Dialplan\_Tools\_strftime](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Fstrftime "Misc. Dialplan Tools strftime") or [Time\_of\_Day\_Routing](https://wiki.freeswitch.org/wiki/Time%5Fof%5FDay%5FRouting "Time of Day Routing")                   |
-| Hangup                     | [Misc.\_Dialplan\_Tools\_hangup](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Fhangup "Misc. Dialplan Tools hangup")                                                                                                                                                                   |
-| Log                        | [Misc.\_Dialplan\_Tools\_log](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Flog "Misc. Dialplan Tools log")                                                                                                                                                                            |
-| Macro/GoSub                | [Misc.\_Dialplan\_Tools\_execute\_extension](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Fexecute%5Fextension "Misc. Dialplan Tools execute extension")                                                                                                                               |
-| MeetMe                     | [mod\_conference](https://wiki.freeswitch.org/wiki/Mod%5Fconference "Mod conference")                                                                                                                                                                                                                |
-| Monitor                    | [Misc.\_Dialplan\_Tools\_record\_session](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Frecord%5Fsession "Misc. Dialplan Tools record session")                                                                                                                                        |
-| Monitor\_exec              | [Channel\_Variables#api\_hangup\_hook](https://wiki.freeswitch.org/wiki/Channel%5FVariables#api%5Fhangup%5Fhook "Channel Variables")                                                                                                                                                                 |
-| MP3Player                  | [mod\_shout](https://wiki.freeswitch.org/wiki/Mod%5Fshout "Mod shout")                                                                                                                                                                                                                               |
-| Musiconhold                | [mod\_local\_stream](https://wiki.freeswitch.org/wiki/Mod%5Flocal%5Fstream "Mod local stream")                                                                                                                                                                                                       |
-| NoCDR                      | &lt;action application="set" data="process\_cdr=false"/>                                                                                                                                                                                                                                                |
-| NoOp                       | Usually used for logging - [Misc.\_Dialplan\_Tools\_log](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Flog "Misc. Dialplan Tools log")                                                                                                                                                 |
-| Park                       | [Misc.\_Dialplan\_Tools\_park](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Fpark "Misc. Dialplan Tools park")                                                                                                                                                                         |
-| Playback                   | [Misc.\_Dialplan\_Tools\_playback](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Fplayback "Misc. Dialplan Tools playback")                                                                                                                                                             |
-| Playtones                  | [Misc.\_Dialplan\_Tools\_gentones](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Fgentones "Misc. Dialplan Tools gentones")                                                                                                                                                             |
-| Progress                   | [Misc.\_Dialplan\_Tools\_pre\_answer](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Fpre%5Fanswer "Misc. Dialplan Tools pre answer")                                                                                                                                                    |
-| Queue                      | [mod\_callcenter](https://wiki.freeswitch.org/wiki/Mod%5Fcallcenter "Mod callcenter") or [mod\_fifo](https://wiki.freeswitch.org/wiki/Mod%5Ffifo "Mod fifo")                                                                                                                                         |
-| Read                       | [Misc.\_Dialplan\_Tools\_read](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Fread "Misc. Dialplan Tools read")                                                                                                                                                                         |
-| Record                     | [Misc.\_Dialplan\_Tools\_record](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Frecord "Misc. Dialplan Tools record")                                                                                                                                                                   |
-| Set                        | [Misc.\_Dialplan\_Tools\_set](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Fset "Misc. Dialplan Tools set")                                                                                                                                                                            |
-| SetGlobal                  | [Misc.\_Dialplan\_Tools\_set\_global](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Fset%5Fglobal "Misc. Dialplan Tools set global")                                                                                                                                                    |
-| SIPGetHeader               | Auto set as variable - ${sip\_h\_HEADER} where HEADER is the header name                                                                                                                                                                                                                             |
-| SIPAddHeader               | [Set](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Fset "Misc. Dialplan Tools set") variable ${sip\_h\_HEADER} where HEADER is the header name you want to send                                                                                                                        |
-| System                     | [Misc.\_Dialplan\_Tools\_system](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Fsystem "Misc. Dialplan Tools system")                                                                                                                                                                   |
-| Transfer                   | [Misc.\_Dialplan\_Tools\_redirect](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Fredirect "Misc. Dialplan Tools redirect")                                                                                                                                                             |
-| Wait                       | [Misc.\_Dialplan\_Tools\_sleep](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Fsleep "Misc. Dialplan Tools sleep")                                                                                                                                                                      |
-| WaitExten                  | [Misc.\_Dialplan\_Tools\_play\_and\_get\_digits](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Fplay%5Fand%5Fget%5Fdigits "Misc. Dialplan Tools play and get digits")                                                                                                                   |
+| Asterisk                   | FreeSWITCH                                                                                                                                                                                                                                                                                                                |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| exten =>                   | `<extension></extension>` 标签                                                                                                                                                                                                                                                                                             |
+| include =>                 | [Misc._Dialplan_Tools_transfer](https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_transfer "Misc. Dialplan Tools transfer")                                                                                                                                                                                     |
+| Realtime                   | [Mod xml curl](https://wiki.freeswitch.org/wiki/Mod_xml_curl "Mod xml curl") 通过XML获取拨号计划                                                                                                                                                                                                                       |
+| Answer                     | [Misc._Dialplan_Tools_answer](https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_answer "Misc. Dialplan Tools answer")                                                                                                                                                                                             |
+| AGI                        | [Event Socket Outbound](https://wiki.freeswitch.org/wiki/Event_Socket_Outbound "Event Socket Outbound") [ivrd](https://wiki.freeswitch.org/wiki/Ivrd "Ivrd")                                                                                                                                                        |
+| Background                 | 通常用于：[IVR](https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_ivr "Misc. Dialplan Tools ivr") [play_and_get_digits](https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_play_and_get_digits "Misc. Dialplan Tools play and get digits")                                                                 |
+| ChanSpy                    | [Misc._Dialplan_Tools_eavesdrop](https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_eavesdrop "Misc. Dialplan Tools eavesdrop")                                                                                                                                                                                    |
+| DB                         | [Mod_db](https://wiki.freeswitch.org/wiki/Mod_db "Mod db")                                                                                                                                                                                                                                                              |
+| Dial                       | 参见 [bridge](https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_bridge "Misc. Dialplan Tools bridge") 应用程序                                                                                                                                                                                                     |
+| Dial(||L(x[:y][:z])   | 限制通话时间，在 x 上使用 [sched_hangup](https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_sched_hangup "Misc. Dialplan Tools sched hangup")，在 :y 和 :z 上使用 [sched_broadcast](https://wiki.freeswitch.org/wiki/FreeSwitch_Scheduler_API "FreeSwitch Scheduler API")                                           |
+| Dial(SIP/${EXTEN}/sipuser) | 使用 data="{sip_route_uri=sipuser}user/whatever" 或 data="sofia/whatever%domain.com^sipuser" 进行桥接                                                                                                                                                                                                                 |
+| DumpChan                   | [Misc._Dialplan_Tools_info](https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_info "Misc. Dialplan Tools info")                                                                                                                                                                                                 |
+| Echo                       | [Misc._Dialplan_Tools_echo](https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_echo "Misc. Dialplan Tools echo")                                                                                                                                                                                                 |
+| Goto                       | [Misc._Dialplan_Tools_transfer](https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_transfer "Misc. Dialplan Tools transfer")                                                                                                                                                                                     |
+| GotoIf                     | 拨号计划中的条件 (&lt;condition field="blah" expression="foo">)                                                                                                                                                                                                                                                        |
+| GotoIfTime                 | 使用 [Misc._Dialplan_Tools_strftime](https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_strftime "Misc. Dialplan Tools strftime") 或 [Time_of_Day_Routing](https://wiki.freeswitch.org/wiki/Time_of_Day_Routing "Time of Day Routing") 在拨号计划中设置条件                                                      |
+| Hangup                     | [Misc._Dialplan_Tools_hangup](https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_hangup "Misc. Dialplan Tools hangup")                                                                                                                                                                                             |
+| Log                        | [Misc._Dialplan_Tools_log](https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_log "Misc. Dialplan Tools log")                                                                                                                                                                                                   |
+| Macro/GoSub                | [Misc._Dialplan_Tools_execute_extension](https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_execute_extension "Misc. Dialplan Tools execute extension")                                                                                                                                                           |
+| MeetMe                     | [mod_conference](https://wiki.freeswitch.org/wiki/Mod_conference "Mod conference")                                                                                                                                                                                                                                   |
+| Monitor                    | [Misc._Dialplan_Tools_record_session](https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_record_session "Misc. Dialplan Tools record session")                                                                                                                                                                     |
+| Monitor_exec              | [Channel_Variables#api_hangup_hook](https://wiki.freeswitch.org/wiki/Channel_Variables#api_hangup_hook "Channel Variables")                                                                                                                                                                                          |
+| MP3Player                  | [mod_shout](https://wiki.freeswitch.org/wiki/Mod_shout "Mod shout")                                                                                                                                                                                                                                                 |
+| Musiconhold                | [mod_local_stream](https://wiki.freeswitch.org/wiki/Mod_local_stream "Mod local stream")                                                                                                                                                                                                                             |
+| NoCDR                      | `<action application="set" data="process_cdr=false"/>`                                                                                                                                                                                                                                                              |
+| NoOp                       | 通常用于日志记录 - [Misc._Dialplan_Tools_log](https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_log "Misc. Dialplan Tools log")                                                                                                                                                                                |
+| Park                       | [Misc._Dialplan_Tools_park](https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_park "Misc. Dialplan Tools park")                                                                                                                                                                                               |
+| Playback                   | [Misc._Dialplan_Tools_playback](https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_playback "Misc. Dialplan Tools playback")                                                                                                                                                                                   |
+| Playtones                  | [Misc._Dialplan_Tools_gentones](https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_gentones "Misc. Dialplan Tools gentones")                                                                                                                                                                                   |
+| Progress                   | [Misc._Dialplan_Tools_pre_answer](https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_pre_answer "Misc. Dialplan Tools pre answer")                                                                                                                                                                               |
+| Queue                      | [mod_callcenter](https://wiki.freeswitch.org/wiki/Mod_callcenter "Mod callcenter") 或 [mod_fifo](https://wiki.freeswitch.org/wiki/Mod_fifo "Mod fifo")                                                                                                                                                              |
+| Read                       | [Misc._Dialplan_Tools_read](https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_read "Misc. Dialplan Tools read")                                                                                                                                                                                               |
+| Record                     | [Misc._Dialplan_Tools_record](https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_record "Misc. Dialplan Tools record")                                                                                                                                                                                         |
+| Set                        | [Misc._Dialplan_Tools_set](https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_set "Misc. Dialplan Tools set")                                                                                                                                                                                                  |
+| SetGlobal                  | [Misc._Dialplan_Tools_set_global](https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_set_global "Misc. Dialplan Tools set global")                                                                                                                                                                               |
+| SIPGetHeader               | 自动设置为变量 - ${sip_h_HEADER}，其中 HEADER 是头部名称                                                                                                                                                                                                                                                            |
+| SIPAddHeader               | 使用 [Set](https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_set "Misc. Dialplan Tools set") 变量 ${sip_h_HEADER}，其中 HEADER 是要发送的头部名称                                                                                                                                                                        |
+| System                     | [Misc._Dialplan_Tools_system](https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_system "Misc. Dialplan Tools system")                                                                                                                                                                                         |
+| Transfer                   | [Misc._Dialplan_Tools_redirect](https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_redirect "Misc. Dialplan Tools redirect")                                                                                                                                                                                   |
+| Wait                       | [Misc._Dialplan_Tools_sleep](https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_sleep "Misc. Dialplan Tools sleep")                                                                                                                                                                                            |
+| WaitExten                  | [Misc._Dialplan_Tools_play_and_get_digits](https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_play_and_get_digits "Misc. Dialplan Tools play and get digits")
 
-### See Also
+### 参见
 
-* [Configuring FreeSWITCH](../../../Configuration/Configuring-FreeSWITCH/index.mdx#set)
+* [配置FreeSWITCH](../../../Configuration/Configuring-FreeSWITCH/index.mdx#set)
 * [Asterisk](./index.mdx#about)
-* [Convert Asterisk Dialplans to FreeSWITCH](./Convert-Asterisk-Dialplans-to-FreeSWITCH/index.mdx#--)
-
-
+* [将Asterisk拨号计划转换为FreeSWITCH](./Convert-Asterisk-Dialplans-to-FreeSWITCH/index.mdx#--)

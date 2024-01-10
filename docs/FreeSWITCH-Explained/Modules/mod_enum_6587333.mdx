@@ -1,39 +1,36 @@
+# mod_enum
 
-# mod_enum 
+## 关于
 
- 
-
-## About
-
-**ENUM** (**E**lectronic **N**umber **M**apping **S**ystem) is a system that uses standard phone numbers as a key to lookup addressing and identification information that can potentially let Freeswitch servers communicate directly, thus bypassing the PSTN, reducing cost, and improving audio quality. It is based on the E.164 standard and uses standard DNS systems to translate telephone numbers into a special DNS record type called a **NAPTR record** (**N**aming**A**uthority **P**oin**T**er **R**esource Record) that might contain information for 1-(800)-555-1234 such as:
+**ENUM**（**E**lectronic **N**umber **M**apping **S**ystem）是一种使用标准电话号码作为键来查找地址和识别信息的系统，可以让Freeswitch服务器直接通信，从而绕过PSTN，降低成本，提高音频质量。它基于E.164标准，并使用标准DNS系统将电话号码转换成一种特殊的DNS记录类型，称为 **NAPTR记录**（**N**aming**A**uthority **P**oin**T**er **R**esource Record），该记录可能包含与1-(800)-555-1234相关的信息，例如：
 
 $ORIGIN 4.3.2.1.5.5.5.0.0.8.1.e164.arpa.
 IN NAPTR 100 10 "U" "E2U+sip" "!^.*$!sip:customer-service@example.com!" .
 IN NAPTR 102 10 "U" "E2U+email" "!^.*$!&lt;mailto:information@example.com>!" .
 
-Click here to expand Table of Contents
+点击此处展开目录
 
-* 1 [Configuration](#configuration)  
-   * 1.1 [Options](#options)
-* 2 [Dialplan interface](#dialplan-apps)
-* 3 [Dialplan apps](#dialplan-apps)  
+* 1 [配置](#configuration)  
+   * 1.1 [选项](#options)
+* 2 [拨号计划接口](#dialplan-apps)
+* 3 [拨号计划应用](#dialplan-apps)  
    * 3.1 [enum](#enum)
 * 4 [API](#enum)  
    * 4.1 [enum](#enum)  
    * 4.2 [enum\_auto](#enum_auto)
-* 5 [ENUM providers](#enum-providers)  
-   * 5.1 [Public E164](#public-e164)  
-   * 5.2 [Registering your number with e164.org](#registering-your-number-with-e164orghttpe164org)  
-   * 5.3 [Custom ENUM Server](#custom-enum-server)  
-   * 5.4 [Use different sofia profiles when using Enum](#use-different-sofia-profiles-when-using-enum)
+* 5 [ENUM提供商](#enum-providers)  
+   * 5.1 [公共E164](#public-e164)  
+   * 5.2 [通过e164.org注册您的号码](#registering-your-number-with-e164orghttpe164org)  
+   * 5.3 [自定义ENUM服务器](#custom-enum-server)  
+   * 5.4 [使用Enum时使用不同的sofia配置文件](#use-different-sofia-profiles-when-using-enum)
 
-### Configuration
+### 配置
 
-The main file for configuring ENUM functionality (assuming you've done "make samples" and are working with the provided sample configuration files) is: conf/autoload\_configs/enum.conf.xml
+配置ENUM功能的主要文件（假设您已经执行了 "make samples" 并正在使用提供的示例配置文件）是: conf/autoload\_configs/enum.conf.xml
 
-The contents of this file are as of such:
+该文件的内容如下:
 
-&lt;configuration name="enum.conf" description="ENUM Module">
+&lt;configuration name="enum.conf" description="ENUM 模块">
   &lt;settings>
     &lt;param name="default-root" value="e164.org"/>
     &lt;param name="default-isn-root" value="freenum.org"/>
@@ -47,40 +44,40 @@ The contents of this file are as of such:
   &lt;/routes>
 &lt;/configuration>
 
-Note the above configuration uses global variables $${sip\_profile} and $${xmpp\_server\_profile}}, these must be set in vars.conf.xml. Or use static values. The above is only an example.
+请注意以上配置使用了全局变量 $${sip\_profile} 和 $${xmpp\_server\_profile}，这些必须在 vars.conf.xml 中进行设置。或者使用静态值。以上仅为示例。
 
-#### Options
+#### 选项
 
-| **Name**         | **Description**                                                                                                                           | **Example**                       |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
-| auto-reload      | Whether to reload the XML configuration when [reloadxml](https://wiki.freeswitch.org/wiki/Mod%5Fcommands#reloadxml "Mod commands") is run | true                              |
-| default-root     | Default root to use when not specified.                                                                                                   | [e164.org](http://e164.org)       |
-| default-isn-root | Default root to use when not specified.                                                                                                   | [freenum.org](http://freenum.org) |
-| query-timeout    | How long before ENUM DNS query times out (seconds)                                                                                        | 10                                |
+| **名称**           | **描述**                                                                                                                                          | **示例**                             |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------- |
+| auto-reload        | 在运行 [reloadxml](https://wiki.freeswitch.org/wiki/Mod%5Fcommands#reloadxml "Mod commands") 命令时是否重新加载 XML 配置文件                    | true                                |
+| default-root       | 未指定时使用的默认根                                                                                                                               | [e164.org](http://e164.org)          |
+| default-isn-root   | 未指定时使用的默认根                                                                                                                               | [freenum.org](http://freenum.org)    |
+| query-timeout      | ENUM DNS 查询超时时间（秒）                                                                                                                        | 10                                  |
 
-**ToDo: The difference between default-isn-root and default-root needs to be documented.**
+**ToDo: 需要记录 default-isn-root 和 default-root 的区别。**
 
-### [Dialplan](https://wiki.freeswitch.org/wiki/Dialplan "Dialplan") interface
+### [Dialplan](https://wiki.freeswitch.org/wiki/Dialplan "Dialplan") 接口
 
-The enum module provides a dialplan interface which allows you only to dial a number and an ENUM lookup will be done. If results are found, the ones supported will be called in order of priority and weight of the [DNS](https://wiki.freeswitch.org/wiki/DNS "DNS") records. The results are mapped to dialstrings using the routes options from the configuration file.
+enum 模块提供了一个拨号计划接口，允许您只需要拨打一个号码，就会进行 ENUM 查找。如果找到结果，则会按照 [DNS](https://wiki.freeswitch.org/wiki/DNS "DNS") 记录的优先级和权重调用支持的结果。通过配置文件中的路由选项，将结果映射为拨号字符串。
 
-The ENUM dialplan can be set from one of the Endpoints configuration [XML](https://wiki.freeswitch.org/index.php?title=XML&action=edit&redlink=1 "XML (page does not exist)") as follows:
+ENUM拨号计划可以通过一个终端点配置的[XML](https://wiki.freeswitch.org/index.php?title=XML&action=edit&redlink=1 "XML (page does not exist)")进行设置，如下所示：
 
 &lt;param name="dialplan" value="enum"/>
 
-It is also possible to [transfer](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Ftransfer "Misc. Dialplan Tools transfer") to the enum dialplan from another dialplan such as the XML one.
+也可以从另一个拨号计划（例如XML拨号计划）[转接](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Ftransfer "Misc. Dialplan Tools transfer")到ENUM拨号计划。
 
-### Dialplan apps
+### 拨号计划应用程序
 
 #### enum
 
-The ENUM application can be called from the dialplan by executing it from within your condition as follows:
+可以通过在条件语句中执行ENUM应用程序来调用ENUM拨号计划，如下所示：
 
- &lt;action application="enum" data="$1 e164.org"/>
+&lt;action application="enum" data="$1 e164.org"/>
 
-You can specify a custom root domain as the second parameter, above it is "[e164.org](http://e164.org)" the parameter $1 contains what has been dialed.
+您可以指定一个自定义的根域作为第二个参数，上面的例子中是"[e164.org](http://e164.org)"，参数$1包含了所拨号码。
 
-The lookup generates dialstrings for bridge using the routes set in the configuration file, for example:
+查找操作会根据配置文件中设置的路由生成用于桥接的拨号字符串，例如：
 
   enum_route_1: sofia/internal/18005551212@tf.voipmich.com
   enum_route_2: sofia/internal/16416418005551212@sip.tollfreegateway.com
@@ -88,9 +85,9 @@ The lookup generates dialstrings for bridge using the routes set in the configur
   enum_route_count: 3
   enum_auto_route: sofia/internal/18005551212@tf.voipmich.com,sofia/internal/16416418005551212@sip.tollfreegateway.com,sofia/internal/18005551212@tollfree.sip-happens.com
 
-The last variable enum\_auto\_route is convenient to pass directly to [bridge](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Fbridge "Misc. Dialplan Tools bridge"). If the enum lookup fails it will be empty, one way to handle this would be to set continue\_on\_fail=true and fallback to another bridge, for example:
+最后一个变量enum\_auto\_route可以直接传递给[bridge](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Fbridge "Misc. Dialplan Tools bridge")。如果ENUM查找失败，则会为空。处理这种情况的一种方法是设置continue\_on\_fail=true并回退到另一个桥接操作，例如：
 
-   &lt;extension name="Outbound to US PSTN 11 Digits">
+&lt;extension name="向美国PSTN拨出11位号码">
      &lt;condition field="destination_number" expression="^(1[2-9][0-9][0-9][2-9][0-9][0-9][0-9][0-9][0-9][0-9])$">
        &lt;action application="set" data="continue_on_fail=true"/>
        &lt;action application="enum" data="$1 e164.org"/>
@@ -99,18 +96,18 @@ The last variable enum\_auto\_route is convenient to pass directly to [bridge](h
      &lt;/condition>
    &lt;/extension>
 
-### [API](https://wiki.freeswitch.org/index.php?title=API&action=edit&redlink=1 "API (page does not exist)")
+### [API](https://wiki.freeswitch.org/index.php?title=API&action=edit&redlink=1 "API（页面不存在）")
 
 #### enum
 
 enum &lt; reload | number \[root\] >
 
-From the CLI issue something similar to the following to see a readable output of the ENUM lookup results:
+从CLI中输入以下类似的内容，以查看ENUM查询结果的可读输出：
 
 enum 18002255288
 enum 18002255288 e164.org
 
-Example output:
+示例输出：
 
 Offered Routes:
 Order	Pref	Service   	Route
@@ -124,30 +121,30 @@ Order	Pref	Service   	Route
 100	10	E2U+SIP   	sofia/internal/16416418002255288@sip.tollfreegateway.com;transport=udp
 100	10	E2U+SIP   	sofia/internal/16416418002255288@tollfree.sip-happens.com;transport=udp
 
-It can also be used to reload the XML configuration:
+也可以用它来重新加载XML配置：
 
  enum reload
 
 #### enum_auto
 
-This API can be used to generate a dialstring compatible with bridge:
+此API可用于生成与桥接兼容的拨号字符串：
 
  enum_auto 18002255288
 
-gives
+输出为：
 
- sofia/internal/16416418002255288@sip.tollfreegateway.com;transport=udp,sofia/internal/16416418002255288@tollfree.sip-happens.com;transport=udp
+sofia/internal/16416418002255288@sip.tollfreegateway.com; transport=udp, sofia/internal/16416418002255288@tollfree.sip-happens.com; transport=udp
 
-### ENUM providers
+### ENUM提供商
 
-#### Public E164
+#### 公共E164
 
-There are several popular ENUM providers for E164 numbers, including:
+对于E164号码，有几个流行的ENUM提供商，包括：
 
 [e164.org](http://www.e164.org/)
 e164.arpa
 
-Hence, one could try:
+因此，可以尝试以下方法：
 
 &lt;action application="set" data="continue_on_fail=true"/>
 &lt;action application="enum" data="$1 e164.org"/>
@@ -155,49 +152,49 @@ Hence, one could try:
 &lt;action application="enum" data="$1 e164.arpa"/>
 &lt;action application="bridge" data="${enum_auto_route}"/>
 
-And there are numerous others spanned across the globe, but please research them fully before using them lest calls be "hijacked" to somewhere else. You could in fact institute your own dialplan within your own DNS domain by using ENUM lookups for particular extensions, however it has been reported that it might be possible to have your DOMAIN hijacked and in the process your telephone traffic may also be exploited. So do your own research into the security of such a deployment.
+在全球范围内还有许多其他提供商，但在使用它们之前，请进行充分的调研，以免电话被“劫持”到其他地方。实际上，您可以通过使用ENUM查找特定扩展的方式在自己的DNS域中建立自己的拨号计划，但有报道称可能会有您的域名被劫持的情况发生，从而导致您的电话通信也可能被利用。因此，请自行调查这种部署的安全性。
 
-#### Registering your number with [e164.org](http://e164.org)
+#### 在[e164.org](http://e164.org)上注册您的号码
 
-[E164.org](http://www.e164.org/) is a free service (supported by donations) that verifies your number by placing a phone call and reading a 6-digit PIN. However, the digits are read only once, rather fast, and it can't dial through an IVR, which makes it difficult to register a number on an operational system. One way to work with this problem is to place in your public dialplan an extension that routes a call from [e164.org](http://e164.org) directly to your extension, using their caller-ID number (+12243336164) as a condition:
+[E164.org](http://www.e164.org/)是一个免费的服务（由捐款支持），通过拨打电话并读取6位数的验证码来验证您的号码。但是，验证码只会被读取一次，速度很快，并且不能通过IVR进行拨号，这使得在操作系统上注册号码变得困难。解决这个问题的一种方法是，在公共拨号计划中放置一个扩展，将来自[e164.org](http://e164.org)的电话直接路由到您的分机，使用它们的主叫号码 (+12243336164) 作为条件。
 
 &lt;condition field="caller_id_number" expression="^\+?(12243336164)$">
   &lt;action application="transfer" data="1023 XML default"/>
 &lt;/condition>
 
-After entering your number at [e164.org](http://e164.org), wait a few minutes at that extension, pick it up immediately, and get ready to write down the 6-digit PIN.
+在[e164.org](http://e164.org)上输入您的号码后，等待几分钟在该分机上，立即接起电话，并准备记录6位数的个人识别码。
 
-Incidentally, although this PIN method ensures that only the owner of a phone number can register it, it is not clear how or if they can detect numbers that have been "changed" or "disconnected", etc... Hence, they rely on the individual that "owns" the record to delete the record for their old number. Hence, over time it is possible that if enough people "forget" to delete their old numbers that a call could get improperly routed to the wrong (old) destination and not arrive to the person/organization that presently owns that PSTN number.
+顺便提一下，虽然这种个人识别码的方法确保只有电话号码的所有者可以注册它，但它并没有明确说明如何或是否能够检测到已经被“更改”或“断开”等的号码...因此，它们依赖于“所有”记录的所有者来删除他们旧号码的记录。因此，随着时间的推移，如果有足够多的人“忘记”删除他们的旧号码，可能会导致呼叫错误地路由到错误（旧）的目的地，并且无法到达当前拥有该PSTN号码的个人/组织。
 
-In short, use at your own risk.
+简言之，请自行决定是否使用。
 
-#### Custom ENUM Server
+#### 自定义ENUM服务器
 
-You can use enum to store your internal phone number to user/phone mapping (often called carrier-enum), this python code use the twisted matrix DNS library ( apt-get install python-twisted-names ) to create a [custom enum DNS server](http://pastebin.freeswitch.org/17150%7Csimple) to that end.
+您可以使用enum来存储内部电话号码到用户/电话映射（通常称为carrier-enum），这段Python代码使用twisted matrix DNS库（apt-get install python-twisted-names）来创建一个[自定义ENUM DNS服务器](http://pastebin.freeswitch.org/17150%7Csimple)。
 
-#### Use different sofia profiles when using Enum
+#### 使用Enum时使用不同的sofia配置文件
 
-Should you want to use different profiles for with your enum entries, it is possible thanks to [RFC 3761](https://tools.ietf.org/html/rfc3761) section 2.4.2
+如果您想在使用枚举条目时使用不同的配置文件，这是可能的，感谢[RFC 3761](https://tools.ietf.org/html/rfc3761)第2.4.2节。
 
-In your enum.conf configuration, setup multiple services giving them names after the comma and then use those name as the NAPTR service name in DNS.
+在您的enum.conf配置中，设置多个服务，并以逗号分隔它们的名称，然后将这些名称用作DNS中的NAPTR服务名称。
 
  &lt;routes>
    &lt;route service="E2U+SIP:MEDIA" regex="sip:(.*)" replace="sofia/media/$1"/>
    &lt;route service="E2U+SIP:TRUNK" regex="sip:(.*)" replace="sofia/pstn/$1"/>
  &lt;/route>
 
- $ cat ienum 
- #!/bin/sh
- # should stip here + or 00 from $1
- echo host -t naptr $(echo $1 | rev | sed -e 's/[0-9]/&./g')my-enum-domain.com
- host -t naptr $(echo $1 | rev | sed -e 's/[0-9]/&./g')my-enum-domain.com
+```
+$ cat ienum
+#!/bin/sh
+# 从$1中删除 + 或 00
+echo host -t naptr $(echo $1 | rev | sed -e 's/[0-9]/&./g')my-enum-domain.com
+host -t naptr $(echo $1 | rev | sed -e 's/[0-9]/&./g')my-enum-domain.com
 
-replace [my-enum-domain.com](http://my-enum-domain.com) with your enum root.
+请将 [my-enum-domain.com](http://my-enum-domain.com) 替换为您的枚举根域名。
 
-Example output :
+示例输出：
 
- $ ienum 123456789
- host -t naptr 9.8.7.6.5.4.3.2.1.enum.domain.com
- 9.8.7.6.5.4.3.2.1.enum.domain.com has NAPTR record 10 100 "U" "E2U+sip:MEDIA" "!^.*$!sip:unallocated-123456789@127.0.0.1!" .
-
-
+$ ienum 123456789
+host -t naptr 9.8.7.6.5.4.3.2.1.enum.domain.com
+9.8.7.6.5.4.3.2.1.enum.domain.com 具有 NAPTR 记录 10 100 "U" "E2U+sip:MEDIA" "!^.*$!sip:unallocated-123456789@127.0.0.1!"。
+```

@@ -1,51 +1,47 @@
+# Khomp/上下文
 
-# Khomp/Contexts 
+单击此处展开目录
 
- 
+* 1 [E1 通道上下文](#contexts-for-e1-channels)
+* 2 [FXS/FXO/GSM 通道上下文](#contexts-of-fxsfxogsm-channels)
+* 3 [FXS 分机的优先级设置](#priority-settings-on-the-fxs-branches)
+* 4 [短信的上下文（仅限 GSM）](#contexts-for-sms-messages-gsm-only)
+* 5 [Khomp_PR 通道的上下文（KPR）](#contexts-for-khomp_pr-channels-kpr)
+* 6 [群组上下文](#groups-contexts)
 
-Click here to expand Table of Contents
+## E1 通道上下文
 
-* 1 [Contexts for E1 channels](#contexts-for-e1-channels)
-* 2 [Contexts of FXS/FXO/GSM channels](#contexts-of-fxsfxogsm-channels)
-* 3 [Priority settings on the FXS branches](#priority-settings-on-the-fxs-branches)
-* 4 [Contexts for SMS messages (GSM only)](#contexts-for-sms-messages-gsm-only)
-* 5 [Contexts for Khomp\_PR channels (KPR)](#contexts-for-khomp_pr-channels-kpr)
-* 6 [Groups contexts](#groups-contexts)
-
-## Contexts for E1 channels
-
-For E1 boards, inbound contexts are predefined as option **context-digital** with default value as following:
+对于 E1 采集卡，入站上下文的预定义选项是 **context-digital**，其默认值如下：
 
 ```xml
 <param name="context-digital" value="khomp-DD-LL"/>
 ```
 
-This standard defines the context that links will be redirected in accordance with the number of the board and number of the link: **DD** is the device number (two digits), and **LL** is the number of the link (also with two digits).
+该标准定义了链接将根据板卡号和链接号重定向的上下文：**DD** 是设备号（两位数），而 **LL** 是链接号（同样是两位数）。
 
-However, it is possible to configure other inbound contexts, with different formats. There is format **CCC**, which means the channel number on the card (three digits), and **SSSS**, which represents the serial board number (with four digits).
+但是，可以配置其他入站上下文，具有不同的格式。有 **CCC** 格式，表示卡上的通道号（三位数），和 **SSSS** 表示序列板号（四位数）。
 
-Examples for configuration entries (**khomp.conf.xml**):
+配置条目示例（**khomp.conf.xml**）：
 
 ```xml
-<!-- Serial board number and sequential link (ex: khomp-01-00) -->
+<!-- 序列板号和顺序链接（例如：khomp-01-00） -->
 <param name="context-digital" value="khomp-DD-LL"/>
 
-<!-- Serial board number and sequential link (ex: khomp-3049-00) -->
+<!-- 序列板号和顺序链接（例如：khomp-3049-00） -->
 <param name="context-digital" value="khomp-SSSS-LL"/>
 
-<!-- Sequential board number and the channel (ex: khomp-00-001) -->
+<!-- 顺序板号和通道（例如：khomp-00-001） -->
 <param name="context-digital" value="khomp-DD-CCC"/>
 
-<!-- Receive all calls in one context (khomp-digital) -->
+<!-- 在一个上下文中接收所有呼叫（khomp-digital） -->
 <param name="context-digital" value="khomp-digital"/>
 ```
 
-Follows an example the context usage inside the dialplan:
+以下是拨号计划中使用上下文的示例：
 
 ```xml
 <!--
-The present context in 'extensions.conf' will handle calls
-that come from the link 0 (first link) of the board 0.
+在 'extensions.conf' 中，当前的上下文将处理来自板卡 0 的链路 0（第一个链路）的呼叫。
 -->
 <context name="khomp-00-00">
              .
@@ -54,12 +50,11 @@ that come from the link 0 (first link) of the board 0.
 </context>
 ```
 
-Another example, using the same format:
+另一个示例，使用相同的格式：
 
 ```xml
 <!-- 
-The present context in 'extensions.conf' will handle calls
-that come from the link 1 (second link) of the board 0.
+在 'extensions.conf' 中，当前的上下文将处理来自板卡 0 的链路 1（第二个链路）的呼叫。
 -->
 <context name="khomp-00-01>
              .
@@ -68,7 +63,7 @@ that come from the link 1 (second link) of the board 0.
 </context>
 ```
 
-A complete example, with a few simple actions:
+一个完整的例子，包含几个简单的操作：
 
 ```xml
 <context name="khomp-00-00">
@@ -93,46 +88,47 @@ A complete example, with a few simple actions:
 </context>
 ```
 
-This dialplan defines that:
+该拨号计划定义了以下内容：
 
-1. The incoming calls on the link **0** of the board **0** will have the following handling:  
-   * Calls to the extension 1234 for will be redirected to the second link on the first board (b0L1), calling number **2345**;  
-   * Calls to any four digit number starting with**23** will be redirected to SIP phones numbered **11** plus the last two digits of the number dialed.
-2. The incoming calls on the link **1** of the board **0** for the number **1111** will be redirected to the first link of the first board (b0L0) calling number **2345**.
+1. 板卡 **0** 的链接 **0** 上的来电将按以下方式处理：
+   * 拨打分机号码为 1234 的电话将被重定向到第一张板卡的第二个链接 (b0L1)，呼叫号码为 **2345**；
+   * 以**23**开头的四位数号码将被重定向到 SIP 电话，号码为 **11** 加上拨号的最后两位数字。
 
-## Contexts of FXS/FXO/GSM channels
+2. 板卡 **0** 的链接 **1** 接收到号码为 **1111** 的来电将被重定向到第一张板卡的第一个链接 (b0L0)，呼叫号码为 **2345**。
 
-Just as in the context of E1 cards, inbound links are forwarded to the Endpoint FreeSwitch.
+## FXS/FXO/GSM 通道的上下文情境
 
-The context is pre-defined as follows, according to the file **khomp.conf.xml**:
+与 E1 卡的情境一样，入站链接将被转发到 Endpoint 的 FreeSwitch。
+
+根据文件 **khomp.conf.xml**，情境已预先定义如下：
 
 ```xml
-<param name="context-gsm" value="khomp-DD-CC"/> ;placas GSM
+<param name="context-gsm" value="khomp-DD-CC"/> ;GSM 板卡
 
-<param name="context-fxs" value="khomp-DD-CC"/> ; placas FXS
+<param name="context-fxs" value="khomp-DD-CC"/> ;FXS 板卡
 
-<param name="context-fxo" value="khomp-DD-CC"/> ; placas FXO
+<param name="context-fxo" value="khomp-DD-CC"/> ;FXO 板卡
 ```
 
-For these options, **DD** is the device number (two digits), and **CC** is the channel number (also two digits). There is also the **SSSS** format, which represents the serial number board.
+在这些选项中，**DD** 是设备编号（两位数字），**CC** 是通道编号（同样是两位数字）。还有一个表示序列号板卡的 **SSSS** 格式。
 
-In the **KGSM** board, incoming calls are **always** redirected to the **"s"** extension, since the GSM protocol does not identify the target number, only the originator - if not omitted.
+在 **KGSM** 板卡上，入站来电始终被重定向到 **"s"** 分机号码，因为 GSM 协议只识别呼叫来源，而不识别目标号码（除非被省略）。
 
-## Priority settings on the FXS branches
+## FXS 分机优先级设置
 
-On calls originated from an FXS branch, the Endpoint searches for a valid extension (digits sent) after the DTMF **#** or after the _timeout_ (option **fxs-digit-timeout**). That search is done in the context defined in section **&lt;fxs-options>**, or if no context configured, the search is done in context defined in **context-fxs**. 
+对于通过 FXS 分机发起的呼叫，在 DTMF **#** 后或时间超时（选项 **fxs-digit-timeout**）后，Endpoint 会搜索有效的分机号码（发送的数字）。该搜索在 **&lt;fxs-options>** 节所定义的上下文中进行，如果没有配置上下文，则搜索将在 **context-fxs** 中定义的上下文中进行。
 
-## Contexts for SMS messages (GSM only)
+## 短信消息的上下文情境（仅限 GSM）
 
-SMS messages are received by the Khomp _Endpoint_ and forwarded to FreeSWITCH as a normal connection but no audio, which has some variables set with information received in the message - for more information on these variables, see the documentation of the variables of the _Endpoint_. This context can also be modified in the same way as the above contexts.
+短信消息被Khomp _Endpoint_ 接收，并作为普通连接转发到FreeSWITCH，但没有音频，在消息中设置了一些变量，有关这些变量的更多信息，请参阅 _Endpoint_ 的变量文档。这个上下文也可以像上面的上下文一样进行修改。
 
-The default value for this option follows (**khomp.conf.xml**):
+这个选项的默认值如下（**khomp.conf.xml**）：
 
 ```xml
 <param name="context-gsm-sms" value="khomp-sms-DD-CC"/> 
 ```
 
-Where **DD** is the device number (two digits), and **CC** is the channel number (also with two digits). For example:
+其中**DD**是设备编号（两位数字），**CC**是通道编号（也是两位数字）。例如：
 
 ```xml
 <context name="khomp-sms-00-01">
@@ -145,20 +141,18 @@ Where **DD** is the device number (two digits), and **CC** is the channel number
 </context>
 ```
 
-## Contexts for Khomp_PR channels (KPR)
+## Khomp_PR通道（KPR）的上下文
 
-For these cards, inbound links have a pre-defined context, as shown below:
+对于这些卡，入站链路有一个预定义的上下文，如下所示：
 
 ```xml
 <param name="context-pr" value="khomp-DD-CC"/> 
 ```
 
-In this case, **DD** is the device number (two digits), and**CC** is the channel number (also two digits). The name and format of this context can also be changed through the "context-pr" in the configuration file. 
+在这种情况下，**DD**是设备编号（两位数字），**CC**是通道编号（也是两位数字）。这个上下文的名称和格式也可以通过配置文件中的"context-pr"进行更改。
 
-## Groups contexts
+## 组上下文
 
-The section **groups**, in the configuration file **khomp.conf.xml**, can be used to define specific settings for certain groups of channels.
+配置文件**khomp.conf.xml**中的**groups**部分可用于定义特定通道组的特定设置。
 
-This section is detailed in the section **Endpoint Configuration**.
-
-
+此部分在**Endpoint Configuration**部分中详细介绍。

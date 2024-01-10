@@ -1,27 +1,24 @@
+# Javascript 示例 - FollowMe 
 
-# Javascript Example - FollowMe 
+## 关于
 
- 
+当一个分机被调用时，同时或按顺序呼叫多个分机或外部电话号码。
 
-## About
+点击这里展开目录
 
-When an extension is called ring multiple extensions or external phone numbers simultaneously or in order.
-
-Click here to expand Table of Contents
-
-Dialplan /usr/local/freeswitch/conf/dialplan/default.xml Do a find for "Local\_Extension" inside the file modify the bottom of that section. Comment out the following:
+拨号计划 /usr/local/freeswitch/conf/dialplan/default.xml 在文件中查找 "Local_Extension" ，修改该部分的底部。注释掉以下部分：
 
 ```xml
 	<action application="bridge" data="user/${dialed_extension}@${domain_name}"/>
 ```
 
-Then add:
+然后添加：
 
 ```xml
  	<action application="javascript" data="followme.js" />
 ```
 
-Now it should look like this.
+现在它应该看起来像这样：
 
 ```xml
      <action application="javascript" data="followme.js" />
@@ -31,60 +28,64 @@ Now it should look like this.
      <action application="voicemail" data="default ${domain_name} ${dialed_extension}"/>
 ```
 
-Add the follome javascript file to /usr/local/freeswitch/scripts/followme.js
+将 followme.js 文件添加到 /usr/local/freeswitch/scripts/followme.js
 
 **followme.js**
 
 ```js
-function get_sofia_contact(extension,domain_name, profile){
-   if (profile == "auto") {
-     profile = "internal";
-     session.execute("set", "sofia_contact_"+extension+"=${sofia_contact("+profile+"/"+extension+"@"+domain_name+")}");
-     sofia_contact = session.getVariable("sofia_contact_"+extension);
-     console_log( "info", "sofia_contact internal: "+sofia_contact+".\n" );
-     
-     //define additional profiles here
-     if (sofia_contact == "error/user_not_registered") {
-       profile = "lan";
-       session.execute("set", "sofia_contact_"+extension+"=${sofia_contact("+profile+"/"+extension+"@"+domain_name+")}");
-       sofia_contact = session.getVariable("sofia_contact_"+extension);
-       console_log( "info", "sofia_contact lan: "+sofia_contact+".\n" );
-     }
-   }
-   else {
-     session.execute("set", "sofia_contact_"+extension+"=${sofia_contact("+profile+"/"+extension+"@"+domain_name+")}");
-     sofia_contact = session.getVariable("sofia_contact_"+extension);
-     console_log( "info", "sofia_contact else: "+sofia_contact+".\n" );
-   }
-   return sofia_contact;
-}
+function get_sofia_contact(extension, domain_name, profile) {
+  if (profile == "auto") {
+    profile = "internal";
+    session.execute("set", "sofia_contact_" + extension + "=${sofia_contact(" + profile + "/" + extension + "@" + domain_name + ")}");
+    sofia_contact = session.getVariable("sofia_contact_" + extension);
+    console_log("info", "内部 sofia_contact: " + sofia_contact + "。\n");
 
+     //在这里定义其他附加配置
+    if (sofia_contact == "error/user_not_registered") {
+      profile = "lan";
+      session.execute("set", "sofia_contact_" + extension + "=${sofia_contact(" + profile + "/" + extension + "@" + domain_name + ")}");
+      sofia_contact = session.getVariable("sofia_contact_" + extension);
+      console_log("info", "局域网 sofia_contact: " + sofia_contact + "。\n");
+    }
+  } else {
+    session.execute("set", "sofia_contact_" + extension + "=${sofia_contact(" + profile + "/" + extension + "@" + domain_name + ")}");
+    sofia_contact = session.getVariable("sofia_contact_" + extension);
+    console_log("info", "其他 sofia_contact: " + sofia_contact + "。\n");
+  }
+  return sofia_contact;
+}
+```
+
+```javascript
 if (session.ready()) {
   session.answer();    
   dialed_extension = session.getVariable("dialed_extension");
   domain_name = session.getVariable("domain_name");
   domain = session.getVariable("domain");
   us_ring = session.getVariable("us-ring");
-  session.execute("set", "ringback="+us_ring);          //set to ringtone
-  session.execute("set", "transfer_ringback="+us_ring); //set to ringtone
+  session.execute("set", "ringback="+us_ring);          //设置为响铃音
+  session.execute("set", "transfer_ringback="+us_ring); //设置为响铃音
   session.execute("set", "call_timeout=30");
   session.execute("set", "hangup_after_bridge=true");
   session.execute("set", "continue_on_fail=true");    
-  console_log( "info", "dialed extension:"+dialed_extension+".\n" );
-  console_log( "info", "domain: "+domain+".\n" );
-  console_log( "info", "us_ring: "+us_ring+".\n" );
-  console_log( "info", "domain: "+domain+".\n" );    
-  console_log( "info", "domain_name: "+domain_name+".\n" );
+  console_log("info", "拨打的分机：" + dialed_extension + "。\n");
+  console_log("info", "域名：" + domain + "。\n");
+  console_log("info", "美国铃声：" + us_ring + "。\n");
+  console_log("info", "域名：" + domain + "。\n");    
+  console_log("info", "域名名称：" + domain_name + "。\n");
+}
+```
 
-  if (dialed_extension == "1001.noload") {
-      console_log( "info", "processing: 1001.\n" );        
+```
+  如果 (dialed_extension == "1001.noload") {
+      console_log( "info", "正在处理: 1001.\n" );        
       sofia_contact_1001 = get_sofia_contact("1001",domain_name, "auto");
       sofia_contact_1002 = get_sofia_contact("1002",domain_name, "auto");
       sofia_contact_1003 = get_sofia_contact("1003",domain_name, "auto");      
       session.execute("bridge", "sofia/gateway/flowroute.com/11231231234,"+sofia_contact_1001+","+sofia_contact_1002+","+sofia_contact_1003);           
   }
   else if (dialed_extension == "1002.noload") {
-      console_log( "info", "processing: 1003.\n" );
+      console_log( "info", "正在处理: 1003.\n" );
       //session.execute("bridge", "user/1003@"+domain_name);
       sofia_contact = get_sofia_contact("1003",domain_name, "auto");
       sofia_contact_1001 = get_sofia_contact("1001",domain_name, "auto");
@@ -92,30 +93,37 @@ if (session.ready()) {
       session.execute("bridge", "sofia/gateway/flowroute.com/11231231234,"+sofia_contact+","+sofia_contact_1001+","+sofia_contact_1002);            
   } 
   else {
-      //ring extension as normal (default)
-      console_log( "info", "processing: else.\n" );
+      //正常响铃分机（默认）
+      console_log( "info", "正在处理: 其他.\n" );
       sofia_contact = get_sofia_contact(dialed_extension,domain_name, "auto");
       session.execute("bridge", sofia_contact);
       //session.execute("bridge", "user/"+dialed_extension+"@"+domain_name);        
   }
   
-  //clear variables
+  //清除变量
   dialed_extension = "";
   new_extension = "";
   domain_name = "";
   us_ring = "";
   followme_processed = "";
   domain = "";
-  
 }
  
-//Calling multiple destinations
-//http://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_bridge#Calling_multiple_destinations
-//By using commas to separate the addresses, bridge will dial them 
-//simultaneously. Using pipes, it'll dial one at a time.
-//If you need to set different channel variables for each destination, you may 
-//prefix the destinations with [] and the variables inside the brackets. Example:
+//拨打多个目的地
+//通过逗号将地址分隔开，bridge将同时呼叫这些地址。使用竖线，则会依次呼叫。
+//如果您需要为每个目的地设置不同的通道变量，您可以在目的地前加上[]，变量放在括号内。例如：
 ```
- 
 
+# Title: 快速翻译引擎
 
+## 简介
+
+您好！欢迎使用我们的快速翻译引擎。我们致力于为您提供简单、专业、优雅且流畅的翻译内容。无论是日常用语、专业术语或正式文本，我们都能为您准确传达信息，而不带有机器翻译的风格。
+
+## 使用须知
+
+- 请保留原始的 Markdown 格式，只翻译文本内容，不要对其进行解释。
+- 请使用简洁、专业、优雅且流畅的语言进行翻译，以达到最佳效果。
+- 请注意，翻译内容必须与原文的风格相符，并且不得影响原始信息的传递。
+
+期待为您提供高质量的翻译服务，谢谢。

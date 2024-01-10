@@ -1,30 +1,27 @@
+# Lua 数据库代理登录示例
 
-# Lua Database agent login example 
+## 关于
 
- 
+使用 PostgreSQL 数据库的简单代理登录脚本。
 
-## About
+## 脚本 db_agent_login.lua
 
-Simple agent login script using a PostgreSQL database.
-
-## Script db_agent_login.lua
-
-```xml
+```lua
 --[[
-db_agent_login.lua - Simple agent login script using a PostgreSQL database.
-Lua Application for FreeSWITCH::mod_lua.
-by Daniel Swarbrick (pressureman @ #freeswitch)
+db_agent_login.lua - 使用 PostgreSQL 数据库的简单代理登录脚本。
+适用于 FreeSWITCH::mod_lua 的 Lua 应用。
+由 Daniel Swarbrick 编写（pressureman @ #freeswitch）
 
-Use/modify/distribute freely.
+可自由使用/修改/分发。
 
-Disclaimer: Use at your own risk.  No implied warranties or help if/when stuff blows up.
+免责声明：使用风险自负。对于任何问题，不提供任何明示或暗示的担保或帮助。
 ]]
 
 require "luasql.postgres"
 
 function myHangupHook(s, status, arg)
     freeswitch.consoleLog("NOTICE", "myHangupHook: " .. status .. "\n")
-    -- close db_conn and terminate
+    -- 关闭 db_conn 并终止
     db_conn:close()
     error()
 end
@@ -38,19 +35,19 @@ session:setHangupHook("myHangupHook")
 max_attempts = 3
 
 while max_attempts > 0 do
-    -- expect 1-6 digits, max_tries=3, timeout=4s, terminator=#
+    -- 期望输入 1-6 位数，最多尝试 3 次，超时时间 4s，终止符为 #
     agent_id = session:playAndGetDigits(1, 6, 3, 4000, '#', 'phrase:voicemail_enter_id:#', '', '\\d+|#')
 
-    -- did we actually get an agent_id?
+    -- 我们是否真的获得了 agent_id？
     if agent_id == "" then
         session:sayPhrase("voicemail_goodbye")
         session:hangup()
     end
 
-    -- expect 1-4 digits, max_tries=3, timeout=4s, terminator=#
+    -- 期望输入 1-4 位数，最多尝试 3 次，超时时间 4s，终止符为 #
     pin = session:playAndGetDigits(1, 4, 3, 4000, '#', 'phrase:voicemail_enter_pass:#', '', '\\d+|#')
 
-    -- did we actually get a pin?
+    -- 我们是否真的获得了 pin？
     if pin == "" then
         session:sayPhrase("voicemail_goodbye")
         session:hangup()
@@ -58,15 +55,17 @@ while max_attempts > 0 do
 
     db_cursor = assert(db_conn:execute(string.format("SELECT pin FROM agent WHERE id = %d", agent_id)))
     row = db_cursor:fetch({}, "a")
+```
 
-    if pin == row["pin"] then
-        freeswitch.consoleLog("INFO", string.format("Agent ID %d login successful\n", agent_id))
-        break
-    else
-        session:sayPhrase("voicemail_fail_auth")
-    end
+```lua
+if pin == row["pin"] then
+    freeswitch.consoleLog("INFO", string.format("工号 %d 登录成功\n", agent_id))
+    break
+else
+    session:sayPhrase("voicemail_fail_auth")
+end
 
-    max_attempts = max_attempts - 1
+max_attempts = max_attempts - 1
 end
 
 if max_attempts <= 0 then
@@ -77,10 +76,8 @@ end
 session:sayPhrase("welcome")
 
 while session:ready() do
-    -- do something useful here
+    -- 在这里执行一些有用的操作
 end
 
 session:hangup()
 ```
-
-

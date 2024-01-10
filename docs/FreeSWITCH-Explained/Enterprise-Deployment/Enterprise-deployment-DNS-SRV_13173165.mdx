@@ -1,39 +1,37 @@
+# 企业部署 DNS SRV
 
-# Enterprise deployment DNS SRV 
+## 关于
 
- 
+DNS 支持 SRV 记录来广告服务的 IP。这些记录支持优先级和权重，与 MX 邮件服务器记录有些相似。
 
-## About
+它们可以用于通过 DNS 提供一个或多个 IP 来访问域名的 SIP 服务。IP 可以被分组成优先级，以指定主要、次要等服务器。
 
-DNS supports SRV records for advertising IPs for a service. These support priorities and weights and are somewhat similar to MX mail server records.
+通过权重可以实现基本的负载均衡。然而，这些仅是对客户端的建议，并未考虑实际服务器负载。
 
-They can be used to provide through DNS one or more IPs for accessing a domain via SIP. IPs can be grouped into priorities which allows primary, secondary etc servers to be specified.
+点击此处展开目录
 
-Basic load balancing can be achieved through weightings. However, these are a recommendation to the client and do not take into account actual server load.
-
-Click here to expand Table of Contents
-
-* 1 [Record format](#-freeswitch--enterprise-deployment-dns-srv-)
-* 2 [Example](#-freeswitch--enterprise-deployment-dns-srv-)
-* 3 [Advantages](#disadvantages)
-* 4 [Disadvantages](#disadvantages)
-* 5 [See also](#-freeswitch--enterprise-deployment-dns-srv-)
+* 1 [记录格式](#-freeswitch--enterprise-deployment-dns-srv-)
+* 2 [示例](#-freeswitch--enterprise-deployment-dns-srv-)
+* 3 [优点](#disadvantages)
+* 4 [缺点](#disadvantages)
+* 5 [参考资料](#-freeswitch--enterprise-deployment-dns-srv-)
 
 ###   
-Record format
+记录格式
 
 ```xml
-_Service._Proto.Name TTL Class SRV Priority Weight Port Target
+_Service._Proto.Name TTL Class SRV 优先级 权重 端口 目标
 ```
 
 ###   
-Example
+示例
 
-All servers listen on port 5060\. Ports are specified in the record, so alternative ports can be used.
+所有服务器都监听端口 5060。端口在记录中指定，因此可以使用其他端口。
 
-* sip1, sip2, sip3 are the primary servers. Server sip1 can handle twice as many calls as sip2 & sip3.
-* sip4, sip5, sip6 are the secondary servers. Servers sip4 and sip5 can handle twice as many calls as sip6.
-* sip7, sip8 are tertiary servers in another data centre. They can all handle the same number of calls.  
+*sip1*, *sip2*和*sip3*是主服务器。服务器*sip1*可以处理比*sip2*和*sip3*多一倍的呼叫量。
+*sip4*, *sip5*和*sip6*是备份服务器。服务器*sip4*和*sip5*可以处理比*sip6*多一倍的呼叫量。
+*sip7*和*sip8*是位于另一个数据中心的三级服务器。它们都可以处理相同数量的呼叫。
+
 ```xml  
 _sip._udp.mydomain.com. 86400 IN SRV 10 50 5060 sip1.mydomain.com.  
 _sip._udp.mydomain.com. 86400 IN SRV 10 25 5060 sip2.mydomain.com.  
@@ -44,35 +42,35 @@ _sip._udp.mydomain.com. 86400 IN SRV 20 10 5060 sip6.mydomain.com.
 _sip._udp.mydomain.com. 86400 IN SRV 50 10 5060 sip7.mydomain.com.  
 _sip._udp.mydomain.com. 86400 IN SRV 50 10 5060 sip8.mydomain.com.  
 ```
-* Failover  
-   * sip1, sip2, sip3 have priority 10, so are the first choice  
-   * sip4, sip5, sip6 have priority 20, so are the second choice if all servers with priority 10 can't be reached  
-   * sip7, sip8 have priority 30, so are the final choice if all servers with priority 10 or 20 can't be reached
-* Load balancing  
-   * sip1, sip2, sip3 have total weight of 100\. sip1 has weight 50 so gets 50/100=50% of calls, sip2&3 have weight 25 so each get 25/100=25% of calls.  
-   * sip4, sip5, sip6 have total weight of 50\. sip4&5 has weight 20 so each get 20/50=2/5 of calls, sip6 has weight 10 so gets 10/50=1/5 of calls.  
-   * sip7, sip8 have total weight of 20\. both have weight 10, so get each get 10/20=50% of calls
-* Scalability  
-   * Any number of extra hosts can be added to increase capacity
 
-### Advantages
+*故障转移  
+   * *sip1*、*sip2*和*sip3*的优先级为10，因此是首选  
+   * *sip4*、*sip5*和*sip6*的优先级为20，在无法连接到具有优先级为10的所有服务器时成为第二选择  
+   * *sip7*和*sip8*的优先级为30，在无法连接到具有优先级为10或20的所有服务器时成为最后选择
 
-* Simple
-* Easy to manage
-* Requires no extra hardware
-* DNS system provides redundancy if DNS server(s) fail through cached copies
-* Can spread calls across multiple data centers, including both load shared across data centers or failover from a primary data centre to a backup location.
+*负载均衡  
+   * *sip1*、*sip2*和*sip3*的总权重为100。*sip1*的权重为50，因此占总呼叫量的50/100=50%，*sip2*和*sip3*的权重为25，因此各占总呼叫量的25/100=25%。
+   * *sip4*、*sip5*和*sip6*的总权重为50。*sip4*和*sip5*的权重为20，因此各占总呼叫量的20/50=2/5，*sip6*的权重为10，因此占总呼叫量的10/50=1/5。
+   * *sip7*和*sip8*的总权重为20。它们的权重都为10，因此各占总呼叫量的10/20=50%。
 
-### Disadvantages
+*可扩展性  
+   * 可以添加任意数量的额外主机来增加容量
 
-* Load balancing is determined by weights so that the caller picks a server to use based on round robin/probability. This means it doesn't take actual server load into account, so you may have find a server overload while there is another server that is almost idle.
-* Requires the SIP client to support retrying with another IP
-* The lower priority IPs will be tried first, which may increase the PDD while the calls fail if the primary servers are offline
-* DNS TTL means it may take some time to update the IPs (a lower TTL avoids this but increases load on the DNS servers)
+### 优势
 
-### See also
+- 简单
+- 易于管理
+- 无需额外硬件
+- 如果 DNS 服务器出现故障，DNS 系统通过缓存副本提供冗余
+- 可将呼叫分散到多个数据中心，包括在数据中心之间进行负载均衡分配或从主要数据中心故障切换到备用位置。
 
-* [Wikipedia: SRV record](https://en.wikipedia.org/wiki/SRV%5Frecord)
+### 缺点
 
-  
+- 负载均衡是根据权重确定的，这意味着呼叫方根据轮询/概率选择一个服务器使用，而不考虑实际服务器负载，因此您可能会发现一个服务器过载，而另一个服务器几乎处于空闲状态。
+- 需要 SIP 客户端支持使用另一个 IP 进行重试
+- 优先级较低的 IP 将首先尝试，这可能会增加 PDD 时间，同时调用失败，如果主服务器处于离线状态
+- DNS TTL 的意思是更新 IP 地址可能需要一些时间（较低的 TTL 可以避免这一点，但会增加 DNS 服务器的负载）
 
+### 另请参阅
+
+* [维基百科：SRV 记录](https://en.wikipedia.org/wiki/SRV%5Frecord)

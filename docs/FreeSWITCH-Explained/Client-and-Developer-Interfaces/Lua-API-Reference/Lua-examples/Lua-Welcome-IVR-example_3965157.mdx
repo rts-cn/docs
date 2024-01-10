@@ -1,24 +1,21 @@
+# Lua欢迎语互动语音应答示例
 
-# Lua Welcome IVR example 
+## 关于
 
- 
+在这个Lua脚本示例中，我们将引导用户输入按键，并转接到选择的目标。
 
-## About
+该IVR设计得易于使用和理解。
 
-Lua script example for IVR, in this example we will to prompt user for digit and transfer to the chosen destination.
+Lua是一个简单易用、可读性强且嵌入式脚本语言。
 
-This IVR is designed to be easy to use and easy to understand.
+## 先决条件
 
-Lua is a great easy, readable and embedded scripting language.
+* [mod_lua](../../../Modules/mod_lua_1048944.mdx#--)
+* [mod_flite](../../../Modules/mod_flite_3965160.mdx#about)，并可轻松升级到[mod_cepstral](../../../Modules/mod_cepstral_3965164.mdx#faq)
 
-## Prerequisites
+## 配置拨号计划
 
-* [mod\_lua](../../../Modules/mod_lua_1048944.mdx#--)
-* [mod\_flite](../../../Modules/mod_flite_3965160.mdx#about) and easy upgrade to [mod\_cepstral](../../../Modules/mod_cepstral_3965164.mdx#faq)
-
-## Configure Dialplan
-
-Configure extensions in your dialplan to call the script welcome.lua
+在您的拨号计划中配置扩展，以调用welcome.lua脚本
 
 **welcome.xml (freeswitch/conf/dialplan/default/welcome.xml)**
 
@@ -32,7 +29,7 @@ Configure extensions in your dialplan to call the script welcome.lua
 </include>
 ```
 
-## Lua script
+## Lua脚本
 
 welcome.lua (freeswitch/scripts/welcome.lua)
 
@@ -41,19 +38,19 @@ session:answer();
 while (session:ready() == true) do
     session:setAutoHangup(false);
     session:set_tts_params("flite", "kal");
-    session:speak("Welcome. Welcome to the VoIp World!. this is a Blind Users Programing Community. powered by Freeswitch, the free / ultimate PBX. thank to toni!");
+    session:speak("欢迎。欢迎来到VoIp世界！这是一个盲人用户编程社群，由Freeswitch提供支持，Freeswitch是免费/终极的PBX。感谢Toni的支持！");
     session:sleep(100);
-    session:speak("please select an Action.");
+    session:speak("请选择一个操作。");
     session:sleep(100);
-    session:speak("to call the conference, press 1");
+    session:speak("要呼叫会议，请按1");
     session:sleep(100);
-    session:speak("to call Freeswitch IVR, press 2");
+    session:speak("要呼叫Freeswitch语音 IVR，请按2");
     session:sleep(100);
-    session:speak("to call Voice Mail, press 3");
+    session:speak("要呼叫语音邮箱，请按3");
     session:sleep(100);
-    session:speak("for Music on hold, press 4");
+    session:speak("要播放音乐保持，请按4");
     session:sleep(100);
-    session:speak("to call me, press 0");
+    session:speak("要呼叫我，请按0");
     session:sleep(3000);
     digits = session:getDigits(1, "", 3000);
     if (digits == "1")  then
@@ -74,11 +71,8 @@ while (session:ready() == true) do
 end
 ```
 
-## NOTES
+## 说明
 
-## You will need to disable enum by changing 99999XX.xml to 99999XX.xml.noload
+## 您需要通过将99999XX.xml更改为99999XX.xml.noload来禁用enum。
 
-## Do not load both mod_flite and mod_cepstral at the same time.
-
-  
-
+## 不要同时加载mod_flite和mod_cepstral。

@@ -1,72 +1,69 @@
+# FreeSwitch MetaSwitch 如何指南
 
-# FreeSwitch MetaSwitch HowTo 
+单击此处展开目录
 
- 
+* 1 [MetaSwitch 如何指南前提条件](#metaswitch-howto-assumptions)
+* 2 [MetaSwitch 限制](#metaswitch-limitations)
+* 3 [将 FreeSwitch 用作 MetaSwitch 的下游（每条线路）](#using-freeswitch-downstream-from-a-metaswitch-individual-lines)  
+   * 3.1 [MetaSwitch 配置](#metaswitch-configuration)  
+   * 3.2 [FreeSwitch 配置](#metaswitch-configuration)  
+   * 3.3 [FreeSwitch 拨号计划示例](#freeswitch-dialplan-examples)
+* 4 [将 FreeSwitch 用作 MetaSwitch 的下游（PBX）](#using-freeswitch-downstream-from-a-metaswitch-pbx)  
+   * 4.1 [MetaSwitch 配置](#metaswitch-configuration)  
+   * 4.2 [FreeSwitch 配置](#metaswitch-configuration)  
+   * 4.3 [FreeSwitch 拨号计划示例](#freeswitch-dialplan-examples)
+* 5 [将 FreeSwitch 用作 MetaSwitch 应用服务器](#using-freeswitch-as-a-metaswitch-application-server)  
+   * 5.1 [语音邮件服务器](#voicemail-server)  
+   * 5.2 [出站应用服务器](#outbound-app-server)  
+   * 5.3 [入站应用服务器](#inbound-app-server)
 
-Click here to expand Table of Contents
+## MetaSwitch 如何指南前提条件
 
-* 1 [MetaSwitch HowTo Assumptions](#metaswitch-howto-assumptions)
-* 2 [MetaSwitch Limitations](#metaswitch-limitations)
-* 3 [Using FreeSwitch downstream from a MetaSwitch (individual lines)](#using-freeswitch-downstream-from-a-metaswitch-individual-lines)  
-   * 3.1 [MetaSwitch Configuration](#metaswitch-configuration)  
-   * 3.2 [FreeSwitch Configuration](#metaswitch-configuration)  
-   * 3.3 [FreeSwitch Dialplan Examples](#freeswitch-dialplan-examples)
-* 4 [Using FreeSwitch downstream from a MetaSwitch (PBX)](#using-freeswitch-downstream-from-a-metaswitch-pbx)  
-   * 4.1 [MetaSwitch Configuration](#metaswitch-configuration)  
-   * 4.2 [FreeSwitch Configuration](#metaswitch-configuration)  
-   * 4.3 [FreeSwitch Dialplan Examples](#freeswitch-dialplan-examples)
-* 5 [Using FreeSwitch as a MetaSwitch Application Server](#using-freeswitch-as-a-metaswitch-application-server)  
-   * 5.1 [Voicemail Server](#voicemail-server)  
-   * 5.2 [Outbound App Server](#outbound-app-server)  
-   * 5.3 [Inbound App Server](#inbound-app-server)
+1. 这个使用说明假设您已经安装并配置了 MetaSwitch，并且熟悉相应的主机名/IP，并且可以访问该交换机的配置。
+2. 这个使用说明是使用 MetaSwitch 软件版本 6.1 创建的。
+3. 已经创建了名为 "FreeSwitch" 的**媒体网关模型**，并选中了以下选项（这些选项对我来说似乎可行，欢迎提出其他建议）：
+- 信令设置  
+   - 支持高带宽媒体格式  
+      - G.711 μ律  
+      - G.711 A律  
+   - 支持低带宽媒体格式  
+      - G.726 32kbps  
+   - 首选低带宽媒体格式  
+      - G.726 32kbps  
+         - 数据包化间隔：20  
+   - 修复位（MGCP，MeGaCo，SIP）  
+      - 不能为中心  
+         - 简单场景  
+         - 不能播放回铃音  
+         - 连接始终接收  
+         - 不能报告呼叫类型区分音的检测  
+         - 对所有编解码器需要带外 DTMF
+   - 修复位（SIP）  
+      - 支持 SDP 连接请求  
+         - 使用 E164 号码  
+         - 期望自发消息等待通知  
+         - 期望自发呼叫列表通知  
+         - 抑制多余的18x响应  
+         - 在 From 头部中包含传输参数  
+         - 可能将呼叫重新导向 MetaSwitch  
+         - 支持接收 SIP 原因头  
+         - 使用联系方式路由取消请求
 
-## MetaSwitch HowTo Assumptions
+## MetaSwitch 限制
 
-1. This HowTo assumes that you have working and configured MetaSwitch, know the appropriate hostnames/IP's and have configuration access to said switch.
-2. This HowTo was created using MetaSwitch software version 6.1.
-3. A **Media Gateway Model** named "FreeSwitch" has been created with the following options checked (These just seem to be working for me, additional suggestions would be welcome):
-* Signaling settings  
-   * Support high-bandwidth media formats  
-      * G.711 u-law  
-         * G.711 A-law  
-   * Supported low-bandwidth media formats  
-      * G.726 32kbps  
-   * Preferred low-bandwidth media formats  
-      * G.726 32kbps  
-         * Packetization interval: 20  
-   * Fix bits (MGCP, MeGaCo, SIP)  
-      * Cannot be hub  
-         * Simple contexts  
-         * Cannot play ringback  
-         * Connections always receive  
-         * Cannot report detection of call-type discrimination tones  
-         * Requires out-of-band DTMF for all codecs  
-   * Fix bits (SIP)  
-      * Supports SDP connectivity requests  
-         * Use E164 numbers  
-         * Expects unsolicited message waiting notifications  
-         * Expects unsolicited Call List notifications  
-         * Suppress superfluous 18x responses  
-         * Include transport parameter in From header  
-         * May loop calls back to MetaSwitch  
-         * Supports receiving SIP Reason header  
-         * Route CANCELs using contact details
+没有已知限制。
 
-## MetaSwitch Limitations
+## 在 MetaSwitch 下游使用 FreeSwitch（各个线路）
 
-None known.
+### MetaSwitch 配置
 
-## Using FreeSwitch downstream from a MetaSwitch (individual lines)
+按照通常的方式配置一个SIP线路。记下目录号码、用户名（如果不使用DN）和密码。如果您的媒体网关型号如上所示，请使用“派生自SIP用户代理”，否则选择您为FreeSwitch构建的MGM。确保设置正确的端口（默认为FreeSwitch中外部SIP配置文件的5080）并将“使用DN进行标识”设置为true。
 
-### MetaSwitch Configuration
+### FreeSwitch配置
 
-Configure a SIP line as usual. Make note of the directory number, username if not using the DN and password. If you Media Gateway Model is named as suggested above, use "Drived from SIP User Agent," otherwise select the MGM you've built for FreeSwitch. Be sure to set the correct port (default is 5080 for external SIP profiles in FreeSwitch) and set "Use DN for identification" to true.
+Sofia外部配置文件：
 
-### FreeSwitch Configuration
-
-Sofia External Profile:
-
-**Sofia External Profile**
+**Sofia外部配置文件**
 
 ```xml
 <include>
@@ -81,15 +78,15 @@ Sofia External Profile:
 </include> 
 ```
 
-(conf/sip\_profiles/external/MetaSwitch.xml)
+（conf/sip\_profiles/external/MetaSwitch.xml）
 
-After a FreeSwitch restart or mod\_sofia reload, the FreeSwitch user should show up as registered in the MetaSwitch.
+FreeSwitch重新启动或mod\_sofia重新加载后，FreeSwitch用户应该会显示在MetaSwitch中注册。
 
-### FreeSwitch Dialplan Examples
+### FreeSwitch拨号计划示例
 
-* This dialplan transfers all incoming calls to extension 5000\. Be sure to replace 5555555555 with the DN assigned to the SIP user.
+* 此拨号计划将所有呼入的通话转移到分机5000。请确保用分配给SIP用户的DN替换5555555555。
 
-**Dialplan Example #1**
+**拨号计划示例 #1**
 
 ```xml
 <include>
@@ -102,11 +99,11 @@ After a FreeSwitch restart or mod\_sofia reload, the FreeSwitch user should show
 </include>
 ```
 
-(conf/dialplan/public/01\_MetaSwitch\_Inbound.xml)
+（conf/dialplan/public/01\_MetaSwitch\_Inbound.xml）
 
-* This dialplan transfers all 1+10 digit or 10 digit calls to the MetaSwitch.
+* 此拨号计划将所有1+10位或10位通话转移到MetaSwitch。
 
-**Dialplan Example #2**
+**拨号计划示例 #2**
 
 ```xml
 <include>
@@ -120,26 +117,26 @@ After a FreeSwitch restart or mod\_sofia reload, the FreeSwitch user should show
 
 (conf/dialplan/default/00\_MetaSwitch\_Outbound.xml)
 
-## Using FreeSwitch downstream from a MetaSwitch (PBX)
+## 在 MetaSwitch (PBX) 下游使用 FreeSwitch
 
-### MetaSwitch Configuration
+### MetaSwitch 配置
 
-* Create a "Configured SIP Binding." Be sure to set "Use DN for identification" or DID will not work properly.  
-   * Note the username and password assigned.  
-   * "Usage:" should be set to "Subscriber."  
-   * SIP domain name should be the IP of the MetaSwitch call agent.  
-   * Contact IP address should be the IP of your FreeSwitch.  
-   * Double check the port number (if FS is configured as default this should be 5080).  
-   * Set the **Media Gateway model** to the one created for FreeSwitch.
-* Create a PBX on the MetaSwitch, selecting the "Configured SIP Binding" just created.  
-   * Note the "Default number of DID digits" (the number of digits of the _called_ number that the MetaSwitch will forward to the SIP Binding).  
-   * Create any DID number ranges desired.
+* 创建一个“Configured SIP Binding”。确保设置了“Use DN for identification”，否则 DID 无法正常工作。  
+   * 记下分配的用户名和密码。  
+   * “Usage:” 应设置为“Subscriber”。  
+   * SIP 域名应为 MetaSwitch 呼叫代理的 IP。  
+   * Contact IP 地址应为您的 FreeSwitch 的 IP。  
+   * 请仔细检查端口号（如果 FS 配置为默认，应为 5080）。  
+   * 将 **Media Gateway model** 设置为为 FreeSwitch 创建的模型。
+* 在 MetaSwitch 上创建一个 PBX，选择刚刚创建的“Configured SIP Binding”。  
+   * 记下“Default number of DID digits”（MetaSwitch 将转发到 SIP Binding 的被叫号码的位数）。  
+   * 创建所需的任何 DID 号码范围。
 
-### FreeSwitch Configuration
+### FreeSwitch 配置
 
-* Sofia External Profile:
+* Sofia 外部配置：
 
-**Sofia External Profile**
+**Sofia 外部配置**
 
 ```xml
 <include>
@@ -156,14 +153,14 @@ After a FreeSwitch restart or mod\_sofia reload, the FreeSwitch user should show
 
 (conf/sip\_profiles/external/MetaSwitch.xml)
 
-After a FreeSwitch restart or mod\_sofia reload, the configured SIP binding in the MetaSwitch should go out of alarm.
+FreeSwitch 重新启动或 mod\_sofia 重新加载后，MetaSwitch 中配置的 SIP 绑定应解除报警状态。
 
-### FreeSwitch Dialplan Examples
+### FreeSwitch 拨号计划示例
 
-* This dialplan works on the DID spill of the incoming call, transferring them to internal extensions.  
-   * Be sure to use the correct number of digits, as set in the PBX configured on the MetaSwitch.
+* 这个拨号计划适用于呼入电话的DID溢出，将其转接到内部分机。
+   * 请确保使用正确的数字位数，如MetaSwitch上配置的PBX中设置的位数。
 
-**Dialplan Example #3**
+**拨号计划示例＃3**
 
 ```xml
 <include>
@@ -190,9 +187,9 @@ After a FreeSwitch restart or mod\_sofia reload, the configured SIP binding in t
 
 (conf/dialplan/public/01\_MetaSwitch\_Inbound.xml)
 
-* This dialplan transfers all 1+10 digit or 10 digit calls to the MetaSwitch.
+* 这个拨号计划将所有1+10位或10位呼叫转接到MetaSwitch。
 
-**Dialplan Example #4**
+**拨号计划示例＃4**
 
 ```xml
 <include>
@@ -206,36 +203,36 @@ After a FreeSwitch restart or mod\_sofia reload, the configured SIP binding in t
 
 (conf/dialplan/default/00\_MetaSwitch\_Outbound.xml)
 
-## Using FreeSwitch as a MetaSwitch Application Server
+## 使用FreeSwitch作为MetaSwitch应用服务器
 
-### Voicemail Server
+### 语音信箱服务器
 
-#### MetaSwitch Configuration
+#### MetaSwitch配置
 
-1. * Create a "Configured SIP Binding." Be sure to set "Use DN for identification" or DID will not work properly.  
-         * Note the username and password assigned.  
-         * "Usage:" should be set to "Application Server."  
-         * SIP domain name should be the IP of the MetaSwitch call agent.  
-         * Contact IP address should be the IP of your FreeSwitch.  
-         * Double check the port number (if FS is configured as default this should be 5080).  
-         * Set the **Media Gateway model** to the one created for FreeSwitch.  
-   * Create an Application Server on the MetaSwitch  
-      * Point this at the SIP Binding that was just created  
-         * Be sure to select the appropriate features for your planned usage
+1. * 创建一个“配置的SIP绑定”。确保设置“使用DN进行身份识别”，否则DID将无法正常工作。
+         * 记下分配的用户名和密码。
+         * “使用情况:”应设置为“应用服务器”。
+         * SIP域名应该是MetaSwitch呼叫代理的IP。
+         * 联系IP地址应该是您的FreeSwitch的IP。
+         * 仔细检查端口号（如果FS配置为默认，则应为5080）。
+         * 将**媒体网关模型**设置为为FreeSwitch创建的模型。
+   * 在MetaSwitch上创建一个应用服务器
+      * 将其指向刚刚创建的SIP绑定
+         * 确保选择适合您计划使用的功能
 
-#### FreeSwitch Configuration
+#### FreeSwitch配置
 
-* Sofia External Profile:
+* Sofia外部配置:
 
-**Sofia External Profile for Voicemail**
+**Sofia用于语音信箱的外部配置**
 
 ```xml
 <include>
   <gateway name="MetaSwitch_App">
     <param name="debug" value="0"/>
-    <param name="username" value="username"/>
+    <param name="username" value="用户名"/>
     <param name="realm" value="MetaSwitch-IP"/>
-    <param name="password" value="password"/>
+    <param name="password" value="密码"/>
     <param name="register" value="false"/>
     <param name="dtmf-type" value="rfc2833"/>
   </gateway>
@@ -244,21 +241,22 @@ After a FreeSwitch restart or mod\_sofia reload, the configured SIP binding in t
 
 (conf/sip\_profiles/external/MetaSwitch\_App.xml)
 
-After a FreeSwitch restart or mod\_sofia reload, the configured SIP binding in the MetaSwitch should go out of alarm.
+在FreeSwitch重新启动或mod\_sofia重新加载后，MetaSwitch中的配置的SIP绑定将不再报警。
 
-#### FreeSwitch Dialplan Examples
+#### FreeSwitch拨号计划示例
 
-* This dialplan has four extensions.  
-   * Check\_VM\_User
-* Check to see if a voicemail box exists for the called number and set a variable that we can check later.  
-   * MetaSwitch\_Check\_Voicemail:  
-      * If the SIP referrer is the same as the from user, the subscriber is dialing his own number. Check Voicemail and do not prompt for a password. This only works for MetaSwitch SIP subscribers.  
-   * MetaSwitch\_Leave\_Voicemail:  
-      * If the SIP referrer is equal to any of our secondary Voicemail check numbers, skip to the next extension (used if you have voicemail check numbers for each NPA/NXX, or just multiple numbers people can dial to check their voicemails). This condition can be removed if that is not the case or left with a dummy expression that will never match.  
-         * If the SIP referrer is 10 digits but didn't get matched by the first extension, then someone is leaving a voicemail.  
-   * MetaSwitch\_Check\_Voicemail\_External:  
-      * The destination number expression should be changed to the directory numbers of the Voicemail server.  
-         * Check to see if the calling number has a voicemail box, if so the user is calling from his own phone, just prompt for a password. If the calling number does not have a voicemail box, the ser is trying to access his Voicemail from a remote phone. Prompt for the mailbox number and password.
+* 这个拨号计划有四个分机。
+   * Check_VM_User (检查_VM_用户)
+
+* 检查被叫号码是否存在语音信箱，并设置一个变量，以便以后检查。
+   * MetaSwitch_Check_Voicemail (元交换_检查_语音信箱):
+      * 如果SIP引荐者与来电用户相同，则订户正在拨打自己的号码。检查语音信箱，无需提示输入密码。这只适用于元交换SIP用户。
+   * MetaSwitch_Leave_Voicemail (元交换_留言):
+      * 如果SIP引荐者与我们的任何次要语音信箱检查号码相等，则跳过到下一个分机（用于每个NPA/NXX都有语音信箱检查号码的情况，或者用户可以拨打多个号码来检查他们的语音信箱）。如果不符合该情况，则可以删除此条件，或者保留一个永远不会匹配的占位表达式。
+         * 如果SIP引荐者是10位数字，但未能通过第一个分机的匹配，那么有人正在留言。
+   * MetaSwitch_Check_Voicemail_External (元交换_检查_外部语音信箱):
+      * 目标号码的表达式应更改为语音邮件服务器的分机号码。
+         * 检查呼叫号码是否有语音信箱。如果是，用户从自己的电话机呼叫，只需提示输入密码。如果呼叫号码没有语音信箱，用户试图从远程电话机访问自己的语音信箱。提示输入邮箱号码和密码。
 
 ```xml
 <include>
@@ -295,9 +293,10 @@ After a FreeSwitch restart or mod\_sofia reload, the configured SIP binding in t
 
 (conf/dialplan/default/00\_MetaSwitch\_Outbound.xml)
 
-#### MetaSwitch/FreeSwitch Message Waiting Indicator
+#### MetaSwitch/FreeSwitch 消息等待指示器
+```
 
-* A simple LUA script to send forward MWI notifications to the MetaSwitch, you will need to set the thee variables to match your network. This script will run indefinitely once started, sending off any waiting MWI events every two seconds. Usually set to run automatically at FS startup.
+#### 一个简单的Lua脚本，用于将MWI通知发送到MetaSwitch，您需要根据您的网络设置这三个变量。一旦启动，此脚本将无限期地运行，每两秒钟发送一次等待的MWI事件。通常在FS启动时自动设置为运行。
 
 **message\_waiting.lua**
 
@@ -336,8 +335,6 @@ while true do
 end
 ```
 
-### Outbound App Server
+### 出站应用服务器
 
-### Inbound App Server
-
-
+### 入站应用服务器

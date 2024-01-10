@@ -1,44 +1,38 @@
+# 外部配置文件
 
-# External Profile 
+## 关于
 
- 
+该页面包含有关外部配置文件的信息，该文件是由Freeswitch默认环境提供的。
 
-## About
+单击此处展开目录
 
-This page holds information about the external profile, which is supplied by Freeswitch default environment.
+* 1 [概述](#概述)
+* 2 [交换机间通信](#交换机间通信)
+* 3 [交换机与外部软电话](#交换机与外部软电话)
+* 4 [交换机与内部电话](#交换机与内部电话)
 
-Click here to expand Table of Contents
+## 概述
 
-* 1 [Overview](#overview)
-* 2 [Switch to Switch Communication](#switch-to-switch-communication)
-* 3 [Switch with External SoftPhone](#switch-with-external-softphone)
-* 4 [Switch with Internal Phone](#switch-with-internal-phone)
+默认情况下，FreeSWITCH提供在端口5080上运行的外部配置文件。外部配置文件处理与SIP提供商的外部注册或外呼。
 
-## Overview
+SIP提供商将呼叫发送给您，您通过外部配置文件将呼叫发送给提供商。外部配置文件允许匿名呼叫，这是必需的，因为提供商将不会对您进行身份验证以发送呼叫。
 
-By default FreeSWITCH supplies an external profile that runs on port 5080\. The external profile handles external or outbound registrations to a SIP provider.
+FreeSWITCH提供的**external**配置文件（conf/sip\_profiles/external.xml）是学习有助于NAT穿越的两个非常重要的变量的良好起点。这两个变量是：
 
-The SIP provider sends calls to you, and you send calls to your provider, through the external profile. The external profile allows anonymous calling, which is required as your provider will never authenticate with you to send you a call.
-
-The **external** profile (conf/sip\_profiles/external.xml) supplied with FreeSWITCH is a great starting place for learning about two very important variables that aid in NAT traversal. These are:
-
-  
 ```xml
 <param name="ext-rtp-ip" value="$${external_rtp_ip}"/>
 <param name="ext-sip-ip" value="$${external_sip_ip}"/>
 ```
 
-  
-The **external\_** variables are configured in _conf/vars.xml_. The external profile is important because if port forwarding were to be setup, you would be able to cleanly send and receive information from the port in a fashion that would allow you to have other devices registering with this instance of FreeSWITCH. This allows you to cleanly break through NAT.
+**external\_**变量在_conf/vars.xml_中进行配置。外部配置文件很重要，因为如果设置了端口转发，您将能够以一种干净的方式发送和接收来自该端口的信息，从而允许其他设备在此FreeSWITCH实例中进行注册。这样您就可以顺利穿越NAT。
 
-If you would like to have communication of this nature then you should consider copying the external profile and creating a dedicated profile specific to your purpose and setup port forwarding such that that profile can send and receive with external entities. The copied version of the external profile will require very little modification other than changing the port that is used. See [General NAT example scenarios](../../Networking/General-NAT-example-scenarios_13173280.mdx#scenario-1). Remember, when you change this reference all devices wishing to use this context must reference it accordingly. So if you create a profile called external5090 and want to make a call from it then you should reference it as:
+如果您希望进行这类通讯，那么您应该考虑复制外部配置文件，并创建一个专门的配置文件来满足您的需求，并设置端口转发，使该配置文件可以与外部实体进行发送和接收。复制的外部配置文件只需进行少量修改，即更改使用的端口。请参阅[常见网络地址转换（NAT）示例场景](../../Networking/General-NAT-example-scenarios_13173280.mdx#scenario-1)。请记住，当更改此引用时，所有希望使用此上下文的设备都必须相应地引用它。因此，如果您创建了一个名为external5090的配置文件，并且希望从中拨打电话，则应将其引用为：
 
 ```xml
 /sofia/external5090/1234@blah.com
 ```
 
-  
-A good sign that you need to make sure your external profile has access to the internet (port forwarding rules need to be setup or creating a dedicated profile by copying and pasting) is if you are receiving the following errors:
+一个明显的迹象表明您需要确保您的外部配置文件可以访问互联网（需要设置端口转发规则或通过复制和粘贴创建一个专用配置文件），即如果您收到以下错误：
 
 ```bash
 [DEBUG] switch_ivr_bridge.c:275 audio_bridge_thread() read: sofia/default/6191231234@sip.mySweetDomain.com Bad Frame.... Bubye!
@@ -47,48 +41,42 @@ event [nua_i_error] status [408][ACK Timeout] session: sofia/default/5551231234@
 event [nua_i_state] status [0][ACK Timeout] session: sofia/default/5551231234@x.x.x.x:5060
 ```
 
-  
-Please note: in some instances you may want to just copy the external profile and create a _new profile_ that will be used exclusively for the associated gateways. Don't forget that doing this will require you to change the port from say 5080 to 5090, or whatever is available on your systems. Also, you will have to setup port-forwarding rules. You can create as many dedicated profiles as you have resources for.
+请注意：在某些情况下，您可能只想复制外部配置文件并创建一个专用配置文件，专门用于相应的网关。不要忘记，这样做需要您将端口从5080更改为5090，或者从系统中可用的其他端口。此外，您还需要设置端口转发规则。您可以根据您的资源创建尽可能多的专用配置文件。
 
-  
-You will need to setup port forwarding on your firewall/NAT devices (yes, this includes iptables) if you are doing any of the following: See [General NAT example scenarios](../../Networking/General-NAT-example-scenarios_13173280.mdx#scenario-1).
+你需要在防火墙/NAT设备上设置端口转发（是的，包括iptables），如果你正在进行以下任何操作：参见[常见NAT示例场景](../../Networking/General-NAT-example-scenarios_13173280.mdx#scenario-1)。
 
-## Switch to Switch Communication
+## 交换机间通信
 
-Attempting to get two switching systems communicating over the internet is really easy, but for many newer users a daunting task. Here is a general layout of what we are talking about.
+试图使两个交换系统通过互联网进行通信非常容易，但对于许多新用户来说却是一项令人望而却步的任务。下面是我们正在讨论的一般布局。
 
 ```c#
-FreeSWITCH (192.168.0.4) -> NAT (Public IP 1.2.3.4) -> INTERNET -> NAT (Public IP 5.6.7.8) -> FreeSWITCH (192.168.0.5)
+FreeSWITCH（192.168.0.4）-> NAT（公共IP 1.2.3.4）-> 互联网-> NAT（公共IP 5.6.7.8）-> FreeSWITCH（192.168.0.5）
 ```
 
-  
-Here are the steps to resolve this problem.
+以下是解决此问题的步骤。
 
-1. Setup port forwarding on port 5080 (or whichever port your are using this dedicated profile on) allowing both TCP and UDP traffic through.  
-   1. Do this to both FreeSWITCH instances.
-2. Within the conf/sip\_profiles/outbound.xml modify the _ext-sip-ip_ and _ext-rtp-ip_ variables to reflect your public IP address.
-3. Restart FreeSWITCH.
-4. Test communication by originating a call from 192.168.0.4 above:  
+1. 在端口5080上设置端口转发（或者您在使用此专用配置文件的其他端口），允许TCP和UDP流量通过。  
+   1. 在两个FreeSWITCH实例上都要这样做。
+2. 在conf/sip\_profiles/outbound.xml中修改\_ext-sip-ip\_和\_ext-rtp-ip\_变量，以反映您的公共IP地址。
+3. 重新启动FreeSWITCH。
+4. 通过从上面的192.168.0.4发起呼叫来测试通信：  
    * /sofia/outbound/1000@5.6.7.8:5080
 
-## Switch with External SoftPhone
+## 带有外部软电话的交换机
 
-  
 ```bash
-FreeSWITCH (192.168.0.4) -> NAT (Public IP 1.2.3.4) -> INTERNET -> Softphone Registering to FreeSWITCH
+FreeSWITCH（192.168.0.4）-> NAT（公共IP 1.2.3.4）-> 互联网-> 注册到FreeSWITCH的Softphone
 ```
 
-1. Copy the external.xmlprofile and create a new profile named external5090.xml. This will be a dedicated profile, for exclusive use to these softphones that are registering to FreeSWITCH.
-2. Change the profile name to something unique, like `<profile name="external5090">`
-3. Change the SIP port the profile is listening on to `<param name="sip-port" value="5090"/>`  
-   * Make sure to setup port forwarding on your Firewall/NAT device for TCP/UDP on 5090.
-4. Within the conf/sip\_profiles/external5090.xml modify the _ext-sip-ip_ and _ext-rtp-ip_ variables to reflect your public IP address.
-5. Restart FreeSWITCH.
-6. Reference the caller from your FreeSWITCH system as: `sofia/external5090/<caller extension>@x.x.x.x:5090` &lt;-- What goes in x.x.x.x? externalUA IP? Domain?
+1. 复制external.xmlprofile并创建一个名为external5090.xml的新配置文件。这将是一个专用配置文件，专门用于注册到FreeSWITCH的这些软电话。
+2. 将配置文件名称更改为唯一的名称，例如`<profile name="external5090">`。
+3. 将配置文件监听的SIP端口更改为`<param name="sip-port" value="5090"/>`。
+   * 确保在防火墙/NAT设备上设置端口转发，端口为5090，协议为TCP/UDP。
+4. 在conf/sip\_profiles/external5090.xml文件中修改_ext-sip-ip_和_ext-rtp-ip_变量，以反映你的公共IP地址。
+5. 重新启动FreeSWITCH。
+6. 在你的FreeSWITCH系统中，将来电者标记为：`sofia/external5090/<主叫分机号>@x.x.x.x：5090` &lt;-- x.x.x.x填入什么? externalUA的IP? 域名?
 
-## Switch with Internal Phone
+## 使用内部电话切换
 
-1. Register your phone on the **default** port 5060 profile. As you may have noted, this profile does not use ext-sip-ip and ext-rtp-ip.
-2. Make sure that your outbound calls reference the **external** profile which will allow you to break through the NAT/Firewall and communicate accordingly.
-
-
+1. 在**默认**端口5060的配置文件上注册你的电话。正如你可能注意到的，此配置文件不使用ext-sip-ip和ext-rtp-ip。
+2. 确保你的呼出电话引用了**external**配置文件，这将允许你穿透NAT/防火墙并进行通信。

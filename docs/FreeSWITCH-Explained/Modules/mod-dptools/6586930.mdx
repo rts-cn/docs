@@ -1,53 +1,48 @@
-
 # mod_dptools: unbind_meta_app 
 
- 
+## 关于
 
-## About
+使用unbind_meta_app来解除之前由bind_meta_app绑定的按键。将按键值作为其ARG参数。如果没有提供参数（按键值），将解除该通道上绑定的所有按键。
 
-Use unbind\_meta\_app to unbind a key previously bound with bind\_meta\_app. Takes the key value as its ARG. If no argument (key value) is provided, then ALL keys bound on the channel will be unbound.
+点击此处展开目录
 
-Click here to expand Table of Contents
+* 1 [示例](#-freeswitch--mod_dptools-unbind_meta_app-)
+* 2 [注意事项](#-freeswitch--mod_dptools-unbind_meta_app-)
+* 3 [参见](#-freeswitch--mod_dptools-unbind_meta_app-)
 
-* 1 [Examples](#-freeswitch--mod_dptools-unbind_meta_app-)
-* 2 [Notes](#-freeswitch--mod_dptools-unbind_meta_app-)
-* 3 [See Also](#-freeswitch--mod_dptools-unbind_meta_app-)
-
-## Examples
+## 示例
 
 ```xml
-<!-- Unbind a particular key - in this case, 7 (dialing *7 will not trigger any app after this is executed). -->
+<!-- 解除特定按键的绑定 - 在本例中，解除按键7的绑定（执行后，拨打*7将不会触发任何应用）。 -->
 <action application="unbind_meta_app" data="7"/>
 
-<!-- Unbind ALL keys bound on this channel. -->
+<!-- 解除该通道上绑定的所有按键。 -->
 <action application="unbind_meta_app" data=""/>
 ```
 
-## Notes
+## 注意事项
 
-After bind\_meta\_app binds a key on a call leg, that binding will exist for the entire life of the call leg - or until unbind\_meta\_app is used. However, in some instances it may not suffice to perform unbind\_meta\_app on a particular key - you may want to do unbind\_meta\_app for ALL keys (provide no argument):
+在bind_meta_app在通话腿上绑定按键后，该绑定将在通话腿的整个生命周期中存在 - 或者直到使用unbind_meta_app。然而，在某些情况下，仅对特定按键执行unbind_meta_app可能不足够 - 您可能希望对所有按键执行unbind_meta_app（不提供参数）：
 
 ```xml
-<!-- Unbind ALL keys bound on this channel. -->
+<!-- 解除该通道上绑定的所有按键。 -->
 <action application="unbind_meta_app" data=""/>
 ```
 
-To explain this note, consider the case of a call leg on which bind\_meta\_app was executed to bind only the digit 7\. Later on in the life of the call, the call leg is sent through an IVR. Before placing the call leg into the IVR, unbind\_meta\_app for key 7 is executed:
+为了解释这个注意事项，考虑一个通话腿，在该通话腿上执行了bind_meta_app来绑定按键7。在通话的后期，将该通话腿发送到一个IVR中。在将通话腿放入IVR之前，会执行解除按键7的unbind_meta_app：
 
 ```xml
 <action application="unbind_meta_app" data="7"/>
 ```
 
-Although 7 was the only key bound, and now it is unbound, pressing '\*' will still tell the system to listen for meta app digit. So, even though unbind\_meta\_app 7 was executed, pressing '\*' will have no effect in the IVR the call leg is now in. To completely turn off the meta app binding mechanism, do:
+虽然绑定的键是7号键，现在它没有绑定，但按下"*"仍会告诉系统监听元应用数字。所以，即使执行了取消绑定元应用7命令，按下"*"在呼叫现在所在的IVR中将没有效果。要完全关闭元应用绑定机制，请在将呼叫引导到IVR之前执行以下操作：
 
 ```xml
 <action application="unbind_meta_app" data=""/>
 ```
 
-BEFORE placing the call leg into an IVR. Then the IVR can correctly detect '\*', should you use '\*' in your IVR.
+然后，IVR可以正确地检测到"*"，如果您在IVR中使用"*"的话。
 
-## See Also
+## 参考资料
 
-[mod\_dptools: bind\_meta\_app](./6586418.mdx#about)
-
-
+[mod_dptools: bind_meta_app](./6586418.mdx#about)

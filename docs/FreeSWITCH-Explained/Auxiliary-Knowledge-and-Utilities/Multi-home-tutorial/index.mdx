@@ -1,136 +1,129 @@
+# 多户型教程
 
-# Multi home tutorial 
+## 关于
 
- 
+本文档涵盖了2009年10月Michael Gende的多户型教程的相关信息，请谨慎阅读。
 
-## About
-
-This document covers information about a multi home tutorial by Michael Gende back in October, 2009 so proceed with caution.
-
-  
-Click here to expand Table of Contents
+点击此处展开目录
 
 * 1 [FREESWITCH FOR DUMMIES: DUAL-HOMED HOST EXAMPLE](#freeswitch-for-dummies-dual-homed-host-example)
-* 2 [STUFF ONE OUGHT TO KNOW BEFORE STARTING](#stuff-one-ought-to-know-before-starting)  
-   * 2.1 [PURPOSE OF THIS DOCUMENT](#purpose-of-this-document)  
-   * 2.2 [PRE-INSTALL CONSIDERATIONS](#pre-install-considerations)
-* 3 [MOVING ON: A FEW IMPORTANT FS COMMANDS FOR STARTERS](#moving-on-a-few-important-fs-commands-for-starters)  
-   * 3.1 [THE FS FILE SYSTEM: WHERE STUFF IS FOR STARTERS:](#the-fs-file-system-where-stuff-is-for-starters)
-* 4 [SETTING THE SIP PROFILES TO USE DIFFERENT ETHERNET PORTS](#setting-the-sip-profiles-to-use-different-ethernet-ports)  
-   * 4.1 [INTERNAL LAN](#internal-lan)  
-   * 4.2 [EXTERNAL WAN](#external-wan)  
-   * 4.3 [GETTING YOUR LAN PHONES REGISTERED](#getting-your-lan-phones-registered)  
-   * 4.4 [CHANGING THE PASSWORD FOR SIP REGISTRATION ON YOUR LAN](#changing-the-password-for-sip-registration-on-your-lan)  
-   * 4.5 [APPLYING YOUR CHANGES AND CHECKING YOUR WORK](#applying-your-changes-and-checking-your-work)
-* 5 [REGISTERING WITH A SIP PROVIDER](#registering-with-a-sip-provider)  
-   * 5.1 [LETS MAKE SOME CALLS (OUT-GOING)](#lets-make-some-calls-out-going)  
-   * 5.2 [IN-COMING CALLS, RINGING A GROUP](#in-coming-calls-ringing-a-group)
-* 6 [MOVING ON TO MORE ADVANCED TOPICS](#moving-on-to-more-advanced-topics)  
-   * 6.1 [VOICE MAIL (OR "HOW TO ACCESS SOME THINGS THAT FS IS PREPARED TO DO")](#voice-mail-or-how-to-access-some-things-that-fs-is-prepared-to-do)  
-   * 6.2 [INCOMING CALLS RING A GROUP AND GOES TO VM AFTER NO ANSWER](#incoming-calls-ring-a-group-and-goes-to-vm-after-no-answer)  
-   * 6.3 [ADDING ANOTHER DID](#adding-another-did)
-* 7 [CHEAT SHEET (OR MORE STUFF FS IS READY TO DO)](#cheat-sheet-or-more-stuff-fs-is-ready-to-do)
-* 8 [AND YET MORE TO COME](#and-yet-more-to-come)
+* 2 [启动前需要了解的一些内容](#stuff-one-ought-to-know-before-starting)  
+   * 2.1 [本文的目的](#purpose-of-this-document)  
+   * 2.2 [预安装考虑事项](#pre-install-considerations)
+* 3 [进入下一步：对于新手来说的一些重要FS命令](#moving-on-a-few-important-fs-commands-for-starters)  
+   * 3.1 [FS文件系统：新手需要了解的地方](#the-fs-file-system-where-stuff-is-for-starters)
+* 4 [设置SIP配置文件以使用不同的以太网端口](#setting-the-sip-profiles-to-use-different-ethernet-ports)  
+   * 4.1 [内部局域网](#internal-lan)  
+   * 4.2 [外部广域网](#external-wan)  
+   * 4.3 [注册您的局域网电话](#getting-your-lan-phones-registered)  
+   * 4.4 [更改局域网上SIP注册的密码](#changing-the-password-for-sip-registration-on-your-lan)  
+   * 4.5 [应用您的更改并检查您的工作](#applying-your-changes-and-checking-your-work)
+* 5 [注册一个SIP提供商](#registering-with-a-sip-provider)  
+   * 5.1 [拨打电话（去电）](#lets-make-some-calls-out-going)  
+   * 5.2 [来电呼叫，同时振铃一组设备](#in-coming-calls-ringing-a-group)
+* 6 [进一步探讨高级话题](#moving-on-to-more-advanced-topics)  
+   * 6.1 [语音邮件（或“如何访问FS准备好的一些功能”）](#voice-mail-or-how-to-access-some-things-that-fs-is-prepared-to-do)  
+   * 6.2 [来电呼叫振铃一组设备，在无答案后进入语音邮件](#incoming-calls-ring-a-group-and-goes-to-vm-after-no-answer)  
+   * 6.3 [添加另一个电话号码（DID）](#adding-another-did)
+* 7 [速查表（或更多FS准备好提供的功能）](#cheat-sheet-or-more-stuff-fs-is-ready-to-do)
+* 8 [更多精彩内容，敬请期待](#and-yet-more-to-come)
 
-## FREESWITCH FOR DUMMIES: DUAL-HOMED HOST EXAMPLE
+## 《FREESWITCH入门指南：双主机示例》
 
-The name tells all.
+名称说明一切。
 
-## STUFF ONE OUGHT TO KNOW BEFORE STARTING
+## 在开始之前需要了解的东西
 
-### PURPOSE OF THIS DOCUMENT
+### 本文档的目的
 
-When I was getting my own FS up and running, I did a lot of Wiki reading (and still do). There's a lot of information (including a really good "Getting Started" guide) on the FreeSwitch site, but I nonetheless found myself looking here and there. So, I tried to put into one place some things I had found about the basics. While I keep this pretty straightforward, there is the assumption that one is comfortable with computer systems, networking, VoIP in general, XML, these kinds of things. This is not developer documentation, just "getting it going and trying to understand what's what." You'll get some of my opinions, keep 'em or chuck 'em, up to you. But, one will also learn some important basics about how to do some hopfully useful things, where things are, and how to get FS to act like a phone system (in this case). From there, the sky's the limit. The idea here is to provide a foothold to step up higher.
+当我自己搭建FS并让其运行起来时，我阅读了很多维基百科的文章（现在仍在阅读）。在FreeSwitch网站上有很多信息（包括一个非常好的“入门指南”），但我仍然发现自己时不时地四处找资料。因此，我尝试将我发现的一些基础知识整理到一个地方。虽然我将其保持得非常简单明了，但前提是读者对计算机系统、网络、VoIP（网络电话）以及XML等有所了解。这不是开发人员的文档，只是“让它运行起来并尝试理解其中的内容”。你可以采纳一些我的观点，你也可以将它们抛之脑后，就看你自己了。但你也将学到一些重要的基础知识，例如如何做一些有用的事情，哪里可以找到这些功能，以及如何使FS像一个电话系统（在这种情况下）。在那之后，你的想象力将无限开放。这里的目标是提供一个踏入更高层次的基础。
 
-Note that this document has much in common with the more mature "Getting Started" section on the FS website. This is more tuned to dual-homed setups, thus its creation. If you find it helpful, great. Find errors, point them out to me, please, and I'll correct them.
+注意，本文档与FS网站上更成熟的“入门指南”部分有很多共同之处。由于它更适用于双主机设置，所以才有了它的出现。如果你觉得有帮助，那太好了。如果你发现错误，请指出来，我会进行修正。
 
-### PRE-INSTALL CONSIDERATIONS
+### 安装前的考虑事项
 
-THE BOX:
+硬件配置：
 
-Before one starts anything, ask yourself a few questions about how you would like FS to be deployed in your situation. One way, and a simple one at that, is to add a computer (or use an existing one) to your LAN. Just a box with, say, a GB of RAM and a dual-core CPU will do it (see the FS site for more precise details on system requirements). FS comes set up to work this way without much fooling around. However, using a dual-homed host has its advantages. The largest one being lessening the traffic introduced to your LAN because a WAN interface is available. I find this a good thing and worth the extra effort. You may not.
+在着手任何事情之前，请先问自己几个关于在你的环境中如何部署FS的问题。一种简单的方法是将一台计算机（或使用已有的计算机）添加到你的局域网中。只需一台具备1GB内存和双核处理器的机箱即可（有关系统要求的更准确详细信息，请参阅FS网站）。FS已设置为能够在这种方式下正常工作，几乎无需额外操作。然而，使用双主机有其优势，最大的优势之一是减少进入局域网的流量，因为存在广域网接口。我认为这是一件好事，并值得额外的努力。可能你不这样认为。
 
-  
-THE OS:
+操作系统：
 
-FS can run on a variety of OS's (the top three being macOS, Windows, and Linux I believe). If you can work with Linux, BSD and the like, you'll be fine. The FS site has a list of ways to install on different distros, take your pick. We initially went the CentOS route, which is a good Red Hat Linux compatible distro. For a computer with only one Ethernet interface on your LAN, that would be my personal choice. However, if you use a computer with separate LAN and WAN interfaces, I'd opt for PfSense ([pfsense.org](http://pfsense.org)). This is a very nice FreeBSD system that is already a powerful firewall (and other great stuff). If you're connecting direct to the Internet, you'll need that. Further, with PfSense the installation of the OS and Firewall, via install disk image they provide, is pretty straightforward. Once FreeBSD/PfSense is installed, one adds FS as a package (see the directions at [pfsense.org](http://pfsense.org)) with just a couple of mouse clicks. While FS on PfSense has some handy interfaces to provide aids in administration, I tend to run and configure it from the command line just the same. I do so because I want to know and understand the FS directory structure and XML files that make things work.
+FS可以在各种操作系统上运行（我认为最常见的是macOS、Windows和Linux）。如果你能处理Linux、BSD等操作系统，那就没问题。FS网站上列出了在不同发行版上安装的方法，请自行选择。最初我们选择了CentOS路线，这是一个良好兼容红帽Linux的发行版。对于只有一个以太网接口的机器，这将是我的个人选择。然而，如果你使用的是具有独立局域网和广域网接口的计算机，我推荐使用PfSense（[pfsense.org](http://pfsense.org)）。这是一个非常好的FreeBSD系统，已经是一个强大的防火墙（还有其他很棒的功能）。如果你直接连接到互联网，你会需要它。此外，使用PfSense提供的安装磁盘映像，安装操作系统和防火墙非常简单。一旦安装了FreeBSD/PfSense，只需通过几次鼠标点击就可以将FS添加为一个软件包（请参考[pfsense.org](http://pfsense.org)上的说明）。虽然在PfSense上运行FS可以通过一些方便的界面来帮助管理，但我仍然倾向于从命令行运行和配置它。这样做是因为我想要了解和理解FS的目录结构和使其工作的XML文件。
 
-  
-SIDEBAR: Want to run FS on a dual homed host?
+侧边栏：想在一个双网卡主机上运行FS？
 
-That's what we do. One Ethernet port is set for the LAN while the other connects direct to the Internet. We opt for a static WAN IP address. I personally suggest using a fixed IP if you're going to go this route. It will make configuring FS, as well as well as potentially registering with your SIP provider, easier in my opinion. Also, one will have less new LAN traffic with the advent of you new VoIP system as one would with a single-homed host. This is what persuaded me. However, please note the FS scripts are pretty intelligent and can sense an IP change on your WAN port, letting the system know about it. However, for clarity and ease, largely my own, I'll go on about a static IP on the WAN and a separate IP address for the LAN port of your FS box.
+这就是我们做的事情。一个以太网口被设置为局域网，而另一个直接连接到互联网。我们选择了一个静态的WAN IP地址。如果你要选择这种方式，我个人建议使用固定的IP地址。这样做会使得配置FS以及可能与您的SIP提供商注册更加容易，我认为。而且，与单宿主的主机相比，使用新的VoIP系统将会减少局域网的新流量。这就是说服我的因素。然而，请注意FS脚本非常智能，可以感知您WAN口的IP变化，并通知系统。然而为了清晰和便捷起见（主要是为了自己），我会继续使用WAN上的静态IP，以及FS盒子局域网口的单独IP地址。
 
-NOTE: Just call your cable provider or DSL provider for info on getting a static IP if you'd like one. We have both DSL and Cable at my office, it was pretty simple to set up. These Internet providers, they'll do anything for money. If you have a T1 or better, you already have a static IP. Also note: going this way (dual-homed, fixed IP) gets your hands a little dirty, and I do mean "a little", with FS. That's something I think you'll want to do to understand more about how things work. It sure helped me.
+注意：如果你想要一个静态IP，只需打电话给你的有线或者DSL供应商了解获取静态IP的信息。我办公室有DSL和有线网络，设置起来非常简单。这些互联网供应商，为了钱什么都愿意做。如果你已经有了T1或更好的网络，那你已经有了一个静态IP。还要注意：采用这种方式（双宿主，固定IP）可能会让你手上有点脏，我是说“有点”，但这对于理解事物运作原理来说是很有帮助的。这对我确实有帮助。
 
-## MOVING ON: A FEW IMPORTANT FS COMMANDS FOR STARTERS
+## 接下来：一些对于初学者来说重要的FS命令
 
-At this point, I'm assuming that you'll have the computer of your choice up and running with an OS and FS installed and waiting for your commands (if you don't, pretend). When I was getting FS up and running, there were a few concepts and commands that helped me get on my feet. So, for your edification, here they are:
+在这一点上，我假设您已经选择并安装了操作系统和FS，并等待您的命令（如果没有，请假装有）。当我将FS安装和运行起来时，有一些概念和命令帮助了我理解和上手。所以，为了让您更了解，这里有一些它们：
 
-To Start FS: The executable is in /usr/local/freeswitch/bin/freeswitch. Invoking it long-hand (or going to the \~/bin directory and typing ./freeswitch) will start FS in the foreground, attach to your terminal, and provide output and a command line.
+开始FS: 可执行文件位于 /usr/local/freeswitch/bin/freeswitch。通过长命令调用（或进入\~/bin目录并输入./freeswitch）将在前台启动FS，连接到您的终端，并提供输出和命令行。
 
-To Check FS Status: If the screen is full of "junk", hit enter. You should see a prompt something like this: "freeswitch@FreeSwitch.local>". From there, you can tell FS to do things and ask about status. You'll use commands like "sofia status", "sofia status profile internal", and "sofia status profile external". One can accomplish quite a lot with just those few. More on these later in the document. Or, go try 'em out.
+检查FS状态: 如果屏幕上充满了"垃圾"，按下回车键。您应该会看到一个类似这样的提示符："freeswitch@FreeSwitch.local>". 从那里，您可以告诉FS执行任务并查询状态。您会使用命令如"sofia status"，"sofia status profile internal"和"sofia status profile external"。只有几个命令就可以完成大部分操作。稍后在文档中会有更多介绍。或者，您也可以尝试使用这些命令。
 
-To Stop FS: At the command line mentioned above, just enter the command "shutdown" (no quotes). Or, one could kill it if its running in the background (as it does by default in PfSense on FreeBSD). I've done so with a "kill -15" followed by the FS PID (ps uax | grep free) and things shut down fine. There's probably a better way to do that, but this works.
+停止FS: 在上述命令行中，只需输入"shutdown"命令（不带引号）。或者，如果FS在后台运行（如在PfSense上的FreeBSD默认配置中），可以使用"kill -15"命令后跟FS PID（ps uax | grep free）来终止它。可能还有更好的方法，但这种方式也有效。
 
-To Reload XML Files into FS: You'll likely be making changes to the XML files that configure FS, especially initially. Once you edit an XML file, FS has to be told about this so your changes will take effect. That can be done with the "reloadxml" command. Alternatively, one can issue a "shutdown" command and then start FS from the command line. Take your choice.
+重新加载XML文件到FS: 您可能会对配置FS的XML文件进行更改，尤其是在初始阶段。一旦您编辑了XML文件，FS必须被告知以便使更改生效。可以使用"reloadxml"命令来做到这一点。或者，您可以发出"shutdown"命令，然后从命令行启动FS。选择其中一种方法即可。
 
-For More Info: one can type "help" at the FS command prompt. There's a lot there; don't let it intimidate you.
+获取更多信息: 可以在FS命令提示符处键入"help"。这里面有很多东西，不要被它吓到。
 
-### THE FS FILE SYSTEM: WHERE STUFF IS FOR STARTERS:
+FS文件系统: 初学者需要了解某些东西的位置:
 
-Here's the basics on where things are. Master this and you've got a good, starting grasp on how to "get around" when configuring and maintaining your FS:
+以下是基本的位置信息。掌握这些内容，您就能初步了解如何在配置和维护FS时进行操作。
 
-NOTE: Everything starts with /usr/local/freeswitch, so I'm just going to assume that with the tilde (\~) here to save me from typing it again and again.
+注意：一切都始于/usr/local/freeswitch，所以我假设在这里使用波浪符(~)来省去重复输入的麻烦。
 
-\~/bin is where all the binaries, like the FS executable itself, resides.
+~/bin是所有二进制文件的存放位置，比如FS可执行文件本身。
 
-\~/conf is a starting point for your exploration. Some important files here, like vars.xml, and more.
+~/conf是你探索的起点。这里有一些重要的文件，比如vars.xml等。
 
-\~/conf/sip\_profiles is very important. Here are all the SIP User Agent instructions. UAs listen for registrations of SIP Phones, etc.
+~/conf/sip_profiles非常重要。这里存放着所有SIP用户代理指令。用户代理监听SIP电话的注册等事件。
 
-\~/conf/dialplan is where one sets up instructions telling FS about events and what to do when they take place.
+~/conf/dialplan是设置FS关于事件以及事件发生时要采取的操作指令的地方。
 
-\~/conf/directory is where information on physical SIP phone extensions (and their groupings) is stored.
+~/conf/directory是存储有关物理SIP电话分机（以及它们的分组）信息的地方。
 
-These directories have sub directories (which themselves have sub directories) that you'll want to get familiar with. I'll go into more detail later on. Also, I've left out where language stuff goes, and more. But, one has to start somewhere. Now, let's get to work.
+这些目录都有子目录（它们本身也有子目录），您应该熟悉一下。我以后会详细介绍。同时，我还没有提到语言相关的内容等等。但是，每个人都要从某个地方开始。现在，让我们开始工作吧。
 
-## SETTING THE SIP PROFILES TO USE DIFFERENT ETHERNET PORTS
+## 设置不同以太网端口使用的SIP配置文件
 
-### INTERNAL LAN
+### 内部局域网
 
-Back to "dual-homed host setup with fixed IP on the WAN port". To make this work, one has to tell FS about where to be listening for SIP registrations, and other SIP traffic. That's done in the /usr/local/freeswitch/conf/sip\_profiles directory. There, one finds what are conveniently called "sip profiles". One profile is for internal traffic (in my case called "internal.xml", for the phones on your LAN, etc) the other is for outside traffic (in my case called "external.xml", outside phone registrations, etc).
+回到"双主机设置，WAN端口固定IP"。为了使此设置生效，我们需要告诉FS在哪里监听SIP注册和其他SIP流量。这是在/usr/local/freeswitch/conf/sip_profiles目录中完成的。在那里，你会找到方便地被称为"sip profiles"的东西。一个配置文件用于内部流量（在我的情况下称为"internal.xml"，用于局域网上的电话等），另一个配置文件用于外部流量（在我的情况下称为"external.xml"，用于外部电话注册等）。
 
-In the internal.xml file, we'll make some changes to accommodate the LAN network. Its a big file, but just a small tweak needs to be made. I'd edit the file and search for rtp-ip, sip-ip, ext-rtp-ip, and ext-sip-ip, respectively. Initially, you'll likely see "value=$${local\_ip\_v4}" in these four lines. Change the "value=" as below, using your own LAN IP address, for those four lines. Note that in the actual file there's a lot more stuff.
+在internal.xml文件中，我们将进行一些更改以适应局域网。这是一个庞大的文件，但只需进行一处小小的调整即可。我会编辑文件，分别查找rtp-ip、sip-ip、ext-rtp-ip和ext-sip-ip。在这四行中，你可能会看到"value=$${local\_ip\_v4}"。请将"value="更改为以下内容，并使用你自己的局域网IP地址，分别替换这四行。请注意，在实际文件中还有很多其他的内容。
 
 &lt;param name="rtp-ip" value="192.168.0.199"/>
 
 &lt;param name="sip-ip" value="192.168.0.199"/>
 
-Since I'm writing about a dual-homed example, we don't need a STUN server (i.e, we don't really need external rtp or sip) you can either leave the following two entries alone or set them as I have below:
+因为我正在讲解一个双主机示例，我们不需要STUN服务器（即，我们实际上不需要外部的rtp或sip），您可以保持以下两个条目不变，或者按照我以下的设置进行更改：
 
 &lt;param name="ext-rtp-ip" value="192.168.0.199"/>
 
 &lt;param name="ext-sip-ip" value="192.168.0.199"/>
 
-Another reminder to use the LAN IP of your computer running FS, not mine. Also remember this is a dual-homed host in this particular example. You don't need to mess with this - the the internal.xml or external.xml files - if you have a single Ethernet port connected to a LAN with a gateway to the Internet. The settings "from the factory" will do just fine "out of the box" with a single homed host (though you will likely need STUN, not covered here). But, what fun is that?
+再次提醒使用运行FS的计算机的局域网IP，而不是我的IP。还要记住，在这个特定的示例中，这是一个双主机。如果您只有一个以太网端口连接到具有连接到互联网的网关的局域网，您不需要进行这些更改-在internal.xml或external.xml文件中。单主机（虽然您可能需要STUN，在此不涉及）。但是，那样会有多少乐趣呢？
 
-### EXTERNAL WAN
+### 外部WAN
 
-So, now we've got to do the same sort of thing to the /usr/local/freeswitch/conf/sip\_profiles/external.xml file too right? Actually, while you could, one does not need to. Strangely enough, and to one's great happiness, this profile will go out and get the address of the WAN side and make the proper adjustments. Again, it will also, if a dynamic IP is being used, sense the address and any changes to it. Again, I prefer the static IP and that's what I'm writing about here. The long and short of it is you don't have to change this file at this time.
+所以，现在我们必须对`/usr/local/freeswitch/conf/sip_profiles/external.xml`文件进行同样的操作，对吧？实际上，虽然你可以这样做，但是并不必要。令人奇怪但也令人欣喜的是，这个配置文件会自动获取WAN侧的地址并进行适当的调整。同样地，如果使用动态IP，它还会检测地址及其任何变动。不过，我个人更喜欢使用静态IP，这也是我在这里写的内容。简而言之，你现在不需要更改这个文件。
 
-### GETTING YOUR LAN PHONES REGISTERED
+### 注册你的局域网电话
 
-Also, we make a similar change elsewhere. In the /usr/local/freeswitch/conf/directory area sits a file that is - I hope - called default.xml. This file also has something to do with SIP on your LAN. In this case, what end-points (phones, soft phones) FS should expect to see, and other info (such as grouping these end-points into, well, groups). So, edit that file but use your LAN IP instead of mine, just like in the profiles above:
+此外，我们还需要在其他位置做类似的更改。在`/usr/local/freeswitch/conf/directory`目录中，有一个文件——我希望如此——名为`default.xml`。这个文件也与局域网上的SIP有关。在这种情况下，它指定了FreeSWITCH应该期望看到哪些终端（电话、软电话），以及其他信息（例如将这些终端分组）。所以，请编辑该文件，但是将其中的IP地址替换为你的局域网IP，就像上面的配置文件一样：
 
 ```xml
-<!--the domain or ip (the right hand side of the @ in the addr-->
-
+<!--域名或IP地址（addr中@符号右侧的部分）-->
 <domain name="192.168.0.199"> 
 ```
 
-While we're in the /usr/local/freeswitch/conf/directory area, let's consider how the SIP phones on your LAN are going to register with FS. I suggest using the pre-set 1000-1019 extension numbers - already set up for you - to configure and register your local SIP phones. If you need more, you'll know where/how to enter them in. So, while still in the default.xml file here - remember there are other default.xml files in other directories doing different things - note everything between the &lt;groups> and &lt;/groups> tags. There are singular &lt;group> &lt;/group> tags nested inside, setting up logical groupings of extension numbers into Sales, Billing, and Support. You can change these groupings to suite yourself, our go with what's there. Either way, you can now see where this configuration is set.
+当我们在`/usr/local/freeswitch/conf/directory`目录区域时，让我们考虑一下你的局域网上的SIP电话将如何注册到FS。我建议使用预设的1000-1019分机号码 - 已经为您设置好了 - 来配置和注册您的本地SIP电话。如果您需要更多，您会知道在哪里/如何输入它们。所以，在这里这个`default.xml`文件中 - 记住其他目录中的其他`default.xml`文件在做不同的事情 - 注意`<groups>`和`</groups>`标签之间的所有内容。其中包含`<group></group>`嵌套的单一标签，将分机号码设置为销售、计费和支持的逻辑分组。您可以更改这些分组以适应自己，或者使用现有的分组。无论哪种方式，您现在都可以看到配置是在哪里设置的。
 
-Also in this file, near the top, you'll see a pre-processor directive to go a directory below and include any .XML files found there. Leave this file, and cd down to the ./default directory. Just to be clear, we're going into directory /usr/local/freeswitch/conf/directory/default. Here's 1015.xml, one of the several you'll find there:
+还在这个文件中，靠近顶部，您会看到一条预处理指令，用于转到下一级目录并包含在那里找到的任何`.XML`文件。离开这个文件，然后进入`./default`目录。清楚起见，我们进入目录`/usr/local/freeswitch/conf/directory/default`。这里是`1015.xml`，这是你将在那里找到的几个文件之一：
 
 ```xml
 <include>
@@ -144,9 +137,9 @@ Also in this file, near the top, you'll see a pre-processor directive to go a di
       <variable name="accountcode" value="1015"/>
       <variable name="user_context" value="default"/>
       <variable name="effective_caller_id_name" value="Extension 1015"/>
-      <!-- The value Extension 1015 can be personalized to your name, for instance, if you'd like -->
+      <!-- 这里的值"Extension 1015"可以按需个性化为您的名字 -->
       <variable name="effective_caller_id_number" value="1015"/>
-      <!-- Again, one could type in your main DID phone number instead of just 1015 if desired -->
+      <!-- 同样，也可以根据需要，将您的主要DID电话号码填入，而不仅限于1015 -->
       <variable name="outbound_caller_id_name" value="$${outbound_caller_name}"/>
       <variable name="outbound_caller_id_number" value="$${outbound_caller_id}"/>
       <variable name="callgroup" value="techsupport"/>
@@ -156,332 +149,330 @@ Also in this file, near the top, you'll see a pre-processor directive to go a di
 ```
 
   
-That's the whole XML file. Now, these can get more complicated, but this is right there and ready to go. While the variables pretty much tell you what they do, the point here is that if you need to modify something about a LAN SIP phone's "personal info", you come to /usr/local/freeswitch/conf/directory/default and look at the \*.xml files here. And/or go "up" one level and look in the default.xml file there. NOTE: On my system, there's another default.xml file here. Keep in mind that while the names are the same, where they are has a lot to do with their function, so associate the place with the name. It gets easier with time.
+那就是整个XML文件。现在，这些可能变得更加复杂，但是现在已经准备好了。虽然变量基本上告诉您它们的作用，但这里的重点是，如果您需要修改LAN SIP电话的“个人信息”，您可以来到/usr/local/freeswitch/conf/directory/default，并查看这里的\*.xml文件。并/或者去“上级”目录并查看那里的default.xml文件。注意：在我的系统上，这里还有另一个default.xml文件。请记住，虽然名称相同，但它们所在的位置与其功能有很大关系，所以将位置与名称关联起来。随着时间的推移，这将变得更容易。
 
-### CHANGING THE PASSWORD FOR SIP REGISTRATION ON YOUR LAN
+### 在本地区修改SIP注册的密码
 
-Last thing: You'll want to change the default password that your LAN SIP phones (or external phones for that matter) will use when authenticating. Leaving the one set up "out of the box" is a security risk since anyone could know it. So, make up your own. Edit the /usr/local/freeswitch/conf/vars.xml file. Near the top you'll see:
+最后一件事：您需要更改LAN SIP电话（或外部电话）在进行身份验证时使用的默认密码。保留“开箱即用”的设置是一种安全风险，因为任何人都可能知道它。所以，请自己设置新密码。编辑`/usr/local/freeswitch/conf/vars.xml`文件。在文件的开头附近，您会看到以下内容：
 
 ```xml
 <X-PRE-PROCESS cmd="set" data="default_password=1234"/>
 
-<!-- Did you change it yet? --> 
+<!-- 您已经更改了吗？ --> 
 ```
 
-Change the default\_password parameter to some other four numbers that appeal to you. Now, only SIP phones that know the secret can register. Having done all this, set up your LAN SIP phones. Assign each a number between 1000 and 1019 for starters because these are already configured. Point your SIP phones the the IP address we've hard coded in the profiles (192.168.0.199 in my example). Be sure to use the new password you just set up.
+将default\_password参数更改为您喜欢的其他四个数字。现在，只有知道密码的SIP电话才能注册。完成所有这些操作之后，设置您的LAN SIP电话。首先为每个电话分配一个1000到1019之间的号码，因为这些号码已经配置好了。将您的SIP电话指向我们在配置文件中指定的IP地址（例如，我的示例中是192.168.0.199）。确保使用您刚刚设置的新密码。
 
-### APPLYING YOUR CHANGES AND CHECKING YOUR WORK
+### 应用更改并检查工作是否正常
 
-Once you've made all these changes, either reloadxml the FS or simply stop and start it (don't know how? See "Stuff I Ought to Know Before Starting" section). To check, after the reload or restart, issue this command at the FS command line:
+在进行所有这些更改之后，重新加载XML配置文件或者停止并重新启动FreeSwitch（不知道如何操作？请参阅“开始之前应该了解的内容”部分）。在重新加载或重新启动之后，在FreeSwitch命令行中输入以下命令进行检查：
 
 ```xml
 freeswitch@FreeSwitch.local> sofia status profile internal
 ```
 
-You'll get something like the following if all is well:
+如果一切正常，您将会得到如下类似的输出：
 
 ```text
-API CALL [sofia(status profile internal)] output:
+API CALL [sofia(status profile internal)] 输出：
 =================================================================================================
-Name                    internal
-Domain Name             N/A
-DBName                  sofia_reg_internal
-Pres Hosts
-Dialplan                XML
-Context                 public
-Challenge Realm         auto_to
-RTP-IP                  192.168.0.199
-Ext-RTP-IP              192.168.0.199
-SIP-IP                  192.168.0.199
-Ext-SIP-IP              192.168.0.199
-URL                     sip:mod_sofia@192.168.0.199:5060
-BIND-URL                sip:mod_sofia@192.168.0.199:5060
-HOLD-MUSIC              local_stream://moh
-OUTBOUND-PROXY          N/A
-CODECS                  G7221@32000h,G7221@16000h,G722,PCMU,PCMA,GSM
-TEL-EVENT               101
-DTMF-MODE               rfc2833
-CNG                     13
-SESSION-TO              0
-MAX-DIALOG              0
-NOMEDIA                 false
-LATE-NEG                false
-PROXY-MEDIA             false
-AGGRESSIVENAT           false
-STUN-ENABLED            true
-STUN-AUTO-DISABLE       false
-CALLS-IN                2
-FAILED-CALLS-IN         0
-CALLS-OUT               3
-FAILED-CALLS-OUT        0
+名称                      internal
+域名                      N/A
+数据库名称               sofia_reg_internal
+Pres主机
+拨号计划                 XML
+上下文                    public
+挑战领域                 auto_to
+RTP-IP                   192.168.0.199
+Ext-RTP-IP               192.168.0.199
+SIP-IP                   192.168.0.199
+Ext-SIP-IP               192.168.0.199
+URL                      sip:mod_sofia@192.168.0.199:5060
+BIND-URL                 sip:mod_sofia@192.168.0.199:5060
+保持音乐                  local_stream://moh
+出口代理                 N/A
+编解码器                  G7221@32000h,G7221@16000h,G722,PCMU,PCMA,GSM
+TEL-EVENT                101
+DTMF-MODE                rfc2833
+CNG                      13
+会话过期时间              0
+最大对话数              0
+无媒体                     false
+较晚的协商              false
+代理媒体                 false
+主动NAT防火墙穿越      false
+STUN启用                  true
+自动禁用STUN           false
+呼入通话数                2
+呼入通话失败数          0
+呼出通话数                3
+呼出通话失败数          0
 
-Registrations:
+注册信息：
 =================================================================================================
 
 Call-ID:        e6c864e9c4a3d@192.168.0.80
-User:           1013@192.168.0.199
-Contact:        "user" <sip:1013@192.168.0.80:5062;transport=udp;fs_nat=yes;fs_path=sip%013%40192.168.0.80%062%3Btransport%3Dudp>
-Agent:          Grandstream GXP2000 1.1.6.46
-Status:         Registered(UDP-NAT)(unknown) EXP(2009-09-23 16:37:10)
-Host:           FreeSwitch.local
-IP:             192.168.0.80
-Port:           5062
-Auth-User:      1013
-Auth-Realm:     192.168.0.199
-
-Call-ID:        88ee646b068da@192.168.0.41
-User:           1012@192.168.0.199
-Contact:        "user" <sip:1012@192.168.0.41:5062;transport=udp;user=phone;fs_nat=yes;fs_path=sip%012%192.168.0.41%3A5062%3Btransport%udp%3Buser%3Dphone>
-Agent:          Grandstream GXP2000 1.1.5.15
-Status:         Registered(UDP-NAT)(unknown) EXP(2009-09-23 16:37:12)
-Host:           FreeSwitch.local
-IP:             192.168.0.41
-Port:           5062
-Auth-User:      1012
-Auth-Realm:     192.168.0.199
-
-Call-ID:        45ee6e1b083da@192.168.0.57
-User:           1017@192.168.0.199
-Contact:        "user" <sip:1017@192.168.0.57:5062;transport=udp;fs_nat=yes;fs_path=sip%17%40192.168.0.57%62%3Btransport%3Dudp>
-Agent:          Grandstream GXP2000 1.1.5.15
-Status:         Registered(UDP-NAT)(unknown) EXP(2009-09-23 16:37:15)
-Host:           FreeSwitch.local
-IP:             192.168.0.57
-Port:           5062
-Auth-User:      1017
-Auth-Realm:     192.168.0.199
-
-=================================================================================================
+用户:              1013@192.168.0.199
+联系方式:       "user" <sip:1013@192.168.0.80:5062;transport=udp;fs_nat=yes;fs_path=sip%013%40192.168.0.80%062%3Btransport%3Dudp>
+设备:            Grandstream GXP2000 1.1.6.46
+状态:            注册成功（UDP-NAT）（未知）到期时间（2009-09-23 16:37:10）
+主机:            FreeSwitch.local
+IP地址:         192.168.0.80
+端口:            5062
+认证用户:      1013
+认证领域:      192.168.0.199
 ```
 
-Note that everywhere there's an IP address (RTP\_IP, SIP\_IP, EXT\_RTP\_IP, EXT\_SIP\_IP), its the LAN Ethernet address on our FS box or the address of a LAN SIP phone (under Registrations). That's what we want. The internal.xml profile is listening ONLY on the LAN.
+Call-ID: 88ee646b068da@192.168.0.41
+用户: 1012@192.168.0.199
+联系方式: "user" <sip:1012@192.168.0.41:5062;transport=udp;user=phone;fs_nat=yes;fs_path=sip%012%192.168.0.41%3A5062%3Btransport%udp%3Buser%3Dphone>
+代理: Grandstream GXP2000 1.1.5.15
+状态: 已注册(UDP-NAT)(未知) 过期(2009-09-23 16:37:12)
+主机名: FreeSwitch.local
+IP地址: 192.168.0.41
+端口: 5062
+认证用户: 1012
+认证域: 192.168.0.199
 
-Do the same thing for the external profile:
+Call-ID: 45ee6e1b083da@192.168.0.57
+用户: 1017@192.168.0.199
+联系方式: "user" <sip:1017@192.168.0.57:5062;transport=udp;fs_nat=yes;fs_path=sip%17%40192.168.0.57%62%3Btransport%3Dudp>
+代理: Grandstream GXP2000 1.1.5.15
+状态: 已注册(UDP-NAT)(未知) 过期(2009-09-23 16:37:15)
+主机名: FreeSwitch.local
+IP地址: 192.168.0.57
+端口: 5062
+认证用户: 1017
+认证域: 192.168.0.199
+
+=================================================================================================
+
+注意，在所有 IP 地址（RTP_IP、SIP_IP、EXT_RTP_IP、EXT_SIP_IP）的地方，都是我们 FS 盒子的 LAN 以太网地址或 LAN SIP 电话的地址（在 Registrations 下）。这就是我们想要的。internal.xml 配置文件仅在 LAN 上监听。
+
+对外部配置文件也进行相同操作：
 
 ```xml
 freeswitch@FreeSwitch.local> sofia status profile external
 ```
 
-...and get output similar to the above, but with no registered sip phones as yet:
+... 并获取类似于上述的输出，但目前没有已注册的 SIP 电话：
 
 ```xml
-API CALL [sofia(status profile external)] output:
+API CALL [sofia（状态配置外部）] 输出结果：
 =================================================================================================
-Name                    external
-Domain Name             N/A
-DBName                  sofia_reg_external
-Pres Hosts
-Dialplan                XML
-Context                 public
-Challenge Realm         auto_to
-RTP-IP                  yy.yy.yy.yy
-Ext-RTP-IP              yy.yy.yy.yy
-SIP-IP                  yy.yy.yy.yy
-Ext-SIP-IP              yy.yy.yy.yy
-URL                     sip:mod_sofia@yy.yy.yy.yy:5080
-BIND-URL                sip:mod_sofia@yy.yy.yy.yy:5080
-HOLD-MUSIC              local_stream://moh
-OUTBOUND-PROXY          N/A
-CODECS                  PCMU,PCMA,GSM
-TEL-EVENT               101
-DTMF-MODE               rfc2833
-CNG                     13
-SESSION-TO              0
-MAX-DIALOG              0
-NOMEDIA                 false
-LATE-NEG                false
-PROXY-MEDIA             false
-AGGRESSIVENAT           false
-STUN-ENABLED            true
-STUN-AUTO-DISABLE       false
-CALLS-IN                1
-FAILED-CALLS-IN         0
-CALLS-OUT               1
-FAILED-CALLS-OUT        0
+名称                      external
+域名                      N/A
+数据库名称               sofia_reg_external
+Pres 主机
+拨号计划                  XML
+上下文                    public
+鉴权域                    auto_to
+RTP-IP                    yy.yy.yy.yy
+Ext-RTP-IP                yy.yy.yy.yy
+SIP-IP                    yy.yy.yy.yy
+Ext-SIP-IP                yy.yy.yy.yy
+URL                       sip:mod_sofia@yy.yy.yy.yy:5080
+BIND-URL                  sip:mod_sofia@yy.yy.yy.yy:5080
+挂起音乐                  local_stream://moh
+出口代理                  N/A
+编解码器                  PCMU,PCMA,GSM
+电话事件                  101
+DTMF 模式                 rfc2833
+CNG                       13
+会话超时                  0
+最大会话数                0
+无媒体                      false
+延迟协商                  false
+代理媒体                   false
+激进 NAT                false
+STUN 启用                true
+STUN 自动禁用           false
+呼入次数                  1
+失败呼入次数            0
+呼出次数                  1
+失败呼出次数            0
 
-Registrations:
+注册信息：
 =================================================================================================
 =================================================================================================
 ```
 
-Here, we have only the external Ethernet static-ip address showing up. Again, that's as it should be. This profile is listening only to the WAN and not interfering with the LAN. Note that in my case, I don't have any registrations on this profile. That's OK, but I could set things up for phones to register from the WAN if that was desirable (which in our case, it is not as yet). As we'll see, these two will work together well for out-going and in-coming calls. Read on.
+在这里，我们只看到了外部以太网静态IP地址。没错，这就是应该的。该配置文件只监听WAN，并且不干扰LAN。请注意，在我的情况下，这个配置文件上没有任何注册。这没关系，但是如果需要的话，我可以为手机设置从WAN注册的方式（在我们的情况下，目前还不需要）。正如我们将看到的那样，这两个配置文件将很好地配合进行呼出和呼入呼叫。请继续阅读。
 
-## REGISTERING WITH A SIP PROVIDER
+## 与SIP提供商进行注册
 
-So that we can make and receive calls, we'll need to register with a SIP/PSTN provider. Getting one is outside the scope of this document, but check out the Internet, many are available. You'll have to have FS register with your "gateway provider" so things can work. Here's how we did it: In /usr/local/freeswitch/conf/sip\_profiles/external, I created a file called urbancom.xml (happens to be the name of my provider). As long as this file is in that directory, FS will use it to register with my SIP/PSTN provider, making calling "in and out" possible. Here's what's inside:
+为了能够进行呼叫的发送和接收，我们需要注册一个SIP/PSTN提供商。获取一个超出了本文档的范围，但是请搜索一下互联网，有很多提供商可供选择。您将需要让FS与您的"网关提供商"进行注册，以使一切正常。以下是我们的步骤：在`/usr/local/freeswitch/conf/sip_profiles/external`目录下，我创建了一个名为urbancom.xml的文件（这恰好是我的提供商的名称）。只要这个文件位于该目录中，FS将使用它来与我的SIP/PSTN提供商进行注册，从而实现 "呼出和呼入" 的功能。以下是文件的内容：
 
 ```xml
 <include>
   <gateway name="xxx.xxx.xxx.xxx">
-     <!-- Remember, you'll need this name for your "out-bound calls" extension -->
+     <!-- 记住，在您的 "out-bound calls" 分机中需要这个名称 -->
      <param name="username" value="8155551212"/>
-     <!-- Natch', your own username, ours is like a NPANXXTN -->
+     <!-- 当然，你自己的用户名，我们的像 NPANXXTN 一样 -->
      <param name="password" value="somekindapassw0rd"/>
-     <!-- Natch', your own password -->
+     <!-- 当然，你自己的密码 -->
      <param name="expire-seconds" value="60"/>
-     <!-- Time out value, 60 works for us -->
+     <!-- 超时值，60 对我们有效 -->
      <param name="register" value="true"/>
-     <!-- You want to register, so "true" -->
+     <!-- 你想要注册，所以为 "true" -->
      <param name="register-transport" value="udp"/>
-     <!-- You'll probably use udp, but ask your provider -->
+     <!-- 你可能会使用 udp，但询问你的供应商 -->
      <param name="retry-seconds" value="30"/>
-     <!-- Retry parameter, 30 seconds works for us -->
+     <!-- 重试参数，我们设置为 30 秒 -->
      <param name="caller-id-in-from" value="false"/>
-     <!-- Use the callerid of an inbound call in the from field on outbound calls via this gateway. We don't, up to you. -->
+     <!-- 在通过此网关的出站呼叫中使用呼入呼叫的来电显示，我们不使用，由您决定 -->
      <param name="contact-params" value="tport=5060"/>
-     <!-- Port 5060 is customary, but again, ask the provider -->
+     <!-- 端口 5060 是通常的，但再次，询问供应商 -->
      <param name="ping" value="25"/>
-     <!-- We like to send a ping just to keep some traffic traversing and keep us registered -->
+     <!-- 我们喜欢发送 ping，以保持一些流量和保持注册 -->
   </gateway>
 </include>
 ```
 
-  
-That's the whole file. The "name" has to be something DNS can translate or an actual IP address. Clearly, I used the latter. Username and password come from the provider, as do the transport value (could be TCP, ask the provider) and the TPORT value (5060 is typical, but ask the...you get the message). I like the ping value, kinda making sure the link is kept alive in the absence of other traffic.
+这是整个文件。"name" 必须是 DNS 可以解析的内容，或者是实际的 IP 地址。用户名和密码来自提供商，传输值（可以是 TCP，请询问供应商）和 TPORT 值（5060 是典型值，但请询问...你明白我的意思）也都来自于提供商。我喜欢这个 ping 值，确保在没有其他流量的情况下保持连接活跃。
 
-Now, we want to set something to happen "call-wise". That is, when our LAN phones register with FS and dial a phone number, something good will transpire. Here's one way to get that done: We'll add an "extension" - not to be confused with a physical telephone extension - to what's called a "context". Contexts are just containers for extensions. These context extensions are really directions to FS, telling it how to react when certain things take place. Our "thing" in this case is a registered sip phone dialing a 10 digit number, trying to call someone on the outside.
+现在，我们想要在“呼叫方式”下设置一些事件。也就是说，当我们的局域网电话与FS注册并拨打电话时，会发生一些好事。下面是完成此操作的一种方式：我们将向所谓的“上下文”添加一个“分机”，这与物理电话分机并非同一概念。上下文只是分机的容器。这些上下文分机实际上是告诉FS如何在发生特定事件时做出反应的指令。在这种情况下，我们的“事件”是一个已注册的SIP电话拨打一个十位数号码，试图拨打外部电话。
 
-To make this work, we add the following "extension" to the "context" in the /usr/local/freeswitch/conf/dialplan/default.xml file. Don't confuse this default.xml with the one in /usr/local/freeswitch/conf/directory, different files doing different things. Enter the following in as the first extension in the file, note the &lt;extension> tags that delimit the text you're inputting. What's the point? Well, this paragraph lets FS know what to do when an outgoing call is dialed. Note the &lt;action application> tag. This directs FS to use a specific gateway, the one we just set up, to "get the call out".
+为了使它正常工作，我们在`/usr/local/freeswitch/conf/dialplan/default.xml`文件中向“上下文”添加以下“分机”。请注意，不要将此`default.xml`与`/usr/local/freeswitch/conf/directory`目录中的文件混淆，它们是执行不同功能的不同文件。将以下内容作为文件中的第一个扩展输入，注意使用`&lt;extension>`标签来标记输入的文本。这段话的目的是让FS知道在拨打出站呼叫时该做什么。请注意`&lt;action application>`标签。它指示FS使用我们刚刚设置的特定网关来“接出呼叫”。
 
 ```xml
-<! -- Mike stole from elsewhere: Dial any 10 digit number (2223334444) or 1+10 number (12223334444) here -->
+<! -- Mike从别处抄袭: 在这里拨打任意10位数的号码（2223334444）或者1+10位数的号码（12223334444） -->
    <extension name="UrbanOut">
-     <! -- Call this what you want, above. Can be anything that makes sense to you. -->
+     <! -- 可以将此处命名为任何有意义的内容。 -->
      <condition field="destination_number" expression="^(1{0,1}\d{10})$">
-     <!-- The above translates to: "a 10 digit number, with or without a preceeding 0 or 1" -->
+     <!-- 上述表达式解释为："一个10位数的号码，可以有0或1开头" -->
        <action application="set" data="effective_caller_id_number=18155551212"/>
-       <!-- Change the above effective_caller_id_number to your own DID. -->
-       <!-- If your provider does not provide ringback (180 or 183) you may simulate ringback by uncommenting the following line. -->
+       <!-- 将上述的effective_caller_id_number更改为您自己的DID。 -->
+       <!-- 如果您的供应商不提供回铃音（180或183），您可以取消注释以下行以模拟回铃音。 -->
        <!-- action application="ringback" /-->
        <action application="bridge" data="sofia/gateway/xxx.xxx.xxx.xxx/$1"/>
-       <!-- Change the above to your own gateway name, between "/gateway/" and "/$1" -->
+       <!-- 将上述内容更改为您自己的网关名称，位于"/gateway/"和"/$1"之间 -->
      </condition>
    </extension>
 ```
 
-NOTE: One can know if the gateway is registered or not, plus other very useful information, by using the following command at the FS command line:
+注意：可以通过在FS命令行上使用以下命令来了解网关是否注册以及其他非常有用的信息：
 
 ```xml
 freeswitch@FreeSwitch.local> sofia status 
 ```
 
-Don't forget to hit "enter". That will get you something like the following:
+不要忘记按下"Enter"键。这将给您提供以下类似的输出：
 
 ```xml
 API CALL [sofia(status)] output:
-
-    Name                Type                       Data                        State
-=================================================================================================
-   internal            profile          sip:mod_sofia@192.168.0.199:5060      RUNNING (0)
-   external            profile            sip:mod_sofia@yy.yy.yy.yy:5080      RUNNING (0)
-   xxx.xxx.xxx.xxx     gateway           sip:8155551212@xxx.xxx.xxx.xxx       REGED
-   default               alias                                  internal      ALIASED
-   192.168.0.199         alias                                  internal      ALIASED
-=================================================================================================
-2 profiles 2 aliases
 ```
 
-Note that my gateway (check the "Type" column) is in state REGED, meaning it is registered with my provider and all is well with the world. If it isn't, check with your provider. If they're nice, they'll look at your registration attempt and provide clues as to what's not right. Hey, its a start.
+```markdown
+    名称                  类型                      数据                       状态
+=================================================================================================
+   internal            profile          sip:mod_sofia@192.168.0.199:5060         运行中 (0)
+   external            profile            sip:mod_sofia@yy.yy.yy.yy:5080         运行中 (0)
+   xxx.xxx.xxx.xxx     gateway           sip:8155551212@xxx.xxx.xxx.xxx       注册成功
+   default               别名                                      internal         已别名
+   192.168.0.199         别名                                      internal         已别名
+=================================================================================================
+2 个配置文件 2 个别名
+```
 
-While were at it, also note that the internal profile is up and running. That's what we messed with in the first place to direct calls to the gateway. Lo, the beautiful symmetry of it all. Further, the internal profile is listening on the LAN address (192.168.0.199 happens to be ours) while the external listens to the outside world on a different Ethernet static IP (it isn't our real one so don't try to hack it) as well as a different UDP port (a logical port for UDP, 5080 for the outside, 5060 for the inside here). All make sense? The alias types are just that, different names for the internal and external profiles. Used for some FS shorthand we won't talk about at the moment.
+请注意我的网关（查看“类型”列）处于注册成功的状态，这意味着它已经成功注册到我的供应商，并且一切正常。如果没有，建议联系您的供应商。如果他们愿意帮忙，他们会检查您的注册尝试，并提供有关问题所在的线索。嘿，这是一个好的开始。
 
-### LETS MAKE SOME CALLS (OUT-GOING)
+顺便提一下，内部配置文件正在运行中。这就是我们一开始所修改的，用于指导呼叫到达网关的配置。正如神奇般的对称性一样美妙。此外，内部配置文件正在监听局域网地址（192.168.0.199是我们的地址），而外部配置文件在不同的以太网静态 IP（这不是我们的真实 IP，所以请不要试图入侵）以及使用不同的 UDP 端口进行外部通信（在此，外部端口为 5080，内部为 5060）。这些都清楚了吗？别名类型只是用于内部和外部配置文件的不同名称。目前不会涉及到使用这些别名的 FS 缩写的话题。
 
-At this point, your FS has SIP phones registered locally, a SIP/PSTN gateway that it is registered to, and SIP profiles listening for work to do. Your SIP phone - there are many types so I assume you know how to configure and use your device - should itself show as registered to the FS. So, go ahead. Make that call out. I called my cellphone the first time. If all is well (if your output from above looks like it should then all IS well) your outside phone is ringing. Rejoice.
+### 我们来打几个电话吧（去电）
 
-### IN-COMING CALLS, RINGING A GROUP
+此时，您的FS已经在本地注册了SIP电话，也已经注册了一个SIP/PSTN网关，并且SIP配置文件正在监听工作任务。您的SIP电话（有很多类型，所以我假设您知道如何配置和使用设备）应该显示为已注册到FS。所以，请继续，打出那个电话吧。我第一次给我的手机打了个电话。如果一切正常（如果您从上面的输出看起来像应该的样子，那就一切正常），您外部的电话就会响起。庆祝吧。
 
-OK, that was fun. But, one would want people to be able to call FS from the outside too. It would also be nice if FS would ring my SIP phone so I could take the call. As a matter of fact, at least in my office, we like all the phones to ring and whoever is available takes the call. One way to set up incoming calls in this way (ring all extensions in a group) is the following:
+### 来电，响铃给一组
 
-First, one has to have a group to ring. Forget, for a second, that there are groups already setup in the /usr/local/freeswitch/conf/directory. There is a feature of FS that allows one, from the SIP phone itself, to join a group that FS can then use. Go to each SIP phone in turn and dial extension 8101 (or \*8101 on my PfSense version). 81 means "I'm putting this phone into a group". The last two digits tell what group, 01 in this case. You'll hear a tone letting you know it worked. Hang up and go join the next phone to group 01 until you've done 'em all.
+好了，这很有趣。但是我们希望外部的人也能拨打FS的电话。FS也能响铃我的SIP电话，这样我就能接听来电了。事实上，在我的办公室里，我们喜欢所有电话一起响，并且接听电话的人是谁就由谁接听。按照以下方法设置来电时所有分机一起响铃的配置（将分机都加入到一个组）：
 
-NOTE: Want to delete a phone from the group (it will still be able to call out)? Dial extension 8001 (or \*8001 in my case on PfSense) and that particular phone will be deleted from the group. Keep in mind that once you are in the group, that group will persist in FS. You can re-register, restart FS or even reboot the computer FS is running on. You have to take action to get an extension out of the group (which is a good thing).
+首先，必须要有一个要响铃的分机组。暂时忘记在/usr/local/freeswitch/conf/directory中已经设置好的分机组。FS有一个功能，允许您从SIP电话本身加入到FS所使用的一个组中。依次转到每个SIP电话，并拨打分机号8101（或者在我的PfSense版本中是\*8101）。81表示“我要将这个电话加入到一个组中”，最后两位表示组别，这里是01。您将听到一个提示音，表示操作成功。挂断电话，并将下一个电话加入到组别01，重复这个过程，直到所有电话都完成。
 
-Also note that if you'd like to see how 8001, 8101, or any other "logic" works in FS on your LAN, edit the /usr/local/freeswitch/conf/dialplan/default.xml file. Search for 80, for instance. This file contains "contexts" which themselves containing "extensions". Here, and extension is logic for taking some action when FS sees a particular event take place (like someone dialing 8201). We are at the heart of FS in this file, don't forget about it or what its for.
+注意：想要从群组中删除一个电话（仍然可以拨打电话）？拨打分机8001（或在我的PfSense上拨打\*8001），然后该特定电话将从群组中删除。请记住，一旦您加入了群组，在FS中该群组将保持存在。您可以重新注册、重新启动FS，甚至重新启动运行FS的计算机。您必须采取行动才能将分机从群组中移除（这是一件好事）。
 
-Now, we have our group, 01 in this case (could be anything between 00 and 99). Dial extension 8201 (or, again, \*8201 depending) and all phones joined to group 01 will ring. Fun stuff. Now, let's get FS to use that group to ring the same group. To do so, go to the /usr/local/freeswitch/conf/dialplan/public directory. I created a file that would be read first by using the file name 00\_inbound\_did.xml. The name is significant, especially the leading 00s. In this case, its the only file here but one could have many. Anyway, enter the following in that file, correcting for your own private info:
+还要注意，如果您想要查看在您的LAN上FS上的8001、8101或任何其他“逻辑”是如何工作的，请编辑/usr/local/freeswitch/conf/dialplan/default.xml文件。例如，搜索80。该文件包含了“上下文”，这些上下文包含了“分机”。在这里，分机就是FS在发生特定事件（比如某人拨号8201）时执行某些操作的逻辑。这个文件是FS的核心之一，请不要忘记它和它的用途。
+
+现在，我们有了我们的群组，以01为例（可以是00到99之间的任何内容）。拨打分机8201（或者，再次取决于具体情况，\*8201），加入群组01的所有电话都会响铃。很有趣。现在，让我们让FS使用该群组来呼叫同一群组的电话。为此，请转到/usr/local/freeswitch/conf/dialplan/public目录。我创建了一个文件，通过使用文件名00_inbound_did.xml来确保首先读取该文件。文件名非常重要，尤其是前面的00。在这种情况下，这里只有一个文件，但也可以有很多个文件。无论如何，根据您自己的私人信息输入以下内容到该文件中，并进行相应的更正：
 
 ```xml
 <include>
   <extension name="Urban1212">
-  <!-- Call it what you'd like. -->
+  <!-- 随便给它起个名字。 -->
     <condition field="destination_number" expression="^(8155551212)$">
-    <!-- When FS sees the incoming number above - please use your own DID - it will engage the actions below -->
+    <!-- 当FS检测到上面的呼入号码时 - 请使用您自己的DID - 它将执行以下操作 -->
       <action application="set" data="domain_name=192.168.0.199"/>
-      <!-- again, use the domain for your LAN from earlier in this document -->
+      <!-- 再次使用此文档中前面的本地区域网域 -->
       <action application="transfer" data="*8201 XML default"/>
-      <!-- Here's the group ring. I need the *, you may not. But, ringing 8201, just like from your phone, will ring the whole group -->
-      <!-- The "*8201 XML default" string means: find extension *8201, its in the default.xml file in the dialplan directory. -->
+      <!-- 这是群组振铃。我需要 "*", 您可能不需要。不过，给8201打电话，就像您打电话一样，它会使整个群组振铃 -->
+      <!-- 字符串 "*8201 XML default" 的意思是：查找扩展 *8201，在dialplan目录中的default.xml文件中。 -->
     </condition>
   </extension>
 </include>
 ```
 
-OK, having done the above, _reloadxml_ or stop and start your FS. Then, dial in from a cellphone or other outside line. All phone in your group should ring. The DID of your calling phone should show. Now, we've got something useful going.
+好了，完成上述操作之后，_reloadxml_ 或停止并启动您的FS。然后，用手机或其他外部线路拨入。您群组中的所有电话都应该响起。您拨出电话的DID应该显示出来。现在，我们有了一个有用的功能。
 
-Now, this is pretty powerful stuff. You could create another file in /usr/local/freeswitch/conf/dialplan/public and call it 01\_inbound\_did.xml. There one could set up another group (or single phone) to be rung if one has another DID. Much is possible. But, we'll keep to getting things functional and operational.
+现在，这是非常强大的东西。您可以在 /usr/local/freeswitch/conf/dialplan/public 中创建另一个文件，并将其命名为 01\_inbound\_did.xml。在那里，您可以设置另一个群组（或单个电话），以便在您拥有另一个DID时也会响铃。有很多可能性。但是，我们将继续使功能和操作正常。
 
-## MOVING ON TO MORE ADVANCED TOPICS
+## 接下来更高级的主题
 
-### VOICE MAIL (OR "HOW TO ACCESS SOME THINGS THAT FS IS PREPARED TO DO")
+### 语音邮件（或 "FS 准备要做的一些事情如何访问"）
 
-If one has a registered phone (at this point in our document, only possible on the internal profile) then you have a voicemail extension at your disposal too. To check if an extension is in fact registered with your FS, go to your console screen and type:
+如果您有一个已注册的电话（在我们文档的这一点上，只能在内部配置文件中注册），那么您也有一个可以使用的语音邮件分机。要检查一个分机是否实际上已经在您的FS上注册，请转到控制台屏幕并输入：
 
 ```xml
 freeswitch@FreeSwitch.local> sofia status profile internal
 ```
-
-As in the scection on APPLYING YOUR CHANGES AND CHECKING YOUR WORK, one sees output about the internal profile itself, followed by all registered extensions for the profile.
-
-Now, we're going to use the FS dialplan file to figure out how to access voicemail. You'll likely want to do things like create a message for people to hear when they get VM. Also, you will want to hear what messages are left there, deleting some, leaving others. How? We'll answer that question; in the process learning more about FS dialplans, contexts, extensions, and how to understand and use them.
-
-NOTE: You may recall a line in the REGISTERING WITH A SIP PROVIDER section stating in passing that a dial plan contained "contexts". Contexts themselves are containters for instruction sets called "extensions". Don't confuse the term "extension" here with a SIP phone or other device (which has an extension number) and these instruction blocks within contexts.
-
-A CLOSER LOOK AT YOUR DEFAULT DIAL PLAN
-
-Let's edit the /usr/local/freeswitch/conf/dialplan/default.xml file. Near the top of the file, one notes a &lt;context=default> tag. All the way at the bottom of the file, one sees the closing &lt;/context> tag. In between these tags, one can see many groupings, deliniated with the &lt;extension="somename"> and &lt;/extension> tags. Each of these extensions is actually a reaction to an event. The event being serviced is seen in the &lt;condition> tag set, inside each extension. Usually, that condition is a number that someone has dialed. That could be an outside caller coming into your FS via your gateway provider, or a registered phone on your LAN doing the dialing. When FS "sees" a number, coming or going, it looks at the dial plans, matching that number to each extension's &lt;condition>. FS then performs the &lt;actions> within the matching extension.
-
-NOTE: If the pattern matching syntax within the "expresion=" of the &lt;condition> tag makes no sense, please have a look at "regular expressions" ("regex" for short) and how they work. There's a great regex primer on the [freeswitch.org](http://freeswitch.org) site that's well worth finding and reading it you need it. However, that's outside the scope of this document. Nonetheless, you'll need some familiarity with regex's to understand conditions.
-
-So, now that you're in the file and have the gist of what's going on here, search for the string "voicemail". In mine, courtesy of PfSense ([pfsense.org](http://pfsense.org)), I find five extensions dealing with voicemail. We'll talk about each a little bit. Once finished, you'll know a lot more about voice mail on my FS. Yours will likely be similar. Here's my five, right from \~/conf/dialplan/default.xml on my system:
-
-```xml
-<!-- voicemail operator extension -->
-    <extension name="operator">
-      <condition field="destination_number" expression="^\*operator$|^0$">
-        <action application="set" data="transfer_ringback=$${hold_music}"/>
-        <action application="transfer" data="1000 XML features"/>
-      </condition>
-    </extension>
 ```
 
-    The "operator" extension above is invoked by the string \*operator or a dialed 0\. On PfSense, that author likes to use a "\*" with special extensions. Others do not. You can set it how you like it. If you have an extension like my "operator", go to a registered phone and hit 0\. Note that you'll need a "real" extension 1000 on your LAN to be able to use this. We'll provide a way to put this to work later.
+在“应用更改并检查工作”部分中，您会看到关于内部配置文件本身的输出，然后是配置文件的所有注册扩展。
+
+现在，我们将使用FS拨号计划文件来找出如何访问语音邮件。您可能希望做一些事情，比如为人们在收到语音邮件时播放一条信息。此外，您还会想听一下那里留下的信息，删除一些信息，保留其他信息。怎么做呢？我们将回答这个问题；在此过程中，我们将了解更多关于FS拨号计划、上下文、扩展以及如何理解和使用它们的知识。
+
+注意：你可能会记得在“与SIP提供商注册”部分有一句话经过地提到，一个拨号计划中包含了“上下文”（contexts）。上下文本身是指令集的容器，称为“扩展”（extensions）。不要将此处的“扩展”一词与SIP电话或其他设备（其具有扩展号码）以及上下文中的这些指令块混淆起来。
+
+仔细看一下您的默认拨号计划
+
+让我们编辑 /usr/local/freeswitch/conf/dialplan/default.xml 文件。在文件的顶部附近，可以看到一个 `<context=default>` 标签。在文件的底部，可以看到 `<context>` 标签的结束符 `</context>`。在这些标签之间，可以看到许多以 `<extension="somename">` 和 `</extension>` 标签分隔的组别。每个扩展实际上都是对某个事件的反应。服务的事件在每个扩展内部的 `<condition>` 标签集合中可见。通常，该条件是某人拨打的号码。可能是一个外部呼叫方通过您的网关提供商进入您的FS，也可能是在您的局域网上注册的电话进行拨号。当FS“看到”一个号码时，不论是来还是去，它都会查看拨号计划，将该号码与每个扩展的 `<condition>` 进行匹配。然后，FS执行匹配扩展内的 `<actions>`。
+
+注意：如果 `<condition>` 标签中的 "expresion=" 的匹配模式语法看起来让人摸不着头脑，请查看一下 "正则表达式"（简称 "正则"）以及它们的工作原理。在 [freeswitch.org](http://freeswitch.org) 网站上有一个很好的正则表达式入门教程，值得查找和阅读一下。然而，这超出了本文档的范畴。尽管如此，您需要对正则表达式有一些了解才能理解条件。
+
+所以，现在您已经进入文件并了解这里正在进行的工作，请搜索字符串 "voicemail"。在我的文件中，由于 PfSense ([pfsense.org](http://pfsense.org)) 提供，我找到了五个处理语音邮件的扩展。我们将稍微谈论一下每个扩展。完成后，您将对我FS上的语音邮件有更多了解。您的情况可能类似。这是我的五个扩展，直接从我的系统上的 \~/conf/dialplan/default.xml 文件中获取的：
 
 ```xml
-<!-- voicemail main2 extension -->
-    <extension name="vmain2">
-      <condition field="destination_number" expression="^vmain2$|^\*97$|^\*4000$">
-        <action application="answer"/>
-        <action application="sleep" data="1000"/>
-        <action application="voicemail" data="check default ${domain_name}"/>
-      </condition>
-    </extension>
+<!-- 语音邮件运营商分机 -->
+<extension name="operator">
+  <condition field="destination_number" expression="^\*operator$|^0$">
+    <action application="set" data="transfer_ringback=$${hold_music}"/>
+    <action application="transfer" data="1000 XML features"/>
+  </condition>
+</extension>
+
+以上的"operator"分机可通过字符串\*operator或拨打0来调用。在PfSense上，作者喜欢使用带有特殊分机的"\*"。其他人则不太使用。您可以根据自己的喜好进行设置。如果您有类似我这个"operator"的分机，请到已注册的电话上按0。请注意，您需要在LAN上拥有一个"真实的"分机1000才能使用此功能。稍后我们将提供一种方法来让它工作起来。
+
+<!-- 语音邮件主分机2 -->
+<extension name="vmain2">
+  <condition field="destination_number" expression="^vmain2$|^\*97$|^\*4000$">
+    <action application="answer"/>
+    <action application="sleep" data="1000"/>
+    <action application="voicemail" data="check default ${domain_name}"/>
+  </condition>
+</extension>
+
+在分机"vmain2"中，您可以输入\*97、\*4000或字面上的vmain2来访问这里的&lt;action>。观察最后的&lt;action>标签，可以看到调用语音邮件来检查用户的语音邮件内容。您需要使用您的用户名和密码来访问。如果您已经有该分机，请尝试一下并按照提示操作。
+
+<!-- 语音邮件主分机 -->
+<extension name="vmain">
+  <condition field="destination_number" expression="^vmain$|^\*98$">
+    <action application="answer"/>
+    <action application="sleep" data="1000"/>
+    <action application="voicemail" data="check default ${domain_name} ${sip_from_user}"/>
+  </condition>
+</extension>
 ```
 
-    In extension "vmain2", one can type \*97, \*4000 or a literal vmain2 to access the &lt;action> here. Looking at the last &lt;action> tag, one notes voicemail being invoked to check a user's VM contents. You'll need your user ID and password to gain access. Try this one out, if you have it, and follow the prompts.
-
-```xml
-<!-- voicemail main extension -->
-    <extension name="vmain">
-      <condition field="destination_number" expression="^vmain$|^\*98$">
-        <action application="answer"/>
-        <action application="sleep" data="1000"/>
-        <action application="voicemail" data="check default ${domain_name} ${sip_from_user}"/>
-      </condition>
-    </extension>
-```
-
-    Much like vmai2, you can type \*98 (or set it how you'd like it) for this VM entry. Note the &lt;action> here works thus: if you call from your own phone extension, you'll only need the password to gain entry. The invocation of voicemail here uses the number you are dialing from as the user.
+与vmai2类似，你可以输入\*98（或者按照你的喜好进行设置）来进行这个语音信箱入口。注意这里的&lt;action>的运作方式：如果你从自己的电话分机呼叫，你只需要输入密码就可以进入语音信箱。这里使用的是你所拨打号码作为用户的方式来调用语音信箱。
 
 ```xml
 <extension name="send_to_voicemail_5digits">
@@ -490,12 +481,12 @@ So, now that you're in the file and have the gist of what's going on here, searc
         <action application="sleep" data="1000"/>
         <action application="set" data="dialed_extension=$1"/>
         <action application="export" data="dialed_extension=$1"/>
-        <action application="voicemail" data="default ${domain_name} ${dialed_extension}"/>
+        <action application="voicemail" data="默认 ${domain_name} ${dialed_extension}"/>
       </condition>
     </extension>
 ```
 
-    Above, a handy extension to transfer a caller to a five-digit extension, if you have them. Mine are all four digit, 1000-1019, the defaults. You could change this to handle any extension lenth you like.
+上述代码是一个方便的分机转接到五位数分机的扩展，如果你的分机是五位数的话。我的默认分机是四位数，从1000到1019。你可以根据需要更改来处理不同位数的分机。
 
 ```xml
 <extension name="send_to_voicemail_4digits">
@@ -504,23 +495,22 @@ So, now that you're in the file and have the gist of what's going on here, searc
         <action application="sleep" data="1000"/>
         <action application="set" data="dialed_extension=$1"/>
         <action application="export" data="dialed_extension=$1"/>
-        <action application="voicemail" data="default ${domain_name} ${dialed_extension}"/>
+        <action application="voicemail" data="默认 ${domain_name} ${dialed_extension}"/>
       </condition>
     </extension>
 ```
 
-Finally, an extension so that anyone taking a call can transfer that party to any four digit extension they'd like (much like the 5 digit above this). Just hit "tranfer" on your phone, and then enter \*991013 to go to 1013's voicemail without ringing his/her phone. Nice. Remember, if your FS isn't configured as above, you can do so with the extension as you see them here, or by modifiying them to suit yourself.
+最后，有一个扩展功能，让任何接听电话的人都可以将通话转接到他们想要的任何四位数字分机（与上面的5位数字类似）。只需在您的手机上点击“转接”，然后输入\*991013，即可将通话转接到1013的语音信箱，而不会响起他/她的电话。不错。请记住，如果您的FS没有配置为上述方式，您可以使用此处看到的分机进行配置，或者根据自己的需要进行修改。
 
-Now that you can get around in this particular default.xml, have a look at other .xml files in the /usr/local/freeswitch/conf/dialplan directory. Note that we've been here before in the IN-COMING CALLS, RINGING A GROUP section of this document. There, we were directing in-coming calls to the proper default.xml extension via the \~/conf/dialplan/public subdirectory. Hopefully, this is all beginning to make sense as a whole.
+现在您可以在默认的default.xml文件中进行操作，请查看/usr/local/freeswitch/conf/dialplan目录中的其他.xml文件。请注意，我们之前在本文档的「IN-COMING CALLS, RINGING A GROUP」部分曾经涉及过这一点。在那里，我们通过~/conf/dialplan/public子目录将传入的呼叫定向到正确的default.xml分机。希望这一切都开始变得有意义了。
 
-So, back to Voicemail. Now, you can access VM from your registered phone, set up your own voice prompt, and administer VM in general. How did we figure that out? By reading the "instructions" in the default dial plan. There's more to know, and a lot more that can be done. The idea is to build on what you've learned up to this point. Now, let's tie that in with calls coming into the system to make our FS even more useful.
+接下来谈谈语音信箱。现在，您可以通过注册的手机访问语音信箱，设置您自己的语音提示，并进行一般的语音信箱管理。我们是如何搞清楚这一点的呢？通过阅读默认拨号计划中的“说明”。还有更多要了解的知识，还有很多工作可以做。思路是在您到目前为止所学到的基础上进行进一步建设。现在，让我们将其与进入系统的呼叫联系起来，使我们的FS变得更加有用。
 
-### INCOMING CALLS RING A GROUP AND GOES TO VM AFTER NO ANSWER
+### 接入呼叫后进行组呼并在无人接听后转至语音信箱
 
-This time, I'm just going to "lay out" some files that are accessed, in order, when an incoming call hits FS. Actually, FS isn't looking at the literal file, it has read them into the running application (assuming you've told it to). If not, FS can't "see" them so be sure you've reloadxml'd or shutdown/started FS. So, have a look and you'll see the flow FS follows to find out what to do. Let's say someone on the "outside" dials us in Illinois at 8158381212.
+这次，我要简单地解释一下，当有来电时FS所访问的文件的顺序。实际上，FS并不是在查看字面意义上的文件，它已经将这些文件读取到正在运行的应用程序中（假设您已经告诉它这样做）。如果没有，FS就看不到它们，所以请确保您已经重新加载xml或关闭/启动FS。查看一下，您就会看到FS所遵循的流程，以找出要执行的操作。假设有人在伊利诺伊州拨打我们的电话号码8158381212。
 
-  
-First, the call "comes in" and FS wants to know where to send it. Since this is a public incoming call, it looks for a match in \~/conf/dialplan/public/ and finds the match - in my case - in 01\_incoming\_did.xml:
+首先，电话"进来"了，FS想知道该将其发送到哪里。由于这是一个公共的来电，它在\~/conf/dialplan/public/中寻找匹配项，并找到了匹配项-在我的案例中是在01\_incoming\_did.xml中：
 
 ```xml
 <include>
@@ -537,10 +527,9 @@ First, the call "comes in" and FS wants to know where to send it. Since this is 
 </include>
 ```
 
-     Notice above that I changed the transfer extension from \*8201 (IN-COMING CALLS, RINGING A GROUP) to a new extension, 8201 (no preceeding \*), seen below. I did that so I could add the &lt;actions> that I needed and also demonstrate another way to ring groups, as you will see:
+请注意，我更改了转接扩展号码，从\*8201（IN-COMING CALLS，RINGING A GROUP）更改为了新的分机号8201（没有前导的\*），如下所示。我这样做是为了能够添加我所需要的&lt;actions>并且还能演示另一种向群组响铃的方法，如下所示：
 
-  
-Next, FS looks in \~/conf/dialplan/default.xml, just as it was told to, above, for the 8201 extension. Here it is:
+接下来，FS会在\~/conf/dialplan/default.xml中查找8201分机，就像上面告诉它的那样。以下是它的内容：
 
 ```xml
 <!-- Mike Added: Incoming Urban Calls -->
@@ -558,14 +547,14 @@ Next, FS looks in \~/conf/dialplan/default.xml, just as it was told to, above, f
     </extension>
 ```
 
-    In this extension, I have the included actions do a few things. I set a timeout value to 20\. That means if no one answers in that amount of time (from when the bridge is invoked later on), FS will skip down to the next action, invoking voicemail (via dialplan default.xml) for extension 1013.
+在这个扩展中，我添加了一些操作。我设置了一个超时值为20。这意味着如果在这段时间内没有人回答（从稍后调用桥接开始计时），FS将跳到下一个操作，调用语音邮件（通过默认的拨号计划default.xml）给分机号1013。
 
-Also notice that instead of bridging to \*8201, which I could have still done, I opted to use one of the groups already set up for me in \~/conf/directory/default.xml (There's a lot of default.xml files. But, being in different directories, they do completely different things. Actually, one could call them anything you'd like. For the moment, I'm sticking to the names as installed).
+同时请注意，我选择使用已经在\~/conf/directory/default.xml中为我设置的组之一进行桥接，而不是桥接到\*8201（我仍然可以这样做）。（在\~/conf/directory/中有很多default.xml文件。但是，它们位于不同的目录下，执行完全不同的操作。实际上，你可以给它们取任何你喜欢的名字。目前，我将他们保留为安装时的名字）。
 
-Here's a snippet of \~/conf/directory/default.xml. I simply located the &lt;group name> set equal to "support", and added the users I wanted to that group. Note that the same users can be in different groups if you'd like:
+这是\~/conf/directory/default.xml的一部分代码。我简单地找到了名称为“support”的&lt;group name>，并向该组添加了我想要的用户。请注意，同一个用户可以属于不同的组，如果你愿意的话。
 
 ```xml
-<group name="support">
+<group name="支持">
       <users>
         <user id="1010" type="pointer"/>
         <user id="1012" type="pointer"/>
@@ -575,100 +564,110 @@ Here's a snippet of \~/conf/directory/default.xml. I simply located the &lt;grou
 </group>
 ```
 
-    Assuming you've set up extension 1013 (the physical phone's voicemail session) with a message about everybody being busy and please leave us a call back number, you're good to go (remember to reloadxml or shutdown/start if you've changed XML files). My phone's (admittedly an older Grandstream GXP-2000) message light blinked red as soon as I called in and left one (I'm 1013). Using the appropriate numbers from A CLOSER LOOK AT YOUR DIAL PLAN, you can now get your VM and deal with it as you'd like.
+假设您已经设置了分机1013（物理电话的语音邮件会话），并留下了一个关于每个人都很忙，请留下您的回拨号码的消息，那么您就可以开始使用了（记得重新加载XML文件或者关闭/启动）。我的电话（诚然是一部旧的Grandstream GXP-2000）在我拨打并错误留言后就会出现红色闪烁的消息指示灯（我是1013） 。根据《仔细观察您的拨号计划》中的适当号码，您现在可以获取您的语音邮件并处理它。
 
-### ADDING ANOTHER DID
+### 添加另一个DID
 
-Let's say that you would like to have more than one direct inward dial number for your home or business. We saw in the section on REGISTERING WITH A SIP PROVIDER how to have one DID registered. To have more than one, naturally, you will have to have another &lt;gateway> set up as that one is. However, if you want to use the same provider, we'll have to change the syntax of the XML file in /usr/local/freeswitch/conf/sip\_profiles/external. Have a look:
+假设您希望为家庭或企业拥有多个直拨号码，我们在注册SIP提供商时看到了如何注册一个DID号码。如果您要拥有多个号码，您需要设置另一个与之前相同的<gateway>。然而，如果您想使用同一提供商，我们需要更改/ usr / local / freeswitch / conf / sip_profiles / external目录中的XML文件的语法。以下是例子：
 
-my \~/conf/sip\_profiles/external/urban.xml file for registering and using one DID:
+我的注册和使用一个DID的\~/conf/sip\_profiles/external/urban.xml文件：
 
 ```xml
 <include>
   <gateway name="xxx.xxx.xxx.xxx">
-     <!-- Remember, you'll need this name for your "out-bound calls" extension -->
+     <!-- 记得，你需要将这个名字用于你的"出站通话"扩展 -->
      <param name="username" value="8155551212"/>
-     <!-- Natch', your own username, ours is like a NPANXXTN -->
+     <!-- 当然了，你自己的用户名，我们的用户名是像 NPANXXTN 这样的 -->
      <param name="password" value="somekindapassw0rd"/>
-     <!-- Natch', your own password -->
+     <!-- 当然了，你自己的密码 -->
      <param name="expire-seconds" value="60"/>
-     <!-- Time out value, 60 works for us -->
+     <!-- 超时值，对于我们来说 60 这个值是适用的 -->
      <param name="register" value="true"/>
-     <!-- You want to register, so "true" -->
+     <!-- 你想要注册，所以是 "true" -->
      <param name="register-transport" value="udp"/>
-     <!-- You'll probably use udp, but ask your provider -->
+     <!-- 你可能使用 udp，但是还是问一下你的提供商 -->
      <param name="retry-seconds" value="30"/>
-     <!-- Retry parameter, 30 seconds works for us -->
+     <!-- 重试参数，对于我们来说 30 秒的值是适用的 -->
      <param name="caller-id-in-from" value="false"/>
-     <!-- Use the callerid of an inbound call in the from field on outbound calls via this gateway. We don't, up to you. -->
+     <!-- 在通过此网关进行的出站通话的 from 字段中使用呼叫的主叫ID。我们不使用，由你决定。 -->
      <param name="contact-params" value="tport=5060"/>
-     <!-- Port 5060 is customary, but again, ask the provider -->
+     <!-- 使用端口 5060 是惯用的，但是同样，请询问提供商 -->
      <param name="ping" value="25"/>
-     <!-- We like to send a ping just to keep some traffic traversing and keep us registered -->
+     <!-- 我们喜欢发送一个 ping，以保持一些流量穿过并使我们保持注册状态 -->
+  </gateway>
+  <gateway name="xxx.xxx.xxx.xxx">
+    <!-- For another DID -->
+    <param name="username" value="8166661313"/>
+    <param name="password" value="anotherpassw0rd"/>
+    <!-- You'll need this name for another "out-bound calls" extension -->
+    <param name="expire-seconds" value="60"/>
+    <param name="register" value="true"/>
+    <param name="register-transport" value="udp"/>
+    <param name="retry-seconds" value="30"/>
+    <param name="caller-id-in-from" value="false"/>
+    <param name="contact-params" value="tport=5060"/>
+    <param name="ping" value="25"/>
   </gateway>
 </include>
 ```
 
-Here's the same file, registering with the same provider, but now we have two registrations, one for each DID. Check the comments in the XML code below:
+在这个文件中，我们使用相同的提供商进行注册，但是现在我们有两个注册，一个用于每个 DID。在下面的 XML 代码的注释中进行检查：
 
 ```xml
 <include>
   <gateway name="urban1212">
-        <!-- Any name that makes sense -->
+        <!-- 任何有意义的名称 -->
         <param name="username" value="8155551212"/>
-        <param name="password" value="somekindapassw0rd"/>
+        <param name="password" value="某种密码"/>
         <param name="realm" value="xxx.xxx.xxx.xxx"/>
-        <!-- The gateway name from the "One DID" example. -->
+        <!-- "One DID" 示例中的网关名称 -->
         <param name="expire-seconds" value="60"/>>
-        <!--/// do not register if value="false"///-->
+        <!--/// 如果值为 "false"，则不注册///-->
         <param name="register" value="true"/>
         <param name="register-transport" value="udp"/>
         <param name="retry-seconds" value="30"/>
-        <!--Use the callerid of an inbound call in the from field on outbound calls via this gateway -->
+        <!-- 在通过此网关进行呼出时，使用传入呼叫的呼叫方字段作为来电方字段 -->
         <param name="caller-id-in-from" value="false"/>
         <param name="contact-params" value="tport=5060"/>
-        <!--send an options ping every x seconds, failure will unregister and/or mark it down-->
+        <!-- 每 x 秒发送一个 options ping，失败将注销并标记为不可用-->
         <param name="ping" value="25"/>
   </gateway>
   <gateway name="urban1234">
-        <!-- Any name that makes sense, but not the one from above. The gateway names must be unique. -->
+        <!-- 任何有意义的名称，不能与上面的名称相同，网关名称必须唯一 -->
         <param name="username" value="8155551234"/>
-        <param name="password" value="anotherpassword1"/>
+        <param name="password" value="另一个密码"/>
         <param name="realm" value="xxx.xxx.xxx.xxx"/>
-        <!-- The gateway name from the "One DID" example. This is the same as above, but its OK here. -->
+        <!-- "One DID" 示例中的网关名称。在这里可以与上方相同 -->
         <param name="expire-seconds" value="60"/>>
-        <!--/// do not register if value="false"///-->
+        <!--/// 如果值为 "false"，则不注册///-->
         <param name="register" value="true"/>
         <param name="register-transport" value="udp"/>
         <param name="retry-seconds" value="30"/>
-        <!--Use the callerid of an inbound call in the from field on outbound calls via this gateway -->
+        <!-- 在通过此网关进行呼出时，使用传入呼叫的呼叫方字段作为来电方字段 -->
         <param name="caller-id-in-from" value="false"/>
         <param name="contact-params" value="tport=5060"/>
-        <!--send an options ping every x seconds, failure will unregister and/or mark it down-->
+        <!-- 每 x 秒发送一个 options ping，失败将注销并标记为不可用-->
         <param name="ping" value="25"/>
   </gateway>
 </include>
 ```
 
-  
-Notice that I had to use a different gateway name in this example for each DID registration, even though the same provider is registering both DIDs. This was done using the &lt;param name="realm" value=xxx.xxx.xxx.xxx"/> tag. Of course, use your own gatway IP address. If you just double the entries of the single DID example, only one will actually register. You could use the syntax of the two DID example for one DID. As you can see, there's more than one way to do things.
+注意，在此示例中我不得不为每个DID注册使用不同的网关名称，即使是同一个供应商注册了两个DIDs。这是使用`<param name="realm" value=xxx.xxx.xxx.xxx/>`标签完成的。当然，要使用您自己的网关IP地址。如果您只是复制两个单个DID示例的条目，那么只会有一个实际注册。您可以使用两个DID示例的语法来适用于一个DID。可以看出，事情有很多种做法。
 
-IMPORTANT: If you only make the changes above - assuming you have a working system with the "one DID" setup - you'll find that you can not make outgoing calls anymore (but incoming calls still work). Why? Remember in REGISTERING WITH A SIP PROVIDER, we told FS what to do with out-going calls. That is, to use your newly registered gatwway. In the "two DID" example, we've changed the name of that gateway. Had to, can't use the same one twice. So, pick one of your DID gateway names above and update the extension in \~/conf/dialplan/default.xml for out-going calls (I use the urban1212 gateway, see below).
+重要提示：如果只做了上述更改——假设您的系统已经是一个可用的“一个DID”设置，您会发现无法再进行出站呼叫（但入站呼叫仍然有效）。为什么会这样？请记住，在《注册一个SIP供应商》中，我们告诉FS如何处理出站呼叫。也就是说，使用您新注册的网关。在“两个DID”的示例中，我们已经更改了该网关的名称。必须这样做，不能使用同一个网关两次。所以，请从上面的您的DID网关名称中选择一个，并在\~/conf/dialplan/default.xml中为出站呼叫的分机进行更新（我使用的是urban1212网关，请参见下文）。
 
 ```xml
-<!-- Mike Stole and Added: Dial any 10 digit number (2223334444) or 1+10 number (12223334444) here -->
+<!-- 这里添加了Mike Stole的：拨打任何10位数字号码（2223334444）或1+10位号码（12223334444） -->
     <extension name="UrbanOut">
      <condition field="destination_number" expression="^(1{0,1}\d{10})$">
        <action application="set" data="effective_caller_id_number=18155551212"/>
-       <!-- If your provider does not provide ringback (180 or 183) you may simulate ringback by uncommenting the following line. -->
+       <!-- 如果您的供应商不提供回铃音（180或183），您可以取消以下行的注释来模拟回铃音。 -->
        <!-- action application="ringback" /-->
        <action application="bridge" data="sofia/gateway/urban1212/$1"/>
      </condition>
     </extension>    
 ```
 
-## CHEAT SHEET (OR MORE STUFF FS IS READY TO DO)
+## 小抄（或更多FS可用的功能）
 
-## AND YET MORE TO COME
-
-
+## 还有更多等待到来的内容

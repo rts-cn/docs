@@ -1,314 +1,316 @@
-
-# Creating a New Endpoint: Lifecycle of a Session 
-
- 
+# 创建新的终端点：会话的生命周期
 
 ---
 
-Table of Contents (click to expand)
+目录（点击展开）
 
-* [0\. About](#-freeswitch--creating-a-new-endpoint-lifecycle-of-a-session-)
-* [1\. Endpoints](#-freeswitch--creating-a-new-endpoint-lifecycle-of-a-session-)
-* [2\. Sessions](#-freeswitch--creating-a-new-endpoint-lifecycle-of-a-session-)
-* [3\. Channels](#-freeswitch--creating-a-new-endpoint-lifecycle-of-a-session-)  
-   * [3.1 state](#-freeswitch--creating-a-new-endpoint-lifecycle-of-a-session-)  
-   * [3.2 running\_state and callstate](#32-running_state-and-callstate)  
-   * [3.3 caller\_profile](#-freeswitch--creating-a-new-endpoint-lifecycle-of-a-session-)  
-   * [3.4 Variables](#-freeswitch--creating-a-new-endpoint-lifecycle-of-a-session-)
-* [4\. How to Write a FreeSWITCH Endpoint](#4-how-to-write-a-freeswitch-endpoint)
-* [5\. Handling calls from within your module](#5-handling-calls-from-within-your-module)  
-   * [5.1 Common tasks to both incoming and outgoing calls](#51-common-tasks-to-both-incoming-and-outgoing-calls)  
-   * [5.2 Outgoing calls](#-freeswitch--creating-a-new-endpoint-lifecycle-of-a-session-)  
-   * [5.3 Incoming calls](#-freeswitch--creating-a-new-endpoint-lifecycle-of-a-session-)
-* [6\. The Babel tower of the API](#-freeswitch--creating-a-new-endpoint-lifecycle-of-a-session-)
+* [0. 关于](#-freeswitch--创建新的终端点：会话的生命周期)
+* [1. 终端点](#-freeswitch--创建新的终端点：会话的生命周期)
+* [2. 会话](#-freeswitch--创建新的终端点：会话的生命周期)
+* [3. 通道](#-freeswitch--创建新的终端点：会话的生命周期)
+   * [3.1 状态](#-freeswitch--创建新的终端点：会话的生命周期)
+   * [3.2 运行状态和呼叫状态](#32-运行状态和呼叫状态)
+   * [3.3 主叫者配置](#-freeswitch--创建新的终端点：会话的生命周期)
+   * [3.4 变量](#-freeswitch--创建新的终端点：会话的生命周期)
+* [4. 如何编写FreeSWITCH终端点](#4-如何编写freeswitch终端点)
+* [5. 在模块中处理呼叫](#5-在模块中处理呼叫)
+   * [5.1 对于呼入和呼出呼叫的常见任务](#51-对于呼入和呼出呼叫的常见任务)
+   * [5.2 呼出呼叫](#-freeswitch--创建新的终端点：会话的生命周期)
+   * [5.3 呼入呼叫](#-freeswitch--创建新的终端点：会话的生命周期)
+* [6. API的巴别塔](#-freeswitch--创建新的终端点：会话的生命周期)
 
 ---
 
-## 0\. About
+## 0. 关于
 
-FreeSWITCH endpoints are designed to create, handle, and destroy media streams. This page describes **sessions** and **channels** from the point of view of writing an extension module for FreeSWITCH.
+FreeSWITCH终端点旨在创建、处理和销毁媒体流。本页面从编写FreeSWITCH扩展模块的角度描述了**会话**和**通道**。
 
-## 1\. Endpoints
+## 1. 终端点
 
-FreeSWITCH manages the establishment and destruction of linked **sessions** between entities. For those of us from a telephony background, FreeSWITCH performs the functions of a PBX or central office. The following document is written with respect to voice calls, but the principles apply to the other types of connections that FreeSWITCH can manage.
+FreeSWITCH管理着实体之间的链接会话的建立和销毁。对于我们来说，从电信背景来看，FreeSWITCH执行了PBX或中央办公室的功能。下面的文档是关于语音呼叫的，但是这些原则也适用于FreeSWITCH可以管理的其他类型的连接。
 
-The voice entities that we're most familiar with are simple telephones. The modules that handles these are called “**endpoints**". The most used **endpoint modules** are [mod\_sofia](../../../Modules/mod_sofia_1048707.mdx#about) (SIP phones) and [mod\_skinny](../../../Modules/mod_skinny_3375354.mdx#docs) (Cisco phones).
+我们最熟悉的语音实体是简单的电话。处理这些电话的模块称为“endpoints”。最常用的endpoint模块是[mod_sofia](../../../Modules/mod_sofia_1048707.mdx#about)（SIP电话）和[mod_skinny](../../../Modules/mod_skinny_3375354.mdx#docs)（Cisco电话）。
 
-As modules, [they must have](./index.mdx#about) the following entry points to be loaded and unloaded:
+作为模块，它们必须有以下入口点才能被加载和卸载:
 
--module_load()  
--module_unload()
+- module_load()
+- module_unload()
 
-TODO Couldn't find direct references to `module_load()` and `module_unload()` in [Creating New Modules](./index.mdx#about), so check what this section is referring to.
+注意：在[创建新模块](./index.mdx#about)中找不到直接引用`module_load()`和`module_unload()`的内容，请检查此部分引用的是什么。
 
-Usually a module will also implement two interfaces, as arrays of callback functions. This is how FreeSWITCH communicates with the module.
+通常，一个模块还会实现两个接口，作为回调函数数组。这样FreeSWITCH就可以与该模块进行通信。
 
-An **endpoint module** deals a lot with **sessions**_._ 
+一个endpoint模块与sessions有很多交互。
 
-## 2\. Sessions
+## 2. Sessions
 
-A FreeSWITCH **session** is equivalent to a **[call-leg](../../../Introduction/Call-Legs_7143972.mdx#0-about)** when the **session**is managed by [mod\_sofia](../../../Modules/mod_sofia_1048707.mdx#about).
+当一个session被[mod\_sofia](../../../Modules/mod_sofia_1048707.mdx#about)管理时，一个FreeSWITCH session相当于一个call-leg。
 
-A **session**contains a **channel** and **private data**_._
+一个session包含一个channel和private data.
 
 ![](/attachments/9634354/9634365.png)
 
-  
-This diagram shows containment, when in fact pointers are used.
+图中显示的是包含关系，但实际上使用的是指针。
 
-A **session** object owns the **channel**_,_ so in a sense the **session** is the parent of the **channel**_._ The **session** also wraps the **channel** in some management overhead, including:
+一个session对象拥有channel，所以从某种意义上说session是channel的父节点。session还为channel提供一些管理开销，包括：
 
-* thread to run the code
-* memory pool
-* array of codecs
-* message queues
-* read/write data buffers
+* 线程运行代码
+* 内存池
+* 编解码器数组
+* 消息队列
+* 读/写数据缓冲区
 
-The **session** also owns a **private** object. The author of the module defines what this object contains and what it's used for. In almost all modules, this object is called `session->tech_pvt`. Some common elements of a **`tech_pvt`** are:
+**会话**还拥有一个**私有**对象。模块的作者定义了这个对象包含的内容和用途。在几乎所有模块中，这个对象被称为`session->tech_pvt`。**`tech_pvt`**的一些常见元素包括：
 
-* IP addresses involved in the communication channel
-* encryption keys for the communication channel
-* the external codecs involved in the media flow
+* 通信通道中涉及的IP地址
+* 通信通道的加密密钥
+* 媒体流中涉及的外部编解码器
 
 ![](/attachments/9634354/9634366.png)
 
-## 3\. Channels
+## 3.通道
 
-The **channel** is the basic entity for one end of a FreeSWITCH call. **Channel** objects manage the flow of media to the outside world. **Channels** are where the most interesting things happen. [The **channel** runs through states](../../../Dialplan/Channel-States_7144639.mdx#0-about) that represent the state of call setup, the media flow and the call tear down.
+**通道**是FreeSWITCH呼叫一端的基本实体。**通道**对象管理媒体流向外界的流动。**通道**是最有趣的地方。[**通道**依次经过各种状态](../../../Dialplan/Channel-States_7144639.mdx#0-about)，代表呼叫建立、媒体流动和呼叫拆除的状态。
 
-The most interesting members of a **channel** (see [switch\_channel.c](https://github.com/signalwire/freeswitch/blob/5274dd1f9c693dd6032f629befefc636af46ba92/src/switch%5Fchannel.c#L146)) are:
+**通道**的最有趣的成员（参见[switch\_channel.c](https://github.com/signalwire/freeswitch/blob/5274dd1f9c693dd6032f629befefc636af46ba92/src/switch%5Fchannel.c#L146)）包括：
 
-* name
-* uuid
-* direction
-* its **session** (wrapper)
-* state
-* caller\_profile
-* flags
-* variables
+* 名称
+* UUID
+* 方向
+* 其**会话**（包装器）
+* 状态
+* 主叫配置
+* 标志位
+* 变量
 
 ### 3.1 `state`
 
-The single most important **channel** member is the `state` variable, **designed to handle the connection status**.  The `state` member is the one that most FreeSWITCH documentation references. This state runs through the sequence `CS_NEW, CS_INIT, CS_ROUTING, CS_EXECUTE, CS_HANGUP, CS_REPORTING and CS_DESTROY`. The transitions from one state to the other are handled gracefully by the internals of FreeSWITCH ([switch\_core\_state\_machine.c](https://github.com/signalwire/freeswitch/blob/master/src/switch%5Fcore%5Fstate%5Fmachine.c)) unless you intercept these transitions. This state describes the highest level connection status of the **channel**_/_**session**.
+**频道**成员中最重要的一个是`state`变量，**用于处理连接状态**。`state`成员是大多数FreeSWITCH文档引用的一个。该状态按照顺序依次为`CS_NEW、CS_INIT、CS_ROUTING、CS_EXECUTE、CS_HANGUP、CS_REPORTING和CS_DESTROY`。从一个状态转换到另一个状态，FreeSWITCH内部会进行优雅的处理（[switch_core_state_machine.c](https://github.com/signalwire/freeswitch/blob/master/src/switch%5Fcore%5Fstate%5Fmachine.c)），除非你拦截这些状态转换。该状态描述了**频道**_/_**会话**的最高级别连接状态。
 
-The `state` variable is not directly what one would normally use in telephony. Because FreeSWITCH can handle many kinds of media, the `state` variable is designed to handle the connection status. You need also look at `CF_RING_READY, CF_EARLY_MEDIA` and `CF_ANSWERED` in order to determine the telephony state.
+`state`变量并不直接适用于电话业务。因为FreeSWITCH可以处理多种媒体类型，所以`state`变量设计用于处理连接状态。你还需要注意`CF_RING_READY、CF_EARLY_MEDIA`和`CF_ANSWERED`来确定电话状态。
 
-Here's a table to illustrate some details of the states:
+下表详细说明了各个状态的一些细节：
 
-| State               | Normal activities                                                    | Standard processing                                                    | Your module code should….                                                                                                                         |
-| ------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| CS\_NEW             | right after **session** creation                                     | none                                                                   | change to CS\_INIT                                                                                                                                |
-| CS\_INIT            | create any data structures required for the rest of the session/call | changes to CS\_ROUTING                                                 |                                                                                                                                                   |
-| CS\_ROUTING         | inbound: dial tone, accepting digits, ringback                       | inbound: uses the caller\_profile & the dialplan to pick a destination | inbound: your module will get a message SWITCH\_INDICATE\_ANSWERoutbound: your module should call switch\_call\_answer()                          |
-| CS\_CONSUME\_MEDIA  | outbound: ringing                                                    |                                                                        |                                                                                                                                                   |
-| CS\_EXCHANGE\_MEDIA | outbound: talking                                                    |                                                                        |                                                                                                                                                   |
-| CS\_EXECUTE         | inbound: media flows; talking                                        |                                                                        | near\_end release: your module should call switch\_channel\_hangup()far\_end release: your module will get a callback on my\_module\_on\_hangup() |
-| CS\_HANGUP          |                                                                      | Changes to CS\_REPORTING\*                                             |                                                                                                                                                   |
-| CS\_REPORTING       |                                                                      | Changes to CS\_DESTROY\*                                               |                                                                                                                                                   |
-| CS\_DESTROY         | Release any memory                                                   |                                                                        |                                                                                                                                                   |
+| 状态       | 说明                                             |
+| ---------- | ------------------------------------------------ |
+| CS_NEW     | 表示通道已创建但尚未初始化                         |
+| CS_INIT    | 表示通道已初始化但尚未开始路由                     |
+| CS_ROUTING | 表示通道正在路由                                 |
+| CS_EXECUTE | 表示通道已开始执行                               |
+| CS_HANGUP  | 表示通道正在挂断                                 |
+| CS_REPORTI | 表示通道已进入报告状态                           |
+| CS_DESTROY | 表示通道已销毁                                   |
 
-### 3.2 `running_state` and `callstate`
+| 状态               | 正常活动                                                            | 标准处理                                                              | 您的模块代码应该...                                                                                                                                   |
+| ------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| CS\_NEW             | **session** 创建后                                                     | 无                                                                     | 更改为 CS\_INIT                                                                                                                                       |
+| CS\_INIT            | 创建会话/呼叫的其他数据结构                                            | 更改为 CS\_ROUTING                                                     |                                                                                                                                                      |
+| CS\_ROUTING         | 呼入：拨号音、接受数字、回铃                                         | 呼入：使用 caller\_profile 和 dialplan 选择目标                      | 呼入：您的模块将收到消息 SWITCH\_INDICATE\_ANSWER呼出：您的模块应调用 switch\_call\_answer()              |
+| CS\_CONSUME\_MEDIA  | 呼出：振铃                                                           |                                                                        |                                                                                                                                                      |
+| CS\_EXCHANGE\_MEDIA | 呼出：通话                                                           |                                                                        |                                                                                                                                                      |
+| CS\_EXECUTE         | 呼入：媒体流动；通话                                                 |                                                                        | 结束在邻近端：您的模块应调用 switch\_channel\_hangup()结束在远程端：您的模块将在 my\_module\_on\_hangup() 上收到回调 |
+| CS\_HANGUP          |                                                                      | 更改为 CS\_REPORTING\*                                                  |                                                                                                                                                      |
+| CS\_REPORTING       |                                                                      | 更改为 CS\_DESTROY\*                                                    |                                                                                                                                                      |
+| CS\_DESTROY         | 释放任何内存                                                         |                                                                        |                                                                                                                                                      |
 
-The **channel** object also has two other state members (`running_state` and `callstate`) which are hardly used at all in the core of FreeSWITCH, and which you probably won't need. The `running_state` is just used in state transitions, usually holds the “previous state". The `callstate` is a more fine-grained version of the state, and it has its own getter and setter. If you chose to use the setter, it will fire an event. `callstate` includes `CCS_DOWN, CCS_DIALING, CCS_RINGING, CCS_EARLY, CCS_ACTIVE and CCS_HANGUP.`
+### 3.2 `running_state`和`callstate`
+
+**通道**对象还有两个其他状态成员（`running_state`和`callstate`），在FreeSWITCH的核心中几乎不被使用，你可能不会需要它们。`running_state`仅用于状态转换，通常用于保存“先前的状态”。`callstate`是状态的更精细版本，它有自己的获取器和设置器。如果选择使用设置器，它将触发一个事件。`callstate`包括`CCS_DOWN，CCS_DIALING，CCS_RINGING，CCS_EARLY，CCS_ACTIVE`和`CCS_HANGUP`。
 
 ### 3.3 `caller_profile`
 
-Within the **channel** is a single `caller_profile`. This **contains descriptions of both the caller and callee**.
+在**通道**内部还有一个单独的`caller_profile`。它包含了呼叫方和被呼叫方的描述。
 
-The internal sections of FreeSWITCH only use:
+在FreeSWITCH的内部部分只使用以下内容：
 
 * uuid
-* caller\_id\_name, caller\_id\_number, caller\_extension
+* caller\_id\_name、caller\_id\_number、caller\_extension
 * [dialplan](../../../Dialplan/index.mdx#0-about)
 * destination\_number
 
-The **channel** flags hold extra state information above and beyond the basic 13 states that are held in the `state` variable. The interesting flags are:
+**通道**的标志位包含了更多的状态信息，超出了`state`变量中的基本13个状态。有趣的标志位包括：
 
-| Flag              | Description                              |
+| 标志位              | 描述                                   |
 | ----------------- | ---------------------------------------- |
-| CF\_ANSWERED      | Channel is answered                      |
-| CF\_OUTBOUND      | Channel is an outbound channel           |
-| CF\_EARLY\_MEDIA  | Channel is ready for audio before answer |
-| CF\_ORIGINATOR    | Channel is an originator                 |
-| CF\_TRANSFER      | Channel is being transfered              |
-| CF\_HOLD          | Channel is on hold                       |
-| CF\_GEN\_RINGBACK | Channel is generating it's own ringback  |
-| CF\_RING\_READY   | Channel is ready to send ringback        |
-| CF\_BREAK         | Channel should stop what it's doing      |
+| CF\_ANSWERED      | 通道已应答                              |
+| CF\_OUTBOUND      | 通道是出站通道                           |
+| CF\_EARLY\_MEDIA  | 通道准备好在应答前开始音频                |
+| CF\_ORIGINATOR    | 通道是发起方                            |
+| CF\_TRANSFER      | 通道正在转移中                           |
+| CF\_HOLD          | 通道已保持                              |
+| CF\_GEN\_RINGBACK | 通道正在生成自己的回铃音                 |
+| CF\_RING\_READY   | 通道准备好发送回铃音                      |
+| CF\_BREAK         | 通道应停止当前操作                       |
 
-### 3.4 Variables
+### 3.4 变量
 
-A **channel** also has a hash of key-value pairs that can hold all kinds of interesting data related to the **channel**. These are used extensively by [mod\_sofia](../../../Modules/mod_sofia_1048707.mdx#about) to bind things like `sip_user_agent` and `sip_profile_name` to a **channel**. These key-value pairs can be queried by either the dialplan or LUA processing. They can also be a handy way to accumulate data in preparation for issuing a FreeSWITCH event. See [channel variables](../../../Dialplan/Channel-Variables_16352493.mdx#about)_[.](../../../Dialplan/Channel-Variables_16352493.mdx#about)_
+一个 **通道** 还具有一个键值对的哈希，可以保存与 **通道** 相关的各种有趣的数据。这些数据被 [mod\_sofia](../../../Modules/mod_sofia_1048707.mdx#about) 广泛用于将 `sip_user_agent` 和 `sip_profile_name` 等东西绑定到 **通道**。这些键值对可以被拨号计划或 LUA 处理查询。它们也可以成为准备发出 FreeSWITCH 事件的累积数据的便捷方式。请参见[通道变量](../../../Dialplan/Channel-Variables_16352493.mdx#about)_[.](../../../Dialplan/Channel-Variables_16352493.mdx#about)_
 
-## 4\. How to Write a FreeSWITCH Endpoint
+## 4\. 如何编写 FreeSWITCH 终端
 
-First follow the [New Module Checklist](./index.mdx#new-module-checklist). [Earlier directions](./index.mdx#about) suggest using` freeswitch/src/mod/applications/mod_skel` to start off, but for endpoints you're better off starting with` freeswitch/src/mod/endpoints/mod_reference`.
+首先按照[新模块清单](./index.mdx#new-module-checklist)的步骤进行操作。[之前的指引](./index.mdx#about)建议使用 `freeswitch/src/mod/applications/mod_skel` 来开始，但对于终端点，最好从 `freeswitch/src/mod/endpoints/mod_reference` 开始。
 
-`module_load() `is the first entry point called. Usually at this point you will inform the caller about your module, its callback interface arrays, and register any API extensions. You may also want to create a memory pool. You should [read your config data](./index.mdx#creating-your-module), which by convention is XML, and buried somewhere in `freeswitch/conf`.
+`module_load()` 是第一个被调用的入口点。通常在此时，您将向调用者介绍您的模块、其回调接口数组，并注册任何 API 扩展。您可能还想创建一个内存池。您应该[读取您的配置数据](./index.mdx#creating-your-module)，它按照惯例是 XML，并嵌藏在 `freeswitch/conf` 中的某个位置。
 
-## 5\. Handling calls from within your module
+## 5\. 在模块内处理呼叫
 
-See [Life Cycle of a Call](../../../Introduction/Life-Cycle-of-a-Call_1048888.mdx#0-about).
+请参见[呼叫的生命周期](../../../Introduction/Life-Cycle-of-a-Call_1048888.mdx#0-about)。
 
-### 5.1 Common tasks to both incoming and outgoing calls
+### 5.1 对于入站呼叫和出站呼叫的常见任务
 
-Below is our current understanding. We are not core developers, so all is guessed --Sathieu 11:14, 18 February 2010 (UTC) – PatB 2015-09-25
+以下是我们目前的理解。我们不是核心开发人员，所以一切都是猜测 --Sathieu 11:14, 2010年2月18日 (UTC) – PatB 2015年9月25日
 
-For both outgoing and incoming calls, you must allocate the **session**. The core of FreeSWITCH will automatically allocate and bind a **channel** to your **session**_._ FreeSWITCH does not create the `caller_profile`_; y_our code must allocate a `caller_profile`_,_ and bind it to the **channel**_. Y_ou probably also want to allocate a **private data** object, and bind it to the **session**_._
+对于呼入和呼出的电话，你必须分配一个**会话（session）**。FreeSWITCH的核心将自动为你的**会话**分配和绑定一个**信道（channel）**。FreeSWITCH不会创建`caller_profile`，你的代码必须分配一个`caller_profile`并将其绑定到**信道**。你可能还想分配一个**私有数据（private data）**对象，并将其绑定到**会话**。
 
-Notice that in a normal call, the inbound/originating **channel** ends up in the [CS\_EXECUTE state](../../../Dialplan/Channel-States_7144639.mdx#0-about), and the outbound/called **channel** ends up in the [CS\_EXCHANGE\_MEDIA state](../../../Dialplan/Channel-States_7144639.mdx#0-about). (Once we start playing with 'hold' and 'transfer', this statement gets muddied.)
+请注意，在普通电话中，呼入/发起的**信道**最终会进入[CS_EXECUTE状态](../../../Dialplan/Channel-States_7144639.mdx#0-about)，而呼出/被叫的**信道**最终会进入[CS_EXCHANGE_MEDIA状态](../../../Dialplan/Channel-States_7144639.mdx#0-about)。（一旦我们开始使用“保持”和“转接”，这个陈述就变得混乱起来了。）
 
-If your module wants to shut down the call, just use `switch_channel_hangup()`. You will get a callback to your `on_hangup()` entry point and the call will shut down.
+如果你的模块想要关闭通话，只需使用`switch_channel_hangup()`。你将收到一个回调到你的`on_hangup()`入口点，通话将关闭。
 
-If the other end wants to shut down the call, you will get a `SIG_KILL` sent to your `on_channel_kill()` entry point. Shortly thereafter you will get a call to your `on_hangup()` entry point and the call will shut down.
+如果对方想要关闭通话，你将收到一个`SIG_KILL`发送到你的`on_channel_kill()`入口点。不久之后，你将收到一个对你的`on_hangup()`入口点的调用，通话将关闭。
 
-Notes
+注释：
 
-\[1\] you don't need to create the **channel**_…_.it is created inside the **session**
+\[1\] 你不需要创建**信道**，它已经在**会话**内部创建了。
 
-\[2\] at minimum, you should set the .name member of the **channel**
+\[2\] 至少要设置**信道**的`name`成员。
 
-\[3\] or if you wish to abort, call` switch_channel_hangup(channel)`
+\[3\] 或者如果你想中止，调用`switch_channel_hangup(channel)`。
 
-\[4\] strangely, you only call `s_c_s_thread_launch`() on incoming calls; it's called automatically for you on outgoing calls (deep in` switch_ivr.c`)
+\[4\] 奇怪的是，你只在呼入电话时调用`s_c_s_thread_launch()`；在呼出电话中，它会自动为你调用（在`switch_ivr.c`深处）。
 
-### 5.2 Outgoing calls
+### 5.2 呼出电话
 
-Outgoing calls are created either by a call coming through the dialplan routing, or when you use the originate command in the console:
+呼出电话可以通过拨号计划路由传入，也可以在控制台使用`originate`命令创建：
 
-* `your_io_routines.outgoing_channel()` is called  
-   * you get a pointer to the other call half (_session/_ _channel_)
-* create a new **session** (with `switch_core_session_request()`) and _private data_\[1\]
-* parse `outbound_profile->destination_number` to get called number
-* create a `caller_profile`and bind it to the **session**
-* qualify the **session**, attached **channel** and attached **private data** \[2\]
-* the **channel** is currently in `CS_NEW`; change [**channel** state](../../../Dialplan/Channel-States_7144639.mdx#0-about) to `CS_INIT`
-   * make the phone ring (and call `switch_channel_ring_ready()`)
-* `your_state_handler.on_init()` is called  
-   * no need to do anything  
-   * the default handler will change **channel** state to `CS_ROUTING`
-* `your_state_handler.on_routing()` is called  
-   * no need to do anything  
-   * the default handler will change [**channel** state](../../../Dialplan/Channel-States_7144639.mdx#0-about) to `CS_CONSUME_MEDIA`
-* when you decide the call is answered  
-   * call `switch_channel_mark_answered(channel)` \[3\] which will set the [**channel** state](../../../Dialplan/Channel-States_7144639.mdx#0-about) to `CS_EXCHANGE_MEDIA`
-* `your_state_handler.on_exchange_media()` is called  
-   * and the call is up
+* `your_io_routines.outgoing_channel()` 会被调用
+   * 你会得到一个指向另一个调用一半的指针（_session_/_channel_）
+* 使用 `switch_core_session_request()` 创建一个新的**会话**，并附加私有数据\[1\]
+* 解析 `outbound_profile->destination_number` 以获取被叫号码
+* 创建一个 `caller_profile` 并绑定到**会话**上
+* 对**会话**、关联的**通道**和关联的**私有数据**进行资格认证\[2\]
+* 当前**通道**处于 `CS_NEW` 状态；将[**通道状态**](../../../Dialplan/Channel-States_7144639.mdx#0-about)更改为 `CS_INIT`
+   * 让电话响起（并调用 `switch_channel_ring_ready()`）
+* `your_state_handler.on_init()` 被调用
+   * 不需要做任何事情
+   * 默认的处理程序将会将**通道**状态更改为 `CS_ROUTING`
+* `your_state_handler.on_routing()` 被调用
+   * 不需要做任何事情
+   * 默认的处理程序将会将[**通道状态**](../../../Dialplan/Channel-States_7144639.mdx#0-about)更改为 `CS_CONSUME_MEDIA`
+* 当你决定通话已接听时
+   * 调用 `switch_channel_mark_answered(channel)`\[3\]，它将设置[**通道状态**](../../../Dialplan/Channel-States_7144639.mdx#0-about)为 `CS_EXCHANGE_MEDIA`
+* `your_state_handler.on_exchange_media()` 被调用
+   * 通话已建立
 
-### 5.3 Incoming calls
+### 5.3 来电
 
-Incoming calls are initiated by your code. To start up a call
+来电是由你的代码发起的。要启动一个通话，
 
-* create a new **session** _(_with `switch_core_session_request()`) and _private data_ \[1\]  
-   * create a `caller_profile` (with `switch_caller_profile_new()`) and fill in the `->destination_number`  
-   * qualify the **channel** and **private data** \[2\]  
-   * create a `caller_profile `and bind it to the **channel**  
-   * start up the thread that manages the **session** (with `switch_core_session_thread_launch()`) \[4\]  
-   * change [**channel** state](../../../Dialplan/Channel-States_7144639.mdx#0-about) from `CS_NEW` to `CS_INIT`
-* `your_state_handler.on_init()` will be called  
-   * no need to do anything  
-   * the default handler will change [**channel** state](../../../Dialplan/Channel-States_7144639.mdx#0-about) to `CS_ROUTING`
-* `your_state_handler.on_routing()` is called  
-   * no need to do anything  
-   * if your `caller_profile->destination_number` has been set, the default handler will search the **dialplan** and start an application; if this is a telephone call, usually the 'bridge' application will start an outbound **session** toward the called party and change change this [**channel** state](../../../Dialplan/Channel-States_7144639.mdx#0-about) to `CS_EXECUTE`
-* when the distant party answers  
-   * `your_state_handler.on_receive_message()` is called  
-      * filter the messages you get for `SWITCH_MESSAGE_INDICATE_ANSWER`  
-         * take any action that you need to start up the call
+* 创建一个新的**会话**（使用`switch_core_session_request()`）和_private data_ \[1\]
+   * 创建一个`caller_profile`（使用`switch_caller_profile_new()`）并填入`->destination_number`
+   * 对**渠道**和**私有数据**进行合格检查\[2\]
+   * 创建一个`caller_profile`并将其绑定到**渠道**
+   * 启动管理**会话**的线程（使用`switch_core_session_thread_launch()`）\[4\]
+   * 将[**渠道**状态](../../../Dialplan/Channel-States_7144639.mdx#0-about)从`CS_NEW`更改为`CS_INIT`
+* `your_state_handler.on_init()`将被调用
+   * 不需要做任何事情
+   * 默认处理程序将把[**渠道**状态](../../../Dialplan/Channel-States_7144639.mdx#0-about)更改为`CS_ROUTING`
+* `your_state_handler.on_routing()`被调用
+   * 不需d要做任何事情
+   * 如果您的`caller_profile->destination_number`已设置，系统默认处理程序将搜索**拨号计划**并启动一个应用程序；如果这是一个电话呼叫，通常“bridge”应用程序将启动它向被叫方发起一个出站**会话**，并将[**渠道**状态](../../../Dialplan/Channel-States_7144639.mdx#0-about)更改为`CS_EXECUTE`
+* 当远程一方接听时
+   * `your_state_handler.on_receive_message()`被调用
+      * 筛选您接收到的`SWITCH_MESSAGE_INDICATE_ANSWER`消息
+         * 执行任何你需要启动呼叫的操作
 
-From the directory that you installed FreeSWITCH, you can simply [type “make mod\_my\_module"](./index.mdx#creating-your-module) to just remake your loadable module. In the FreeSWITCH console, you can enter [load mod\_my\_module](./index.mdx#reloading-your-module) and `unload mod_my_module` as often as you want, fixing bugs between builds.
+您可以在您安装FreeSWITCH的目录中，简单地[输入“make mod\_my\_module"](./index.mdx#creating-your-module)以重新制作您的可加载模块。在FreeSWITCH控制台中，您可以输入[load mod\_my\_module](./index.mdx#reloading-your-module)和`unload mod_my_module`，可以根据需要重复加载和卸载，以修复构建之间的错误。
 
-## 6\. The Babel tower of the API
+## 6\. API 的巴比伦之塔
 
-When trying to learn FreeSWITCH programming, you're going to be overwhelmed by the number of API methods that are available. Here's a list on the one's you're likely to need in **session** and **channel** management.
+当尝试学习 FreeSWITCH 编程时，你会被可用的 API 方法数量所压倒。下面是你可能在**会话**和**通道**管理中需要的一些方法清单。
 
-| switch\_core\_session\_request()                                  | allocate and initialize a new **session**                                                                                                                |
-| ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| switch\_core\_session\_get\_channel()                             | given a **session**, get the associated **channel**                                                                                                      |
-| switch\_core\_session\_get\_private()                             | given a **session**, get the **private data**                                                                                                            |
-| switch\_channel\_get/set\_state()                                 | used to coerce a [**channel** state](../../../Dialplan/Channel-States_7144639.mdx#0-about); usually the only one you will do is CS\_NEW→CS\_INIT                                |
-| switch\_core\_session\_alloc()                                    | allocayr space, usually for tech\_pvt                                                                                                                    |
-| switch\_caller\_profile\_clone()                                  | on outgoing, clone the caller's caller\_profile                                                                                                          |
-| switch\_channel\_get /set\_caller\_profile()                      | bind a caller\_profile to a **channel**                                                                                                                  |
-| switch\_channel\_test\_flag() switch\_channel\_set\_flag\_value() | set/test CF\_ANSWERED, CF\_EARLY\_MEDIA, etc                                                                                                             |
-| switch\_channel\_get/set\_name()                                  | give your channel a name, like “superphone/1001"                                                                                                         |
-| |                                                                 |                                                                                                                                                          |
-| switch\_channel\_ring\_ready()                                    | ignored if the **channel** is already answeredif inbound, sends the message SWITCH\_MESSAGE\_INDICATE\_RINGINGcalls switch\_channel\_mark\_ring\_ready() |
-| switch\_channel\_mark\_ring\_ready()                              | set CF\_RING\_READYsends a PROGRESS eventsets callstate=CCS\_RINGINGsends message SWITCH\_MESSAGE\_RING\_EVENT                                           |
-| switch\_channel\_pre\_answer()                                    | ignored if the _channel_ is already answeredif inbound, sends the messageSWITCH\_MESSAGE\_INDICATE\_PROGRESScalls switch\_channel\_mark\_pre\_answer()   |
-| switch\_channel\_mark\_pre\_answer()                              | set CF\_EARLY\_MEDIAsends a PROGRESS\_MEDIA eventsets callstate=CCS\_EARLYsends message SWITCH\_MESSAGE\_PROGRESS\_EVENT                                 |
-| switch\_channel\_answer()                                         | ignores outbound calls or calls already answeredsends message SWITCH\_MESSAGE\_INDICATE\_ANSWERcall switch\_channel\_mark\_answered()                    |
-| switch\_channel\_mark\_answered()                                 | ignores calls already answeredsets CF\_ANSWEREDsends CHANNEL\_ANSWER eventsets callstate=CCS\_ACTIVEsends message SWITCH\_MESSAGE\_ANSWER\_EVENT         |
-| switch\_channel\_hangup()                                         | change channel state to CS\_HANGUPsends the HANGUP eventsends SIG\_KILL(1) to itself                                                                     |
-| switch\_core\_session\_thread\_launch()                           | starts up the state machine; inbound only                                                                                                                |
-| switch\_channel\_direction()                                      | check inbound or outbound                                                                                                                                |
+| switch\_core\_session\_request()                                  | 分配并初始化一个新的**会话**                                                                                                        |
+| ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| switch\_core\_session\_get\_channel()                             | 给定一个**会话**，获取关联的**信道**                                                                                            |
+| switch\_core\_session\_get\_private()                             | 给定一个**会话**，获取**私有数据**                                                                                              |
+| switch\_channel\_get/set\_state()                                 | 用于强制更改[**信道**状态](../../../Dialplan/Channel-States_7144639.mdx#0-about)，通常只会进行一个更改，即CS_NEW→CS_INIT                    |
+| switch\_core\_session\_alloc()                                    | 分配空间，通常用于处理技术私有数据                                                                                                  |
+| switch\_caller\_profile\_clone()                                  | 对于外呼，克隆呼叫者的呼叫者配置文件                                                                                          |
+| switch\_channel\_get /set\_caller\_profile()                      | 将呼叫者配置文件绑定到**信道**                                                                                                |
+| switch\_channel\_test\_flag() switch\_channel\_set\_flag\_value() | 设置/测试CF_ANSWERED，CF_EARLY_MEDIA等                                                                                                |
+| switch\_channel\_get/set\_name()                                  | 为您的信道设置名称，例如“superphone/1001"                                                                                        |
+| |                                                                 |                                                                                                                                            |
+| switch\_channel\_ring\_ready()                                    | 如果**信道**已经接听，则忽略如果是呼入的，发送SWITCH\_MESSAGE\_INDICATE\_RINGING消息，调用switch\_channel\_mark\_ring\_ready()        |
+| switch\_channel\_mark\_ring\_ready()                              | 设置CF\_RING\_READY发送PROGRESS事件将呼叫状态设置为CCS\_RINGING发送SWITCH\_MESSAGE\_RING\_EVENT消息                       |
+| switch\_channel\_pre\_answer()                                    | 如果信道已经接听，则忽略如果是呼入的，发送SWITCH\_MESSAGE\_INDICATE\_PROGRESS消息，调用switch\_channel\_mark\_pre\_answer() |
+| switch\_channel\_mark\_pre\_answer()                              | 设置CF\_EARLY\_MEDIA发送PROGRESS\_MEDIA事件将呼叫状态设置为CCS\_EARLY发送SWITCH\_MESSAGE\_PROGRESS\_EVENT消息                 |
+| switch\_channel\_answer()                                         | 忽略外呼或已经接听的呼叫发送SWITCH\_MESSAGE\_INDICATE\_ANSWER消息，调用switch\_channel\_mark\_answered()               |
+| switch\_channel\_mark\_answered()                                 | 忽略已经接听的呼叫设置CF\_ANSWERED发送CHANNEL\_ANSWER事件将呼叫状态设置为CCS\_ACTIVE发送SWITCH\_MESSAGE\_ANSWER\_EVENT消息     |
+| switch\_channel\_hangup()                                         | 将信道状态更改为CS\_HANGUP发送HANGUP事件发送SIG\_KILL(1)到自身                                                              |
+| switch\_core\_session\_thread\_launch()                           | 启动状态机；仅限呼入                                                                                                                 |
+| switch\_channel\_direction()                                      | 检查呼入还是呼出                                                                                                                     |
 
-There are several similar calls with the word "`_perform_`" in the name; these are just versions that include the filename/line number for debugging. Don't call those directly.
+在名称中有几个带有"`_perform_`"的相似调用；这只是包含用于调试的文件名/行号的版本。不要直接调用这些。
 
-There are three pairs in the middle, with and without the "`_mark_`" in the name. You call
+中间有三对带有和不带有"`_mark_`"的名称。当您想要将`SWITCH_MESSAGE_INDICATE_` \*消息放入消息队列时，您需要调用以下函数：
 
 | switch\_channel\_ring\_ready() |
 | ------------------------------ |
 | switch\_channel\_pre\_answer() |
 | switch\_channel\_answer()      |
 
-when you want to issue the `SWITCH_MESSAGE_INDICATE_`\* messages into the message queue. If you're responding to an `INDICATE` message, you don't need to re-issue that message, so you would call these below:
+如果您正在响应一个`INDICATE`消息，您不需要重新发出该消息，所以您可以调用以下函数：
 
 | switch\_channel\_mark\_ring\_ready() |
 | ------------------------------------ |
 | switch\_channel\_mark\_pre\_answer() |
 | switch\_channel\_mark\_answered()    |
 
-For example, if you just got a `SWITCH_MESSAGE_INDICATE_ANSWER`, you would only call the `switch_channel_mark_answered`() version. If you are working on something else, and you decide the call should be answered, call the non-`_mark_` version `switch_channel_anwer`().
+例如，如果您刚刚收到一个`SWITCH_MESSAGE_INDICATE_ANSWER`，那么您只需要调用`switch_channel_mark_answered()`版本。如果您正在处理其他事情，而且您决定应该接听呼叫，那么调用非`_mark_`版本的`switch_channel_anwer()`。
 
-In practice, the standard state code does a pretty good job of managing channel flags, [channel variable](../../../Dialplan/Channel-Variables_16352493.mdx#about), and [**channel** state](../../../Dialplan/Channel-States_7144639.mdx#0-about)s. The only routines that you will probably need to call are
+在实际应用中，标准状态代码非常有效地管理通道标志、通道变量和通道状态。您可能唯一需要调用的例程是：
 
-  switch_channel_set_state() // once, during session creation
+switch_channel_set_state() // 会话创建期间调用一次
 
-  switch_channel_mark_answered() // when your device answers
+switch_channel_mark_answered() // 当您的设备接听时调用
 
-  switch_channel_hangup() // to shut down
+switch_channel_hangup() // 关闭连接时调用
 
-  
 ---
 
-**Source code for those UML diagrams above:**
+**上述UML图的源代码：**
 
-using PlantUML syntax
+使用PlantUML语法
 
-Fig 1
-
-session *-- channel  
-channel *-- caller_profile  
-session *-- tech_pvt
-
-Fig 2
+图1
 
 session *-- channel  
 channel *-- caller_profile  
 session *-- tech_pvt
 
-session : thread  
-session : memory pool  
-session : codec[]  
-session: messages[]
+图2
 
-channel: name  
-channel: uuid  
-channel: direction  
-channel: flags[]  
-channel: variables[]
+session *-- channel  
+channel *-- caller_profile  
+session *-- tech_pvt
 
-caller_profile: destination_number  
-caller_profile: caller_id
+会话 : 线程
+会话 : 内存池 
+会话 : 编解码器[]
+会话 : 消息[]
 
-tech_pvt: ip addresses  
-tech_pvt: other data that you may need
+频道 : 名称 
+频道 : UUID 
+频道 : 方向 
+频道 : 标志[]
+频道 : 变量[]
 
-  
-## Attachments:
+呼叫者信息 : 目标号码 
+呼叫者信息 : 主叫号码
 
-![](/images/icons/bullet_blue.gif) [session.png](/attachments/9634354/9634365.png) (image/png)  
-![](/images/icons/bullet_blue.gif) [full\_session.png](/attachments/9634354/9634366.png) (image/png)  
+技术私有数据 : IP地址 
+技术私有数据 : 其他可能需要的数据
 
+## 附件:
 
+![](/images/icons/bullet_blue.gif) [session.png](/attachments/9634354/9634365.png) (image/png)
+![](/images/icons/bullet_blue.gif) [full\_session.png](/attachments/9634354/9634366.png) (image/png)

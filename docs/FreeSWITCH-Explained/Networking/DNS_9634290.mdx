@@ -1,150 +1,144 @@
-
 # DNS 
 
- 
+## 关于
 
-## About
+在这里，我们列出了几种与FreeSWITCH和IP通信非常兼容的DNS记录类型。
 
-Here we list several types of DNS records that integrate quite nicely with FreeSWITCH and IP communications.
-
-Click here to expand Table of Contents
+单击此处展开目录
 
 * 1 [ENUM](#srv)
 * 2 [SRV](#srv)
-* 3 [ITAD (ISN)](#srv)
-* 4 [Updating Records](#updating-records)  
-   * 4.1 [Generating A DNS Key](#generating-a-dns-key)  
+* 3 [ITAD（ISN）](#srv)
+* 4 [更新记录](#updating-records)  
+   * 4.1 [生成DNS密钥](#generating-a-dns-key)  
    * 4.2 [nsupdate](#nsupdate)  
       * 4.2.1 [ENUM](#srv)  
          * 4.2.2 [ISN](#srv)  
          * 4.2.3 [NAPTR](#naptr)
-* 5 [Explanation of DNS/SRV/NAPTR](#explanation-of-dnssrvnaptr)
-* 6 [See Also](#see-also)
+* 5 [DNS/SRV/NAPTR的说明](#explanation-of-dnssrvnaptr)
+* 6 [参见](#see-also)
 
 ## [ENUM](../Modules/mod_enum_6587333.mdx#enum)
 
-A way to query E.164 numbers to keep calls "on-net".
+通过查询E.164号码，以保持呼叫“内部网”。
 
 ## SRV
 
-These records can give you a pseudo redundant network. Allowing failover (or pseudo load-balancing) to other servers in your network.
+这些记录可以为您提供伪冗余网络。允许故障转移（或伪负载均衡）到网络中的其他服务器。
 
-## ITAD ([ISN](../Installation/Linux/Deprecated-Installation-Instructions/Gentoo/ISN_13173387.mdx#about))
+## ITAD（[ISN](../Installation/Linux/Deprecated-Installation-Instructions/Gentoo/ISN_13173387.mdx#about)）
 
-E-Mail style phone numbers that more easily allow cross-domain calls to stay "on-net" without the need for a full keyboard on your telephone (i.e. analog telephones hooked up to analog adapters). A typical number will look similar to 123\*543.
+这些是电子邮件样式的电话号码，更容易让跨域呼叫保持“内部网”，而不需要您的电话上装有完整的键盘（即模拟电话连接到模拟适配器）。典型的号码看起来类似于123\*543。
 
-## Updating Records
+## 更新记录
 
-There are many possible ways to dynamically update records in running DNS zones. Here we list the ones we know.
+有许多可能的方法来动态更新运行中DNS区域中的记录。在这里，我们列出我们所知的方法。
 
-  
-### Generating A DNS Key
+### 生成DNS密钥
 
-dnssec-keygen -a HMAC-MD5 -b 512 -n USER &lt;NAME_OF_KEY_HERE>
+dnssec-keygen -a HMAC-MD5 -b 512 -n USER <名称_在这里输入密钥的名称>
 
 ### nsupdate
 
-All of the following commands are input from the nsupdate command line. You should first have a key that you can use for updating a single zone.
+以下所有命令都是从nsupdate命令行输入的。首先，您应该有一个可用于更新单个区域的密钥。
 
 #### [ENUM](../Modules/mod_enum_6587333.mdx#enum)
 
-  
 update add 3.2.1.enum.org 60 NAPTR 100 10 "u" "E2U+sip" "!^.*$!sip:123@freeswitch.org!" .
 
-If a user dials 123, this will route the call to [123@freeswitch.org](mailto:123@freeswitch.org) provided enum is correctly configured to use your zone.
+如果用户拨打123，将会将呼叫转到[123@freeswitch.org](mailto:123@freeswitch.org)，前提是枚举配置正确地使用了您的区域。
 
 #### [ISN](../Installation/Linux/Deprecated-Installation-Instructions/Gentoo/ISN_13173387.mdx#about)
 
   
-update add 3.2.1.543.freenum.org 60 NAPTR 100 10 "u" "E2U+sip" "!^.*$!sip:123@freeswitch.org!" .
+更新添加3.2.1.543.freenum.org 60 NAPTR 100 10 "u" "E2U+sip" "!^.*$!sip:123@freeswitch.org!"。
 
-This would route 123\*543 to [123@freeswitch.org](mailto:123@freeswitch.org)
+这将会将123\*543路由到[123@freeswitch.org](mailto:123@freeswitch.org)。
 
   
 #### NAPTR
 
-for bind find the [example.com](http://example.com) zone file, you should put this near your \_sip.\_udp records.
+对于bind，找到[example.com](http://example.com)区域文件，您应该将其放置在您的_sip._udp记录附近。
 
 ```xml
 $ORIGIN example.com.
-; NAPTR record for SIP Secure TLS (TCP) example.com
-;     priority: 50  weight: 0
-;     protocol: "SIPS+D2T"  regex: ""  uri: _sips._tcp.example.com
+; SIP安全TLS（TCP）的NAPTR记录
+;     优先级：50  权重：0
+;     协议： "SIPS+D2T"  正则表达式：""  URI： _sips._tcp.example.com
 ;     example.com
 @           IN      NAPTR   50 0 "s" "SIPS+D2T" "" _sips._tcp
-; NAPTR record for SIP TCP example.com
-;     priority: 90  weight: 0
-;     protocol: "SIP+D2T"  regex: ""  uri: _sip._tcp.example.com
+; SIP的TCP的NAPTR记录
+;     优先级：90  权重：0
+;     协议： "SIP+D2T"  正则表达式：""  URI： _sip._tcp.example.com
 ;     example.com
 @           IN      NAPTR   90 0 "s" "SIP+D2T" "" _sip._tcp
-; NAPTR record for SIP UDP example.com
-;     priority: 100  weight: 0
-;     protocol: "SIP+D2U"  regex: ""  uri: _sip._udp.example.com
+; SIP的UDP的NAPTR记录
+;     优先级：100  权重：0
+;     协议： "SIP+D2U"  正则表达式：""  URI： _sip._udp.example.com
 ;
 @           IN      NAPTR   100 0 "s" "SIP+D2U" "" _sip._udp
 
 ```
 
   
-Under Windows Server 2008, SR2 you can also add them. Take note of 'Regex'.
+在Windows Server 2008，SR2中，您也可以添加它们。注意'Regex'。
 
-* SIPS or SIP Secure over TLS is represented by SIPS and the transport protocol is always going to be TCP.
-* The "s" denotes SIP and can be used inside a firewall and outside, but if you have a client, like the Cisco EX60 or EX90 terminals, the software reads "s" and sets the connectivity flag in the SIP contact header to "0" or Internal. Setting this to "se" denotes SIP External and set the connectivity flag in the SIP contact header to "1" or External. This is useful if you are using the SIP Provisioning mechanism so that the system can return the proper configuration details.
-* Typically it is preferable to use a secure TLS connection, a less secure but more reliable transport of TCP and lastly use an insecure and less reliable transport of UDP. Setting a priority of the transport methods to 50, 90 & 100 respectively then helps to facilitate the proper use of protocols unless you want to attempt UDP or TCP first and then failover to TLS.
+*SIPS或SIP安全传输层*由SIPS表示，传输协议始终为TCP。
 
-test with
+`s`表示SIP，并且可以在防火墙内外使用。但是，如果您使用类似Cisco EX60或EX90终端的客户端，软件会读取`s`，并将SIP联系标头中的连接标志设置为"0"或"内部"。将其设置为"se"表示SIP外部，并将SIP联系标头中的连接标志设置为"1"或"外部"。如果您使用SIP Provisioning机制，则这将很有用，以便系统可以返回正确的配置详细信息。
+
+通常，首选使用安全的TLS连接，其次是较不安全但更可靠的TCP传输，最后是较不安全且不太可靠的UDP传输。然后，将传输方法的优先级分别设置为50、90和100，可以促进协议的正确使用，除非您想首先尝试UDP或TCP，然后才切换到TLS。
+
+使用以下命令进行测试：
 
 ```xml
 host -t naptr example.com
 ```
 
-You should get something like this:
+您应该会得到类似于以下内容的结果：
 
 ```xml
-example.com has NAPTR record 50 0 "S" "SIPS+D2T" "" _sips._tcp.example.com.
-example.com has NAPTR record 90 0 "S" "SIP+D2T" "" _sip._tcp.example.com.
-example.com has NAPTR record 100 0 "S" "SIP+DTU" "" _sip._udp.example.com.
+example.com有NAPTR记录50 0 "S" "SIPS+D2T" "" _sips._tcp.example.com.
+example.com有NAPTR记录90 0 "S" "SIP+D2T" "" _sip._tcp.example.com.
+example.com有NAPTR记录100 0 "S" "SIP+DTU" "" _sip._udp.example.com.
 ```
 
-SRV
+SRV记录：
 
 ```xml
 update add sip.example.com 60 SRV 100 10 5060 sip1.example.com
 update add sip.example.com 60 SRV 100 10 5060 sip2.example.com
 ```
 
-The preceding will allow load-balancing between [sip1.example.com](http://sip1.example.com) and [sip2.example.com](http://sip2.example.com)
+上述操作将允许[sip1.example.com](http://sip1.example.com)和[sip2.example.com](http://sip2.example.com)之间进行负载均衡。
 
 ```xml
 update add sip.example.com 60 SRV 10 100 5060 sip1.example.com
 update add sip.example.com 60 SRV 100 100 5060 sip2.example.com
 ```
 
-This will keep sip2 on stand-by for use if sip1 fails. This works for User-Agents that properly support SRV.
+这将使 sip2 处于待命状态，以备在 sip1 失败时使用。对于正确支持 SRV 的用户代理来说，这是有效的。
 
-## Explanation of DNS/SRV/NAPTR
+## DNS/SRV/NAPTR 的解释
 
-This explanation is from Lawrence Conroy and is part of a mailing list [thread](http://lists.freeswitch.org/pipermail/freeswitch-users/2013-January/091063.html). I found it helpful to read this explanation, even though it is brief.
+这个解释来自 Lawrence Conroy，并且是一个邮件列表 [thread](http://lists.freeswitch.org/pipermail/freeswitch-users/2013-January/091063.html) 的一部分。尽管这个解释很简短，但我发现它很有帮助。
 
-> I have some sympathy, as the term domain is overloaded within FreeSWITCH.
+> 对于在 FreeSWITCH 中，术语 "domain" 有不同的含义，我表示理解。
 
-> A sip address consists of a userpart and a domain part -- e.g., &lt;sip:user@sipdomain> The sip domain is similar to an email domain -- e.g., &lt;&lt;mailto:user@maildomain>\> With email, you need to do a lookup of the MX record in DNS to find the FQDN of the machine that handles mail for the domain. With SIP (see [RFC 3263](https://tools.ietf.org/html/rfc3263)), you do a lookup on the SRV record (at \_sip.\_udp.&lt;sipdomain>) to find the machine that handles SIP registrations/incalls for the domain. That also gives you the port on which that machine is listening. (Yup, you can also have a NAPTR record in the domain to tell you where the SRV record is, but many folks don't bother -- for Best Practice, you should, but ...)
+> 一个 sip 地址由用户部分和域部分组成，比如 `<sip:user@sipdomain>`。sip 域类似于电子邮件域，比如 `<mailto:user@maildomain>`。对于电子邮件来说，你需要在 DNS 中查找 MX 记录以找到处理该域的邮件服务器的完全域名。而对于 SIP 来说（详见 [RFC 3263](https://tools.ietf.org/html/rfc3263)），你需要在 SRV 记录中查找 (位于 \_sip.\_udp.&lt;sipdomain>) 以找到处理该域的 SIP 注册/呼入的机器。这同样为你提供了该机器监听的端口。(是的，你也可以在域中使用 NAPTR 记录来告诉你在哪里找到 SRV 记录，但是很多人都不去烦恼这个问题 -- 根据最佳实践，你应该去做，但是...)
 
-> There IS a "get out" clause in the SIP specs for [RFC 2543](https://tools.ietf.org/html/rfc2543) (AKA legacy) support that means most SIP clients will look for the SRV and, if it can't be found (or there's an IP address rather than a DNS -style domain, in which case the SIP client won't bother hunting the SRV), the client will guess that the domain has a machine (i.e. it will look for an A or AAAA record), and also guess it's listening on 5060 (the default port). Email is the same (mail to [fred@example.com](mailto:fred@example.com), and strictly the sender will do a check for a MX and then look for an A record for [example.com](http://example.com), and try there).
+[SIP](https://tools.ietf.org/html/rfc3261)规范（又名遗留规范）中有一种"退出"条款，意味着大多数SIP客户端会查找SRV记录，如果找不到（或者有一个IP地址而不是DNS风格的域名，此时SIP客户端不会再查找SRV记录），客户端会猜测该域名对应一台机器（即会查询A或AAAA记录），并猜测它监听在5060端口上（默认端口）。邮件也是类似的（邮件发送至[fred@example.com](mailto:fred@example.com)，发件人会检查MX记录，然后查询主机名[example.com](http://example.com)的A记录，试图发送邮件）。
 
-> There IS a wrinkle to this special case: If you have a URL of the form &lt;sip:user@[example.com](http://example.com):5055> the client should NOT look for a NAPTR or SRV, but instead go straight to looking for an A or AAAA for the host [example.com](http://example.com) (i.e., there's a machine called [example.com](http://example.com), and it is handling SIP traffic for that domainpart). Basically, if you see a colon in the domainpart, you're looking for a machine -- otherwise you're looking for a NAPTR (and/or a SRV at \_sip.\_udp.&lt;sipdomain>).
+但是针对这种特殊情况有一个注意点：如果URL的形式是&lt;sip:user@[example.com](http://example.com):5055>，客户端不应该查找NAPTR或SRV记录，而是直接查询主机名[example.com](http://example.com)的A或AAAA记录（也就是说，这个域名有一台叫做[example.com](http://example.com)的机器负责处理该域名下的SIP流量）。基本上，如果你在域名部分看到了冒号，那就表示你要找的是一台机器，否则你要找的是NAPTR记录（和/或SRV记录在\_sip.\_udp.&lt;sipdomain>）。
 
-> However, relying on that default "get out" clause is definitely NOT what you should do for BCP. Using the hostname as the sip domain is a kludge -- the FQDN with A record usually works, but it's not what you want to do.
+然而，对于BCP（最佳常规实践）来说，依赖于默认的"退出"条款绝对不是你应该采取的方法。使用主机名作为SIP域名是一种临时的解决办法，通常带有A记录的完全限定域名是可行的，但这不是你想要的方式。
 
-> SO ... get yourself a domain, put a D2U NAPTR at that domain, put a SRV at \_sip.\_udp.&lt;domain>, and you're done. No need for an A record at that domain at all.
+所以...为自己获取一个域名，在该域名下设置D2U NAPTR记录，并在\_sip.\_udp.&lt;domain>下设置一个SRV记录，就完成了。不需要在该域名下再设置A记录。
 
-> ([RFC 3263](https://tools.ietf.org/html/rfc3263) is not too hard to read, for a change -- it's certainly shorter than [RFC 3261](https://tools.ietf.org/html/rfc3261), and it even has an ASCII art diagram :).
+> ([RFC 3263](https://tools.ietf.org/html/rfc3263) 比起 [RFC 3261](https://tools.ietf.org/html/rfc3261) 来说，阅读起来并不太难 -- 它的长度显然更短，而且甚至还有一个 ASCII 艺术图 :).
 
-## See Also
+## 另请参阅
 
-[Function\_sofia\_dig](../Configuration/Sofia-SIP-Stack/index.mdx#-sofia-sip-stack-watchdog-)
+[Function_sofia_dig](../Configuration/Sofia-SIP-Stack/index.mdx#-sofia-sip-stack-watchdog-)
 
-[Enterprise deployment DNS SRV](../Enterprise-Deployment/Enterprise-deployment-DNS-SRV_13173165.mdx#--)
-
-  
-
+[企业部署 DNS SRV](../Enterprise-Deployment/Enterprise-deployment-DNS-SRV_13173165.mdx#--)

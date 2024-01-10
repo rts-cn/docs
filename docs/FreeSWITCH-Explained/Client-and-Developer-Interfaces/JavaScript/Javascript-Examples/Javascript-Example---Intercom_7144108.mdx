@@ -1,18 +1,15 @@
+# JavaScript示例 - Intercom
 
-# Javascript Example - Intercom 
+## 关于
 
- 
+将Intercom接收方添加到会议桥接。此脚本通过为每个Intercom接收方发起呼叫通道来工作。默认情况下，呼叫将自动接听，但如果您处理旧的或非SIP Intercom设备（或像我这样的混合环境），则可以指定呼叫铃声。一旦所有接收方回答或拒绝呼叫，它们将通过转接命令添加到一个会议中。完成后，发起者也将连接到会议中。当发起者挂断时，所有线路都将断开。
 
-## About
+## 示例代码
 
-Add intercom recipients to a conference bridge.This script works by originating a channel to each of your Intercom recipients. The call will be auto-answered by default, but you may specify it to ring in case you are dealing with older or non-sip intercom equipment (or a mixed environment like myself). Once all of the recipients have answered or rejected the call they are added to a conference via a transfer command. Once this has been completed the initiator will be connected to the conference as well. All legs are dropped when the initiator hangs up.
-
-## Example Code
-
-**intercom.js example** Expand source 
+**intercom.js示例** 展开源码
 
 ```js
-// Main
+// 主要代码
 var script_major_version = 0;
 var script_minor_version = 8;
 var script_name = "Intercom";
@@ -26,25 +23,24 @@ var conference_command = argv[2];
 var domain_name = session.getVariable("domain_name");
 var originate_options = "ignore_early_media=true";
 
-// exit now if we werent passed what we need
+// 如果我们没有传递所需的参数，立即退出
 if(!recipient_data || !transfer_command || !conference_command)
 {
-	console_log("warning", "Improper call to "+script_name+" v"+script_major_version+"."+script_minor_version+"\n");
+	console_log("warning", "对"+script_name+" v"+script_major_version+"."+script_minor_version+"的调用不正确\n");
 	exit();
 }
 
-
-// enumerate users and autodial options
+// 枚举用户和自动拨号选项
 var arr_rlist = new Array();
 var arr_rvars = new Array();
 var recipients = new Array();
 var autoanswer = new Array();
 
-// create our recipient list ... splitting by , then ;
+// 创建接收方列表...按逗号和分号分割
 arr_rlist = recipient_data.split(",");
 for(i in arr_rlist)
 {
-       if(!arr_rlist[i]) continue;
+	if(!arr_rlist[i]) continue;
 	arr_rvars = arr_rlist[i].split(":");
 	
 	recipients[i] = arr_rvars[0];
@@ -52,15 +48,15 @@ for(i in arr_rlist)
 	if(autoanswer[i] != "false") autoanswer[i] = "true";
 }
 
-
-// answer the call if we can, exit if we cant
+```cpp
+// 如果能接听电话，则接听电话，否则退出
 if(session.ready()) session.answer();
 else exit();
 
 pageSessions = new Array();
 for(i in recipients)
 {
-	console_log("debug", "Originating: "+recipients[i]+"\n");
+	console_log("debug", "正在呼叫: "+recipients[i]+"\n");
 
 
 	session.execute("export", "sip_auto_answer="+autoanswer[i]);
@@ -70,10 +66,10 @@ for(i in recipients)
 		session.execute("export", "sip_h_Call-Info=<sip:"+domain_name+">;answer-after=0");
 	}
 
-	// if we originate via the Session() constructor, our exported intercom options will not be passed along
-	// so we construct an empty session and originate via the method
+	// 如果我们通过Session()构造函数来呼叫，那么我们导出的对讲选项将无法传递
+	// 因此我们构造一个空会话并通过该方法来呼叫
 	pageSessions[i] = new Session();
-	//pageSessions[i].setCallerData("caller_id_name", "Intercom Page") <== WRONG
+	//pageSessions[i].setCallerData("caller_id_name", "Intercom Page") <== 错误
        originate_options = originate_options + ",caller_id_name=Intercom Page";
 	pageSessions[i].originate(session, "{"+originate_options+"}user/"+recipients[i]);
 
@@ -82,77 +78,76 @@ for(i in recipients)
 
 for(i in recipients)
 {
-	console_log("debug", "Conferencing: "+recipients[i]+"\n");
+	console_log("debug", "会议中: "+recipients[i]+"\n");
 
-	// if the session is not ready, send a notice and do not transfer to the conference
+	// 如果会话未准备好，则发送通知并不传输至会议中
 	if(!pageSessions[i].ready())
 	{
-		console_log("notice", recipients[i]+" not ready: "+pageSessions[i].cause+"\n");
+		console_log("notice", recipients[i]+" 未准备好: "+pageSessions[i].cause+"\n");
 	}
 	else
 	{
-		// transfer instead of conferencing, since transfer is a nonblocking call
+		// 由于传输是非阻塞调用，所以使用传输而不是会议
 		pageSessions[i].execute("transfer", transfer_command);
 		intercom_answered++;
 	}
 }
-console_log("debug", intercom_answered+" recipients answered our page\n");
+console_log("debug", intercom_answered+" 个接收者接听了我们的呼叫\n");
 
 
-// send ourselves to the conference if someone is waiting for us
-// otherwise send a warning that the pager might not be working
+// 如果有人在等待我们，则将我们发送到会议室
+// 否则，发送警告表示呼叫器可能无法正常工作
 if(intercom_answered)
 {
 	session.execute("conference", conference_command);
 }
 else
 {
-	console_log("warning", "Intercom page reached no recipients\n");
-	// stream a sound file if desired here
+	console_log("warning", "对讲呼叫无法到达任何接收者\n");
+	// 在此处根据需要流放声音文件
 }
+```
 
-
-// done :)
-console_log("notice", "Intercom page completed");
+// 完成 :)
+console_log("notice", "Intercom页面已完成");
 exit();
 
 
 ```
 
-The above script can be invoked with the following syntax:
+可以使用以下语法调用上述脚本：
+
 
 ```xml
 <action application="javascript" data="Intercom.js 'sofia_address1[:auto_answer][,sofia_address2:[auto_answer][,...]]' 'transfer_command' 'conference_command'"/>
 ```
 
-* sofia\_addressX are the recipients of the intercom page and can take any format accepted by [originate](https://wiki.freeswitch.org/wiki/Session%5Foriginate "Session originate") (eg. 'user/101@mydomain')
-* auto\_answer: true or false. Determines whether this address will be auto answered by the recipient
-* transfer\_command: the data string passed to [transfer](../../../Modules/mod-dptools/6586616.mdx#about). This is used on recipients after they have answered the page
-* conference command: the data string passed to [conference](../../../Modules/mod_conference_3965534.mdx#list). This is used on the initiator after all recipients have been conferenced
+* sofia_addressX 是Intercom页面的接收者，并且可以采用[originate](https://wiki.freeswitch.org/wiki/Session%5Foriginate "Session originate")中所接受的任何格式（例如'user/101@mydomain'）
+* auto_answer: true or false。确定接收者是否自动接听
+* transfer_command: 用于[transfer](../../../Modules/mod-dptools/6586616.mdx#about)的数据字符串。在接收者接听页面之后使用此命令
+* conference_command: 用于[conference](../../../Modules/mod_conference_3965534.mdx#list)的数据字符串。在所有接收者会议之后使用此命令
 
-Below is the relevant section of my dialplan:
+以下是我的拨号计划的相关部分：
 
-**Dialplan example for intercom.js**
+**intercom.js的拨号计划示例**
 
 ```xml
-<extension name="Example Intercom">
+<extension name="示例Intercom">
 	<condition field="destination_number" expression="^150$" break="never">
 		<action application="javascript" data="Intercom.js '101@${domain_name},117@${domain_name},150@${domain_name}:false' '9150 XML default' '150@default'"/>
 	</condition>
 </extension>
 
-<extension name="Example Intercom Conference">
+<extension name="示例Intercom会议">
 	<condition field="destination_number" expression="^9150$" break="never">
 		<action application="conference" data="150@default+flags{mute}"/>
 	</condition>
 </extension>
 ```
 
-Extension 150 is my intercom page extension. 9150 is the extension to which paged recipients are directed. 150 is set to false on auto\_answer as it is an intercom connected to a legacy device connected to a Sipura 2102 ATA (thus it must ring so the device can pick up). 101 and 117 are Polycom Soundpoint IP phones with reg.x.callsPerLineKey="1". This means that call-waiting is disabled on their pager lines, so incoming pages don't put their current caller on hold.
+扩展150是我的对讲机分机号码。接收页消息的分机号码是9150。150的自动应答设置为false，因为它是连接到传统设备上（通过Sipura 2102 ATA连接），必须响铃以便设备能够接听。101和117都是Polycom Soundpoint IP电话，其reg.x.callsPerLineKey="1"。这意味着对他们的页消息线路禁用了来电等待功能，因此接收到的页消息不会让当前通话保持等待。
 
-Feedback for additional phones would be great! Currently tested on:
+非常感谢对其他手机的反馈！目前在以下手机上进行了测试：
 
-* Polycom Soundpoint IP 320/330 and 550/650
+* Polycom Soundpoint IP 320/330和550/650
 * Linksys/Sipura SPA2102 ATA
-
-

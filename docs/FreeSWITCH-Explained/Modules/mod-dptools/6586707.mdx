@@ -1,77 +1,83 @@
+# mod_dptools: 重定向
 
-# mod_dptools: redirect 
+## 关于
 
- 
+可以将一个通道重定向到另一个终端，但必须注意不要将不兼容的通道重定向，否则将不会达到预期的效果。
 
-## About
+单击此处展开目录
 
-Can redirect a channel to another endpoint, you must take care to not redirect incompatible channels, as that wont have the desired effect.
+* 1 [示例](#示例)
+* 2 [提示](#-freeswitch--mod_dptools-重定向-)
+* 3 [参见](#参见)
 
-Click here to expand Table of Contents
+### 示例
 
-* 1 [Examples](#examples)
-* 2 [Tips](#-freeswitch--mod_dptools-redirect-)
-* 3 [See also](#see-also)
-
-### Examples
-
-If you redirect to a SIP url it should be a SIP channel. By providing a single SIP URI FreeSWITCH will issue a 302 "Moved Temporarily".
+如果要将通道重定向到 SIP URL，则应该是 SIP 通道。通过提供一个单独的 SIP URI，FreeSWITCH 将发出 302 "暂时移动"。
 
 ```xml
-<action application="redirect" data="sip:foo@bar.com "/> 
+<action application="redirect" data="sip:foo@bar.com "/> 
 ```
 
-By providing multiple SIP URIs separated by a comma FreeSWITCH will send a 300 "Multiple Choices" (as of commit e15abcf9aaf6742765debb7ccb101965f5eae51b):
+通过提供用逗号分隔的多个 SIP URIs，FreeSWITCH 将发送 300 "多种选择"（自提交 e15abcf9aaf6742765debb7ccb101965f5eae51b 起）：
 
 ```xml
-<action application="redirect" data="sip:foo@bar.com,sip:foo@end.com"/> 
+<action application="redirect" data="sip:foo@bar.com,sip:foo@end.com"/> 
 ```
 
-The 300 sent by FreeSWITCH will have multiple Contact: headers with each value.
+FreeSWITCH 发送的 300 响应将具有多个 Contact: 头，每个头都包含一个值。
 
-redirect can only be used on new incoming calls that haven't been answered (Answer app). If the call has been answered, use the Deflect application instead.
+重定向只能用于尚未回答的新呼入呼叫（Answer 应用程序）。如果呼叫已回答，请改用 Deflect 应用程序。
 
-### Tips
+### 提示
 
-Click here to expand...
+单击此处展开...
 
-\--------------------------------  
-Server A where a phone is registered  
-\--------------------------------  
-Server A make profile int/ext profiles use TCP transport  
-./sip\_profile/internal.xml  
-&lt;param name="bind-params" value="transport=tcp"/>  
-./sip\_profile/external.xml  
-&lt;param name="bind-params" value="transport=tcp"/>  
-\--------------------------------  
-Server A Dialplan, I dial 9, and 8378 to send call to server B, where B external profile handles call  
-./dialplan/default.xml  
-&lt;extension name="call\_fs\_right">  
-&lt;condition field="destination\_number" expression="^9(\\d+)$">  
-&lt;action application="answer"/>  
-&lt;action application="bridge" data="sofia/external/sip:$1@192.168.150.3:5080"/>  
-&lt;/condition>  
-&lt;/extension>  
-\--------------------------------  
-Sever B where redirect happens  
-\--------------------------------  
-Sever B make external profile use TCP transport  
-./sip\_profile/external.xml  
-&lt;param name="bind-params" value="transport=tcp"/>  
-\--------------------------------  
-Server B public dialplan I redirect call without answering it  
-./dialplan/public.xml  
-&lt;extension name="redirect call">  
-&lt;condition field="destination\_number" expression="^(test|8378)$">  
-&lt;action application="redirect" data="sip:music@[iptel.org](http://iptel.org)"/>  
-&lt;/condition>  
-&lt;/extension>  
-\---------------------------------
-  
-  
-### See also
+**Server A电话注册的地方**
 
-* [mod\_dptools: deflect](./6586629.mdx#about)
-* [Handling SIP Redirect](../../Dialplan/XML-Dialplan/Handling-SIP-Redirect_9634433.mdx#about)
+Server A使用TCP传输创建内部和外部配置文件
 
+./sip_profile/internal.xml
 
+`<param name="bind-params" value="transport=tcp"/>`
+
+./sip_profile/external.xml
+
+`<param name="bind-params" value="transport=tcp"/>`
+
+**Server A的拨号计划，我拨打9和8378来将呼叫发送到Server B，由B的外部配置文件处理呼叫**
+
+./dialplan/default.xml
+
+```
+<extension name="call_fs_right">
+    <condition field="destination_number" expression="^9(\d+)$">
+        <action application="answer"/>
+        <action application="bridge" data="sofia/external/sip:$1@192.168.150.3:5080"/>
+    </condition>
+</extension>
+```
+
+**发生重定向的Server B**
+
+Sever B使用TCP传输创建外部配置文件
+
+./sip_profile/external.xml
+
+`<param name="bind-params" value="transport=tcp"/>`
+
+**Server B的公共拨号计划，我在不接听呼叫的情况下进行重定向**
+
+./dialplan/public.xml
+
+```
+<extension name="redirect call">
+    <condition field="destination_number" expression="^(test|8378)$">
+        <action application="redirect" data="sip:music@[iptel.org](http://iptel.org)"/>
+    </condition>
+</extension>
+```
+
+### 另请参阅
+
+- [mod\_dptools: deflect](./6586629.mdx#about)
+- [处理SIP重定向](../../Dialplan/XML-Dialplan/Handling-SIP-Redirect_9634433.mdx#about)

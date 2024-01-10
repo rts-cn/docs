@@ -1,46 +1,43 @@
+# Fail2Ban
 
-# Fail2Ban 
+## 关于
 
- 
+Fail2Ban是一种入侵预防系统，它通过扫描日志文件并根据日志条目采取相应的措施来工作。Fail2ban在基本配置中专门支持FreeSWITCH，并且可以轻松启用。
 
-## About  
+Fail2ban扫描FreeSWITCH日志文件，以及其他可选的日志文件，以寻找指示问题的模式；例如，入侵者试图在FreeSWITCH上进行注册的尝试。Fail2ban在日志条目中查找IP地址，并且当来自特定IP地址的问题达到阈值时（在配置文件中设置），fail2ban将更新iptable防火墙规则以阻止该IP地址的访问 - 也就是封禁该IP地址。正如在fail2ban网站[fail2ban.org](http://www.fail2ban.org)上所解释的，封禁的阈值 - 什么构成问题，问题数量，问题的时间范围，封禁的持续时间等等 - 都可以进行配置。
 
-Fail2Ban is an intrusion prevention system that works by scanning log files and then taking actions based on the log entries. Fail2ban specifically supports FreeSWITCH as part of its base configuration and can be easily enabled.
+Fail2Ban可以通过GitHub页面<https://github.com/fail2ban/fail2ban>和各种Linux发行版的软件库获取。
 
-Fail2ban scans FreeSWITCH logs, and optionally other logs, for patterns that indicate problems; e.g., an attempt by an intruder to register with FreeSWITCH. Fail2ban looks for IP addresses in the log entries, and when problems from a specific IP address reach a threshold (as set in a configuration file), fail2ban will update iptable firewall rules to block access from that IP address – that is, "ban" that IP address. As explained at the fail2ban web site [fail2ban.org](http://www.fail2ban.org), the thresholds for a ban – what constitutes a problem, number of problems found, time frame of problems, duration of a ban, etc. – can all be configured.
+单击以展开目录
 
-Fail2Ban is available via github page <https://github.com/fail2ban/fail2ban> and in various Linux distribution repositories.
-
-Click to expand Table of Contents
-
-* 1 [Requirements](#-requirements-)
-* 2 [Install](#-install-)  
-   * 2.1 [Examples](#examples)  
+* 1 [要求](#-要求-)
+* 2 [安装](#-安装-)
+   * 2.1 [示例](#示例)
    * 2.2 [CentOS](#centos)
-* 3 [Configure](#-configure-)  
-   * 3.1 [Baseline Configuration of FreeSWITCH](#baseline-configuration-of-freeswitch--)  
-   * 3.2 [Baseline Configuration of Fail2ban](#-baseline-configuration-of-fail2ban)  
-   * 3.3 [Custom Fail2ban Monitoring](#custom-fail2ban-monitoring)  
-   * 3.4 [Customizing Log Files for Use by fail2ban](#customizing-log-files-for-use-by-fail2ban)
-* 4 [Start and Test Fail2ban and Verify Operation](#start-and-test-fail2ban-and-verify-operation)  
-   * 4.1 [Starting Fail2ban](#starting-fail2ban)  
-   * 4.2 [Test the actual failure mode](#-test-the-actual-failure-mode-)  
-   * 4.3 [Errors](#errors)
-* 5 [See Also](#see-also)
+* 3 [配置](#-配置-)
+   * 3.1 [FreeSWITCH 基线配置](#freeswitch-基线配置--)
+   * 3.2 [Fail2ban 基线配置](#-fail2ban-基线配置)
+   * 3.3 [自定义 Fail2ban 监控](#自定义-fail2ban-监控)
+   * 3.4 [定制 fail2ban 的日志文件](#定制-fail2ban-的日志文件)
+* 4 [启动并验证 Fail2ban 的运行状态](#启动并验证-fail2ban-的运行状态)
+   * 4.1 [启动 Fail2ban](#启动-fail2ban)
+   * 4.2 [测试实际故障模式](#-测试实际故障模式-)
+   * 4.3 [错误](#错误)
+* 5 [参考](#参考)
 
-##  Requirements 
+##  要求
 
-An installation of fail2ban requires:
+安装 fail2ban 需要以下条件:
 
-* iptables, used to ban IP addresses
-* fail2ban
-* log file(s) of problems to detect
+* 使用 iptables 来封禁 IP 地址
+* 安装了 fail2ban
+* 需要有问题的日志文件来检测
 
-Some distributions of fail2ban (CentOS, for example) require firewalld.  
+某些发行版的 fail2ban（例如 CentOS）需要 firewalld。
 
-##  Install 
+##  安装
 
-### Examples
+### 示例
 
 **Debian**
 
@@ -61,38 +58,40 @@ zypper install fail2ban
 
 ```bash
 pkg install py27-fail2ban
-... and all the files referenced later are in /usr/local/etc/ rather than /etc/
+... 另外，后面所引用的文件都位于 /usr/local/etc/ 而不是 /etc/ 中
 ```
 
 ### CentOS
 
-Fail2ban may be installed from the EPEL repository. See <http://fedoraproject.org/wiki/EPEL/FAQ>.
+可以通过 EPEL 软件源安装 Fail2ban。请参考 <http://fedoraproject.org/wiki/EPEL/FAQ>。
 
-The EPEL repository is non-architecture specific; the links to i386 are identical to x86\_64.
+EPEL 软件源不涉及特定架构；i386 和 x86\_64 的链接是相同的。
 
-##  Configure 
+##  配置
 
-### Baseline Configuration of FreeSWITCH  
+### FreeSWITCH 基线配置
 
-For FreeSWITCH, one common intrusion is Authentication Attempts/Failures. Reports of these failures can be placed into the standard FreeSWITCH log in one of two ways:
+对于 FreeSWITCH，一种常见的入侵方式是鉴权尝试/失败。可以通过以下两种方式将这些失败报告放入标准的 FreeSWITCH 日志中:
 
-* Beta: [mod\_fail2ban](../Modules/mod_fail2ban_6587363.mdx#hint), a module that will publish failure attempts to the FreeSWITCH log; or
-* Enable "log-auth-failures" for each Sofia profile  
+* Beta: [mod\_fail2ban](../Modules/mod_fail2ban_6587363.mdx#hint)是一个模块，会将失败的尝试记录到FreeSWITCH日志中；
+或者
+* 为每个Sofia配置文件启用"log-auth-failures"  
+
 ```bash  
 <param name="log-auth-failures" value="true"/>  
 ```
 
-In both cases, **loglevel** must set to loglevel 4 (**WARNING**) or higher.
+无论哪种方式，都必须将**loglevel**设置为loglevel 4（**WARNING**）或更高。
 
-Later on in this document we'll see an example of how to configure a custom warning.
+在本文档稍后的部分，我们将看到如何配置自定义警告的示例。
 
-###  Baseline Configuration of Fail2ban
+### Fail2ban的基本配置
 
-The maintainers of Fail2Ban have taken an interest in supporting FreeSWITCH. They have asked that we use fail2ban's FreeSWITCH configuration file at <https://github.com/fail2ban/fail2ban/blob/master/config/filter.d/freeswitch.conf> rather than specify a custom configuration here. If anyone wishes to submit other regular expressions that should be included in the fail2ban distribution, please provide samples to <https://github.com/fail2ban/fail2ban/issues>.
+Fail2Ban的维护者们对支持FreeSWITCH很感兴趣。他们要求我们使用fail2ban的FreeSWITCH配置文件，而不是在这里指定自定义配置。如果有人希望提交应该包含在fail2ban分发中的其他正则表达式，请提供样例到<https://github.com/fail2ban/fail2ban/issues>。
 
-Fail2ban's jail.conf file contains a standard configuration for FreeSWITCH.
+Fail2ban的jail.conf文件包含了FreeSWITCH的标准配置。
 
-**From Standard jail.conf**
+**从标准的jail.conf文件中提取**
 
 ```bash
 [freeswitch]
@@ -105,40 +104,40 @@ logpath  = /var/log/freeswitch.log
 maxretry = 10
 ```
 
-To enable monitoring of FreeSWITCH create a file in /etc/fail2ban/jail.d called freeswitch.local. This file **must** contain the line "enabled=true," because by default freeswitch is not enabled.
+要启用对FreeSWITCH的监控，请在/etc/fail2ban/jail.d目录下创建一个名为freeswitch.local的文件。这个文件**必须**包含一行"enabled=true"，因为默认情况下，freeswitch是未启用的。
 
-**jail.d/freeswitch.local**
-
-```bash
-[freeswitch]
-enabled = true
-
-# Ignore failures from our local internal network
-ignoreip = 127.0.0.0/8 X.Y.0.0/16
-```
-
-"ignoreip" is not mandatory; if present it can be set to whatever values make sense for your installation. The usual use case is to prevent internal IP addresses from being banned.
-
-### Custom Fail2ban Monitoring
-
-Fail2ban sets some standard values in jail.conf; among them, the number of retries that constitute a failure, the time window in which the failures must occur, and how long to ban the IP address. Here's how freeswitch.local looks if we change the values:
-
-**Customized freeswitch.local**
+**jail.d/freeswitch.local文件**
 
 ```bash
 [freeswitch]
 enabled = true
 
-# Ignore failures from our local internal network
+# 忽略来自本地内部网络的失败尝试
+ignoreip = 127.0.0.0/8 X.Y.0.0/16
+```
+
+"ignoreip"是可选的；如果存在，则可以设置为适合您的安装的任何值。通常的用例是防止内部IP地址被禁止。
+
+### 自定义Fail2ban监控
+
+Fail2ban在jail.conf中设置了一些标准值，其中包括构成失败的重试次数、失败必须发生的时间窗口以及禁止IP地址的时间长度。如果我们更改这些值，freeswitch.local的情况如下：
+
+**自定义的freeswitch.local**
+
+```bash
+[freeswitch]
+enabled = true
+
+# 忽略来自本地内部网络的失败
 ignoreip = 127.0.0.0/8 X.Y.0.0/16
 
-maxretry  =   4    ; for a total of five failures
-findtime  =  3600  ; based on empirical testing
-bantime   =  1200  ; ban for 20 minutes
+maxretry  =   4    ; 总共允许五次失败
+findtime  =  3600  ; 基于经验测试
+bantime   =  1200  ; 禁止20分钟
 
 ```
 
-If your system has only port 5060 enabled, and other ports blocked by iptables, you'll want to restrict fail2ban to control 5060 only. In that case, freeswitch.local becomes:
+如果您的系统只启用了5060端口，并且通过iptables阻止了其他端口，您将希望将fail2ban限制在只控制5060端口。在这种情况下，freeswitch.local变为：
 
 **freeswitch.local**
 
@@ -146,19 +145,19 @@ If your system has only port 5060 enabled, and other ports blocked by iptables, 
 [freeswitch]
 enabled = true
 
-# Ignore failures from our local internal network
+# 忽略来自本地内部网络的失败
 ignoreip = 127.0.0.0/8 X.Y.0.0/16
 
-maxretry  =   4    ; for a total of five failures
-findtime  =  3600  ; based on empirical testing
-bantime   =  1200  ; ban for 20m (which lets us pick up repeat offenders)
+maxretry  =   4    ; 总共允许五次失败
+findtime  =  3600  ; 基于经验测试
+bantime   =  1200  ; 禁止20分钟（这样我们可以识别出重复违规者）
 
-# We do not use 5061 and it is not open to the outside world, so act on 5060 only
+# 我们不使用5061，并且它没有开放给外部世界，所以只对5060端口进行操作
 port     = 5060
 
 ```
 
-If email notifications are not useful, re-define the default actions – one per line, regardless of how the browser displays it below – and leave off the "mta" that's in the freeswitch section of jail.conf. Our freeswitch.local now reads:
+如果电子邮件通知没有用处，请重新定义默认的操作 - 每行一项，不管浏览器如何显示下面的内容 - 并且在jail.conf的freeswitch部分中省略掉"freeswitch"中的"mta"。我们的freeswitch.local现在如下： 
 
 **freeswitch.local**
 
@@ -166,47 +165,48 @@ If email notifications are not useful, re-define the default actions – one per
 [freeswitch]
 enabled = true
 
-# Ignore failures from our local internal network
+# 忽略来自本地内部网络的失败
 ignoreip = 127.0.0.0/8 X.Y.0.0/16
 
-maxretry  =   4    ; for a total of five failures
-findtime  =  3600  ; based on empirical testing
-bantime   =  1200  ; ban for 20m (which lets us pick up repeat offenders)
+```plaintext
+maxretry = 4; 总共允许5次失败尝试
+findtime = 3600; 经证实的时间
+bantime = 1200; 封禁20分钟（这样我们可以封禁重复违规者）
 
-# We do not use 5061 and it is not open to the outside world, so act on 5060 only
-port     = 5060
+# 我们不使用5061端口，也不对外开放，所以只针对5060端口进行操作
+port = 5060
 
-# we do not want mail, so remove that action from standard jail.conf freeswitch config
-action   = %(banaction)s[name=%(__name__)s-tcp, port="%(port)s", protocol="tcp", chain="%(chain)s", actname=%(banaction)s-tcp]
-           %(banaction)s[name=%(__name__)s-udp, port="%(port)s", protocol="udp", chain="%(chain)s", actname=%(banaction)s-udp]
+# 我们不需要邮件功能，所以从标准的jail.conf配置中移除该操作
+action = %(banaction)s[name=%(__name__)s-tcp, port="%(port)s", protocol="tcp", chain="%(chain)s", actname=%(banaction)s-tcp]
+            %(banaction)s[name=%(__name__)s-udp, port="%(port)s", protocol="udp", chain="%(chain)s", actname=%(banaction)s-udp]
 
 ```
 
-### Customizing Log Files for Use by fail2ban
+### 自定义日志文件供fail2ban使用
 
-The "baseline configuration of FreeSWITCH" section, above, creates entries in the FreeSWITCH log file for unauthorized attempts to register. Let's say that aside from unauthorized attempts to register, intruders also attempt to make unauthorized calls. Here's an example of how to configure FreeSWITCH and fail2ban to find these unauthorized calls and block the IP address of the attacker.
+上面的"自由交换基线配置"部分在FreeSWITCH日志文件中创建了未经授权的注册尝试的记录。假设除了未经授权的注册尝试之外，入侵者还试图进行未经授权的呼叫。以下是如何配置FreeSWITCH和fail2ban以查找这些未经授权的呼叫并阻止攻击者的IP地址的示例。
 
-In step one, check each incoming call request over the public-facing SIP port and determine if the call is a spoof attempt. When FreeSWITCH finds that attempt, execute the following line in the dialplan:
+在第一步中，检查公共SIP端口上的每个传入呼叫请求，并确定呼叫是否为欺骗尝试。当FreeSWITCH发现此尝试时，在拨号计划中执行以下行：
 
-**Anti-Action in Dialplan**
+**拨号计划中的反操作**
 
 ```bash
-<anti-action application="set" data="accountcode=instrusion"/>
+<anti-action application="set" data="accountcode=intrusion"/>
 ```
 
-Of course the choice of how to set accountcode will vary according to how intrusion is detected.
+当然，根据检测到入侵的方式，如何设置accountcode的选择会有所不同。
 
-In autoload\_configs/cdr\_csv.conf.xml, add the following line inside the `templates` section:
+在autoload\_configs/cdr\_csv.conf.xml中，在`templates`部分中添加以下行：
 
-**Template in cdr\_csv.conf.xml**
+**cdr\_csv.conf.xml中的模板**
 
 ```bash
-<template name="instrusion">"FAIL2BAN_HOST=${sip_received_ip}","{sip_call_id}"</template>
+<template name="intrusion">"FAIL2BAN_HOST=${sip_received_ip}","{sip_call_id}"</template>
 ```
 
-As the result of these two settings, a line will be printed in that format for each intrusion attempt in the log file` /var/log/freeswitch/cdr-csv/spam.csv.` Only the sip\_received\_ip is actually necessary here; but in this example, I assume that a human reviewing the file may be interested in more information.
+根据这两个设置的结果，每个入侵尝试都将在日志文件` /var/log/freeswitch/cdr-csv/spam.csv`中以指定格式打印一行。在这里，实际上只有`sip_received_ip`是必需的；但在此示例中，我假设人类审查该文件时可能对更多信息感兴趣。
 
-Next, fail2ban must be configured to look for this pattern. This is accomplished by adding a new filter, freeswitch.local, to fail2ban's filter.d directory:
+接下来，需要配置fail2ban以查找此模式。可以通过将新过滤器`freeswitch.local`添加到fail2ban的`filter.d`目录来实现这一目标：
 
 **filter.d/freeswitch.local**
 
@@ -217,9 +217,9 @@ failregex = ^\.\d+ \[WARNING\] sofia_reg\.c:\d+ SIP auth (failure|challenge) \((
             \"FAIL2BAN_HOST=<HOST>\"
 ```
 
-The first two lines of failregex are the original filter from filter.d/freeswitch.conf, and the next line is a regex to find the IP address to ban in the log entry we just specified in cdr\_csv.config.xml.
+`failregex`的前两行是`filter.d/freeswitch.conf`中的原始过滤器，接下来一行是在我们刚刚在`cdr_csv.config.xml`中指定的日志条目中查找要禁止的IP地址的正则表达式。
 
-Finally, we need to modify jail.d/freeswitch.local's list of log files to search:
+最后，我们需要修改`jail.d/freeswitch.local`中要搜索的日志文件列表：
 
 **freeswitch.local**
 
@@ -227,78 +227,78 @@ Finally, we need to modify jail.d/freeswitch.local's list of log files to search
 [freeswitch]
 enabled = true
 
-# Ignore failures from our local internal network
+# 忽略来自本地内部网络的失败尝试
 ignoreip = 127.0.0.0/8 X.Y.0.0/16
 
-maxretry  =   4    ; for a total of five failures
-findtime  =  3600  ; based on empirical testing
-bantime   =  1200  ; ban for 20m (which lets us pick up repeat offenders)
+maxretry  =   4    ; 总共允许五次失败
+findtime  =  3600  ; 基于经验测试
+bantime   =  1200  ; 封禁20分钟（以便我们识别出重复违规者）
 
-# We do not use 5061 and it is not open to the outside world, so act on 5060 only
+# 我们不使用5061端口，也不开放给外部世界，所以只针对5060端口进行操作
 port     = 5060
+```
 
-# we do not want mail, so remove that action from standard jail.conf freeswitch config
+# 我们不需要邮件，所以从标准的jail.conf freeswitch配置中移除该操作
 action   = %(banaction)s[name=%(__name__)s-tcp, port="%(port)s", protocol="tcp", chain="%(chain)s", actname=%(banaction)s-tcp]
            %(banaction)s[name=%(__name__)s-udp, port="%(port)s", protocol="udp", chain="%(chain)s", actname=%(banaction)s-udp]
 
-# Add intrusion log, which contains special string for host (see freeswitch.local filter)
+# 添加入侵日志，其中包含用于主机的特殊字符串（参见freeswitch.local过滤器）
 logpath = /var/log/freeswitch/freeswitch.log
-          /var/log/freeswitch/cdr-csv/intrusion.csv 
-```
+          /var/log/freeswitch/cdr-csv/intrusion.csv
 
-As a result of these modifications, fail2ban will look for both the standard registration attempts as well as our custom-defined intrusions. If a threshold is reached by a particular IP address, fail2ban will ban the IP address of the intruder.
+通过这些修改，fail2ban将查找标准的注册尝试以及我们自定义定义的入侵。如果特定IP地址达到了阈值，fail2ban将禁止入侵者的IP地址。
 
-## Start and Test Fail2ban and Verify Operation
+## 启动并测试Fail2ban并验证操作
 
-### Starting Fail2ban
+### 启动Fail2ban
 
-Restart fail2ban (/etc/init.d/fail2ban restart, or service fail2ban restart, or systemctl restart fail2ban). The following, or something similar, should be in your /var/log/fail2ban.log:
+重新启动fail2ban（/etc/init.d/fail2ban restart，或service fail2ban restart，或systemctl restart fail2ban）。以下或类似的内容应该出现在/var/log/fail2ban.log中：
 
-2018-01-03 18:55:06,436 fail2ban.server         [410]: INFO    Changed logging target to /var/log/fail2ban.log for Fail2ban v0.9.7
+2018-01-03 18:55:06,436 fail2ban.server         [410]: INFO    将日志记录目标更改为 /var/log/fail2ban.log，适用于Fail2ban v0.9.7
 
-2018-01-03 18:55:06,439 fail2ban.jail           [410]: INFO    Creating new jail 'freeswitch'
+2018-01-03 18:55:06,439 fail2ban.jail           [410]: INFO    创建新的监狱 'freeswitch'
 
-2018-01-03 18:55:06,440 fail2ban.jail           [410]: INFO    Jail 'freeswitch' uses poller {}
+2018-01-03 18:55:06,440 fail2ban.jail           [410]: INFO    监狱 'freeswitch' 使用轮询器 {}
 
-2018-01-03 18:55:06,443 fail2ban.jail           [410]: INFO    Initiated 'polling' backend
+2018-01-03 18:55:06,443 fail2ban.jail           [410]: INFO    启动 'polling' 后端
 
-2018-01-03 18:55:06,446 fail2ban.filter         [410]: INFO    Added logfile = /var/log/freeswitch/freeswitch.log
+2018-01-03 18:55:06,446 fail2ban.filter         [410]: INFO    添加日志文件= /var/log/freeswitch/freeswitch.log
 
-2018-01-03 18:55:06,448 fail2ban.filter         [410]: INFO    Added logfile = /var/log/freeswitch/cdr-csv/spam.csv
+2018-01-03 18:55:06,448 fail2ban.filter         [410]: INFO    添加日志文件= /var/log/freeswitch/cdr-csv/spam.csv
 
-2018-01-03 18:55:06,449 fail2ban.filter         [410]: INFO    Set maxRetry = 4
+2018-01-03 18:55:06,449 fail2ban.filter         [410]: INFO    设置maxRetry = 4
 
-2018-01-03 18:55:06,452 fail2ban.filter         [410]: INFO    Set jail log file encoding to ANSI_X3.4-1968
+2018-01-03 18:55:06,452 fail2ban.filter         [410]: INFO    将监狱日志文件编码设置为ANSI_X3.4-1968
 
-2018-01-03 18:55:06,453 fail2ban.actions        [410]: INFO    Set banTime = 1200
+2018-01-03 18:55:06,453 fail2ban.actions        [410]: INFO    将banTime设置为1200
 
-2018-01-03 18:55:06,455 fail2ban.filter         [410]: INFO    Set findtime = 3600
+2018-01-03 18:55:06,455 fail2ban.filter         [410]: INFO    将findtime设置为3600
 
-2018-01-03 18:55:06,483 fail2ban.jail           [410]: INFO    Creating new jail 'recidive'
+2018-01-03 18:55:06,483 fail2ban.jail           [410]: INFO    创建新的监狱'recidive'
 
-2018-01-03 18:55:06,483 fail2ban.jail           [410]: INFO    Jail 'recidive' uses poller {}
+2018-01-03 18:55:06,483 fail2ban.jail           [410]: INFO    监狱'recidive'使用poller {}
 
-2018-01-03 18:55:06,484 fail2ban.jail           [410]: INFO    Initiated 'polling' backend
+2018-01-03 18:55:06,484 fail2ban.jail           [410]: INFO    启用'polling'后端
 
-2018-01-03 18:55:06,485 fail2ban.filter         [410]: INFO    Added logfile = /var/log/fail2ban.log
+2018-01-03 18:55:06,485 fail2ban.filter         [410]: INFO    添加日志文件/var/log/fail2ban.log
 
-2018-01-03 18:55:06,486 fail2ban.filter         [410]: INFO    Set maxRetry = 1
+2018-01-03 18:55:06,486 fail2ban.filter         [410]: INFO    将maxRetry设置为1
 
-2018-01-03 18:55:06,486 fail2ban.filter         [410]: INFO    Set jail log file encoding to ANSI_X3.4-1968
+2018-01-03 18:55:06,486 fail2ban.filter         [410]: INFO    将监狱日志文件编码设置为ANSI_X3.4-1968
 
-2018-01-03 18:55:06,486 fail2ban.actions        [410]: INFO    Set banTime = 43200
+2018-01-03 18:55:06,486 fail2ban.actions        [410]: INFO    将banTime设置为43200
 
-2018-01-03 18:55:06,487 fail2ban.filter         [410]: INFO    Set findtime = 7200
+2018-01-03 18:55:06,487 fail2ban.filter         [410]: INFO    将findtime设置为7200
 
-2018-01-03 18:55:06,487 fail2ban.server         [410]: INFO    Jail recidive is not a JournalFilter instance
+2018-01-03 18:55:06,487 fail2ban.server         [410]: INFO    监狱recidive不是JournalFilter实例
 
-2018-01-03 18:55:06,499 fail2ban.jail           [410]: INFO    Jail 'freeswitch' started
+2018-01-03 18:55:06,499 fail2ban.jail           [410]: INFO    监狱'freeswitch'已启动
 
-2018-01-03 18:55:06,508 fail2ban.jail           [410]: INFO    Jail 'recidive' started
+2018-01-03 18:55:06,508 fail2ban.jail           [410]: INFO    监狱'recidive'已启动
 
- The values will vary, of course, based on values for findtime, bantime, etc. If you've set up other jails – for example, fail2ban's recidive to ban repeat offenders – expect to see multiple jails started.
+这些值会根据findtime、bantime等值而有所不同。如果您设置了其他监狱，例如fail2ban的'\ recidive'用于禁止重复违规者，则可能会看到多个监狱已启动。
 
-Verify that the iptables rules were created:
+确认iptables规则已创建：
 
 ```bash
 # iptables -L f2b-freeswitch
@@ -308,15 +308,15 @@ RETURN     all  --  anywhere             anywhere
 
 ```
 
- ###  Test the actual failure mode 
+###  测试实际故障模式
 
-Setup your favorite client with an invalid userid or invalid password. Try to login as many times as you have set your failure threshold in Fail2Ban. Watch Fail2Ban log:
+设置你喜欢的客户端的无效用户ID或密码。尝试登录的次数应与Fail2Ban中设置的失败阈值相同。监视Fail2Ban日志：
 
 tail -f /var/log/fail2ban.log
-2010-02-05 10:13:12,070 fail2ban.actions: WARNING [freeswitch-udp] Ban 192.168.1.10
-2010-02-05 10:13:12,098 fail2ban.actions: WARNING [freeswitch-tcp] Ban 192.168.1.10
+2010-02-05 10:13:12,070 fail2ban.actions: 警告 [freeswitch-udp] 禁止 192.168.1.10
+2010-02-05 10:13:12,098 fail2ban.actions: 警告 [freeswitch-tcp] 禁止 192.168.1.10
 
-Verify your client can no longer do a register (should just time out). Also verify iptables:
+验证你的客户端不能再进行注册（应该超时）。同时验证iptables：
 
 ```bash
 # iptables -n -L f2b-freeswitch
@@ -331,7 +331,7 @@ DROP       all  --  192.168.1.10         0.0.0.0/0
 RETURN     all  --  0.0.0.0/0            0.0.0.0/0
 ```
 
-You can then wait for Fail2Ban to clear the the block, or do it yourself:
+然后等待Fail2Ban清除该阻止，或者自己清除：
 
 ```bash
 # iptables -D f2b-freeswitch 1
@@ -345,17 +345,17 @@ target     prot opt source               destination
 RETURN     all  --  anywhere             anywhere
 ```
 
-You might also take a look at [this oreilly scn my systemript](http://etel.wiki.oreilly.com/wiki/index.php/SIP%5FDoS/DDoS%5FMitigation)
+你还可以查看 [这个Oreilly的系统脚本](http://etel.wiki.oreilly.com/wiki/index.php/SIP%5FDoS/DDoS%5FMitigation)
 
-### Errors
+### 错误
 
-_The problems in this section are likely solved in modern versions of iptables, i.e., greater than 1.4.7, by the "lockingopt" parameter which is included by default in fail2ban's actions.d/iptables-common.conf_  
+这一部分的问题在现代版本的iptables中很可能已经解决，即大于1.4.7版本，通过“lockingopt”参数，该参数默认包含在fail2ban的actions.d/iptables-common.conf中。
 
-If you're seeing something like this in your Fail2Ban logfile:
+如果你在Fail2Ban的日志文件中看到类似以下的内容：
 
 2011-02-27 14:11:42,326 fail2ban.actions.action: ERROR  iptables -N fail2ban-freeswitch-tcp
 
-add the time.sleep(0.1) to /usr/bin/fail2ban-client
+在 /usr/bin/fail2ban-client 中添加 time.sleep(0.1)
 
 def __processCmd(self, cmd, showRet = True):
 	beautifier = Beautifier()
@@ -363,19 +363,17 @@ def __processCmd(self, cmd, showRet = True):
 		**time.sleep(0.1)**
 		beautifier.setInputCmd(c)
 
-or
+或者
 
 sed -i -e s,beautifier\.setInputCmd\(c\),'time.sleep\(0\.1\)\n\t\t\tbeautifier.setInputCmd\(c\)', /usr/bin/fail2ban-client
 
-[Source: fail2ban wiki](http://www.fail2ban.org/wiki/index.php/Fail2ban%5Ftalk:Community%5FPortal#fail2ban.action.action%5FERROR%5Fon%5Fstartup.2Frestart)
+[来源: fail2ban wiki](http://www.fail2ban.org/wiki/index.php/Fail2ban%5Ftalk:Community%5FPortal#fail2ban.action.action%5FERROR%5Fon%5Fstartup.2Frestart)
 
-## See Also
+## 查看更多
 
-[fail2ban Webinar](https://youtu.be/K-k6qHfzlp4) by Moshe Yudkowsky on ClueCon Weekly Conference Call
+[fail2ban Webinar](https://youtu.be/K-k6qHfzlp4) - Moshe Yudkowsky 在 ClueCon 周会议中的演讲
 
-## Comments:
+## 评论:
 
-| (failure\|challenge)Here you may leave **failure** only, if your **f2b** bans legal users. ![](/images/icons/contenttypes/comment_16.png) Posted by kvishnivetsky at May 07, 2019 03:57 |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-
-
+| 在此处只需留下 **failure**，如果您的 **f2b** 封禁了合法用户。 ![](/images/icons/contenttypes/comment_16.png) 作者：kvishnivetsky 发表于 2019年5月7日 03:57 |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

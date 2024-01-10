@@ -1,12 +1,9 @@
+# Aastra
 
-# Aastra 
-
- 
-
-* 1 [Aastra Products](#aastra-products)  
-   * 1.1 [Presence Support](#presence-support)  
-   * 1.2 [Codec Support](#codec-support)  
-   * 1.3 [Aastra TLS Setup](#aastra-tls-setup)
+* 1 [Aastra产品](#aastra-products)
+   * 1.1 [Presence支持](#presence-support)
+   * 1.2 [编解码器支持](#codec-support)
+   * 1.3 [Aastra TLS设置](#aastra-tls-setup)
 * 2 [Aastra 6739i](#aastra-6739i)
 * 3 [Aastra 55i](#aastra-55i)
 * 4 [Aastra 57i](#aastra-55i)
@@ -15,97 +12,95 @@
 * 7 [Aastra IP-DECT (RFP 32)](#aastra-ip-dect-rfp-32)
 * 8 [Aastra 6757i](#aastra-6739i)
 
-## Aastra Products
+## Aastra产品
 
-Later than 2.3.1, Aastra Phones (55i, 57i) are working very well behind NAT, tested with rport enabled, very reliable, and also connecting with proxy/registrar ports other than 5060\. These have been tested with firmwares later than 2.3.1\. The latest firmware 2.4.1 is the best with correct G.722 support, also supporting many other wideband Codecs.
+2.3.1版本之后的Aastra电话（55i，57i）在NAT后面运行非常好，已进行了rport启用的测试，非常可靠，并且也可以连接到代理服务器/注册服务器的端口，而不是5060端口。这些已经测试通过了2.3.1版本之后的固件。最新的2.4.1固件具有正确的G.722支持，还支持许多其他宽带编解码器。
 
-If you are having trouble with registering or dialing from behind a NAT with an Aastra Phone, in the phone's web interface try enabling the rport option on the Advanced/Network page. Also, when trying to use a port other than 5060 behind a NAT, on the Advanced/Global SIP page you might try changing "Local SIP UDP/TCP Port" to whatever port you are registering on with your Line settings. This lets the FreeSWITCH server return SIP traffic on the same port your phone sent SIP traffic out on.
+如果您在Aastra电话的后面注册或拨号时遇到问题，请在电话的Web界面上尝试在高级/网络页面上启用rport选项。而且，当尝试在NAT后面使用其他端口而不是5060端口时，您可能需要在高级/全局SIP页面上更改“本地SIP UDP/TCP端口”为您在线路设置中注册的端口。这样一来，FreeSWITCH服务器可以将SIP流量返回到与您的电话发送SIP流量的端口上。
 
-Enabling STUN support may also help on the newer firmwares.
+在较新的固件上启用STUN支持也可能有所帮助。
 
-### Presence Support
+### Presence支持
 
-A lot of users have complained about presence not working properly with Aastra phones. Currently, changing the transport from UDP to TCP seems to resolve these issues. This has been tested against firmware 2.6.0 all model Aastra phones.
+很多用户抱怨Aastra电话的presence功能无法正常工作。目前，将传输方式从UDP更改为TCP似乎可以解决这些问题。该解决方案已在固件2.6.0的所有模型的Aastra电话上进行了测试。
 
-### Codec Support
+### 编解码器支持
 
-Aastra phones support many broadband codecs all have been tested and working except BV32\. BV32 does not work properly on all Aastra models. This appears to be an Aastra issue, and not related to FreeSWITCH.
+Aastra手机支持许多宽带编解码器，所有已经通过测试并正常工作，除了BV32编解码器。在所有Aastra型号上BV32编解码器无法正常工作。这似乎是Aastra的问题，而与FreeSWITCH无关。
 
-### Aastra TLS Setup
+### Aastra TLS配置
 
-Just specify where the trusted certificate file (the one generated in [Step 2 - Generate the Server Certificate](/confluence/pages/createpage.action?spaceKey=FREESWITCH&title=Generate_the_Server_Certificate&linkCreation=true&fromPageId=1966907)) is located.
+只需指定受信任的证书文件的位置（在[第2步 - 生成服务器证书](/confluence/pages/createpage.action?spaceKey=FREESWITCH&title=Generate_the_Server_Certificate&linkCreation=true&fromPageId=1966907)中生成的文件）。
 
 ```xml
-sips trusted certificates: ftp://admin:admin!@1.2.3.4:50/path/cacert.pem
-sips persistent tls: 1
+sips信任的证书：ftp://admin:admin!@1.2.3.4:50/path/cacert.pem
+sips持久化TLS：1
 ```
 
 ---
 
 ## Aastra 6739i
 
-Using firmware version 3.0.1.2031, G.722, SRTP and TLS works
+使用固件版本3.0.1.2031，G.722，SRTP和TLS都可以工作
 
 ```xml
-tftp server: 1.2.3.4
-sip customized codec: payload=9;ptime=30;silsupp=on
-sip srtp mode: 2
-sips trusted certificates: cacert.pem
-sip transport protocol: 4
-sips persistent tls: 1
+tftp服务器：1.2.3.4
+sip自定义编解码器：payload=9;ptime=30;silsupp=on
+sip srtp模式：2
+sips信任的证书：cacert.pem
+sip传输协议：4
+sips持久化TLS：1
 
 
 ```
 
- ---
+---
 
 ## Aastra 55i
 
-SRTP in Preferred mode doesn't work. G.722 is working correctly with latest firmware 2.4.1 TLS not tested.
+在首选模式下无法使用SRTP。在最新的2.4.1固件上G.722可以正常工作，但未测试TLS。
 
 ---
 
 ## Aastra 57i
 
-TLS not working
+TLS无法工作
 
 ---
 
 ## Aastra 480i CT
 
-No TLS in 1.4.3 firmware.
+1.4.3固件不支持TLS。
 
 ---
 
 ## Aastra 9112i
 
-Working fine on basic tests with firmware 1.4.0.1048\. If you get the ptime warning you should, in theory, be able to fix it with 'ptime=20' in the Customized Codec Preference List settings, but mine seemed to go away of its own accord.
+在基本测试中，固件版本1.4.0.1048可以正常工作。如果出现ptime警告，理论上可以通过在自定义编解码器偏好设置中添加'ptime=20'来修复，但我的问题似乎自行解决了。
 
 ---
 
 ## Aastra IP-DECT (RFP 32)
 
-* **Registration:** Deregister doesn't work cleanly. But there is a patch in Jira to get it working.
-* **Caller Id:** Works
-* **Call in/out:** Works
-* **Call waiting:** works
-* **Transfer calls:** works
-* **Park calls:** Works
+* **注册：** 取消注册无法正常工作，但有一个在Jira中的补丁可以解决此问题。
+* **来电显示：** 可以工作
+* **呼入/呼出：** 可以工作
+* **呼叫等待：** 可以工作
+* **呼叫转移：** 可以工作
+* **呼叫保持：** 可以工作
 
-Tested with RFP 32 and RFP 34(Outdoor) base stations. The good thing with these phones is, that you can add multiple base stations to a DECT cluster. Each base station then acts also as a DECT repeater, so no additional repeaters are necessary. Central provisioning is not working so far, but is announced by Aastra.
+使用RFP 32和RFP 34（户外）基站进行测试。这些电话的好处是，您可以将多个基站添加到DECT集群中。每个基站还可以作为DECT中继器，因此不需要额外的中继器。目前尚未实现集中配置，但Aastra已经宣布将会实现。
 
 ---
 
 ## Aastra 6757i
 
-* **Registration:** works
-* **Caller Id:** works
-* **Call in/out:** works
-* **Call waiting:** works
-* **Transfer calls:** not tested
-* **Park calls:** not tested
-* **MWI:** not tested
-* **SRTP:** not tested
-* **TLS:** not tested
-
-
+* **注册：**可用
+* **呼叫者ID：**可用
+* **呼入/呼出：**可用
+* **呼叫等待：**可用
+* **转接电话：**未测试
+* **挂起电话：**未测试
+* **收件箱提示：**未测试
+* **SRTP：**未测试
+* **TLS：**未测试

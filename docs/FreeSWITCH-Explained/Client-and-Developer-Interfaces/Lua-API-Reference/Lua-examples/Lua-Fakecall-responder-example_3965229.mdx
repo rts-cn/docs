@@ -1,13 +1,10 @@
+# Lua Fakecall回复程序示例
 
-# Lua Fakecall responder example 
+## 关于
 
- 
+这是一个小而简单的Lua脚本，模拟了在回答之前随机等待一段时间的电话，随机选择不回答（包括各种挂断原因）以及在回答后随机说一段时间的话语。这对于测试目的非常有用，可以模拟负载，让呼叫中心操作员针对“虚假”号码测试脚本，并具有“真实”的行为，最终用于测试和调试自动拨号程序。
 
-## About
-
-A small and simple lua script that simulates a call with random wait time before answering, randomly not answering at all (with various hangup causes) and saying things for a random times once answered. This would be useful for testing purposes simulating load, letting call center operators try scripts against "fake" numbers with a "realistic" behaviour and eventually to test and debug an automated dialer.
-
-## Call script in Dialplan
+## 拨号计划中的呼叫脚本
 
 ```xml
 [...]
@@ -19,35 +16,34 @@ A small and simple lua script that simulates a call with random wait time before
 [...]
 ```
 
-## Lua fakecall responder script
+## Lua Fakecall回复脚本
 
-Script **fakecall.lua**:
+脚本**fakecall.lua**：
 
 ```xml
 ---------------------------------
------Simulates a random call-----
------------RpG-RoughRaf-2009-----
--- released under the terms of the
--- WTF Public License http://sam.zoy.org/wtfpl/
+----- 模拟随机通话 -----
+------- RpG-RoughRaf-2009 -------
+-- 在 WTF Public License（http://sam.zoy.org/wtfpl/）条款下发布 --
 function logInfo(what)
     freeswitch.consoleLog("info", "fakecall-" .. seed .. " - " .. what .. "\n\r");
 end
 function waitARandomTime()
     wait = math.random(3000, 15000) ;
-    logInfo("waiting " .. (wait) .. " msecs");
+    logInfo("等待 " .. (wait) .. " 毫秒");
     session:sleep(wait);
 end
 function saySomethingNRandomTimes()
     n = math.random(1,10);
-    logInfo("saying something " .. n .. " times");
+    logInfo("说 " .. n .. " 次话");
     session:set_tts_parms("flite", "kal");
-    session:speak("Hello! Who's speaking?");
+    session:speak("你好！请问你是谁？");
     session:sleep(2000);
-    session:speak("As I am a stupid robot I will just say something " .. n .. " times.");
+    session:speak("因为我是一个愚蠢的机器人，所以我就只说 " .. n .. " 次话。");
     for i=1,n do
         if session:ready() == false then break end;
-        logInfo("saying something for the " .. i .. " out of " .. n .. " time");
-        session:speak("" .. i .. " out of " .. n .. ": Please stay tuned for more happy days");
+        logInfo("第 " .. i .. " 次，共 " .. n .. " 次");
+        session:speak("" .. i .. "，共 " .. n .. " 次：请继续关注更多快乐的日子");
     end
 end
 function randomize()
@@ -61,7 +57,7 @@ function randomize()
     api:execute("global_setvar", "randomseed=" .. seed)
 end
 function simulateNetworkLatency()
-    logInfo("simulating network latency");
+    logInfo("模拟网络延迟");
     session:sleep(math.random(100,500));
 end
 immediateHangupCauses = {"USER_BUSY", "NO_ROUTE_DESTINATION", "SUBSCRIBER_ABSENT"};
@@ -69,33 +65,70 @@ lateHangupCauses = {"CALL_REJECTED", "NO_ANSWER", "NO_USER_RESPONSE"};
 function rejectCall()
     if math.random(1,3) == 1 then
         cause = immediateHangupCauses[math.random(1,table.getn(immediateHangupCauses))];
-        logInfo("cause is " .. cause);
+        logInfo("挂断原因是 " .. cause);
     else
         cause = lateHangupCauses[math.random(1,table.getn(lateHangupCauses))];
         delay = math.random(1000,5000);
-        logInfo("cause will be " .. cause .. " rejecting in " .. delay .. " seconds");
+        logInfo("挂断原因将是 " .. cause .. "，将在 " .. delay .. " 秒后挂断");
         session:sleep(delay);
     end
     session:execute("hangup", cause);
-    logInfo("hangup");
+    logInfo("挂断");
 end
 seed=12345678;
 randomize()
-logInfo("fakecall.lua up and running");
+logInfo("fakecall.lua 已启动");
 session:preAnswer();
 simulateNetworkLatency()
 if math.random(1,3) == 1 then
-    logInfo("I will accept the call");
+    logInfo("将接听通话");
     waitARandomTime();
     session:answer();
     saySomethingNRandomTimes();
-    logInfo("hanging up");
+    logInfo("挂断");
     session:hangup();
 else
-    logInfo("I will reject the call");
+    logInfo("将拒绝通话");
     rejectCall();
 end
-logInfo("bye...");
+logInfo("再见...");
 ```
 
+## 这是标题
 
+这是一段正文，其中包含一些**粗体**和*斜体*的文字。
+
+这是一个链接到[谷歌](http://www.google.com)的链接。
+
+这是一个无序列表：
+
+- 项目1
+- 项目2
+- 项目3
+
+这是一个有序列表：
+
+1. 第一项
+2. 第二项
+3. 第三项
+
+这是一个引用的文本块：
+
+> 这是引用的文本。
+
+这是一段代码：
+
+```python
+print("Hello, world!")
+```
+
+这是一个表格：
+
+| 列1 | 列2 | 列3 |
+|-----|-----|-----|
+| 项1  | 项2  | 项3  |
+| 项4  | 项5  | 项6  |
+
+这是一张图片：
+
+![图片](image.jpg)

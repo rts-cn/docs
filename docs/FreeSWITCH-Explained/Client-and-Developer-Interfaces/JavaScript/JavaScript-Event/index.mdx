@@ -1,54 +1,53 @@
+# JavaScript事件
 
-# JavaScript Event 
+## 关于
 
- 
+JavaScript事件处理。
 
-## About
+点击这里展开目录
 
-JavaScript event handling.
+* 1 [调用事件对象](#invoking-event-object)
+* 2 [方法](#methods)
+* 3 [创建事件对象并触发的示例](#example-of-creating-event-object-and-then-fire-it)
+   * 3.1 [结果](#result)
+   * 3.2 [订阅自定义事件](#subscribing-to-custom-events)
 
-Click here to expand Table of Contents
+### 调用事件对象
 
-* 1 [Invoking Event Object](#invoking-event-object)
-* 2 [Methods](#methods)
-* 3 [Example of creating Event object and then fire it](#example-of-creating-event-object-and-then-fire-it)  
-   * 3.1 [Result](#result)  
-   * 3.2 [Subscribing To Custom Events](#subscribing-to-custom-events)
+```javascript
+// 定义回调函数
+function on_event(session, type, event_obj, user_data) {
+    if (type == "event") {
+        console_log("notice", "事件: " + event_obj.serialize() + "\n");
+    }
+}
+// 开始音调检测并播放静默文件以等待事件
+session.execute("tone_detect", "voicemail_beep 1400 r");
+session.streamFile("/usr/local/freeswitch/sounds/silence.wav", on_event);
+session.execute("stop_tone_detect");
+```
 
-### Invoking Event Object
+### 方法
 
-   // Define callback function
-   function on_event(session, type, event_obj, user_data) {
-           if (type == "event") {
-                   console_log("notice", "Event: " + event_obj.serialize() + "\n"); 
-           }
-   }
-   // Start tone detection and play silent file to wait for event
-   session.execute("tone_detect", "voicemail_beep 1400 r");    
-   session.streamFile("/usr/local/freeswitch/sounds/silence.wav", on_event);
-   session.execute("stop_tone_detect");
+* [Event addHeader](https://wiki.freeswitch.org/index.php?title=Event%5FaddHeader&action=edit&redlink=1 "Event addHeader（页面不存在）")
+* [Event getHeader](https://wiki.freeswitch.org/index.php?title=Event%5FgetHeader&action=edit&redlink=1 "Event getHeader（页面不存在）")
+* [Event addBody](https://wiki.freeswitch.org/index.php?title=Event%5FaddBody&action=edit&redlink=1 "Event addBody（页面不存在）")
+* [Event getBody](https://wiki.freeswitch.org/index.php?title=Event%5FgetBody&action=edit&redlink=1 "Event getBody（页面不存在）")
+* [Event serialize](https://wiki.freeswitch.org/index.php?title=Event%5Fserialize&action=edit&redlink=1 "Event serialize（页面不存在）")
+* [Event getType](https://wiki.freeswitch.org/index.php?title=Event%5FgetType&action=edit&redlink=1 "Event getType（页面不存在）")
+* [Event fire](https://wiki.freeswitch.org/index.php?title=Event%5Ffire&action=edit&redlink=1 "Event fire（页面不存在）")
+* [Event destroy](https://wiki.freeswitch.org/index.php?title=Event%5Fdestroy&action=edit&redlink=1 "Event destroy（页面不存在）")
 
-### Methods
+### 创建Event对象并触发的示例
 
-* [Event addHeader](https://wiki.freeswitch.org/index.php?title=Event%5FaddHeader&action=edit&redlink=1 "Event addHeader (page does not exist)")
-* [Event getHeader](https://wiki.freeswitch.org/index.php?title=Event%5FgetHeader&action=edit&redlink=1 "Event getHeader (page does not exist)")
-* [Event addBody](https://wiki.freeswitch.org/index.php?title=Event%5FaddBody&action=edit&redlink=1 "Event addBody (page does not exist)")
-* [Event getBody](https://wiki.freeswitch.org/index.php?title=Event%5FgetBody&action=edit&redlink=1 "Event getBody (page does not exist)")
-* [Event serialize](https://wiki.freeswitch.org/index.php?title=Event%5Fserialize&action=edit&redlink=1 "Event serialize (page does not exist)")
-* [Event getType](https://wiki.freeswitch.org/index.php?title=Event%5FgetType&action=edit&redlink=1 "Event getType (page does not exist)")
-* [Event fire](https://wiki.freeswitch.org/index.php?title=Event%5Ffire&action=edit&redlink=1 "Event fire (page does not exist)")
-* [Event destroy](https://wiki.freeswitch.org/index.php?title=Event%5Fdestroy&action=edit&redlink=1 "Event destroy (page does not exist)")
-
-### Example of creating Event object and then fire it
-
-    var msg = "Hello, welcome to the FreeSWITCH demo application please enter some text into the chat box";
+    var msg = "你好，欢迎使用FreeSWITCH演示应用，请在聊天框中输入一些文字";
     e = new Event("custom", "message");
     e.addBody(msg);
     e.fire();
 
-#### Result
+#### 结果
 
-    Content-Length: 608
+Content-Length: 608
     Content-Type: text/event-plain
     
     Event-Subclass: message
@@ -69,43 +68,40 @@ Click here to expand Table of Contents
          
     Hello, welcome to the FreeSWITCH demo application please enter some text into the chat box
 
-#### Subscribing To Custom Events
+#### 订阅自定义事件
 
-In JavaScript you need to specify the Event-Subclass when subscribing to list to custom events. To listen for custom events like the above, do this at the event socket:
+在JavaScript中，当订阅自定义事件时，需要指定Event-Subclass。要监听像上述那样的自定义事件，请在事件套接字中执行以下操作：
 
 events plain custom message
 
-The following is WRONG for JavaScript custom events:
+以下是错误的JavaScript自定义事件用法：
 
 events plain custom
 
-In short, be sure to specify the event subclass when listening for custom events created by your JavaScripts.   
-NOTE: This gives you a bit of flexibility in listening to custom events - you can listen to some custom events but not all custom events.  
-If you have an event like this:
+简而言之，在监听由JavaScript创建的自定义事件时，请确保指定事件子类。  
+注意：这样可以在监听自定义事件时获得一定的灵活性 - 您可以监听部分自定义事件，而无需监听全部自定义事件。  
+如果您有一个事件：
 
 e = new Event("custom","foo");
 
-Then you can listen for it like this at the event socket:
+然后您可以在事件套接字中这样监听它：
 
 events plain custom foo
 
-  
-NOTE: It is not required that one create an actual "custom" event. This is perfectly valid:
+注意：并非必须创建一个实际的"custom"事件。这样做是完全有效的：
 
 e = new Event("message");
 
-You could then simply listen for "message" events:
+然后，您可以简单地监听"message"事件：
 
 events plain message
 
-With custom events it is important to specify a subclass. Internally FreeSWITCH uses the nomenclature of mod::event\_name, so you could do something like this:
+使用自定义事件时，指定一个子类非常重要。在内部，FreeSWITCH使用mod::event\_name的命名法，所以你可以这样做：
 
 e = new Event("custom","my_js::test);
 
-You could then listen specifically for these events:
+您可以专门监听这些事件：
 
 events plain custom my_js::test
 
-This way you can be very specific with the events you need to see and can program accordingly.
-
-
+这样，您可以非常具体地查看所需的事件，并相应地编程。

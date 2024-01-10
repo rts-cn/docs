@@ -1,117 +1,112 @@
+# MGCP
 
-# MGCP 
+## 关于
 
- 
+## 注意：已废弃，FreeSWITCH不支持MGCP端点模块
 
-## About
+**MGCP**，或称**媒体网关控制协议**，是在分布式VoIP系统中使用的一种协议。
 
-## Note:: Deprecated, no supported MGCP endpoint module for FreeSWITCH
+MGCP的定义在[RFC 3435](https://tools.ietf.org/html/rfc3435)中，这个定义废弃了前一个[RFC 2705](https://tools.ietf.org/html/rfc2705)中的定义。它取代了简单网关控制协议（SGCP）。
 
-**MGCP**, or **Media Gateway Control Protocol** is a protocol used within a distributed Voice over IP system.
+目前，FreeSWITCH没有实现MGCP。虽然它是一项非常有价值的功能，但在未来的计划中似乎没有提供MGCP的支持。
 
-MGCP is defined in [RFC 3435](https://tools.ietf.org/html/rfc3435), which obsoletes an earlier definition in [RFC 2705](https://tools.ietf.org/html/rfc2705). It superseded the Simple Gateway Control Protocol (SGCP).
+点击此处展开目录
 
-Currently, FreeSWITCH does not implement MGCP. There does not appear to be any indication on the road map to provide MGCP support, although it would be a highly-valued feature.
+* 1 [架构](#架构)
+* 2 [协议概述](#协议概述)
+* 3 [实现](#实现)
+* 4 [RFCs](#RFCs)
+* 5 [参考](#参考)
+* 6 [来源](#来源)
 
-Click here to expand Table of Contents
+### 架构
 
-* 1 [Architecture](#architecture)
-* 2 [Protocol Overview](#protocol-overview)
-* 3 [Implementations](#implementations)
-* 4 [RFCs](#rfcs)
-* 5 [See also](#see-also)
-* 6 [Source](#source)
+该分布式系统由一个呼叫代理（或媒体网关控制器）、至少一个媒体网关（MG）（执行电路和数据包之间媒体信号的转换）以及至少一个与PSTN连接的信令网关（SG）组成。
 
-### Architecture
+呼叫代理使用MGCP告知媒体网关:
 
-The distributed system is composed of a Call Agent (or Media Gateway Controller), at least one Media Gateway (MG) that performs the conversion of media signals between circuits and packets, and at least one Signaling gateway (SG) when connected to the PSTN.
+* 哪些事件应向呼叫代理报告。
+* 如何将端点连接在一起。
+* 在端点上应播放哪些信号。
 
-The Call Agent uses MGCP to tell the Media Gateway:
+MGCP还允许呼叫代理审核媒体网关上端点的当前状态。
 
-* What events should be reported to the Call Agent.
-* How endpoints should be connected together.
-* What signals should be played on endpoints.
+媒体网关使用MGCP向呼叫代理报告事件（如摘机或拨号按键）。
 
-MGCP also allows the Call Agent to audit the current state of endpoints on a Media Gateway.
+（尽管信令网关通常与媒体网关位于同一物理交换机上，但这并非必须如此。呼叫代理不使用MGCP来控制信令网关；相反，使用SIGTRAN协议在信令网关和呼叫代理之间进行信令的回传）。
 
-The Media Gateway uses MGCP to report events (such as off-hook, or dialed digits) to the Call Agent.
+在MGCP中，每个命令都有一个事务ID并收到响应。
 
-(While any Signaling Gateway is usually on the same physical switch as a Media Gateway, this needn't be so. The Call Agent does not use MGCP to control the Signaling Gateway; rather, SIGTRAN protocols are used to backhaul signaling between the Signaling Gateway and Call Agent).
+通常情况下，媒体网关配置有一个呼叫代理的列表，它可以接受来自该列表的编程（通常只包括一个或两个呼叫代理）。原则上，可以通过设置NotifiedEntity参数，将事件通知发送到网关上的每个端点的不同呼叫代理（由呼叫代理进行编程）。然而，在实际应用中，通常希望在任何给定时刻，网关上的所有端点都由同一个呼叫代理控制；其他呼叫代理仅用于在主要呼叫代理发生故障或与媒体网关失去联系时提供冗余。在这种故障情况下，备用呼叫代理负责重新编程MG，以使网关接受备用呼叫代理的控制。在这种情况下需要小心处理；两个呼叫代理可能知道它们之间失去联系，但这并不能保证它们不会同时尝试控制同一个网关。可以通过审计网关来确定当前控制网关的呼叫代理，以解决这种冲突。
 
-In MGCP, every command has a transaction ID and receives a response.
+MGCP假设多个呼叫代理将相互之间的设备状态信息维护在一起（可能使用未指定的协议），或在必要时重新构建设备状态信息（应对灾难性故障）。其故障转移功能同时考虑了计划内和非计划内的中断。
 
-Typically, a Media Gateway is configured with a list of Call Agents from which it may accept programming (where that list normally comprises only one or two Call Agents). In principle, event notifications may be sent to different Call Agents for each endpoint on the gateway (as programmed by the Call Agents, by setting the NotifiedEntity parameter). In practice however, it is usually desirable that at any given moment all endpoints on a gateway should be controlled by the same Call Agent; other Call Agents are available only to provide redundancy in the event that the primary Call Agent fails, or loses contact with the Media Gateway. In the event of such a failure it is the backup Call Agent's responsibility to reprogram the MG so that the gateway comes under the control of the backup Call Agent. Care is needed in such cases; two Call Agents may know that they have lost contact with one another, but this does not guarantee that they are not both attempting to control the same gateway. The ability to audit the gateway to determine which Call Agent is currently controlling can be used to resolve such conflicts.
+### 协议概述
 
-MGCP assumes that the multiple Call Agents will maintain knowledge of device state among themselves (presumably with an unspecified protocol) or rebuild it if necessary (in the face of catastrophic failure). Its failover features take into account both planned and unplanned outages.
+MGCP数据包与其他许多协议不同。MGCP数据报通常在UDP端口2427中传输，并带有类似于TCP协议中的空格格式。MGCP数据包要么是命令，要么是响应。
 
-### Protocol Overview
+命令以四个字母动词开头。响应以三个数字的响应代码开头。
 
-MGCP packets are unlike what you find in many other protocols. Usually wrapped in UDP port 2427, the MGCP datagrams are formatted with white space, much like you would expect to find in TCP protocols. An MGCP packet is either a command or a response.
-
-Commands begin with a four-letter verb. Responses begin with a three number response code.
-
-There are eight (8) command verbs:
+有八 (8) 个命令动词:
 
 ```xml
  AUEP, AUCX, CRCX, DLCX, MDCX, NTFY, RQNT, RSIP
 ```
 
-Two verbs are used by a Call Agent to query (the state of) a Media Gateway:
+两个动词由呼叫代理机使用来查询 (状态) 媒体网关:
 
 ```xml
-AUEP - Audit Endpoint
-AUCX - Audit Connection
+AUEP - 审计终端点
+AUCX - 审计连接
 ```
 
-Three verbs are used by a Call Agent to manage an RTP connection on a Media Gateway (a Media Gateway can also send a DLCX when it needs to delete a connection for its self-management):
+三个动词由呼叫代理机用于管理媒体网关上的 RTP 连接 (媒体网关在需要删除连接自身管理时也可以发送 DLCX):
 
 ```xml
- CRCX - Create Connection
- DLCX - Delete Connection
- MDCX - Modify Connection
+CRCX - 创建连接
+DLCX - 删除连接
+MDCX - 修改连接
 ```
 
-One verb is used by a Call Agent to request notification of events on the Media Gateway, and to request a Media Gateway to apply signals:
+一个动词由呼叫代理机用于请求媒体网关上事件的通知，并请求媒体网关应用信号:
 
 ```xml
-RQNT - Request for Notification
+RQNT - 请求通知
 ```
 
-One verb is used by a Media Gateway to indicate to the Call Agent that it has detected an event for which the Call Agent had previously requested notification of (via the RQNT command verb):
+一个动词由媒体网关用于告知呼叫代理机它已检测到之前呼叫代理机通过 RQNT 命令动词请求通知的事件:
 
 ```xml
-NTFY - Notify
+NTFY - 通知
 ```
 
-One verb is used by a Media Gateway to indicate to the Call Agent that it is in the process of restarting:
+一个动词由媒体网关用于告知呼叫代理机它正在重新启动的过程中:
 
 ```xml
-RSIP - Restart In Progress
+RSIP - 重新启动中
 ```
 
  
-### Implementations
+### 实施
 
-* [Vovida MGCP](http://www.vovida.org/protocols/downloads/mgcp/) (not found)
+* [Vovida MGCP](http://www.vovida.org/protocols/downloads/mgcp/) (未找到)
 
 ### RFCs
 
-* [RFC 3435](https://tools.ietf.org/html/rfc3435) \- Media Gateway Control Protocol (MGCP) Version 1.0 (this supersedes [RFC 2705](https://tools.ietf.org/html/rfc2705))
-* [RFC 3660](https://tools.ietf.org/html/rfc3660) \- Basic Media Gateway Control Protocol (MGCP) Packages (informational)
-* [RFC 3661](https://tools.ietf.org/html/rfc3661) \- Media Gateway Control Protocol (MGCP) Return Code Usage
-* [RFC 3064](https://tools.ietf.org/html/rfc3064) \- MGCP CAS Packages
-* [RFC 3149](https://tools.ietf.org/html/rfc3149) \- MGCP Business Phone Packages
-* [RFC 3991](https://tools.ietf.org/html/rfc3991) \- Media Gateway Control Protocol (MGCP) Redirect and Reset Package
-* [RFC 3992](https://tools.ietf.org/html/rfc3992) \- Media Gateway Control Protocol (MGCP) Lockstep State Reporting Mechanism
-* [RFC 2805](https://tools.ietf.org/html/rfc2805) \- Media Gateway Control Protocol Architecture and Requirements
+* [RFC 3435](https://tools.ietf.org/html/rfc3435) \- 媒体网关控制协议（MGCP）1.0版（取代 [RFC 2705](https://tools.ietf.org/html/rfc2705)）
+* [RFC 3660](https://tools.ietf.org/html/rfc3660) \- 基本媒体网关控制协议（MGCP）套件（信息性）
+* [RFC 3661](https://tools.ietf.org/html/rfc3661) \- 媒体网关控制协议（MGCP）返回码用法
+* [RFC 3064](https://tools.ietf.org/html/rfc3064) \- MGCP CAS套件
+* [RFC 3149](https://tools.ietf.org/html/rfc3149) \- MGCP商务电话套件
+* [RFC 3991](https://tools.ietf.org/html/rfc3991) \- 媒体网关控制协议（MGCP）重定向和重置套件
+* [RFC 3992](https://tools.ietf.org/html/rfc3992) \- 媒体网关控制协议（MGCP）同步状态报告机制
+* [RFC 2805](https://tools.ietf.org/html/rfc2805) \- 媒体网关控制协议架构和要求
 
-### See also
+### 另请参阅
 
-* [MGCP Information Site](http://www.packetizer.com/voip/mgcp) This site provides information related to MGCP
-* [Session Initiation Protocol](https://wiki.freeswitch.org/index.php?title=Session%5FInitiation%5FProtocol&action=edit&redlink=1 "Session Initiation Protocol (page does not exist)") ([SIP](https://wiki.freeswitch.org/wiki/SIP "SIP"))
+* [MGCP信息站点](http://www.packetizer.com/voip/mgcp) 该站点提供与MGCP相关的信息
+* [会话发起协议](https://wiki.freeswitch.org/index.php?title=Session%5FInitiation%5FProtocol&action=edit&redlink=1 "Session Initiation Protocol (该页面不存在)")（[SIP](https://wiki.freeswitch.org/wiki/SIP "SIP")）
 
-### Source
+### 来源
 
-The majority of this article was taken from [wikipedia](http://en.wikipedia.org/wiki/Media%5FGateway%5FControl%5FProtocol).
-
-
+本文大部分参考自[wikipedia](http://en.wikipedia.org/wiki/Media%5FGateway%5FControl%5FProtocol)。

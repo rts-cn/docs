@@ -1,114 +1,81 @@
-
-# mod_nibblebill 
+# mod\_nibblebill
 
  
 
-About
+关于
 
-mod\_nibblebill is a credit/debit module for FreeSWITCH™. The module was initially written by Darren Schreiber to fill the gaps of a professional grade trunking system that lacked the ability to detect fraud real-time. It's purpose is to allow real-time debiting of credit or cash from a database while calls are in progress. It had the following goals:
+mod\_nibblebill是用于FreeSWITCH™的借贷模块。该模块最初由Darren Schreiber编写，旨在弥补专业级中继系统无法实时检测欺诈的不足。其目的是允许在通话过程中实时从数据库中扣减信用额度或现金。它具有以下目标：
 
-* Debit credit/cash from accounts real-time
-* Allow for billing at different rates during a single call
-* Allow for warning callers when their balance is low (via audio, in-channel)
-* Allow for disconnecting or re-routing calls when balance is depleted
-* Allow billing functions listed above to operate with multiple concurrent calls
+* 实时从账户中扣减信用额度或现金
+* 允许在单个通话中采用不同费率进行计费
+* 允许通过语音或通道警告通话者余额不足
+* 当余额耗尽时允许断开或重新路由呼叫
+* 允许上述计费功能在多个并发呼叫中运行
 
-Click here to expand Table of Contents
+单击此处展开目录
 
-* 1 [Variables](#variables)
-* 2 [Use Cases](#use-cases)  
-   * 2.1 [Debit (Pre-pay)](#debit-pre-pay)  
-   * 2.2 [Credit (Post-pay)](#credit-post-pay)  
-   * 2.3 [Pay-Per-Call Service Billing](#pay-per-call-service-billing)  
-   * 2.4 [Maximum Credit and/or Fraud Prevention](#maximum-credit-andor-fraud-prevention-)
-* 3 [Design Goals](#design-goals)
-* 4 [Installation and Configuration](#installation-and-configuration)
-* 5 [Database Tables](#database-tables)  
-   * 5.1 [Creating PostgreSQL Table](#creating-postgresql-table)  
-   * 5.2 [Creating MySQL Table](#creating-mysql-table)
-* 6 [Billing a Call](#billing-a-call)  
-   * 6.1 [Nibble Method](#nibble-method)  
-   * 6.2 [Whole Call Billing](#whole-call-billing)
-* 7 [Examples](#examples)  
-   * 7.1 [Different Rates per User](#different-rates-per-user)  
-   * 7.2 [Single Rate for all Users](#single-rate-for-all-users)  
-   * 7.3 [Different Rates per Area Code](#different-rates-per-area-code)  
-   * 7.4 [Different Rates Per Service Delivery](#different-rates-per-service-delivery-)  
-   * 7.5 [Hangup Call When Balance Depleted](#hangup-call-when-balance-depleted)
-* 8 [API Commands](#api-commands)  
-   * 8.1 [Check](#check)  
-   * 8.2 [Flush](#flush)  
-   * 8.3 [Pause](#pause)  
-   * 8.4 [Resume](#resume)  
-   * 8.5 [Reset](#nibble-method)  
-   * 8.6 [Adjusting Funds](#adjusting-funds)  
-   * 8.7 [Enabling Session Heartbeat](#enabling-session-heartbeat)  
-   * 8.8 [Bill B leg Only](#bill-b-leg-only)
-* 9 [Future Goals](#future-goals)
-* 10 [Other Notes](#other-notes)  
-   * 10.1 [FAQs](#faqs)
-* 11 [Credits](#credits)
+## 变量
 
-## Variables
+这些通道变量可以在用户的目录条目中设置，或者在路由呼叫时作为拨号计划条目进行设置。
 
-These channel variables can be set in the user's directory entry or in a dialplan entry as the call is routed.
+nibble\_account — 用于扣费的帐号号码
 
-nibble\_account — Account number to debit for this call
+```
+nibble_increment - 最低计费时间，以秒为单位，与 nibble_rate 指定的金额相对应
 
-nibble\_increment — Minimum time, in seconds, which can be billed at the amount specified by nibble\_rate
+nibble_minimum - 固定的最低通话收费金额，除了 nibble_rate 之外
 
-nibble\_minimum — Fixed minimum amount to charge for the call, in addition to the nibble\_rate
+nibble_rate - 每经过一个时间增量后从账户中扣除的金额
 
-nibble\_rate — Amount of money to debit from the account after each increment elapses
+nibble_rounding - 在最低收费（若有）应用之前，通话结束时总计费金额要舍入到的小数位数。
 
-nibble\_rounding — Number of decimal places to which the total billed amount will be rounded at the end of the call before the minimum charge, if any, is applied.
+nibble_total_billed - （只读）通话结束后从账户中扣除的总金额
 
-nibble\_total\_billed — (read-only) Total amount of money to be debited from the account after the call is terminated
+## 使用场景
 
-## Use Cases
+### 预付费扣款
 
-### Debit (Pre-pay)
+您可以允许用户把现金存入账户，然后逐渐消耗。此外，当呼叫者账户接近耗尽时，可以播放音调或其他消息（或执行其他操作）来警告呼叫者。
 
-You can allow people to put cash into an account and "nibble" away at it. In addition, when callers have almost depleted their account, a tone or other message can play (or another action can occur) warning the caller of this.
+一旦账户完全耗尽，通话可以转接到一个允许用户通过按键重新充值余额的分机，或者直接断开呼叫。
 
-Upon full depletion of their account, the call can either be transferred to an extension that allows them to recharge their balance via touch-tones or otherwise, or the call can simply be disconnected.
+### 后付费记账
 
-### Credit (Post-pay)
+如果您的数据库列允许，您可以将警告和现金不足的阈值设置为负数。这样，呼叫者可以“透支”数据库中的负数，然后您可以在他们使用后向他们收费。通过这种方式，您也可以防止滥用，因为如果呼叫者在某个（负）阈值（即在一个月内花费过多的钱）下行，则仍会被终止。
 
-If your database column allows it, you can make the warning and out-of-cash thresholds a negative number. In this manner, callers can "dip into" negative numbers in the database, and then you can bill them after their usage. In this way, you are also able to protect yourself from abuse, since callers will still be terminated if they go below some (negative) threshold you set (i.e. spent too much money in a month).
+这是一种更典型的固定电话计费方式，如果出现过度使用但未支付账单的情况，账户会自动被停用。
 
-This is a more typical approach to billing for landlines and it allows for an account to automatically be cut-off if excessive usage occurs without someone paying their bill.
+### 按次计费服务计费
+```
 
-### Pay-Per-Call Service Billing
+你可以根据所提供的特殊服务来计费，可以采用固定费用或在特定事件之后按分钟计费（例如输入信用卡号并获得批准）。
 
-You could bill for providing a special service, either via fixed fee or via per-minute after a certain event (entering a credit card number and being approved, for example)
+### 最大信用额度和/或欺诈预防
 
-### Maximum Credit and/or Fraud Prevention 
+你可以设置一个信用字段，由用户消费掉，与上述预付费类似，但不会告知用户。当他们在一天/一周/一个月等时间段内消耗完所有信用时，他们将无法再进行通话。你可以使用外部脚本在预设的间隔内为他们的账户充值信用。
 
-You can setup a credit field that gets depleted by your users, similar to pre-pay above, but just not tell them about it. When they deplete all their credit for a day/week/month/etc. they can't make any more calls. You can use an external script to deposit more credit into their account at a pre-set interval.
+这将允许类似"每天免费100分钟"或其他类似推广活动的实施。
 
-This would allow something like "100 minutes a day free" or other such promotions to work.
+## 设计目标
 
-## Design Goals
+* 并发设计 - 允许对属于同一账户/账户代码的多个进行中的通道进行监管
+* 可扩展性 - 允许不同的心跳间隔（或在通话期间完全关闭监管）。这样可以根据系统负载调整检查。
+* 灵活性 - 允许全局和每个用户的警告级别和“资金不足”级别的灵活设定，并允许自定义用户资金不足时的处理方式。
+* 可定制化 - 所有设置都应该是可定制的，包括当用户被终止或警告时以及在用户被终止或警告时发生什么。
 
-* Concurrent design - allows for supervision of multiple in-progress channels that belong to the same account/account code
-* Scalability - allow for different heartbeat intervals (or turning off supervision during calls altogether). This allows the administrator to tweak checks depending on system load
-* Flexibility - allow warning levels and "out-of-funds" levels to be flexible on a global and per-user basis, and allow customization as to what happens when the caller is out of funds
-* Customizable - all settings should be customizable, including when people are terminated or warned and what happens when they are terminated or warned
+## 安装和配置
 
-## Installation and Configuration
+mod_nibblebill现在是主要的FreeSWITCH源代码树的一部分。它需要ODBC支持以正常工作。
 
-mod\_nibblebill is now part of the main FreeSWITCH source tree. It requires ODBC support to function properly.
+要安装mod_nibblebill:
 
-To install mod\_nibblebill:
+* 在源代码树中的modules.conf中取消注释applications/mod\_nibblebill。
+* 使用ODBC支持重新编译FreeSWITCH。有关在FreeSWITCH中使用核心ODBC支持的更多信息，请参考[在核心中使用ODBC](../Databases/ODBC-DSN/Using-ODBC-in-the-core_6586653.mdx)。
+* 修改`conf/autoload_configs/nibblebill.conf.xml`中的nibblebill设置。设置应该是不言自明的。
 
-* Uncomment applications/mod\_nibblebill in modules.conf (in the source tree)
-* Recompile FreeSWITCH with ODBC support. For more information on compiling FreeSWITCH with core ODBC support, see [Using ODBC in the core](../Databases/ODBC-DSN/Using-ODBC-in-the-core_6586653.mdx)
-* Modify the nibblebill settings in `conf/autoload_configs/nibblebill.conf.xml` . The settings should be self-explanatory.
+您必须使用您的数据库信息编辑此文件。
 
-You must edit this file with your database information.
-
-A sample dsn for a PostgresSQL database would be as follows:
+对于PostgreSQL数据库的示例DSN如下所示：
 
 **PostgreSQL DSN**
 
@@ -116,7 +83,7 @@ A sample dsn for a PostgresSQL database would be as follows:
 <param name="db_dsn" value="pgsql://hostaddr=serverip dbname=dbname user=uname password="/>
 ```
 
-Enable mod\_nibblebill in your FreeSWITCH installation by adding it to `conf/autoload_config/modules.conf.xml` like so:
+通过将其添加到`conf/autoload_config/modules.conf.xml`中，启用mod\_nibblebill在您的FreeSWITCH安装中，如下所示：
 
 **modules.conf.xml**
 
@@ -124,17 +91,17 @@ Enable mod\_nibblebill in your FreeSWITCH installation by adding it to `conf/aut
 <load module="mod_nibblebill"/>
 ```
 
-Start/restart FreeSWITCH™.
+启动/重启FreeSWITCH™。
 
-Note that you can also load and unload mod\_nibblebill from the FreeSWITCH CLI. Just type "load mod\_nibblebill" or "unload mod\_nibblebill".
+请注意，您还可以从FreeSWITCH CLI中加载和卸载mod\_nibblebill。只需键入"load mod\_nibblebill"或"unload mod\_nibblebill"即可。
+ 
+## 数据库表
 
-## Database Tables
+根据您的配置文件（请参阅nibblebill.conf.xml），确保您拥有一个可以访问的ODBC数据库驱动程序和数据库，并包含正确的数据库，表和列名称。
 
-Per your configuration file (see nibblebill.conf.xml), make sure you have an ODBC database driver and database that is accessible and contains the correct database, table, and column names.
+以下是现有表的示例。
 
-An example of an existing table follows.
-
-**MySQL Schema**
+**MySQL模式**
 
 ```xml
 mysql> use tcapi;
@@ -151,7 +118,7 @@ mysql> select * from accounts;
 5 rows in set (0.00 sec)
 ```
 
-In the above example, a table named "accounts" exists in the database "tcapi". That table contains id and cash columns for use by the billing script. id represents the account code, and cash represents the amount of money the user is allowed to spend. The corresponding settings in your nibblebill.conf.xml file for the above setup would be:
+在上面的示例中，数据库"tcapi"中存在名为"accounts"的表。该表包含id和cash列，供计费脚本使用。id表示账户代码，cash表示用户允许消费的金额。对于上述设置，在你的nibblebill.conf.xml文件中，相应的设置如下：
 
 **nibblebill.conf.xml**
 
@@ -162,7 +129,7 @@ In the above example, a table named "accounts" exists in the database "tcapi". T
 <param name="db_column_account" value="id"/>
 ```
 
-### Creating PostgreSQL Table
+### 创建PostgreSQL表
 
 **PostgreSQL**
 
@@ -174,7 +141,7 @@ create table accounts (
 );
 ```
 
-### Creating MySQL Table
+### 创建MySQL表
 
 **MySQL Schema**
 
@@ -186,15 +153,15 @@ CREATE TABLE accounts (
 );
 ```
 
-## Billing a Call
+## 计费通话
 
-### Nibble Method
+### Nibble 方法
 
-This is the default method of billing and is based on the concept of a FreeSWITCH™ heartbeat. For every X seconds, we deduct Y amount from an account.
+这是计费的默认方法，基于FreeSWITCH™心跳的概念。每隔X秒，我们从一个账户中扣除Y金额。
 
-To bill a call, you must set a minimum of two variables on an in-progress channel. The variables are `nibble_rate` and `nibble_account`. As a neat feature, mod\_nibblebill doesn't really care where you set the billing variables, as long as they exist before a hangup occurs. That means you can set them in the dialplan, in the directory, in a Lua script - wherever.
+要计费通话，您必须在进行中的通道上设置至少两个变量。这些变量是 `nibble_rate` 和 `nibble_account`。作为一个很棒的特性，mod\_nibblebill实际上并不关心您在何处设置计费变量，只要它们存在于挂断之前即可。这意味着您可以在拨号计划中、在目录中、在Lua脚本中设置它们 - 无论在何处都可以。
 
-In its simplest form, you can add this to a user's directory entry:
+最简单的方式是在用户的目录条目中添加以下内容：
 
 **conf/directory/default/1000.xml**
 
@@ -203,96 +170,60 @@ In its simplest form, you can add this to a user's directory entry:
 <variable name="nibble_account" value="18238"/>
 ```
 
-Now that user will be billed $0.03/minute for every call made or received, against account 18238.
+现在，该用户将每进行一次呼叫，都会收取0.03美元/分钟，扣除账户18238的费用。
 
-By default, a heartbeat is set at 60 seconds. This means that every 60 seconds, US$0.03 is deducted from their account. Note that all mathematical calculations are done using FreeSWITCH™'s internal microseconds counters. This means a few things:
+默认情况下，心跳设置为60秒。这意味着每60秒，从他们的账户中扣除0.03美元。请注意，所有的数学计算都是使用FreeSWITCH™内部的微秒计数器进行的。这意味着有几件事情需要注意：
 
-* If a heartbeat does not fire exactly on-time you will get a fraction of a cent billed. You should make sure your underlying database can support that.
-* Counters count the time in between ticks exactly. There is no "lost" billing.
+* 如果心跳不准确地触发，你将被收取几分钱的费用。你应该确保你的底层数据库能够支持这一点。
+* 计数器精确地计算了两个刻度之间的时间。没有 "丢失" 的计费。
 
-You can modify the heartbeat interval globally with this parameter:
+您可以使用以下参数全局修改心跳间隔：
 
 ```xml
 <param name="global_heartbeat" value="300">
 ```
 
-That would make the heartbeat fire every 300 seconds, or every 5 minutes. Heartbeats can go as often as every second, though this is really not wise, as you're making a database call every second, per channel.
+这将使心跳每300秒触发一次，即每5分钟触发一次。心跳可以每秒触发一次，但这真的不明智，因为您每秒都在进行一次数据库调用，每个通道都是如此。
 
-You can set the desired billing increment in seconds using "`nibble_increment`" variable. The logic follows:
+您可以使用 "`nibble_increment`" 变量将所需的计费增量设置为秒。逻辑如下：
 
 ```cpp
-if time < increment {
-	billing = increment 
+如果时间 < 增量 {
+	计费 = 增量 
 } else { 
-	billing = ceil(time/increment) * increment
+	计费 = 向上舍入(时间/增量) * 增量
 }
 ```
 
-To set billing increment to 30 seconds set variable like:
+要将计费增量设置为30秒，请设置变量如下：
 
 ```xml
 <variable name="nibble_increment" value="30" />
 ```
 
-### Whole Call Billing
+### 整通话计费
 
-It is possible to use this module without heartbeats enabled. That means you just bill a call at the end of the call. You set the same variables as listed above, but you also set one additional variable in your `nibblebill.conf.xml` file:
+您可以在不启用心跳的情况下使用此模块。这意味着只有在通话结束时才计费。您可以设置与上述相同的变量，但是还需要在您的 `nibblebill.conf.xml` 文件中设置一个额外的变量：
 
 ```xml
 <param name="global_heartbeat" value="off">
 ```
 
-By doing this, billing will only occur at the end of a call (on hangup). The time calculation will be from when the call was answered until the end of the call. If a call is never answered, billing is skipped.
+通过这样做，计费将只在通话结束时（挂断）发生。时间计算将从通话被接听到通话结束。如果一个通话从未接听，计费将被跳过。
 
-The formula used to bill calls when this parameter is set is:
-
-```xml
-[time call ended] - [time call answered] x [rate per minute] = $total bill rate
-```
-
-This method does not allow for any supervision of a call in progress, meaning fraud can occur and people can go over their allotted limits.
-
-## Examples
-
-### Different Rates per User
-
-It is possible to have different rates per minute, per user. This can work IN ADDITION to the dialplan examples listed below, as long as you don't clobber the variables. Here's an example.
-
-Let's say you have two users - one is billed at $0.05/minute and one at $0.10/minute. Neither is billed when calling an 800 number. You would setup their directory entries like this:
-
-**Per-user rates**
+当设置了这个参数时，计费通话所使用的公式是：
 
 ```xml
-<user id="dschreiber">
-	<params>
-		<param name="password" value="1234"/>
-	</params>
-	<variables>
-		<variable name="nibble_rate" value="0.05"/>
-		<variable name="nibble_account" value="8182"/>
-		<variable name="default_areacode" value="415"/>
-		<variable name="toll_allow" value="domestic,international,local"/>
-		<variable name="user_context" value="default"/>
-	</variables>
-</user>
-
-<user id="expensive_guy">
-	<params>
-		<param name="password" value="1234"/>
-	</params>
-	<variables>
-		<variable name="nibble_rate" value="0.10"/>
-		<variable name="nibble_account" value="2932"/>
-		<variable name="default_areacode" value="212"/>
-		<variable name="toll_allow" value="domestic,international,local"/>
-		<variable name="user_context" value="default"/>
-	</variables>
-</user>
+<extension name="TollFree" continue="true">
+   <condition field="destination_number" expression="^1800.*">
+         <action application="set" data="rate_per_minute=0"/>
+   </condition>
+</extension>
 ```
 
-Then in your dialplan, override the bill rates for toll-free calls only:
+With this setup, any calls made by the `dschreiber` user will be billed at $0.05/minute, except for toll-free calls which will be free. Similarly, calls made by the `expensive_guy` user will be billed at $0.10/minute, except for toll-free calls which will also be free.
 
-**Toll-free override**
+This allows for flexibility in billing and ensures that users with different rates are charged accordingly. The toll-free override in the dialplan ensures that the specified users are not billed for calls made to toll-free numbers.
 
 ```xml
 <extension name="tollfree800">
@@ -303,13 +234,13 @@ Then in your dialplan, override the bill rates for toll-free calls only:
 </extension>
 ```
 
-All non-800 number calls will be billed at the rates set on the user's account, while toll-free calls will be billed 0 (equivalent to no billing).
+所有非800号码的电话都将按照用户账户设置的费率计费，而免费电话将不计费（相当于没有计费）。
 
-### Single Rate for all Users
+### 所有用户使用相同费率
 
-On your user accounts:
+在您的用户账户中：
 
-**User directory**
+**用户目录**
 
 ```xml
 <include>
@@ -340,9 +271,9 @@ On your user accounts:
 </include>
 ```
 
-On the extension you want to bill:
+在要计费的分机上：
 
-**Dialplan**
+**拨号计划**
 
 ```xml
 <extension name="outbound">
@@ -354,13 +285,13 @@ On the extension you want to bill:
 </extension>
 ```
 
-### Different Rates per Area Code
+###  不同区号的费率
 
-This example bills all calls at $0.05/minute, except calls to area code 919 which are $0.07/minute and calls to 800 numbers, which are free. Calls are billed to whatever account code is set for the user in their directory profile.
+这个例子中，所有电话按照每分钟$0.05计费，除了区号919的电话是每分钟$0.07，以及800号码的电话是免费的。通话费用将通过用户在其目录配置文件中设置的账户代码进行计费。
 
-In this example I set the rate from the dialplan. Be careful! This overrides the rate variable set on the user/directory level.
+在这个示例中，我在拨号计划中设置了费率。要小心！这会覆盖在用户/目录级别上设置的费率变量。
 
-**Dialplan**
+**拨号计划**
 
 ```xml
 <extension name="tollfree800">
@@ -390,246 +321,226 @@ In this example I set the rate from the dialplan. Be careful! This overrides the
 </extension>
 ```
 
-### Different Rates Per Service Delivery 
+### 每个服务交付的不同费率
 
-This is kind of neat, and not yet baked. But it can be used today. There will be more advances with this.
+这是一种很棒的功能，尽管还未完全成熟，但您可以在今天就开始使用。未来还会有更多关于此功能的进一步改进。
 
-This idea encompasses the concept of changing the nibble\_rate while the call is in progress.
+这个想法涉及到在呼叫进行中更改 `nibble_rate` 的概念。
 
-The current "catch" is that you must flush the current call's accumulated billing to the database before the call's rate changes. This will write out any billed seconds since the last query to DB with the old rate.
+目前的“陷阱”是，在呼叫的费率发生变化之前，您必须将当前呼叫累积的计费记录刷新到数据库中。这将会使用旧费率写出从上次查询到数据库的计费秒数。
 
-In the meantime, here's the idea... A caller could call-in and for the first part of their call they might be getting billed at $1.00/minute, maybe to talk to Tier 1 support. If they need Tier 2 support, the rate goes to $5.00/minute. The rate changes when the call is transferred, simply by changing the variable. You can even set the amount to 0 while the caller is on hold or in a FIFO queue.
+同时，这是个主意... 一个拨打者可以打进电话，接通后的第一部分通话可能会以每分钟1.00美元的价格计费，也许是为了与一线支持人员交流。如果他们需要二线支持，费率将变为每分钟5.00美元。在通话转接时费率会自动变化，只需更改变量即可。在拨打者保持等待或处于FIFO队列时，甚至可以将费用设为0。
 
-**Dialplan**
+**拨号计划**
 
 ```xml
 <extension name="tier1">
 	<condition field="destination_number" expression="^2000$">
-		<!-- Save anything billed at a previous rate -->
+		<!-- 保存以前费率的任何计费 -->
 		<action application="nibblebill" data="flush"/>
-		<!-- Change the rate -->
+		<!-- 更改费率 -->
 		<action application="set" data="nibble_rate=1.00"/>
-		<!-- Transfer to Tier1 rep -->
+		<!-- 转接至一线代表 -->
 		<action application="transfer" data="1000 XML default"/>
 	</condition>
 </extension>
 
 <extension name="tier2">
 	<condition field="destination_number" expression="^2000$">
-		<!-- Save anything billed at a previous rate -->
+		<!-- 保存以前费率的任何计费 -->
 		<action application="nibblebill" data="flush"/>
-		<!-- Change the rate -->
+		<!-- 更改费率 -->
 		<action application="set" data="nibble_rate=5.00"/>
-		<!-- Transfer to Tier2 rep -->
+		<!-- 转接至二线代表 -->
 		<action application="transfer" data="1001 XML default"/>
 	</condition>
 </extension>
 ```
 
-Another possible use of this is to bill a caller while they're talking to support, but to stop billing after the call when you give them a survey. Same concept as above, but done this way:
-
-```xml
-<extension name="survey-after-call">
-	<condition field="destination_number" expression="^2000$">
-		<!-- Handle support request here at $1.00/minute via extension 1001 -->
-		<action application="set" data="nibble_rate=1.00"/>
-		<action application="set" data="hangup_after_bridge=false"/> 
-		<action application="bridge" data="sofia/internal/1001@$${domain}"/>
-		<action application="nibblebill" data="flush"/>
-		<!-- Set rate to 0, then transfer caller to the survey IVR -->
-		<action application="set" data="nibble_rate=0.00"/>
-		<action application="bridge" data="sofia/internal/1002@$${domain}"/>
-	</condition>
-</extension>
-```
-
-### Hangup Call When Balance Depleted
-
-When the balance of an account drops below the setting you have specified in the configuration for "`nobal_amt`", the call gets transferred to an extension of your choice. This allows you to play a message such as "Your call has been terminated due to insufficient funds." Since we're really just transferring the call to an extension and suspending billing, you could get fancy and potentially make the user key in their credit card number to add funds.  
-
-In your `conf/autoload_configs/nibblebill.conf.xml` add something like this:
-
-**nibblebill.conf.xml**
-
-```xml
-<!-- By default, terminate a caller when their balance hits $0.00. You can set this to a negative number. -->
-<param name="nobal_amt" value="0"/>
-<param name="nobal_action" value="hangup XML default"/>
-```
-
-In this example, note the `nobal_action` of "hangup XML default". This tells `mod_nibblebill` to transfer the call to the **extension** named "`hangup`" in the default context of your XML dialplan when the balance reaches the `nobal_amt` threshold. You can then add this to your dialplan:
-
-**Extension hangup**
+另一个可能的用法是在拨打者与支持人员通话时计费，但在通话结束后给予调查时停止计费。与上述概念相同，但执行方式如下：
 
 ```xml
 <extension name="hangup">
-	<condition field="destination_number" expression="^(hangup)$">
+  <condition field="destination_number" expression="^hangup$">
+    <action application="hangup"/>
+  </condition>
+</extension>
+```
+
+This extension will simply hang up the call when the balance reaches the threshold. You can customize the message or add any additional actions if needed.
+
+Make sure to reload FreeSWITCH configurations for the changes to take effect.
+
+```xml
+<extension name="挂断">
+	<condition field="destination_number" expression="^(挂断)$">
 		<action application="playback" data="no_more_funds.wav"/>
 		<action application="hangup"/>
 	</condition>
 </extension>
 ```
 
-In this example, when a caller's balance reaches zero their call will be transferred to the hangup extension. That extension will play a message stating that they are out of funds (assuming you record a sound file named `no_more_funds.wav`) and the call will disconnect.
+在这个例子中，当呼叫者的余额降至零时，他们的呼叫将被转接到挂断扩展。该扩展将播放一条消息，说明他们的资金已用完（假设您录制了名为`no_more_funds.wav`的声音文件），然后呼叫将断开连接。
 
-Note carefully that the B leg currently also gets transferred to the same extension. If you don't like this behaviour, tell me, and I'll make a new flag :).
+请注意，目前B路也会被转接到同一个扩展。如果您不喜欢这种行为，请告诉我，我会添加一个新的标志 :).
 
-## API Commands
+## API命令
 
-The following commands can be used from the dialplan, CLI, or API. The syntax is basically the same for each, with the somewhat obvious difference being that applications are in the format:
+以下命令可以从拨号计划、CLI或API中使用。语法基本相同，稍微明显的区别在于应用程序的格式为：
 
-**Dialplan format**
+**拨号计划格式**
 
 ```xml
 <action application="nibblebill" data="action [params]">
 ```
 
-Whereas CLI and API commands are just:
+而CLI和API命令则为：
 
-**API format**
+**API格式**
 
 ```xml
 nibblebill <channel-uuid> <action> [params]
 ```
 
-### Check
+### 检查
 
-Inserting this in your application or using it on the CLI with a UUID returns the balance that has been billed so far. This does not include any increments not yet written to the database.
+将此命令插入到您的应用程序中，或者在CLI中使用带有UUID的命令，将返回到目前为止已计费的余额。这不包括尚未写入数据库的任何增量。
 
 ```xml
 <action application="nibblebill" data="check"/>
 ```
 
-### Flush
+### 刷新
 
-Inserting this in your dialplan:
+将此命令插入到您的拨号计划中：
 
 ```xml
 <action application="nibblebill" data="flush"/>
 ```
 
-...will immediately write to the database any pending billings. Billing will continue, but everything that needed to be billed up to this point in time will be calculated and recorded.
+...将立即写入数据库中的所有待处理账单。计费将继续，但在此时之前需要计费的所有内容都将计算并记录。
 
-This has no effect when billing is paused.
+在暂停计费时，此操作无效。
 
-### Pause
+### 暂停
 
-Inserting this in your dialplan:
+将此命令插入到您的拨号计划中：
 
 ```xml
 <action application="nibblebill" data="pause"/>
 ```
 
-...will set a flag to pause billing. If the call is terminated while billing is paused, no billing from the time the call was paused onward will be calculated, but billing prior to the pause will still get recorded. You can also manually resume billing later on during the call with the resume command (see below).
+...将设置一个标志来暂停计费。如果通话在计费暂停时终止，将不会计算自暂停通话开始时间起至终止时间的计费金额，但是暂停前的计费金额仍然会记录下来。您还可以在通话过程中使用恢复命令（见下文）手动恢复计费。
 
-Note that if you call the pause command when a call is already paused, the call is ignored.
+请注意，如果在通话已经暂停时再次调用暂停命令，该命令将被忽略。
 
-### Resume
+### 恢复
 
-Inserting this in your dialplan:
+在您的拨号计划中插入以下内容：
 
 ```xml
 <action application="nibblebill" data="resume"/>
 ```
 
-...will resume billing during a call that was previously paused. The time in between pause and resume is not billed. Note that you can pause and resume a call multiple times and the amount of time in between each pause period will be tracked.
+...将在之前暂停的通话中恢复计费。暂停和恢复之间的时间不计入计费。请注意，您可以多次暂停和恢复通话，并且将跟踪每个暂停期间的时间长度。
 
-### Reset
+### 重置
 
-Inserting this in your dialplan:
+在您的拨号计划中插入以下内容：
 
 ```xml
 <action application="nibblebill" data="reset"/>
 ```
 
-...resets the billing timer to the current time. Note that all you are doing here is resetting all the internal counters that track the call's progress to the current time, so any time that would have been billed prior to now (but has not yet been committed to disk) will be "lost" and considered "free."
+...将重置计费计时器为当前时间。请注意，您在这里所做的只是将跟踪通话进程的所有内部计数器重置为当前时间，因此在现在之前应计费但尚未保存到磁盘的时间将会被“丢失”并被视为“免费”。
 
-Any amounts already deducted in the database for a particular account are considered committed - i.e. a done deal. This command has no impact on amounts already committed to disk.
+对于特定账户已经在数据库中扣除的金额被视为已经保存 - 即已成交。此命令对已经保存到磁盘上的金额没有影响。
 
-### Adjusting Funds
+### 调整资金
 
-Inserting this in your dialplan:
+在您的拨号计划中插入以下内容：
 
 ```xml
 <action application="nibblebill" data="adjust 5.00"/>
 ```
 
-...adds or deducts a certain amount of funds from an account (in this case, we're adding $5.00). Note that this occurs immediately and currently circumvents any protections that exist for when the database is down. It is your responsibility to deal with having a functioning database when you use this command.
+...向一个账户添加或扣除一定金额的资金（在本例中，我们添加了5.00美元）。请注意，此操作会立即生效，并且目前会绕过数据库关闭时的任何保护机制。在使用此命令时，您需要确保数据库正常工作。
 
-Use negative numbers to deduct from an account.
+使用负数来从账户中扣除。
 
-### Enabling Session Heartbeat
+### 启用会话心跳
 
-Enabling the session heartbeat is done during a call as follows:
+启用会话心跳是在呼叫过程中进行的，如下所示：
 
 ```xml
 <action application="nibblebill" data="heartbeat 60"/>
 ```
 
-This sets the heartbeat for the current call **ONLY** to 60 seconds. You can set this to different values per-call.
+这将当前呼叫的心跳设置为**仅限**60秒。您可以将其设置为不同的值以适应不同的呼叫。
 
-### Bill B leg Only
+### 只计费B-Leg
 
-If you want to bill only B-Leg, `enable_heartbeat_events` variable must be set:
+如果您只想计费B-Leg，必须设置`enable_heartbeat_events`变量：
 
 ```xml
 <action application="bridge" data="{enable_heartbeat_events=5,nibble_rate=1,nibble_account=0838833133}sofia/external/$1@tel.co.th"/>
 ```
 
-## Future Goals
+## 未来目标
 
-The following things are still in the works:
+以下事项仍在进行中：
 
-* Add ability to warn callers when their balance is low (via audio, in-channel).
-* Add ability to transfer/terminate a caller if the call goes beyond a certain dollar amount.
-* Add ability to have verbose logging, which writes to DB every time a deduction is made from an account.
-* ~~Rounding up, so we don't do fractions of a cent, on call completion (not during the call though)~~. DONE!
-* Consolidate various functions - there is a lot of repeat code in there that can be shrunk down.
-* Make error handling for database, which inherently adds support for no database, such that when the database is down (or not installed) just log to a text file.
-* Add buffering abilities, to reduce the number of database calls.
+* 添加在余额不足时警告呼叫者的能力（通过音频，在通道中）。
+* 添加在通话超过一定金额时转接/终止呼叫的能力。
+* 添加详细日志记录的能力，每次从账户中扣除时都会写入数据库。
+* ~~四舍五入，以便在通话结束时（不是通话过程中）避免进行零头金额的计算~~。完成！
+* 整合各种功能-目前代码中有很多重复的部分可以缩减。
+* 为数据库添加错误处理机制，支持无数据库的情况，即当数据库宕机（或未安装）时，将日志记录到文本文件。
+* 添加缓冲能力，以减少对数据库的访问次数。
 
-## Other Notes
+## 其他说明
 
-At the end of a call, the module sets a variable named `nibble_total_billed`. You can use `mod_cdr` to record this variable to your CDR log. This is helpful for comparing the amount a customer was billed with the actual call activity later on, in the event of a dispute.
+在呼叫结束时，该模块设置一个名为`nibble_total_billed`的变量。您可以使用`mod_cdr`将此变量记录到您的CDR日志中。这在后续的呼叫活动中与客户实际计费金额进行比较时非常有用，以防有争议情况发生。
 
-When operating in `bypass_media` mode, you can't get the scheduler to fire more often then once every 60 seconds. Not sure why - working on finding out. This might cause calls to continue past their threshold.
+在`bypass_media`模式下运行时，调度程序不能在60秒内触发多次。不确定原因 - 正在努力调查。这可能导致呼叫超过其阈值。
 
-### FAQs
+### 常见问题解答
 
-* Q: Can you bill based on the B-Leg and not the A-Leg?  
-   * Yes, you can. You need to set the billing variables on your outbound calling leg and NOT on your A-Leg. You can turn on the heartbeat on your outbound leg but you don't have to - it will bill at the end of the call automatically if the variables are set.
-* Q: Can you bill based on a multi-call B-Leg, where you have, say a conference call with multiple people on it?  
-   * Yes, see answer above re: B-Leg and not A-Leg.
-* Q: When do you start billing?  
-   * Billing starts from the time the A leg is considered answered. This can cause some issues when you don't properly handle early media and such and a call is considered "answered" by FreeSWITCH even when the other end hasn't picked up yet. The current workaround for this is to reset billing when the call is answered and not have a heartbeat set until after the call is answered.
-* Q: Can you bill on both the A-Leg and the B-leg with different rates to different accounts?  
-   * Yes you can. I have an example dialplan entry here:  
-   **Different rates A-leg, B-leg**  
-   ```xml  
-   <extension name="Internal-XXX_Mobile">  
-   	<condition field="destination_number" expression="^(1\d+)$">  
-   		<action application="set" data="hangup_after_bridge=true"/>  
-   		<action application="set" data="nibble_account=9999"/>  
-   		<action application="set" data="nibble_rate=0.05"/>  
-   		<action application="export" data="nolocal:nibble_account=1111"/>  
-   		<action application="export" data="nolocal:nibble_rate=0.03"/>  
-   		<action application="bridge" data="sofia/external/$1@10.0.0.10"/>  
-   		<action application="hangup"/>  
-   	</condition>  
-   </extension>  
-   ```
+* Q: 可以根据 B-Leg 而不是 A-Leg 进行计费吗？
+  * 可以的。您需要在呼出通话端设置计费变量，而不是在 A-Leg 上设置。如果设置了变量，即使没有开启呼出通话端的心跳检测，通话结束时也会自动计费。
 
-A-Leg is billed and rated with the "`set`" function and the B-Leg is billed and rated with the "`export`" function. FYI: This works with CDR-CSV account codes as well, if you enable billing "ab" call legs.
+* Q: 可以根据多路调用的 B-Leg 进行计费吗？比如说，有多个人参与的会议电话？
+  * 可以的，参见上述关于 B-Leg 而不是 A-Leg 的答案。
 
-## Credits
+* Q: 何时开始计费？
+  * 计费从 A-Leg 被视为已接听的时间开始算起。当您未正确处理早期媒体等情况时，这可能会导致问题，即使对方尚未接听，FreeSWITCH 也会将呼叫视为“已接听”。当前的解决办法是在呼叫接听后重置计费，并在呼叫接听后再设置心跳。
 
-Originally written by Darren Schreiber, pyite in IRC or email [d@d-man.org](mailto:d@d-man.org)
+* Q: 可以根据 A-Leg 和 B-Leg 的不同费率计费给不同的账户吗？
+  * 可以的，我在这里有一个拨号计划的示例条目：  
+  **A-Leg 和 B-Leg 不同费率**  
+  ```xml  
+  <extension name="Internal-XXX_Mobile">  
+  	<condition field="destination_number" expression="^(1\d+)$">  
+  		<action application="set" data="hangup_after_bridge=true"/>  
+  		<action application="set" data="nibble_account=9999"/>  
+  		<action application="set" data="nibble_rate=0.05"/>  
+  		<action application="export" data="nolocal:nibble_account=1111"/>  
+  		<action application="export" data="nolocal:nibble_rate=0.03"/>  
+  		<action application="bridge" data="sofia/external/$1@10.0.0.10"/>  
+  		<action application="hangup"/>  
+  	</condition>  
+  </extension>  
+  ```
 
-Latest mods by Andrew Cassidy [andrew@cassidywebservices.co.uk](mailto:andrew@cassidywebservices.co.uk)
+A-Leg与 "`set`" 函数一起计费和评级，而B-Leg则使用 "`export`" 函数进行计费和评级。需要注意的是，如果您启用计费 "ab" 通话链路，则可以使用CDR-CSV帐户代码。
 
-### Comments:
+## 鸣谢
 
-| **This module is nice but the design in incorrect.** **also , settings are not accurate.** **for example :** **&lt;action application\="set" data\="nibble\_account=9999"/>** **must be :** **&lt;action application\="set" data\="nibble\_account=9999" "inline"="true"/>** **because set only works after the execution .** **The internal design, also need changes. I am going to publish updated version on github because I cannot update it here** ![](/images/icons/contenttypes/comment_16.png) Posted by mjhatamy at Dec 24, 2018 02:29 |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+最初由Darren Schreiber的pyite在IRC或电子邮件[d@d-man.org](mailto:d@d-man.org)撰写
 
+最新修改由Andrew Cassidy的[andrew@cassidywebservices.co.uk](mailto:andrew@cassidywebservices.co.uk)完成
 
+### 评论:
+
+| **这个模块很好，但设计有误。** **此外，设置不准确。** **例如：** **&lt;action application\="set" data\="nibble\_account=9999"/>** **应该是：** **&lt;action application\="set" data\="nibble\_account=9999" "inline"="true"/>** **因为set仅在执行之后才起作用。** **内部设计也需要更改。我将在github上发布更新的版本，因为我无法在这里更新。** ![](/images/icons/contenttypes/comment_16.png) 由mjhatamy于2018年12月24日02:29发布|
+|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

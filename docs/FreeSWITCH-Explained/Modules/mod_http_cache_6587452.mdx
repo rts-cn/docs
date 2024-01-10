@@ -1,146 +1,96 @@
-
 # mod_http_cache 
 
  
 
-## About
+## 关于
 
-mod\_http\_cache allows one to make an HTTP GET request to cache a document and HTTP PUT to store a document. The primary use case is to download and cache audio files from a web server.
+mod_http_cache允许使用HTTP GET请求缓存文档并使用HTTP PUT存储文档。其主要用途是从web服务器下载和缓存音频文件。
 
-mod\_http\_cache will only respect the max-age cache-control directive to determine when a cached file becomes stale. Use http\_remove\_cache &lt;url> to force an update if you know the source file on the server is newer than the cached file.
+mod_http_cache只会遵循max-age缓存控制指令来确定缓存文件何时过期。如果您知道服务器上的源文件比缓存文件更新，可以使用http_remove_cache <url>来强制更新。
 
-mod\_http\_cache offers the http\_cache:// read and write file interfaces. See [these examples](mod_http_cache_6587452.mdx#examples) for usage.
+mod_http_cache提供了http_cache://读写文件接口。有关用法，请参见[这些示例](mod_http_cache_6587452.mdx#examples)。
 
-mod\_http\_cache offers the http:// and https:// read and write file interfaces if the "enable-file-formats" param is set to true. DO NOT LOAD mod\_httapi IF YOU USE THIS PARAM.
+如果将"enable-file-formats"参数设置为true，则mod_http_cache支持http://和https://读写文件接口。如果您使用此参数，请勿加载mod_httapi。
 
-mod\_http\_cache supports GET/PUT to Amazon S3 private buckets and (on FreeSWITCH later than 1.6) Microsoft's Azure Blob Service. See configuration below.
+mod_http_cache支持对Amazon S3私有存储桶和（FreeSWITCH 1.6之后的版本）Microsoft的Azure Blob Service进行GET/PUT。请参见下面的配置。
 
-[mod\_httapi](./mod_httapi_3966423.mdx#about) is also available which offers an HTTP read/write file interface.
+还提供了一个名为mod_httapi的模块，该模块提供了HTTP读写文件接口。请点击这里展开目录。
 
-Click here to expand Table of Contents
-
-* 1 [Installing](#installing)
-* 2 [Configuration](#configuration)
+* 1 [安装](#installing)
+* 2 [配置](#configuration)
 * 3 [API](#http_put)  
-   * 3.1 [http\_prefetch](#http_prefetch)  
-   * 3.2 [http\_get](#http_get)  
-   * 3.3 [http\_tryget](#http_tryget)  
-   * 3.4 [http\_put](#http_put)  
-   * 3.5 [http\_remove\_cache](#http_remove_cache)  
-   * 3.6 [http\_clear\_cache](#http_clear_cache)
-* 4 [Examples](#examples)  
-   * 4.1 [Playback](#playback)  
-   * 4.2 [Recording](#recording)
+   * 3.1 [http_prefetch](#http_prefetch)  
+   * 3.2 [http_get](#http_get)  
+   * 3.3 [http_tryget](#http_tryget)  
+   * 3.4 [http_put](#http_put)  
+   * 3.5 [http_remove_cache](#http_remove_cache)  
+   * 3.6 [http_clear_cache](#http_clear_cache)
+* 4 [示例](#examples)  
+   * 4.1 [播放](#playback)  
+   * 4.2 [录音](#recording)
 
-## Installing
+## 安装
 
-To use mod\_http\_cache:
+要使用mod_http_cache：
 
-Tell FreeSWITCH to compile in this module by editing modules.conf in /usr/src/freeswitch/trunk and adding:
+通过编辑/usr/src/freeswitch/trunk下的modules.conf文件并添加以下内容，告诉FreeSWITCH编译此模块：
 
 ```xml
 applications/mod_http_cache
 ```
 
-Now go recompile FreeSWITCH.
+然后重新编译FreeSWITCH。
 
 ```xml
 make
 make install 
 ```
 
-Tell FreeSWITCH to actually use the module when running by adding the module to modules.conf.xml in /usr/local/freeswitch/conf/autoload\_configs:
+要让FreeSWITCH在运行时实际使用该模块，请将该模块添加到`/usr/local/freeswitch/conf/autoload_configs/modules.conf.xml`中：
 
 ```xml
 <load module="mod_http_cache"/>
 ```
 
-For HTTPS support, grab the latest CA certs from <http://curl.haxx.se/ca/cacert.pem> and install in /usr/local/freeswitch/conf. An older copy is also available in freeswitch/src/mod/applications/mod\_http\_cache/conf/cacert.pem.
+对于HTTPS支持，请从<http://curl.haxx.se/ca/cacert.pem>获取最新的CA证书，并安装在`/usr/local/freeswitch/conf`中。旧版本的CA证书也可以在`freeswitch/src/mod/applications/mod_http_cache/conf/cacert.pem`中找到。
 
-## Configuration
+## 配置
 
-The conf/autoload\_configs/http\_cache.conf.xml file contains the configuration.
+`conf/autoload_configs/http_cache.conf.xml`文件包含了配置信息。
 
-**http\_cache.conf.xml**
+**http_cache.conf.xml**
 
 ```xml
-<configuration name="http_cache.conf" description="HTTP GET cache">
+<configuration name="http_cache.conf" description="HTTP GET缓存">
   <settings>
-    <!-- set to true if you want to enable http:// and https:// formats.  Do not use if mod_httapi is also loaded -->
+    <!-- 如果想启用http://和https://格式，请将其设置为true。如果已加载mod_httapi，请勿使用此选项 -->
     <param name="enable-file-formats" value="false"/>
-    <!-- maximum size of cache -->
+    <!-- 缓存的最大大小 -->
     <param name="max-urls" value="10000"/>
-    <!-- location of cached files -->
+    <!-- 缓存文件的存储位置 -->
     <param name="location" value="$${base_dir}/http_cache"/>
-    <!-- if not specified by cache-control max-age directive, this value will be used
-         to expire cached files -->
+    <!-- 如果缓存-Control标头中未指定max-age指令，则使用此值来过期缓存文件 -->
     <param name="default-max-age" value="86400"/>
-    <!-- size of the prefetch thread pool -->
+    <!-- 预取线程池的大小 -->
     <param name="prefetch-thread-count" value="8"/>
-    <!-- size of the prefetch request queue -->
+    <!-- 预取请求队列的大小 -->
     <param name="prefetch-queue-size" value="100"/>
-    <!-- absolute path to CA bundle file -->
+    <!-- CA证书文件的绝对路径 -->
     <param name="ssl-cacert" value="$${base_dir}/conf/cacert.pem"/>
-    <!-- verify certificates -->
+    <!-- 验证证书 -->
     <param name="ssl-verifypeer" value="true"/>
-    <!-- verify host name matches certificate -->
+    <!-- 验证主机名是否与证书匹配 -->
     <param name="ssl-verifyhost" value="true"/>
   </settings>
-
-  <profiles>
-    <!-- amazon s3 security credentials -->
-    <profile name="s3">
-      <aws-s3>
-        <!-- 20 character key identifier -->
-        <access-key-id><![CDATA[AKIAIOSFODNN7EXAMPLE]]></access-key-id>
-        <!-- 40 character secret -->
-        <secret-access-key><![CDATA[wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY]]></secret-access-key>
-      </aws-s3>
-      <!-- optional list of domains that this profile will automatically be applied to -->
-      <!-- if you wish to apply the s3 credentials to a domain not listed here, then use
-           {profile=s3}http://foo.s3... -->
-      <domains>
-        <domain name="bucket.s3.amazonaws.com"/>
-      </domains>
-    </profile>
-    <!-- Azure Blob Service security credentials -->
-    <profile name="azure">
-      <azure-blob>
-        <!-- key identifier, can override with AZURE_STORAGE_ACCESS_KEY environment variable -->
-        <secret-access-key>EXAMPLEKEY</secret-access-key>
-      </azure-blob>
-      <!-- optional list of domains that this profile will automatically be applied to -->
-      <!-- if you wish to apply the Azure credentials to a domain not listed here, then use
-           {profile=azure}http://account.blob... -->
-      <domains>
-        <domain name="account.blob.core.windows.net"/>
-      </domains>
-    </profile>
-  </profiles>
-</configuration> 
 ```
-
-## API
-
-### http_prefetch
-
-Download a URL to the cache in a background thread. Does not wait for the download to finish.
 
 ```xml
- http_prefetch http://example.com/media/hello_world.wav
+http_tryget http://example.com/media/hello_world.wav
 ```
 
-### http_get
+尝试下载文档到缓存中。如果下载成功，返回可供FreeSWITCH APPs使用的缓存文件名，否则返回"-ERR"。
 
-Download a document to the cache. Returns the name of the cached file suitable for use by FreeSWITCH APPs or "-ERR" on error:
-
-```xml
-http_get http://example.com/media/hello_world.wav
-```
-
-### http_tryget
-
-Same as http\_get except if the document is missing from the cache or stale, "-ERR download" is returned. i.e. this API call checks the cache only. "-ERR" is returned on all other errors:
+与http_get相同，只是如果缓存中不存在或是过期的话，会返回"-ERR download"。也就是说，这个API调用只检查缓存。在其他所有错误情况下，都会返回"-ERR"。
 
 ```xml
 http_tryget http://example.com/media/hello_world.wav
@@ -148,7 +98,7 @@ http_tryget http://example.com/media/hello_world.wav
 
 ### http_put
 
-PUT a file. This can be used to PUT a file like a session recording to a webserver:
+PUT一个文件。可以用来将会话录音之类的文件上传到Web服务器：
 
 ```xml
 http_put http://user:password@example.com/recordings/1df4a12708bcea.wav /tmp/1df4a12708bcea.wav
@@ -156,7 +106,7 @@ http_put http://user:password@example.com/recordings/1df4a12708bcea.wav /tmp/1df
 
 ### http_remove_cache
 
-Invalidate a cached file, typically when the source file has been updated. This will force the updated file to be downloaded into the cache.
+使缓存中的文件失效，通常用于源文件已更新的情况。这将强制下载更新后的文件到缓存中。
 
 ```xml
 http_remove_cache http://example.com/media/hello_world.wav
@@ -165,21 +115,21 @@ http_remove_cache http://example.com/media/hello_world.wav
   
 ### http_clear_cache
 
-Empty the cache:
+清空缓存：
 
 ```xml
 http_clear_cache
 ```
 
-## Examples
+## 示例
 
-### Playback
+### 播放
 
-Play a .wav file hosted by a webserver.
+播放由Web服务器托管的.wav文件。
 
-http\_prefetch
+http_prefetch
 
-While this example below will work, it is probably best to download all the .wav files needed by a call in a background thread early in the call using http\_prefetch. Subsequent calls to http\_get will then just grab the cached file. That way, delays in downloading will be less likely to cause pauses in playback.
+尽管下面的示例可以正常工作，但最好在调用中的早期使用http_prefetch在后台线程中下载所有需要用到的.wav文件。之后再使用http_get来获取缓存文件。这样，下载时的延迟不太可能导致播放暂停。
 
   
 enable-file-formats=false
@@ -202,7 +152,7 @@ enable-file-formats=true
   
 refresh=true
 
-Force download of source file, for example if the file on the server has been updated and the cached file is now invalid.  
+强制下载源文件，例如，如果服务器上的文件已经更新，缓存文件现在无效了。  
 
 **Refresh**
 
@@ -212,11 +162,11 @@ Force download of source file, for example if the file on the server has been up
 ```
 
   
-### Recording
+### 录音
 
-How to record a .wav file to a webserver
+如何将.wav文件记录到Web服务器
 
-mod\_http\_cache can record using the http/https/http\_cache file formats. The file is PUT when the recording is completed and the file is closed. 
+mod_http_cache可以使用http/https/http_cache文件格式进行记录。当录音完成并关闭文件时，文件会被PUT。
 
 enable-file-formats=false
 
@@ -233,5 +183,3 @@ enable-file-formats=true
 ```xml
 <action application="record" data="https://example.com/recordings/${uuid}.wav"/>
 ```
-
-

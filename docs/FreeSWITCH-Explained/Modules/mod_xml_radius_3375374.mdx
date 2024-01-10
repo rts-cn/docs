@@ -1,35 +1,32 @@
+# mod_xml_radius
 
-# mod_xml_radius 
+## 关于
 
- 
+提供RADIUS身份验证，对于连接到Jerasoft等计费软件也非常有用。
 
-## About
+## 特点
 
-Provides RADIUS authentication, also useful for connecting to billing packages such as Jerasoft.  
+### 已实现
 
-## Features
+授权：用于sip注册的目录查找（仅哈希，无密码）授权的拨号计划应用程序
 
-### Implemented
+计费：基于正则表达式的计费每条腿的限制，可以适用于几乎任何通道变量
 
-Authorization: Directory lookup for sip registrations(hash only, no passwords) Dialplan app for authorization
+其他：能够指定通道变量，以及用于字段值的备用通道变量
 
-Accounting: Per leg accounting regular expression based limiting for accounting on nearly any channel variable
+### 缺失
 
-Misc: Ability to specify channel variable, plus alternate channel variable to use for field values
+有四种很好的方法来添加功能：
 
-### Missing  
+* 在博客评论下添加功能请求
+* 提交JIRA工单
+* 在IRC上找到我，IRC频道为#freeswitch，用户名为quentusrex或quentusrex\_
+* 联系[consulting@freeswitch.org](mailto:consulting@freeswitch.org)
+* 发送补丁给我：[wking@freeswitch.org](mailto:wking@freeswitch.org)
 
-There are four good ways to have the feature added:
+## 示例freeradius配置
 
-* Add the feature request as a blog comment below
-* File a JIRA ticket
-* Catch me on IRC #freeswitch as user quentusrex or quentusrex\_
-* Contact [consulting@freeswitch.org](mailto:consulting@freeswitch.org)
-* Send me a patch: [wking@freeswitch.org](mailto:wking@freeswitch.org)
-
-## Example freeradius config
-
-Radius users entry ( cleartext password or HA1 hash required for digest authentication )
+Radius用户项（明文密码或HA1哈希用于摘要身份验证）
 
 ```xml
 bob Cleartext-Password := "zanzibar", Realm == "biloxi.com"
@@ -40,36 +37,32 @@ bob Cleartext-Password := "zanzibar", Realm == "biloxi.com"
         Freeswitch-AVPair += "vm_pass=1234"
 ```
 
-## Dialplan Use Examples
+## Dialplan使用示例
 
-To schedule hangup when time runs out:
+在时间用尽时安排挂断：
 
 ```xml
 <action application="set" data="execute_on_answer=sched_hangup +${h323-credit-time} allotted_timeout" />
 ```
 
-  
-To tell user the number of minutes:
+告知用户分钟数：
 
 ```xml
 <action application="pre_answer" />
-<action application="playback" data="/usr/local/freeswitch/sounds/en/us/callie/voicemail/8000/vm-you_have.wav"/>
+<action application="playback" data="/usr/local/freeswitch/sounds/zh-CN/callie/voicemail/8000/vm-you_have.wav"/>
 <action application="set" data="h323-credit-time-minutes=${expr(floor(${h323-credit-time}/60))}"/>
-<action application="say" data="en number pronounced ${h323-credit-time-minutes}"/>
-<action application="playback" data="/usr/local/freeswitch/sounds/en/us/callie/time/8000/minutes.wav"/>
+<action application="say" data="zh-CN number pronounced ${h323-credit-time-minutes}"/>
+<action application="playback" data="/usr/local/freeswitch/sounds/zh-CN/callie/time/8000/minutes.wav"/>
 ```
-
-To tell the user their account balance / funds remaining:
+告知用户账户余额/剩余资金:
 
 ```xml
 <action application="pre_answer" />
-<action application="playback" data="/usr/local/freeswitch/sounds/en/us/callie/ivr/8000/ivr-account_balance_is.wav"/>
-<action application="say" data="en currency pronounced ${h323-credit-amount}"/>
+<action application="playback" data="/usr/local/freeswitch/sounds/zh-CN/callie/ivr/8000/ivr-account_balance_is.wav"/>
+<action application="say" data="zh-CN currency pronounced ${h323-credit-amount}"/>
 ```
 
-### Comments:
+### 评论:
 
-| FreeRADIUS 3.0.12:(3) \[digest\] = noop ![](/images/icons/contenttypes/comment_16.png) Posted by morfair at Sep 27, 2018 11:53 |
-| ----------------------------------------------------------------------------------------------------------------------------- |
-
-
+| FreeRADIUS 3.0.12:(3) \[digest\] = noop ![](/images/icons/contenttypes/comment_16.png) 发表者：morfair 时间：2018年9月27日 11:53 |
+| --------------------------------------------------------------------------------------------------------------------- |

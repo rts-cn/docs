@@ -1,24 +1,20 @@
+# CDR 通过 ESL
 
-# CDR via ESL 
+## 关于
 
- 
+[Event Socket Library](../../Client-and-Developer-Interfaces/Event-Socket-Library/index.mdx#-new-) 允许实时检索CDR。CDR信息以**CHANNEL\_HANGUP\_COMPLETE**事件的形式提供。
 
-## About
+如果将通道变量`hangup_complete_with_xml=true`，那么该事件的内容将是完整的XML CDR。
 
-[Event Socket Library](../../Client-and-Developer-Interfaces/Event-Socket-Library/index.mdx#-new-) allows one to retrieve CDRs in realtime. The CDR information are provided in the event **CHANNEL\_HANGUP\_COMPLETE**.
+同时也可以参考`mod_cdr_`模块（例如：[mod\_cdr\_pg\_csv](../../Modules/mod_cdr_pg_csv_6587338.mdx#about)，[mod\_cdr\_csv](../../Modules/mod_cdr_csv_6587322.mdx#legs)，[mod\_cdr\_mongodb](../../Modules/mod_cdr_mongodb_3965094.mdx#about)）。
 
-If you set channel variable hangup\_complete\_with\_xml=true, then the body of that event will be a full XML CDR
-
-  
-See also `mod_cdr_` \* modules (e.g., [mod\_cdr\_pg\_csv](../../Modules/mod_cdr_pg_csv_6587338.mdx#about), [mod\_cdr\_csv](../../Modules/mod_cdr_csv_6587322.mdx#legs), [mod\_cdr\_mongodb](../../Modules/mod_cdr_mongodb_3965094.mdx#about)). 
-
-### Example in Perl on how to use ESL to display CDRs
+### 使用ESL显示CDR的 Perl 示例
 
 ```perl
 #! /usr/bin/perl -wT
 # handle_cdr.pl
-# Connect to event socket, listen for CHANNEL_HANGUP_COMPLETE events
-# Uses event data to create custom CDRs
+# 连接到事件套接字，监听 CHANNEL_HANGUP_COMPLETE 事件
+# 使用事件数据创建自定义CDR
 
 use strict;
 use warnings;
@@ -29,31 +25,31 @@ use ESL;
 my $host = 'localhost';
 my $port = '8021';
 my $pass = 'ClueCon';
-# Connect to event socket
+# 连接到事件套接字
 my $con  = ESL::ESLconnection->new($host, $port, $pass);
 if ( ! $con ) {
-    die "Unable to establish connection to FreeSWITCH.\n";
+    die "无法建立与FreeSWITCH的连接。\n";
 }
-# Listen for events of type CHANNEL_HANGUP_COMPLETE only
+# 仅监听 CHANNEL_HANGUP_COMPLETE 类型事件
 $con->events('plain','CHANNEL_HANGUP_COMPLETE');
+```
 
-print "Connected to FreeSWITCH $host:$port and waiting for events...\n\n";
-while ( $con->connected() ) {
+```perl
+print "已连接到FreeSWITCH $host:$port并等待事件...\n\n";
+while ($con->connected()) {
     my $e = $con->recvEvent();
     my @raw_data = split /\n/, $e->serialize();
     my %cdr;
-    foreach my $item ( @raw_data ) {
+    foreach my $item (@raw_data) {
         #print "$item\n";
         my ($header, $value) = split /: /, $item;
         $header =~ s/^variable_//;
         $cdr{$header} = $value;
     }
-    # %cdr contains a complete list of channel variables
-    print 'New CDR: ';
-    print $cdr{uuid} . ', ' . $cdr{direction} . ', ';
-    print $cdr{answer_epoch} . ', ' . $cdr{end_epoch} . ', ';
+    # %cdr 包含了完整的通道变量列表
+    print '新CDR：';
+    print $cdr{uuid} . '，' . $cdr{direction} . '，';
+    print $cdr{answer_epoch} . '，' . $cdr{end_epoch} . '，';
     print $cdr{hangup_cause} . "\n";
 }
 ```
-
-

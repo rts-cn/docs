@@ -1,57 +1,54 @@
+# mod_radius_cdr
 
-# mod_radius_cdr 
+## 关于
 
- 
+关于文本。
 
-## About
+单击此处展开目录
 
-About text.
+* 1 [构建和安装](#building--installation)
+* 2 [安装配置文件](#install-configuration-files)
+* 3 [模块配置](#module-configuration)
+* 4 [示例](#example)
 
-Click here to expand Table of Contents
+## 构建和安装
 
-* 1 [Building & Installation](#building--installation)
-* 2 [Install Configuration Files](#install-configuration-files)
-* 3 [Module Configuration](#module-configuration)
-* 4 [Example](#example)
+该模块不会默认构建。为了构建该模块，您需要执行以下步骤：
 
-## Building & Installation
+* 下载并安装 'freeradius-client' 库。您需要运行最新版本。有关如何执行此操作的文档可以在此处找到：[freeradius-client](http://wiki.freeradius.org/Radiusclient)
+* 取消 'modules.conf' 中的 'mod\_radius\_cdr' 注释。
+* 运行 'make' && 'make install'。
 
-This module is not built by default. In order to build this module, you will need to perform the following steps:
+## 安装配置文件
 
-* Download and install the 'freeradius-client' library. You will need to run the CVS head version. Documentation on how to do this can be found here: [freeradius-client](http://wiki.freeradius.org/Radiusclient)
-* Uncomment the 'mod\_radius\_cdr' entry in 'modules.conf'.
-* Run 'make' && 'make install'.
+您需要将配置文件从源目录复制到您的 FreeSWITCH 配置目录。
 
-## Install Configuration Files
+您需要复制的文件是 'mod\_radius\_cdr.conf.xml' 和 'radius' 目录（及其内容）。
 
-You will need to copy the configuration files from the source directory, into your FreeSWITCH configuration directory.
-
-The files you need to copy are 'mod\_radius\_cdr.conf.xml' and the the 'radius' directory ( and it's contents ).
-
-* Edit 'conf/modules.conf' to load mod\_radius\_cdr with the other event\_handlers that you want enabled.
-* Edit 'conf/freeswitch.xml' to include 'mod\_radius\_cdr.conf.xml'.
-* Run FreeSWITCH. You should see the following in the startup messages:
+* 编辑 'conf/modules.conf' 加载 mod\_radius\_cdr，并启用其他事件处理程序。
+* 编辑 'conf/freeswitch.xml' 并包含 'mod\_radius\_cdr.conf.xml'。
+* 运行 FreeSWITCH。您应该在启动消息中看到以下内容：
 
 ```xml
  2007-06-18 10:21:51 [CONSOLE] switch_loadable_module.c:736 switch_loadable_module_load_file() Successfully Loaded [mod_radius_cdr]
 ```
 
-## Module Configuration
+## 模块配置
 
-The **dictionary** directive specifies the location of the RADIUS dictionary file. If the module can't find this file, it won't run.
+**dictionary** 指令指定RADIUS字典文件的位置。如果模块找不到该文件，则无法运行。
 
 ```xml
  <param name="dictionary" value="/usr/local/freeswitch/conf/radius/dictionary"/>
 ```
 
-The **radius\_retries** directive tells the module how many times to try sending a request to a server before failing. The default is 3 retries. The **radius\_timeout** directive tells the module how many seconds to wait between request attempts before timing out. The default is 5 seconds. The total time a request may be pending is ( radius\_timeout \* radius\_retries \* number\_of\_servers ). Currently, the module blocks the thread while it is sending the requests. This may cause threads to hang around longer than expected after a call, if your RADIUS servers are not reachable/responding.
+**radius\_retries**指令告诉模块在失败之前发送请求到服务器的次数。默认为3次重试。**radius\_timeout**指令告诉模块在请求尝试之间等待的秒数。默认为5秒。请求可以挂起的总时间为（radius\_timeout \* radius\_retries \* number\_of\_servers）。目前，模块在发送请求时会阻塞线程。如果您的RADIUS服务器无法连接/响应，这可能导致线程比预期更长时间地挂起。
 
 ```xml
  <param name="radius_retries" value="3"/>
  <param name="radius_timeout" value="5"/>
 ```
 
-The **acctserver** directive defines the servers to be used ( sequentially ) for sending requests. The format for the value is: host:port:secret. The host SHOULD be defined as an IP address, not as DNS hostname. You can specify a DNS hostname, but inconsistent behavior has been observed when doing this. A maximum of 8 servers can be defined.
+**acctserver**指令定义要用于发送请求的服务器（按顺序）。值的格式为：host:port:secret。主机应定义为IP地址，而不是DNS主机名。您可以指定DNS主机名，但在这样做时观察到了不一致的行为。最多可以定义8个服务器。
 
 ```xml
 <param name="acctserver" value="127.0.0.1:1813:mysecret"/>
@@ -59,43 +56,41 @@ The **acctserver** directive defines the servers to be used ( sequentially ) for
 <param name="acctserver" value="10.0.0.3:1813:toomanysecrets"/>
 ```
 
-## Example
+## 示例
 
-Here's a sample RADIUS transaction ( logged to a detail file via FreeRADIUS server ):
+以下是一个示例的RADIUS交易（通过FreeRADIUS服务器记录到详细文件中）：
 
 ```xml
- Fri Jun  8 08:23:10 2007
-       Acct-Status-Type = Start
-       Acct-Session-Id = "d734ff5e-bf04-4045-8cb3-f5744574808b"
-       Freeswitch-Src = "8478797989"
-       Freeswitch-CLID = "Chris Parker"
-       Freeswitch-Dst = "888"
-       Freeswitch-Dialplan = "XML"
-       NAS-Port = 0
-       Acct-Delay-Time = 0
-       NAS-IP-Address = 127.0.0.1
-       Client-IP-Address = 127.0.0.1
-       Acct-Unique-Session-Id = "4b7754541b5902fa"
-       Timestamp = 1181308990
+2007年6月8日星期五08:23:10
+     Acct-Status-Type = 开始
+     Acct-Session-Id = "d734ff5e-bf04-4045-8cb3-f5744574808b"
+     Freeswitch-Src = "8478797989"
+     Freeswitch-CLID = "Chris Parker"
+     Freeswitch-Dst = "888"
+     Freeswitch-Dialplan = "XML"
+     NAS-Port = 0
+     Acct-Delay-Time = 0
+     NAS-IP-Address = 127.0.0.1
+     Client-IP-Address = 127.0.0.1
+     Acct-Unique-Session-Id = "4b7754541b5902fa"
+     Timestamp = 1181308990
 ```
 
 ```xml
- Fri Jun  8 08:23:31 2007
-       Acct-Status-Type = Stop
-       Acct-Session-Id = "d734ff5e-bf04-4045-8cb3-f5744574808b"
-       Freeswitch-Hangupcause = Normal-Clearing
-       Freeswitch-Src = "8478797989"
-       Freeswitch-CLID = "Chris Parker"
-       Freeswitch-Dst = "888"
-       Freeswitch-Dialplan = "XML"
-       Freeswitch-Lastapp = "bridge"
-       Freeswitch-Billusec = 21460442
-       NAS-Port = 0
-       Acct-Delay-Time = 0
-       NAS-IP-Address = 127.0.0.1
-       Client-IP-Address = 127.0.0.1
-       Acct-Unique-Session-Id = "4b7754541b5902fa"
-       Timestamp = 1181309011
+2007年6月8日星期五08:23:31
+     Acct-Status-Type = 停止
+     Acct-Session-Id = "d734ff5e-bf04-4045-8cb3-f5744574808b"
+     Freeswitch-Hangupcause = 正常挂断
+     Freeswitch-Src = "8478797989"
+     Freeswitch-CLID = "Chris Parker"
+     Freeswitch-Dst = "888"
+     Freeswitch-Dialplan = "XML"
+     Freeswitch-Lastapp = "bridge"
+     Freeswitch-Billusec = 21460442
+     NAS-Port = 0
+     Acct-Delay-Time = 0
+     NAS-IP-Address = 127.0.0.1
+     Client-IP-Address = 127.0.0.1
+     Acct-Unique-Session-Id = "4b7754541b5902fa"
+     Timestamp = 1181309011
 ```
-
-

@@ -1,29 +1,26 @@
+# CDR（通话详单）
 
-# CDR 
+## 关于
 
- 
+通话详单（CDR）是在每次通话会话期间记录的数据。CDR可以包含与每次通话会话和最终通话的每个双腿相关的属性。
 
-## About
+CDR包含呼叫发起电话号码、接收电话号码、通话时间、通话持续时间以及其他更多属性。
 
-Call Detail Records are the data recorded during each call session. A CDR may contain attributes specific to each call session and eventually each leg of the call.
+* [CDR示例](#cdr-examples)
+* [存储CDR](#store-cdr)
+* [处理CDR](#cdr-handling)
+* [计算通话的各种时间值](#calculating-various-time-values-for-a-call)  
+   * [通话开始响铃的时间（PDD）](#what-time-a-call-started-ringing-pdd)  
+   * [通话持续时间有多长](#how-long-was-the-talk-time)  
+   * [电话响铃时间有多长](#how-long-did-the-phone-ring)  
+   * [通话保持时间有多长](#how-long-was-the-call-on-hold)
+* [整理CDR](#putting-together-cdrs)
 
-CDR contain the phone numbers originating the call and receiving the call, time of the call, call duration and many more attributes.
+## CDR示例
 
-* [CDR Examples](#cdr-examples)
-* [Store CDR](#store-cdr)
-* [CDR Handling](#cdr-handling)
-* [Calculating Various Time Values For A Call](#calculating-various-time-values-for-a-call)  
-   * [What time a call started ringing (PDD)](#what-time-a-call-started-ringing-pdd)  
-   * [How long was the talk time](#how-long-was-the-talk-time)  
-   * [How long did the phone ring](#how-long-did-the-phone-ring)  
-   * [How long was the call on hold](#how-long-was-the-call-on-hold)
-* [Putting Together CDRs](#putting-together-cdrs)
+一个存储在/usr/local/freeswitch/log/cdr-csv/Master.csv中的FreeSWITCH CDR示例
 
-## CDR Examples
-
-An example of FreeSWITCH CDRs stored in /usr/local/freeswitch/log/cdr-csv/Master.csv
-
-**Sample CSV CDR** Expand source 
+**示例CSV CDR** 查看源代码
 
 ```xml
 "9007","9007","0034688886392","public","2014-05-29 16:59:50","","2014-05-29 16:59:50","0","0","NORMAL_CLEARING","a5c9f6c0-e752-11e3-8bfb-65b6c3cdac7d","","","",""
@@ -33,22 +30,22 @@ An example of FreeSWITCH CDRs stored in /usr/local/freeswitch/log/cdr-csv/Master
 "9008","9008","00034688886392","public","2014-05-29 17:01:34","","2014-05-29 17:01:34","0","0","NORMAL_CLEARING","e38cb5b0-e752-11e3-8c0b-65b6c3cdac7d","","","",""
 ```
 
-An example of detailed XML CDR stored in /usr/local/freeswitch/log/xml\_cdr/a\_80183ec8-d424-11e3-8fb2-65b6c3cdac7d.cdr.xml
+一个详细的XML CDR示例存储在 /usr/local/freeswitch/log/xml_cdr/a_80183ec8-d424-11e3-8fb2-65b6c3cdac7d.cdr.xml 中
 
-**Sample XML CDR** Expand source 
+**示例 XML CDR** Expand source
 
 ```xml
 <?xml version="1.0"?>
 <cdr core-uuid="b658d05e-c42c-11e3-bdcd-65b6c3cdac7d">
   <channel_data>
-    <state>CS_REPORTING</state>
-    <direction>inbound</direction>
+    <state>通话报告</state>
+    <direction>呼入</direction>
     <state_number>11</state_number>
     <flags>0=1;37=1;39=1;73=1</flags>
     <caps>1=1;2=1;3=1;4=1;5=1;6=1</caps>
   </channel_data>
   <variables>
-    <direction>inbound</direction>
+    <direction>呼入</direction>
     <uuid>80183ec8-d424-11e3-8fb2-65b6c3cdac7d</uuid>
     <session_id>1600</session_id>
     <sip_from_user>8009</sip_from_user>
@@ -89,175 +86,73 @@ An example of detailed XML CDR stored in /usr/local/freeswitch/log/xml\_cdr/a\_8
     <sip_via_rport>5082</sip_via_rport>
     <max_forwards>70</max_forwards>
     <switch_r_sdp>v%3D0%0D%0Ao%3Dsipcli-Session%201224945619%201785273517%20IN%20IP4%20XX.XX.XXX.XXX%0D%0As%3Dsipcli%0D%0Ac%3DIN%20IP4%20XX.XX.XXX.XXX%0D%0At%3D0%200%0D%0Am%3Daudio%205083%20RTP/AVP%2018%200%208%20101%0D%0Aa%3Drtpmap%3A18%20G729/8000%0D%0Aa%3Drtpmap%3A0%20PCMU/8000%0D%0Aa%3Drtpmap%3A8%20PCMA/8000%0D%0Aa%3Drtpmap%3A101%20telephone-event/8000%0D%0Aa%3Dfmtp%3A101%200-15%0D%0Aa%3Dptime%3A20%0D%0A</switch_r_sdp>
-    <ep_codec_string>PCMU%408000h%4020i%4064000b,PCMA%408000h%4020i%4064000b</ep_codec_string>
-    <endpoint_disposition>DELAYED%20NEGOTIATION</endpoint_disposition>
-    <call_uuid>80183ec8-d424-11e3-8fb2-65b6c3cdac7d</call_uuid>
-    <outside_call>true</outside_call>
-    <current_application_data>RFC2822_DATE%3DMon,%2005%20May%202014%2007%3A11%3A38%20%2B0000</current_application_data>
-    <current_application>export</current_application>
-    <RFC2822_DATE>Mon,%2005%20May%202014%2007%3A11%3A38%20%2B0000</RFC2822_DATE>
-    <export_vars>RFC2822_DATE</export_vars>
-    <hangup_cause>NORMAL_CLEARING</hangup_cause>
-    <hangup_cause_q850>16</hangup_cause_q850>
-    <digits_dialed>none</digits_dialed>
-    <start_stamp>2014-05-05%2007%3A11%3A38</start_stamp>
-    <profile_start_stamp>2014-05-05%2007%3A11%3A38</profile_start_stamp>
-    <end_stamp>2014-05-05%2007%3A11%3A38</end_stamp>
-    <start_epoch>1399273898</start_epoch>
-    <start_uepoch>1399273898421766</start_uepoch>
-    <profile_start_epoch>1399273898</profile_start_epoch>
-    <profile_start_uepoch>1399273898421766</profile_start_uepoch>
-    <answer_epoch>0</answer_epoch>
-    <answer_uepoch>0</answer_uepoch>
-    <bridge_epoch>0</bridge_epoch>
-    <bridge_uepoch>0</bridge_uepoch>
-    <last_hold_epoch>0</last_hold_epoch>
-    <last_hold_uepoch>0</last_hold_uepoch>
-    <hold_accum_seconds>0</hold_accum_seconds>
-    <hold_accum_usec>0</hold_accum_usec>
-    <hold_accum_ms>0</hold_accum_ms>
-    <resurrect_epoch>0</resurrect_epoch>
-    <resurrect_uepoch>0</resurrect_uepoch>
-    <progress_epoch>0</progress_epoch>
-    <progress_uepoch>0</progress_uepoch>
-    <progress_media_epoch>0</progress_media_epoch>
-    <progress_media_uepoch>0</progress_media_uepoch>
-    <end_epoch>1399273898</end_epoch>
-    <end_uepoch>1399273898421766</end_uepoch>
-    <last_app>export</last_app>
-    <last_arg>RFC2822_DATE%3DMon,%2005%20May%202014%2007%3A11%3A38%20%2B0000</last_arg>
-    <caller_id>%228009%22%20%3C8009%3E</caller_id>
-    <duration>0</duration>
-    <billsec>0</billsec>
-    <progresssec>0</progresssec>
-    <answersec>0</answersec>
-    <waitsec>0</waitsec>
-    <progress_mediasec>0</progress_mediasec>
-    <flow_billsec>0</flow_billsec>
-    <mduration>0</mduration>
-    <billmsec>0</billmsec>
-    <progressmsec>0</progressmsec>
-    <answermsec>0</answermsec>
-    <waitmsec>0</waitmsec>
-    <progress_mediamsec>0</progress_mediamsec>
-    <flow_billmsec>0</flow_billmsec>
-    <uduration>0</uduration>
-    <billusec>0</billusec>
-    <progressusec>0</progressusec>
-    <answerusec>0</answerusec>
-    <waitusec>0</waitusec>
-    <progress_mediausec>0</progress_mediausec>
-    <flow_billusec>0</flow_billusec>
-    <sip_hangup_disposition>send_refuse</sip_hangup_disposition>
-  </variables>
-  <app_log>
-    <application app_name="set" app_data="outside_call=true" app_stamp="1399273898425694"></application>
-    <application app_name="export" app_data="RFC2822_DATE=Mon, 05 May 2014 07:11:38 +0000" app_stamp="1399273898426099"></application>
-  </app_log>
-  <callflow dialplan="XML" unique-id="801853d6-d424-11e3-8fb3-65b6c3cdac7d" profile_index="1">
-    <extension name="outside_call" number="003468888646444">
-      <application app_name="set" app_data="outside_call=true"></application>
-      <application app_name="export" app_data="RFC2822_DATE=${strftime(%a, %d %b %Y %T %z)}"></application>
-    </extension>
-    <caller_profile>
-      <username>8009</username>
-      <dialplan>XML</dialplan>
-      <caller_id_name>8009</caller_id_name>
-      <caller_id_number>8009</caller_id_number>
-      <callee_id_name></callee_id_name>
-      <callee_id_number></callee_id_number>
-      <ani>8009</ani>
-      <aniii></aniii>
-      <network_addr>XX.XX.XXX.XXX</network_addr>
-      <rdnis></rdnis>
-      <destination_number>003468888646444</destination_number>
-      <uuid>80183ec8-d424-11e3-8fb2-65b6c3cdac7d</uuid>
-      <source>mod_sofia</source>
-      <context>public</context>
-      <chan_name>sofia/external/8009@XX.XX.XXX.XXX</chan_name>
-    </caller_profile>
-    <times>
-      <created_time>1399273898421766</created_time>
-      <profile_created_time>1399273898421766</profile_created_time>
-      <progress_time>0</progress_time>
-      <progress_media_time>0</progress_media_time>
-      <answered_time>0</answered_time>
-      <bridged_time>0</bridged_time>
-      <last_hold_time>0</last_hold_time>
-      <hold_accum_time>0</hold_accum_time>
-      <hangup_time>1399273898421766</hangup_time>
-      <resurrect_time>0</resurrect_time>
-      <transfer_time>0</transfer_time>
-    </times>
-  </callflow>
-</cdr>
-```
+    <ep_codec_string>PCMU%408000h%4020i%4064000b,PCMA%408000h%402
 
-## Store CDR
+## 存储CDR
 
-There are several ways which FreeSWITCH can save CDR (Call Detail Record).
+FreeSWITCH有几种方法可以保存通话详单（Call Detail Record）。
 
-The best way to store "live" call detail records is to write all the data fields to a temporary area on disk or RAM drive and write a script to scan that same area of the file system for the long-running processing of storing them in your database. This avoids hanging the voice call thread in FS if the http or db server is down at the end of the calls.
+存储“实时”通话详单的最佳方式是将所有数据字段写入磁盘或RAM驱动器上的临时区域，并编写一个脚本来扫描文件系统中同一区域，以实现长时间运行的处理，并将它们存储到数据库中。这样，即使在通话结束时http或db服务器宕机，也不会阻塞FS中的语音通话线程。
 
-**DO NOT** write CDR scripts in the hangup hook of your dialplan or ESL script as this will delay the termination of the voice thread and will not scale to large systems. Allow the voice thread to handle only voice; handle your back-end business processes separately, off-line. This approach works for all installations from small to huge.
+**不要**在dialplan或ESL脚本的挂机钩子中编写CDR脚本，因为这会延迟语音线程的终止，而且不能扩展到大规模系统。让语音线程仅处理音频，将后端业务流程单独处理，离线进行。这种方法适用于从小型到大型的所有安装。
 
-Popular ways include:
+常用的方式包括：
 
-* **[mod\_cdr\_csv](../../Modules/mod_cdr_csv_6587322.mdx#legs)** \- saves a CSV file with the variables you specify in a template.
-* **[mod\_cdr\_mongodb](../../Modules/mod_cdr_mongodb_3965094.mdx#about)** \- saves detailed CDR data to a MongoDB database, in a format similar to mod\_json\_cdr.
-* **[mod\_odbc\_cdr](../../Modules/mod_odbc_cdr_7143449.mdx#about)** \- saves any channel variable from call to your choice of ODBC database.
-* **[mod\_cdr\_pg\_csv](../../Modules/mod_cdr_pg_csv_6587338.mdx#about)** \- Asterisk Compatible CDR Module with PostgreSQL interface.
-* **[mod\_cdr\_sqlite](../../Modules/mod_cdr_sqlite_6587351.mdx#about)** \- saves directly to an sqlite DB with the variables you specify in a template.
-* **[mod\_json\_cdr](../../Modules/mod_json_cdr_4653124.mdx#-output-example-cdrs-)** \- Saves to file or POSTs a JSON representation of the channel variable and callflow. It can post directly to CouchDB.
-* **[mod\_xml\_cdr](../../Modules/mod_xml_cdr_6587377.mdx#faq)** \- Saves to file or POSTs an XML representation of the channel variable and callflow.  
-   * [Xmlcdrd](../../Auxiliary-Knowledge-and-Utilities/Xmlcdrd_13173237.mdx#--) or [JavaCDRLogger](../../Client-and-Developer-Interfaces/Java-ESL/Java-CDR-Logger_7144082.mdx#about) may assist you in saving the results.
-* **[mod\_radius\_cdr](../../Modules/mod_radius_cdr_13173523.mdx#about)** \- RADIUS CDR Module.
-* **[CDR via ESL](CDR-via-ESL_3965102.mdx#about)** \- Retrieve the CDR in an ESL event
-* **tiny\_cdr** from bougyman at <https://github.com/rubyists/tiny%5Fcdr>
+* **[mod_cdr_csv](../../Modules/mod_cdr_csv_6587322.mdx#legs)** - 保存一个包含你在模板中指定的变量的CSV文件。
+* **[mod_cdr_mongodb](../../Modules/mod_cdr_mongodb_3965094.mdx#about)** - 将详细的CDR数据保存到一个MongoDB数据库中，格式与mod_json_cdr类似。
+* **[mod_odbc_cdr](../../Modules/mod_odbc_cdr_7143449.mdx#about)** - 将呼叫的任何通道变量保存到你选择的ODBC数据库中。
+* **[mod_cdr_pg_csv](../../Modules/mod_cdr_pg_csv_6587338.mdx#about)** - 兼容Asterisk的CDR模块，带有PostgreSQL接口。
+* **[mod_cdr_sqlite](../../Modules/mod_cdr_sqlite_6587351.mdx#about)** - 直接保存到一个sqlite数据库中，包含你在模板中指定的变量。
+* **[mod_json_cdr](../../Modules/mod_json_cdr_4653124.mdx#-output-example-cdrs-)** - 保存为文件或以JSON表示通道变量和呼叫流程。它可以直接发送到CouchDB。
+* **[mod_xml_cdr](../../Modules/mod_xml_cdr_6587377.mdx#faq)** - 保存为文件或以XML表示通道变量和呼叫流程。
+   * [Xmlcdrd](../../Auxiliary-Knowledge-and-Utilities/Xmlcdrd_13173237.mdx#--) 或者[JavaCDRLogger](../../Client-and-Developer-Interfaces/Java-ESL/Java-CDR-Logger_7144082.mdx#about)可以帮助你保存结果。
+* **[mod_radius_cdr](../../Modules/mod_radius_cdr_13173523.mdx#about)** - RADIUS CDR模块。
+* **[通过ESL获取CDR](CDR-via-ESL_3965102.mdx#about)** - 通过ESL事件检索CDR。
+* **tiny_cdr** 来自bougyman在<https://github.com/rubyists/tiny%5Fcdr>
 
-## CDR Handling
+## CDR处理
 
-You can instruct FreeSWITCH to not log a call, or only log leg B or the like. See: [Variable\_process\_cdr](../../Dialplan/-Variables-(work-in-progress)/CDR-and-accounting-variables_7766283.mdx#process_cdr)
+你可以指示FreeSWITCH不记录一次呼叫，或者只记录B路或类似的内容。查看：[Variable_process_cdr](../../Dialplan/-Variables-(work-in-progress)/CDR-and-accounting-variables_7766283.mdx#process_cdr)
 
-You can also specify hangup causes that should not generate a CDR. See [Variable\_skip\_cdr\_causes](../../Dialplan/-Variables-(work-in-progress)/CDR-and-accounting-variables_7766283.mdx#skip_cdr_causes) (added V1.2.3 3cf238fc)
+您还可以指定不应生成CDR的挂断原因。请参阅 [Variable\_skip\_cdr\_causes](../../Dialplan/-Variables-(work-in-progress)/CDR-and-accounting-variables_7766283.mdx#skip_cdr_causes)（添加于 V1.2.3 3cf238fc）。
 
-## Calculating Various Time Values For A Call
+## 计算通话的各种时间值
 
-FreeSWITCH CDRs contain lots of information. From those values one can extract other information:
+FreeSWITCH CDR 中包含大量信息。从这些值中可以提取其他信息：
 
-### What time a call started ringing (PDD)
+### 通话开始响铃的时间（PDD）
 
-When a call starts ringing it either has media or does not have media. If it has media then **progress\_media\_time** will be set; if not, **progress\_time** will be set. The value not set will be zero. Therefore this formula will always yield the exact time the call started to ring:
+当通话开始响铃时，它可以有媒体或者没有媒体。如果有媒体，则 **progress\_media\_time** 将被设置；如果没有，**progress\_time** 将被设置。未设置的值将为零。因此，以下公式将始终返回通话开始响铃的确切时间：
 
-**Calculating Ring Start**
+**计算响铃开始时间**
 
 ```xml
 ring_start_time = progress_time + progress_media_time
 ```
 
-The PDD (post-dial delay) is the period of silence between the call starting and the call ringing, therefore for calls that ring:
+PDD（拨号后延迟）是通话开始响铃和通话响铃之间的静默时间段，因此对于响铃的通话：
 
-**Post-Dial Delay**
+**拨号后延迟**
 
 ```xml
 pdd = ring_start_time - created_time
 ```
 
-### How long was the talk time
+### 通话时间有多长
 
-If the call was answered then there is a talk time. If call was unanswered then **answered\_time** will be 0\. If **answered\_time** is greater than zero:
+如果通话已接听，则存在通话时间。如果通话未接听，则 **answered\_time** 为 0。如果 **answered\_time** 大于零：
 
-**Calculating Call Duration**
+**计算通话持续时间**
 
 ```xml
 length_of_talk_time = hangup_time - answered_time
 ```
 
-### How long did the phone ring
+### 电话响了多久
 
-How long the phone rang is determined either by the **hangup\_time** or the **answered\_time**:
+电话响铃的时长由 **hangup\_time** 或 **answered\_time** 决定：
 
-**Calculating Ring Duration**
+**计算响铃时长**
 
 ```xml
 if ( answered_time == 0 ) then
@@ -267,13 +162,13 @@ else
 end
 ```
 
-### How long was the call on hold
+### 通话保持了多长时间
 
-As of September 13th, 2012, FreeSWITCH also provides the **hold\_events** field. This field is structured as a flattened, multi-dimensional array of uepoch values representing the start and stop time of hold events for the channel. For example: {{1347907323618493,1347907328495937},{1347907309458486,1347907314655415},{1347907298602214,1347907304095908},{1347907285118780,1347907291355494}}
+截至2012年9月13日，FreeSWITCH还提供了**hold_events**字段。该字段是一个多维数组，以uepoch值的形式表示通道的保持事件的开始和停止时间。例如：{{1347907323618493,1347907328495937},{1347907309458486,1347907314655415},{1347907298602214,1347907304095908},{1347907285118780,1347907291355494}}
 
-It is structured in native PostgreSQL array text format so it is very easy to work with in PostgreSQL. Here is an example showing how to work with such a field in PostgreSQL:
+它以本机的PostgreSQL数组文本格式结构化，因此在PostgreSQL中非常容易使用。以下是一个示例，说明如何在PostgreSQL中使用这样的字段：
 
-**Calculating Hold Time**
+**计算保持时间**
 
 ```xml
 CREATE OR REPLACE FUNCTION test_hold() RETURNS VOID AS $$
@@ -299,30 +194,28 @@ LANGUAGE plpgsql;
 SELECT * FROM test_hold();
 ```
 
-The "WITH" clause converts the multi-dimensional array into a set of row result records with two columns: start\_time and stop\_time. The "SELECT" clause below the "WITH" clause converts the resulting micro-second Epoch timestamps into TIMESTAMP WITH TIME ZONE types and returns the resulting set of rows. The FOR loop assigns each row in turn to the RECORD variable "tmp," which is used in the RAISE NOTICE line to print out the resulting values. This allows you to treat the **hold\_events** field as a TEXT type in the database and convert it into a record-based result-set on demand anywhere you need to iterate through the hold records.
+"WITH"子句将多维数组转换为带有两列的一组行结果记录：start_time和stop_time。"WITH"子句下面的"SELECT"子句将结果微秒级的Epoch时间戳转换为带有时区的TIMESTAMP类型，并返回结果行集。FOR循环依次将每行赋给RECORD变量"tmp"，该变量在RAISE NOTICE行中用于输出结果值。这样，您可以将数据库中的**hold_events**字段视为TEXT类型，并将其按需转换为基于记录的结果集，在任何需要迭代遍历保持记录的地方使用。
 
-## Putting Together CDRs
+## 组装CDR
 
-If you are saving both A and B leg for CDRs, you'll need to piece them together.
+如果您保存了呼叫记录的A和B两端，您需要将它们拼接起来。
 
-1) The self-uuid is stored in "uuid"
+1）self-uuid存储在"uuid"中
 
-2) A-legs - it's an A-leg if:
+2）A端 - 如果满足以下条件，则为A端：
 
-* "originatee" or "origination" or "originate\_disposition" is set. (NOTE: The original channel that triggered a loopback shows up as B leg in xml\_cdr)
+- "originatee"或"origination"或"originate_disposition"已设置。(注意：触发回环的原始通道在xml_cdr中显示为B端)
 
-3) B-legs - it's a B-leg if:
+3）B端 - 如果满足以下条件，则为B端：
 
-* "ent\_originate\_aleg\_uuid" is set. "ent\_originate\_aleg\_uuid" contains the UUID of the A leg.
-* "originator" or "originating\_leg\_uuid" is set. Both contain the UUID of the A leg.
+- "ent_originate_aleg_uuid"已设置。"ent_originate_aleg_uuid"包含A端的UUID。
+- "originator"或"originating_leg_uuid"已设置。两者都包含A端的UUID。
 
-4) What's the connecting leg?
+4）连接的端是什么？
 
-* For enterprise originates: on B-leg, use ent\_originate\_aleg\_uuid.
-* "bridge\_uuid" (not in bypass mode)
-* "signal\_bond"
-* "last\_bridge\_to"
-* In B-leg: originator or originating\_leg\_uuid
-* In A-leg: Parse originated\_legs or originate\_causes (added 2012-10-18, commit 3099445a95933a52954c64d5f2fd314a55577c9d)
-
-
+- 对于企业发起的：在B端，使用ent_originate_aleg_uuid。
+- "bridge_uuid"（非旁路模式）
+- "signal_bond"
+- "last_bridge_to"
+- 在B端：originator或originating_leg_uuid
+- 在A端：解析originated_legs或originate_causes（添加于2012-10-18，提交号3099445a95933a52954c64d5f2fd314a55577c9d）

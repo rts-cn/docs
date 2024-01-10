@@ -1,45 +1,42 @@
+# OpenSIPS 企业部署
 
-# Enterprise deployment OpenSIPS 
+## 关于
 
- 
+负载均衡设置可以根据负载在多个 FS 主机之间进行负载均衡。对于整个集群，可以向客户提供单个入口 IP，简化客户配置（可以与 [DNS SRV](https://wiki.freeswitch.org/wiki/Enterprise%5Fdeployment%5FDNS%5FSRV "Enterprise deployment DNS SRV") 结合使用，实现数据中心之间的故障切换）。负载均衡器将测量集群中每个服务器上的负载，并将呼叫发送到最负载较轻的服务器。这确保呼叫负载在服务器之间均匀分配，因此没有服务器
 
-## About
+SIP 信令通过负载均衡器服务器进行传输，但媒体直接在客户端点和集群中的 FS 主机之间传输。这类似于 FS 的绕过媒体功能。由于媒体不经过 OpenSIPS 服务器，相比于集群中的 FS 主机，硬件要求要小得多。
 
-A load balancer setup can share load between multiple FS hosts according to load. A single ingress IP can be presented to the customer for the entire cluster simplifying the customer configuration (this can be combined with [DNS SRV](https://wiki.freeswitch.org/wiki/Enterprise%5Fdeployment%5FDNS%5FSRV "Enterprise deployment DNS SRV") to give failover between data centres). The load balancer will measure load on each server in the cluster and send calls to the least loaded server. This ensures that the call load is spread among servers evenly, so no server
+对于本页示例，有 2 个负载均衡器服务器 lb1（100.100.100.101）和 lb2（100.100.100.102），以及 4 个 FreeSWITCH 服务器（fs1-fs4，100.100.100.103-100.100.100.106）。所有设备都位于同一子网（255.255.255.0）。虚拟 IP 是 100.100.100.100。
 
-SIP signalling goes via the load balancer server, but media goes direct between the customer endpoint and the FS host in the cluster. This is similar to the bypass media functionality of FS. Since media does not go through the OpenSIPS server, the hardware requirements are far smaller that for the FS hosts in the cluster.
+关于文本。
 
-For the purposes of the example of this page there are 2 load balancer servers lb1 (100.100.100.101) & lb2 (100.100.100.102) and 4 FreeSWITCH servers (fs1-fs4, 100.100.100.103 - 100.100.100.106). All are on the same subnet (255.255.255.0). The virtual IP is 100.100.100.100.
+单击此处展开目录。
 
-About text.
+* 1 [负载均衡器配置](#负载均衡器配置)  
+   * 1.1 [心跳检测](#-freeswitch--企业部署-opensips-)  
+   * 1.2 [Sysctl](#-freeswitch--企业部署-opensips-)  
+   * 1.3 [MySQL集群](#-freeswitch--企业部署-opensips-)
+* 2 [FreeSWITCH配置](#FreeSWITCH配置)  
+   * 2.1 [认证](#API认证)  
+   * 2.2 [SIP注册](#SIP注册)  
+   * 2.3 [CDR记录](#-freeswitch--企业部署-opensips-)
+* 3 [参考资料](#-freeswitch--企业部署-opensips-)
 
-Click here to expand Table of Contents
+### 负载均衡器配置
 
-* 1 [Loadbalancer Configuration](#loadbalancer-configuration)  
-   * 1.1 [Heartbeat](#-freeswitch--enterprise-deployment-opensips-)  
-   * 1.2 [Sysctl](#-freeswitch--enterprise-deployment-opensips-)  
-   * 1.3 [MySQL Cluster](#-freeswitch--enterprise-deployment-opensips-)
-* 2 [FreeSWITCH Configuration](#freeswitch-configuration)  
-   * 2.1 [Authentication](#api-authentication)  
-   * 2.2 [SIP Registrations](#sip-registrations)  
-   * 2.3 [CDRs](#-freeswitch--enterprise-deployment-opensips-)
-* 3 [See Also](#-freeswitch--enterprise-deployment-opensips-)
+为了实现冗余，您应该有两台充当负载均衡器的服务器。它们将处于主-备配置，即所有流量通过主服务器，如果主服务器故障或进行维护，则备用服务器将被提升为主服务器。它们各自具有独立的IP地址，以便可以独立访问（例如，通过SSH进行维护），并共享一个虚拟IP地址，该地址分配给当前的活动服务器。SIP流量在虚拟IP上接受。
 
-### Loadbalancer Configuration
+建议lb1和lb2之间有多种通信方式，以防止"分裂大脑"情况发生，即lb1和lb2都认为对方离线并开始在虚拟IP上进行侦听。
 
-For redundancy you should have two servers that act as load balancers. These will be in an active-passive configuration, i.e. all traffic goes via the active server the passive server is promoted to active if the active server fails or is taken down for maintenance. They each have their own IP so that they can be accessed independantly (e.g. via SSH for maintenance) and share a virtual IP which is assigned to the current active server. SIP traffic is accepted on the virtual IP.
+#### 心跳检测
 
-It is recommended that lb1 and lb2 have multiple ways to communicate, to prevent a split brain situation where both lb1 and lb2 think the other is offline and both start listening on the virtual IP.
+心跳检测负责将虚拟IP地址分配给服务器，并检测另一台服务器故障时的情况。
 
-#### Heartbeat
-
-Heartbeat is responsible for assigning the virtual IP to a server and detecting when the other server fails.
-
-You will need to create 3 files in /etc/heartbeat: authkeys, [ha.cf](http://ha.cf), haresources. These files must be identical on both lb1 and lb2.
+您需要在/etc/heartbeat目录下创建三个文件：authkeys、[ha.cf](http://ha.cf)、haresources。这些文件在lb1和lb2上必须完全相同。
 
 ##### authkeys
 
-This file stores one or more authentication methods, and selects which to use with the auth statement. For example:
+此文件存储一个或多个身份验证方法，并通过auth语句选择要使用的方法。例如：
 
 ```xml
 auth 2
@@ -48,58 +45,57 @@ auth 2
 3 md5 thisismysecretkey
 ```
 
-  
-The key here is used to authenticate communication between nodes in the cluster and prevents malicious servers being able to trick a node into going offline. As a result it should be kept secret and very secure. CRC should never be used in production as it provides no authentication, just error checking.
+这里的关键在于用于集群中节点之间认证通信的密钥，它可以防止恶意服务器欺骗节点以使其脱机。因此，该密钥应保密并且非常安全。在生产环境中绝不能使用 CRC，因为它只提供错误检查而不提供认证。
 
 ##### [ha.cf](http://ha.cf)
 
-This is only an example. Timings can be adjusted to suit your needs. This uses a serial cable and network broadcast to check the other node but 1 or more of serial, unicast, multicast and broadcast can be used and none is required (apart from there must be at least one communication method).
+这只是一个示例。可以根据需要调整时间。此示例使用串行电缆和网络广播来检查其他节点，但可以使用串行，单播，组播和广播中的一个或多个，无需任何（除了必须至少有一种通信方法）。
 
 ```xml
-# Logging
+# 日志记录
 logfacility     local0
 
-# Timings
+# 时间设置
 keepalive 100ms
 deadtime 2
 warntime 1
 initdead 120
 
-# Communication between nodes - serial port
+# 节点之间的通信 - 串口
 baud   19200
 serial /dev/ttyS0
 
-# Communication between nodes - network
+# 节点之间的通信 - 网络
 udpport 694
 bcast   bond0
 
-# What nodes are in the cluster
+# 集群中的节点
 node lb1 lb2
 
-# Control whether a resource will automatically fail back to its "primary" node
-# or remain on the current node until it fails/admin intervenes
+# 控制资源是否自动回到其“主”节点
+# 或者留在当前节点，直到发生故障/管理员干预
 auto_failback off
 
-# Processes started and stopped with heartbeat.  Restarted unless they exit with rc=100
+# 使用 heartbeat 启动和停止的进程。除非以 rc=100 的状态退出，否则会重新启动
 respawn hacluster /usr/lib/heartbeat/ipfail
 
-# API Authentication
+# API 认证
 apiauth ipfail gid=haclient uid=hacluster
 ```
 
 #####   
 haresources
 
-This file controls what resources are configured on the load balancer servers, this is where the virtual IP is configured. The format is:
+此文件控制负载均衡服务器上配置的资源，这是配置虚拟 IP 的地方。格式如下：
 
 ```xml
 preferred_hostname IPaddr2::ip_address/netmask(/interface)
 ```
 
   
-Interface is optional, but for our example there are two NICs (eth0 and eth1) bonded to form bond0 for network redundancy.
+接口是可选的，但在我们的示例中有两个 NIC（eth0 和 eth1）被绑定成 bond0 以实现网络冗余。
 
-For example:
+例如：
 
 ```xml
 lb1 IPaddr2::100.100.100.100/255.255.255.0/bond0
@@ -108,63 +104,96 @@ lb1 IPaddr2::100.100.100.100/255.255.255.0/bond0
 ####   
 Sysctl
 
-OpenSIPS will bind to the virtual IP. This will result in an error on the passive server which prevents OpenSIPS starting up since it will be attempting to listen on an IP that does not belong to it. This can be avoided by setting the Linux option net.ipv4.ip\_nonlocal\_bind=1.
+OpenSIPS将绑定到虚拟IP。这将导致被动服务器出错，阻止OpenSIPS启动，因为它将尝试在不属于自己的IP上进行监听。可以通过设置Linux选项net.ipv4.ip_nonlocal_bind=1来避免这种情况。
 
-On debian this can be achieved by creating the file /etc/sysctl.d/linuxha.conf:
+在Debian上可以通过创建文件/etc/sysctl.d/linuxha.conf来实现：
 
 ```xml
-# allow services to bind to the virtual ip even when this server is the passive machine
+# 允许服务绑定到虚拟IP，即使此服务器是被动机器
 net.ipv4.ip_nonlocal_bind = 1
 ```
 
-  
 OpenSIPS
 
-This example listens for both UDP and TCP SIP calls on the virtual IP.
+该示例在虚拟IP上同时监听UDP和TCP的SIP呼叫。
 
-The dispatcher is used distribute REGISTER requests among the FreeSWITCH hosts. It uses the OPTIONS packet to detect when a FreeSWITCH host is offline and stop sending requests to that host. Dispatcher uses weights and doesn't take server load into account; this is ok for REGISTER requests but unsuitable for actual calls.
+调度器用于在FreeSWITCH主机之间分发REGISTER请求。它使用OPTIONS数据包来检测FreeSWITCH主机是否离线，并停止向该主机发送请求。调度器使用权重并不考虑服务器负载；这对于REGISTER请求来说是可以的，但对于实际呼叫则不合适。
 
-The load\_balancer module is used to distribute INVITE requests (calls). It also uses OPTIONS to automatically stop sending traffic to a host if it goes offline. Unlike dispatcher, it stores the number of channels available on a host and in memory keeps a count of how many calls are currently in progress to that host, sending the INVITE to the least loaded host.
+负载均衡器模块用于分发INVITE请求（呼叫）。它也使用OPTIONS自动停止向下线主机发送流量。与调度器不同，负载均衡器会存储主机上可用的通道数量，并在内存中计数当前向该主机进行中的呼叫数量，将INVITE发送到负载最轻的主机上。
 
-load\_balance() takes an algorithm as the 3rd option - either 0 (absolute) or 1 (relative). The example here uses relative, so the "least loaded" server is the one with the lowest percentage load (current\_channels/max\_channels) while absolute would send to the one with the most free channels (maximum\_channels-current\_channels).
+load_balance()函数接受一个算法作为第三个选项 - 要么是0（绝对式），要么是1（相对式）。这个示例中使用的是相对式，所以“负载最轻”的服务器是当前负载最低（current_channels/max_channels）的服务器，而绝对式则会将INVITE发送给剩余最多通道的服务器（maximum_channels-current_channels）。
 
-OpenSIPS 1.7 install guide on CentOS 5.6:
+在CentOS 5.6上安装OpenSIPS 1.7指南：
 
 ```xml
+[root@opensips1~]# cp opensips-1.7.0-tls/opensips-1.7.0/opensips.init /etc/init.d/
+```
+
+  
+Install the startup script:
+
+```xml
+[root@opensips1~]# chmod +x /etc/init.d/opensips.init
+[root@opensips1~]# chkconfig --add opensips.init
+```
+
+  
+Start the OpenSIPS service:
+
+```xml
+[root@opensips1~]# service opensips.init start
+```
+
+
+The provided instructions are for installing and configuring OpenSIPS, an open-source SIP proxy server.
+
+First, install the required dependencies by executing the following commands:
+```xml
 [root@opensips1~]# yum install gcc-c++ bison lynx subversion flex
+```
+
+Next, download the OpenSIPS source code:
+```xml
 [root@opensips1~]# wget http://opensips.org/pub/opensips/1.7.0/src/opensips-1.7.0_src.tar.gz
+```
+
+Extract the downloaded file:
+```xml
 [root@opensips1~]# tar zxvf opensips-1.7.0_src.tar.gz
+```
+
+Navigate to the extracted directory:
+```xml
 [root@opensips1~]# cd opensips-1.7.0-tls
+```
+
+Compile and install OpenSIPS with the MySQL module:
+```xml
 [root@opensips1~]# make all include_modules="db_mysql"
 [root@opensips1~]# make include_modules="db_mysql" prefix="/usr/local" install
 ```
 
-  
-Edit /usr/local/etc/opensips/opensipsctlrc and uncomment the line that says DBENGINE=MYSQL
-
+Open the configuration file `/usr/local/etc/opensips/opensipsctlrc` using a text editor like vi. Uncomment the line that specifies the database engine as MySQL:
 ```xml
 [root@opensips1~]# vi /usr/local/etc/opensips/opensipsctlrc
 DBENGINE=MYSQL
 ```
 
-  
 Create the OpenSIPS database:
-
 ```xml
 [root@opensips1~]# opensipsdbctl create
 ```
 
-  
-Create the OpenSIPS MySQL user, password and grant privileges to openips database:
-
+Create a MySQL user, password, and grant privileges for the OpenSIPS database. Start by accessing the MySQL command-line interface:
 ```xml
 [root@opensips1~]# mysql -p
+```
+Then execute the following commands within the MySQL environment:
+```xml
 mysql> grant all privileges on opensips.* to opensips@localhost identified by 'opensips';
 ```
 
-  
-While still in MySQL CLI add the FreeSWITCH machines into the load\_balancer table:
-
+Next, add the FreeSWITCH machines to the load_balancer table in the MySQL CLI:
 ```xml
 mysql> use opensips;
 mysql> insert into load_balancer (group_id, dst_uri, resources, description) values (1,'sip:100.100.100.103', 'pstn=32', 'FS1');
@@ -174,8 +203,23 @@ mysql> insert into load_balancer (group_id, dst_uri, resources, description) val
 mysql> quit;
 ```
 
-  
-Copy the OpenSIPS startup script:
+Copy the OpenSIPS startup script to the appropriate directory:
+```xml
+[root@opensips1~]# cp opensips-1.7.0-tls/opensips-1.7.0/opensips.init /etc/init.d/
+```
+
+Install the startup script:
+```xml
+[root@opensips1~]# chmod +x /etc/init.d/opensips.init
+[root@opensips1~]# chkconfig --add opensips.init
+```
+
+Finally, start the OpenSIPS service:
+```xml
+[root@opensips1~]# service opensips.init start
+```
+
+These steps will help you install and configure OpenSIPS for your SIP proxy server.
 
 ```xml
 cp /usr/src/opensips-1.7.0-tls/packaging/rpm/opensips.init /etc/init.d/opensips
@@ -186,15 +230,13 @@ sed -i "s/RUN_OPENSIPS=no/RUN_OPENSIPS=yes/g" /etc/init.d/opensips
 chmod +x /etc/init.d/opensips
 ```
 
-  
-Add user 'opensips':
+添加用户 'opensips':
 
 ```xml
 useradd -d /usr/local/etc/opensips -s /sbin/nologin opensips
 ```
 
-  
-Start opensips and add the FreeSWITCH machines into the dispatcher table:
+启动 opensips 并将 FreeSWITCH 机器添加到调度器表中:
 
 ```xml
 [root@opensips1~]# service opensips start
@@ -204,15 +246,13 @@ Start opensips and add the FreeSWITCH machines into the dispatcher table:
 [root@opensips1~]# opensipsctl dispatcher addgw 1 sip:100.100.100.106 0 'FS4'
 ```
 
-  
-Edit opensips.cfg:
+编辑 opensips.cfg:
 
 ```xml
 vi /usr/local/etc/opensips/opensips.cfg
 ```
 
-  
-Copy and paste into opensips.cfg:
+复制并粘贴到 opensips.cfg:
 
 ```xml
 ####### Global Parameters #########
@@ -251,8 +291,9 @@ loadmodule "textops.so"
 loadmodule "mi_fifo.so"
 loadmodule "dispatcher.so"
 loadmodule "load_balancer.so"
+```
 
-# ----------------- setting module-specific parameters ---------------
+# ----------------- 设置特定模块参数 ---------------
 
 modparam("mi_fifo", "fifo_name", "/tmp/opensips_fifo")
 
@@ -274,9 +315,9 @@ modparam("load_balancer", "db_url", "mysql://opensips:opensips@localhost/opensip
 modparam("load_balancer", "probing_method", "OPTIONS")
 modparam("load_balancer", "probing_interval", 5)
 
-####### Routing Logic ########
+####### 路由逻辑 ########
 
-# based on http://www.opensips.org/index.php?n=Resources.DocsTutLoadbalancing
+# 参考：http://www.opensips.org/index.php?n=Resources.DocsTutLoadbalancing
 route{
 
         if (!mf_process_maxfwd_header("10")) {
@@ -285,99 +326,99 @@ route{
         }
 
         if (!has_totag()) {
-                # initial request
+                # 初始请求
                 record_route();
         }
         else {
-                # sequential request - obey the indicated route
+                # 顺序请求 - 遵循指定路由
                 loose_route();
                 t_relay();
                 exit;
         }
 
-        # handle cancel and re-transmissions
+        # 处理取消和重传的情况
         if ( is_method("CANCEL") ) {
                 if ( t_check_trans() )
                         t_relay();
                 exit;
         }
 
-        # from now on we have only the initial requests
+        # 从这里开始，只有初始请求
 
-        # select the node that'll handle the call (load balanced)
-        # the method used is different for invite/register requests
-        # unknown methods are rejected here
-        if (is_method("INVITE")) {
-                if (!load_balance("1","pstn","1")) {
-                        send_reply("503","Service Unavailable");
-                        exit;
-                }
-        }
-        else if (is_method("REGISTER")) {
-                if (!ds_select_dst("1", "0")) {
-                        send_reply("503","Service Unavailable");
-                        exit;
-                }
-        }
-        else {
-                send_reply("405","Method Not Allowed");
-                exit;
-        }
+```# 选择处理呼叫的节点（负载均衡）
+# 对于邀请/注册请求使用不同的方法
+# 未知方法在此处被拒绝
+if (is_method("INVITE")) {
+    if (!load_balance("1","pstn","1")) {
+        send_reply("503","Service Unavailable");
+        exit;
+    }
+}
+else if (is_method("REGISTER")) {
+    if (!ds_select_dst("1", "0")) {
+        send_reply("503","Service Unavailable");
+        exit;
+    }
+}
+else {
+    send_reply("405","Method Not Allowed");
+    exit;
+}
 
-        # route the request
-        if (!t_relay()) {
-                sl_reply_error();
-        }
+# 路由请求
+if (!t_relay()) {
+    sl_reply_error();
+}
 }
 ```
 
-Restart OpenSIPS:
+重新启动OpenSIPS：
 
 ```xml
 service opensips restart
 ```
 
-Done!
+完成！
 
-#### MySQL Cluster
+#### MySQL集群
 
-For calls to failover without dropping, the dialogs module must share its information in a shared database. This then means that on failover UDP calls will not be dropped since OpenSIPS will still know where to forward any SIP packets passing through the passive (now active) server as they'll be in its database. TCP calls cannot failover as gracefully in this way because the TCP connection will not be known to Linux/OpenSIPS on the passive server.
+为了使呼叫在切换时不被丢弃，对话模块必须在共享数据库中共享其信息。这意味着，在切换时，UDP呼叫不会丢失，因为OpenSIPS仍然知道在数据库中将SIP数据包转发到哪个通过被动（现在是主动）服务器。TCP呼叫不能像这种方式那样优雅地切换，因为Linux/OpenSIPS在被动服务器上不会知道TCP连接。
 
-The database also provides a source for the list of hosts and weights/channels for the dispatcher and load\_balancer modules. These must be told to reload the data from the database via a MI module if the database is updated.
+数据库还为调度器和负载平衡器模块提供了主机列表和权重/通道的来源。如果数据库已更新，则必须通过MI模块告知这些模块从数据库重新加载数据。
 
-There are multiple methods for setting up a shared database. You can have a single database, but this provides a point of failure. You can also have a pair of database servers with master-master, but this can cause problems since the replication is asynchronous. The MySQL Cluster solution provides a nice solution.
+简体中文：
 
-For a fully redundant setup, you should have at least 2 management servers, 2 data nodes and 2 sql nodes. All can be on the same hardware or on dedicated hardware. For this example they'll all run on lb1 and lb2, but in real usage it might be advisable to move them onto separate servers to reduce the load on the load balancer servers. This could be a LAN which lb1 & lb2 are also on, to remove them from the public Internet (this is advisable since MySQL Cluster uses no authentication/encryption).
+共享数据库有多种设置方法。你可以只有一个数据库，但这会成为一个故障点。你也可以有一对主-主数据库服务器，但这可能会导致问题，因为复制是异步的。MySQL Cluster解决方案提供了一个很好的解决办法。
 
-### FreeSWITCH Configuration
+为了完全冗余的设置，你至少需要2个管理服务器、2个数据节点和2个SQL节点。它们可以都在同一台硬件上，也可以在专用硬件上。在这个示例中，它们将都运行在lb1和lb2上，但在实际使用中，可能建议将它们迁移到单独的服务器上以减轻负载均衡器服务器的负载。这可以是一个局域网，其中lb1和lb2也位于其中，以将它们从公共互联网上删除（这是建议的，因为MySQL Cluster不使用身份验证/加密）。
 
-FreeSWITCH needs very little additional configuration to function with the load balancer setup. Your existing setup will mostly work just fine. There are a couple of areas that will need attention though.
+### FreeSWITCH配置
 
-#### Authentication
+为了与负载均衡器设置一起正常运行，FreeSWITCH需要非常少的额外配置。你现有的设置大部分都可以正常工作。不过，有几个需要注意的地方。
 
-User authentication would just fine, as the 401 Not Authorized and authentication headers are forwarded by the SIP proxy.
+#### 身份验证
 
-ACLs might be trickier however, since the requests will all come from the virtual IP.
+用户身份验证应该没有问题，因为SIP代理会转发401 Not Authorized和身份验证头部。
 
-_TODO: is it possible to get FreeSWITCH to authenticate against an ACL from a value in a header if the request comes from an IP matching a proxy ACL? If so OpenSIPS could add an IP header_
+然而，ACL可能会比较棘手，因为所有的请求都来自虚拟IP。
 
-#### SIP Registrations
+_TODO：如果请求来自与代理ACL匹配的IP，是否可以让FreeSWITCH从头部的值中对ACL进行身份验证？如果可以的话，OpenSIPS可以添加一个IP头部_
 
-REGISTER requests will go to a host in FreeSWITCH cluster. For the other hosts to know about the registration they will need to store the mod\_sofia data in a shared database (single database, master-master replication or MySQL cluster). All hosts must also be configured to handle calls for the same domain, and the registration must be to this domain.
+#### SIP注册
 
-#### CDRs
+提交注册请求将发送到FreeSWITCH集群中的一个主机。为了使其他主机知道注册情况，它们需要将mod_sofia数据存储在共享数据库中（单个数据库、主-主复制或MySQL集群）。所有主机还必须配置为处理同一域的呼叫，并且注册必须归属于该域。
 
-The network IP logged in the CDRs will be that of the load balancer not the client's IP, this should be beared in mind.
+#### 通话记录
 
-### See Also
+CDR日志中记录的网络IP将是负载均衡器的IP，而不是客户端的IP，请记住这一点。
 
-* [Enterprise Deployment](https://wiki.freeswitch.org/wiki/Enterprise%5FDeployment "Enterprise Deployment")
-* [OpenSIPS using dispatcher](https://wiki.freeswitch.org/wiki/OpenSIPS%5Fconfiguration%5Ffor%5F2%5For%5Fmore%5FFreeSWITCH%5Finstalls "OpenSIPS configuration for 2 or more FreeSWITCH installs") \- Using OpenSIPS to provide load balancing using dispatcher.
-* [Linux-HA project (heartbeat)](http://www.linux-ha.org/wiki/Main%5FPage)
-* [OpenSIPS project](http://www.opensips.org/)
-* [OpenSIPS dispatcher module documentation](http://www.opensips.org/html/docs/modules/devel/dispatcher.html)
-* [OpenSIPS load\_balancer module documentation](http://www.opensips.org/html/docs/modules/devel/load%5Fbalancer.html)
-* ##### [MySQL Cluster](http://mysql.com/products/database/cluster/)
+### 参见
+
+* [企业部署](https://wiki.freeswitch.org/wiki/Enterprise%5FDeployment "企业部署")
+* [使用调度程序的OpenSIPS配置](https://wiki.freeswitch.org/wiki/OpenSIPS%5Fconfiguration%5Ffor%5F2%5For%5Fmore%5FFreeSWITCH%5Finstalls "使用调度程序的OpenSIPS配置") - 使用OpenSIPS提供调度程序进行负载均衡。
+* [Linux-HA项目（heartbeat）](http://www.linux-ha.org/wiki/Main%5FPage)
+* [OpenSIPS项目](http://www.opensips.org/)
+* [OpenSIPS调度程序模块文档](http://www.opensips.org/html/docs/modules/devel/dispatcher.html)
+* [OpenSIPS负载均衡器模块文档](http://www.opensips.org/html/docs/modules/devel/load%5Fbalancer.html)
+* ##### [MySQL集群](http://mysql.com/products/database/cluster/)
 * <http://opensips.org/pub/events/2016-05-10%5FOpenSIPS-Summit%5FAmsterdam/Giovanni%5FMaruzzelli-OpenSIPS%5FSummit2016-FreeSWITCH%5FHA.pdf>
-
-

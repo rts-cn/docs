@@ -1,34 +1,31 @@
-
-# mod_dptools: say 
-
- 
+# mod_dptools: 说
 
 ---
 
-Table of Contents (click to expand)
+目录（点击展开）
 
-* [0\. About](#0-about)
-* [1\. Syntax](#1-syntax)  
-   * [1.1 say](#11-say-)  
-   * [1.2 say\_string](#12-say_string-)  
-      * [1.2.1 Usage](#121-usage)
-* [2\. Dialplan examples](#2-dialplan-examples)  
-   * [2.1 Talking Clock](#21-talking-clock)
-* [3\. See Also](#3-see-also)
+* [0\. 关于](#0-关于)
+* [1\. 语法](#1-语法)
+   * [1.1 说](#11-说-)
+   * [1.2 说\_string](#12-说_string-)
+      * [1.2.1 用法](#121-用法)
+* [2\. 拨号计划示例](#2-拨号计划示例)
+   * [2.1 语音时钟](#21-语音时钟)
+* [3\. 参见](#3-参见)
 
 ---
 
-## 0\. About
+## 0\. 关于
 
-The `say` application will use the pre-recorded sound files to read or say various things like dates, times, digits, etc.
+`say` 应用程序将使用预先录制的声音文件读取或说出各种内容，例如日期、时间、数字等等。
 
-It can read digits, numbers, dollar amounts, date/time values, IP addresses, spell out alpha-numeric text, including punctuation marks, and so on. 
+它可以读取数字、金额、日期/时间值、IP地址，拼写出字母数字文本（包括标点符号）等等。
 
-There's a transcript of the pre-recorded files in the source under [docs/phrase/phrase\_en.xml](https://github.com/signalwire/freeswitch/blob/master/docs/phrase/phrase%5Fen.xml).
+在源码中有预先录制文件的转录，路径为 [docs/phrase/phrase\_en.xml](https://github.com/signalwire/freeswitch/blob/master/docs/phrase/phrase%5Fen.xml)。
 
-Call the specific "type" say api as below. The method is used to modify the way the data is annunciated (counted, iterated, or pronounced).
+调用特定的 "type" say api 如下所示。该方法用于修改数据的发音方式（计数、迭代或发音）。
 
-## 1\. Syntax
+## 1\. 语法
 
 ### 1.1 `say` 
 
@@ -36,88 +33,88 @@ Call the specific "type" say api as below. The method is used to modify the way 
 say <module_name>[:<lang>] <say_type> <say_method> [gender] <text>
 ```
 
-Where
+其中
 
-| Parameter    | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |                        |          |          |                                 |               |               |                                     |                   |               |                         |                                                                                                       |
-| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | -------- | -------- | ------------------------------- | ------------- | ------------- | ----------------------------------- | ----------------- | ------------- | ----------------------- | ----------------------------------------------------------------------------------------------------- |
-| module\_name | Module name is usually the channel language (such as en , es ).[TODO](https://github.com/signalwire/freeswitch/tree/master/src/mod/say) Are [these](https://github.com/signalwire/freeswitch/tree/master/src/mod/say) the available values?                                                                                                                                                                                                                                                               |                        |          |          |                                 |               |               |                                     |                   |               |                         |                                                                                                       |
-| say\_type    | Accepted values (from [the source](https://github.com/signalwire/freeswitch/blob/15ad4c23e259c1c2dff58f89e9124e5f36dd2e94/src/switch%5Fivr%5Fsay.c#L44)): NUMBER    \| ITEMS                                                                                                                                                                                                                                                                                                                              | general counts PERSONS | MESSAGES | CURRENCY | money-related TIME\_MEASUREMENT | CURRENT\_DATE | CURRENT\_TIME | dates and times CURRENT\_DATE\_TIME | SHORT\_DATE\_TIME | NAME\_SPELLED | spelling NAME\_PHONETIC | TELEPHONE\_NUMBER TELEPHONE\_EXTENSION URL IP\_ADDRESS EMAIL\_ADDRESS POSTAL\_ADDRESS ACCOUNT\_NUMBER |
-| say\_method  | Accepted values (from [the source](https://github.com/signalwire/freeswitch/blob/15ad4c23e259c1c2dff58f89e9124e5f36dd2e94/src/switch%5Fivr%5Fsay.c#L35)), and assuming the input value was "42":**pronounced** \- cardinal number, e.g. "forty two"**iterated** \- nominal number, e.g. "four two"**counted** \- ordinal number, e.g. "forty second"[TODO](https://github.com/signalwire/freeswitch/tree/master/src/mod/say) There is also N/A and PRONOUNCED\_YEAR but not sure when the former is used. |                        |          |          |                                 |               |               |                                     |                   |               |                         |                                                                                                       |
-| gender       | Accepted values (from [the source](https://github.com/signalwire/freeswitch/blob/15ad4c23e259c1c2dff58f89e9124e5f36dd2e94/src/switch%5Fivr%5Fsay.c#L67)) for languages with gender-specific grammar (such as French or German): FEMININE MASCULINE NEUTER                                                                                                                                                                                                                                                 |                        |          |          |                                 |               |               |                                     |                   |               |                         |                                                                                                       |
+| 参数         | 描述                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |     |  |     |         |   |   |           |   |   |     |                                                                                                 |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- | --- | --- | ----- | - | - | --------- | - | - | --- | ------------------------------------------------------------------------------------------- |
+| module_name  | 模块名称通常是通道语言（例如 en，es）。[TODO](https://github.com/signalwire/freeswitch/tree/master/src/mod/say) 这些是可用的值吗？                                                                                                                                                                                                                                                                                                                                                                   |     |     |     |         |   |   |           |   |   |     |                                                                                                 |
+| say_type     | 接受的值（来自 [the source](https://github.com/signalwire/freeswitch/blob/15ad4c23e259c1c2dff58f89e9124e5f36dd2e94/src/switch%5Fivr%5Fsay.c#L44)）：NUMBER \| ITEMS                                                                                                                                                                                                                                                                                                                    | 一般计数 人员         | 消息     | 货币     | 与金钱有关的  时间测量   | 当前日期       | 当前时间       | 日期和时间-当前日期时间   | 简短日期时间            | 拼写姓名       | 姓名拼音         | 电话号码         电话分机     URL     IP地址         | 邮件地址     邮政地址         | 账号                          |
+| say_method   | 接受的值（来自 [the source](https://github.com/signalwire/freeswitch/blob/15ad4c23e259c1c2dff58f89e9124e5f36dd2e94/src/switch%5Fivr%5Fsay.c#L35)），假设输入值为 "42"：**pronounced** \- 基数词，例如 "forty two"**iterated** \- 零数词，例如 "four two"**counted** \- 序数词，例如 "forty second"[TODO](https://github.com/signalwire/freeswitch/tree/master/src/mod/say) 还有 N/A 和 PRONOUNCED\_YEAR，但不确定何时使用前者。 |     |     |     |         |   |   |           |   |   |     |                                                                                                 |
+| gender       | 接受的值（来自 [the source](https://github.com/signalwire/freeswitch/blob/15ad4c23e259c1c2dff58f89e9124e5f36dd2e94/src/switch%5Fivr%5Fsay.c#L67)），适用于具有特定性别语法的语言（例如法语或德语）：FEMININE MASCULINE NEUTER                                                                                                                                                                                                                                                                        |     |     |     |         |   |   |           |   |   |     |                                                                                                 |
 
-### 1.2 `say_string` 
+### 1.2 `say_string`
 
-`say_string` is a new method of doing `say` , and use it in `mod_say_en` and `mod_say_ru` . We can do more to centralize the `say` things, and go back and apply it to other languages. Using this method you can set the desired file extension as well.
+`say_string` 是使用 `say` 的一种新方法，并在 `mod_say_en` 和 `mod_say_ru` 中使用。我们可以做更多的工作来集中处理 `say` 的事情，并将其应用到其他语言中。使用此方法，您还可以设置所需的文件扩展名。
 
 ```xml
 say_string <module_name>[.<ext>] <lang>[.<ext>] <say_type> <say_method> [<say_gender>] <text> 
 ```
 
-See **1.1 `say`** section above for the parameter descriptions.
+有关参数描述，请参见上面的 **1.1 `say`** 部分。
 
-#### 1.2.1 Usage
+#### 1.2.1 使用方法
 
-From [CLI](../../Client-and-Developer-Interfaces/1048948.mdx#or):
+来自 [CLI](../../Client-and-Developer-Interfaces/1048948.mdx#or)：
 
 ```xml
 eval ${say_string en.gsm en current_date_time pronounced ${strepoch()}} 
 ```
 
-From [dialplan](../../Dialplan/XML-Dialplan/index.mdx#about):
+来自 [拨号计划](../../Dialplan/XML-Dialplan/index.mdx#about)：
 
 ```xml
 <action application="playback" data="${say_string en.wav en current_date_time pronounced ${strepoch()}}" /> 
 ```
 
-## 2\. Dialplan examples
+## 2\. 拨号计划示例
 
 ```xml
-<!-- use in a phrase macro, different from using in the dialplan-->
+<!-- 在短语宏中使用，不同于在拨号计划中使用 -->
 <action function="say" data="733#" method="iterated" type="name_spelled"/>
 
-<!-- spelled out alpha-numeric + ascii code, like "a-b-seven-three-three-pound", ASCII code 32-47 and, 58-62, 92-122 -->
+<!-- 拼读字母数字+ASCII码，例如 "a-b-seven-three-three-pound"，ASCII码 32-47 和 58-62、92-122 -->
 <action application="say" data="en name_spelled iterated ab733#"/>
 
-<!-- spell out called number, like "one-two-three-four-five" -->
+<!-- 拼读被呼叫号码，例如 "one-two-three-four-five" -->
 <action application="say" data="en name_spelled iterated ${destination_number}"/>
 
-<!-- read number, like "twelve thousand, three hundred forty-five" -->
+<!-- 读出数字，例如 "twelve thousand, three hundred forty-five" -->
 <action application="say" data="en number pronounced 12345"/>
 
-<!-- read IP address, like "one two dot three four dot five six dot seven eight" -->
+<!-- 读出IP地址，例如 "one two dot three four dot five six dot seven eight" -->
 <action application="say" data="en ip_address iterated 12.34.56.78"/>
 
-<!-- read IP address, like "twelve dot thirty-four dot fifty-six dot seventy-eight" -->
+<!-- 读出IP地址，例如 "twelve dot thirty-four dot fifty-six dot seventy-eight" -->
 <action application="say" data="en ip_address pronounced 12.34.56.78"/>
 
-<!-- pronounce a dollar value, even works for negatives, like "negative one dollar and ninety-six cents."-->
+```xml
+<!-- 发音一个金额，包括负数，比如“负一美元九十六美分”。-->
 <action application="say" data="en CURRENCY PRONOUNCED -1.96"/>
 
-<!-- pronounce a short date/time (like "Wednesday, 2:23PM") -- substitute [timestamp]
-with a UTC timestamp -->
+<!-- 发音一个短日期/时间（例如“星期三，下午2:23”）-- 替换 [timestamp] 为一个UTC时间戳 -->
 <action application="say" data="en short_date_time pronounced [timestamp]"/>
 ```
 
-`say <language> number` works up to 999999999 (9 digits) in current languages.
+在当前语言中，`say <language> number`可以处理最多9位数字，即999999999。
 
-### 2.1 Talking Clock
+### 2.1 说话的时钟
 
 ```xml
-<extension name="Talking Clock Time" ><!--e.g. 10:56pm-->
+<extension name="Talking Clock Time" ><!--示例：晚上10点56分-->
   <condition field="destination_number" expression="9190">
     <action application="say" data="en CURRENT_TIME pronounced ${strepoch()}"/>
     <action application="hangup"/>
   </condition>
 </extension>
 
-<extension name="Talking Clock Date" ><!--e.g. March 8, 2011-->
+<extension name="Talking Clock Date" ><!--示例：2011年3月8日-->
   <condition field="destination_number" expression="9191">
     <action application="say" data="en CURRENT_DATE pronounced ${strepoch()}"/>
     <action application="hangup"/>
   </condition>
 </extension>
 
-<extension name="Talking Clock Date and Time" ><!--e.g. March 8, 2011 10:56pm-->
+<extension name="Talking Clock Date and Time" ><!--示例：2011年3月8日晚上10点56分-->
   <condition field="destination_number" expression="9192">
     <action application="say" data="en CURRENT_DATE_TIME pronounced ${strepoch()}"/>
     <action application="hangup"/>
@@ -125,9 +122,8 @@ with a UTC timestamp -->
 </extension>
 ```
 
-## 3\. See Also
+## 3. 参见
 
-* [Dialplan](../../Dialplan/index.mdx#0-about)
+* [拨号计划](../../Dialplan/index.mdx#0-about)
 * [mod\_dptools: speak](./6587123.mdx#0-about)
-
-
+```

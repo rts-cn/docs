@@ -1,21 +1,18 @@
+# mod_voicemail
 
-# mod_voicemail 
+## 关于
 
- 
+mod_voicemail是一个Dialplan应用程序，通过Dialplan提供语音邮件服务。它允许您将呼叫转移到语音邮件中，这样呼叫者就可以为用户留言，并且用户可以检索和管理呼叫者留下的任何消息。
 
-## About
+点击此处展开目录
 
-mod\_voicemail is a Dialplan Application that provides voicemail services via Diaplans. It lets you send calls to voicemail, which allows callers to leave messages for users and allows users to retrieve and manage any messages left by callers.
-
-Click here to expand Table of Contents
-
-* 1 [Synopsis](#synopsis)
-* 2 [Dialplan variables](#dialplan-variables)  
+* 1 [概述](#synopsis)
+* 2 [呼叫计划变量](#dialplan-variables)  
    * 2.1 [skip\_greeting](#skip_greeting)  
    * 2.2 [skip\_instructions](#vm-skip-instructions)  
    * 2.3 [voicemail\_callback\_dialplan](#voicemail_callback_dialplan)  
    * 2.4 [voicemail\_callback\_context](#voicemail_callback_context)
-* 3 [Controlling User Parameters & Variables](#controlling-user-parameters--variables)  
+* 3 [控制用户参数和变量](#controlling-user-parameters--variables)  
    * 3.1 [vm-enabled](#vm-enabled)  
    * 3.2 [vm-alternate-greet-id](#voicemail_alternate_greet_id)  
    * 3.3 [voicemail\_alternate\_greet\_id](#voicemail_alternate_greet_id)  
@@ -39,26 +36,26 @@ Click here to expand Table of Contents
    * 3.21 [vm-storage-dir](#vm-domain-storage-dir)  
    * 3.22 [vm-storage-dir-shared](#vm-storage-dir-shared)  
    * 3.23 [vm-domain-storage-dir](#vm-domain-storage-dir)
-* 4 [Using Outside Programs to Send Voicemail to Email](#using-outside-programs-to-send-voicemail-to-email)
-* 5 [Send\_mail setting](#send_mail-setting)
-* 6 [Exim4 settings](#exim4-settings)  
-   * 6.1 [Using MSMTP for Local Relay to Exim4 on Debian](#using-msmtp-for-local-relay-to-exim4-on-debian)
-* 7 [Windows settings](#windows-settings)
-* 8 [Mail via PHP](#send-voice-mail-to-email)
-* 9 [nullmailer settings](#nullmailer-settings)
-* 10 [sSMTP settings](#ssmtp-settings)
-* 11 [Debugging an external mailer](#debugging-an-external-mailer)
-* 12 [Example](#example)  
-   * 12.1 [Send Voice Mail to Email](#send-voice-mail-to-email)  
-   * 12.2 [Send Call To Voice Mail](#send-call-to-voice-mail)  
-   * 12.3 [Check Voice Mail](#send-voice-mail-to-email)  
-   * 12.4 [Retrieve Voice Mail Via Web Interface](#retrieve-voice-mail-via-web-interface)  
-      * 12.4.1 [Configuration](#configuration)  
-   * 12.5 [Retrieve Voice Mail Via IMAP Interface](#retrieve-voice-mail-via-imap-interface)  
-   * 12.6 [Using voicemail to authenticate a caller's PIN](#using-voicemail-to-authenticate-a-callers-pin)
-* 13 [Configuration Parameters](#configuration-parameters)  
+* 4 [使用外部程序将语音邮件发送到电子邮箱](#using-outside-programs-to-send-voicemail-to-email)
+* 5 [Send\_mail设置](#send_mail-setting)
+* 6 [Exim4设置](#exim4-settings)  
+   * 6.1 [在Debian上将MSMTP用作本地中继到Exim4的方法](#using-msmtp-for-local-relay-to-exim4-on-debian)
+* 7 [Windows设置](#windows-settings)
+* 8 [通过PHP发送邮件](#send-voice-mail-to-email)
+* 9 [nullmailer设置](#nullmailer-settings)
+* 10 [sSMTP设置](#ssmtp-settings)
+* 11 [调试外部邮件发送程序](#debugging-an-external-mailer)
+* 12 [示例](#example)  
+   * 12.1 [将语音邮件发送到电子邮箱](#send-voice-mail-to-email)  
+   * 12.2 [将通话转接到语音邮件](#send-call-to-voice-mail)  
+   * 12.3 [检查语音邮件](#send-voice-mail-to-email)  
+   * 12.4 [通过Web界面检索语音邮件](#retrieve-voice-mail-via-web-interface)  
+      * 12.4.1 [配置](#configuration)  
+   * 12.5 [通过IMAP界面检索语音邮件](#retrieve-voice-mail-via-imap-interface)  
+   * 12.6 [使用语音邮件验证呼叫者的PIN码](#using-voicemail-to-authenticate-a-callers-pin)
+* 13 [配置参数](#configuration-parameters)  
    * 13.1 [file-extension](#file-extension)  
-   * 13.2 [Key FS Mapping](#key-fs-mapping)  
+   * 13.2 [键FS映射](#key-fs-mapping)  
    * 13.3 [callback-dialplan](#voicemail_callback_dialplan)  
    * 13.4 [callback-context](#voicemail_callback_context)  
    * 13.5 [terminator-key](#terminator-key)  
@@ -91,90 +88,54 @@ Click here to expand Table of Contents
    * 13.32 [dbname](#voicemail_inject)  
    * 13.33 [allow-empty-password-auth](#allow-empty-password-auth)  
    * 13.34 [auto-playback-recordings](#auto-playback-recordings)
-* 14 [Database Schema](#database-schema)
+* 14 [数据库架构](#database-schema)
 * 15 [API](#voicemail_inject)  
    * 15.1 [vm\_boxcount](#vm_boxcount)  
-   * 15.2 [voicemail\_inject](#voicemail_inject)  
-   * 15.3 [vm\_prefs](#vm_prefs)  
-   * 15.4 [vm\_list](#voicemail_inject)  
-   * 15.5 [vm\_delete](#vm_delete)  
-   * 15.6 [vm\_read](#vm_read)
-* 16 [Advanced API](#advanced-api)  
-   * 16.1 [vm\_fsdb\_pref\_password\_set](#vm_fsdb_pref_password_set)  
-   * 16.2 [vm\_fsdb\_pref\_greeting\_set](#vm_fsdb_pref_greeting_set)  
-   * 16.3 [vm\_fsdb\_pref\_recname\_set](#vm_fsdb_pref_recname_set)  
-   * 16.4 [vm\_fsdb\_msg\_list](#vm_fsdb_msg_list)  
-   * 16.5 [vm\_fsdb\_msg\_email](#vm_fsdb_msg_email)  
-   * 16.6 [vm\_fsdb\_msg\_purge](#vm_fsdb_msg_purge)  
-   * 16.7 [vm\_fsdb\_msg\_delete](#vm_fsdb_msg_delete)  
-   * 16.8 [vm\_fsdb\_msg\_save](#vm_fsdb_msg_save)  
-   * 16.9 [vm\_fsdb\_msg\_undelete](#vm_fsdb_msg_undelete)  
-   * 16.10 [vm\_fsdb\_auth\_login](#vm_fsdb_auth_login)  
-   * 16.11 [vm\_fsdb\_msg\_get](#vm_fsdb_msg_get)  
-   * 16.12 [vm\_fsdb\_msg\_count](#vm_fsdb_msg_count)
-* 17 [FAQ](#check-voice-mail)
-* 18 [How do I reload new configuration without restarting FreeSWITCH?](#how-do-i-reload-new-configuration-without-restarting-freeswitch)
-* 19 [Do I need a text-to-speech engine installed?](#do-i-need-a-text-to-speech-engine-installed)
-* 20 [How do I install sound files?](#how-do-i-install-sound-files)
-* 21 [Voicemail Voice Prompt / Troubleshooting Problems](#voicemail-voice-prompt--troubleshooting-problems)
-* 22 [How to update keys for accessing voicemail from outside?](#how-to-update-keys-for-accessing-voicemail-from-outside)
-* 23 [How can I disable remote login/access to voicemail?](#how-can-i-disable-remote-loginaccess-to-voicemail)
-* 24 [Can I share voicemail boxes between multiple phones/users?](#can-i-share-voicemail-boxes-between-multiple-phonesusers)  
-   * 24.1 [To Monitor Voicemail](#to-monitor-voicemail)  
-      * 24.1.1 [1\. SUBSCRIBE feature method](#1-subscribe-feature-method)  
-         * 24.1.2 [SNOM 320 configuration](#snom-320-configuration)  
-         * 24.1.3 [2\. Force MWI Info in Sofia](#2-force-mwi-info-in-sofia)  
-   * 24.2 [To Receive Voicemail](#to-receive-voicemail)  
-   * 24.3 [Voicemail Callback](#voicemail-callback)
-* 25 [Transcribing Voicemail](#transcribing-voicemail)
+   * 15.2 [voicemail\_inject](#voicemail_in
 
-## Synopsis
+## 简介
 
 ```xml
 voicemail,Voicemail,[check] [auth] <profile_name> <domain_name> [<id>]
 ```
 
-## Dialplan variables
+## 拨号计划变量
 
 ### skip_greeting
 
-  
-Skips playback of greeting message when leaving messages. Variable is unset after voicemail application finishes.
+当留言时跳过播放问候信息。Voicemail应用程序结束后，该变量将被取消设置。
 
-If using a command to access voicemail, you can use the following to direct the playout of a custom greeting to the caller:
+如果使用命令访问语音信箱，您可以使用以下方法将自定义问候语播放给呼叫者：
 
 ```xml
 <action application="set" data="skip_greeting=true"/>
 <action application="voicemail" data="default $${domain} $1"/>
 ```
 
-  
-However, if using bridge to get to voicemail, you need to use "export" instead of "set" to get the channel variable to the correct leg of the call
+然而，如果使用桥接进入语音信箱，则需要使用"export"代替"set"将通道变量传递给呼叫的正确方向：
 
 ```xml
 <action application="export" data="skip_greeting=true"/>
 <action application="bridge" data="loopback/app=voicemail:default $${domain} $1"/>
 ```
 
-  
 ### skip_instructions
 
-  
-Skips playback of instructions when leaving messages. Variable is unset after voicemail application finishes.
+当留言时跳过播放指示。Voicemail应用程序结束后，该变量将被取消设置。
 
 ```xml
 <action application="set" data="skip_instructions=true"/>
 <action application="voicemail" data="default $${domain} $1"/>
 ```
 
-However, if using bridge to get to voicemail, you need to use "export" instead of "set" to get the channel variable to the correct leg of the call
+然而，如果使用桥接进入语音信箱，则需要使用"export"代替"set"将通道变量传递给呼叫的正确方向：
 
 ```xml
 <action application="export" data="skip_greeting=true"/>
 <action application="bridge" data="loopback/app=voicemail:default $${domain} $1"/>
 ```
 
-For instance, in dialplan/default.xml under &lt;extension name="Local\_Extension">, you would modify the xml by:
+例如，在dialplan/default.xml文件的&lt;extension name="Local\_Extension">下，您可以通过以下方式修改xml：
 
 ```xml
 <action application="export" data="skip_instructions=true"/>
@@ -183,7 +144,7 @@ For instance, in dialplan/default.xml under &lt;extension name="Local\_Extension
 
 ### voicemail_callback_dialplan
 
-Set's the dialplan for the voicemail callback. This channel variable will override the parameter 'callback\_dialplan' in voicemail.conf.xml
+设置语音邮件回拨的拨号计划。此通道变量将覆盖voicemail.conf.xml中的“callback_dialplan”参数。
 
 ```xml
 <action application="set" data="voicemail_callback_dialplan=XML"/>
@@ -191,35 +152,34 @@ Set's the dialplan for the voicemail callback. This channel variable will overri
 
 ### voicemail_callback_context
 
-Set's the dialplan context for the voicemail callback. This channel variable will override the parameter 'callback\_context' in voicemail.conf.xml
+设置语音邮件回拨的拨号计划上下文。此通道变量将覆盖voicemail.conf.xml中的“callback_context”参数。
 
 ```xml
 <action application="set" data="voicemail_callback_context=mydomain.com"/>
 ```
 
-## Controlling User Parameters & Variables
+## 控制用户参数和变量
 
-When the following parameters are set in the extension conf files located in (conf/directory/'extension'.xml or conf/directory/default/'extension'.xml), they set options for your voicemail users
+当以下参数在扩展配置文件中设置时（位于conf/directory/'extension'.xml或conf/directory/default/'extension'.xml），它们为您的语音邮件用户设置选项。
 
 ### vm-enabled
 
-When set to false this user will not have a voicemail box. This means busy and no answer calls will not forward to a voicemail box, nor will the user be able to log in to a voicemail box.
+如果设置为false，则该用户将没有语音邮件盒子。这意味着来电繁忙和无应答将不会转接到语音邮件盒子，用户也无法登录语音邮件盒子。
 
 ### vm-alternate-greet-id
 
 ### voicemail_alternate_greet_id
 
-The parameter allows you to override the default extension or phone number spoken by the system in the voicemail greeting. This can also be set in the dialplan before calling the voicemail app.
+该参数允许您覆盖在语音邮件问候中系统发音的默认分机号或电话号码。在调用语音邮件应用程序之前也可以在拨号计划中设置此项。
 
-This controls system greetings that read back a phone number, not user recorded greetings. To change to a different recorded greeting, use voicemail\_greeting\_number below.
+这控制的是系统读出电话号码而不是用户录制的问候语。要更改为不同的录音问候语，请使用下面的voicemail_greeting_number。
 
-  
-Example setting the parameter in the user's directory entry. This example will say "8661234567" in the voicemail generic system greeting instead of the extension number 1004.
+示例中将此参数设置在用户目录条目中。此示例将在语音邮件的通用系统问候中说出“8661234567”，而不是分机号码1004。
 
-**Parameter set in user directory entry**
+**在用户目录条目中设置的参数**
 
 ```xml
-<!-- note use of dashes in parameter name -->
+<!-- 注意参数名称中使用破折号 -->
 <include>
   <user id="1004">
     <params>
@@ -238,18 +198,15 @@ Example setting the parameter in the user's directory entry. This example will s
 </include>
 ```
 
-  
-Example setting the variable before trasferring to voicemail. This example will say "2024561000" in the voicemail greeting instead of the extension number, for example 1019.
+设置变量后转接到语音邮箱的示例。该示例在语音邮箱的问候语中将显示"2024561000"，而不是分机号码，比如1019。
 
-**Variable set in dialplan**
+**拨号计划中设置的变量**
 
 ```xml
 <!-- 
-dial the extension (1000-1019) for 30 seconds and go to voicemail if the 
-call fails (continue_on_fail=true), otherwise hang up after a successful
-bridge (hangup_after_bridge=true) 
+如果呼叫失败（continue_on_fail=true），则拨号分机号（1000-1019）30秒后转到语音信箱，否则在成功桥接后挂断（hangup_after_bridge=true）
 -->
-<extension name="Local_Extension">
+<extension name="本地分机">
   <condition field="destination_number" expression="^(10[01][0-9])$">
     <action application="export" data="dialed_extension=$1"/>
     <action application="set" data="ringback=${us-ring}"/>
@@ -259,7 +216,7 @@ bridge (hangup_after_bridge=true)
     <action application="set" data="continue_on_fail=true"/>
     <action application="bridge" data="user/${dialed_extension}@${domain_name}"/>
     <action application="answer"/>
-<!-- Note the use of underscore_ between elements of the variable name -->
+<!-- 注意变量名称中使用下划线_分隔元素 -->
     <action application="export" data="voicemail_alternate_greet_id=2024561000"/>
     <action application="sleep" data="1000"/>
     <action application="bridge" data="loopback/app=voicemail:default ${domain_name} ${dialed_extension}"/>
@@ -271,9 +228,9 @@ bridge (hangup_after_bridge=true)
 ### voicemail_greeting_number
 
   
-Selects the user-recorded greeting to play.
+选择要播放的用户录制的问候语音。
 
-If using a command to access voicemail, you can use the following to direct the playout of a custom greeting to the caller:
+如果使用命令访问语音信箱，可以使用以下内容将自定义问候语音的播放定向给呼叫方：
 
 ```xml
 <action application="set" data="voicemail_greeting_number=1"/>
@@ -281,20 +238,20 @@ If using a command to access voicemail, you can use the following to direct the 
 ```
 
   
-However, if using bridge to get to voicemail, you need to use "export" instead of "set" to get the channel variable to the correct leg of the call
+然而，如果使用桥接进入语音信箱，则需要使用"export"而不是"set"将通道变量传递到呼叫的正确端口上。
 
 ```xml
 <action application="export" data="voicemail_greeting_number=1"/>
 <action application="bridge" data="loopback/app=voicemail:default $${domain} ${dialed_extension}"/>
 ```
 
-By default, either of the above would play the file in $${base\_dir}/storage/voicemail/default/$${domain}/&lt;user>/greeting\_1.wav. However, this file is not created until the user has recorded a custom greeting in slot 1.
+默认情况下，以上任一动作将播放$${base\_dir}/storage/voicemail/default/$${domain}/&lt;user>/greeting\_1.wav文件。然而，在用户录制自定义问候语之前，该文件不会被创建。
 
-If you have defined voicemail\_greeting\_number in the user's XML directory entry and would like to follow that value then execute the [set\_user](./mod-dptools/6587133.mdx#about) app before transferring to voicemail.
+如果您在用户的XML目录条目中已定义了voicemail\_greeting\_number，并且希望按照该值执行转接到语音信箱之前，请先执行[set\_user](./mod-dptools/6587133.mdx#about) 应用程序。
 
 ### http-allowed-api
 
-This allows the user to use the web vm
+这允许用户使用网络语音信箱。
 
 ```xml
 <param name="http-allowed-api" value="voicemail"/>
@@ -302,10 +259,9 @@ This allows the user to use the web vm
 
 ### vm-disk-quota
 
-  
-This will put a limit to the length of voicemail messages a user can store. If 0 or missing doesn't make any limitation. Default is no limitation.
+这将限制用户可以存储的语音邮件消息的长度。如果为0或缺失，则没有任何限制。 默认情况下，没有限制。
 
-The following example will limit the user's voicemail box to 30 seconds. When the limit exceed, The caller will hear "mailbox is full, please try your call again later, goodbye".
+以下示例将限制用户的语音邮件箱为30秒。当超过限制时，呼叫者将听到“邮箱已满，请稍后再试，再见”。
 
 ```xml
 <param name="vm-disk-quota" value="30"/>
@@ -313,10 +269,10 @@ The following example will limit the user's voicemail box to 30 seconds. When th
 
 ### vm-mailto
 
-This is the user's email address, default: undefined.  
-(originally called email-addr. Use vm-mailto instead)
+这是用户的电子邮件地址，默认值为undefined。
+（原名为email-addr，请改用vm-mailto）
 
-This is defined in the directory for the particular user as a param. Multiple email addresses can be defined using a comma-separated list.
+这在特定用户的目录中作为参数来定义。可以使用逗号分隔的列表来定义多个电子邮件地址。
 
 ```xml
 <param name="vm-mailto" value="user101@mydomain.com" />
@@ -324,23 +280,21 @@ This is defined in the directory for the particular user as a param. Multiple em
 
 ### vm-mailfrom
 
-This is the FROM address to send the email, default: undefined
+这是用于发送电子邮件的发件人地址，默认值为undefined。
 
-This is defined in the directory for the particular user as a param.
+这在特定用户的目录中作为参数来定义。
 
 ```xml
 <param name="vm-mailfrom" value="noreply@yourdomain.com" />
 ```
 
-  
-in the voicemail template you can get this value using: ${voicemail\_email\_from}
+在语音信箱模板中，您可以使用${voicemail\_email\_from}获取此值。
 
 ### vm-notify-mailto
 
-  
-The address you want notification messages sent to, default: same as vm-mailto.
+您希望通知消息发送到的地址，默认为与vm-mailto相同。
 
-This is defined in the directory for the particular user as a param.
+这在特定用户的目录中定义为参数。
 
 ```xml
 <param name="vm-notify-mailto" value="user101_manager@yourdomain.com" />
@@ -348,12 +302,11 @@ This is defined in the directory for the particular user as a param.
 
 ### vm-password
 
-  
-This is the user's configured voicemail PIN. This is additional to the voicemail password that the user can change in the voicemail system. If the value is set to "user-choose", then there is no configured password and only the user set password is used. Note that if you set the vm\_password in the directory XML, any changes to the password from a phone are stored in the voicemail\_prefs table. The module does not update the XML. The result is that there will be 2 passwords that can access the mail box, the one set in XML and the one that the user set from the phone.
+这是用户配置的语音信箱个人识别码（PIN码）。这是用户可以在语音信箱系统中更改的密码之外的一个附加密码。如果将值设置为"user-choose"，则表示没有配置密码，只使用用户设置的密码。请注意，如果您在目录XML中设置了vm\_password，从电话更改密码将存储在voicemail\_prefs表中。该模块不会更新XML。结果是将存在两个可以访问邮箱的密码，一个是在XML中设置的，另一个是用户从电话中设置的。
 
-This is defined in the directory for the particular user as a param.
+这在特定用户的目录中定义为参数。
 
-Example:
+示例：
 
 ```xml
 <param name="vm-password" value="12345" />
@@ -361,20 +314,20 @@ Example:
 
 ### vm-a1-hash
 
-This parameter allows you to avoid sending the voicemail password in plain text. This is the same as the user a1-hash (see \[\[XML\_User\_Directory\_Guide\]\]). Set this parameter to the MD5 hash of "userid:domain\_name:vm-password". Example:
+此参数允许您避免以明文形式发送语音信箱密码。这与用户的a1-hash相同（参见\[\[XML\_User\_Directory\_Guide\]\]）。将此参数设置为"userid:domain\_name:vm-password"的MD5哈希值。示例：
 
 ```xml
-<!-- The password has been left as a comment for example -->
+<!-- 密码已被注释，仅供示例 -->
 <!-- <param name="vm-password" value="12345"/> -->
-<!-- The MD5 hash of "101:mydomain.com:12345" -->
+<!-- "101:mydomain.com:12345"的MD5哈希值 -->
 <param name="vm-a1-hash" value="fd5184d9d36a2009c72e1571abf0493e" />
 ```
 
 ### vm-email-all-messages
 
-Setting to true will send all messages to vm-mailto address (attachment based on vm-attach-file param), default: false
+设置为true将所有消息发送到vm-mailto地址（根据vm-attach-file参数附带附件），默认为false
 
-This is defined in the directory for the particular user as a param.
+这在特定用户的目录中定义为参数。
 
 ```xml
 <param name="vm-email-all-messages" value="true" />
@@ -382,11 +335,9 @@ This is defined in the directory for the particular user as a param.
 
 ### vm-notify-email-all-messages
 
-  
-Setting to true will send a notify email to vm-notify-mailto when a vm is left (never has attachment)  
-default: false
+将此设置为true将在留下voicemail（从未附带附件）时发送通知邮件给vm-notify-mailto。默认值为false。
 
-This is defined in the directory for the particular user as a param.
+这在特定用户目录中以参数的形式定义。
 
 ```xml
 <param name="vm-notify-email-all-messages" value="true" />
@@ -394,32 +345,30 @@ This is defined in the directory for the particular user as a param.
 
 ### vm_cc
 
-Setting this variable will inject the message into the specified voicemail mailbox.  
-This is defined in the directory for the particular user as a variable.  
-Please note that the variable 'vm\_cc' needs to be set as a channel variable before mod\_voicemail is called. When set as a directory variable, it only becomes a channel variable when the UA is authenticated.
+设置此变量将将消息注入到指定的voicemail邮箱中。这在特定用户目录中作为变量定义。请注意，在调用mod\_voicemail之前，必须将变量'vm\_cc'设置为通道变量。当作为目录变量设置时，只有在UA验证后才成为通道变量。
 
-Dialplan Example (recommended):
+拨号方案示例（推荐）：
 
 ```xml
 <action application="set" data="vm_cc=1001@mydomain.com"/>
 <action application="voicemail" data="default mydomain.com 1000"/>
-<!--If you want to cc the message to multiple users, use a comma separated list of users:-->
+<!--如果您想将消息抄送给多个用户，请使用逗号分隔的用户列表：-->
 <action application="set" data="vm_cc=1001@mydomain.com,1002@mydomain.com,1003@mydomain.com"/>
 ```
 
-Directory Example:
+目录示例：
 
 ```xml
 <include>
   <domain name="mydomain.com">
     <user id="101">
       <params>
-        <!--Note: for user directory you can use either vm_cc in variables or the vm-cc param-->
+        <!--注意：对于用户目录，您可以在变量中使用vm_cc或在vm-cc参数中使用vm_cc-->
         <param name="vm-cc" value="1001@mydomain.com,1002@mydomain.com,1003@mydomain.com" />
       </params>
       <varibles>
         <variable name="vm_cc" value="1001@mydomain.com" />
-        <!--If you want to cc the message to multiple users, use a comma separated list of users:-->
+        <!--如果您想将消息抄送给多个用户，请使用逗号分隔的用户列表：-->
         <variable name="vm_cc" value="1001@mydomain.com,1002@mydomain.com,1003@mydomain.com" />
       </varibles>
     </user>
@@ -429,10 +378,11 @@ Directory Example:
 
 ### vm-keep-local-after-email
 
-Setting to false will delete the local copy of the voicemail file after transmission of the mail message. When set to true the voicemail file will be kept locally and set as New for the phone to retrieve.  
-default: true
+将设置设为false将在邮件传输后删除本地副本的语音邮件文件。如果设置为true，则会保留语音邮件文件，并将其设置为新的以供电话检索。
 
-Example:
+默认值：true
+
+示例：
 
 ```xml
 <param name="vm-keep-local-after-email" value="false" />
@@ -440,13 +390,13 @@ Example:
 
 ### vm-attach-file
 
-  
-Setting to true will attach the audio file to the main email  
-default: false
+将设置设为true将音频文件附加到主邮件中。
 
-This is defined in the directory for the particular user as a param.
+默认值：false
 
-Example:
+此参数在特定用户的目录中定义为参数。
+
+示例：
 
 ```xml
 <param name="vm-attach-file" value="true" />
@@ -455,9 +405,9 @@ Example:
 
 ### vm-message-ext
 
-This Parameter determines the storage type (and email type) for voicemails received and can be set per user. In order to use MP3 you must have mod\_shout installed and loaded. The default is 'wav'.
+此参数确定接收到的语音邮件的存储类型（和邮件类型），可以根据用户设置。要使用MP3，必须安装和加载mod_shout。默认值为'wav'。
 
-Example:
+示例：
 
 ```xml
 <param name="vm-message-ext" value="mp3"/>
@@ -466,10 +416,9 @@ Example:
 
 ### vm_message_ext
 
-Determines the storage type (and email type) for voicemails received and can be set per originating user or the Dial Plan. In order to use MP3 you must have mod\_shout installed and loaded. The default is 'wav'. This may be set from the Dial Plan to override the file type. If this variable is set it overrides the vm-message-ext parameter.  
-When this variable is set on the originating user the specified file type will apply to the receiver of the message.
+确定接收到的语音邮件的存储类型（和邮件类型），可以根据发起用户或拨号方案设置。要使用MP3，必须安装和加载mod_shout。默认值为'wav'。可以从拨号方案中设置此变量以覆盖文件类型。如果设置了此变量，则会覆盖vm-message-ext参数。当在发起用户上设置此变量时，指定的文件类型将适用于消息接收者。
 
-Example:
+示例：
 
 ```xml
 <variable name="vm_message_ext" value="mp3"/>
@@ -478,8 +427,7 @@ Example:
 
 ### vm-skip-instructions
 
-  
-This disables instructions for how to leave a message, and instead just plays a beep.
+将其设置为true将禁用如何留言的说明，而仅播放一个蜂鸣声。
 
 ```xml
 <param name="vm-skip-instructions" value="true"/>
@@ -487,8 +435,9 @@ This disables instructions for how to leave a message, and instead just plays a 
 
 ### notify-template-file
 
-The notify email will use the same template as the main email unless you define the new profile   
-default: undefined
+通知邮件将使用与主邮件相同的模板，除非您定义了新的配置文件。
+
+默认值：undefined
 
 ```xml
 <param name="notify-template-file" value="other_template"/>
@@ -496,102 +445,80 @@ default: undefined
 
 ### vm-storage-dir
 
-  
-This parameter allows to force the storage directory for voicemail files received and can be set per user. By default, voicemail files are stored in 'BASE\_DIR/storage/voicemail/DOMAIN\_NAME/USER\_ID'.
+该参数允许强制设置每个用户的语音信箱文件的存储目录。默认情况下，语音信箱文件存储在'BASE\_DIR/storage/voicemail/DOMAIN\_NAME/USER\_ID'中。
 
-It can be set to a full path, or a path relative to the BASE\_DIR (usually /usr/local/freeswitch or /opt/freeswitch for debian installs).
+它可以设置为完整路径，或相对于BASE\_DIR的路径（通常是/debian installs的/usr/local/freeswitch或/opt/freeswitch）。
 
-Example:
+示例：
 
 ```xml
 <param name="vm-storage-dir" value="/home/voicemail/test.com/100"/>
-
 ```
 
-![(warning)](/images/icons/emoticons/warning.svg) Note: Most users either save voicemails locally, on a network file share directory or using a distribusted network file system, like glusterFS. [https://www.gluster.org](https://www.gluster.org/) You can also save the voicemails locally and transfer to different FreeSWITCH servers in any manner: scp, rsync, Borgbackup, sneakernet, etc.
+![(warning)](/images/icons/emoticons/warning.svg) 注意：大多数用户会将语音邮件保存在本地，网络文件共享目录或使用分布式网络文件系统（如glusterFS）上。[https://www.gluster.org](https://www.gluster.org/) 您还可以将语音邮件保存在本地，并以任何方式传输到不同的FreeSWITCH服务器：scp、rsync、Borgbackup、sneakernet等。
 
-Here's a users input on GlusterFS:
+以下是一个用户对GlusterFS的评价：
 
-_Essentially, gluster is a cluster distributed filesystem. It uses local storage on each 'server' node, and that can then_  
-_be mounted on clients. It's intended for high performance compute resources, but works quite nicely for freeswitch backend._  
-  
-_In my case, I have 4 servers accessing the cluster - 2 freeswitch nodes that are setup as an HA pair using keepalived_  
-_(article already in wiki for that), 2 web server front end nodes for a local custom UI._  
-  
-_On the backend, I have the three gluster nodes for file service (odd number to insure quorum) and 3 Percona XTraDB mysql_  
-_nodes also operating as a cluster._  
-  
-_Everything except the two freeswitch instances is running as a VM. The FS nodes are running on real hardware._  
-  
-_The key difference with NFS is that the filesystem itself is redundant - so you can take any one of those backend nodes_  
-_out of service and it isn't visible (except as a momentary hang) to the servers that have the filesystem mounted._
+基本上，gluster是一个集群分布式文件系统。它使用每个`服务器`节点上的本地存储，可以在客户端上进行挂载。它旨在用于高性能计算资源，但对于freeswitch后端也非常适用。
 
-_<http://lists.freeswitch.org/pipermail/freeswitch-users/2016-August/121650.html>_
+在我的情况下，我有4个服务器访问该集群-2个freeswitch节点，它们使用keepalived设置为一个HA对（关于此的wiki中已有文章），另外有2个用于本地自定义UI的web服务器前端节点。
+
+在后端，我有三个用于文件服务的gluster节点（奇数以确保仲裁性），以及3个作为集群运行的Percona XtraDB mysql节点。
+
+除了两个freeswitch实例外，所有内容都运行在虚拟机上。FS节点运行在真实硬件上。
+
+与NFS的关键区别在于文件系统本身是冗余的-因此，如果将其中任何一个后端节点停止服务，对于挂载了文件系统的服务器来说，它是不可见的（除了一小段时间的停顿）。
+
+<http://lists.freeswitch.org/pipermail/freeswitch-users/2016-August/121650.html>
 
 ![](https://ssl.gstatic.com/ui/v1/icons/mail/images/cleardot.gif)
 
 ### vm-storage-dir-shared
 
-If this is set to true (default false) we assume the storage-dir is shared, organized by realm/domain, with uses other than voicemail, so we adopt a directory structure of:
+如果设置为true（默认为false），我们认为存储目录是共享的，由领域/域组织，并且用于除了语音邮件之外的其他用途，因此我们采用以下目录结构：
 
 ```xml
 <storage_dir>/<realm>/voicemail/<id>
 ```
 
-Example:
+示例：
 
 ```xml
 <param name="vm-storage-dir-shared" value="true"/>
-
 ```
 
 ### vm-domain-storage-dir
 
-This is like vm-storage-dir but we append the user ID to the directory so if vm-domain-storage-dir is /var/lib/freeswitch/storage/[example.com](http://example.com), it will store VM in /var/lib/freeswitch/storage/[test.com/user\_id](http://test.com/user%5Fid).
+与vm-storage-dir类似，但我们会将用户ID附加到目录中，因此如果vm-domain-storage-dir为/var/lib/freeswitch/storage/[example.com](http://example.com)，它将在/var/lib/freeswitch/storage/[test.com/user_id](http://test.com/user%5Fid)中存储语音邮件。
 
-Example:
+示例：
 
 ```xml
 <param name="vm-domain-storage-dir" value="/var/lib/voicemail/test.com/"/>
-
 ```
 
-## Using Outside Programs to Send Voicemail to Email
+## 使用外部程序将语音信箱发送到电子邮件
 
-  
-There are times when you don't want or need an email server on your PBX. For these times it would be nice to be able to  
-use an outside program to send the email.
+在某些情况下，您可能不需要在您的PBX上安装电子邮件服务器。在这些情况下，使用外部程序发送电子邮件将是一个不错的选择。
 
-Below is a python script that does just that. Note that it will give deprecation warnings on later versions of Python so needs to be rewritten to used MIME in place of MimeWriter.
+下面是一个Python脚本，可以实现这一功能。请注意，它将在较新版本的Python上产生过时警告，因此需要重新编写以使用MIME替代MimeWriter。
 
-TODO: Fix indentation
+待办事项：修复缩进
 
 ```xml
 #!/usr/bin/python
 #
 """
-Copyright (c) 2009, ChronosTelecom, LLC
-All rights reserved.
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-* Redistributions of source code must retain the above copyright
-notice, this list of conditions and the following disclaimer.
-* Redistributions in binary form must reproduce the above copyright
-notice, this list of conditions and the following disclaimer in the
-documentation and/or other materials provided with the distribution.
-* Neither the name of the <organization> nor the
-names of its contributors may be used to endorse or promote products
-derived from this software without specific prior written permission.
-THIS SOFTWARE IS PROVIDED BY <copyright holder> ''AS IS'' AND ANY
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL <copyright holder> BE LIABLE FOR ANY
-DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+版权所有 (c) 2009, ChronosTelecom有限公司
+保留所有权利。
+在源代码和二进制形式中以原样或经过修改的方式重新分发和使用，只要符合以下条件：
+* 必须保留源代码中的上述版权声明、此条件列表和下述免责声明。
+* 在二进制形式中重新分发时，必须在文档和/或其他提供材料中复制上述版权声明、此条件列表和下述免责声明。
+* 未经特定事先书面许可，不能使用<组织>的名称或其贡献者的姓名来认可或推广使用基于本软件生成的产品。
+本软件按“原样”提供，<版权持有者>不提供任何明示或隐含的担保，
+包括但不限于对特定目的的适销性和适用性的隐含担保。 
+在任何情况下，无论是在合同、严格责任或侵权行为等方面，<版权持有者>都不对任何直接、间接、偶尔、特殊、惩罚性或后果性损害承担责任，
+包括但不限于替代商品或服务的获取、使用、数据或利润的损失或业务中断。即使事先已被告知发生此类损害的可能性。
 """
 import smtplib
 import sys
@@ -610,7 +537,7 @@ PORT = 587
 USER = 'YOUR_MAIL_USER'
 PASSWORD = 'PASSWORD'
 attach = ""
-# Write data to a file given the filename. Make a backup of the file FIRST!
+# 给定文件名，将数据写入文件中。首先备份文件!
 def write_file(filename,data):
     fh = ""
     cur_time = time.time()
@@ -621,97 +548,120 @@ def write_file(filename,data):
 #print "WARNING: %s exists! Moving it to %s.bak.%s" % (filename,filename,cur_time)
 shutil.move(filename,"%s.bak.%s" % (filename,cur_time))
 fh = open(filename,'w')
+```
 
+```python
 fh.write(data)
 fh.close()
-# send the mail
+# 发送邮件
 def send(sender,to,message,verbose=False):
-smtp = smtplib.SMTP(SERVER, PORT)
-if verbose:
-smtp.set_debuglevel(1)
-smtp.ehlo()
-smtp.starttls()
-smtp.ehlo()
-smtp.login(USER,PASSWORD)
-smtp.sendmail(sender, to, message)
-smtp.quit()
+    smtp = smtplib.SMTP(SERVER, PORT)
+    if verbose:
+        smtp.set_debuglevel(1)
+    smtp.ehlo()
+    smtp.starttls()
+    smtp.ehlo()
+    smtp.login(USER,PASSWORD)
+    smtp.sendmail(sender, to, message)
+    smtp.quit()
 
 
 def mail(sender='', to='', subject='', text='', attachments=None, verbose=False):
-"""
-Usage:
-mail()
-Params:
-sender: sender's email address
-to: receipient email address
-subject: subject line
-text: Email message body main part.
-attachments: list of files to attach
-"""
-message = StringIO.StringIO()
-writer = MimeWriter.MimeWriter(message)
-writer.addheader('To', to)
-writer.addheader('From', sender)
-writer.addheader('Subject', subject)
-writer.addheader('MIME-Version', '1.0')
+    """
+    Usage:
+    mail()
+    Params:
+    sender: 发件人的电子邮件地址
+    to: 收件人的电子邮件地址
+    subject: 邮件主题行
+    text: 邮件的正文内容部分。
+    attachments: 要附加的文件列表
+    """
+    message = StringIO.StringIO()
+    writer = MimeWriter.MimeWriter(message)
+    writer.addheader('To', to)
+    writer.addheader('From', sender)
+    writer.addheader('Subject', subject)
+    writer.addheader('MIME-Version', '1.0')
 
-writer.startmultipartbody('mixed')
+    writer.startmultipartbody('mixed')
 
-# start with a text/plain part
-part = writer.nextpart()
-body = part.startbody('text/plain')
-part.flushheaders()
-body.write(text)
-# now add the attachments
-if attachments is not None:
-for a in attachments:
-filename = os.path.basename(a)
-ctype, encoding = mimetypes.guess_type(a)
-if ctype is None:
-ctype = 'application/octet-stream'
-encoding = 'base64'
-elif ctype == 'text/plain':
-encoding = 'quoted-printable'
-else:
-encoding = 'base64'
+    # 首先是一个text/plain部分
+    part = writer.nextpart()
+    body = part.startbody('text/plain')
+    part.flushheaders()
+    body.write(text)
+    # 现在添加附件
+    if attachments is not None:
+        for a in attachments:
+            filename = os.path.basename(a)
+            ctype, encoding = mimetypes.guess_type(a)
+            if ctype is None:
+                ctype = 'application/octet-stream'
+                encoding = 'base64'
+            elif ctype == 'text/plain':
+                encoding = 'quoted-printable'
+            else:
+                encoding = 'base64'
 
-part = writer.nextpart()
-part.addheader('Content-Transfer-Encoding', encoding)
-body = part.startbody("%s; name=%s" % (ctype, filename))
-print filename
-mimetools.encode(open(a, 'rb'), body, encoding)
-# that's all folks
-writer.lastpart()
-send(sender,to,message.getvalue(),verbose)
+            part = writer.nextpart()
+            part.addheader('Content-Transfer-Encoding', encoding)
+            body = part.startbody("%s; name=%s" % (ctype, filename))
+            print filename
+            mimetools.encode(open(a, 'rb'), body, encoding)
+    # 完成邮件写入
+    writer.lastpart()
+    send(sender,to,message.getvalue(),verbose)
 
 def validate_email(fromAddress):
-email_addr = re.compile(r'(([a-zA-Z0-9_\-\.]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9\-]+\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?))')
-return bool(email_addr.search(fromAddress))
+    email_addr = re.compile(r'(([a-zA-Z0-9_\-\.]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9\-]+\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?))')
+    return bool(email_addr.search(fromAddress))
+```
 
+```python
 if __name__ == "__main__":
-fromAddress = ""
-to = ""
-subject = ""
-infile = ""
-body = ""
-translate = ""
-tempfile = ""
-usestdin = False
-verbose = False
-delete = False
-log = False
+    fromAddress = ""
+    to = ""
+    subject = ""
+    infile = ""
+    body = ""
+    translate = ""
+    tempfile = ""
+    usestdin = False
+    verbose = False
+    delete = False
+    log = False
+```
 
+```python
+if __name__ == "__main__":
+    fromAddress = ""
+    to = ""
+    subject = ""
+    infile = ""
+    body = ""
+    translate = ""
+    tempfile = ""
+    usestdin = False
+    verbose = False
+    delete = False
+    log = False
+```
+
+请注意：以上是一个Python脚本的代码片段，无法直接翻译为中文。
+
+```python
 parser = OptionParser()
-parser.add_option('-f', dest='fromAddress', metavar='FROMADDRESS',help="The from address for the email")
-parser.add_option('-t', dest='toAddress', metavar='TOADDRESS',help="The to address for the email")
-parser.add_option('-s', dest='subject', metavar='SUBJECT',help="The subject for the email")
-parser.add_option('-a', dest='attachment', metavar='ATTACHMENT',help="The file to attach to the email")
-parser.add_option('-b', dest='body', metavar='BODY',help="The body of the email")
-parser.add_option('-x', dest='translate', metavar='TRANSLATE',help="Translate the attachment using a translator program.\ntiff2pdf is the only supported option at this time.")
-parser.add_option('-i', dest='use_stdin', action="store_true", default=False,help="Use standard in as the input for the email message.")
-parser.add_option('-d', dest='delete', action="store_true", default=False,help="Delete the attachments when done processing.")
-parser.add_option('-v', dest='verbose', action="store_true", default=False,help="Verbose output for debugging.")
-parser.add_option('-l', dest='log', action="store_true", default=False,help="Log the message to a file stored in /tmp/sendemail.log")
+parser.add_option('-f', dest='fromAddress', metavar='FROMADDRESS',help="The from address for the email")  # 发件人地址
+parser.add_option('-t', dest='toAddress', metavar='TOADDRESS',help="The to address for the email")  # 收件人地址
+parser.add_option('-s', dest='subject', metavar='SUBJECT',help="The subject for the email")  # 邮件主题
+parser.add_option('-a', dest='attachment', metavar='ATTACHMENT',help="The file to attach to the email")  # 附件文件
+parser.add_option('-b', dest='body', metavar='BODY',help="The body of the email")  # 邮件正文
+parser.add_option('-x', dest='translate', metavar='TRANSLATE',help="Translate the attachment using a translator program.\ntiff2pdf is the only supported option at this time.")  # 使用翻译程序翻译附件，目前只支持tiff2pdf选项
+parser.add_option('-i', dest='use_stdin', action="store_true", default=False,help="Use standard in as the input for the email message.")  # 使用标准输入作为电子邮件消息的输入
+parser.add_option('-d', dest='delete', action="store_true", default=False,help="Delete the attachments when done processing.")  # 处理完毕后删除附件
+parser.add_option('-v', dest='verbose', action="store_true", default=False,help="Verbose output for debugging.")  # 调试时产生详细输出
+parser.add_option('-l', dest='log', action="store_true", default=False,help="Log the message to a file stored in /tmp/sendemail.log")  # 将消息记录到/tmp/sendemail.log文件中
 (options, args) = parser.parse_args()
 if options.fromAddress:
     fromAddress = options.fromAddress
@@ -732,30 +682,31 @@ if options.verbose: verbose = options.verbose
 if options.delete: delete = options.delete
 if options.log: log = options.log
 if usestdin is True:
-message = ""
-attachment = infile
-for line in sys.stdin:
-message += line
-to_field = re.compile(r'To: <(([a-zA-Z0-9_\-\.]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9\-]+\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?))>')
-if to_field.search(message):
-to_match = to_field.search(message)
-to = str(to_match.group(1))
-if log:
-write_file('/tmp/sendemail.log',message)
-send(fromAddress,to,message,verbose)
-else:
-if translate == 'tiff2pdf':
-tempfile = "/tmp/%s.pdf" % os.path.basename(infile)
-command = "tiff2pdf %s -o %s" % (infile, tempfile)
-os.system(command)
-attachment = tempfile
-else:
-attachment = infile
+    message = ""
+    attachment = infile
+    for line in sys.stdin:
+        message += line
+    to_field = re.compile(r'To: <(([a-zA-Z0-9_\-\.]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9\-]+\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?))>')
+    if to_field.search(message):
+        to_match = to_field.search(message)
+        to = str(to_match.group(1))
+    if log:
+        write_file('/tmp/sendemail.log',message)
+        send(fromAddress,to,message,verbose)
+    else:
+        if translate == 'tiff2pdf':
+            tempfile = "/tmp/%s.pdf" % os.path.basename(infile)
+            command = "tiff2pdf %s -o %s" % (infile, tempfile)
+            os.system(command)
+            attachment = tempfile
+        else:
+            attachment = infile
+```
 
 attach=[attachment]
 mail(sender=fromAddress, to=to, subject=subject, text=body, attachments=attach, verbose=verbose)
 
-# delete our temporary file - it's up to the caller to delete the attachments, if they want
+# 删除临时文件 - 如果需要的话，由调用者负责删除附件
 if tempfile:
 os.unlink(tempfile)
 if delete and attachment:
@@ -764,7 +715,7 @@ os.unlink(attachment)
 
 ```
 
-Make the following changes to /usr/local/freeswitch/autoload\_configs/switch.conf.xml:
+对/usr/local/freeswitch/autoload\_configs/switch.conf.xml进行以下更改:
 
 ```xml
 <param name="mailer-app" value="/usr/local/freeswitch/scripts/sendemail.py"/>
@@ -772,9 +723,9 @@ Make the following changes to /usr/local/freeswitch/autoload\_configs/switch.con
 
 ```
 
-## Send_mail setting
+## 发送邮件设置
 
-To enable email setting for voicemail, make sure the following two lines are configured correctly in switch.conf.xml
+要为语音邮件启用电子邮件设置，请确保在switch.conf.xml中正确配置以下两行
 
 ```xml
 <param name="mailer-app" value="sendmail"/>
@@ -782,46 +733,46 @@ To enable email setting for voicemail, make sure the following two lines are con
 
 ```
 
-'''Note''' - On CentOS and possibly other OSs, \`sendmail\` isn't in the non-root PATH so you'll want to specify the entire path in the mailer-app value or modify your PATH prior to running FreeSWITCH&trade;.
+'''注意''' - 在CentOS和其他一些操作系统上，`sendmail`不在非root PATH中，因此您需要在mailer-app值中指定完整路径，或在运行FreeSWITCH™之前修改您的PATH。
 
-## Exim4 settings
+## Exim4设置
 
-There have been several reports of segfaults with Exim4 in combination with Debian and FreeSWITCH - so far no definite resolution has been posted - mostly citing the advice below - which does not help(See \[<http://lists.freeswitch.org/pipermail/freeswitch-users/2009-June/043660.html> here\],\[<http://lists.freeswitch.org/pipermail/freeswitch-users/2010-January/052529.html> here\] and \[<http://jira.freeswitch.org/browse/FS-1923> here\]).  
-A default installation of '''postfix''' instead of exim4 is a workaround, if you just quickly want to setup a mailer for FreeSWITCH on Debian --\[\[User:Peletiah|Peletiah\]\] 15:19, 1 June 2011 (UTC).
+关于Debian和FreeSWITCH结合使用的Exim4的段错误已经有过几次报告, 到目前为止尚未发布明确的解决方法 - 大多数报告提到了下面的建议 - 这些建议并没有帮助 (请参见\[<http://lists.freeswitch.org/pipermail/freeswitch-users/2009-June/043660.html>](http://lists.freeswitch.org/pipermail/freeswitch-users/2009-June/043660.html)、\[<http://lists.freeswitch.org/pipermail/freeswitch-users/2010-January/052529.html>](http://lists.freeswitch.org/pipermail/freeswitch-users/2010-January/052529.html)和\[<http://jira.freeswitch.org/browse/FS-1923>](http://jira.freeswitch.org/browse/FS-1923))。
+在Debian上，将默认安装的'''postfix'''替换为exim4是一种解决方法，如果你只是想快速设置一个用于FreeSWITCH的邮件程序 -- \[\[User:Peletiah|Peletiah\]\] 15:19, 2011年6月1日 (UTC)。
 
-Using '''msmtp''' together with exim4 on the same host works and can be used as a workaround, see the notes below in a dedicated sub-section -- \[\[User:Miconda|miconda\]\] Sep 24, 2012.
+在同一主机上同时使用 `msmtp` 和 `exim4` 是可以的，并且可以作为解决方法，详见下面的注释，[[User:Miconda|miconda]] 2012年9月24日。
 
-As of April 22, 2013, a patch was applied to resolve the stack size setting for child processes, which is the primary cause of this issue. See \[<http://jira.freeswitch.org/browse/FS-5332> here\] for details.
+截至2013年4月22日，应用了补丁解决了子进程堆栈大小设置的问题，这是此问题的主要原因。详见[此处](http://jira.freeswitch.org/browse/FS-5332)。
 
-VM to email notification can also use other MTAs such as Debian's default Exim4\. For email notification basically mod\_voicemail constructs an email message that is then passed to standard input of the application defined in the "mailer-app" param found in switch.conf.xml.
+用于邮件通知的虚拟机（VM）也可以使用其他 MTA，如 Debian 默认的 Exim4。对于电子邮件通知，基本上 mod\_voicemail 构造了一封电子邮件，然后将其传递给 switch.conf.xml 中的 "mailer-app" 参数定义的应用程序的标准输入。
 
-The MTA application then needs to be configured in a way so that the recipients of the message are obtained from the To:, Cc:, and Bcc: header lines of the message passed to it. This is achieved in Exim4 with the -t option.
+然后，MTA 应用程序需要以一种方式配置，以便从传递给它的消息的 To:、Cc: 和 Bcc: 头部行中获取消息的收件人。在 Exim4 中，可以使用 `-t` 选项实现。
 
-However, FS also adds another argument with the To: address to the command defined in the parameters above, so that the final command would look like:
+然而，FS 还向上述参数定义的命令添加了另一个参数，该参数包含 To: 地址，因此最终命令看起来像这样：
 
 ```xml
 cat /tmp/mail.12336173682b88 | exim4 -t someone@someaddress.net
 ```
 
-If you have set:
+如果你已经设置了：
 
 ```xml
 <param name="mailer-app" value="exim4"/>
 <param name="mailer-app-args" value="-t"/>
 ```
 
-This is because as documented in O'Reilly Sendmail's book, some versions of Sendmail add argument addresses to those obtained from the headers and also as a good measure to send the To: address to applications that cannot parse the headers in the email msg.
+这是因为根据 O'Reilly 发送邮件书籍的文档记载，某些版本的 Sendmail 会在从头部得到的地址中添加参数地址，并且为了确保将 To: 地址发送到无法解析电子邮件消息头部的应用程序中。
 
-Exim's default behavior however is that these extra addresses specify addresses to which the message is NOT to be delivered. So in the command line described above "someone@[someaddress.net](http://someaddress.net)" is the actual recipient of the email message, but exim's default behavior takes the argument from the command line and subtracts the "someone@[someaddress.net](http://someaddress.net)" email address from the To: headers of the actual message, leaving it with no recipients at all.
+Exim 的默认行为是，这些额外的地址指定的是不要发送邮件的地址。因此，在上述命令行中，“someone@[someaddress.net](http://someaddress.net)”是实际接收电子邮件的收件人，但是 Exim 的默认行为会将命令行中的参数从实际邮件的 To: 标头中减去“someone@[someaddress.net](http://someaddress.net)”的电子邮件地址，因此实际邮件没有接收者。
 
-Exim can be made to add the argument instead of subtracting it by setting the option extract\_addresses\_remove\_arguments false in it's config and then you can use:
+可以通过在配置中设置选项 extract\_addresses\_remove\_arguments false 来使 Exim 添加参数而不是减去它，然后可以使用以下内容：
 
 ```xml
 <param name="mailer-app" value="exim4"/>
 <param name="mailer-app-args" value="-t"/>
 ```
 
-But if you do not want to go through the hassle of changing exim's configuration, then you could also overcome the "extra" argument using a script such as:
+但是如果您不想麻烦更改 Exim 的配置，那么您也可以使用以下脚本来解决“额外”参数的问题：
 
 eximcompat.sh:
 
@@ -830,29 +781,28 @@ eximcompat.sh:
 exec exim4 -t
 ```
 
-  
-And then pointing the mailer app to this script:
+然后将邮件程序指向此脚本：
 
 ```xml
 <param name="mailer-app" value="/usr/local/bin/eximcompat.sh"/>
 <!-- <param name="mailer-app-args" value="-t"/> -->
 ```
 
-If you're using the sysV init script from this wiki, the stack size is set to some low value (240) which can cause exim to segfault; add a line in your exim4compat.sh to increase this value (8192 works for me).
+如果您正在使用这个 Wiki 上的 sysV init 脚本，则堆栈大小被设置为很低的值 (240)，这可能会导致 Exim 发生段错误。可以在 exim4compat.sh 中添加一行来增加这个值 （对我而言，8192 可以正常工作）。
 
-### Using MSMTP for Local Relay to Exim4 on Debian
+### 在 Debian 上使用 MSMTP 进行本地中继到 Exim4
 
-This is a possible workaround to make voicemail email notification work on Debian with Exim4 as main MTA.
+这是一个可能的解决办法，用于使 Debian 上的 Exim4 作为主要 MTA 在语音邮箱邮件通知工作。
 
-MSMTP can be installed together with Exim4 on the same host and can be configured to do relay to local exim4 instance. In this way, Voicemail module can use MSMTP, but the public email relaying is taken care by Exim.
+可以在同一台主机上安装 MSMTP 和 Exim4，并配置 MSMTP 进行本地中继到 Exim4 实例。这样，Voicemail 模块就可以使用 MSMTP，但公共邮件中继由 Exim 负责。
 
-Installation of MSMTP on Debian is very simple:
+在 Debian 上安装 MSMTP 很简单：
 
 ```xml
 apt-get install msmtp
 ```
 
-Its configuration has to be stored in '''/etc/msmtprc'''. To relay to localhost SMTP server, just set its content to the next three lines:
+其配置文件需要存储在`/etc/msmtprc`中。若要转发到本地SMTP服务器，只需将其内容设置为以下三行：
 
 ```xml
 account default
@@ -860,112 +810,108 @@ host 127.0.0.1
 syslog LOG_MAIL
 ```
 
-  
-By default, exim4 accepts messages from localhost without user authentication (to allow running processes to send email alerts), so you don't need to change anything in exim4 configuration (unless you disabled that default option).
+默认情况下，exim4接受来自本地主机的消息而无需用户身份验证（以便允许运行过程发送电子邮件提醒），因此您无需更改exim4的配置（除非您禁用了该默认选项）。
 
-On FreeSwitch configuration side, edit switch.conf.xml to set sending emails with MSMTP:
-
-```xml
-<param name="mailer-app" value="msmtp"/>
-```
-
-## Windows settings
-
-Example setting in switch.conf.xml for sending email on windows.
+在FreeSwitch配置方面，编辑switch.conf.xml以设置使用MSMTP发送电子邮件：
 
 ```xml
 <param name="mailer-app" value="msmtp"/>
 ```
 
-##   
-Mail via PHP
+## Windows设置
 
-Example setting in switch.conf.xml for sending email with PHP mailer. Make sure the path to php is correct for mailer-app.
+在Windows上发送电子邮件的switch.conf.xml示例设置。
+
+```xml
+<param name="mailer-app" value="msmtp"/>
+```
+
+## 通过PHP发送电子邮件
+
+使用PHP邮件程序发送电子邮件的switch.conf.xml示例设置。确保mailer-app的php路径正确。
 
 ```xml
 <param name="mailer-app" value="/usr/bin/php /usr/local/www/freeswitch/mailer_app.php"/>
 <param name="mailer-app-args" value=""/>
 ```
 
-## nullmailer settings
+## nullmailer设置
 
-<http://untroubled.org/nullmailer/> is installed sometimes as a sendmail service. Make sure the following two lines are configured correctly in switch.conf.xml
+有时会将<http://untroubled.org/nullmailer/>安装为sendmail服务。请确保在switch.conf.xml中正确配置以下两行：
 
 ```xml
 <param name="mailer-app" value="sendmail"/>
 <param name="mailer-app-args" value=""/>
-<-- don't comment out the args line, leave it in with no value -->
+<-- 不要注释args行，保持没有值 -->
 ```
 
-If you don't take out the ''-t'' default argument, nullmailer will create duplicate emails.
+如果没有删除`-t`的默认参数，nullmailer将创建重复的电子邮件。
 
-## sSMTP settings
+## sSMTP设置
 
-<http://wiki.debian.org/sSMTP> can be used as a null mailer and has the advantage over <http://untroubled.org/nullmailer/> that it permits sending to mail hosts that require SSL/TLS and/or authentication. It also logs to /var/log/mail.log which is useful for debugging.
+<http://wiki.debian.org/sSMTP>可用作无邮件发送程序，并具有优于<http://untroubled.org/nullmailer/>的优点，使其能够发送到需要SSL/TLS和/或身份验证的邮件主机。它还会记录到/var/log/mail.log中，这对于调试非常有用。
 
-sSMTP uses the same sendmail command, ignoring some options and failing if others are specified. Within conf/autoload\_configs//switch.conf.xml, you need to include:
+sSMTP使用相同的sendmail命令，忽略一些选项并在指定其他选项时失败。在conf/autoload\_configs//switch.conf.xml文件中，您需要包含以下内容：
 
 ```xml
 <param name="mailer-app" value="sendmail"/>
 <param name="mailer-app-args" value="-f freeswitch@mydomain.com"/>
 ```
 
-Within /etc/ssmtp/ssmtp.conf, your mileage may vary, but to relay to a Postfix server using submission (tcp/587), the config looks like this:
+在/etc/ssmtp/ssmtp.conf中，您可能需要适应自己的情况，但配置如下所示可以将邮件中继到使用submission（tcp/587）的Postfix服务器：
 
 ```xml
-root=postmaster # part of the default config
+root=postmaster # 默认配置的一部分
 mailhub=smtp.mydomain.com:587
 UseTLS=YES
 UseSTARTTLS=YES
 AuthUser=myusername
 AuthPass=mypassword
-rewriteDomain=mydomain.com # This is useful if your FS box is not in DNS or has a different domain from the sending email
+rewriteDomain=mydomain.com # 如果您的FS盒子没有在DNS中或与发件电子邮件的域名不同，这是很有用的
 hostname=myFShostname.domain
-FromLineOverride=NO # This stops the mail message overriding the -f switch on the command line, useful if your FS ${domain} is an IP address
+FromLineOverride=NO # 这样可以防止邮件消息覆盖命令行上的 -f 选项，如果您的FS ${domain} 是一个IP地址，则非常有用
 ```
 
-Google will help you get a config that matches your configuration.
+使用Google可以帮助您获取与您的配置相匹配的配置文件。
 
-## Debugging an external mailer
+## 调试外部邮件程序
 
-FreeSWITCH does very little error reporting on emails. Basically, once the email is   
-accepted for queueing, FreeSWITCH has (rightly) lost interest. So, it is best to first test that mails can be sent from your FreeSWITCH box before trying to get FreeSWITCH to do it.
+FreeSWITCH在电子邮件上很少提供错误报告。基本上，一旦电子邮件被队列接受，FreeSWITCH就会失去兴趣（理应如此）。因此，最好在尝试启用FreeSWITCH发送邮件之前，先测试一下是否能够从您的FreeSWITCH盒子发送电子邮件。
 
-First, create a minimal email in a text file:
+首先，在一个文本文件中创建一个最简电子邮件：
 
 ```xml
 From: <freeswitch@mydomain.com>
 To: <testuser@mydomain.com>
 Date: Thu, 2 Feb 2012 13:13:40 +0100
-Subject: Test 131340 (I always put a timestamp in the subject line when 
-testing email due to the queueing and routing and stuff)
-Minimal test email 131340 (and I try to remember to put the same timestamp in the body of the text)
+Subject: Test 131340 (因为排队和路由等原因，我总是在主题行中放入时间戳进行电子邮件测试)
+Minimal test email 131340 (我还试着记得在正文中放入相同的时间戳)
 ```
 
-Then send it from the command line with:
+然后使用以下命令将其从命令行发送出去：
 
 ```xml
 cat email.txt | sendmail -f freeswitch@mydomain.com testuser@mydomain.com
 ```
 
-Nearly all mailers have a 'sendmail' alias even if they are not sendmail itself. Depending on the local mail server you are using, you may have to include the -t switch which extracts the To address(es) from the message itself.
+几乎所有邮件程序都有一个`'sendmail'`别名，即使它们本身并不是`sendmail`。根据您使用的本地邮件服务器，您可能需要包含`-t`开关，该开关从邮件本身中提取出收件人地址。
 
-If this command fails, then you may not have sendmail, or a clone, installed. If you don't need the weight and features of sendmail, exim or postfix, leave them alone and use a simple null mailer like nullmailer or sSMTP as described above.
+如果此命令失败，则可能未安装`sendmail`或其克隆版本。如果您不需要`sendmail`、`exim`或`postfix`的复杂功能和特性，可以像上述描述的那样使用简单的空邮件程序，例如`nullmailer`或`sSMTP`。
 
-If the command works but the mail still does not reach the destination, then you know you have a mail transport issue and can solicit the assistance of your friendly postmaster or a forum appropriate to your operating system and mailer.
+如果命令正常工作但邮件仍然无法到达目标地址，则说明您遇到了邮件传输问题，您可以寻求友善的系统管理员或适合您操作系统和邮件程序的论坛的帮助。
 
-Once you are reliably sending email from the shell, transfer your settings into conf/autoload\_configs/switch.conf.xml
+一旦您能够可靠地通过shell发送电子邮件，请将设置传输到`conf/autoload\_configs/switch.conf.xml`文件中。
 
-For example, for sSMTP:
+例如，对于`sSMTP`：
 
 ```xml
 <param name="mailer-app" value="sendmail"/>
 <param name="mailer-app-args" value="-f freeswitch@mydomain.com"/>
 ```
 
-Note that if you need to run your mailer-app with no args, explicitly state them as &lt;param name="mailer-app-args" value="" /> as the default if not specified is to use "-t".
+注意，如果您需要不带参数运行您的`mailer-app`，请将其明确设置为`<param name="mailer-app-args" value="" />`，因为如果未指定，默认值是使用`"-t"`。
 
-With your external mailer known to be working, you can now narrow down your debugging to FreeSWITCH. Make sure that you include all the parameters required in the user directory entry. For example, in conf/directory/default/1001.xml:
+在您已知外部邮件程序正常工作的前提下，现在可以将调试范围缩小到`FreeSWITCH`上。确保在用户目录项中包含所有必需的参数。例如，在`conf/directory/default/1001.xml`中：
 
 ```xml
 <param name="vm-password" value="1001" />
@@ -980,7 +926,7 @@ With your external mailer known to be working, you can now narrow down your debu
 <!-- Can be 'mp3' but needs mod_lame to be loaded. -->
 ```
 
-Then, use fs\_cli in /log 7 and leave a voicemail on a configured extension. After completing the voicemail, you should see something like this (both mailto and notify-mailto have been set in this case):
+然后，在`/log 7`使用`fs_cli`命令，并给配置的分机留言。完成留言后，您应该看到类似于以下内容（在这种情况下，`mailto`和`notify-mailto`都已设置）：
 
 ```xml
 2012-02-02 18:21:36.494891 [DEBUG] mod_voicemail.c:2641 Deliver VM to 1001@192.168.100.100
@@ -990,13 +936,11 @@ Then, use fs\_cli in /log 7 and leave a voicemail on a configured extension. Aft
 2012-02-02 18:21:37.394793 [DEBUG] mod_voicemail.c:2881 Sending notify message to user.name@mydomain.com
 ```
 
-  
 ## Example
 
-### Send Voice Mail to Email
+### 发送语音邮件到邮箱
 
-  
-The following is an example of sending a voicemail to email
+以下是将语音邮件发送到邮箱的示例：
 
 ```xml
 <include>
@@ -1016,116 +960,114 @@ The following is an example of sending a voicemail to email
 </include>
 ```
 
-### Send Call To Voice Mail
+### 发送呼叫到语音信箱
 
-The following is an example of sending a call to voicemail after you've decided that a user isn't available.
+以下是一个例子，当您判断用户不可用时，将呼叫发送到语音信箱。
 
 ```xml
 <action application="answer"/>
 <action application="voicemail" data="default $${domain} $1"/>
 ```
 
-where '''default''' is the profile name (must be configured in voicemail.conf.xml), '''$${domain}''' is (obviously) the domain (in this case the system-wide domain setting for your switch from vars.xml) and '''$1''' is the dialed extension.
+其中`default`是配置在`voicemail.conf.xml`中的配置文件名，`$${domain}`是（显然）域名（在这种情况下，是从`vars.xml`中的系统级域名设置），`$1`是拨打的分机号码。
 
-### Check Voice Mail
+### 检查语音信箱
 
-The following is an example of checking vm (will prompt for PIN if ${voicemail\_authorized} is not "true")
+以下是一个检查语音信箱的示例（如果`${voicemail_authorized}`不等于"true"，将提示输入个人识别码）。
 
-Please make sure the password is set in order for the mailbox to prompt for a password.
+请确保设置了个人识别码以便语音信箱提示输入个人识别码。
 
 ```xml
 <action application="voicemail" data="check $${voicemail_profile} $${domain} $1"/>
 ```
 
-The following example will allow the user to check vm whether they're "voicemail\_authorized" or not. If voicemail\_authorized=true , then user can access voicemail without prompting for password. If it's set to false, then the system will ask to enter the password. I found that even if you don't put &lt;auth> in the following example, it will still check if it is authed. Someone please verify.
+以下示例将允许用户检查语音信箱，无论他们是否被授权。如果`voicemail_authorized=true`，则用户可以在不提示输入个人识别码的情况下访问语音信箱。如果设置为false，系统将要求输入个人识别码。我发现，即使在下面的示例中没有放置`<auth>`，系统仍会检查是否进行了认证。请有人验证一下。
 
 ```xml
 <action application="voicemail" data="check auth $${voicemail_profile} $${domain} $1"/>
 ```
 
-To automatically pass all registered users on your domain without prompting to enter the password:
+为了自动通过您域上的所有注册用户而不提示输入密码：
 
 ```xml
 <action application="set" data="voicemail_authorized=${sip_authorized}"/>
 <action application="voicemail" data="check auth $${voicemail_profile} $${domain} $1"/>
 ```
 
-(Preliminary 2012.02.06) To speak the called party number before speaking the date of the voicemail message, enable channel variable vm\_announce\_cid. This only speaks the number, it does not preface it with introductory words such as "The caller's number is..." nor separate the number from the date that follows it.
+（初步版本 2012.02.06）在播放语音信箱消息的日期之前播放被呼叫方号码，请启用通道变量vm_announce_cid。该功能只会播放号码，不会附加前言词（如“来电号码是…”）也不会将号码与后续日期分隔开。
 
 ```xml
 <action application="set" data="vm_announce_cid=true" />
 <action application="voicemail" data="check $${voicemail_profile} $${domain} $1"/>
 ```
 
-### Retrieve Voice Mail Via Web Interface
+### 通过Web界面检索语音邮件
 
-#### Configuration
+#### 配置
 
-To enable the web interface for voice mail, you must first install/enable [mod\_xml\_rpc](./mod_xml_rpc_1048928.mdx#about)
+要启用语音邮件的Web界面，您首先必须安装/启用[mod_xml_rpc](./mod_xml_rpc_1048928.mdx#about)
 
-You also need to enable the user or domain to use the web interface using #http-allowed-api
+您还需要使用#http-allowed-api启用用户或域使用Web界面的功能
 
-There are two different URLs for retrieving voice mail via a browser.  
-The following are functionally equivalent:
+通过浏览器检索语音邮件有两个不同的URL地址。
+以下两种方式等效：
 
 ```xml
 * http://fs.ip:8080/api/voicemail/web
 * http://fs.ip:8080/domains/this/api/voicemail/web
 ```
 
-Enter the username and password in the challenge box. When authorized, the list of current voice mails will be displayed.&lt;br/>  
-Note: use the actual IP address (or domain name) and not something like 127.0.0.1 or "localhost" because it won't work.&lt;br/>  
-Domains are used in various circumstances. Here are some scenarios:
+在挑战框中输入用户名和密码。授权后，将显示当前语音邮件列表。&lt;br/>  
+注意：请使用实际的IP地址（或域名），而不是像127.0.0.1或"localhost"这样的内容，因为它不能正常工作。&lt;br/>  
+域名在各种情况下都有用。以下是一些实例情况：
 
-* [your.domain.com](http://your.domain.com) is on the public Internet
+* [your.domain.com](http://your.domain.com) 在公共互联网上
 
-In this case you could do this:
+在此情况下，您可以执行以下操作：
 
-<http://your.domain.com:8080/api/voicemail/web>
+使用以下链接登录：<http://your.domain.com:8080/api/voicemail/web>
 
-Log in with user and password and you are in  
-  
-Alternatively, you could use the IP address:
+输入用户名和密码即可登录
 
-<http://1.2.3.4:8080/api/voicemail/web>
+或者，您可以使用IP地址登录：<http://1.2.3.4:8080/api/voicemail/web>
 
-Then login with [user@your.domain.com](mailto:user@your.domain.com) and password
+然后使用[user@your.domain.com](mailto:user@your.domain.com)作为用户名，输入密码
 
-Finally, you could even do this:
+最后，您甚至可以这样做：
 
 <http://1.2.3.4:8080/domains/your.domain.com/api/voicemail/web>
 
-And log in with just user and password (no @[your.domain.com](http://your.domain.com))
+只需输入用户名和密码即可登录（不需要@[your.domain.com](http://your.domain.com)）
 
-### Retrieve Voice Mail Via IMAP Interface
+### 通过IMAP接口检索语音邮件
 
-This is not implemented yet.
+此功能尚未实现。
 
-See \[\[Bounty#IMAP integration of voicemail\]\]
+请参阅\[\[悬赏#邮件语音邮箱的IMAP集成\]\]
 
-### Using voicemail to authenticate a caller's PIN
+### 使用语音邮件验证呼叫者的个人识别码
 
-This example allows you to authenticate a user by requiring him/her to enter a PIN. If the user enters the correct PIN then dialplan processing continues. If not, then the system will play an error message and then disconnect the caller.
+此示例允许您通过要求用户输入个人识别码来验证用户。如果用户输入正确的个人识别码，则拨号计划处理将继续。如果未输入正确的个人识别码，则系统将播放错误消息并断开呼叫。
 
 ```xml
 <action application="voicemail" data="check auth_only ${extension_number_against_which_to_check}"/>
 ```
 
-you can also set the "vm\_auth\_only" channel variable to true before calling the voicemail application, instead of using the auth\_only arg
+您还可以在调用语音邮件应用程序之前将"vm_auth_only"通道变量设置为true，而不是使用auth_only参数。
 
-## Configuration Parameters
+## 配置参数
 
 ### file-extension
 
-This is the extension which you want to use for the voicemail messages to be recorded. The default is wav but can be gsm, raw, ul, al, etc.
+这是要用于录制语音邮件的扩展名。默认为wav，但还可以是gsm、raw、ul、al等。
 
 ```xml
 <param name="file-extension" value="wav"/>
 ```
 
-### Key FS Mapping
+### 键FS映射
 
-\[\[mod\_voicemail key map\]\]
+\[\[mod_voicemail key map\]\]
 
 ### callback-dialplan
 
@@ -1154,136 +1096,137 @@ This is the extension which you want to use for the voicemail messages to be rec
 ### digit-timeout
 
 ```xml
-<param name="digit-timeout" value="10000"/>
+<param name="record-silence-threshold" value="-38"/>
 ```
 
-### max-record-len
+### max-silence
 
 ```xml
-<param name="max-record-len" value="300"/>
+<param name="max-silence" value="4"/>
 ```
 
-### tone-spec
+### min-msg-length
 
 ```xml
-<param name="tone-spec" value="%(1000, 0, 640)"/>
+<param name="min-msg-length" value="3"/>
 ```
 
-### play-new-messages-key
+### say-unavailable-excuse
 
 ```xml
-<param name="play-new-messages-key" value="1"/>
+<param name="say-unavailable-excuse" value="true"/>
 ```
 
-### play-saved-messages-key
+### unavailable-excuse
+```xml
+<param name="unavailable-excuse" value="I am currently unable to answer your call. Please leave a message after the beep."/>
+```
+
+### say-unavailable-take_message
+```xml
+<param name="say-unavailable-take_message" value="true"/>
+```
+
+### say-name-path
+```xml
+<param name="say-name-path" value="true"/>
+```
+
+### read-login-names
+
+This option reads the login names directly from a flat text file.
 
 ```xml
-<param name="play-saved-messages-key" value="2"/>
+<param name="read-login-names" value="true"/>
 ```
 
-### main-menu-key
+### login-names-fn
 
 ```xml
-<param name="main-menu-key" value="0"/>
+<param name="login-names-fn" value="names.txt"/>
 ```
 
-### config-menu-key
+### main-menu-greet
 
 ```xml
-<param name="config-menu-key" value="5"/>
+<param name="main-menu-greet" value="welcome.wav"/>
 ```
 
-### record-greeting-key
+### record-name-greet
 
 ```xml
-<param name="record-greeting-key" value="1"/>
+<param name="record-name-greet" value="record_name.wav"/>
 ```
 
-### choose-greeting-key
+### login-hello
 
 ```xml
-<param name="choose-greeting-key" value="2"/>
+<param name="login-hello" value="hello.wav"/>
 ```
 
-### record-name-key
+### login-char
 
 ```xml
-<param name="record-name-key" value="3"/>
+<param name="login-char" value="login.wav"/>
 ```
 
-### record-file-key
+### login-incorrect
 
 ```xml
-<param name="record-file-key" value="3"/>
+<param name="login-incorrect" value="incorrect_voicemail_login.wav"/>
 ```
 
-### listen-file-key
+### say-envelope
 
 ```xml
-<param name="listen-file-key" value="1"/>
+<param name="say-envelope" value="true"/>
 ```
 
-### save-file-key
+### envelope-lang
 
 ```xml
-<param name="save-file-key" value="2"/>
+<param name="envelope-lang" value="EN"/>
 ```
 
-### delete-file-key
+### say-enveloped-from
 
 ```xml
-<param name="delete-file-key" value="7"/>
+<param name="say-enveloped-from" value="true"/>
 ```
 
-### undelete-file-key
+### qa-enable
 
 ```xml
-<param name="undelete-file-key" value="8"/>
+<param name="qa-enable" value="true"/>
 ```
 
-### email-key
+### qa-interval
 
 ```xml
-<param name="email-key" value="4"/>
+<param name="qa-interval" value="120"/>
 ```
 
-### pause-key
+### qa-score
 
 ```xml
-<param name="pause-key" value="0"/>
+<param name="qa-score" value="70"/>
 ```
 
-### restart-key
+### qa-skip-users
 
 ```xml
-<param name="restart-key" value="1"/>
+<param name="qa-skip-users" value="400"/>
 ```
 
-### ff-key
+### qa-skip-domain
 
 ```xml
-<param name="ff-key" value="6"/>
+<param name="qa-skip-domain" value="example.com"/>
 ```
 
-### rew-key
+此参数定义了一个“能量级别”，它是该频道“安静程度”的数字表示。
 
-```xml
-<param name="rew-key" value="4"/>
-```
-
-### odbc-dsn
-
-This option allows you to override the default sqlite with an ODBC handle. You can use any valid DSN from your odbc.ini to store your voicemail configuration
-
-```xml
-<param name="odbc-dsn" value="dsn:user:pass"/>
-```
-
-### record-silence-threshold
-
-This parameter defines an 'energy level', it is a numeric value of how "quiet" the channel is.
-
-See \[\[Misc. Dialplan Tools wait\_for\_silence#Description|DP Tool 'wait\_for\_silence'\]\] for more info.
+详见 \[\[Misc. Dialplan Tools wait\_for\_silence#Description|DP Tool 'wait\_for\_silence'\]\] 获取更多信息。
 
 ```xml
 <param name="record-silence-threshold" value="200"/>
@@ -1291,9 +1234,9 @@ See \[\[Misc. Dialplan Tools wait\_for\_silence#Description|DP Tool 'wait\_for\_
 
 ### record-silence-hits
 
-This parameter defines how many consecutive hits below record-silence-threshold it takes to end the recording.
+此参数定义了连续多少个低于record-silence-threshold的命中次数才会结束录音。
 
-See \[\[Misc. Dialplan Tools wait\_for\_silence#Description|DP Tool 'wait\_for\_silence'\]\] for more info.
+详见 \[\[Misc. Dialplan Tools wait\_for\_silence#Description|DP Tool 'wait\_for\_silence'\]\] 获取更多信息。
 
 ```xml
 <param name="record-silence-hits" value="2"/>
@@ -1301,7 +1244,7 @@ See \[\[Misc. Dialplan Tools wait\_for\_silence#Description|DP Tool 'wait\_for\_
 
 ### email-from
 
-Setting this value will set the from address on the email sent
+设置此值将设置发送电子邮件时的发件地址
 
 ```xml
 <param name="email-from" value="${voicemail_account}@${voicemail_domain}"/>
@@ -1309,7 +1252,7 @@ Setting this value will set the from address on the email sent
 
 ### db-password-override
 
-If db-password-override=true, the db password will only be used if present, if not present fallback to the xml config file vm-password. By default, both values in voicemail db and xml config file work.
+如果db-password-override=true，则只有在存在数据库密码时才会使用它，如果不存在则会回退到xml配置文件vm-password的值。默认情况下，voicemail数据库和xml配置文件中的值都有效。
 
 ```xml
 <param name="db-password-override" value="false"/>
@@ -1317,7 +1260,7 @@ If db-password-override=true, the db password will only be used if present, if n
 
 ### dbname
 
-If you want to have a non-standard location for the sqlite3 db, you can specify a different location for the profile.
+如果您希望将sqlite3数据库存储在非标准位置，可以指定一个不同的位置来存储配置文件。
 
 ```xml
 <param name="dbname" value="/dev/shm/voicemail_default.db"/>
@@ -1325,7 +1268,7 @@ If you want to have a non-standard location for the sqlite3 db, you can specify 
 
 ### allow-empty-password-auth
 
-If allow-empty-password-auth=false, it will disable login via a authentication method if there is no password set in the user account (This wont affect voicemail\_authorize=true login)
+如果allow-empty-password-auth=false，则如果用户帐户中没有设置密码，将禁用通过身份验证方法进行登录（这不会影响voicemail\_authorize=true登录）。
 
 ```xml
 <param name="allow-empty-password-auth" value="true"/>
@@ -1337,75 +1280,75 @@ If allow-empty-password-auth=false, it will disable login via a authentication m
 <param name="auto-playback-recordings" value="true"/>
 ```
 
-## Database Schema
+## 数据库模式
 
-This will be automatically created by FreeSWITCH if it does not already exist.
+如果该数据库不存在，FreeSWITCH 将自动创建它。
 
 **Voicemail Message Settings**
 
 ```sql
--- #### Voicemail Message Settings #### --
+-- #### 语音信箱消息设置 #### --
 CREATE TABLE voicemail_msgs (
-created_epoch INTEGER, -- when this voicemail message was created
-read_epoch INTEGER, -- when this voicemail message was read, '0' means its unread
-username VARCHAR(255), -- recipient's username
-domain VARCHAR(255), -- recipient's domain
-uuid VARCHAR(255), -- call uuid which created this voicemail message
-cid_name VARCHAR(255), -- sender caller-id name
-cid_number VARCHAR(255), -- sender caller-id number
-in_folder VARCHAR(255), -- voicemail box folder name
-file_path VARCHAR(255), -- physical path to voicemail message on disk
-message_len INTEGER, -- length of voiemail message in seconds
-flags VARCHAR(255), -- voicemail message status, 'save' (saved message) | 'delete' (deleted message) | ' ' (normal message)
-read_flags VARCHAR(255), -- voicemail message priority, 'A_URGENT' | 'B_NORMAL'
-forwarded_by VARCHAR(255) -- n/a
+created_epoch INTEGER, -- 语音信箱消息创建时间
+read_epoch INTEGER, -- 语音信箱消息阅读时间，'0' 表示未读
+username VARCHAR(255), -- 收件人用户名
+domain VARCHAR(255), -- 收件人域名
+uuid VARCHAR(255), -- 创建该语音信箱消息的通话 uuid
+cid_name VARCHAR(255), -- 发件人呼叫者 ID 名称
+cid_number VARCHAR(255), -- 发件人呼叫者 ID 号码
+in_folder VARCHAR(255), -- 语音信箱文件夹名称
+file_path VARCHAR(255), -- 语音信箱消息在磁盘上的物理路径
+message_len INTEGER, -- 语音信箱消息长度（秒）
+flags VARCHAR(255), -- 语音信箱消息状态，'save'（已保存消息）| 'delete'（已删除消息）| ' '（普通消息）
+read_flags VARCHAR(255), -- 语音信箱消息优先级，'A_URGENT' | 'B_NORMAL'
+forwarded_by VARCHAR(255) -- 无
 );
 ```
 
-**Voicemail User Preferences**
+**语音信箱用户偏好设置**
 
 ```sql
--- #### Voicemail User Preferences #### --
+-- #### 语音信箱用户偏好设置 #### --
 CREATE TABLE voicemail_prefs (
-username VARCHAR(255), -- voicemail user's name
-domain VARCHAR(255), -- voicemail user's domain
-name_path VARCHAR(255), -- named path of user defined greeting file (see [[#vm_prefs]])
-greeting_path VARCHAR(255), -- physical path to user defined greeting file (see [[#vm_prefs]])
-password VARCHAR(255) -- voicemail user's password
+username VARCHAR(255), -- 语音信箱用户名称
+domain VARCHAR(255), -- 语音信箱用户域名
+name_path VARCHAR(255), -- 用户自定义欢迎词文件的命名路径（详见 [[#vm_prefs]]）
+greeting_path VARCHAR(255), -- 用户自定义欢迎词文件的物理路径（详见 [[#vm_prefs]]）
+password VARCHAR(255) -- 语音信箱用户密码
 );
 ```
 
 ```sql
-create index voicemail_msgs_idx1 on voicemail_msgs(created_epoch);
-create index voicemail_msgs_idx2 on voicemail_msgs(username);
-create index voicemail_msgs_idx3 on voicemail_msgs(domain);
-create index voicemail_msgs_idx4 on voicemail_msgs(uuid);
-create index voicemail_msgs_idx5 on voicemail_msgs(in_folder);
-create index voicemail_msgs_idx6 on voicemail_msgs(read_flags);
-create index voicemail_msgs_idx7 on voicemail_msgs(forwarded_by);
-create index voicemail_msgs_idx8 on voicemail_msgs(read_epoch);
-create index voicemail_msgs_idx9 on voicemail_msgs(flags);
-create index voicemail_prefs_idx1 on voicemail_prefs(username);
-create index voicemail_prefs_idx2 on voicemail_prefs(domain);
+create index voicemail_msgs_idx1 on voicemail_msgs(created_epoch);创建voicemail_msgs表的`created_epoch`字段索引。
+create index voicemail_msgs_idx2 on voicemail_msgs(username);创建voicemail_msgs表的`username`字段索引。
+create index voicemail_msgs_idx3 on voicemail_msgs(domain);创建voicemail_msgs表的`domain`字段索引。
+create index voicemail_msgs_idx4 on voicemail_msgs(uuid);创建voicemail_msgs表的`uuid`字段索引。
+create index voicemail_msgs_idx5 on voicemail_msgs(in_folder);创建voicemail_msgs表的`in_folder`字段索引。
+create index voicemail_msgs_idx6 on voicemail_msgs(read_flags);创建voicemail_msgs表的`read_flags`字段索引。
+create index voicemail_msgs_idx7 on voicemail_msgs(forwarded_by);创建voicemail_msgs表的`forwarded_by`字段索引。
+create index voicemail_msgs_idx8 on voicemail_msgs(read_epoch);创建voicemail_msgs表的`read_epoch`字段索引。
+create index voicemail_msgs_idx9 on voicemail_msgs(flags);创建voicemail_msgs表的`flags`字段索引。
+create index voicemail_prefs_idx1 on voicemail_prefs(username);创建voicemail_prefs表的`username`字段索引。
+create index voicemail_prefs_idx2 on voicemail_prefs(domain);创建voicemail_prefs表的`domain`字段索引。
 ```
 
 ## API
 
 ### vm_boxcount
 
-vm\_boxcount can be called from console, xml\_rpc or any other interface that exposes FreeSWITCH API.
+vm\_boxcount可以从控制台、xml\_rpc或任何其他显示FreeSWITCH API的界面调用。
 
-The function takes the following arguments:
+该函数接受以下参数：
 
 \[profile/\]&lt;user>@&lt;domain>\[|\[new|saved|new-urgent|saved-urgent|all\]\]
 
-and defaults to "new" voicemails and to the "default" voicemail profile.
+默认为检索"new"的语音邮件和"default"的voicemail profile。
 
-Examples:
+示例：
 
 ```xml
 vm_boxcount myprofile/0001@my.domain.com|new
-vm_boxcount 0001@default|saved     (defaults to "default" voicemail profile)
+vm_boxcount 0001@default|saved     (默认值为"default"的voicemail profile)
 ```
 
   
@@ -1413,38 +1356,40 @@ vm_boxcount 0001@default|saved     (defaults to "default" voicemail profile)
 
 &lt;user>@&lt;domain>\[@&lt;profile>\] &lt;sound\_file> \[&lt;cid\_num>\] \[&lt;cid\_name>\]
 
-voicemail\_inject is used to add an arbitrary sound file to a users voicemail mailbox.
+voicemail\_inject用于向用户的语音邮件邮箱中添加任意声音文件。
 
 ### vm_prefs
 
-Syntax:  
-vm\_prefs \[profile/\]&lt;user>@&lt;domain>\[|\[name\_path|greeting\_path|password\]\]  
-vm\_prefs is used to check the preference changed by user  
-&lt;br>  
-Example:   
-vm\_prefs [1000@192.168.15.186](mailto:1000@192.168.15.186)|name\_path|greeting\_path|password  
-Output:  
-  
-/etc/freeswitch.trunk/storage/voicemail/default/192.168.15.186/1000/greeting\_1.[wav:/etc/freeswitch.trunk/storage/voicemail/default/192.168.15.186/1000/recorded\_name.wav:9999](http://wav/etc/freeswitch.trunk/storage/voicemail/default/192.168.15.186/1000/recorded%5Fname.wav:9999)
+语法：
+vm_prefs [profile/]\<user>@\<domain>\[|\[name_path|greeting_path|password\]\]
+vm_prefs 用于检查用户更改的偏好设置
 
-Example:  
-vm\_prefs [1000@192.168.15.186](mailto:1000@192.168.15.186)|greeting\_path  
-Output:  
-  
-/etc/freeswitch.trunk/storage/voicemail/default/192.168.15.186/1000/greeting\_1.wav
+\<br>
+
+示例：
+vm_prefs [1000@192.168.15.186](mailto:1000@192.168.15.186)|name_path|greeting_path|password
+输出：
+
+/etc/freeswitch.trunk/storage/voicemail/default/192.168.15.186/1000/greeting_1.[wav:/etc/freeswitch.trunk/storage/voicemail/default/192.168.15.186/1000/recorded_name.wav:9999](http://wav/etc/freeswitch.trunk/storage/voicemail/default/192.168.15.186/1000/recorded%5Fname.wav:9999)
+
+示例：
+vm_prefs [1000@192.168.15.186](mailto:1000@192.168.15.186)|greeting_path
+输出：
+
+/etc/freeswitch.trunk/storage/voicemail/default/192.168.15.186/1000/greeting_1.wav
 
 ### vm_list
 
-Syntax:  
-vm\_list &lt;id>@&lt;domain>\[/profile\] \[xml\]  
-vm\_list is used to get list of all the voicemails for the user
+语法：
+vm_list \<id>@\<domain>\[/profile\] \[xml\]
+vm_list 用于获取用户所有语音邮件的列表
 
-Example  
-vm\_list [1000@192.168.15.186](mailto:1000@192.168.15.186)   
-  
-1303500797:1303501043:1000:192.168.15.186:[inbox:/etc/freeswitch.trunk/storage/voicemail/default/192.168.15.186/1000/msg\_051dfd52-3318-4edc-b2ac-ba4d66dd55da.wav:051dfd52-3318-4edc-b2ac-ba4d66dd55da:Extension](http://inbox/etc/freeswitch.trunk/storage/voicemail/default/192.168.15.186/1000/msg%5F051dfd52-3318-4edc-b2ac-ba4d66dd55da.wav:051dfd52-3318-4edc-b2ac-ba4d66dd55da:Extension) 1001:1001
+示例：
+vm_list [1000@192.168.15.186](mailto:1000@192.168.15.186) 
 
-Example  
+1303500797:1303501043:1000:192.168.15.186:[inbox:/etc/freeswitch.trunk/storage/voicemail/default/192.168.15.186/1000/msg_051dfd52-3318-4edc-b2ac-ba4d66dd55da.wav:051dfd52-3318-4edc-b2ac-ba4d66dd55da:Extension](http://inbox/etc/freeswitch.trunk/storage/voicemail/default/192.168.15.186/1000/msg%5F051dfd52-3318-4edc-b2ac-ba4d66dd55da.wav:051dfd52-3318-4edc-b2ac-ba4d66dd55da:Extension) 1001:1001
+
+示例  
 vm\_list [1001@192.168.0.207](mailto:1001@192.168.0.207) xml  
 &lt;voicemail>  
 &lt;message>  
@@ -1463,262 +1408,252 @@ vm\_list [1001@192.168.0.207](mailto:1001@192.168.0.207) xml
 
 ### vm_delete
 
-Syntax:  
+语法:  
 vm\_delete &lt;id>@&lt;domain>\[/profile\] \[&lt;uuid>\]
 
 ### vm_read
 
-Syntax:  
+语法:  
 vm\_read &lt;id>@&lt;domain>\[/profile\] &lt;read|unread> \[&lt;uuid>\]
 
-## Advanced API
+## 高级API
 
-This advanced API was introduced in Apr 2011\. It provides for configuring voicemail as well as the retrieval of voicemail related information. Using this api avoids needing to access voicemail\_defaults.db directly. It was created for use with \[\[Mod\_voicemail\_ivr\]\], and was as well used in some GUI implementations.
+该高级API于2011年4月引入。它提供了配置语音邮件以及检索与语音邮件相关信息的功能。使用此API可避免直接访问voicemail\_defaults.db。它是为与\[\[Mod\_voicemail\_ivr\]\]一起使用而创建的，也用于某些GUI实现中。
 
-This is also the base reference API for future \[\[Mod\_voicemail\_ivr\]\] improvement.
+这也是未来\[\[Mod\_voicemail\_ivr\]\]改进的基本参考API。
 
 ### vm_fsdb_pref_password_set
 
-Syntax  
+语法  
 vm\_fsdb\_pref\_password\_set &lt;profile> &lt;domain> &lt;userid> &lt;new-password>   
-Sets the mailbox password
+设置邮箱密码
 
 ### vm_fsdb_pref_greeting_set
 
-Syntax  
+语法  
 vm\_fsdb\_pref\_greeting\_set &lt;profile> &lt;domain> &lt;userid> &lt;slot> \[file-path\]  
-Sets the file in file\_path as the current greeting in voicemail\_prefs table (voicemail\_defaults.db)
+将file\_path中的文件设置为voicemail\_prefs表(voicemail\_defaults.db)中当前的问候语
 
-&lt;need to determine the slot parameter action>
+&lt;需要确定slot参数的操作>
 
-The voicemail\_prefs table is updated to reflect the currently active greeting
+更新voicemail\_prefs表以反映当前活动的问候语
 
-Returns -ERR if the file is not present
+如果文件不存在，返回 -ERR
 
 ### vm_fsdb_pref_recname_set
 
-Syntax  
-vm\_fsdb\_pref\_recname\_set &lt;profile> &lt;domain> &lt;user> &lt;file-path>  
-Sets or updates (if there is already a name file path) the file in file-path as the current name recording in voicemail\_prefs
+语法  
+`vm_fsdb_pref_recname_set <profile> <domain> <user> <file-path>`  
+将`file-path`中的文件设置为voicemail\_prefs中的当前名字录制，并更新（如果已经存在一个名字文件路径）
 
-returns -ERR if the file is not present
+如果文件不存在，则返回-ERR
 
 ### vm_fsdb_msg_list
 
-Syntax  
-vm\_fsdb\_msg\_list &lt;format> &lt;profile> &lt;domain> &lt;user> &lt;folder> &lt;filter>  
-&lt;format> is ignored but must be present  
-&lt;folder> For future implementation but must be present  
-&lt;filter> If none specified, then all messages are returned. Support the following filter :  
-\* not-read  
-\* new  
-\* save  
-Example:   
-freeswitch@default> vm\_fsdb\_msg\_list 0 default mydomain.com 1000 0 new ASC
+语法  
+`vm_fsdb_msg_list <format> <profile> <domain> <user> <folder> <filter>`  
+`<format>`被忽略，但必须存在  
+`<folder>`未来实现时使用，但必须存在  
+`<filter>`如果未指定，则返回所有消息。支持以下过滤器：  
+- `not-read`
+- `new`
+- `save`  
 
-  
-Returns the list of unread messages for the user@domain for Inbox in JSON format
+示例：  
+freeswitch@default> vm_fsdb_msg_list 0 default mydomain.com 1000 0 new ASC
 
-This function returns only New messages so it is not a full replacement for vm\_list
+返回以JSON格式列出用户@域中收件箱的未读消息列表
+
+此函数仅返回新消息，因此不能完全替代vm_list
 
 ### vm_fsdb_msg_email
 
-Syntax  
-vm\_fsdb\_msg\_list &lt;profile> &lt;domain> &lt;user> &lt;uuid> &lt;email address>  
-Example:   
-freeswitch@default> vm\_fsdb\_msg\_email default mydomain.com 1000 1dfdc31c-7615-4e54-bfbc-dadacc3e5807 me@myemail.com
+语法  
+`vm_fsdb_msg_list <profile> <domain> <user> <uuid> <email address>`  
+示例：  
+freeswitch@default> vm_fsdb_msg_email default mydomain.com 1000 1dfdc31c-7615-4e54-bfbc-dadacc3e5807 me@myemail.com
 
 ### vm_fsdb_msg_purge
 
-Syntax  
-vm\_fsdb\_msg\_purge &lt;profile> &lt;domain> &lt;user>  
-This function purges voicemails marked as Delete for the user@domain
+语法  
+`vm_fsdb_msg_purge <profile> <domain> <user>`  
+此函数清除标记为Delete的用户@域中的语音邮件
 
-Returns -OK or -ERR (if missing a parameter or profile not found)
+返回-OK或-ERR（如果缺少参数或未找到配置文件）
 
 ### vm_fsdb_msg_delete
 
-Syntax  
-vm\_fsdb\_msg\_delete &lt;profile> &lt;domain> &lt;user> &lt;uuid>  
-Deletes the message specified by uuid for user@domain
+语法  
+`vm_fsdb_msg_delete <profile> <domain> <user> <uuid>`  
+删除用户@域中由uuid指定的消息
 
-returns -OK or -ERR (if missing parameter or profile not found)
+返回-OK或-ERR（如果缺少参数或未找到配置文件）
 
 ### vm_fsdb_msg_save
 
-Syntax  
-vm\_fsdb\_msg\_save &lt;profile> &lt;domain> &lt;user> &lt;uuid>  
-Marks the file specified by uuid for user@domain to 'save'
-
-Returns -OK or -ERR if missing a parameter or profile not found
+语法  
+`vm_fsdb_msg_save <profile> <domain> <user> <uuid>`  
+将由uuid指定的文件标记为用户@域中的'save'状态
 
 ### vm_fsdb_msg_undelete
 
-Syntax  
+语法  
 vm\_fsdb\_msg\_undelete &lt;profile> &lt;domain> &lt;user> &lt;uuid>  
-Clears the flags field (regardless of whether it was 'delete' or not)
+清除flags字段（无论其是否为'delete'）
 
-Returns -OK or -ERR if missing a paramter or profile is not found
+如果缺少参数或未找到配置文件，则返回-OK或-ERR
 
 ### vm_fsdb_auth_login
 
-Syntax  
+语法  
 vm\_fsdb\_auth\_login &lt;profile> &lt;domain> &lt;user> &lt;password>  
-password is assumed to be 64 chars or less
+假设密码不超过64个字符
 
-Seems to verify that the password in voicemail\_prefs is same as in xml?????
+似乎验证voicemail\_prefs中的密码与xml中的密码是否相同？？？？
 
-Returns -OK or -ERR if:   
-#missing parameters or profile not found  
-#password in voicemail\_prefs doesn't match password passed in call  
-#password in xml does not match password passed in call  
-#"Login Denied" if vm is disabled  
-If a password exists in voicemail\_prefs, it is used in preference to xml
+如果：  
+#缺少参数或未找到配置文件  
+#voicemail\_prefs中的密码与通话中传递的密码不匹配  
+#xml中的密码与通话中传递的密码不匹配  
+# vm已禁用 则返回-"登录被拒绝"  
+如果voicemail\_prefs中存在密码，则优先使用它而不是xml中的密码
 
 ### vm_fsdb_msg_get
 
-Syntax  
+语法  
 vm\_fsdb\_msg\_get &lt;format> &lt;profile> &lt;domain> &lt;user> &lt;uuid>  
-&lt;format> is ignored but must be present
+忽略&lt;format>，但必须存在
 
-Returns a JSON formatted list detailing the VM  
-or -ERR if missing parameters or profile is not found
+返回以JSON格式列出VM的详细信息  
+如果缺少参数或未找到配置文件，则返回-ERR
 
-Assumes that the uuid can exist in more than 1 row of voicemail\_msgs
+假设uuid可以存在于voicemail\_msgs的多行中
 
 ### vm_fsdb_msg_count
 
-Syntax  
+语法  
 vm\_fsdb\_msg\_count &lt;format> &lt;profile> &lt;domain> &lt;user> &lt;folder>  
-Returns a count of the number of read and unread VM's in the Inbox folder for this user@domain
+返回此用户@ domain的收件箱中已读和未读VM数量
 
-Counts are returned in JSON format for   
+以JSON格式返回计数，包括  
 VM-Total-New-Messages  
 VM-Total-New-Urgent-Messages  
 VM-Total-Saved-Messages  
 VM-Total-Saved-Urgent-Messages  
-(VM's in other folders are not counted but includes VM's marked as delete or save)
+（不计算其他文件夹中的VM，但包括标记为删除或保存的VM）
 
-Returns -ERR if missing a parameter or if profile is not found
+如果缺少参数或未找到配置文件，则返回-ERR
 
-## FAQ
+## 常见问题解答
 
-## How do I reload new configuration without restarting FreeSWITCH?
+## 如何在不重新启动FreeSWITCH的情况下重新加载新配置？
 
-If you happened to change settings in autoload\_configs/voicemail.conf.xml and would like to make it effective without restarting FreeSWITCH, enter the following command in console mode in sequence:
+如果您刚好更改了autoload\_configs/voicemail.conf.xml中的设置，并希望在无需重新启动FreeSWITCH的情况下使其生效，请按顺序在控制台模式下输入以下命令：
 
 reloadxml  
 reload mod\_voicemail
 
-## Do I need a text-to-speech engine installed?
+## 我需要安装文本到语音引擎吗？
 
-No, it will work with sound files or a text-to-speech engine.
+不需要，它可以使用声音文件或文本到语音引擎工作。
 
-## How do I install sound files?
+## 我该如何安装声音文件？
 
 make sounds-install
 
-## Voicemail Voice Prompt / Troubleshooting Problems
+## 语音信箱提示音/故障排除问题
 
-  
-Unfortunately mod\_voicemail does not have a great ability to be debugged, even with logging turned up tracking down errors can be tricky and an incorrect config upgrade can leave you without working voicemail. Make sure that dialed\_extension is SET and exported (you can use the info app to verify) as if this variable is not set voicemail will most likely not be working for you.
+不幸的是，mod\_voicemail没有很好的调试能力，即使打开日志进行跟踪查找错误也可能很棘手，配置错误升级会导致语音信箱无法正常工作。请确保设置并导出了dialed\_extension（您可以使用info app进行验证），如果此变量未设置，则语音信箱很可能无法正常工作。
 
-If you encounter a problem where the voice mail prompts are either missing, or fail to play with this error on the console:
+如果遇到语音邮件提示音丢失或在控制台上出现以下错误而无法播放的问题：
 
-  
 switch\_ivr\_phrase\_macro() Macro \[voicemail\_config\_menu\] did not match any patterns  
-  
-or  
-  
+
+或者  
+
 Can't find macro
 
-This is caused by a missing voicemail prompt sound file or invalid conf/lang files.  
-You will need to perform the corrective command below in the FreeSWITCH source directory:
+这是由于缺少语音信箱提示音文件或无效的conf/lang文件引起的。您需要在FreeSWITCH源目录中执行以下纠正命令：
 
-  
 make vm-sync
 
-After you run the make vm-sync, you'll need to do a reloadxml at the FreeSWITCH console, or restart FreeSWITCH. If the error is in certain xml files then this may not fix it, try to temporarily replace your conf/lang folder with that from trunk (or the base install).
+运行make vm-sync之后，您需要在FreeSWITCH控制台上执行reloadxml命令，或者重新启动FreeSWITCH。如果错误出现在特定的xml文件中，则此方法可能无法修复。尝试将conf/lang文件夹暂时替换为trunk（或基本安装）中的文件。
 
-If you've installed french sound files, you have to do the following:  
-\* rename \`conf/lang/fr/ca/vm/sounds.xml\` to \`conf/lang/fr/ca/vm/tts.xml\`   
-\* copy \`conf/lang/en/us/vm/sounds.xml\` to \`conf/lang/fr/ca/vm/sounds.xml\` 
+如果您已安装了法语声音文件，请执行以下操作：  
+\* 将“conf/lang/fr/ca/vm/sounds.xml”重命名为“conf/lang/fr/ca/vm/tts.xml”   
+\* 将“conf/lang/en/us/vm/sounds.xml”复制到“conf/lang/fr/ca/vm/sounds.xml”中
 
-## How to update keys for accessing voicemail from outside?
+## 如何更新从外部访问语音信箱的键？
 
-  
-You need to edit the /&lt;path to freeswitch>/conf/autoload\_configs/voicemail.conf.xml file.
+您需要编辑 /&lt;freeswitch路径>/conf/autoload\_configs/voicemail.conf.xml 文件。
 
 &lt;param name="login-keys" value="0"/>   
-\-Key to prompt the voicemail's password  
+\- 用于提示语音信箱密码的键  
 &lt;param name="vmain-key" value="\*"/>   
-\-Key to prompt the voicemail's UserID  
+\- 用于提示语音信箱用户ID的键  
 &lt;br>&lt;br>  
-The login-keys param is the key to prompt the password, while the vmain-key is the key to prompt the UserID.
+login-keys 参数用于提示密码的键，而vmain-key 则用于提示用户ID的键。
 
-## How can I disable remote login/access to voicemail?
+## 如何禁用远程登录/访问语音信箱？
 
-Set the following two params in autoload\_configs/voicemail.conf.xml:
+在 autoload\_configs/voicemail.conf.xml 文件中设置以下两个参数：
 
 &lt;param name="vmain-key" value="a"/>   
 &lt;param name="login-keys" value="a"/>
 
-## Can I share voicemail boxes between multiple phones/users?
+## 我可以在多个电话/用户之间共享语音信箱吗？
 
-### To Monitor Voicemail
+### 监听语音信箱
 
-  
-There are 2 ways to do this, the correct way would be to use the subscribe feature of your phone to monitor a particular mailbox
+有两种方法可以实现，正确的方法是使用电话的订阅功能来监听特定的信箱
 
-#### 1\. SUBSCRIBE feature method
+#### 1\. 订阅功能方法
 
-  
-: The phones in question all need to support using SUBSCRIBE to monitor their mailbox.&lt;br/>  
-: Phones that use other methods (ie. gratuitous/parasitic "NOTIFY" style) will not work.&lt;br/>  
-: Other concerns you may face include: whether you can configure the extension dialed when you press the 'retrieve' button.&lt;br/>  
-: This configuration tested successfully on two SNOM 320 handsets, but fails on the Cisco 7960 because it does not use SUBSCRIBE.&lt;br/>
+: 涉及的电话都需要支持使用订阅功能来监听其信箱。&lt;br/>  
+: 使用其他方法的电话（例如任意/寄生式的“通知”方式）将无法工作。&lt;br/>  
+: 您可能会遇到的其他问题包括：是否可以配置按下“检索”按钮时拨打的分机号码。&lt;br/>  
+: 此配置在两个 SNOM 320 手机上成功测试，但在 Cisco 7960 上失败，因为它不使用订阅功能。&lt;br/>
 
-#### SNOM 320 configuration
+#### SNOM 320 配置
 
-This configuration tested with firmware 7.1.30 and newer.&lt;br/>  
-\* Under 'Identity-->Login', set Mailbox to the shared box number.
+此配置经过 7.1.30 版固件及更新版本的测试。&lt;br/>  
+\* 在“Identity-->Login”下，将信箱设置为共享信箱号码。
 
-#### 2\. Force MWI Info in Sofia
+#### 2\. 在 Sofia 中强制 MWI 信息
 
-  
-: To populate the param MWI-Account of the directory user (or domain) with user@domain of the voicemail you want to monitor.  
-: This will force sofia to send the MWI info for that mailbox even if you registred for another phone. This method only allow you to monitor mailbox  
-  
+:将目录用户（或域）的param MWI-Account填充为您要监视的语音邮件的用户@域。 
+:即使您为其他电话注册，这将强制sofia发送该邮箱的MWI信息。此方法只允许您监视邮箱。
+
 &lt;param name="MWI-Account" value="1000@$${domain}"/>
 
-### To Receive Voicemail
+### 收听语音邮件
 
-''receiving voicemail into the shared mailbox (e.g. when no answer)''
+''将语音邮件接收到共享邮箱（例如，当未接通时）''
 
-In each user's directory entry, add a variable named 'mailbox' that looks like this:  
-  
+在每个用户的目录条目中，添加一个名为'mailbox'的变量，它看起来像这样：
+
 &lt;variable name="mailbox" value="1500"/>
 
-This sets the stage for which mailbox they're actually going to use, shared or not.. it is used ONLY in the dialplan.  
-Change your dialplan to reflect this:  
-  
-The old entry:  
-  
-&lt;action application="voicemail" data="default ${domain\_name} ${dialed\_extension}"/>  
-  
-The new entry:  
-  
+这为实际使用的邮件箱设置了舞台，共享还是非共享的，它仅在分段计划中使用。
+更改您的分段计划以反映此更改：
+
+旧条目：
+
+&lt;action application="voicemail" data="default ${domain\_name} ${dialed\_extension}"/>
+
+新条目：
+
 &lt;action application="voicemail" data="default ${domain\_name} ${user\_data(${dialed\_extension}@${domain\_name} var mailbox)}"/>
 
-### Voicemail Callback
+### 语音邮件回拨
 
-''calling back a caller while checking voicemail''
+''在查看语音邮件时回拨拨打者''
 
-When a user is listening to voicemail messages - they are able to dial '5' and be connected to the caller of that voicemail.
+当用户正在收听语音邮件时，他们可以拨打“5”与那封语音邮件的拨打者进行连接。
 
-You are able to control the dial plan execution of this callback method by modifying the vm\_callback.xml file located under BASE\_FREESWITCH\_DIR/conf/dialplan
+您可以通过修改位于BASE\_FREESWITCH\_DIR/conf/dialplan下的vm\_callback.xml文件来控制此回拨方法的拨号计划执行。
 
-An example vm\_callback.xml is as follows:
+一个示例的vm\_callback.xml如下所示：
 
 ```xml
 <include>
@@ -1737,62 +1672,57 @@ An example vm\_callback.xml is as follows:
 /usr/bin/python /home/chronos_client/persistent/freeswitch.app/conf/scripts/sendemail.py -l -i -d -f revolutionpbx@chronostelecom.com -t
 ```
 
-  
-## Transcribing Voicemail
+## 语音留言转录
 
-There's no real simple way to do this as of now with mod\_voicemail.
+目前使用`mod_voicemail`没有简单的方法可以实现这个。
 
-If you use Fusionpbx's mailer for FS, then you can intercept the wav file mid-mailing and send it to some sort of API.
+如果您使用FusionPBX的邮件服务，那么您可以在邮件发送过程中拦截wav文件，并将其发送到某个API接口。
 
-NOTE: "Transcription" is the full text, where as IVR speech recognition is to recognize audio vs a specific list of options, "grammar". These are very different things.
+注意："转录（transcription）"是完整的文本，而IVR语音识别是识别音频与特定选项列表（"grammar"）的区别非常大。
 
-The available APIs for some sort of transcription are:
+以下是一些提供转录功能的API接口：
 
-* [twilio](http://twilio.com) \- 5cents/minute
-* [voicecloud](http://voicecloud.com) \- 10cents/minute. They seem to have a $250/month minumum.
-* [tropo](http://tropo.com) \- 3 cents/minute I think (60 second billing) BUT they need to record the file, on their system. They have all-SIP plans with alternate billing.
-* [quicktate](http://quicktate.com) \- $0.0175/word, volume at 1.10cents/word. Avg of 160 words per minute = $2.80/minute.
-* [mycaption](http://mycaption.com) \- 9c/minute for purely machine-based.
-* [mycaption](http://mycaption.com) \- 43c/minute upto 55c/minute - 15 second increments -premium that combines machine-based speech recognition with error correction by human editors.
-* Google speech API - free, but it's not that great as of right now. Some info on how to access it [here](http://wiki.openmoko.org/wiki/Google%5FVoice%5FRecognition#Google%5FVoice%5FAPI).  
-   * Add this to FusionPBX's voicemail mailer with the [code from AviMarcus](http://wiki.fusionpbx.com/index.php?title=Voicemail#Transcribing%5FVoicemails%5Fwith%5Fgoogle%5Fspeech%5FAPI)
+- [twilio](http://twilio.com) - 每分钟5美分
+- [voicecloud](http://voicecloud.com) - 每分钟10美分。他们似乎有每月至少250美元的最低充值额度。
+- [tropo](http://tropo.com) - 每分钟3美分（60秒计费），但他们需要在他们的系统上记录文件。他们提供带有其他计费方式的全部SIP计划。
+- [quicktate](http://quicktate.com) - 每个字0.0175美元，按1.10美分/字计费。平均每分钟160个字，为每分钟2.80美元。
+- [mycaption](http://mycaption.com) - 纯机器转录每分钟9美分。
+- [mycaption](http://mycaption.com) - 每分钟43美分至55美分（15秒递增），结合机器转录和人工编辑纠错的高级转录。
+- 谷歌语音API - 免费，但目前并不优秀。关于如何访问它的一些信息可参考[这里](http://wiki.openmoko.org/wiki/Google%5FVoice%5FRecognition#Google%5FVoice%5FAPI)。 
+  - 将这段代码添加到FusionPBX的语音留言邮件服务中，代码示例可参考[AviMarcus提供的代码](http://wiki.fusionpbx.com/index.php?title=Voicemail#Transcribing%5FVoicemails%5Fwith%5Fgoogle%5Fspeech%5FAPI)。
 
-Here is a script you can use for tinkering with Google Speech API:
+以下是用于调试谷歌语音API的脚本：
 
-**Google Speech API**
+**谷歌语音API**
 
 ```bash
 #!/bin/sh
-echo "1 SoX Sound Exchange - Convert WAV to FLAC with 16000" 
+echo "1 SoX音频转换 - 将WAV文件转换为16000的FLAC格式" 
 sox $1 message.flac pad .1 0 rate 16k
-echo "2 Submit to Google Voice Recognition"
+echo "2 提交给Google语音识别"
 wget -q -U "Mozilla/5.0" --post-file message.flac --header="Content-Type: audio/x-flac; rate=16000" -O - "http://www.google.com/speech-api/v1/recognize?lang=en-us&client=chromium" > message.ret
-echo "3 SED Extract recognized text" 
+echo "3 使用SED提取识别出的文本" 
 cat message.ret | sed 's/.*utterance":"//' | sed 's/","confidence.*//' > message.txt
-echo "4 Remove Temporary Files"
+echo "4 删除临时文件"
 rm message.flac
 # rm message.ret
-echo "5 Show Text "
+echo "5 显示文本"
 cat message.txt
 ```
-  
-  
-Example:
+
+示例：
 
 ./googlevoice.sh /usr/local/freeswitch/sounds/en/us/callie/ivr/8000/ivr-one_more_mistake.wav 
-1 SoX Sound Exchange - Convert WAV to FLAC with 16000
-2 Submit to Google Voice Recognition
-3 SED Extract recognized text
-4 Remove Temporary Files
-5 Show Text 
+1 SoX音频转换 - 将WAV文件转换为16000的FLAC格式
+2 提交给Google语音识别
+3 使用SED提取识别出的文本
+4 删除临时文件
+5 显示文本
 that's odd 1 more mistake and I will hang up on your ass
 
-It should be "that's it" instead of "that's odd" but otherwise Google actually got it right. Try other sound prompts.
+除了"that's odd"应为"that's it"之外，Google实际上做得对。尝试其他音频提示。
 
-  
-### Comments:
+### 评论：
 
-| there are few useful variables for skipping post messages: **skip\_record\_urgent\_check** and **skip\_record\_check** ![](/images/icons/contenttypes/comment_16.png) Posted by alexey\_khabulyak at Jul 18, 2018 09:00 |
+|有一些有用的变量用于跳过后续消息：**skip\_record\_urgent\_check**和**skip\_record\_check**！[](/images/icons/contenttypes/comment_16.png)由alexey\_khabulyak在2018年7月18日09:00发布|
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-
-

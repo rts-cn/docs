@@ -1,18 +1,15 @@
-
 # Switch.conf.xml 
 
- 
+## 关于
 
-## About
+FreeSWITCH的核心配置包含在[autoload_configs/switch.conf.xml](http://git.freeswitch.org/git/freeswitch/tree/conf/vanilla/autoload%5Fconfigs/switch.conf.xml)中。
 
-The FreeSWITCH core configuration is contained in [autoload\_configs/switch.conf.xml](http://git.freeswitch.org/git/freeswitch/tree/conf/vanilla/autoload%5Fconfigs/switch.conf.xml)
+点击这里展开目录
 
-Click here to expand Table of Contents
-
-* 1 [Default key bindings](#-default-key-bindings-)
-* 2 [Core parameters](#-core-parameters-)  
+* 1 [默认按键绑定](#-默认按键绑定-)
+* 2 [核心参数](#-核心参数-)  
    * 2.1 [core-db-dsn](#-core-db-dsn-)  
-   * 2.2 [max-db-handles](#max-db-handles-)  
+   * 2.2 [max-db-handles](#-max-db-handles-)  
    * 2.3 [db-handle-timeout](#-db-handle-timeout-)  
    * 2.4 [disable-monotonic-timing](#-disable-monotonic-timing-)  
    * 2.5 [enable-use-system-time](#-enable-use-system-time-)  
@@ -24,12 +21,12 @@ Click here to expand Table of Contents
    * 2.11 [rtp-end-port](#-rtp-end-port-)  
    * 2.12 [switchname](#switchname)  
    * 2.13 [dialplan-timestamps](#dialplan-timestamps)
-* 3 [Variables](#-variables-)
-* 4 [Example config](#example-config)
+* 3 [变量](#-变量-)
+* 4 [示例配置](#示例配置)
 
-##  Default key bindings 
+##  默认按键绑定 
 
-Function keys can be mapped to API commands using the following configuration:
+可以使用以下配置将功能键映射到API命令:
 
 ```xml
 <cli-keybindings>
@@ -37,7 +34,7 @@ Function keys can be mapped to API commands using the following configuration:
 </cli-keybindings>
 ```
 
-The default keybindings are;
+默认按键绑定是：
 
 F1 = help
 F2 = status
@@ -52,135 +49,129 @@ F10 = sofia profile internal siptrace on
 F11 = sofia profile internal siptrace off
 F12 = version
 
-Beware that the option loglevel is actually setting the minimum hard\_log\_Level in the application. What this means is if you set this to something other than DEBUG no matter what log level you set the console to one you start up you will not be able to get any log messages below the level you set. Also be careful of mis-typing a log level, if the log level is not correct it will default to a hard\_log\_level of 0\. This means that virtually no log messages will show up anywhere.
+注意，loglevel选项实际上是设置应用程序中的最低hard_log_Level。这意味着，无论你将日志级别设置为什么，一旦启动，你将无法获取低于所设置级别的任何日志消息。另外，小心输入错误的日志级别，如果日志级别不正确，它将默认为0的hard_log_level。这意味着几乎没有任何日志消息会显示出来。
 
-##  Core parameters 
+##核心参数
 
-###  core-db-dsn 
+###core-db-dsn
 
-Allows to use ODBC database instead of sqlite3 for freeswitch core.
+允许使用ODBC数据库而不是sqlite3用于freeswitch核心。
 
-Syntax:
+语法：
 
 ```xml
 dsn:user:pass
 ```
 
-### max-db-handles 
+###max-db-handles
 
-Maximum number of simultaneous DB handles open
+同时打开的最大DB句柄数
 
-###  db-handle-timeout 
+###db-handle-timeout
 
-Maximum number of seconds to wait for a new DB handle before failing
+在失败之前等待新的DB句柄的最大秒数
 
-###  disable-monotonic-timing 
+###disable-monotonic-timing
 
-(bool) disables monotonic timer/clock support if it is broken on your system.
+（布尔）如果在您的系统上出现错误，则禁用单调计时器/时钟支持。
 
-###  enable-use-system-time 
+###enable-use-system-time
 
-Enables FreeSWITCH to use system time.
+启用FreeSWITCH使用系统时间。
 
-After discussion withe the engineers, I've come to understand that the "enable-use-system-time" parameter is a work around for older machines with broken clock APIs.
+在与工程师讨论后，我了解到"enable-use-system-time"参数是针对老旧机器的一个解决方法，因为这些机器的时钟API可能出错。
 
-It's not recommended to use this setting in modern machines, as it's likely to break timing and other things... more notably when it comes to CDRs.
+在现代机器上不推荐使用此设置，因为它可能会破坏计时和其他事项...特别是当涉及到CDR时更为明显。
 
-It's preferred to use monotonic timing like as NTP/UTC.  
-  
-I hear it can be useful to use non-monotonic timing for debugging weird issues occasionally, but I don't have specifics how or when that may be used.
+最好使用类似NTP/UTC的单调计时。
 
-Using montonic timing is exactly how you address clock shift issues.
+我听说在调试奇怪问题时，使用非单调计时可能会有用，但我不知道具体情况如何或何时使用。
 
-  
-enable-use-system-time is something that may get removed from source code at some point, we've just not taken the time to remove it yet...
+使用单调计时正是解决时钟偏移问题的方法。
 
-  
+enable-use-system-time可能会在某个时候从源代码中删除，我们只是还没有抽出时间来删除它...
+
 ### events-use-dispatch
 
-Boolean
+布尔值
 
-If set to true, instructs the FreeSWITCH event dispatcher to use the number of threads specified in initial-event-threads to dispatch events. This is useful on heavily loaded systems.
+如果设置为`true`，则指示FreeSWITCH事件调度程序使用`initial-event-threads`中指定的线程数来分发事件。这在负载很重的系统上非常有用。
 
-If initial-event-threads is specified, then events-use-dispatch is automatically toggled to true in switch\_core.c
+如果指定了`initial-event-threads`，则会在`switch_core.c`中自动将`events-use-dispatch`切换为`true`。
 
-  
-###  initial-event-threads 
+### 初始事件线程
 
-Integer
+整数
 
-Number of event dispatch threads to allocate in the core. Default is 1.
+在核心中分配的事件调度线程数。默认为1。
 
-If you see the WARNING "Create additional event dispatch thread" on a heavily loaded server, you could increase the number of threads to prevent the system from falling behind.
+如果在负载很重的服务器上看到警告“创建附加的事件调度线程”，可以增加线程数以防止系统滞后。
 
-The maximum value is runtime.cpu\_count / 2
+最大值为`runtime.cpu_count / 2`
 
-loglevel
+日志级别
 
-amount of detail to show in log
+在日志中显示的详细程度
 
-###  max-sessions 
+### 最大会话数
 
-limits the total number of concurrent channels on your FreeSWITCH™ system.
+限制FreeSWITCH™系统上并发通道的总数。
 
-###  sessions-per-second 
+### 每秒会话数
 
-throttling mechanism, the switch will only create this many channels at most, per second.
+限制机制，交换机每秒最多只能创建这么多通道。
 
-###  rtp-start-port 
+### RTP起始端口
 
-RTP port range begin
+RTP端口范围开始
 
-###  rtp-end-port 
+### RTP结束端口
 
-RTP port range end
+RTP端口范围结束
 
 ### switchname
 
-Set the Switch Name for HA environments. When setting the switch name, it will override the system hostname for all DB and CURL requests allowing cluster environments such as RHCS to have identical FreeSWITCH configurations but run as different hostnames.
+为HA环境设置交换机名称。当设置交换机名称时，它将覆盖所有DB和CURL请求的系统主机名，从而允许类似RHCS的群集环境拥有相同的FreeSWITCH配置但运行为不同的主机名。
 
 ```xml
 <param name="switchname" value="fs02"/>
 ```
 
-  
 ### dialplan-timestamps
 
-Adds timestamps to dialplan log lines (useful for log correlation and other stats).
+在拨号计划日志行中添加时间戳（对于日志关联和其他统计信息很有用）。
 
 ```xml
 <param name="dialplan-timestamps" value="true"/>
 ```
 
-Example of info added:
+信息示例:
 
 ```xml
 UUID 2016-11-18 11:05:53.309812 [DEBUG] mod_dialplan_xml.c:690 Dialplan: LOGDATA
 ```
 
-  
-##  Variables 
+## 变量
 
-Variables are default channel variables set on each channel automatically.
+变量是自动设置在每个通道上的默认通道变量。
 
-  
-## Example config
+## 示例配置
 
 ```xml
-<configuration name="switch.conf" description="Modules">
+<configuration name="switch.conf" description="模块设置">
   <settings>
-    <!--Most channels to allow at once -->
+    <!-- 同时允许的最大通道数 -->
     <param name="max-sessions" value="1000"/>
     <param name="sessions-per-second" value="30"/>
     <param name="loglevel" value="debug"/>
 
-    <!-- Maximum number of simultaneous DB handles open -->
+    <!-- 最大同时打开的数据库句柄数 -->
     <param name="max-db-handles" value="50"/>
-    <!-- Maximum number of seconds to wait for a new DB handle before failing -->
+    <!-- 等待新数据库句柄的最大秒数，超时将失败 -->
     <param name="db-handle-timeout" value="10"/>
 
   </settings>
-  <!--Any variables defined here will be available in every channel, in the dialplan etc -->
+  <!-- 在每个通道和拨号计划中都可以使用此处定义的任何变量 -->
   <variables>
     <variable name="uk-ring" value="%(400,200,400,450);%(400,2200,400,450)"/>
     <variable name="us-ring" value="%(2000, 4000, 440.0, 480.0)"/>
@@ -188,12 +179,9 @@ Variables are default channel variables set on each channel automatically.
   </variables>
 </configuration>
 ```
-  
-  
-### Comments:
 
-| The command **reloadxml** can reload this xml conf at a running freeswitch server ? ![](/images/icons/contenttypes/comment_16.png) Posted by livem at Sep 15, 2020 01:01                                               |
+### 评论:
+
+| 命令 **reloadxml** 可以在运行中的Freeswitch服务器上重新加载此XML配置吗？![](/images/icons/contenttypes/comment_16.png) 作者：livem，发布于2020年9月15日01:01                                               |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| For many parameters, you'll have to use fsctl, for example, fsctl max\_sessions 10000 or fsctl sps 1000 for sessions per seconds. ![](/images/icons/contenttypes/comment_16.png) Posted by TiCPU at Mar 02, 2021 10:14 |
-
-
+| 对于许多参数，您将需要使用fsctl，例如fsctl max\_sessions 10000或fsctl sps 1000用于每秒会话数。![](/images/icons/contenttypes/comment_16.png) 作者：TiCPU，发布于2021年3月2日10:14 |

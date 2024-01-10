@@ -1,387 +1,385 @@
+# 在OS X 10.8 Mountain Lion上安装
 
-# Installation on OS X 10.8 Mountain Lion 
+## 存档页面
 
- 
+已归档已被淘汰-不再维护
 
-## Archived Page
+截至2015年9月30日，OS X 10.8页面不再由原作者维护，并标记为已归档。原因如下：
 
-Archived Obsolete - No Longer Maintained
+- FreeSWITCH网页和正常下载站点现在受到TLS 1.2的保护。OS X 10.8不支持TLS 1.2，因此无法访问维基和其他页面。下载说明也不再有效，因为它们现在要求使用TLS 1.2。如果您确实需要使用OS X 10.8下载FreeSWITCH，则应该在邮件列表中搜索使用ssh、tarballs等的方法。
+- 对于1.4版本之后的FreeSWITCH版本，没有先决条件的支持。
 
-As of September 30, 2015, the OS X 10.8 page is no longer maintained by the original author and is marked as archived. The reasons are:
+尽管在OS X 10.8上生成FreeSWITCH在技术上是可能的，但不值得投入精力和时间。
 
-* The FreeSWITCH web pages and normal download sites are now protected by TLS 1.2\. OS X 10.8 does not support TLS 1.2 so cannot access the wiki and other pages. The download instructions also do not work as they now require TLS 1.2\. If you absolutely need to download FreeSWITCH using OS X 10.8 you should search the mailing list for using ssh, tarballs, etc.
-* There is no prerequisite support for FreeSWITCH versions beyond 1.4.
+## 关于
 
-Although it's technically possible to generate FreeSWITCH on OS X 10.8 it's not worth the effort and time.
+在进一步通知之前，OS X只支持FreeSwitch 1.4
 
-## About
+2015年9月9日：在进一步通知之前，由于新的广泛前提要求，无法在OS X上构建FreeSWITCH™ 1.6及更高版本。必须使用先前的1.4生产版本，直到解决新的前提要求。此页面将在那时更新。
 
-OS X Limited to FreeSwitch 1.4 Until Further Notice
+这是[在OS X上安装和设置](./Installation-and-Setup-on-OS-X_1966082.mdx#ssh)FreeSWITCH™指南的一部分。本页描述了使用以下组件**已安装并测试于2015年9月9日：**
 
-September 9 2015: Until further notice, FreeSWITCH™ version 1.6 and later cannot be built on OS X due to new extensive prerequisite requirements. The prior 1.4 Production version must be used until the new prerequisites are resolved. This page will be updated at that time
+- OS X Mountain Lion 10.8.5（10.8以从先前的OS X版本升级的方式进行干净构建）
+- Xcode 5.1.1及其命令行工具
+- Homebrew和其他先决条件
+- FreeSWITCH™ 1.4.21b+git\~20150909生产版~~主/开发~~
 
-This is part of the [Installation and Setup on OS X](./Installation-and-Setup-on-OS-X_1966082.mdx#ssh) guide for installing and running FreeSWITCH™. This page describes the installation of FreeSWITCH™ using the following components **Installed and tested September 9, 2015:** 
+* [已归档的页面](#-freeswitch--在-os-x-108-mountain-lion-上的安装-)
+* [获取帮助](#-freeswitch--在-os-x-108-mountain-lion-上的安装-)
+* [OS X 系统安全](#os-x-系统安全)
+* [准备工作](#-freeswitch--在-os-x-108-mountain-lion-上的安装-)  
+   * [备份](#-freeswitch--在-os-x-108-mountain-lion-上的安装-)  
+   * [终端应用程序首选项](#终端应用程序首选项)
+* [OS X 开发者工具](#os-x-开发者工具)  
+   * [安装 Xcode](#-freeswitch--在-os-x-108-mountain-lion-上的安装-)  
+   * [安装命令行工具 (CLT)](#安装命令行工具-clt)
+* [设置安装目录](#设置安装目录)  
+   * [在 Finder 中显示隐藏文件和目录](#在-finder-中显示隐藏文件和目录)  
+   * [创建 /usr 子目录](#创建-usr-子目录)
+* [先决条件](#-freeswitch--在-os-x-108-mountain-lion-上的安装-)  
+   * [先决条件安装选项](#先决条件安装选项)  
+   * [安装软件包管理器和先决条件](#安装软件包管理器和先决条件)  
+      * [安装 Homebrew](#安装-homebrew)  
+         * [安装所需软件包](#安装所需软件包)
+* [下载 FreeSWITCH™](#安装-freeswitch)  
+   * [选择版本](#选择版本)  
+   * [使用 Git Clone 下载](#使用-git-clone-下载)
+* [安装 FreeSWITCH™](#安装-freeswitch)  
+   * [生成安装和配置文件](#生成安装和配置文件)  
+   * [添加文本到语音模块](#添加文本到语音模块)  
+   * [编译、创建额外的源目录并检查错误](#编译创建额外的源目录并检查错误)  
+   * [生成 FreeSWITCH™ 运行时](#生成-freeswitch-运行时)  
+      * [下载并安装声音文件](#下载并安装声音文件)  
+         * [清理](#-freeswitch--在-os-x-108-mountain-lion-上的安装-)  
+         * [安装完成！](#安装完成)
+* [更新](#-freeswitch--在-os-x-108-mountain-lion-上的安装-)  
+   * [更新 FreeSWITCH™](#安装-freeswitch)  
+   * [更新先决条件](#更新先决条件)
+* [卸载](#-freeswitch--在-os-x-108-mountain-lion-上的安装-)  
+   * [卸载 FreeSWITCH™](#安装-freeswitch)  
+   * [卸载 Homebrew 和先决条件](#卸载-homebrew-和-先决条件)  
+   * [卸载 Xcode](#-freeswitch--在-os-x-108-mountain-lion-上的安装-)  
+   * [删除其他所有内容](#删除其他所有内容)  
+   * [在 Finder 中隐藏隐藏文件和目录](#在-finder-中隐藏隐藏文件和目录)
 
-* OS X Mountain Lion 10.8.5 (10.8 built clean, not upgraded from a prior OS X release)
-* Xcode 5.1.1 and its Command Line Utilities
-* Homebrew and other prerequisites
-* FreeSWITCH™ 1.4.21b+git\~20150909 Production ~~Master/Development~~ version
+OS X FreeSWITCH™ 安装程序
 
-* [Archived Page](#-freeswitch--installation-on-os-x-108-mountain-lion-)
-* [Getting Help](#-freeswitch--installation-on-os-x-108-mountain-lion-)
-* [OS X System Security](#os-x-system-security)
-* [Preparation](#-freeswitch--installation-on-os-x-108-mountain-lion-)  
-   * [Backup](#-freeswitch--installation-on-os-x-108-mountain-lion-)  
-   * [Terminal Application Preferences](#terminal-application-preferences)
-* [OS X Developer Tools](#os-x-developer-tools)  
-   * [Install Xcode](#-freeswitch--installation-on-os-x-108-mountain-lion-)  
-   * [Install Command Line Tools (CLT)](#install-command-line-tools-clt)
-* [Setup Installation Directories](#setup-installation-directories)  
-   * [Show Invisible Files and Directories in the Finder](#show-invisible-files-and-directories-in-the-finder)  
-   * [Create /usr Subdirectories](#create-usr-subdirectories)
-* [Prerequisites](#-freeswitch--installation-on-os-x-108-mountain-lion-)  
-   * [Prerequisite Installation Options](#prerequisite-installation-options)  
-   * [Install Package Manager and Prerequisites](#install-package-manager-and-prerequisites)  
-      * [Install Homebrew](#install-homebrew)  
-         * [Install Required Packages](#install-required-packages)
-* [Download FreeSWITCH™](#install-freeswitch)  
-   * [Selecting a Version](#selecting-a-version)  
-   * [Download Using Git Clone](#download-using-git-clone)
-* [Install FreeSWITCH™](#install-freeswitch)  
-   * [Generate Installation and Configuration Files](#generate-installation-and-configuration-files)  
-   * [Add Text To Speech Module](#add-text-to-speech-module)  
-   * [Compile, Create Additional Source Directories and Check for Errors](#compile-create-additional-source-directories-and-check-for-errors)  
-   * [Generate FreeSWITCH™ Runtime](#generate-freeswitch-runtime)  
-      * [Download and Install Sounds](#download-and-install-sounds)  
-         * [Cleanup](#-freeswitch--installation-on-os-x-108-mountain-lion-)  
-         * [Installation is Complete!](#installation-is-complete)
-* [Updating](#-freeswitch--installation-on-os-x-108-mountain-lion-)  
-   * [Updating FreeSWITCH™](#install-freeswitch)  
-   * [Updating Prerequisites](#updating-prerequisites)
-* [Removal](#-freeswitch--installation-on-os-x-108-mountain-lion-)  
-   * [Removing FreeSWITCH™](#install-freeswitch)  
-   * [Remove Homebrew and Prerequisites](#remove-homebrew-and-prerequisites)  
-   * [Remove Xcode](#-freeswitch--installation-on-os-x-108-mountain-lion-)  
-   * [Remove Everything Else](#remove-everything-else)  
-   * [Hide Invisible Files and Directories in the Finder](#hide-invisible-files-and-directories-in-the-finder)
-
-The OS X FreeSWITCH™ Installer
-
-The OS X FreeSWITCH™ Installer simplifies installation and saves time! Check it out at [macOS macFI Installation](../macOS-Installation/macOS-macFI-Installation_1966731.mdx#about).
+OS X FreeSWITCH™ 安装程序简化安装流程，节省时间！请访问[macOS macFI Installation](../macOS-Installation/macOS-macFI-Installation_1966731.mdx#about)查看详情。
 
 xxx
 
-Some information on this page is for people who want a little more than others. _If you're not too technical don't let the explanations intimidate you._ Just follow the steps and FreeSWITCH™ should be installed in about an hour.
+本页面提供一些更详细的信息。_如果您不太懂技术，请不要被解释吓到。_只需按照步骤操作，大约一个小时就可以安装好 FreeSWITCH™。
 
-## Getting Help
+## 获取帮助
 
-If you encounter problems search the web, if you can't find an answer join and post to the [FreeSWITCH-users mailing list](http://lists.freeswitch.org/).
+如果遇到问题，请在网上搜索。如果找不到答案，请加入并发布到[FreeSWITCH 用户邮件列表](http://lists.freeswitch.org/)。
 
-## OS X System Security
+## OS X 系统安全性
 
-It is _not recommended_ to perform this procedure while logged on as root. The administrator password is required minimally, resulting in a couple of extra prompts and a safer system.
-
----
-
-## Preparation
-
-### Backup
-
-Athough it's easy to remove FreeSWITCH™, it's prerequisites, and Xcode following the instructions below, it's best to backup before starting this procedure.
-
-### Terminal Application Preferences
-
-We'll use the Terminal application extensively during installation and to start FreeSWITCH™ initially. You should make the following changes to save time during this procedure:
-
-1. Copy Terminal in the Applications/Utilities folder into the [Dock](http://support.apple.com/kb/HT2474) for quick access.
-2. Start the Terminal application by clicking it in the dock. Then open its preferences panel.
-3. In Settings–>Window change the Window Size to larger values such as 140x48 to reduce having to resize the window often.
-4. In Settings–>Window change Scrollback to Limit to Available Memory or a larger number. A lot of messages are produced that you may need to view.
-5. In Settings–>Shell change Prompt before closing to "Only if there are processes other than:". This prevents the Terminal window from closing when FreeSWITCH™ is shutdown if it started automatically, which would result in the loss of all messages in the window. This is useful during debugging. If FreeSWITCH™ started manually the window does not close.
+_不建议_在以 root 用户身份登录时执行此过程。至少需要输入管理员密码，可能会出现几次额外提示，但这样会让系统更安全。
 
 ---
 
-## OS X Developer Tools
+## 准备工作
 
-The OS X Developer Tools are composed of two parts, the [Xcode](http://developer.apple.com/technologies/tools/xcode.html) OS X Software Developer Kit used to develop and test OS X GUI applications, and the **C**ommand **L**ine **T**ools that provide [GCC](http://en.wikipedia.org/wiki/GNU%5FCompiler%5FCollection), [Git](http://en.wikipedia.org/wiki/Git%5F%28software%29) and other tools required to generate non-GUI applications such as FreeSWITCH™ and its prerequisites.
+### 备份
 
-### Install Xcode
+尽管根据以下说明很容易删除 FreeSWITCH™、其先决条件和 Xcode，但最好在开始此过程之前备份一下数据。
 
-Xcode 5.1.1 is no longer available from the [OS X App Store](https://itunes.apple.com/us/app/xcode/id497799835?mt=12&ign-mpt=uo%3D4) so must be downloaded from the [OS X Developer site](http://developer.apple.com/devcenter/mac/index.action) which requires a minimum of a free membership. Xcode takes a while to download and is placed into the Applications folder (/Applications directory). _**Once installed start Xcode to accept the license agreement.**_
+### 终端应用偏好设置
 
-You can perform all editing using Textedit, however, you should become familiar with the Xcode editor. Its advantage is that it displays [XML](http://en.wikipedia.org/wiki/XML) code colorized so you can find syntax errors quickly. This is ideal for editing FreeSWITCH™ XML configuration files.
+在安装期间以及最初启动 FreeSWITCH™ 过程中，我们将广泛使用终端应用程序。为了节省时间，请进行以下更改：
 
-### Install Command Line Tools (CLT)
-
-_**The stand-alone Command Line Tools should be installed after installing Xcode**_ as follows:
-
-1. Start Xcode.
-2. Open Preferences and click on Downloads.
-3. Click Install for Command Line Tools will download and install in a few minutes into /Applications/Xcode.app/Contents/Developer and various system directories.
+1. 将应用程序/实用工具文件夹中的终端复制到[dock](http://support.apple.com/kb/HT2474)，以便快速访问。
+2. 通过在dock中点击终端应用程序来启动它。然后打开其首选项面板。
+3. 在设置 -> 窗口中，将窗口大小更改为更大的值，如140x48，以减少经常调整窗口大小的次数。
+4. 在设置 -> 窗口中，将回滚改为"限制为可用内存"或更大的数字。会产生很多消息，您可能需要查看这些消息。
+5. 在设置 -> Shell中将关闭提示更改为"只有在有其他进程时"。这将防止在FreeSWITCH™关闭时终端窗口关闭，如果它是自动启动的，这将导致窗口中的所有消息丢失。在调试过程中，这很有用。如果FreeSWITCH™是手动启动的，则窗口不会关闭。
 
 ---
 
-## Setup Installation Directories
+## OS X开发工具
 
-OS X provides the /usr directory which contains subdirectories. This procedure adds the directory **local** to /usr as /usr/local where FreeSWITCH™ and its prerequisite [source](http://en.wikipedia.org/wiki/Source%5Fcode) and [runtime](http://en.wikipedia.org/wiki/Runtime%5Flibrary) files are placed. These files are kept out of OS X supplied directories to allow easy removal of FreeSWITCH™ and its prerequisites.
+OS X开发工具由两部分组成，一是用于开发和测试OS X图形界面应用程序的[Xcode](http://developer.apple.com/technologies/tools/xcode.html) OS X软件开发工具包，二是提供[GCC](http://en.wikipedia.org/wiki/GNU%5FCompiler%5FCollection)、[Git](http://en.wikipedia.org/wiki/Git%5F%28software%29)和其他工具的**C**命令行**T**ool，用于生成非图形界面的应用程序，如FreeSWITCH™及其前提条件。
 
-### Show Invisible Files and Directories in the Finder
+### 安装Xcode
 
-OS X hides many Unix directories and files from the Finder including the directories created by this procedure. These files and directories can be unhidden so they appear on the desktop, Finder windows and file dialogs. Additional information and scripts for showing invisible files are in the [Installation and Setup on OS X](./Installation-and-Setup-on-OS-X_1966082.mdx#invisible-files-and-directories) guide. View hidden files by running the lines below in Terminal:
+Xcode 5.1.1已经无法从[OS X App Store](https://itunes.apple.com/us/app/xcode/id497799835?mt=12&ign-mpt=uo%3D4)下载，因此必须从[OS X开发者网站](http://developer.apple.com/devcenter/mac/index.action)下载，需要至少一个免费会员资格。Xcode需要一段时间来下载，并被放置在Applications文件夹(/Applications目录)中。安装完成后，启动Xcode以接受许可协议。
+
+您可以使用TextEdit进行所有编辑，但是建议您熟悉Xcode编辑器。它的优点是可以对[XML](http://en.wikipedia.org/wiki/XML)代码进行颜色标记，以便您可以快速找到语法错误。这非常适合编辑FreeSWITCH™ XML配置文件。
+
+### 安装命令行工具 (CLT)
+
+安装Xcode后，应按照以下步骤安装独立的命令行工具：
+
+1. 启动Xcode。
+2. 打开“Preferences”(首选项)并点击“Downloads”(下载)。
+3. 点击“Install”(安装)以下载并安装命令行工具，几分钟后将安装到/Applications/Xcode.app/Contents/Developer和其他系统目录中。
+
+---
+
+## 设置安装目录
+
+OS X提供了包含子目录的/usr目录。此过程将目录**local**添加到/usr目录，作为/usr/local，其中放置了FreeSWITCH™及其先决条件的[源代码](http://en.wikipedia.org/wiki/Source%5Fcode)和[运行库](http://en.wikipedia.org/wiki/Runtime%5Flibrary)文件。将这些文件保存在OS X提供的目录之外，以便轻松删除FreeSWITCH™及其先决条件。
+
+### 在Finder中显示隐藏的文件和目录
+
+OS X 在 Finder 中隐藏了许多 Unix 目录和文件，包括此过程所创建的目录。这些文件和目录可以被取消隐藏，使它们出现在桌面、Finder 窗口和文件对话框中。有关显示隐藏文件的附加信息和脚本，请参阅[在 OS X 上进行安装和设置](./Installation-and-Setup-on-OS-X_1966082.mdx#invisible-files-and-directories)指南。通过在终端中运行以下命令来查看隐藏文件：
 
 ```xml
   defaults write com.apple.finder AppleShowAllFiles YES
   killall Finder
 ```
 
-### **Create /usr Subdirectories**
+### **创建 /usr 子目录**
 
-The user name (owner) and group name of /usr/local and it's subdirectories must match the user and group FreeSWITCH™ will run under. This is typically the main user name of the Mac. View this information (yourname and yourgroup) by running the following command in Terminal:
+/usr/local 及其子目录的用户名称（所有者）和组名称必须与 FreeSWITCH™ 将在其下运行的用户和组相匹配。通常情况下，这是 Mac 的主用户名称。通过在终端中运行以下命令来查看此信息（yourname 和 yourgroup）：
 
 ```xml
   ls -l ~/
 ```
 
-The user name and group appear in the third and fourth columns. Now create the /usr/local and /usr/local/src directories, replace yourname and yourgroup with the ones obtained from the previous command:
+用户名称和组名称显示在第三列和第四列。现在创建 /usr/local 和 /usr/local/src 目录，用先前命令中获得的名称替换 yourname 和 yourgroup：
 
 ```xml
-  cd /usr                                   # Change to the /usr directory
-  sudo mkdir local                          # Create the /usr/local directory
-  sudo chown -R yourname:yourgroup local    # Modify the owner of the /usr/local directory to yours
-  mkdir local/src                           # Create the /usr/local/src directory FreeSWITCH™ source will be downloaded into
+  cd /usr                                   # 切换到 /usr 目录
+  sudo mkdir local                          # 创建 /usr/local 目录
+  sudo chown -R yourname:yourgroup local    # 将 /usr/local 目录的所有者修改为您的用户
+  mkdir local/src                           # 创建将下载 FreeSWITCH™ 源代码的 /usr/local/src 目录
 ```
 
-You will access /usr/local often so it should be placed in the Finder "FAVORITES" sidebar for quick access. Navigate to the /usr/local folder in the Finder, then drag the **local** folder under "FAVORITES".
+由于您经常要访问 /usr/local 目录，因此应将其放在 Finder 的“收藏夹”边栏中以便快速访问。在 Finder 中导航到 /usr/local 文件夹，然后将 **local** 文件夹拖到“收藏夹”下。
 
-If you're interested: Even though OS X did not contain the /usr/local directory, /usr/local/bin is defined at the end of the default OS X path. The path is viewed by running "echo $PATH" in Terminal. If you don't understand this, don't worry, it doesn't affect anything.
+如果你感兴趣的话：虽然OS X系统中没有包含/usr/local目录，但是/usr/local/bin被定义在默认OS X路径的末尾。要查看路径，请在终端中运行"echo $PATH"命令。如果你不理解这个，不用担心，它不会对任何东西产生影响。
 
 ---
 
-## Prerequisites
+## 先决条件
 
-### Prerequisite Installation Options
+### 先决条件安装选项
 
-Additional programs are required to generate and run FreeSWITCH™. It is _strongly recommended to follow this procedure using the Homebrew [package manager](http://en.wikipedia.org/wiki/Package%5Fmanagement%5Fsystem)_ and its [repository](http://en.wikipedia.org/wiki/Software%5Frepository) of products for OS X. Homebrew saves time since there is no need to locate packages and determine the version required for each OS X release. Homebrew's [Git](http://en.wikipedia.org/wiki/Git%5F%28software%29) repository is maintained by volunteers. 
+为了生成和运行FreeSWITCH™，需要额外安装一些程序。强烈建议使用Homebrew[软件包管理器](http://en.wikipedia.org/wiki/Package%5Fmanagement%5Fsystem)以及其为OS X系统提供的[软件仓库](http://en.wikipedia.org/wiki/Software%5Frepository)来完成此过程。使用Homebrew可以节省时间，因为不需要搜索包并确定每个OS X版本所需的版本。Homebrew的[Git](http://en.wikipedia.org/wiki/Git%5F%28software%29)仓库由志愿者维护。
 
-Alternatively, other techniques for installing prerequisites and FreeSWITCH™ can be viewed on the [Installation on OS X Alternatives](./Installation-on-OS-X-Alternatives_1966101.mdx#about) documentation. This is discouraged but is made available for those who don’t want to use Homebrew.
+或者，可以在[Installation on OS X Alternatives](./Installation-on-OS-X-Alternatives_1966101.mdx#about)文档中查看其他安装先决条件和FreeSWITCH™的方法。不过，这种方法并不被推荐，只是为那些不想使用Homebrew的人提供了选择。
 
   
-### Install Package Manager and Prerequisites
+### 安装软件包管理器和先决条件
 
-Using the commands below the package manager and prerequisites install in under 10 minutes.
+使用下面的命令，软件包管理器和先决条件可以在不到10分钟内安装好。
 
-#### Install Homebrew
+#### 安装Homebrew
 
-Homebrew installation is simple, the command can be run from any directory:
+Homebrew的安装非常简单，可以在任何目录下运行以下命令：
 
-1. Go to the bottom of the [Homebrew](http://mxcl.github.com/homebrew) page and copy the ruby command.
-2. Open terminal if not already opened, paste and run the command
-3. Run the command "brew doctor" to verify homebrew works, this command could take a couple of minutes.
+1. 打开[Homebrew](http://mxcl.github.com/homebrew)页面的底部，并复制Ruby命令。
+2. 如果终端还未打开，请打开终端，粘贴并运行该命令。
+3. 运行命令"brew doctor"来验证Homebrew是否正常工作，此命令可能需要几分钟时间。
 
-#### Install Required Packages
+#### 安装所需软件包
 
-The basic FreeSWITCH™ prerequisite packages are installed by running the following command in Terminal from any directory:
+在终端中的任意目录下运行以下命令安装FreeSWITCH™的基本先决条件包:
 
 ```xml
   brew install autoconf automake curl jpeg ldns libtool openssl pcre pkg-config speex sqlite
 ```
 
-Some packages produce _keg-only_ messages which can be ignored. It means an alias (link) for the package was not placed into /usr/local/bin because brew found that OS X has another version installed. This is not a problem because the FreeSWITCH™ installation process searches Homebrew directories to find packages.
+一些包会产生 _keg-only_ 的消息，可以忽略。这意味着一个别名（链接）未被放置在 /usr/local/bin 中，是因为brew发现Mac OS X中已安装了另一个版本。这不是一个问题，因为FreeSWITCH™的安装过程会搜索Homebrew目录以找到包。
 
-Homebrew has never failed in all tests but if any prerequisite fails to install it must be resolved before continuing. First, check if you are using an OS X or Xcode that was upgraded, if so read the warnings at the top of the [Installation on OS X Alternatives](./Installation-on-OS-X-Alternatives_1966101.mdx#about) page.
+在所有测试中，Homebrew从未失败过，但如果有任何先决条件安装失败，必须在继续之前解决该问题。首先，检查您是否使用了升级的Mac OS X或Xcode，如果是，请阅读[Installation on OS X Alternatives](./Installation-on-OS-X-Alternatives_1966101.mdx#about)页面顶部的警告内容。
 
 ---
 
-## Download FreeSWITCH™
+## 下载FreeSWITCH™
 
-OS X is now ready to download and install FreeSWITCH™. This takes about 20 minutes.
+现在，OS X已经准备好下载和安装FreeSWITCH™。这大约需要20分钟。
 
-### Selecting a Version
+### 选择版本
 
-There are two versions of FreeSWITCH™ to choose from: the **_current release_** version recommended for production systems, and _**master**_ containing the latest fixes and features used duringdevelopment. The current release version is recommended unless you need newer features or patches added since the current release of FreeSWITCH™. Additional Information is located at [Source Options](https://confluence.freeswitch.org/display/FREESWITCH/Installation#Installation-SourceOptions).
+有两个版本的FreeSWITCH™可供选择：**_当前发布_** 版本适用于生产系统，包含了最新的修复和功能；而 _**master**_ 版本则包含了开发过程中使用的最新修复和功能。除非您需要较新的功能或自当前版本的FreeSWITCH™发布以来新增了补丁，否则建议使用当前发布版本。更多信息请参阅[Source Options](https://confluence.freeswitch.org/display/FREESWITCH/Installation#Installation-SourceOptions)。
 
-This documentation is tested with the master version to keep it as recent as possible and to provide feedback to the developers. If there are problems the developers may request that you install the master version for diagnosis.
+本文档采用master版本进行测试，以保持尽可能的最新性并向开发人员提供反馈。如果有问题，开发人员可能要求您安装master版本进行诊断。
 
-### Download Using Git Clone
+### 使用Git Clone下载
 
-Download FreeSWITCH™ by switching to the src directory and invoking one of the "git clone" commands below. The git command will create the **freeswitch** directory in src (/usr/local/src/freeswitch) and download the FreeSWITCH™ source files.
+在切换到src目录并执行以下一条"git clone"命令之一的情况下，下载 FreeSWITCH™。git 命令将在 src 目录（/usr/local/src/freeswitch）下创建 **freeswitch** 目录，并下载 FreeSWITCH™ 源文件。
 
 ```xml
   cd /usr/local/src
-  git clone -b v1.4 https://stash.freeswitch.org/scm/fs/freeswitch.git             # The current release version
+  git clone -b v1.4 https://stash.freeswitch.org/scm/fs/freeswitch.git             # 当前发布版本
         or
-  git clone https://stash.freeswitch.org/scm/fs/freeswitch.git                     # The master/development version
+  git clone https://stash.freeswitch.org/scm/fs/freeswitch.git                     # 主线/开发版本
 ```
 
 ---
 
-## Install FreeSWITCH™
+## 安装 FreeSWITCH™
 
-### Generate Installation and Configuration Files
+### 生成安装和配置文件
 
-This step creates installation files based on the operating system and installed packages. ./bootstrap.sh creates many files such as modules.conf used to add optional functionality to FreeSWITCH™, while ./configure sets [compilation](http://en.wikipedia.org/wiki/GNU%5FCompiler%5FCollection) options. Enter the following commands (each will run several minutes):
+此步骤根据操作系统和安装的软件包创建安装文件。./bootstrap.sh 创建许多文件，例如 modules.conf，用于向 FreeSWITCH™ 添加可选功能，而 ./configure 则设置了[编译](http://en.wikipedia.org/wiki/GNU%5FCompiler%5FCollection)选项。执行以下命令（每个命令将运行几分钟）：
 
 ```xml
-  cd freeswitch    # <- the new freeswitch directory created by the git clone process
+  cd freeswitch    # <- git clone 过程创建的新 freeswitch 目录
   ./bootstrap.sh
   ./configure
 ```
 
-### Add Text To Speech Module
+### 添加文本转语音模块
 
-Optional functions are added to FreeSWITCH™ by editing the modules.conf file, this may be required as your FreeSWITCH™ configuration becomes more complex. Although not required, adding FLITE Text To Speech functionality is recommended. The easiest way to add the FLITE module is to paste and run the following line into Terminal:
+通过编辑 modules.conf 文件向 FreeSWITCH™ 添加可选功能，这在 FreeSWITCH™ 配置变得更加复杂的情况下可能是必需的。虽然不是必需的，但推荐添加 FLITE 文本转语音功能。最简单的添加 FLITE 模块的方法是将以下行粘贴并运行到终端：
 
 ```xml
    perl -pi -e 's{#asr_tts/mod_flite}{asr_tts/mod_flite}' /usr/local/src/freeswitch/modules.conf
 ```
 
-If you prefer to manually edit the modules.conf file use this procedure:
+如果您更喜欢手动编辑 modules.conf 文件，请使用以下步骤：
 
-1. Use the Finder to navigate to the /usr/local/src/freeswitch directory.
-2. Scroll to and double-click modules.conf in the freeswitch directory, the first time requires application selection, Textedit should be used.
-3. Search for "flite" and remove the # to uncomment.
-4. Save the file.
+1. 使用Finder导航到`/usr/local/src/freeswitch`目录。
+2. 滚动到并双击freeswitch目录中的modules.conf文件，第一次需要选择应用程序，应选择Textedit。
+3. 搜索"flite"，将#号移除以取消注释。
+4. 保存文件。
 
-_If this is your first FreeSWITCH™ don't add more than the FLITE module. Some modules may have prerequisites in addition to what is listed in this procedure._
+_如果这是您第一次使用FreeSWITCH™，请不要添加比FLITE模块更多的内容。有些模块可能除了本过程中列出的要求之外，还有其他的先决条件。_
 
-### Compile, Create Additional Source Directories and Check for Errors
+### 编译，创建额外的源目录并检查错误
 
-This step compiles the programs and creates additional directories and files based on modules.conf. It can run longer than 10 minutes. While still in /usr/local/src/freeswitch compile FreeSWITCH™ with the following command:
+此步骤根据modules.conf文件编译程序，并创建额外的目录和文件。此过程可能需要超过10分钟的时间。在`/usr/local/src/freeswitch`目录中继续使用以下命令编译FreeSWITCH™：
 
 ```xml
   make
 ```
 
-If there are no errors proceed, otherwise seek assistance from the [FreeSWITCH-users mailing list](http://lists.freeswitch.org/)
+如果没有错误，请继续，否则请从[FreeSWITCH-users邮件列表](http://lists.freeswitch.org/)寻求帮助。
 
-### Generate FreeSWITCH™ Runtime
+### 生成FreeSWITCH™运行时
 
-This creates the /usr/local/freeswitch [runtime](http://en.wikipedia.org/wiki/Runtime%5Flibrary) library and executable programs.
+这将创建/usr/local/freeswitch运行时库和可执行程序。
 
 ```xml
   make install
 ```
 
-#### Download and Install Sounds
+#### 下载和安装声音文件
 
-There are mandatory sound prompts and optional music on hold files. All must be compiled to run the sample IVR. There are four versions available:
+有必要的声音提示和可选的等候音乐文件。所有文件都必须编译才能运行示例IVR。有四个版本可供选择：
 
 * sounds-install moh-install (8 kHz)
 * hd-sounds-install hd-moh-install (16 kHz)
 * uhd-sounds-install uhd-moh-install (32 kHz)
 * cd-sounds-install cd-moh-install (48 kHz)
 
-The cd sounds are recommended since all the sampling rates are provided resulting in fewer problems. Invoke the following command:
+建议使用cd声音文件，因为提供了所有采样率，可以减少问题。执行以下命令：
 
 ```xml
   make cd-sounds-install cd-moh-install
 ```
 
-#### Cleanup
+#### 清理
 
-This optional step can be performed to save space by removing the temporary files created by make:
+这是可选的步骤，可以通过删除make创建的临时文件来节省空间：
 
 ```xml
   make clean
 ```
 
-#### Installation is Complete!
+#### 安装完成！
 
-Continue at [Installation and Setup on OS X - Installation is Complete](./Installation-and-Setup-on-OS-X_1966082.mdx#installation-is-complete).
+继续在[OS X上的安装和设置 - 安装完成](./Installation-and-Setup-on-OS-X_1966082.mdx#installation-is-complete)处。
 
 ---
 
-## Updating
+## 更新
 
-### Updating FreeSWITCH™
+### 更新FreeSWITCH™
 
-FreeSWITCH™ may occasionally require updating due to new features, fixes, etc. To download the latest updates, compile FreeSWITCH™ and create updated runtime binaries, run the following two commands:
+由于新功能、修复等原因，FreeSWITCH™可能需要定期更新。要下载最新的更新、编译FreeSWITCH™并创建更新的运行时二进制文件，请运行以下两个命令：
 
 ```xml
   cd /usr/local/src/freeswitch
   git pull && make current
 ```
 
-### Updating Prerequisites
+### 更新先决条件
 
-To update Homebrew and its formulas run "brew update" in Terminal, this should be run prior to upgrading packages. To upgrade all packages, run "brew upgrade", or to upgrade a single package run "brew upgrade _package-name_" command.
+要更新Homebrew及其公式，请在终端中运行"brew update"命令，这应在升级软件包之前运行。要升级所有软件包，请运行"brew upgrade"命令，或者要升级单个软件包，请运行"brew upgrade _package-name_"命令。
 
 ---
 
-## Removal
+## 卸载
 
-### Removing FreeSWITCH™
+### 卸载FreeSWITCH™
 
-Consider backing up modified or new configuration files you created! FreeSWITCH™ is completely removed by deleting the /usr/local/freeswitch and /usr/local/src/freeswitch directories using the Finder (drag to trash) or in Terminal:
+考虑备份您创建的修改或新配置文件！通过删除Finder中的/usr/local/freeswitch和/usr/local/src/freeswitch目录（拖到垃圾箱）或在终端中进行以下操作来完全删除FreeSWITCH™：
 
 ```xml
   rm -r /usr/local/freeswitch
   rm -r /usr/local/src/freeswitch
 ```
 
-### Remove Homebrew and Prerequisites
+### 删除Homebrew和先决条件
 
-Packages installed by Homebrew are listed using the "brew list" command. They are removed using the "brew uninstall _package-name_" command. To remove packages and Homebrew run the following in Terminal:
+使用"brew list"命令列出由Homebrew安装的软件包。使用"brew uninstall _package-name_"命令来删除它们。要同时删除软件包和Homebrew，请在终端中运行以下命令：
 
 ```xml
 rm -rf /usr/local/Cellar /usr/local/.git && brew cleanup
-sudo rm -r /Library/Caches/Homebrew   # (OS X prompts for the administrator password)
+sudo rm -r /Library/Caches/Homebrew   # (OS X提示输入管理员密码)
 ```
 
-### Remove Xcode
+### 删除Xcode
 
-Xcode is installed as an OS X package (directory) that looks like a single application file. To remove Xcode drag the application to the trash, empty it and restart OS X. To remove the Command Line Tools:
+Xcode被安装为一个看似单个应用程序文件的OS X包（目录）。要删除Xcode，将应用程序拖到垃圾箱中，然后清空垃圾箱并重新启动OS X。要删除命令行工具：
 
-Copy and paste the following script: into a new text file named removeCLT.sh
+将以下脚本复制并粘贴到一个名为removeCLT.sh的新文本文件中
 
 RemoveCLT.sh
 
+```
 RECEIPT\_FILE=/var/db/receipts/com.apple.pkg.DeveloperToolsCLI.bom  
 RECEIPT\_PLIST=/var/db/receipts/com.apple.pkg.DeveloperToolsCLI.plist  
-  
+
 if \[ ! -f "$RECEIPT\_FILE" \]  
 then  
  echo "Command Line Tools not installed."  
  exit 1  
 fi  
-  
-echo "Command Line Tools installed, removing ..."  
-  
+
+echo "Command Line Tools installed, removing ..."
+
 \# Need to be at root  
 cd /  
-  
+
 \# Remove files and dirs mentioned in the "Bill of Materials" (BOM)  
 lsbom -fls $RECEIPT\_FILE | sudo xargs -I{} rm -r "{}"  
-  
+
 \# remove the receipt  
 sudo rm $RECEIPT\_FILE  
-  
+
 \# remove the plist  
 sudo rm $RECEIPT\_PLIST  
-  
+
 RECEIPT\_FILE=/var/db/receipts/com.apple.pkg.DevSDK.bom  
 RECEIPT\_PLIST=/var/db/receipts/com.apple.pkg.DevSDK.plist  
-  
+
 if \[ ! -f "$RECEIPT\_FILE" \]  
 then  
  echo "SDK not installed."  
  exit 1  
 fi  
-  
-echo "SDK installed, removing ..."  
-  
+
+echo "SDK installed, removing ..."
+
 \# Need to be at root  
 cd /  
-  
+
 \# Remove files and dirs mentioned in the "Bill of Materials" (BOM)  
 lsbom -fls $RECEIPT\_FILE | sudo xargs -I{} rm -r "{}"  
-  
+
 \# remove the receipt  
 sudo rm $RECEIPT\_FILE  
-  
+
 \# remove the plist  
 sudo rm $RECEIPT\_PLIST  
-  
+
 echo "Done!"
 
 Make the script executable and run it (add and prefix directories to its location):
@@ -396,17 +394,32 @@ Make the script executable and run it (add and prefix directories to its locatio
 If the /usr/local directory existed prior to using this procedure it has to be examined to determine if the contents are deletable. If the instructions on this page were followed, _**and the /usr/local directory was created during this procedure**_, everything can be removed to roll back the system prior to using this procedure by performing these steps:
 
 1. Drag directory /usr/local to the trash. Or delete it in Terminal (OS X prompts for the administrator password):  
-```xml  
+```xml
   sudo rm -r /usr/local  
 ```
+```
 
-### Hide Invisible Files and Directories in the Finder
+将脚本可执行并运行它（添加并在其位置前缀目录）：
 
-To reverse the show hidden files step, open the Terminal application and run each line below. All hidden files will disappear from the desktop, Finder and file dialogs.
+```xml
+ chmod +x removeCLT.sh
+./removeCLT.sh
+```
+
+### 删除其余的内容
+
+如果在使用此步骤之前存在目录/usr/local，则必须检查其内容以确定是否可删除。如果按照本页上的说明操作且/usr/local目录是在这个过程中创建的，则可以通过执行以下步骤将系统恢复到使用此步骤之前的状态：
+
+1. 将目录/usr/local拖到垃圾箱中。或在终端中删除它（OS X会提示输入管理员密码）：
+```xml
+  sudo rm -r /usr/local
+```
+
+### 在Finder中隐藏不可见的文件和文件夹
+
+要撤消显示隐藏文件的步骤，请打开“终端”应用程序并运行以下每行命令。所有隐藏文件将从桌面、Finder和文件对话框中消失。
 
 ```xml
   defaults write com.apple.finder AppleShowAllFiles NO
   killall Finder
 ```
-
-

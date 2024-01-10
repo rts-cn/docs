@@ -1,23 +1,20 @@
-
 # sdp_m\_per_ptime 
 
- Created by  Ryan Harris, last modified on 2018.02.07
+由Ryan Harris创建，于2018.02.07进行修改
 
 ## sdp_m\_per_ptime
 
-boolean Adds a new `m=` line for each distinct ptime in codec list.
+布尔值，为编解码器列表中的每个不同的ptime添加一个新的`m=`行。
 
-When this variable is not set:
+当此变量未设置时：
 
-* When mixing codecs with various ptime in a codec list, they will now be allowed to co-exist in the sdp but it will send no ptime attr. This means the ptime preferences on the offer will be ignored when mixing codecs with various ptimes. When receiving a codec list with no ptime attr, the ptime will be chosen from local preference instead of assuming 20ms. This means if offer contains PCMU with no ptime and FS has PCMU@40i
-* Dynamic payloads will now start at 98 and increment per additional dynamic codec per call. So now you can add CELT@32000h,CELT@48000h and each one will be auto-assigned a dynamic payload type.
+* 当混合具有不同ptime的编解码器在编解码器列表中时，它们将被允许共存在sdp中，但不会发送ptime属性。这意味着在混合具有不同ptime的编解码器时，将忽略提供中的ptime首选项。当接收到没有ptime属性的编解码器列表时，将从本地偏好中选择ptime而不是默认的20ms。这意味着如果提供中不包含ptime并且FS拥有PCMU@40i
+* 动态载荷现在从98开始，并按每个附加的动态编解码器递增。因此，现在您可以添加CELT@32000h，CELT@48000h，而每个编解码器将自动分配一个动态载荷类型。
 
-Is now implied to be `true`, if you don't like this set it to `false` but it's going to be undefined behaviour. This basically means if you call in with ptime 30 then you have a bunch of ptime 20 codecs in your outbound list that there will be one m= line with 30 and the original inbound codec and more `m=` lines for each discinct ptime in your list. This is, of course, will depend on [disable\_transcoding](../FreeSWITCH-Explained/Dialplan/Variables-Master-List_16352570.mdx#easy_dialstring) or [absolute\_codec\_string](../FreeSWITCH-Explained/Dialplan/Variables-Master-List_16352570.mdx#absolute_codec_string) as well.
+如果不设置此选项，默认为`true`。如果您不喜欢它，请将其设置为`false`，但这将导致未定义的行为。这基本上意味着如果您以ptime 30呼入，但您的外拨列表中有一堆ptime 20的编解码器，那么将有一个带有30和原始呼入编解码器的m=行，以及每个列表中不同ptime的更多`m=`行。当然，这也会依赖于[disable\_transcoding](../FreeSWITCH-Explained/Dialplan/Variables-Master-List_16352570.mdx#easy_dialstring)或[absolute\_codec\_string](../FreeSWITCH-Explained/Dialplan/Variables-Master-List_16352570.mdx#absolute_codec_string)。
 
-**Usage**
+**用法**
 
 ```xml
 <action application="set" data="sdp_m_per_ptime=true"/>
 ```
-
-

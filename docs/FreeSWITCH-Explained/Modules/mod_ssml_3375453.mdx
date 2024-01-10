@@ -1,56 +1,53 @@
+# mod_ssml
 
-# mod_ssml 
+## 关于
 
- 
+mod_ssml 实现了 [SSML](http://www.w3.org/TR/speech-synthesis/)（语音合成标记语言）和 TTS（文本到语音）文件格式。
 
-## About
+该模块主要被 [mod_rayo](./mod_rayo_3375450.mdx#about) 使用。
 
-mod\_ssml implements the [SSML](http://www.w3.org/TR/speech-synthesis/) (Speech Synthesis Markup Language) and TTS (text-to-speech) file formats.
+单击此处展开目录
 
-This module is used primarily by [mod\_rayo](./mod_rayo_3375450.mdx#about).
-
-Click here to expand Table of Contents
-
-* 1 [Installing](#installing-)
-* 2 [ssml.conf.xml Configuration](#ssmlconfxml-configuration)  
+* 1 [安装](#installing-)
+* 2 [ssml.conf.xml 配置](#ssmlconfxml-configuration)  
    * 2.1 [tts-voices](#tts-voices)  
-   * 2.2 [Say module integration](#say-module-integration)  
-   * 2.3 [ssml:// format](#ssml-format)  
-   * 2.4 [tts:// format](#ssml-format)
+   * 2.2 [Say 模块集成](#say-module-integration)  
+   * 2.3 [ssml:// 格式](#ssml-format)  
+   * 2.4 [tts:// 格式](#ssml-format)
 
-### Installing 
+### 安装
 
-Tell FreeSWITCH to compile in this module by editing modules.conf in /usr/src/freeswitch/trunk and adding:
+通过编辑 /usr/src/freeswitch/trunk 的 modules.conf 文件并添加以下内容，告诉 FreeSWITCH 编译此模块：
 
 ```xml
  formats/mod_ssml
 ```
 
-Now go recompile FreeSWITCH.
+现在重新编译 FreeSWITCH。
 
 ```xml
 make
 make install
 ```
 
-Tell FreeSWITCH to actually use the module when running by adding the module to modules.conf.xml in /usr/local/freeswitch/conf/autoload\_configs:
+通过将模块添加到 /usr/local/freeswitch/conf/autoload_configs 下的 modules.conf.xml 文件中，告诉 FreeSWITCH 在运行时实际使用该模块：
 
 ```xml
 <load module="mod_ssml"/>
 ```
 
-### ssml.conf.xml Configuration
+### ssml.conf.xml 配置
 
-The conf/autoload\_configs/ssml.conf.xml file contains the configuration. An example configuration is located in formats/mod\_ssml/conf/autoload\_configs/ssml.conf.xml.
+conf/autoload_configs/ssml.conf.xml 文件包含了配置信息。在 formats/mod_ssml/conf/autoload_configs/ssml.conf.xml 中提供了一个示例配置。
 
-It is recommended that you start with the example config and adjust the settings as needed!
+建议您以示例配置为起点，并根据需要进行调整！
 
 #### tts-voices
 
-This section defines all the available voice languages and genders. mod\_ssml will search these voices for the closet match.
+此部分定义了所有可用的语音语言和性别。mod_ssml 将在这些语音中寻找最匹配的声音。
 
 ```xml
-    <!-- voices in order of preference -->
+    <!-- 按优先顺序声音 -->
     <tts-voices>
       <voice name="slt" language="en-US" gender="female" prefix="tts://flite|slt|"/>
       <voice name="kal" language="en-US" gender="male" prefix="tts://flite|kal|"/>
@@ -59,42 +56,40 @@ This section defines all the available voice languages and genders. mod\_ssml wi
     </tts-voices>
 ```
 
-#### Say module integration
+#### Say 模块集成
 
-These sections map languages to the appropriate FreeSWITCH say module (like [mod\_say\_en](https://70.169.193.216/index.php?title=Mod%5Fsay%5Fen&action=edit&redlink=1 "Mod say en (page does not exist)")), define say voices in order of preference, and map interpret-as to the say types and methods
+这些部分将语言映射到适当的FreeSWITCH say模块（如 [mod\_say\_en](https://70.169.193.216/index.php?title=Mod%5Fsay%5Fen&action=edit&redlink=1 "Mod say en (page does not exist)"))，按优先顺序定义 say voices，将 interpret-as 映射到说法的类型和方法
 
 ```xml
-    <!-- say voices in order of preference -->
+    <!-- 按优先顺序 say voices -->
     <say-voices>
       <voice name="callie" language="en-US" gender="female" prefix="$${sounds_dir}/en/us/callie/"/>
     </say-voices>
 
-    <!-- maps ISO language to say module -->
+    <!-- 映射 ISO 语言到 say 模块 -->
     <language-map>
       <language iso="en-US" say-module="en" language="en"/>
     </language-map>
 
-    <!-- map interpret-as to say macros -->
+    <!-- 将 interpret-as 映射到 say 宏 -->
     <macros>
       <macro name="cardinal" method="pronounced" type="number"/>
       <macro name="characters" method="pronounced" type="name_spelled"/>
     </macros>
 ```
 
-#### ssml:// format
+#### ssml:// 格式
 
-To use the format:
+使用格式如下：
 
 ```xml
 ssml://<speak xmlns="http://www.w3.org/2001/10/synthesis" version="1.0" xml:lang="en-US"><p>Hello there!</p></speak>
 ```
 
-#### tts:// format
+#### tts:// 格式
 
-To use the format:
+使用格式如下：
 
 ```xml
   tts://flite|slt|Hello there!
 ```
-
-

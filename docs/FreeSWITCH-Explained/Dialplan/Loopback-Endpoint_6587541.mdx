@@ -1,73 +1,70 @@
+# Loopback Endpoint
 
-# Loopback Endpoint 
+## 关于
 
- 
+Loopback特殊通道模拟一个端点，将呼叫路由回到指定拨号计划的起始点。一旦Loopback通道能够将两个真实通道连接在一起，它将消失，就好像这两个通道最初就已经连接起来了。请注意关于错误通话详单的注意事项，因为Loopback仅适用于非常有限的用例。如果Loopback是您解决问题的第一尝试，请继续寻找其他解决方案，直到没有其他选择。
 
-## About
+单击此处展开目录
 
-The Loopback special channel emulates an endpoint to route a call back into the start of the specified dialplan. As soon as the loopback channel is able to connect together the two real channels it will disappear as if the two channels had been connected originally. **Note well** the cautions about erroneous call detail records, as loopback is only for very limited use cases. If loopback is your first attempt at solving a problem, keep looking elsewhere until you have no alternatives remaining.
-
-Click here to expand Table of Contents
-
-* 1 [Usage](#loopback_export)
-* 2 [Precautions](#precautions)
-* 3 [CDR Handling](#cdr-handling)
-* 4 [Applicable Channel Variables](#applicable-channel-variables)  
+* 1 [使用方法](#loopback_export)
+* 2 [注意事项](#precautions)
+* 3 [通话详单处理](#cdr-handling)
+* 4 [适用的通道变量](#applicable-channel-variables)  
    * 4.1 [is\_loopback](#is_loopback)  
    * 4.2 [loopback\_bowout\_on\_execute](#loopback_bowout_on_execute)  
    * 4.3 [loopback\_export](#loopback_export)  
    * 4.4 [loopback\_leg](#loopback_leg)  
    * 4.5 [other\_loopback\_leg\_uuid](#other_loopback_leg_uuid)
-* 5 [Examples](#loopback_leg)  
-   * 5.1 [Registered Extension](#registered-extension)  
-   * 5.2 [Extension With Context](#extension-with-context)  
-   * 5.3 [Extension, Context, and Dialplan](#extension-context-and-dialplan)  
-   * 5.4 [A-leg Inline Dialplan](#a-leg-inline-dialplan)
+* 5 [例子](#loopback_leg)  
+   * 5.1 [已注册分机](#registered-extension)  
+   * 5.2 [带上下文的分机](#extension-with-context)  
+   * 5.3 [分机、上下文和拨号计划](#extension-context-and-dialplan)  
+   * 5.4 [A-leg行内拨号计划](#a-leg-inline-dialplan)
 
-## Usage
+## 使用方法
 
-loopback/&lt;exten>[/context[/dialplan]]
+loopback/\<分机号>[/上下文[/拨号计划]]
 
-If dialplan and context are omitted, the inherited values from the channel are used. If dialplan is specified, then context must be specified.
+如果省略了拨号计划和上下文，则使用通道继承的值。如果指定了拨号计划，则必须指定上下文。
 
-Implemented by: mod\_loopback
+由mod\_loopback实现
 
-## Precautions
+## 注意事项
 
-Please take extra precautions in regard to CDR records. They may not display the information you are looking for after a call has been bridged through the loopback endpoint. Using the loopback channel requires extra dialplan programming and post-call processing to ensure that you get all the desired call detail data needed for billing and reporting. Be careful with using **proxy media** or **T.38 pass-through** (this is not supported with loopback/ channels).
+请在处理CDR记录时多加注意。在呼叫通过环回终端进行桥接后，可能无法显示您所需的信息。使用环回通道需要额外的拨号计划编程和呼后处理，以确保您获取到所需的通话详细数据，用于计费和报告。使用**代理媒体**或**T.38传递**时要小心（在环回通道中不支持此功能）。
 
-## CDR Handling
+## CDR处理
 
-* Call comes in, that's the A leg. (#1 - defaults to **Leg \*B\***, see [Putting Together CDRs](../Configuration/CDR/index.mdx#putting-together-cdrs))
-* It creates a B loopback leg to handle the routing (#2 - default to leg B)
-* That gets connected to a new leg that traverses the dial plan accordingly (#3 - default to leg A)
-* If you bridge, then we have a new leg, too. (#4 - defaults to leg B.)
+* 呼叫进入，称为A路（#1-默认为**Leg B**，请参阅[组合CDR](../Configuration/CDR/index.mdx#putting-together-cdrs)）
+* 创建B环回路以处理路由（#2-默认为Leg B）
+* 将其连接到相应的拨号计划遍历的新路（#3-默认为Leg A）
+* 如果进行桥接，那么我们也会有一个新的路（#4-默认为Leg B）
 
-Once the call connects, after 1-2 seconds #2 and #3 drop out, with a billsec of about 2 seconds.
+一旦通话连接，1-2秒后#2和#3会断开连接，并具有约2秒的billsec。
 
-If you do billing on leg B of the initial call, then your billing will be for **only a 2 second call**. OR the exported vars to #4 properly stay there. Test extensively before committing to production mode.
+如果您对初始呼叫的B路进行计费，那么您的计费将仅为**2秒的通话**。或者导出的变量正确地留在#4上。在投入生产之前进行充分测试。
 
-## Applicable Channel Variables
+## 适用的通道变量
 
 ### is_loopback
 
-boolean A variable added during the hangup phase that distinguishes loopback channels from real channels. This is useful for processing CDRs. `is_loopback` was made available as of 6/26/2013
+布尔值，在挂断阶段添加的变量，用于区分环回通道和真实通道。这对于处理CDR非常有用。`is_loopback`自2013年6月26日起可用。
 
-![(warning)](/images/icons/emoticons/warning.svg) this variable is only available **after** the channel has ended.
+![(warning)](/images/icons/emoticons/warning.svg)此变量仅在通道结束**之后**可用。
 
 ### loopback_bowout_on_execute
 
-boolean Set to `true` to have one-legged [loopback channels](../Bit-Bucket/For-Consideration/mod_bridgecall_13173999.mdx#loopback) "bow out" (remove the loopback legs) of the call.
+布尔值，如果设置为`true`，则使单腿[环回通道](../Bit-Bucket/For-Consideration/mod_bridgecall_13173999.mdx#loopback)在呼叫中“消失”（删除环回路）。
 
-`loopback_bowout_on_execute` is only useful to single leg calls. You never have to set it: `loopback_bowout` is `true` by default. It tries to remove loopback by doing [uuid\_bridge](../Modules/mod_commands_1966741.mdx#uuid_bridge).
+`loopback_bowout_on_execute`只对单个腿的呼叫有用。您无需设置它：`loopback_bowout`默认为`true`。它尝试通过执行`uuid_bridge`（../Modules/mod_commands_1966741.mdx#uuid_bridge）来移除回环。
 
-When setting `loopback_bowout=false`, a bridged loopback call results in 4 legs (a-leg, loopback-a, loopback-b, b-leg).
+当设置`loopback_bowout=false`时，桥接的回环呼叫将生成4个腿（A腿、回环A、回环B、B腿）。
 
-When setting `loopback_bowout=true`, a bridged loopback call results in 2 legs (a-leg, b-leg).
+当设置`loopback_bowout=true`时，桥接的回环呼叫将生成2个腿（A腿、B腿）。
 
-During the call setup phase even with `loopback_bowout=true` there will always be 4 legs, however. loopback-a and loopback-b will be destroyed when a-leg and b-leg are successfully bridged.
+然而，在呼叫设置阶段，即使使用`loopback_bowout=true`，仍会始终有4个腿。当A腿和B腿成功桥接时，回环A和回环B将被销毁。
 
-**Usage**
+**用法**
 
 ```xml
 <action application="set" data="loopback_bowout_on_execute=true"/>
@@ -75,45 +72,43 @@ During the call setup phase even with `loopback_bowout=true` there will always b
 
 ### loopback_export
 
-string A list of channel variables to pass from loopback-a to loopback-b.
+字符串，用于将通道变量从回环A传递到回环B。
 
 ### loopback_leg
 
-string
+字符串
 
 ### other_loopback_leg_uuid
 
-string
+字符串
 
-## Examples
+## 示例
 
-### Registered Extension
+### 注册分机
 
 loopback/1000 
 
-Would inherit the context and dialplan from the other leg.
+将继承与其他腿相同的上下文和拨号计划。
 
-### Extension With Context
+### 带有上下文的分机
 
 loopback/1000/companyA
 
-Would force the default context.
+将强制使用默认上下文。
 
-### Extension, Context, and Dialplan
+### 分机、上下文和拨号计划
 
 loopback/1000/companyA/XML
 
-Would force both the dialplan and context.
+将同时强制使用拨号计划和上下文。
 
-### A-leg Inline Dialplan
+### A腿内联拨号计划
 
 originate loopback/set:job=1234\,answer\,park/default/inline lua:loop.lua inline
 
-Executes [set](../Modules/mod-dptools/6586661.mdx#about) app, then [answer](../Modules/mod-dptools/6586406.mdx#about) app, then [park](../Modules/mod-dptools/6586687.mdx#0-about) app on the B leg then bridges to the [Lua](../Modules/mod_lua_1048944.mdx#--) app on the A leg
+在B腿上执行`set`（../Modules/mod-dptools/6586661.mdx#about）应用程序，然后执行`answer`（../Modules/mod-dptools/6586406.mdx#about）应用程序，然后执行`park`（../Modules/mod-dptools/6586687.mdx#0-about）应用程序，最后在A腿上与`Lua`（../Modules/mod_lua_1048944.mdx#--）应用程序桥接。
 
-### Comments:
+### 注释：
 
-| Not confirmed, but if you are trying to use hangup\_after\_bridge=false with a call to a loopback endpoint, you likely need to set loopback\_bowout=false on the call - otherwise it seems to not take effect. ![](/images/icons/contenttypes/comment_16.png) Posted by nneul at Mar 28, 2017 10:18 |
+| 不能确定，但如果你尝试在呼叫到回环端点时使用hangup\_after\_bridge=false，很可能需要在呼叫上设置loopback\_bowout=false - 否则似乎不会生效。 ![](/images/icons/contenttypes/comment_16.png) 由nneul于2017年3月28日10:18发布 |
 | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-
-

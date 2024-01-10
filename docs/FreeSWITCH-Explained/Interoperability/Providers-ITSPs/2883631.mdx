@@ -1,39 +1,36 @@
-
-# Provider Bandwidth (USA) 
-
- 
+# 美国供应商带宽
 
 ## [Bandwidth.com](http://Bandwidth.com)
 
-Last Update: 8 February 2011
+最近更新日期：2011年2月8日
 
-Incoming and Outgoing works. Trunk settings:
+进出都正常工作。以下是托底设置：
 
 ```xml
 <include>
   <gateway name="bandwidth.com">
-    <param name="username" value="username"/>
-    <param name="password" value="password"/>
-    <param name="from-user" value="fromuser"/>
-    <param name="from-domain" value="gateway-ip"/>
-    <param name="proxy" value="gateway-ip"/>
+    <param name="username" value="用户名"/>
+    <param name="password" value="密码"/>
+    <param name="from-user" value="发信人用户"/>
+    <param name="from-domain" value="网关IP"/>
+    <param name="proxy" value="网关IP"/>
     <param name="expire-seconds" value="600"/>
     <param name="register" value="false"/>
     <param name="retry_seconds" value="30"/>
     <param name="extension" value=""/>
-    <param name="context" value="public"/>
+    <param name="context" value="公共"/>
   </gateway>   
 </include>
 ```
 
-Dialplan Settings - [bandwidth.com](http://bandwidth.com) sends and receives in e164 format by default. Inbound dialplan settings (transfer to extension 102):
+拨号计划设置 - [bandwidth.com](http://bandwidth.com) 默认以e164格式发送和接收。入站拨号计划设置（转接到分机102）：
 
 ```xml
 <include>
-  <extension name="bandwidth.com inbound">
-    <condition field="context" data="public"/>
-    <!-- The following line detects the e164 format on incoming calls -->
-    <!-- Note: The leading '+' needs to be escaped by adding a '\' before it -->
+  <extension name="bandwidth.com入站">
+    <condition field="context" data="公共"/>
+    <!--以下行检测传入呼叫的e164格式-->
+    <!--注意：前面的'+'需要用'\'转义-->
     <condition field="destination_number" expression="^\+18315551234$>
       <action application="transfer" data="102 XML default"/>
     </condition>
@@ -41,17 +38,15 @@ Dialplan Settings - [bandwidth.com](http://bandwidth.com) sends and receives in 
 </include> 
 ```
 
-Outbound dialplan settings (dial 9 then ten digits):
+出站拨号计划设置（拨打9然后十位数）：
 
 ```xml
 <include>
-<extension name="bandwidth.com Outbound 9.10d">
-   <!-- The following line detects outbound calls with a 9 as a dropped prefix -->
-   <!-- The line after changes the 10 digit number into 11 digit with a leading '+' -->
+<extension name="bandwidth.com出站 9.10d">
+   <!--以下行检测省略前缀9的出站呼叫-->
+   <!--之后的行将十位数改为带有前导'+'的11位数-->
    <condition field="destination_number" expression="^9(\d{10})$">
        <action application="bridge" data="sofia/gateway/bandwidth.com/+1$1"/>
    </condition>
 </extension> 
 ```
-
-

@@ -1,56 +1,53 @@
+# 内联拨号计划
 
-# Inline Dialplan 
+##### _**你是否在拨号计划中寻找[内联动作](https://wiki.freeswitch.org/wiki/Dialplan%5FXML#Inline%5FActions "Dialplan XML")？**_
 
- 
+点击此处展开目录
 
-##### _**Are you looking for [inline actions](https://wiki.freeswitch.org/wiki/Dialplan%5FXML#Inline%5FActions "Dialplan XML") in the dialplan?**_
-
-Click here to expand Table of Contents
-
-* 1 [Description](#description)  
-   * 1.1 [Escaping](#escaping)
-* 2 [Examples](#examples)  
+* 1 [描述](#description)  
+   * 1.1 [转义](#escaping)
+* 2 [示例](#examples)  
    * 2.1 [uuid\_transfer](#uuid_transfer)  
    * 2.2 [Originate](#originate)  
    * 2.3 [PortAudio](#portaudio)
-* 3 [See Also](#see-also)
+* 3 [参见](#see-also)
 
-## Description
+## 描述
 
-Allows you to specify a dialplan in code where you might normally specify an extension and dialplan.  
-Basic syntax is a comma-separated list of 'app:arg' pairs:
+允许您在代码中指定一个拨号计划，其中通常需要指定一个分机和拨号计划。  
+基本语法是一组以逗号分隔的'app:arg'对：
 
 ```xml
 'app1:arg1,app2:arg2,app3:arg3' inline
 ```
 
-Single quotes generally are necessary except in the case of a single app:arg pair with no spaces, e.g.:
+一般情况下，单引号是必需的，除非是一个没有空格的单个'app:arg'对，例如：
 
 ```xml
 uuid_transfer <uuid> playback:/foo.wav inline
 ```
 
-The inline dialplan is a handy tool that allows for flexible application development.
+内联拨号计划是一个方便的工具，它可以实现灵活的应用程序开发。
 
-### Escaping
+### 转义
 
-If you have a complicated inline dialplan, you can occasionally run afoul of issues with commas. To avoid this issue, the inline dialplan allows you define the application delimiter:
+如果您有一个复杂的内联拨号计划，有时可能遇到逗号的问题。为了避免这个问题，内联拨号计划允许您定义应用程序分隔符：
 
 ```xml
 'm:^:app1:arg1^app2:arg2^bridge:{origination_uuid=asdf,ignore_early_media_true}/sofia/gateway/mygw/1234' inline
 ```
 
-## Examples
+## 示例
 
 ### uuid_transfer
 
-A simple uuid transfer might look like this:
+一个简单的uuid转移可能是这样的：
 
 ```xml
 uuid_transfer 2bde6598-0f1a-48fe-80bc-a457a31b0055 'set:test=blah blah,playback:foo.wav' inline
 ```
 
-Another application is to grabbed a parked channel and bridge to another channel:
+另一个应用是抢占一个正在等待的通道，并桥接到另一个通道：
 
 ```xml
 uuid_transfer <parked_uuid> intercept:<other_uuid> inline
@@ -58,45 +55,40 @@ uuid_transfer <parked_uuid> intercept:<other_uuid> inline
 
 ### Originate
 
-A simple originate where the B leg is specified inline:
+一个简单的 originate，其中B路由在内联中指定：
 
 ```xml
- originate sofia/gateway/my_gw/user@domain.com 'set:myvar=myvalue,info:,playback:foo.wav' inline
+originate sofia/gateway/my_gw/user@domain.com 'set:myvar=myvalue,info:,playback:foo.wav' inline
 ```
 
 ### PortAudio
 
-A handy way to use PortAudio from the FreeSWITCH CLI is this:
+使用FreeSWITCH CLI 方式中，使用PortAudio的一个方便的方法如下：
 
 ```xml
  originate {absolute_codec_string=XXXX}sofia/default/foo@bar.com bridge:portaudio/auto_answer inline
 ```
 
-See also: [Dialplan\_XML#Getting\_Fancy\_With\_PortAudio](https://wiki.freeswitch.org/wiki/Dialplan%5FXML#Getting%5FFancy%5FWith%5FPortAudio "Dialplan XML")
+另请参见：[Dialplan\_XML#Getting\_Fancy\_With\_PortAudio](https://wiki.freeswitch.org/wiki/Dialplan%5FXML#Getting%5FFancy%5FWith%5FPortAudio "Dialplan XML")
 
-  
-Note the lack of a leading / in the bridge string above. If you tried to do [bridge:/portaudio/auto\_answer](http://bridge/portaudio/auto%5Fanswer) the bridge would fail with CHAN\_NOT\_IMPLEMENTED because FreeSWITCH™ assumes the string between the ':' and the first '/' to be the channel type, and so if you have a leading slash the channel type is an empty string.SIP Profile
+请注意以上bridge字符串前面缺少斜杠。如果您尝试使用 [bridge:/portaudio/auto\_answer](http://bridge/portaudio/auto%5Fanswer) ，该桥接将失败，并显示CHAN\_NOT\_IMPLEMENTED，因为FreeSWITCH™假定':'和第一个斜杠之间的字符串为通道类型。所以，如果您有一个斜杠作为开头，那么通道类型将是一个空字符串。
 
-The dialplan parameter in the SIP profile can also be an inline dialplan. The standard entry is this:
+SIP配置文件中的拨号计划参数也可以是内联拨号计划。标准的条目如下：
 
 ```xml
 <param name="dialplan" value="XML"/>
 ```
 
-Customize it like this:
+可以按照以下方式进行自定义：
 
 ```xml
 <param name="dialplan" value="inline:playback:woohoo.wav,hangup:BUHbye"/>
 ```
 
-  
-Note that you specify "inline:" at the beginning of the parameter and not at the end like you do when using the command line.
+请注意，在参数中您应该在开始处指定"inline:"，而不是像在命令行中一样在末尾指定。
 
-  
-## See Also
+## 另请参阅
 
-* [Dialplan](./index.mdx#0-about)
-* [Configuration](../Configuration/index.mdx#about)
-* [mod\_dptools: Inline Dialplan](../Modules/mod-dptools/6586667.mdx#about)
-
-
+* [拨号计划](./index.mdx#0-about)
+* [配置](../Configuration/index.mdx#about)
+* [mod\_dptools: 内联拨号计划](../Modules/mod-dptools/6586667.mdx#about)

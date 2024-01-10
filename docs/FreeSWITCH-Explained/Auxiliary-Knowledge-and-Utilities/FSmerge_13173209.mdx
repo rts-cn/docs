@@ -1,54 +1,50 @@
+# FSmerge
 
-# FSmerge 
+## 关于
 
- 
+FreeSWITCH 长期以来一直需要一种机制来更新已安装的配置文件并合并任何本地修改。此脚本的设计就是为了满足这个需求，以一种可选的方式。
 
-## About
+它基于 [OpenBSD](http://www.openbsd.org/cgi-bin/man.cgi?query=sysmerge&apropos=0&sektion=0&manpath=OpenBSD+Current&arch=i386&format=html) 的 [sysmerge(8)]，该工具本身又基于 [FreeBSD](http://www.freebsd.org/cgi/man.cgi?query=mergemaster&apropos=0&sektion=0&manpath=FreeBSD+8.0-RELEASE&format=html) 的 [mergemaster(8)]。
 
-FreeSWITCH has long needed a mechanism to update the installed configuration files and merge in  
-any local changes. This script is designed to fit that need, in an optional manner.
+点击此处展开目录
 
-It is based on [sysmerge(8)](http://www.openbsd.org/cgi-bin/man.cgi?query=sysmerge&apropos=0&sektion=0&manpath=OpenBSD+Current&arch=i386&format=html) from OpenBSD, which is based on [mergemaster(8)](http://www.freebsd.org/cgi/man.cgi?query=mergemaster&apropos=0&sektion=0&manpath=FreeBSD+8.0-RELEASE&format=html) from FreeBSD.
+* 1 [关于 fsmerge 的会议通话](#conference-call-about-fsmerge)
+* 2 [下载](#download)
+* 3 [使用方法](#usage)
+* 4 [点子](#ideas)
+* 5 [可选补丁](#optional-patches)
 
-Click here to expand Table of Contents
+## 关于 fsmerge 的会议通话
 
-* 1 [Conference Call About fsmerge](#conference-call-about-fsmerge)
-* 2 [Download](#download)
-* 3 [Usage](#usage)
-* 4 [Ideas](#ideas)
-* 5 [Optional Patches](#optional-patches)
+约翰谈到了 fsmerge [收听](http://www.voicenetwork.ca/freeswitch/fsmerge/johntow%5Ffsmerge.mp3)
 
-## Conference Call About fsmerge
+## 下载
 
-John talks about fsmerge [Listen](http://www.voicenetwork.ca/freeswitch/fsmerge/johntow%5Ffsmerge.mp3)
+在提交到 FS 存储库之前，可以在[这里](http://svn.slic.com/ext/jontow/freeswitch/misc/fsmerge)找到。
 
-## Download
-
-Until committed to the FS repository, it is available [here](http://svn.slic.com/ext/jontow/freeswitch/misc/fsmerge).
-
-## Usage
+## 使用方法
 
 ```xml
  $ fsmerge [-h] [-s src] [-d dst]
 ```
 
-* \-h: help
-* \-s src: source directory tree (ie: /home/username/freeswitch-src/conf)
-* \-d dst: destination directory tree (ie: /usr/local/freeswitch/conf)
+* \-h: 帮助
+* \-s src: 源目录树（例如：/home/username/freeswitch-src/conf）
+* \-d dst: 目标目录树（例如：/usr/local/freeswitch/conf）
 
-## Ideas
+## 点子
 
-* A 'make merge' target from the top-level source directory, automatically running with the correct parameters.
+* 在顶级源目录中添加 "make merge" 目标，自动运行并使用正确的参数。
 
-## Optional Patches
+## 可选补丁
 
-* Apply this from toplevel-src before running bootstrap/configure, it adds a "make merge" target, shown below in the 'Example Session'.
+* 在运行 bootstrap/configure 之前，将此项应用于顶级源目录，它会添加一个 "make merge" 目标，示例会话如下所示。
 
 ```diff
-Index: Makefile.am
+索引：Makefile.am
 ===================================================================
---- Makefile.am (revision 17539)
-+++ Makefile.am (working copy)
+--- Makefile.am（修订版17539）
++++ Makefile.am（工作副本）
 @@ -650,3 +650,6 @@
         @cp support-d/.screenrc ~
         @cp support-d/.bashrc ~
@@ -58,44 +54,45 @@ Index: Makefile.am
 +       @./scripts/fsmerge -s $(switch_builddir)/conf -d $(prefix)/conf
 ```
 
-Example Session
+示例会话
 
 ```xml
 _:jontow@apex:~/SVN-freeswitch% make merge
 
-===> Running fsmerge with the following settings:
+===> 正在使用以下设置运行fsmerge：
 
- source:              /usr/home/jontow/SVN-freeswitch/conf
- destination:         /usr/local/freeswitch/conf
+ 源：              /usr/home/jontow/SVN-freeswitch/conf
+ 目标：         /usr/local/freeswitch/conf
 
- base work directory: /tmp/fsmerge.MyBlF
- temp root directory: /tmp/fsmerge.MyBlF/temproot
- backup directory:    /tmp/fsmerge.MyBlF/backups
+ 基本工作目录： /tmp/fsmerge.MyBlF
+ 临时根目录： /tmp/fsmerge.MyBlF/temproot
+ 备份目录：    /tmp/fsmerge.MyBlF/backups
 
-Continue? (y|[n]) y
+要继续吗？（y|[n]） y
 
-===> Creating and populating temporary root under
-     /tmp/fsmerge.MyBlF/temproot
+===> 创建并填充临时根目录
+     在 /tmp/fsmerge.MyBlF/temproot 下
 
-===> Starting comparison
-
-========================================================================
-
-===> /usr/local/freeswitch/conf/autoload_configs/nibblebill.conf.xml was not found on the target system
-
-
-  Use 'd' to delete the temporary ./autoload_configs/nibblebill.conf.xml
-  Use 'i' to install the temporary ./autoload_configs/nibblebill.conf.xml
-
-  Default is to leave the temporary file to deal with by hand
-
-How should I deal with this? [Leave it for later] i
-
-===> ./autoload_configs/nibblebill.conf.xml installed successfully
+===> 开始比较
 
 ========================================================================
 
-===> Displaying differences between ./autoload_configs/enum.conf.xml and installed version:
+===> 在目标系统上找不到 /usr/local/freeswitch/conf/autoload_configs/nibblebill.conf.xml
+
+
+  使用 'd' 删除临时的 ./autoload_configs/nibblebill.conf.xml
+  使用 'i' 安装临时的 ./autoload_configs/nibblebill.conf.xml
+
+  默认是保留临时文件以后再处理
+
+应该如何处理？[保留以后再处理] i
+
+===> ./autoload_configs/nibblebill.conf.xml 成功安装
+
+========================================================================
+
+===> 显示 ./autoload_configs/enum.conf.xml 与已安装版本之间的差异：
+```
 
 --- /usr/local/freeswitch/conf/autoload_configs/enum.conf.xml   Fri May 22 14:03:22 2009
 +++ ./autoload_configs/enum.conf.xml    Tue May 18 20:15:05 2010
@@ -108,18 +105,15 @@ How should I deal with this? [Leave it for later] i
    </routes>
  </configuration>
 
-  Use 'd' to delete the temporary ./autoload_configs/enum.conf.xml
-  Use 'i' to install the temporary ./autoload_configs/enum.conf.xml
-  Use 'm' to merge the temporary and installed versions
-  Use 'v' to view the diff results again
+  使用 'd' 删除临时 ./autoload_configs/enum.conf.xml 文件
+  使用 'i' 安装临时 ./autoload_configs/enum.conf.xml 文件
+  使用 'm' 合并临时和已安装的版本
+  使用 'v' 再次查看差异结果
 
-  Default is to leave the temporary file to deal with by hand
+  默认选择手动处理临时文件
 
-How should I deal with this? [Leave it for later] i
+如何操作？[稍后处理] i
 
-===> ./autoload_configs/enum.conf.xml installed successfully
+===> ./autoload_configs/enum.conf.xml 安装成功
 
 .....
-```
-
-

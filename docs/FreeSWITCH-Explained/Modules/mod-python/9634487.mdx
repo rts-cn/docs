@@ -1,13 +1,12 @@
-
-# Example: frontdoor.py 
+# 示例：frontdoor.py 
 
  
 
-## About
+## 关于
 
-Click here to expand Table of Contents
+点击此处展开目录
 
-You will need [mod\_python](https://wiki.freeswitch.org/wiki/Mod%5Fpython "Mod python") working for this... also this script was adapted from a working script, but the script below in its exact form was not actually tested. There might be minor bugs.
+你需要确保 [mod\_python](https://wiki.freeswitch.org/wiki/Mod%5Fpython "Mod python") 正常工作... 此脚本是从一个可用的脚本进行了修改，但是下面的脚本并没有实际测试过。可能存在一些小错误。
 
 **frontdoor.py**
 
@@ -46,64 +45,61 @@ class FrontdoorMain:
             pass
         
         if not logged_in:
-            self.speak("Goodbye")
+            self.speak("再见")
             return
 
-        # 1. enter a local extension
-        # 2. dial out of gateway
-        # 3. listen to voicemail
+```python
+        # 1. 输入分机号
+        # 2. 外拨网关
+        # 3. 听取语音信箱
         thing2say = "Enter_extension_followed_by_the_pound_sign.wav"
-        in_rslt = self.session.playAndGetDigits(1,15,3,15000,        
-                                                "*#",thing2say,
-                                                "","")[1]
+        in_rslt = self.session.playAndGetDigits(1, 15, 3, 15000,        
+                                                "*#", thing2say,
+                                                "", "")[1]
         if in_rslt:
             self.session.execute("execute_extension", in_rslt)
         
         
     def main(self):
         thing2say = "Hello_Connecting_your_call_please_hold.wav"
-        in_rslt = self.session.playAndGetDigits(1,1,1,1000,
-                                                "*#",thing2say,
-                                                "","")[1]
+        in_rslt = self.session.playAndGetDigits(1, 1, 1, 1000,
+                                                "*#", thing2say,
+                                                "", "")[1]
         if in_rslt:
             if int(in_rslt) == 0:
                 return self.internal_access()
                 
-        tz_name="America/Los_Angeles"
+        tz_name = "America/Los_Angeles"
         tz = timezone(tz_name)
         now = datetime.datetime.now(tz)
-        if now.hour >= 7 and now.hour <=22:
+        if now.hour >= 7 and now.hour <= 22:
             self.bridge2endpoint()
         else:
             self.session.answer()
-            # play a warning saying only continue if emergency,
-            # press 1 to continue
+            # 播放警告声音，仅在紧急情况下继续按1
             thing2say = "You_have_called_after_hours.wav"
-            in_rslt = self.session.playAndGetDigits(1,1,1,5000,
-                                                "*#",thing2say,
-                                                "","")[1]
+            in_rslt = self.session.playAndGetDigits(1, 1, 1, 5000,
+                                                "*#", thing2say,
+                                                "", "")[1]
             bridgecall = False
             if in_rslt:
-                # if they press 1, let them through ..
+                # 如果按下1，允许通过...
                 if int(in_rslt) == 1:
                     bridgecall = True
 
             if bridgecall:
                 self.bridge2endpoint()
             else:
-                # transfer to voicemail..
+                # 转接语音信箱..
 		pass
+```
 
-
+```python
 def handler(uuid):
     if not uuid:
-        console_log("info", "\nNo uuid given\n")
+        console_log("info", "\n未提供uuid\n")
         return
     session = PySession(uuid)
     frontdoormain = FrontdoorMain(session)
     frontdoormain.main()
-
-
 ```
-
-

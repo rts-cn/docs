@@ -1,31 +1,28 @@
+# Lua DISA示例
 
-# Lua DISA Example 
+## 关于
 
- 
+这是由[Brian Foster](https://freeswitch.org/confluence/display/~bdfoster)贡献的Lua脚本，用于在FreeSWITCH™中执行D.I.S.A.（直接进入系统接入）功能。
 
-## About
+点击此处展开目录
 
-Lua script contributed by [Brian Foster](https://freeswitch.org/confluence/display/~bdfoster) to perform D.I.S.A. (Direct Inward System Access) function in FreeSWITCH™.
+* 1 [用法](#用法)
+* 2 [拨号计划](#拨号计划)
+* 3 [代码](#代码)
 
-Click here to expand Table of Contents
+## 用法
 
-* 1 [Usage](#usage)
-* 2 [Dialplan](#dialplan)
-* 3 [Code](#code)
+安全警告
 
-## Usage
+**注意：允许DISA会存在某些安全问题。主要问题是，在首次收集扩展号码和语音信箱PIN码作为凭证之后，我们将一个不受信任的外部呼叫传输到默认上下文中。您需要了解在您的电话系统上发生了什么。作者对任何责任不承担责任，并将该脚本放在这里只作为概念验证的目的。**
 
-SECURITY WARNING
+话虽如此，这个脚本非常容易使用。在任何用户的目录记录中，将"disa"放入toll_allow变量中以允许DISA访问（您可以在toll_allow中有多个逗号分隔的值）。该脚本会检查toll_allow变量中是否存在字母组合"disa"。
 
-**NOTICE: There are some inherit security concerns when allowing DISA. Mainly, we're transferring an untrusted external call into the default context after first collecting credentials in the form of an extension number and a voicemail PIN. You need to be aware of what's happening on YOUR phone system. The author disclaims any liability and places the script here for purposes of proof of concept.**
+## 拨号计划
 
-Having said that, this script is pretty easy to use. Place 'disa' in the toll\_allow variable in any user's directory record to allow DISA access (you can have multiple comma separated values in toll\_allow). This script checks for the existence of the letter combination 'disa' somewhere in the toll\_allow variable.
+使用以下拨号计划调用此脚本：
 
-## Dialplan
-
-Call this script using the following dialplan:
-
-**DISA dialplan example**
+**DISA拨号计划示例**
 
 ```xml
 <extension name="disa">
@@ -35,11 +32,9 @@ Call this script using the following dialplan:
 </extension>
 ```
 
-## Code
+## 代码
 
-Name the following file 'disa.lua' and place under your FreeSWITCH scripts folder. This script was tested on FreeSWITCH version 1.4.15 and using Lua 5.1 (sorry, we use libraries in other scripts that require 5.1 so we're already set up for it). If it doesn't work in 5.2, please send me a message at [Brian Foster.](https://freeswitch.org/confluence/display/~bdfoster)
-
-**disa.lua**
+将以下文件命名为"disa.lua"，并放在您的FreeSWITCH脚本文件夹中。该脚本在FreeSWITCH版本1.4.15上进行了测试，并使用Lua 5.1（抱歉，我们在其他脚本中使用了需要5.1的库，所以我们已经针对它进行了设置）。如果在5.2上无法工作，请在[这里给我发送一条消息](https://freeswitch.org/confluence/display/~bdfoster)。
 
 ```cpp
 api = freeswitch.API();
@@ -56,80 +51,84 @@ end_call_sound = "tone_stream://%L=3;(100,100,350,440)";
 session:answer();
 
 if (session:ready()) then
-    -- Line is live, start talking
+    -- 通话线路已连接，开始对话
     session:flushDigits();
     session:execute("playback", "silence_stream://1500");
     session:execute("playback", "ivr/ivr-hello.wav");
 
-    -- Try authentication
+    -- 尝试身份验证
     while (creds_tries_limit >= creds_tries) do
-        -- Prompt for user id
+        -- 提示用户输入用户ID
         user_id = session:playAndGetDigits(1, 10, creds_tries_limit, 3000, "#", "ivr/ivr-please_enter_extension_followed_by_pound.wav", invalid_entry_sound, "\\d+", "", 3000);
 
         if (user_id == "") then
-            -- Exceeded tries
+            -- 尝试次数已达限制
             creds_tries = creds_tries_limit;
 
         elseif (api:executeString("user_exists id ".. user_id .. " " .. domain)) then
-            -- User id exists, prompt for pin
+            -- 用户ID存在，提示输入密码
             pin = session:playAndGetDigits(1, 64, 3, 3000, "#", "ivr/ivr-please_enter_pin_followed_by_pound.wav", invalid_entry_sound, "\\d+", "", 3000);
             pin_valid = "";
-            freeswitch.consoleLog("info", "PIN valid: " .. pin_valid);
+            freeswitch.consoleLog("info", "密码有效：" .. pin_valid);
+```
 
-            if (pin == "") then
-                -- Exceeded tries
-                creds_tries = creds_tries_limit;
-            else
-                pin_valid = api:executeString("vm_fsdb_auth_login default " .. domain .. " " .. user_id .. " " .. pin);
-                freeswitch.consoleLog("info", "PIN valid: " .. pin_valid);
-            
-                if (pin_valid == "-OK") then
-                    -- DISA Authenticated
-                    -- Make sure user is authorized for DISA
+```lua
+if (pin == "") then
+    -- 尝试次数超限
+    creds_tries = creds_tries_limit;
+else
+    -- 验证PIN码是否有效
+    pin_valid = api:executeString("vm_fsdb_auth_login default " .. domain .. " " .. user_id .. " " .. pin);
+    freeswitch.consoleLog("info", "PIN码有效：" .. pin_valid);
 
-                    toll_allow = api:executeString("user_data " .. user_id .. "@" .. domain .. " var toll_allow");
-                    if(string.match(toll_allow, "disa")) then
-                        -- Authorized for service
-                        authorized = true;
-                        break;
-                    else
-                        -- Not authorized for service
-                        session:execute("playback", no_permissions_sound);
-                        break;
-                    end
-                else
-                    -- Bad pin
-                    session:execute("playback", invalid_entry_sound);
-                    creds_tries = creds_tries + 1;
-                end
-            end
+    if (pin_valid == "-OK") then
+        -- DISA验证通过
+        -- 确保用户有DISA的授权
+
+        toll_allow = api:executeString("user_data " .. user_id .. "@" .. domain .. " var toll_allow");
+        if(string.match(toll_allow, "disa")) then
+            -- 有服务的授权
+            authorized = true;
+            break;
         else
-            -- Bad user id
-            session:execute("playback", invalid_entry_sound);
-			creds_tries = creds_tries + 1;
-		end
-    end
-    
-    if (authorized) then
-        -- Authorized for service, play instructions and give dialtone
-        session:execute("playback", "ivr/ivr-please_enter_the_phone_number.wav");
-        session:execute("playback", "ivr/ivr-followed_by_pound.wav");
-        
-        digits = session:playAndGetDigits(2, 15, 1, 15000, "#", dialtone, invalid_entry_sound, "\\d+", "", "3000");
-
-        if (digits == "") then
-            session:execute("playback", "voicemail/vm-goodbye.wav");
-        else
-			-- Set user using set_user dialplan application, then transfer the call
-			session:execute("set_user", user_id .. "@" .. domain);
-			session:execute("transfer", digits .. " XML default");
+            -- 没有服务的授权
+            session:execute("playback", no_permissions_sound);
+            break;
         end
-
     else
-        session:execute("playback", "voicemail/vm-goodbye.wav");
+        -- 错误的PIN码
+        session:execute("playback", invalid_entry_sound);
+        creds_tries = creds_tries + 1;
     end
+end
+else
+    -- 错误的用户ID
+    session:execute("playback", invalid_entry_sound);
+    creds_tries = creds_tries + 1;
+end
+end
+
+if (authorized) then
+    -- 被授权使用服务，播放说明并提供拨号音
+    session:execute("playback", "ivr/ivr-please_enter_the_phone_number.wav");
+    session:execute("playback", "ivr/ivr-followed_by_pound.wav");
+
+    digits = session:playAndGetDigits(2, 15, 1, 15000, "#", dialtone, invalid_entry_sound, "\\d+", "", "3000");
+```
+
+```lua
+
+if (digits == "") then
+    session:execute("playback", "voicemail/vm-goodbye.wav");
+else
+    -- 使用 set_user dialplan 应用来设置用户，然后转接电话
+    session:execute("set_user", user_id .. "@" .. domain);
+    session:execute("transfer", digits .. " XML default");
+end
+
+else
+    session:execute("playback", "voicemail/vm-goodbye.wav");
+end
 
 end
 ```
-
-

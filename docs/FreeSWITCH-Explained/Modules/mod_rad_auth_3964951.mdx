@@ -1,49 +1,46 @@
-
 # mod_rad_auth 
 
- 
+## 关于
 
-## About
+模块 rad_auth 仅执行 RADIUS 认证操作（不包括计费）。
 
-Module rad\_auth does only RADIUS authentication (and not the accounting).
-
-The truly magic thing about the rad\_auth is that you can specify your own list of VSAs (Vendor-Specific Attributes) to be included in the packet along with the standard ones that are being used.
+rad_auth 真正神奇的地方在于，您可以指定自己的 VSAs（特定供应商属性）列表，并将其包含在与正在使用的标准属性一起发送的数据包中。
 
 ```xml
-         name:       just a description
-         value:      direct input or variable
-         pec:        vendor ID (0 for default, 9 for cisco...)
-         expr:       0 - direct input (string), 1 - channel variable
-         direction:  in for radius-request, out for radius-response
+         名称：描述
+         值：直接输入或变量
+         供应商 ID：（默认为 0，思科为 9）
+         表达式：0 - 直接输入（字符串），1 - 通道变量
+         方向：进入 RADIUS 请求时为 in，回复 RADIUS 时为 out
 ```
 
-VSA mappings can be used to specify additional VSA list in both radius request and radius response messages.
+可以使用 VSA 映射来指定在 RADIUS 请求和 RADIUS 响应消息中的额外 VSA 列表。
 
-Including an additional VSA in a radius request message looks like this:
+在 RADIUS 请求消息中包含额外的 VSA 如下所示：
 
 ```xml
 <param name="Calling-Station-Id" id="31" value="CALLINGNUMBER" pec="0" expr="1" direction="in"/>
 ```
 
-or
+或者
 
 ```xml
 <param name="Calling-Station-Id" id="31" value="16094191500" pec="0" expr="0" direction="in"/>
 ```
 
-CALLINGNUMBER is a channel variable you can re-use later in the dialplan.
+CALLINGNUMBER 是一个通道变量，您可以在拨号计划中重复使用它。
 
-Extracting VSA of your interest from a radius response message looks like this:
+从 RADIUS 响应消息中提取感兴趣的 VSA 如下所示：
 
 ```xml
 <param name="lang" id="107" value="PREFFERED_LANG" pec="9" expr="0" direction="out"/>
 ```
 
-Here you map VSA with vendor\_id=9 and id=110 into a channel variable called PREFFERED\_LANG so you can use it later in dialplan to play the correct language for instance.
+在此示例中，将 vendor_id=9 和 id=110 的 VSA 映射到名为 PREFFERED_LANG 的通道变量，以便您在拨号计划中使用它播放正确的语言。
 
-## 1) To install the module you have to install freeradius-client first.
+## 1) 要安装该模块，您首先需要安装 freeradius-client。
 
-Go to <http://freeradius.org/freeradius-client/> and download the package:
+访问 <http://freeradius.org/freeradius-client/> 并下载该软件包：
 
 ```xml
 $ cd ~/build
@@ -55,18 +52,18 @@ $ make
 $ sudo make install
 ```
 
-(or $ sudo checkinstall) Checkinstall will create and install a nice Debian package for you, otherwise you may use a traditional make install.
+（或者 $ sudo checkinstall）Checkinstall将为您创建并安装一个漂亮的Debian软件包，否则您可以使用传统的make install命令。
 
-run ldconfig as root to update the shared libs links:
+以root身份运行ldconfig命令以更新共享库链接：
 
 ```xml
 ldconfig -v | grep radius
 hash -r
 ```
 
-## 2) Go to FreeSWITCH source directory and edit the modules.conf
+## 2）进入FreeSWITCH源代码目录并编辑modules.conf文件
 
-append applications/mod\_rad\_auth to the end
+在文件末尾追加applications/mod\_rad\_auth
 
 ```xml
 $ cd src/mod/applications/mod_rad_auth/
@@ -74,24 +71,24 @@ $ make
 $ make install
 ```
 
-or simply:
+或者简化为：
 
 ```xml
 $ make mod_rad_auth-install
 ```
 
-## 3) Run Freeswitch and verify that module is installed.
+## 3）运行Freeswitch并验证模块是否安装成功。
 
 ```xml
 freeswitch> load mod_rad_auth
 ```
 
-Here an example on how to use RADIUS for authentication:
+下面是使用RADIUS进行身份验证的示例：
 
 ```xml
  <configuration name="rad_auth.conf" description="radius authentification module">
   <settings>
-     <!-- backward compatibility to allow radiusclient config file instead of an embedded config -->
+     <!-- 用于兼容性的参数，允许使用radiusclient的配置文件而不是内嵌配置 -->
      <!--  <param name="radius_config" value="/usr/local/etc/radiusclient/radiusclient.conf"/>   -->
   </settings>
 
@@ -109,47 +106,49 @@ Here an example on how to use RADIUS for authentication:
 
   <vsas>
     <!-- 
-         name:       just a description
-         value:      direct input or variable 
-         pec:        vendor ID (0 for default, 9 for cisco...)
-         expr:       0 - direct input (string), 1 - channel variable
-         direction:  in for radius-request, out for radius-response
+         name:       描述
+         value:      直接输入或变量 
+         pec:        厂商ID (0表示默认, 9表示Cisco...)
+         expr:       0-直接输入（字符串）, 1-频道变量
+         direction:  in表示radius请求，out表示radius响应
     -->
 
-    <!-- mappings for radius request message; input attributes -->
-    <param name="h323-conf-id" id="24" value="CALLID" pec="9" expr="1" direction="in"/>
-    <param name="h323-prompt-id" id="104" value="SERVICENUM" pec="9" expr="1" direction="in"/>
-    <param name="Cisco-AVPair" id="1" value="TRANSACTIONID" pec="9" expr="1" direction="in"/>
-    <param name="Calling-Station-Id" id="31" value="CALLINGNUMBER" pec="0" expr="1" direction="in"/>
-    <param name="NAS-Port-Type" id="61" value="0" pec="0" expr="0" direction="in"/>
-    <param name="NAS-Port-Id" id="87" value="ISDN 3/0:D:14" pec="0" expr="0" direction="in"/>
-    <param name="Login-User" id="1" value="1" pec="0" expr="0" direction="in"/>
+<!-- mappings for radius request message; input attributes --> 
+<!-- 半径请求消息的映射；输入属性 -->
+<param name="h323-conf-id" id="24" value="CALLID" pec="9" expr="1" direction="in"/>
+<param name="h323-prompt-id" id="104" value="SERVICENUM" pec="9" expr="1" direction="in"/>
+<param name="Cisco-AVPair" id="1" value="TRANSACTIONID" pec="9" expr="1" direction="in"/>
+<param name="Calling-Station-Id" id="31" value="CALLINGNUMBER" pec="0" expr="1" direction="in"/>
+<param name="NAS-Port-Type" id="61" value="0" pec="0" expr="0" direction="in"/>
+<param name="NAS-Port-Id" id="87" value="ISDN 3/0:D:14" pec="0" expr="0" direction="in"/>
+<param name="Login-User" id="1" value="1" pec="0" expr="0" direction="in"/>
 
-    <!-- mappings for radius-response message; output values from returning outributes -->
-    <param name="BILING_MODEL" id="109" value="billing_model" pec="9" expr="0" direction="out"/>
-    <param name="CREDIT_AMOUNT" id="101" value="credit_amount" pec="9" expr="0" direction="out"/>
-    <param name="CURRENCY" id="110" value="currency" pec="9" expr="0" direction="out"/>
-    <param name="PREFFERED_LANG" id="107" value="preffered_lang" pec="9" expr="0" direction="out"/>
-    <param name="CREDIT_TIME" id="102" value="credit_time" pec="9" expr="0" direction="out"/>
-    <param name="H323-IVR-IN:DIRATION" id="1" value="h323_ivr_duration" pec="9" expr="0" direction="out"/>
-    <param name="RADIUS_RETURN_CODE" id="103" value="return_code" pec="9" expr="0" direction="out"/>
-    <!-- expr param is to be ignored here-->
-  </vsas>
- </configuration>
+<!-- mappings for radius-response message; output values from returning outributes -->
+<!-- 半径响应消息的映射；从返回的属性中输出值 -->
+<param name="BILING_MODEL" id="109" value="billing_model" pec="9" expr="0" direction="out"/>
+<param name="CREDIT_AMOUNT" id="101" value="credit_amount" pec="9" expr="0" direction="out"/>
+<param name="CURRENCY" id="110" value="currency" pec="9" expr="0" direction="out"/>
+<param name="PREFFERED_LANG" id="107" value="preffered_lang" pec="9" expr="0" direction="out"/>
+<param name="CREDIT_TIME" id="102" value="credit_time" pec="9" expr="0" direction="out"/>
+<param name="H323-IVR-IN:DIRATION" id="1" value="h323_ivr_duration" pec="9" expr="0" direction="out"/>
+<param name="RADIUS_RETURN_CODE" id="103" value="return_code" pec="9" expr="0" direction="out"/>
+<!-- expr param is to be ignored here-->
+</vsas>
+</configuration>
 ```
 
-In the dialplan you need to trigger auth as:
+在拨号计划中触发授权的行为是：
 
 ```xml
 <action application="auth_function" data="in ${DIALED_NUMBER}, in ${USERNAME}, in ${PASSWD}, out AUTH_RESULT"/>
 ```
 
-There are two behaviors:
+有两种行为：
 
-1. authorize the call according to username&pass and dialed number - if authorized, the radius server returns credit time towards the dialed number.
-2. authorize the call according to username&pass - if authorized, the radius server returns the current account balance.
+1. 根据用户名、密码和拨打的号码进行呼叫授权 - 如果授权成功，半径服务器将返回对应号码的通话时长。
+2. 根据用户名和密码进行呼叫授权 - 如果授权成功，半径服务器将返回当前账户余额。
 
-For example, you may use the credit time for scheduled hangup of call:
+例如，您可以使用通话的通话时长来进行计划挂断：
 
 ```xml
      <action application="log" data="INFO  credit_time=${credit_time}"/>
@@ -175,32 +174,63 @@ For example, you may use the credit time for scheduled hangup of call:
       <action application="sleep" data="2000"/>
       <action application="auth_function" data="in ${DIALED_NUMBER}, in ${USERNAME}, in ${PASSWD}, out AUTH_RESULT"/>
 
-      <action application="log" data="INFO  AUTH_RESULT=${AUTH_RESULT}"/>
-      <action application="log" data="INFO  billing_model=${billing_model}"/>
-      <action application="log" data="INFO  credit_amount=${credit_amount}"/>
-      <action application="log" data="INFO  currency=${currency}"/>
-      <action application="log" data="INFO  preffered_lang=${preffered_lang}"/>
-      <action application="log" data="INFO  credit_time=${credit_time}"/>
-      <action application="log" data="INFO  h323_ivr_duration=${h323_ivr_duration}"/>
-      <action application="log" data="INFO  return_code=${return_code}"/>
-      <!-- <action application="execute_extension" data="AUTH XML default"/> -->
-    </condition>
-  </extension>
+```xml
+<action application="log" data="INFO  AUTH_RESULT=${AUTH_RESULT}"/>
+<action application="log" data="INFO  billing_model=${billing_model}"/>
+<action application="log" data="INFO  credit_amount=${credit_amount}"/>
+<action application="log" data="INFO  currency=${currency}"/>
+<action application="log" data="INFO  preffered_lang=${preffered_lang}"/>
+<action application="log" data="INFO  credit_time=${credit_time}"/>
+<action application="log" data="INFO  h323_ivr_duration=${h323_ivr_duration}"/>
+<action application="log" data="INFO  return_code=${return_code}"/>
+<!-- <action application="execute_extension" data="AUTH XML default"/> -->
+</condition>
+</extension>
 
-  <extension name="unitest_rad-ANI-balance">
-    <condition field="destination_number" expression="^602$">
-      <action application="log" data="INFO  PRIJE RAD_AUTH "/>
+<extension name="unitest_rad-ANI-balance">
+<condition field="destination_number" expression="^602$">
+<action application="log" data="INFO  PRIJE RAD_AUTH "/>
 
-      <action inline="true" application="set" data="CALLID=h323-conf-id=${uuid}"/>
-      <action inline="true" application="set" data="SERVICENUM=h323-prompt-id=${destination_number}"/>
-      <action inline="true" application="set" data="TRANSACTIONID=h323-ivr-out=transactionID:1234"/>
- <!--      <action inline="true" application="set" data="CALLINGNUMBER=${caller_id_number}"/> -->
-      <action inline="true" application="set" data="CALLINGNUMBER=38516060333"/>
-      <action inline="true" application="set" data="USERNAME=38516060333"/>
- <!--      <action inline="true" application="set" data="USERNAME=209354"/> -->
-      <action inline="true" application="set" data="PASSWD=003282"/>
-      <action inline="true" application="set" data="DIALED_NUMBER=16094191500"/>
+<action inline="true" application="set" data="CALLID=h323-conf-id=${uuid}"/>
+<action inline="true" application="set" data="SERVICENUM=h323-prompt-id=${destination_number}"/>
+<action inline="true" application="set" data="TRANSACTIONID=h323-ivr-out=transactionID:1234"/>
+<!-- <action inline="true" application="set" data="CALLINGNUMBER=${caller_id_number}"/> -->
+<action inline="true" application="set" data="CALLINGNUMBER=38516060333"/>
+<action inline="true" application="set" data="USERNAME=38516060333"/>
+<!-- <action inline="true" application="set" data="USERNAME=209354"/> -->
+<action inline="true" application="set" data="PASSWD=003282"/>
+<action inline="true" application="set" data="DIALED_NUMBER=16094191500"/>
+```
 
+```xml
+<action application="log" data="INFO  AUTH_RESULT=${AUTH_RESULT}"/>
+<action application="log" data="INFO  billing_model=${billing_model}"/>
+<action application="log" data="INFO  credit_amount=${credit_amount}"/>
+<action application="log" data="INFO  currency=${currency}"/>
+<action application="log" data="INFO  preffered_lang=${preffered_lang}"/>
+<action application="log" data="INFO  credit_time=${credit_time}"/>
+<action application="log" data="INFO  h323_ivr_duration=${h323_ivr_duration}"/>
+<action application="log" data="INFO  return_code=${return_code}"/>
+<!-- <action application="execute_extension" data="AUTH XML default"/> -->
+</condition>
+</extension>
+
+<extension name="unitest_rad-ANI-balance">
+<condition field="destination_number" expression="^602$">
+<action application="log" data="INFO  PRIJE RAD_AUTH "/>
+
+<action inline="true" application="set" data="CALLID=h323-conf-id=${uuid}"/>
+<action inline="true" application="set" data="SERVICENUM=h323-prompt-id=${destination_number}"/>
+<action inline="true" application="set" data="TRANSACTIONID=h323-ivr-out=transactionID:1234"/>
+<!-- <action inline="true" application="set" data="CALLINGNUMBER=${caller_id_number}"/> -->
+<action inline="true" application="set" data="CALLINGNUMBER=38516060333"/>
+<action inline="true" application="set" data="USERNAME=38516060333"/>
+<!-- <action inline="true" application="set" data="USERNAME=209354"/> -->
+<action inline="true" application="set" data="PASSWD=003282"/>
+<action inline="true" application="set" data="DIALED_NUMBER=16094191500"/>
+```
+
+```xml
       <action application="sleep" data="2000"/>
       <action application="auth_function" data="in ${DIALED_NUMBER}, in ${USERNAME}, in ${PASSWD}, out AUTH_RESULT"/>
 
@@ -216,5 +246,3 @@ For example, you may use the credit time for scheduled hangup of call:
     </condition>
   </extension>
 ```
-
-

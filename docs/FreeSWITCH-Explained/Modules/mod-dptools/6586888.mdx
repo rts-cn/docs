@@ -1,25 +1,22 @@
+# mod_dptools: 传真检测
 
-# mod_dptools: fax detect 
+## 关于
 
- 
+传真检测工具。
 
-## About
+单击此处展开目录
 
-Fax detection tool.
+* 1 [用法](#-freeswitch--mod_dptools-fax-detect-)
 
-Click here to expand Table of Contents
+## 用法
 
-* 1 [Usage](#-freeswitch--mod_dptools-fax-detect-)
-
-## Usage
-
-To detect a fax, you can use the following XML in your dialplan:
+要检测传真，请在您的拨号计划中使用以下XML代码：
 
 ```xml
 <action application="tone_detect" data="fax 1100 r +5000 transfer fax XML default" /> 
 ```
 
-When a fax is detected, the call will be routed to context=default, extension name=fax in the dialplan.
+当检测到传真时，呼叫将被路由到上下文为default，扩展名为fax的位置。
 
 ```xml
 <context name="default">
@@ -36,129 +33,127 @@ When a fax is detected, the call will be routed to context=default, extension na
 </context>
 ```
 
-The above example assuming you are using Faxlib.fjs (bellow) to receive fax.
+上述示例假设您正在使用Faxlib.fjs（见下文）来接收传真。
 
-Click here to see Faxlib.fjs
+单击此处查看Faxlib.fjs
 
 ```js
-//  -*- mode:c; tab-width:4; c-basic-offset:4; c-indent-level:4; indent-tabs-mode:nil;  -*-
+// -*- mode:c; tab-width:4; c-basic-offset:4; c-indent-level:4; indent-tabs-mode:nil;  -*-
 /*
- * Version: MPL 1.1
+ * 版本：MPL 1.1
  *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- * http://www.mozilla.org/MPL/
+ * 本文件的内容受 Mozilla Public License Version 1.1（“许可证”）的约束。您只能在遵守许可证的情况下使用本文件。您可以在以下网址获取许可证的副本：http://www.mozilla.org/MPL/
  *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
+ * 根据许可证, 本软件以“原样”分发，无任何形式的担保。具体的权利和限制请参阅许可证。
  *
- * The Original Code is FreeSWITCH[tm] Spidermonkey Fax Manipulation Library
+ * 原始代码是 FreeSWITCH[tm] Spidermonkey Fax Manipulation Library
  *
- * The Initial Developer of the Original Code is
+ * 最初的开发者是
  *
  * Bret McDanel <bret AT 0xdecafbad dot com>
  *
- * Portions created by the Initial Developer are Copyright (C) 2007
- * the Initial Developer. All Rights Reserved.
+ * 最初开发者创建的部分版权所有 © 2007
+ * 最初的开发者。保留所有权利。
  *
- * Contributor(s):
+ * 贡献者：
  *
  *
  * faxlib.jm
  *
- * This is a library to do fax manipulation from within Javascript in FreeSWITCH[tm]
- * The goal of this library is to make it easier to send and receive faxes
+ * 这是一个用于在 FreeSWITCH[tm] 中使用 Javascript 进行传真操作的库。
+ * 该库的目标是简化传真的发送和接收过程。
  *
  *
- * REQUIREMENTS:
+ * 要求：
  *
- * - A working install of socket2me from the FreeSWITCH[tm] src
- * - tiff2pdf from libtiff tools, in your PATH [optional]
+ * - 在 FreeSWITCH[tm] 源代码中安装并工作正常的 socket2me
+ * - 在 PATH 中安装 tiff2pdf（来自 libtiff 工具）[可选]
  */
+```
 
-function fax(session,socketaddr,faxFilePrefix,faxFile) {
-    this.socketaddr=socketaddr;
-    this.session=session;
-    this.faxDetect=false;
-    this.faxFilePrefix="/tmp";
-    this.faxFile=session.uuid+".tiff";
-    this.gotFax=false;
-    if(typeof faxFilePrefix != 'undefined') {
+```javascript
+function fax(session, socketaddr, faxFilePrefix, faxFile) {
+    this.socketaddr = socketaddr;
+    this.session = session;
+    this.faxDetect = false;
+    this.faxFilePrefix = "/tmp";
+    this.faxFile = session.uuid + ".tiff";
+    this.gotFax = false;
+    if (typeof faxFilePrefix != 'undefined') {
         this.faxFilePrefix = faxFilePrefix;
     }
-    if(typeof faxFile != 'undefined') {
+    if (typeof faxFile != 'undefined') {
         this.faxFile = faxFile;
     }
-    // disable fax cng detection
-    this.stopFaxDetect = function () {
-        if(this.faxDetect == true) {
-            this.session.execute("stop_fax_detect","");
-            this.faxDetect=false;
+    // 禁用传真CNG检测
+    this.stopFaxDetect = function() {
+        if (this.faxDetect == true) {
+            this.session.execute("stop_fax_detect", "");
+            this.faxDetect = false;
         }
     }
 
-    // enable fax cng detection
-    this.startFaxDetect = function () {
-        if(this.faxDetect == false) {
-            this.session.execute("fax_detect","");
-            this.faxDetect=true;
+    // 启用传真CNG检测
+    this.startFaxDetect = function() {
+        if (this.faxDetect == false) {
+            this.session.execute("fax_detect", "");
+            this.faxDetect = true;
         }
     }
 
-    this.getFaxFile = function () {
+    this.getFaxFile = function() {
         return this.faxFilePrefix + "/" + this.faxFile;
-    }
-
-    // receive a fax
-    this.rxFax = function() {
-        if(typeof this.socketaddr != 'undefined') {
-            this.stopFaxDetect();
-            this.session.execute("set","fax_mode=recv"); // not needed at this time, future proofing
-            this.session.execute("set","fax_file_name=" + this.getFaxFile());
-            this.session.execute("socket",this.socketAddr);
-            fd = new File(this.getFaxFile());
-            if(fd.exists) {
-                this.gotFax=true;
-            }
-        } else {
-            console_log("SocketAddr is not set, unable to receive a fax\n");
-        }
-    }
-    // send a fax
-    this.txFax = function() {
-        if(typeof this.socketaddr != 'undefined') {
-            this.session.execute("set","fax_mode=send");
-            this.session.execute("set","fax_file_name=" + this.getFaxFile());
-            this.session.execute("socket",this.socketAddr);
-        } else {
-            console_log("SocketAddr is not set, unable to transmit a fax\n");
-        }
-    }
-
-    this.fax2pdf = function() {
-        fd = new File(this.getFaxFile());
-        if(fd.exists) {
-            outfile = this.faxFile.replace(/tiff$/i,"pdf");
-            if(outfile == this.faxFile) {
-                outfile = this.faxFile + ".pdf";
-            }
-            system("tiff2pdf -z -p letter -t 'FreeSWITCH FAX' -s 'Fax from " + this.session.caller_id_num + "' " +
-                   "-c FreeSWITCH -a FreeSWITCH -f -o " + this.faxFilePrefix + "/" + outfile + " " + 
-                   this.getFaxFile());
-            var pdf = new File(this.faxFilePrefix + "/" + outfile);
-            if(pdf.exists) {
-                fd.remove(); // remove the tiff file
-                this.faxFile = outfile;
-                return true;
-            }
-        }
-        return false;
     }
 }
 ```
-  
-  
 
+```javascript
+// 接收传真
+this.rxFax = function() {
+    if(typeof this.socketaddr != 'undefined') {
+        this.stopFaxDetect();
+        this.session.execute("set","fax_mode=recv"); // 现在不需要，为了未来做准备
+        this.session.execute("set","fax_file_name=" + this.getFaxFile());
+        this.session.execute("socket",this.socketAddr);
+        fd = new File(this.getFaxFile());
+        if(fd.exists) {
+            this.gotFax=true;
+        }
+    } else {
+        console_log("SocketAddr 未设置，无法接收传真\n");
+    }
+}
+// 发送传真
+this.txFax = function() {
+    if(typeof this.socketaddr != 'undefined') {
+        this.session.execute("set","fax_mode=send");
+        this.session.execute("set","fax_file_name=" + this.getFaxFile());
+        this.session.execute("socket",this.socketAddr);
+    } else {
+        console_log("SocketAddr 未设置，无法发送传真\n");
+    }
+}
+```
+
+```java
+this.fax2pdf = function() {
+    fd = new File(this.getFaxFile());
+    if(fd.exists) {
+        outfile = this.faxFile.replace(/tiff$/i,"pdf");
+        if(outfile == this.faxFile) {
+            outfile = this.faxFile + ".pdf";
+        }
+        system("tiff2pdf -z -p letter -t 'FreeSWITCH FAX' -s 'Fax from " + this.session.caller_id_num + "' " +
+               "-c FreeSWITCH -a FreeSWITCH -f -o " + this.faxFilePrefix + "/" + outfile + " " + 
+               this.getFaxFile());
+        var pdf = new File(this.faxFilePrefix + "/" + outfile);
+        if(pdf.exists) {
+            fd.remove(); // remove the tiff file
+            this.faxFile = outfile;
+            return true;
+        }
+    }
+    return false;
+}
+}
+```

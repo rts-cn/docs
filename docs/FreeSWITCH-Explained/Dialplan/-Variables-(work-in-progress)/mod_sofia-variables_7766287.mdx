@@ -1,13 +1,12 @@
-
-# mod_sofia variables 
+# mod_sofia 变量 
 
  
 
-## About
+## 关于
 
-These channel variables are used in [mod\_sofia](../../Modules/mod_sofia_1048707.mdx#about).
+这些通道变量在 [mod\_sofia](../../Modules/mod_sofia_1048707.mdx#about) 中使用。
 
-Click here to expand Table of Contents
+单击此处展开目录
 
 * 1 [acl\_token](#sip_acl_token)
 * 2 [alert\_info](#alert_info)
@@ -28,247 +27,245 @@ Click here to expand Table of Contents
 
 ## acl_token
 
-If an incoming SIP INVITE message matches against a user ACL, this variable is set to the user ID and domain name.
+如果一个传入的 SIP INVITE 消息与用户 ACL 匹配，这个变量就会设置为用户 ID 和域名。
 
 ## alert_info
 
-Add an Alert-Info Header like Snom and other Phones need for Ring or Ringtone information.
+添加一个 Alert-Info Header，例如 Snom 和其他电话所需的铃声或铃声信息。
 
-#### **Usage:**
+#### **用法:**
 
-Load an external Wav Ringtone on all Calls.
+在所有通话上加载外部 Wav 铃声。
 
 ```xml
 <action application="export" data="alert_info=http://192.168.181.5/sounds/ctu.wav"/> 
 ```
 
-Use the External Ringer (Change the Ringtone for the alert-external, alert-group and alert-internal in Snom under Setup > Preferences > Alert-Info Ringer)
+使用外部铃声（在 Snom 的设置 > 首选项 > Alert-Info 铃声中更改 alert-external、alert-group 和 alert-internal 的铃声）
 
 ```xml
 <action application="export" data="alert_info=http://www.notused.com;info=alert-external;x-line-id=0"/>
 ```
 
-**See also:** <http://wiki.snom.com/Web%5FInterface/V8/Preferences/Alert-Info%5FRinger>
+**另请参阅：** <http://wiki.snom.com/Web%5FInterface/V8/Preferences/Alert-Info%5FRinger>
 
 ## auto_answer_destination
 
-In an inbound call, the remote side may send a SIP NOTIFY message with the event type "talk", telling Sofia endpoint to answer the call. In this case, the variable "`auto_answer_destination`" is set to the channel's "`destination_number`", and the call is transferred to the extension "`auto_answer`" within current dialplan and context.
+在呼入呼叫中，远端可能会发送一个SIP NOTIFY消息，事件类型为"talk"，告知Sofia终端应答呼叫。在这种情况下，变量"`auto_answer_destination`"被设置为通道的"`destination_number`"，并且呼叫被转接到当前拨号计划和上下文中的"`auto_answer`"分机。
 
 ## call_clientcode
 
-This is used by SNOM phones. When FreeSWITCH receives a SIP INFO message with `x-clientcode` header, this variable is set to the value of that header.
+这是SNOM电话使用的。当FreeSWITCH接收到带有`x-clientcode`头的SIP INFO消息时，此变量会被设置为该头的值。
 
-#### **Implemented By:**
+#### **实现于:**
 
-| **Module Name**                                                        | **Source File** | **Last Revised** |
-| ---------------------------------------------------------------------- | --------------- | ---------------- |
-| [mod\_sofia](https://wiki.freeswitch.org/wiki/Mod%5Fsofia "Mod sofia") | sofia.c         | 6987             |
+| **模块名称**                                                          | **源文件** | **最后修订** |
+| -------------------------------------------------------------------- | ---------- | ------------ |
+| [mod_sofia](https://wiki.freeswitch.org/wiki/Mod%5Fsofia "Mod sofia") | sofia.c    | 6987         |
 
 ## codec_string
 
-Sets the base codec string to use.
+设置要使用的基本编解码器字符串。
 
-#### **Usage:**
+#### **用法:**
 
 ```xml
 <action application="set" data="codec_string=PCMU,GSM"/>
 ```
 
-#### **Implemented By:**
+#### **实现于:**
 
-| **Module Name**                                                        | **Source File** | **Last Revised** |
-| ---------------------------------------------------------------------- | --------------- | ---------------- |
-| [mod\_opal](https://wiki.freeswitch.org/wiki/Mod%5Fopal "Mod opal")    | mod\_opal.cpp   | 10567            |
-| [mod\_sofia](https://wiki.freeswitch.org/wiki/Mod%5Fsofia "Mod sofia") | sofia\_glue.c   | 5114             |
+| **模块名称**                                                          | **源文件**   | **最后修订** |
+| -------------------------------------------------------------------- | ------------ | ------------ |
+| [mod_opal](https://wiki.freeswitch.org/wiki/Mod%5Fopal "Mod opal")    | mod_opal.cpp | 10567        |
+| [mod_sofia](https://wiki.freeswitch.org/wiki/Mod%5Fsofia "Mod sofia") | sofia_glue.c | 5114         |
 
 ## disable_q850_reason
 
-When set to "true", this disables sending of the Reason header, which includes the Q.850 reason code, in responses and BYE's. For a list of hangup causes and their Q.850 codes, see [Hangup Causes](https://wiki.freeswitch.org/wiki/Hangup%5FCauses "Hangup Causes").
+当设置为"true"时，这将禁止在响应和挂断中发送包含Q.850原因码的Reason头。有关挂断原因及其Q.850代码的列表，请参见[Hangup Causes](https://wiki.freeswitch.org/wiki/Hangup%5FCauses "Hangup Causes")。
 
-#### **Usage:**
+#### **用法:**
 
 ```xml
 <action application="set" data="disable_q850_reason=true"/>
 ```
 
-#### **Implemented By:**
+#### **实现者：**
 
-| Module Name | Source File | Last Revised               |
-| ----------- | ----------- | -------------------------- |
-| mod\_sofia  |             | 15850 committed 12/8/2009. |
+| 模块名称   | 源代码文件 | 最后修订日期               |
+| ---------- | ---------- | -------------------------- |
+| mod\_sofia |            | 2009年12月8日提交 15850项。 |
 
 ## drop_dtmf
 
-Set this on an inbound channel before answer or on an outbound channel before the bridge/originate in order to prevent DTMF events from being sent to the channel.
+在应答之前通过设置入站通道，或在桥接/发出呼叫之前通过设置出站通道，以防止DTMF事件发送到通道。
 
-Only tested with RFC2833, may also work for INFO / inband. See Jira issue FS-4769\. Commit 60f7849cbe72.
+仅在RFC2833中进行了测试，也可能适用于INFO / inband。参见Jira问题FS-4769。提交60f7849cbe72。
 
-#### **Usage:**
+#### **用法：**
 
 ```xml
 <action application="set" data="drop_dtmf=true"/>
 <action application="answer"/>
 ```
 
-or,
+或者，
 
 ```xml
 <action application="export" data="nolocal:drop_dtmf=true"/>
 <action application="bridge" data="sofia/internal/100@1.2.3.4"/>
 ```
 
-or,
+或者，
 
 ```xml
 <action application="bridge" data="{drop_dtmf=true}sofia/internal/100@1.2.3.4"/>
 ```
 
-#### **Implemented By:**
+#### **实现者：**
 
-| **Module Name**                                                        | **Source File** | **Last Revised** |
-| ---------------------------------------------------------------------- | --------------- | ---------------- |
-| [mod\_sofia](https://wiki.freeswitch.org/wiki/Mod%5Fsofia "Mod sofia") | sofia\_glue.c   |                  |
+| **模块名称**                                                        | **源代码文件** | **最后修订日期** |
+| ------------------------------------------------------------------ | -------------- | ---------------- |
+| [mod\_sofia](https://wiki.freeswitch.org/wiki/Mod%5Fsofia "Mod sofia") | sofia\_glue.c  |                  |
 
 ## dtmf_type
 
-For inband DTMF, [Misc. Dialplan Tools start\_dtmf](../../Modules/mod-dptools/6587132.mdx#0-about) must be used in the dialplan.
+对于inband DTMF，[离线拨号计划工具 start\_dtmf](../../Modules/mod-dptools/6587132.mdx#0-about)必须在拨号计划中使用。
 
-#### **Usage:**
-
-```xml
-<action application="set" data="dtmf_type=info"/> 
-```
-
-or,
+#### **用法：**
 
 ```xml
-<action application="set" data="dtmf_type=rfc2833"/> 
+<action application="set" data="dtmf_type=info"/> 
 ```
 
-or,
+或者，
 
 ```xml
- <action application="set" data="dtmf_type=none"/>
+<action application="set" data="dtmf_type=rfc2833"/> 
 ```
 
-#### **Implemented By:**
+或者，
 
-| **Module Name**                                                        | **Source File** | **Last Revised** |
-| ---------------------------------------------------------------------- | --------------- | ---------------- |
-| [mod\_sofia](https://wiki.freeswitch.org/wiki/Mod%5Fsofia "Mod sofia") | sofia\_glue.c   | 6952             |
+```xml
+ <action application="set" data="dtmf_type=none"/>
+```
+
+#### **实现者：**
+
+| **模块名称**                                                        | **源文件**       | **最后修订日期** |
+| ------------------------------------------------------------------- | ---------------- | ---------------- |
+| [mod_sofia](https://wiki.freeswitch.org/wiki/Mod%5Fsofia)   | sofia_glue.c     | 6952             |
 
 ## execute_on_sip_extra_headers
 
-Execute a command when SIP extra headers are detected in a SIP message.  
+当在SIP消息中检测到SIP额外标头时执行一个命令。
 
 ## execute_on_sip_reinvite
 
-Execute a command when SIP Reinvite is received.
+当收到SIP Reinvite时执行一个命令。
 
 ## rtp_disable_hold
 
-When set to true the user may not put the call on hold.
+当设置为true时，用户无法将通话放置在等待状态。
 
-#### **Usage:**
+#### **使用方法:**
 
 ```xml
 <action application="set" data="rtp_disable_hold=true"/>
 ```
 
-#### **Implemented By:**
+#### **由以下模块实现:**
 
-* mod\_sofia
+* mod_sofia
 
 ## sip_acl_authed_by
 
-Contains the name of the ACL node that authorized this call.
+包含授权此通话的ACL节点的名称。
 
-#### **Implemented By:**
+#### **由以下模块实现:**
 
-* mod\_sofia
+* mod_sofia
 
 ## sip_acl_token
 
-Contains the ACL auth token for the current call.
+包含当前通话的ACL认证令牌。
 
-#### **Implemented By:**
+#### **由以下模块实现:**
 
-* \[Mod\_sofia\]
+* \[Mod_sofia\]
 
 ## sip_auth_password
 
-For mod\_sofia use with sip\_auth\_username to answer auth challenges without defining a full gateway.
+对于mod_sofia，与sip_auth_username一起使用，以回答认证挑战，而无需定义一个完整的网关。
 
-#### **Usage:**
+#### **使用方法:**
 
 ```xml
 originate {sip_auth_username=<your_user_name>,sip_auth_password=<your_password>}sofia/external/1xxxxxxx@12.34.56.78 &echo
 ```
 
-#### **See also:**
+#### **另请参阅:**
 
-* **sip\_auth\_username**
+* **sip_auth_username**
 
-#### **Implemented By:**
+#### **由以下模块实现:**
 
-| **Module Name** | **Source File** | **Last Revised** |
-| --------------- | --------------- | ---------------- |
-| mod\_sofia      | sofia\_reg.c    | 12819            |
+| **模块名称** | **源文件**     | **最后修订日期** |
+| ------------- | -------------- | ---------------- |
+| mod_sofia     | sofia_reg.c    | 12819            |
 
 ## sip_auth_username
 
-For mod\_sofia answer auth challenges without defining a full gateway. Used in tandem with [sip\_auth\_password](https://wiki.freeswitch.org/wiki/Variable%5Fsip%5Fauth%5Fpassword "Variable sip auth password"). Also indicates the SIP username a device successfully registered to FreeSWITCH with.
+对于mod_sofia没有定义完整网关的应答验证挑战。与[sip_auth_password](https://wiki.freeswitch.org/wiki/Variable%5Fsip%5Fauth%5Fpassword "Variable sip auth password")配合使用。还指示了设备成功注册到FreeSWITCH的SIP用户名。
 
-#### **Usage:**
+#### **用法:**
 
 ```xml
 originate {sip_auth_username=<your_user_name>,sip_auth_password=<your_password>}sofia/external/1xxxxxxx@12.34.56.78 &echo
 ```
 
-#### **Notes:**
+#### **注意事项:**
 
-This should contain the username of the authenticated user that has triggered this request, if applicable.
+如果适用的话，这里应包含触发此请求的经过身份验证用户的用户名。
 
-Depending on how your FreeSWITCH instance is configured, you may experience problems with this variable being incorrect or blank after calling the 'bridge' application. If this happens, you may want to force the channel variable, for example;
+根据您的FreeSWITCH实例的配置方式，调用'bridge'应用程序后，可能出现此变量不正确或为空的问题。如果发生这种情况，您可能需要强制设置通道变量，例如;
 
 ```xml
 <action application="bridge" data="{sip_auth_username=${sip_auth_username}}sofia/gateway/external/2000"/>
 ```
 
-**See also:**
+**另请参阅:**
 
-* **sip\_auth\_password**
-* **sip\_authorized**
+* **sip_auth_password**
+* **sip_authorized**
 
-#### **Implemented By:**
+#### **实现者:**
 
-| **Module Name** | **Source File** | **Last Revised** |
+| **模块名称** | **源代码文件** | **最新修订** |
 | --------------- | --------------- | ---------------- |
-| mod\_sofia      | sofia\_reg.c    | 12819            |
+| mod_sofia      | sofia_reg.c    | 12819            |
 
 ## sip_authorized
 
-sip\_authorized indicates whether the SIP device accessing the dialplan is authorized to FreeSWITCH or not. The SIP device can be authorized either via an ACL or via digest authentication.
+sip_authorized指示访问拨号计划的SIP设备是否经过FreeSWITCH授权。SIP设备可以通过ACL或通过摘要认证进行授权。
 
-**Usage:**
+**用法:**
 
-Example needed! Please contribute one.
+需要示例！请提供一份。
 
-**See also:**
+**另请参阅:**
 
-* sip\_auth\_username
-* sip\_acl\_authed\_by
-* sip\_acl\_token\_vars
+* sip_auth_username
+* sip_acl_authed_by
+* sip_acl_token_vars
 
-**Implemented By:**
+**实现者:**
 
-| **Module Name** | **Source File** | **Last Revised** |
+| **模块名称** | **源代码文件** | **最新修订** |
 | --------------- | --------------- | ---------------- |
-| mod\_sofia      | sofia.c         | 5299             |
+| mod_sofia      | sofia.c         | 5299             |
 
-### Comments:
+### 评论:
 
-| The variables on this document have been reconciled into the Variables Master List. ![](/images/icons/contenttypes/comment_16.png) Posted by ryharris at Feb 07, 2018 13:42 |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-
-
+| 这个文档中的变量已经与变量主列表中的变量进行了对账。![ ](/images/icons/contenttypes/comment_16.png) 由 ryharris 于 2018年2月7日 13:42 发布 |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

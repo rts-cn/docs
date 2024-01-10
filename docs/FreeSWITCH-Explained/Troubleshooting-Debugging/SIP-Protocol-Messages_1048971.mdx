@@ -1,110 +1,105 @@
+# SIP协议消息
 
-# SIP Protocol Messages 
+## 关于
 
- 
-
-## About
-
-The SIP protocol specifies messages that communicate status between endpoints. Each standardized message is indexed by a number as listed below.
+SIP协议规定了终端之间传递状态的消息。下面列出了每个标准化消息的索引。
 
 [RFC 3261](https://tools.ietf.org/html/rfc3261)
 
-  
-Click here to expand ToC
+点击此处展开目录
 
-* [Requests](#requests)
-* [Responses](#responses)  
-   * [1xx Informational Messages](#1xx-informational-messages)  
-   * [2xx Successful Responses](#2xx-successful-responses)  
-   * [3xx Redirection Responses](#3xx-redirection-responses)  
-   * [4xx Request Failure Responses](#4xx-request-failure-responses)  
-   * [5xx Server Failure Responses](#5xx-server-failure-responses)  
-   * [6xx Global Failure Responses](#6xx-global-failure-responses)
-* [Example: Playback custom error message](#example-playback-custom-error-message)
-* [See Also](#see-also)
+- [请求](#requests)
+- [响应](#responses)
+  - [1xx 信息消息](#1xx-informational-messages)
+  - [2xx 成功响应](#2xx-successful-responses)
+  - [3xx 重定向响应](#3xx-redirection-responses)
+  - [4xx 请求失败响应](#4xx-request-failure-responses)
+  - [5xx 服务器失败响应](#5xx-server-failure-responses)
+  - [6xx 全局失败响应](#6xx-global-failure-responses)
+- [示例：播放自定义错误消息](#example-playback-custom-error-message)
+- [参见](#see-also)
 
-## Requests
+## 请求
 
-* **INVITE** Indicates that a user is being invited to join a session.
-* **ACK** Confirms that client has received a response to the invite message.
-* **BYE** Terminates a call.
-* **CANCEL** Cancels any Pending Searches.
-* **OPTIONS** Queries for Capabilities.
-* **REGISTER** Registers the Address listed in the header field with a SIP Server.
+- **INVITE**：表示邀请用户加入会话。
+- **ACK**：确认客户端已收到邀请消息的响应。
+- **BYE**：结束通话。
+- **CANCEL**：取消任何待定搜索。
+- **OPTIONS**：查询能力。
+- **REGISTER**：将头字段中列出的地址注册到SIP服务器。
 
-## Responses
+## 响应
 
-### 1xx Informational Messages
+### 1xx 信息消息
 
-* **100 Trying:** Indicates that a request has been initiated by the caller and the called party has yet not been located.
-* **180 Ringing:** Indicates that the called party has been located and is being notified of the call.
-* **181 Call is being forwarded:** Indicates that the called party has rerouted the call to another.
-* **182 Queued:** Indicates that the called party is currently not available, and have put the call in queue.
-* **183 Session in Progress**
+- **100 Trying**：表示呼叫方发起请求，被呼叫方尚未找到。
+- **180 Ringing**：表示被呼叫方已被找到并正在通知来电。
+- **181 Call is being forwarded**：表示被呼叫方已将呼叫转发到另一个号码。
+- **182 Queued**：表示被呼叫方当前不可用，并把呼叫放入队列中。
+- **183 Session in Progress**：正在进行会话。
 
-### 2xx Successful Responses
+### 2xx 成功响应
 
-* **200 OK:** Indicates that the request has been successfully processed.
+- **200 OK**：表示请求已成功处理。
 
-### 3xx Redirection Responses
+### 3xx 重定向响应
 
-* **300 Multiple Choices:** Indicates that the address resolved to more than one location.
-* **301 Moved permanently:** Indicates user is no longer available at this location, an alternate location should be included in the header.
-* **302 Moved Temporarily:** Indicates that the user in temporarily unavailable, an alternate location should be included in the header.
-* **305 Use Proxy:** This response indicates that the caller must use a proxy to contact the called party.
-* **380 Call is not successful** but alternate services are available.
+* **300 多种选择:** 表示地址解析到了多于一个位置。
+* **301 永久移动:** 表示用户不再位于此位置，应在标头中包含备用位置。
+* **302 暂时移动:** 表示用户暂时不可用，应在标头中包含备用位置。
+* **305 使用代理:** 此响应表示呼叫者必须使用代理与被呼叫方联系。
+* **380 呼叫不成功，** 但备用服务可用。
 
-### 4xx Request Failure Responses
+### 4xx 请求失败响应
 
-* **400 Bad Request:** Indicates the request sent could not be understood.
-* **401 Unauthorized Request:** Indicates the request requires authorization.
-* **402 Payment Required:** Indicates payment is required to complete the call.
-* **403 Forbidden:** Indicates Server has received the request but will not provide the service.
-* **404 Not Found:** Indicates the server was not found.
-* **405 Method Not Allowed:** Indicates that the request contains a list of methods that are not allowed.
-* **406 Not acceptable:** Indicates that the request can not be processed by the client.
-* **407 Proxy Authentication Required:** Client must first authenticate itself with a proxy.
-* **408 Request Timeout:** The server could not produce a response before a given time out.
-* **409 Conflict:** Indicates a conflict with the current state of the resource.
-* **410 Gone:** Resource is no longer available at the server and no forwarding address was found.
-* **411 Length Required:** User refuses request without a specified length.
-* **412 Request Entity Too Large:** Server refuses to process request because URI is too long.
-* **415 Unsupported Media:** Indicates the format of the body is not supported by the destination endpoint.
-* **420 Bad Extension:** The server could not understand the protocol extension indicated in the required header.
-* **480 Temporarily Unavailable:** Indicates that the called party was contacted but was temporarily unavailable.
-* **481 Call Leg Transaction Does Not Exist:** Indicates that the server was ignoring the request of bye or cancel since there is no matching Invite transaction.
-* **482 Loop Detected:** (Also, _Request Merged_) Server received a request which has it self in the path.
-* **483 Too Many Hops:** The server received a request that required more hops than allowed.
-* **484 Incomplete Address:** The server received a request with an incomplete address.
-* **485 Ambiguous:** Server received a request in which the called address is ambiguous.
-* **486 Busy Here:** The called party was contacted but the system was not able to receive any more calls.
-* **487 Request Terminated:** The calling party canceled the request before the dialog was established with a 200 OK.
-* **488 Not Acceptable Here**
-* **489 Bad Event:** See [RFC3265](http://www.faqs.org/rfcs/rfc3265.html)
-* ****491 Request Pending**
-* **493 Undecipherable**
-* **494 Security Agreement Required:** See [RFC3329](http://www.faqs.org/rfcs/rfc3329.html)
+- **400 Bad Request:** 表示无法理解发送的请求。
+- **401 Unauthorized Request:** 表示请求需要授权。
+- **402 Payment Required:** 表示需要付款才能完成通话。
+- **403 Forbidden:** 表示服务器已收到请求但不会提供服务。
+- **404 Not Found:** 表示找不到服务器。
+- **405 Method Not Allowed:** 表示请求包含了不允许的方法列表。
+- **406 Not Acceptable:** 表示客户端无法处理请求。
+- **407 Proxy Authentication Required:** 客户端必须先通过代理服务器进行身份验证。
+- **408 Request Timeout:** 服务器在给定的超时时间之前无法生成响应。
+- **409 Conflict:** 表示与资源的当前状态冲突。
+- **410 Gone:** 资源在服务器上不再可用，且没有找到转发地址。
+- **411 Length Required:** 用户拒绝没有指定长度的请求。
+- **412 Request Entity Too Large:** 服务器拒绝处理请求，因为URI太长。
+- **415 Unsupported Media:** 表示目标终端不支持请求体的格式。
+- **420 Bad Extension:** 服务器无法理解所需头部的协议扩展。
+- **480 Temporarily Unavailable:** 表示被呼叫方已被联系，但暂时无法使用。
+- **481 Call Leg Transaction Does Not Exist:** 表示服务器忽略了结束或取消请求，因为没有匹配的邀请事务。
+- **482 Loop Detected:** (还有，_Request Merged_) 服务器收到了一个包含自身路径的请求。
+- **483 Too Many Hops:** 服务器接收到的请求所需的跳数超过了允许的限制。
+- **484 Incomplete Address:** 服务器收到了一个不完整的地址请求。
+- **485 Ambiguous:** 服务器收到了一个被叫地址不明确的请求。
+- **486 Busy Here:** 已联系被叫方，但系统无法接收更多呼叫。
+- **487 Request Terminated:** 呼叫方在与200 OK建立对话之前取消了请求。
+- **488 Not Acceptable Here**
+- **489 Bad Event:** 请参考[RFC3265](http://www.faqs.org/rfcs/rfc3265.html)
+- **491 Request Pending**
+- **493 Undecipherable**
+- **494 Security Agreement Required:** 请参考[RFC3329](http://www.faqs.org/rfcs/rfc3329.html)
 
-### 5xx Server Failure Responses
+### 5xx 服务器错误响应
 
-* **500 Server Internal Error:** Server encountered an unexpected error and could not process the request
-* **501 Not Implemented:** Server does not support the functions required to complete the request.
-* **502 Bad Gateway:** Server received an invalid request upstream.
-* **503 Service Unavailable:** Server has an overload or maintenance problem.
-* **504 Gateway Timeout:** Server did not receive a timely response from another server.
-* **505 Version Not Supported:** Server does not support the SIP protocol used in the request.
+* **500 服务器内部错误：** 服务器遇到意外错误，无法处理请求。
+* **501 没有实现：** 服务器不支持完成请求所需的功能。
+* **502 错误的网关：** 服务器接收到不合法的上游请求。
+* **503 服务不可用：** 服务器出现过载或维护问题。
+* **504 网关超时：** 服务器未能及时从另一个服务器收到响应。
+* **505 不支持的版本：** 服务器不支持请求中使用的SIP协议。
 
-### 6xx Global Failure Responses
+### 6xx 全局错误响应
 
-* **600 Busy Everywhere:** Called party is busy and cannot take the call at this time.
-* **603 Decline:** Called party was contacted but does not want to take part in the call.
-* **604 Does Not Exist Anywhere:** Called Party does not exist anywhere in the network.
-* **606 Not Acceptable:** Called party has rejected some part of the call session description as unacceptable.
+* **600 忙：** 被呼叫方正在忙，暂时无法接听电话。
+* **603 拒接：** 被呼叫方已经接听，但不愿意参与通话。
+* **604 不存在：** 在网络中不存在被呼叫方。
+* **606 不可接受：** 被呼叫方拒绝通话会话描述的某部分。
 
-## Example: Playback custom error message
+## 示例：播放自定义错误消息
 
-  
-**Dialplan example**
+**呼叫计划示例**
 
 ```xml
 <action application="set" data="hangup_on_bridge=true"/>
@@ -113,11 +108,11 @@ Click here to expand ToC
 <action application="lua" data="playerror.lua"/>
 ```
 
-That'll run the lua script after the bridge, but only if the bridge fails.
+这将在桥接之后运行lua脚本，但仅在桥接失败时才运行。
 
-In the lua script:
+在lua脚本中：
 
-**Lua script**
+**Lua脚本**
 
 ```ruby
 cause = session:getVariable("originate_disposition")
@@ -132,12 +127,11 @@ else
 end
 ```
 
-See [Hangup\_Causes](./Hangup-Cause-Code-Table_3964945.mdx#about) for the full list of causes.
+请参见[挂机原因](./Hangup-Cause-Code-Table_3964945.mdx#about)获取完整的原因列表。
 
-  
-Alternatively you can now use [transfer\_on\_fail](https://wiki.freeswitch.org/wiki/Variable%5Ftransfer%5Fon%5Ffail "Variable transfer on fail") like this
+或者，您现在可以使用 [transfer\_on\_fail](https://wiki.freeswitch.org/wiki/Variable%5Ftransfer%5Fon%5Ffail "Variable transfer on fail") 如下所示:
 
-**Dialplan Example transfer\_on\_fail**
+**拨号计划示例 transfer\_on\_fail**
 
 ```xml
 <action application="set" data="hangup_on_bridge=true"/>
@@ -148,25 +142,22 @@ Alternatively you can now use [transfer\_on\_fail](https://wiki.freeswitch.org/w
 <action application="bridge" data="B..."/>
 ```
 
-  
-then have the an "Error" context in your dialplan.
+然后在您的拨号计划中有一个"Error"上下文。
 
-**Dialplan Context error**
+**拨号计划上下文 error**
 
 ```xml
 <context name="error">
-    <extension name="UNALLOCATED_NUMBER" continue="true">
+   <extension name="UNALLOCATED_NUMBER" continue="true">
       <condition field="${originate_disposition}" expression="UNALLOCATED_NUMBER" continue="false" break="on-true">
-        <action application="playback" data="/usr/local/freeswitch/sounds/NotInService.wav"/>
-        <action application="hangup" data="NORMAL_CLEARING"/>
+         <action application="playback" data="/usr/local/freeswitch/sounds/NotInService.wav"/>
+         <action application="hangup" data="NORMAL_CLEARING"/>
       </condition>
-    </extension>
+   </extension>
 </context>
 ```
 
-## See Also
+## 另请参阅
 
-* [IANA SIP Parameters](http://www.iana.org/assignments/sip-parameters)
-* [Hangup Cause Code Table](./Hangup-Cause-Code-Table_3964945.mdx#about)
-
-
+* [IANA SIP 参数](http://www.iana.org/assignments/sip-parameters)
+* [挂机原因代码表](./Hangup-Cause-Code-Table_3964945.mdx#about)

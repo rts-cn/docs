@@ -1,21 +1,18 @@
+# PHP ESL
 
-# PHP ESL 
+## 概述
 
- 
+假设已经安装了对ESL提供PHP支持，通过包含ESL库并与FreeSWITCH进行交互是相对简单的。可以通过连接到运行中的FreeSWITCH，或者通过需要时让FreeSWITCH连接到Socket应用程序来实现。这与其他语言的使用方式相同，因为它使用了标准化的SWIG绑定。
 
-## Overview
+以下是一些使用ESL进行PHP编程的实例，其中包含了注释，帮助您学习如何使用ESL。
 
-Assuming PHP support for ESL was installed it is relatively simple to include the ESL Library and perform interaction with FreeSWITCH. It can be done by connecting to a running FreeSWITCH as well as having FreeSWITCH connecting to a socket application as needed. This is the same potential exposed to other languages due to the standardize SWIG bindings.
+## 实例
 
-Below are some working examples with comments to help educate how to use the ESL via PHP.
+### single_command.php
 
-## Examples
+这是在FreeSWITCH树中附带的示例文件。
 
-###  single_command.php
-
-included with FreeSWITCH tree  
-
-#### Example
+#### 示例
 
 ```xml
 #!/usr/bin/php
@@ -25,33 +22,33 @@ require_once('ESL.php');
 if ($argc > 1) {
     array_shift($argv);
     $command = sprintf('%s', implode(' ', $argv));
-    printf("Command to run is: %s\n", $command);
+    printf("要运行的命令是: %s\n", $command);
     $sock = new ESLconnection('localhost', '8021', 'ClueCon');
     $res = $sock->api($command);
     printf("%s\n", $res->getBody());
 } else {
-    printf("ERROR: You Need To Pass A Command\nUsage:\n\t%s <command>", $argv[0]);
+    printf("错误: 你需要传递一个命令\n用法:\n\t%s <command>", $argv[0]);
 }
 ```
 
-The example above is designed to run from the local console using the default credentials for the event socket and run whatever command is based as an argument.
+上面的示例旨在从本地控制台运行，使用默认凭据为事件Socket运行基于参数的任何命令。
 
-#### Example
+#### 示例
 
 ```xml
 $ ./single_command.php status
 ```
 
-Command to run is: status
+要运行的命令是: status
 
-UP 0 years, 0 days, 2 hours, 37 minutes, 44 seconds, 733 milliseconds, 519 microseconds
-0 session(s) since startup
-0 session(s) 0/30
-1000 session(s) max
+开机时间：0年0天2小时37分44秒733毫秒519微秒
+启动后会话数：0
+会话数 0/30
+最大会话数：1000
 
-###  Example of making an inbound connection from script to FS and execute a FSAPI command show channels. 
+### 从脚本建立入站连接并执行FSAPI命令show channels的示例。
 
-#### Example
+#### 示例
 
 ```xml
 #!/usr/bin/php
@@ -63,97 +60,101 @@ $res = $sock->api($command);
 printf("%s\n", $res->getBody());
 ```
 
-### Example of making an inbound connection and listening for events and printing them serialized. 
+### 监听事件并打印它们的序列化示例：建立入站连接。
 
-Example.
+示例:
 
+```php
 #!/usr/bin/php
 
-&lt;?php
+<?php
 
 require_once('ESL.php');
 
-set_time_limit(0); // Remove the PHP time limit of 30 seconds for completion due to loop watching events
+set_time_limit(0); // 取消 PHP 完成所需的30秒时间限制，以便循环监听事件
 
-// Connect to FreeSWITCH
+// 连接到 FreeSWITCH
 $sock = new ESLconnection('localhost', '8021', 'ClueCon');
-// We want all Events (probably will want to change this depending on your needs)
+// 我们想要所有事件（根据需要可能需要更改此设置）
 $sock->sendRecv("event plain ALL");
 
 
-// Grab Events until process is killed
+// 直到进程结束，获取事件
 while($sock->connected()){
-$event = $sock->recvEvent();
-print_r($event->serialize());
+    $event = $sock->recvEvent();
+    print_r($event->serialize());
 }
 
 ?>
+```
 
-Above example connects to the event socket and just prints the events as they are received until the process is stopped.
+上面的示例连接到事件套接字，并在接收到事件时将其打印，直到进程停止。
 
-###  Example of an outbound socket connection where the call is answered, a variable is set then perhaps play one of the pre-installed files and hangup. 
+### 自动播放语音文件的呼出套接字连接示例，并设置变量，最后挂断电话。
 
-####  ivrd 
+#### ivrd
 
-fs\_ivrd comes with freeswitch. It being a small daemon just invokes the script defined in a variable and passes data from it via STDIN/OUT
+fs_ivrd 是 FreeSWITCH 自带的。它是一个小型的守护进程，可以调用在一个变量中定义的脚本，并通过 STDIN/OUT 传递数据。
 
-Since this is an outbound socket connections it needs to be defined in the dialplan.
+由于这是一个呼出套接字连接，需要在拨号计划中定义它。
 
-  
- Example.
+示例：
 
-&lt;extension name="outbound-socket">
-&lt;condition field="destination_number" expression="^55(522)$">
-&lt;action application="set" data="ivr_path=/usr/local/freeswitch/scripts/ivrd-demo.php"/>
-&lt;action application="socket" data="127.0.0.1:8084 async full"/>
-&lt;/condition>
-&lt;/extension>
+```xml
+<extension name="outbound-socket">
+    <condition field="destination_number" expression="^55(522)$">
+        <action application="set" data="ivr_path=/usr/local/freeswitch/scripts/ivrd-demo.php"/>
+        <action application="socket" data="127.0.0.1:8084 async full"/>
+    </condition>
+</extension>
+```
 
-The above dialplan sample would invoke ivr-demo.php when 55522 is called as long as fs\_ivrd is running. To start fs\_ivrd:
+上面的拨号计划示例在调用55522时将会调用ivr-demo.php，只要fs_ivrd正在运行。要启动fs_ivrd，可以执行以下命令：
 
-/usr/local/freeswitch/bin/fs\_ivrd -h 127.0.0.1 -p 8004
+```shell
+/usr/local/freeswitch/bin/fs_ivrd -h 127.0.0.1 -p 8004
+```
 
-  
- It takes 2 arguments -h for hostname and -p for port.
+它接受两个参数，-h 表示主机名，-p 表示端口号。
 
-Example.
+示例:
 
+```php
 #!/usr/bin/php -q
 
-&lt;?php
+<?php
+```
 
-// set a couple of things so we dont kill the system
+// 设置一些参数，以免影响系统性能
 ob_implicit_flush(true);
 set_time_limit(30);
 
-// Open stdin so we can read the data in
+// 打开标准输入流，以便读取数据
 $in = fopen("php://stdin", "r");
 
-// Connect
-echo "connect\n\n";
+// 连接
+echo "连接\n\n";
 
-// Answer
-echo "sendmsg\n";
-echo "call-command: execute\n";
-echo "execute-app-name: answer\n\n";
+// 应答
+echo "发送消息\n";
+echo "调用命令: 执行\n";
+echo "执行应用名称: answer\n\n";
 
-// Play a prompt
-echo "sendmsg\n";
-echo "call-command: execute\n";
-echo "execute-app-name: playback\n";
-echo "execute-app-arg: /usr/local/freeswitch/sounds/en/us/callie/ivr/8000/ivr-welcome_to_freeswitch.wav\n\n";
+// 播放提示音
+echo "发送消息\n";
+echo "调用命令: 执行\n";
+echo "执行应用名称: playback\n";
+echo "执行应用参数: /usr/local/freeswitch/sounds/en/us/callie/ivr/8000/ivr-welcome_to_freeswitch.wav\n\n";
 
-// Wait
+// 等待
 sleep(5);
 
-// Hangup
-echo "sendmsg\n";
-echo "call-command: hangup\n\n";
+// 挂断
+echo "发送消息\n";
+echo "调用命令: 挂断\n\n";
 
 fclose($in);
 
 ?>
 
-ivrd will call this script for each call. All itdoes is answer the channel tell FreeSWITCH to play the “welcome to freeswitch" prompt. Since the script is now controlling all call flow I needed to add a wait or it would send the hangup immediately before the prompt was played.
-
-
+每次呼叫，ivrd 都会调用这个脚本。它的作用只是应答通道，并告诉 FreeSWITCH 播放“welcome to freeswitch”提示音。由于现在脚本控制着所有呼叫流程，我需要添加一个等待时间，否则脚本会在提示音播放之前立即发送挂断命令。

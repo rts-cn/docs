@@ -1,24 +1,22 @@
+# Lua示例-没有回应时发送邮件
 
-# Lua example Send mail when no answer 
 
- 
+## 关于
 
-## About
+在这个示例中，我们展示了如何测试桥接状态，并向目标所有者发送邮件告诉他/她有人找他们。
 
-In this example we show how to test the bridge status and send mail to the destination's owner telling him/her that someone was looking for them.
+这假设用户在其目录条目中有一个名为**sendNoans**的变量；如果它的值为1，则用户希望发送这样一封邮件，邮件将发送到**vm-mailto**参数中的地址。
 
-This assumes that the user has in his directory entry a variable named **sendNoans**; if it has a valuie of 1 then the user wants such a mail, which is sent to the address in the **vm-mailto** parameter.
+## 拨号计划
 
-## Dialplan
-
-First, you need the following two statements before the bridge command in order to regain control after Bridge fails:
+首先，在桥接命令之前，您需要添加以下两个语句以便在桥接失败后重新获得控制权：
 
 ```xml
 <action application="set" data="hangup_after_bridge=false" />
 <action application="set" data="continue_on_fail=true" />
 ```
 
-After the Bridge command add the following commands:
+在桥接命令后添加以下命令：
 
 ```xml
 <action application="set" data="eml=${user_data(${sip_callee_id_number}@${domain_name} param vm-mailto)}" />
@@ -26,28 +24,28 @@ After the Bridge command add the following commands:
 <action application="lua" data="TestNoAns.lua ${originate_disposition} '${caller_id_number}' '${destination_number}' '${sna}' '${eml}' " />
 ```
 
-The first two commands sets the parameters, and the last one calls the script to test whether to send Email or not.
+前两个命令设置了参数，最后一个命令调用脚本来测试是否发送电子邮件。
 
-## Lua Script
+## Lua脚本
 
 ```xml
 -- TestNoAns.lua
--- If destination not answered and has double ring - send mail to yehavi
+-- 如果目标未接听且有双倍振铃，则向yehavi发送邮件
 ------------------------------
 
-local disPosition = argv[1] or '';   -- how the call ended
-local callee = argv[2] or '';        -- callee number
-local dest = argv[3] or '';          -- Destination number
+local disPosition = argv[1] or '';   -- 通话结束时的状态
+local callee = argv[2] or '';        -- 被叫号码
+local dest = argv[3] or '';          -- 目标号码
 local sna = argv[4] or '';           -- SetNoAnswer
-local eml = argv[5] or '';           -- Email
-
-if (disPosition ~= 'SUCCESS') then
-    if (sna == '1') then
-      if (eml ~= '') then
-            os.execute(string.format("/usr/bin/mutt -n -f /dev/null -s \"[%s] got no answer, from [%s]\" %s < /dev/null",callee,dest,eml));
-      end
-    end
-end
+local eml = argv[5] or '';           -- 电子邮件
 ```
 
+如果 (disPosition ~= 'SUCCESS') then
+    如果 (sna == '1') then
+        如果 (eml ~= '') then
+            os.execute(string.format("/usr/bin/mutt -n -f /dev/null -s \"[%s]没有答复，来自[%s]\" %s < /dev/null",callee,dest,eml));
+        end
+    end
+end
 
+```

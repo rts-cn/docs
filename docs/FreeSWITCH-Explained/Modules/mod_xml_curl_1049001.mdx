@@ -1,88 +1,85 @@
+# mod_xml_curl
 
-# mod_xml_curl 
+## 关于
 
- 
+[https://freeswitch.org/confluence/display/FREESWITCH/Channel+Variables](../Dialplan/Channel-Variables_16352493.mdx#about) 中也有一些泄漏问题，URL应该更新一下。（原始维基笔记）
 
-## About
+_mod_xml_curl_ 可用于动态控制 FreeSWITCH 的行为。
 
-There is also some leaking into [https://freeswitch.org/confluence/display/FREESWITCH/Channel+Variables](../Dialplan/Channel-Variables_16352493.mdx#about) , at some point that URL should also be updated. (original wiki note)
+当 FreeSWITCH 需要获取通常从静态 XML 配置文件中读取的配置时，将调用此模块。以下是一些典型的使用场景：
 
-_mod\_xml\_curl_ can be used to dynamically control the behaviour of FreeSWITCH.
+- 运行多个 FreeSWITCH 实例而无需维护多个服务器配置
+- 集中化配置管理，而无需使用 hacky 的 shell 脚本
+- 从连接到数据库的 Web 应用程序动态填充配置
+- 提供一种轻松自动化 FreeSWITCH 配置部署的方式（例如，托管的 VoIP 平台）
 
-This module is called when FreeSWITCH needs to fetch configuration that would normally be read from the static XML configuration files. Here are some typical use cases;
+该模块将为经验丰富的开发人员提供完成工作所需的核心工具，但这仅仅是 1% 的工作。
 
-* Running multiple FreeSWITCH instances without having to maintain multiple server configurations
-* Centralized configuration management without resorting to hacky shell scripts
-* Dynamically populating configuration from a web application connected to a database
-* Providing an easy way to automate configuration deployment of FreeSWITCH (for example, a hosted VoIP platform)
+它的工作方式类似于任何其他典型的 API，它将发送一个 POST 请求到你的 Web 应用程序，你将用一段 XML 回复。
 
-This module will give a seasoned developer the core tool he needs to get the job done, but this is only 1% of the work.
+它将获取通过 [FreeSWITCH 配置文件](../Client-and-Developer-Interfaces/Freeswitch-GUI/index.mdx#about) 加载的任何配置。
 
-It works just like any other typical API, it will send your web application a POST request, and you would reply with a chunk of XML.
+如果它从你的 Web 应用程序收到一个有效的响应，那么它将像将其放入 [FreeSWITCH 配置文件](../Bit-Bucket/For-Consideration/FreeSWITCH.xml_13173070.mdx#default-configuration-file) 中一样加载配置。如果它收到一个无效或 404 的“未找到”响应，那么它将尝试在磁盘上查找该文件。
 
-It will fetch any configuration that would have otherwise been loaded via the [FreeSWITCH Configuration File](../Client-and-Developer-Interfaces/Freeswitch-GUI/index.mdx#about).
+然而，您可能会注意到一些字段在其他字段中重复数据，或者结构有点混乱。
 
-If it receives a valid response from your web application, then it will load the configuration just like it would if you had put it into the [FreeSWITCH Configuration File](../Bit-Bucket/For-Consideration/FreeSWITCH.xml_13173070.mdx#default-configuration-file). If it receives an invalid or 404 _not found_ response, then it will attempt to look for the file on disk instead.
+现在让我告诉您，该模块并不完美，在某些情况下，您将不得不通过尝试和错误来弄清楚，因为并没有完全记录所有内容。
 
-However, you may notice that some fields repeat data in other fields, or that the structure is a bit confusing.
+###
 
-Let me tell you now, the module is not perfect, and in some cases you will have to figure it out with trial and error because not everything is documented yet.
+单击展开目录
 
-### 
-
-Click to expand Table of Contents
-
-* 1 [Click to expand Table of Contents](#xml-usage)
-* 2 [Considerations](#considerations-)
-* 3 [Installation](#-installation-)
-* 4 [Configuration](#-configuration-)  
-   * 4.1 [&lt;binding> options](#-binding-options-)
-* 5 [API tips and tricks](#-api-tips-and-tricks-)  
-   * 5.1 [Pre-processor directives and variables](#-pre-processor-directives-and-variables-)
-* 6 [API Request Fields](#-api-request-fields-)  
-   * 6.1 [Event variables](#event-variables)  
-   * 6.2 [Channel variables](#channel-variables)  
-   * 6.3 [Section: configuration](#-section-configuration-)  
-   * 6.4 [Section: directory](#-section-directory-)  
-   * 6.5 [Section: Dialplan](#-section-dialplan-)
-* 7 [XML Usage](#xml-usage)  
-   * 7.1 [Section: dialplan](#-section-dialplan-)  
-   * 7.2 [Section: configuration](#-section-configuration-)  
-   * 7.3 [Section: directory](#-section-directory-)  
-   * 7.4 [Section: not found](#-section-not-found-)  
-   * 7.5 [post\_load configuration](#-post_load-configuration-)
-* 8 [Caching](#caching)
-* 9 [Alternative ways of storing static configurations](#-alternative-ways-of-storing-static-configurations-)
-* 10 [Client implementations](#-client-implementations-)  
+* 1 [单击展开目录](#xml-usage)
+* 2 [注意事项](#considerations-)
+* 3 [安装](#-installation-)
+* 4 [配置](#-configuration-)  
+   * 4.1 [&lt;binding>选项](#-binding-options-)
+* 5 [API技巧与技巧](#-api-tips-and-tricks-)  
+   * 5.1 [预处理指令和变量](#-pre-processor-directives-and-variables-)
+* 6 [API请求字段](#-api-request-fields-)  
+   * 6.1 [事件变量](#event-variables)  
+   * 6.2 [通道变量](#channel-variables)  
+   * 6.3 [配置部分](#-section-configuration-)  
+   * 6.4 [目录部分](#-section-directory-)  
+   * 6.5 [拨号计划部分](#-section-dialplan-)
+* 7 [XML使用](#xml-usage)  
+   * 7.1 [拨号计划部分](#-section-dialplan-)  
+   * 7.2 [配置部分](#-section-configuration-)  
+   * 7.3 [目录部分](#-section-directory-)  
+   * 7.4 [未找到部分](#-section-not-found-)  
+   * 7.5 [加载后配置](#-post_load-configuration-)
+* 8 [缓存](#caching)
+* 9 [存储静态配置的其他方式](#-alternative-ways-of-storing-static-configurations-)
+* 10 [客户端实现](#-client-implementations-)  
    * 10.1 [PHP](#php)  
-   * 10.2 [Other languages](#other-languages)  
+   * 10.2 [其他语言](#other-languages)  
    * 10.3 [Lua](#xml-usage)
 
   
-### Considerations 
+### 注意事项 
 
-There are some important things you need to consider before using _mod\_xml\_curl_.
+在使用_mod\_xml\_curl_之前，有一些重要的事情需要考虑。
 
-* Ask yourself why you need to use dynamically generated configuration files, and what you can't achieve without it.
-* Will you serve the configuration from files on disk, or will you build them using a database schema?
-* Will you generate the output using an XML library, or a templating language?
-* How will you parse the requests, will you write a proper API parsing library?
-* What hosting stack will you use to expose the web application to your FreeSWITCH instances?
-* How will you prevent it from being abused by unauthorized users?
+* 问问自己为什么需要使用动态生成的配置文件，以及没有它你无法实现什么。
+* 你是从磁盘上的文件中提供配置，还是使用数据库模式构建它们？
+* 你是使用 XML 库还是模板语言生成输出？
+* 如何解析请求，你会编写一个合适的 API 解析库吗？
+* 你将使用什么托管堆栈来将 Web 应用暴露给你的 FreeSWITCH 实例？
+* 如何防止未经授权的用户滥用它？
 
-These are just a few of the questions you should be asking yourself. If you are not, then _mod\_xml\_curl_ probably isn't for you!
+这仅仅是你需要问自己的一些问题。如果你没有这样做，那么“mod_xml_curl”可能不适合你！
 
-You should also have a reasonable grasp on writing low latency web applications, as the performance of your web application will directly impact the performance of FreeSWITCH.
+你还应该对编写低延迟的 Web 应用程序有合理的了解，因为你的 Web 应用程序的性能将直接影响 FreeSWITCH 的性能。
 
-###  Installation 
+### 安装
 
-Edit modules.conf in your FreeSWITCH source directory, ensure the following line is uncommented, then recompile and install.
+在你的FreeSWITCH源代码目录中编辑`modules.conf`，确保以下行没有被注释掉，然后重新编译和安装。
 
-xml_int/mod_xml_curl
+`xml_int/mod_xml_curl`
 
-Then edit your [Modules XML Configuration File](./XML-Modules-Configuration_13173211.mdx#xml-modules-configuration) inside your FreeSWITCH configuration directory, and place the following at the top of the file;
+然后在你的FreeSWITCH配置目录中编辑您的[模块 XML 配置文件](./XML-Modules-Configuration_13173211.mdx#xml-modules-configuration)，并将以下内容放在文件的顶部；
 
-**./freeswitch/conf/autoload\_configs/modules.conf.xml**
+**./freeswitch/conf/autoload_configs/modules.conf.xml**
 
 ```xml
 <!-- Loggers (I'd load these first) --> 
@@ -91,104 +88,91 @@ Then edit your [Modules XML Configuration File](./XML-Modules-Configuration_1317
 <load module="mod_xml_curl"/>
 ```
 
-It is important that these goes at the top, otherwise things might not get loaded in the correct order. Also don't get _modules.conf_ and _modules.conf.xml_ mixed up, they both serve very different purposes!
+重要的是这些要放在顶部，否则可能无法按正确的顺序加载。此外，请不要混淆`modules.conf`和`modules.conf.xml`，它们具有非常不同的目的！
 
-###  Configuration 
+### 配置
 
-The module is split into 4 different bindings (otherwise referred to as 'sections'), which are;
+该模块分为4个不同的绑定(也称为“部分”)，它们是：
 
-* configuration - configuration items, for example [mod\_sofia](https://confluence.freeswitch.org/display/FREESWITCH/Sofia "Sofia")
-* directory - [user directory](https://confluence.freeswitch.org/display/FREESWITCH/XML+User+Directory "XML User Directory Guide") (user authentication)
-* dialplan - [Dialplan](https://confluence.freeswitch.org/display/FREESWITCH/Dialplan "Dialplan") items (call routing)
-* phrases - phrases for the SAY api ([Speech Phrase Management](https://wiki.freeswitch.org/wiki/Speech%5FPhrase%5FManagement "Speech Phrase Management"))
+- 配置（configuration）- 配置项，例如 [mod_sofia](https://confluence.freeswitch.org/display/FREESWITCH/Sofia "Sofia")
+- 目录（directory）- 用户目录（[XML 用户目录指南](https://confluence.freeswitch.org/display/FREESWITCH/XML+User+Directory "XML 用户目录指南")）（用户认证）
+- 拨号计划（dialplan）- 拨号计划项（[拨号计划](https://confluence.freeswitch.org/display/FREESWITCH/Dialplan "拨号计划")）（呼叫路由）
+- 短语（phrases）- SAY API 的短语（[语音短语管理](https://wiki.freeswitch.org/wiki/Speech%5FPhrase%5FManagement "语音短语管理")）
 
-You can point a binding at as many different gateways as you like, and you can specify multiple bindings to keep the configuration tidy.
+您可以将绑定指向多个不同的网关，并且可以指定多个绑定以保持配置整洁。
 
-Here is a typical example of how you might configure this module;
+以下是一个典型的配置示例：
 
-**./freeswitch/conf/autoload\_configs/xml\_curl.conf.xml**
+**./freeswitch/conf/autoload_configs/xml_curl.conf.xml**
 
 ```xml
  
-<configuration name="xml_curl.conf" description="cURL XML Gateway">
+<configuration name="xml_curl.conf" description="cURL XML 网关">
   <bindings> 
-    <!-- Ask example1.com for a dialplan config, if we get a valid response then don't continue onto example2.com. However if we don't get a valid response, then continue onto example2.com --> 
+    <!-- 向 example1.com 请求拨号计划配置，如果我们得到有效的响应，则不继续向 example2.com。但是，如果我们没有得到有效的响应，则继续向 example2.com --> 
     <binding name="dialplan">
       <param name="gateway-url" value="http://example1.com:80/fsapi" bindings="dialplan"/> 
     </binding>
 
-    <!-- This will only get called if example1.com returns an invalid or not found response. If this gateway also fails to return a valid configuration, then FreeSWITCH will look for the static configuration file on disk -->
-    <binding name="dialplan backup"> 
-      <param name="gateway-url" value="http://example2.com:80/fsapi" bindings="dialplan"/>
-    </binding> 
- 
-    <!-- Ask example1.com for a directory config, if not found then revert to disk --> 
-    <binding name="directory"> 
-      <param name="gateway-url" value="http://example1:80/fsapi" bindings="directory"/> 
-    </binding> 
- 
-    <!-- Ask example1.com for a configuration config, if not found then revert to disk --> 
-    <binding name="configuration"> 
-      <param name="gateway-url" value="http://example1:80/fsapi" bindings="configuration"/> 
-    </binding> 
- 
-    <!-- Ask example1.com for a phrases config, if not found then revert to disk --> 
-    <binding name="phrases">
-      <param name="gateway-url" value="http://example1:80/fsapi" bindings="phrases"/> 
-    </binding> 
-  </bindings> 
+<!--仅当example1.com返回无效或未找到的响应时，才会调用此内容。如果此网关也无法返回有效的配置，则FreeSWITCH将查找磁盘上的静态配置文件-->
+<binding name="dialplan备份">
+  <param name="gateway-url" value="http://example2.com:80/fsapi" bindings="dialplan" />
+</binding>
+
+<!--如果在example1.com上找不到目录配置，则回退到磁盘-->
+<binding name="目录">
+  <param name="gateway-url" value="http://example1:80/fsapi" bindings="directory" />
+</binding>
+
+<!--如果在example1.com上找不到配置配置，则回退到磁盘-->
+<binding name="配置">
+  <param name="gateway-url" value="http://example1:80/fsapi" bindings="configuration" />
+</binding>
+
+<!--如果在example1.com上找不到短语配置，则回退到磁盘-->
+<binding name="短语">
+  <param name="gateway-url" value="http://example1:80/fsapi" bindings="phrases" />
+</binding>
+</bindings>
 </configuration>
- 
-```
 
-  
-If you wanted to keep things compact/tidy, you can also use the following approach:
+如果您想保持紧凑/整洁，您也可以使用以下方法：
 
-**./freeswitch/conf/autoload\_configs/xml\_curl.conf.xml**
+./freeswitch/conf/autoload\_configs/xml\_curl.conf.xml
 
 ```xml
-<configuration name="xml_curl.conf" description="cURL XML Gateway">
+<configuration name="xml_curl.conf" description="cURL XML网关">
   <bindings>
-    <!-- Attempt to load dialplan/configuration/directory/phrases config from
-         this gateway. If invalid or not found, then continue onto the next gateway -->
-    <binding name="all configs">
-      <param name="gateway-url" value="http://example1.com:80/fsapi" bindings="dialplan|configuration|directory|phrases"/>
+    <!--尝试从此网关加载dialplan/configuration/directory/phrases配置。如果无效或未找到，则继续到下一个网关-->
+    <binding name="所有配置">
+      <param name="gateway-url" value="http://example1.com:80/fsapi" bindings="dialplan|configuration|directory|phrases" />
     </binding>
 
-    <!-- Attempt to load dialplan/configuration/directory/phrases only if example1.com
-         sends back an invalid or not found response. If this also returns an invalid or
-         not found then revert to disk
-     -->
-    <binding name="all configs backup">
-      <param name="gateway-url" value="http://example2.com:80/fsapi" bindings="dialplan|configuration|directory|phrases"/>
-    </binding>
-  </bindings>
+<!-- 尝试仅在 example1.com 返回无效或未找到的响应时加载 dialplan/configuration/directory/phrases。
+     如果该请求也返回无效或未找到，则回退到磁盘 -->
+<binding name="所有配置备份">
+  <param name="gateway-url" value="http://example2.com:80/fsapi" bindings="dialplan|configuration|directory|phrases"/>
+</binding>
+</bindings>
 </configuration>
-```
 
-  
-You may also provide some extra parameters, such as authentication scheme and login credentials. Here is an example;
+你还可以提供一些额外的参数，例如认证方案和登录凭据。以下是一个示例;
 
-**./freeswitch/conf/autoload\_configs/xml\_curl.conf.xml**
+./freeswitch/conf/autoload_configs/xml_curl.conf.xml
 
 ```xml
-<configuration name="xml_curl.conf" description="cURL XML Gateway">
+<configuration name="xml_curl.conf" description="cURL XML 网关">
   <bindings>
-    <!-- Attempt to load all configs from example1.com on port 7111, using
-         an authentication username and password.
-    -->
-    <binding name="all configs">
+    <!-- 尝试通过身份验证用户名和密码从 example1.com 的 7111 端口加载所有配置。 -->
+    <binding name="所有配置">
       <param name="gateway-url" value="http://example1.com:7111/fsapi" bindings="dialplan|configuration|directory|phrases"/>
 
-      <!-- Optional. The username and password to use to access the webserver. 
-           Only required if authentication is required on the webserver
-      -->
+      <!-- 可选。访问 Web 服务器所需的用户名和密码。
+           仅在 Web 服务器上需要进行身份验证时才需要。-->
       <param name="gateway-credentials" value="muser:mypass"/>
 
-      <!-- Optional. Either basic or digest. Only basic is used by default, omitting this 
-           parameter while using digest on the web server will cause all requests 
-           to be rejected with HTTP 401 Unauthorized
-      -->
+      <!-- 可选。基本认证或摘要认证。默认情况下仅使用基本认证。如果在 Web 服务器上使用摘要认证，
+           则在使用摘要时省略此参数将导致所有请求被拒绝，显示 HTTP 401 Unauthorized。 -->
       <param name="auth-scheme" value="basic"/>
 
     </binding>
@@ -196,53 +180,53 @@ You may also provide some extra parameters, such as authentication scheme and lo
 </configuration>
 ```
 
-The 'name' parameters shown in the above examples can be anything you want.
+以上示例中显示的 'name' 参数可以是任意名称。
 
-####  &lt;binding> options 
+#### &lt;binding> 选项
 
-| **Name**              | **Description**                                                                                                                    | **Example**                        |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
-| gateway-url           | URL for binding                                                                                                                    | <http://myhost/xml%5Fcurl.php>     |
-| gateway-credentials   | Username/Password for URL                                                                                                          | [user:pass](http://userpass)       |
-| auth-scheme           | which auhtentification scheme to use. Supported values are: basic, digest, NTLM, GSS-NEGOTIATE or "any" for automatic detection    | basic                              |
-| method                | Whether to use GET or POST.                                                                                                        | GET                                |
-| timeout               | HTTP request timeout                                                                                                               | 20                                 |
-| enable-cacert-check   | Whether to check server's SSL certificate against CA certificates (recommended for HTTPS)                                          | true                               |
-| enable-ssl-verifyhost | Whether to check server's SSL certificate matches the hostname of the URL (recommended for HTTPS)                                  | true                               |
-| ssl-cacert-file       | Path to CA certificate(s) file. _**Note**_  this appears to be required as the module doesn't automatically search for system CAs. | /etc/ssl/certs/ca-certificates.crt |
-| ssl-cert-path         | Path to client certificate                                                                                                         | /etc/ssl/certs/fs\_client.crt      |
-| ssl-key-path          | Path to client private key                                                                                                         | /etc/ssl/private/fs\_client.key    |
-| ssl-key-password      | Password for client private key                                                                                                    | mysecret                           |
-| ssl-version           | Which version of SSL/TLS to use. Support values are "SSLv3" or "TLSv1"                                                             | TLSv1                              |
-| disable-100-continue  | Disable 100 Continue in HTTP Expect header, for servers which dislike this option.                                                 | true                               |
-| cookie-file           | Path to file for storing cookies                                                                                                   | /var/run/freeswitch/fs.cookies     |
-| use-dynamic-url       | _Undocumented_                                                                                                                     | _Undocumented_                     |
-| enable-post-var       | _Undocumented_                                                                                                                     | _Undocumented_                     |
-| bind-local            | Name of network interface to use for HTTP requests, which can affect the source address/routing on multihomed servers.             | eth1                               |
+| **名称**                     | **描述**                                                                                                                            | **示例**                          |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| gateway-url                | 绑定的 URL                                                                                                                        | <http://myhost/xml%5Fcurl.php>   |
+| gateway-credentials        | URL 的用户名/密码                                                                                                                  | [user:pass](http://userpass)     |
+| auth-scheme                | 要使用的认证方案。支持的值有：basic、digest、NTLM、GSS-NEGOTIATE 或 "any"（用于自动检测）                                                | basic                            |
+| method                     | 使用 GET 还是 POST                                                                                                                 | GET                              |
+| timeout                    | HTTP 请求超时时间                                                                                                                   | 20                               |
+| enable-cacert-check        | 是否检查服务器的 SSL 证书是否与 CA 证书匹配（推荐用于 HTTPS）                                                                       | true                             |
+| enable-ssl-verifyhost      | 是否检查服务器的 SSL 证书是否与 URL 的主机名匹配（推荐用于 HTTPS）                                                                 | true                             |
+| ssl-cacert-file            | CA 证书文件的路径。_**注意**_：由于此模块不会自动搜索系统的 CA 证书，因此此项似乎是必需的。                                                    | /etc/ssl/certs/ca-certificates.crt |
+| ssl-cert-path              | 客户端证书的路径                                                                                                                   | /etc/ssl/certs/fs\_client.crt    |
+| ssl-key-path               | 客户端私钥的路径                                                                                                                   | /etc/ssl/private/fs\_client.key  |
+| ssl-key-password           | 客户端私钥的密码                                                                                                                   | mysecret                         |
+| ssl-version                | 使用的 SSL/TLS 版本。支持的值有 "SSLv3" 或 "TLSv1"                                                                                  | TLSv1                            |
+| disable-100-continue       | 禁用 HTTP Expect 头中的 100 Continue，某些服务器不支持此选项                                                                             | true                             |
+| cookie-file                | 用于存储 cookies 的文件路径                                                                                                        | /var/run/freeswitch/fs.cookies   |
+| use-dynamic-url            | _未记录_                                                                                                                            | _未记录_                        |
+| enable-post-var            | _未记录_                                                                                                                            | _未记录_                        |
+| bind-local                 | 用于 HTTP 请求的网络接口的名称，这可能会影响多宿主服务器的源地址/路由                                                                    | eth1                             |
 
-###  API tips and tricks 
+### API技巧与技巧
 
-You can use the following freeswitch command to help with debugging your configuration. It will return a filename with the resulting XML for each xml\_curl query.
+您可以使用以下freeswitch命令来帮助调试您的配置。它将返回每个xml_curl查询的带有结果XML的文件名。
 
 xml_curl debug_on
 
-If you get an error like the following, then that means you're really serving up some big-time configs. No worries, just edit mod\_xml\_curl.c and adjust XML\_CURL\_MAX\_BYTES as needed.
+如果您遇到以下错误，则表示您正在提供一些大型配置。别担心，只需编辑mod_xml_curl.c并根据需要调整XML_CURL_MAX_BYTES。
 
-mod_xml_curl.c:121 Oversized file detected [1056100 bytes]
+mod_xml_curl.c:121 检测到超大文件[1056100字节]
 
-If you want to include a local file from disk, you would use the following approach (TODO: needs confirmation);
+如果您想从磁盘中包含一个本地文件，则可以使用以下方法（待确认）：
 
-&lt;param name="dialplan" value="XML,XML:/path/to/custom/dialplan.xml"/>
+<param name="dialplan" value="XML,XML:/path/to/custom/dialplan.xml"/>
 
-A point to note here, is to use timeout param in xml\_curl config to prevent sofia profile from becoming unresponsive to REGISTER requests. Full explanation of this issue can be found [here](http://blog.godson.in/2011/06/pitfalls-to-avoid-while-using.html)
+这里需要注意的是，在xml_curl配置中使用超时参数来防止sofia配置对注册请求无响应。有关该问题的完整说明，请点击[此处](http://blog.godson.in/2011/06/pitfalls-to-avoid-while-using.html)
 
-####  Pre-processor directives and variables 
+#### 前处理指令和变量
 
-Note: Right now, this section is based more on my evaluation of the FreeSWITCH source code than on actually using the mechanism. I'm putting it here now while it is fresh in my mind because I believe it to be accurate.
+注意：目前，此部分更多基于我对FreeSWITCH源代码的评估，而非实际使用机制。我现在将其放在这里，因为它在我脑海中仍然很新鲜，并且我相信这是准确的。
 
-When mod\_xml\_curl retrieves an XML document, it saves that document to a temporary file, and then tells FreeSWITCH™ to process that file like it would process any other XML configuration file. This means that any X-PRE-PROCESS tags you place in your dynamic configuration will be processed before handing the resulting XML to the main configuration parser, just like your conf/\* files.
+当mod_xml_curl检索到一个XML文档时，它将该文档保存到临时文件中，然后告诉FreeSWITCH™处理该文件，就像处理任何其他XML配置文件一样。这意味着您在动态配置中放置的任何X-PRE-PROCESS标签都会在将结果XML交给主配置解析器之前进行处理，就像您的conf/*文件一样。
 
-Some care must be taken when setting variables using X-PRE-PROCESS tags. Setting a variable using set in a X-PRE-PROCESS tag sets a "core global" variable. In all XML configuration these variables are referenced by the form $${varname}, and are actually treated as preprocessor variables. That is, the same parser pass that processes X-PRE-PROCESS tags also substitutes these variables for their value at that very instant in time, and the resulting xml document is passed to the main configuration parser, and that is the configuration that is used. Simply put, if you do something like this somewhat forced example:
+在使用X-PRE-PROCESS标记设置变量时，需要注意一些事项。使用X-PRE-PROCESS标记中的set命令来设置变量会设置一个 "核心全局" 变量。在所有XML配置中，这些变量通过 $${varname} 的形式引用，并且实际上被视为预处理器变量。也就是说，处理X-PRE-PROCESS标记的同一解析器会在即时时刻用它们的值替换这些变量，并将生成的XML文档传递给主配置解析器，并在应用中使用这种配置。简单来说，如果你做了类似这样有点强制的示例：
 
 ...
 &lt;X-PRE-PROCESS cmd="set" data="global_codec_prefs=PCMU"/>
@@ -254,56 +238,55 @@ Some care must be taken when setting variables using X-PRE-PROCESS tags. Setting
 &lt;param name="codec-prefs" value="$${global_codec_prefs}"/>
 ...
 
-Just pretend that is happening across two different SIP profiles so that it seems somewhat plausible. The first reference to $${global\_codec\_prefs} will expand to mu-law, and the second one (and all subsequent references in time) to $${global\_codec\_prefs} will expand to a-law. The first setting is unchanged.
+可以假设这发生在两个不同的SIP配置文件中，使其看起来有些合理。对于$${global\_codec\_prefs} 的第一次引用将展开为 mu-law，而第二次引用（以及所有随后的引用）将展开为 a-law。第一个设置保持不变。
 
-This point deserves some discussion because it's important to know that, as truly global variables, values of variables set in conf/vars.xml or in any X-PRE-PROCESS tag are accessible to the XML you generate dynamically, which makes it OK to reference $${local\_ip\_v4} from your generated XML and the Right thing will happen. It's also possible to overwrite variables that were previously set in vars.xml or any X-PRE-PROCESS tag using your generated XML. Doing this, however will have absolutely no effect on any previously parsed XML that used that variable. Also, executing a reloadxml will cause the original vars.xml to be re-parsed, thus overwriting your overwrite. If this sounds confusing that is because you can probably create some confusing and difficult to track bugs in your configuration by doing this.
+这一点值得讨论，因为了解到作为真正的全局变量，conf/vars.xml中设置的变量值或任何X-PRE-PROCESS标签中设置的变量值可以在您动态生成的XML中访问，所以您可以从生成的XML中引用 $${local\_ip\_v4} ，并会发生正确的事情。还可以使用生成的XML来覆盖先前在vars.xml或任何X-PRE-PROCESS标签中设置的变量。然而，这样做对于先前解析过该变量的任何已解析XML毫无影响。另外，执行reloadxml将导致原始的vars.xml重新解析，从而覆盖您的覆写。如果听起来有点混乱，那是因为您可能通过这样做创建一些混乱且难以追踪的错误配置。
 
-Having said all of this, we can distill the information down to the simple caveat that, while it is safe and good to reference static variables in your dynamic configuration, it is probably not safe to try to overwrite them. Treat them with the respect you'd treat any global variable and you should be fine.
+尽管如此，我们可以将这些信息概括为一个简单的注意事项：在您的动态配置中，引用静态变量是安全和良好的做法，但尝试覆盖它们可能是不安全的。像对待任何全局变量一样尊重它们，您就应该没问题。
 
-  
-###  API Request Fields 
+###  API 请求字段 
 
-This gives an explanation of what individual request fields means.
+这提供了每个请求字段的解释。
 
-#### Event variables
+#### 事件变量
 
-For a better explanation on event variables, see [Event Fields](https://wiki.freeswitch.org/wiki/Event%5FList#Event%5Ffields "Event List")
+有关事件变量的更好解释，请参阅 [事件字段](https://wiki.freeswitch.org/wiki/Event%5FList#Event%5Ffields "事件列表")
 
-#### Channel variables
+#### 通道变量
 
-For a better explanation on channel variables, see [Channel Variables](https://wiki.freeswitch.org/wiki/Channel%5FVariables#Info%5FApplication%5FVariable%5FNames%5F.28variable%5Fxxxx.29 "Channel Variables")
+有关通道变量的更好解释，请参阅 [通道变量](https://wiki.freeswitch.org/wiki/Channel%5FVariables#Info%5FApplication%5FVariable%5FNames%5F.28variable%5Fxxxx.29 "通道变量")
 
 **section**
 
-The target section of the request.
+请求的目标部分。
 
-This can be one of the following;
+可以是以下之一：
 
-* directory
-* dialplan
-* configuration
+* 目录（directory）
+* 拨号计划（dialplan）
+* 配置（configuration）
 
-####  Section: configuration 
+####  部分：配置
 
-Below is a list of all the variables expected within a directory section request.
+下面是在目录部分请求中期望的所有变量的列表。
 
-##### Applicable common fields
+##### 适用的通用字段
 
-_TODO: Needs example_
+_TODO：需要示例_
 
-##### Non-applicable common fields
+##### 不适用的通用字段
 
-_TODO: Needs example_
+_TODO：需要示例_
 
-##### Applicable context fields
+##### 适用的上下文字段
 
-_TODO: Needs example_
+_TODO：需要示例_
 
-####  Section: directory 
+####  部分：directory 
 
-Below is a list of all the variables expected within a directory section request.
+下面是在目录部分请求中期望的所有变量的列表。
 
-##### Applicable common fields
+##### 适用的通用字段
 
 * **sip\_contact\_user**
 * **sip\_contact\_host**
@@ -320,140 +303,140 @@ Below is a list of all the variables expected within a directory section request
 * **sip\_to\_port**
 * **sip\_user\_agent**
 
-##### Non-applicable common fields
+##### 不适用的通用字段
 
-* **hostname** (use FreeSWITCH-Hostname instead)
-* **sip\_from\_host** (use domain instead)
-* **sip\_request\_host** (use domain instead)
-* **sip\_to\_host** (use domain instead)
-* **sip\_auth\_realm** (use domain instead)
-* **key\_value** (use domain instead)
-* **sip\_auth\_uri** (unclean, debugging only)
-* **key\_name** (useless here)
-* **key** (useless here)
-* **tag\_name** (useless here)
+* **hostname**（使用FreeSWITCH-Hostname替代）
+* **sip\_from\_host**（使用域名替代）
+* **sip\_request\_host**（使用域名替代）
+* **sip\_to\_host**（使用域名替代）
+* **sip\_auth\_realm**（使用域名替代）
+* **key\_value**（使用域名替代）
+* **sip\_auth\_uri**（不规范的，仅用于调试）
+* **key\_name**（此处无用）
+* **key**（此处无用）
+* **tag\_name**（此处无用）
 
-##### Applicable context fields
+##### 适用的上下文字段
 
 **purpose**
 
-Once you start implementing things with XML cURL, you will find that several requests are fired on several different places on the code, specially with directory. The purpose field will tell you which one it is requesting so that you know what to reply. Given that the modules are the ones responsible for giving context to the information on the directory, the list of options will depend on the module. On the next section, you will find examples and explanations for each one of the modules and their requests.
+当您开始使用 XML cURL 实现事物时，您会发现有多个请求在代码的不同位置触发，特别是目录部分。`purpose`字段将通知您是哪个请求，以便您知道要回复什么。鉴于模块负责为目录中的信息提供上下文，选项的列表将取决于模块。在下一节中，您将找到每个模块及其请求的示例和解释。
 
 ######  mod_sofia 
 
 * gateways
 
-All sofia profiles that have parse=true on their domain definitions will query the directory for their gateway definitions. Every time we issue a rescan on a profile or the profile is loading, we will receive one of these requests. Sometimes this request even gets sent on FreeSWITCH boot and to avoid this behavior when you only want it to send such a request purely when client sends a register then comment out the lines in the profile which goes under domains section if your not going to use under multi tenant mode.
+所有具有domain定义上parse=true的sofia配置文件都会查询目录以获取其网关定义。每次我们对一个配置文件进行重新扫描，或者该配置文件正在加载时，我们都会收到这样的请求。有时甚至在FreeSWITCH启动时也会发送这个请求，为了避免这种行为，当你只想在客户端发送一个注册请求时才发送这样的请求时，可以在配置文件中注释掉位于domains部分下的行。如果你不打算在多租户模式下使用，那么就可以这样做。
 
-hostname : FS-CUBO
-section : directory
-tag_name : 
-key_name : 
-key_value : 
-Event-Name : REQUEST_PARAMS
-Core-UUID : 5ff05ea9-98ae-4469-82a8-595766d9b41e
-FreeSWITCH-Hostname : FS-CUBO
-FreeSWITCH-Switchname : FS-CUBO
-FreeSWITCH-IPv4 : 192.168.204.3
-FreeSWITCH-IPv6 : ::1
-Event-Date-Local : 2012-11-13 12:33:11
-Event-Date-GMT : Tue, 13 Nov 2012 15:33:11 GMT
-Event-Date-Timestamp : 1352820791632159
-Event-Calling-File : sofia.c
-Event-Calling-Function : launch_sofia_worker_thread
-Event-Calling-Line-Number : 2332
-Event-Sequence : 26
-purpose : gateways
-profile : internal
+主机名: FS-CUBO
+节: directory
+标签名: 
+键名: 
+键值: 
+事件名称: REQUEST_PARAMS
+核心UUID: 5ff05ea9-98ae-4469-82a8-595766d9b41e
+FreeSWITCH主机名: FS-CUBO
+FreeSWITCH开关名: FS-CUBO
+FreeSWITCH IPv4: 192.168.204.3
+FreeSWITCH IPv6: ::1
+本地事件日期: 2012-11-13 12:33:11
+GMT事件日期: Tue, 13 Nov 2012 15:33:11 GMT
+事件时间戳: 1352820791632159
+事件调用文件: sofia.c
+事件调用函数: launch_sofia_worker_thread
+事件调用行号: 2332
+事件顺序: 26
+目的: 网关
+配置文件: internal
 
-* network-list
+* 网络列表
 
-Even though we classify this as being for mod\_sofia, it really is a request made by the core. Every time the core is loading ACLs, you will get a request like the following:
+尽管我们将其归类为mod_sofia的请求，但实际上这是由核心发出的请求。每当核心加载ACL时，您都会收到以下请求：
 
-hostname : FS-CUBO
-section : directory
-tag_name : domain
-key_name : name
-key_value : 192.168.204.3
-Event-Name : GENERAL
-Core-UUID : 6f2c3a2c-ab56-44d1-ad53-f763a430b1b3
-FreeSWITCH-Hostname : FS-CUBO
-FreeSWITCH-Switchname : FS-CUBO
-FreeSWITCH-IPv4 : 192.168.204.3
-FreeSWITCH-IPv6 : ::1
-Event-Date-Local : 2012-11-13 12:24:57
-Event-Date-GMT : Tue, 13 Nov 2012 15:24:57 GMT
-Event-Date-Timestamp : 1352820297648064
-Event-Calling-File : switch_core.c
-Event-Calling-Function : switch_load_network_lists
-Event-Calling-Line-Number : 1202
-Event-Sequence : 475
-domain : 192.168.204.3
-purpose : network-list
+主机名: FS-CUBO
+部分: 目录
+标签名称: domain
+键名称: name
+键值: 192.168.204.3
+事件名称: GENERAL
+核心UUID: 6f2c3a2c-ab56-44d1-ad53-f763a430b1b3
+FreeSWITCH主机名: FS-CUBO
+FreeSWITCH交换机名称: FS-CUBO
+FreeSWITCH-IPv4: 192.168.204.3
+FreeSWITCH-IPv6: ::1
+事件日期（本地）: 2012-11-13 12:24:57
+事件日期（GMT）: 2012年11月13日星期二 15:24:57 GMT
+事件时间戳: 1352820297648064
+事件调用文件: switch_core.c
+事件调用函数: switch_load_network_lists
+事件调用行号: 1202
+事件序列: 475
+域名: 192.168.204.3
+用途: 网络列表
 
 * publish-vm
 
 **action**
 
-The action being performed on this directory request.
+对此目录请求执行的操作。
 
-Valid options are;
+有效选项包括：
 
-* sip\_auth (Used by mod\_sofia to perform authentication checks)
-* message-count (Used by mod\_voicemail to check if messages are waiting - needs response example)
-* reverse-auth-lookup (???)
+* sip\_auth（由mod\_sofia用于执行认证检查）
+* message-count（由mod\_voicemail用于检查是否有待处理的消息-需要响应示例）
+* reverse-auth-lookup（???）
 
 **user**
 
-_TODO: Find out how/where this value is extracted_
+_TODO：找出从何处/如何提取此值_
 
-Username of the authenticating user, this should always be present for every directory request.
+认证用户的用户名，每个目录请求中应始终存在。
 
 **ip**
 
-_TODO: Find out how/where this value is extracted_
+_TODO：找出从何处/如何提取此值_
 
-IP address of authenticating user
+认证用户的IP地址
 
 **domain**
 
-_TODO: Find out how/where this value is extracted_
+_TODO：找出从何处/如何提取此值_
 
-Target domain/realm of authenticating user, this should always be present for every directory request.
+认证用户的目标域名/领域，每个目录请求中应始终存在。
 
-####  Section: Dialplan 
+####  部分: 拨号计划 
 
-Below is a list of all the variables expected within a dialplan section request.
+以下是拨号计划部分请求中预期的所有变量的列表。
 
-##### Applicable common fields
+##### 适用的常见字段
 
-_TODO: Explanation needed_
+_TODO: 需要解释_
 
-##### Non-applicable common fields
+##### 不适用的常见字段
 
-_TODO: Explanation needed_
+_TODO: 需要解释_
 
-##### Applicable context fields
+##### 适用的上下文字段
 
-_TODO: Explanation needed_
+_TODO: 需要解释_
 
-##### Sample xml_dialplan POST
+##### xml_dialplan POST示例
 
-Sample of what mod\_xml\_curl posts to the web server on a request for dialplan. Caller is 800 and callee is 9999, keys and values seperated by ::::
+mod\_xml\_curl在请求拨号计划时将帖子发布到Web服务器的示例。呼叫者是800，被叫是9999，键和值用::::分隔。
 
-Expand source 
+展开源代码
 
 ```xml
 variable_sip_via_rport :::: 2048
 variable_sip_from_uri :::: 800@192.168.0.9
-variable_user_context :::: default
+variable_user_context :::: 默认
 Caller-Network-Addr :::: 192.168.0.19
 variable_mailbox :::: 800
 variable_sip_contact_port :::: 2048
-Caller-Screen-Bit :::: yes
+Caller-Screen-Bit :::: 是
 variable_sip_via_port :::: 2048
-Caller-Caller-ID-Name :::: Work
-Call-Direction :::: inbound
+Caller-Caller-ID-Name :::: 工作
+Call-Direction :::: 来电
 variable_accountcode :::: 800
 variable_sip_to_uri :::: 9999@192.168.0.9
 variable_user_name :::: 800
@@ -461,7 +444,7 @@ variable_sip_auth_username :::: 800
 variable_sip_mailbox :::: 800
 variable_sip_req_host :::: 192.168.0.9
 variable_sip_to_params :::: user=phone
-variable_sofia_profile_name :::: internal
+variable_sofia_profile_name :::: 内部
 variable_effective_caller_id_number :::: 800
 variable_sip_authorized :::: true
 Channel-State-Number :::: 2
@@ -481,7 +464,7 @@ variable_sip_auth_realm :::: 192.168.0.9
 variable_sip_h_P-Key-Flags :::: resolution="31x13", keys="4"
 Caller-Username :::: 800
 variable_channel_name :::: sofia/internal/800@192.168.0.9
-Caller-Privacy-Hide-Number :::: no
+Caller-Privacy-Hide-Number :::: 否
 variable_sip_from_host :::: 192.168.0.9
 Channel-Write-Codec-Rate :::: 8000
 variable_sip_to_user :::: 9999
@@ -499,7 +482,7 @@ Caller-Profile-Index :::: 1
 Channel-State :::: CS_ROUTING
 variable_sip_from_user_stripped :::: 800
 variable_sip_to_host :::: 192.168.0.9
-section :::: dialplan
+section :::: 拨号计划
 hostname :::: frog
 Channel-Read-Codec-Name :::: PCMU
 variable_sip_call_id :::: 3c2a39c538e1-f6k7b52a7dnm
@@ -508,13 +491,13 @@ variable_sip_contact_user :::: 800
 variable_sofia_profile_domain_name :::: 192.168.0.9
 Caller-Channel-Answered-Time :::: 0
 variable_sip_secure_media :::: true
-Answer-State :::: ringing
-Caller-Privacy-Hide-Name :::: no
+Answer-State :::: 响铃
+Caller-Privacy-Hide-Name :::: 否
 key_value :::: 
 variable_remote_media_ip :::: 192.168.0.19
 Caller-Channel-Hangup-Time :::: 0
 variable_write_codec :::: PCMU
-Caller-Context :::: default
+Caller-Context :::: 默认
 variable_max_forwards :::: 70
 variable_read_codec :::: PCMU
 variable_sip_has_crypto :::: AES_CM_128_HMAC_SHA1_32
@@ -525,13 +508,13 @@ variable_sip_req_params :::: user=phone
 variable_sip_req_uri :::: 9999@192.168.0.9
 variable_sip_from_user :::: 800
 Caller-Channel-Created-Time :::: 1216848907951512
-variable_endpoint_disposition :::: RECEIVED
+variable_endpoint_disposition :::: 已接收
 variable_switch_r_sdp :::: v=0
 o=root 1097507980 1097507980 IN IP4 192.168.0.19
-s=call
+s=通话
 c=IN IP4 192.168.0.19
 t=0 0
-m=audio 59788 RTP/SAVP 0 8 9 2 3 18 4 101
+m=音频 59788 RTP/SAVP 0 8 9 2 3 18 4 101
 a=rtpmap:0 pcmu/8000
 a=rtpmap:8 pcma/8000
 a=rtpmap:9 g722/8000
@@ -543,7 +526,7 @@ a=rtpmap:101 telephone-event/8000
 a=fmtp:101 0-16
 a=crypto:1 AES_CM_128_HMAC_SHA1_32 inline:tcj5d1Iw3KFcIIKiwWRtlz7uI7JUwLWbcT9u6FDx
 a=ptime:20
-m=audio 59788 RTP/AVP 0 8 9 2 3 18 4 101
+m=音频 59788 RTP/AVP 0 8 9 2 3 18 4 101
 a=rtpmap:0 pcmu/8000
 a=rtpmap:8 pcma/8000
 a=rtpmap:9 g722/8000
@@ -554,6 +537,7 @@ a=rtpmap:4 g723/8000
 a=rtpmap:101 telephone-event/8000
 a=fmtp:101 0-16
 a=ptime:20
+```
 
 tag_name :::: 
 variable_sip_contact_host :::: 192.168.0.19
@@ -563,15 +547,25 @@ variable_effective_caller_id_name :::: hads
 ```
 
   
-### XML Usage
+### XML 用法
+
+####  标签名称: 
+variable_sip_contact_host: 192.168.0.19
+variable_sip_nat_detected: true
+variable_sip_from_tag: zah0wfkmg9
+variable_effective_caller_id_name: hads
+```
+
+  
+### XML 用法
 
 ####  Section: dialplan 
 
-This is used to send back configuration files relating to dialplans. This will be triggered every time there is a call.
+用于发送与拨号计划相关的配置文件。每次有电话呼入时，都会触发此功能。
 
-##### Example
+##### 示例
 
-REQUEST:
+请求：
 
 ```xml
 section=dialplan&tag_name=&key_name=&key_value=&context=default&destination_number=556
@@ -580,13 +574,12 @@ section=dialplan&tag_name=&key_name=&key_value=&context=default&destination_numb
 &endpoint_disposition=ANSWER
 ```
 
-  
-RESPONSE:
+响应：
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <document type="freeswitch/xml">
-  <section name="dialplan" description="RE Dial Plan For FreeSwitch">
+  <section name="dialplan" description="自由开关的拨号计划">
     <context name="default">
       <extension name="test9">
         <condition field="destination_number" expression="^83789$">
@@ -601,25 +594,25 @@ RESPONSE:
   
 ####  Section: configuration 
 
-This is used to send back configuration files such as sofia.conf.
+用于发送如sofia.conf等配置文件。
 
-Request variables are;
+请求变量为：
 
-* key\_value (This is the filename of the configuration being requested, for example sofia.conf - note it does not have the trailing _.xml_ extension)
-* key\_name (Seems to always contain the string _name_)
-* section (This will always contain the string _configuration_, as this is how you detect what section is being requested)
-* tag\_name (Seems to be the same as _section_)
+* key\_value（请求的配置文件的文件名，例如sofia.conf - 请注意，它没有后缀名.xml）
+* key\_name（似乎总是包含字符串_name_）
+* section（这将始终包含字符串_configuration_，因为它是用于检测请求的部分的方法）
+* tag\_name（似乎与_section_相同）
 
-##### Example
+##### 示例
 
-An example request query string would be;
+示例请求查询字符串将是：
 
 ```xml
 key_value=sofia.conf&key_name=name&section=configuration&tag_name=configuration
 ```
 
   
-The response should look identical to what the file would have looked like on disk, with the exception that you need to wrap it in a _&lt;document>_, as shown in the following example;
+响应应该与文件在磁盘上的内容完全一致，但需要将其包装在 _&lt;document>_ 中，如以下示例所示;
 
 ```xml
 <document type="freeswitch/xml">
@@ -640,18 +633,19 @@ The response should look identical to what the file would have looked like on di
   
 ####  Section: directory 
 
-You must ensure that the "accept-blind-reg" parameter is set to "false" in [sofia.conf.xml](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Settings "Sofia Configuration Files"), otherwise your web application will not get called.
+您必须确保在 [sofia.conf.xml](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Settings "Sofia Configuration Files") 中将 "accept-blind-reg" 参数设置为 "false"，否则您的 Web 应用程序将无法被调用。
 
-This will be called every time there is an authentication request, and also under other circumstances (see below)
+每次进行身份验证请求时都会调用这个部分，还有其他情况（请参阅下面）
 
-This particular section will also be called from different contexts, and as such you may not need to return the full configuration each time. In fact, responding with as little as necessary is advisable, in order to avoid CPU spikes related to processing large XML documents, which then could lead to adverse voice quality. You can determine what information needs to be returned by analysing the 'purpose' field.
+此特定部分还将从不同的上下文中调用，因此您可能不需要每次返回完整的配置。实际上，为了避免处理大型 XML 文档产生的 CPU 峰值，从而导致不良语音质量，建议您尽可能地响应较少的信息。您可以通过分析 'purpose' 字段来确定需要返回的信息。
 
-##### Example: default
+##### 示例：默认值
 
-You will also receive requests where purpose is blank, and these are where you would send back user information, say during an authorization.
+您还将收到 purpose 字段为空的请求，并且这些请求是您在授权期间发送用户信息的地方。
 
-REQUEST:
+请求：
 
+```
 [hostname] => testmachine
 [section] => directory
 [tag_name] => domain
@@ -661,7 +655,7 @@ REQUEST:
 [Core-UUID] => c5c8cbf4-60c3-45a2-b110-933da620cfd2
 [FreeSWITCH-Hostname] => 25515_1_36308_177178
 [FreeSWITCH-IPv4] => 192.168.1.10
-[FreeSWITCH-IPv6] => ::1
+[FreeSWITCH-IPv6] => ::1
 [Event-Date-Local] => 2009-10-27 00:47:10
 [Event-Date-GMT] => Tue, 27 Oct 2009 07:47:10 GMT
 [Event-Date-Timestamp] => 1256629630733916
@@ -694,6 +688,52 @@ REQUEST:
 [ip] => 192.168.1.100
 
 RESPONSE:
+```
+
+```
+[hostname] => testmachine
+[section] => 目录
+[tag_name] => 域
+[key_name] => 姓名
+[key_value] => 域名1.awesomevoipdomain.faketld
+[Event-Name] => REQUEST_PARAMS
+[Core-UUID] => c5c8cbf4-60c3-45a2-b110-933da620cfd2
+[FreeSWITCH-Hostname] => 25515_1_36308_177178
+[FreeSWITCH-IPv4] => 192.168.1.10
+[FreeSWITCH-IPv6] => ::1
+[Event-Date-Local] => 2009-10-27 00:47:10
+[Event-Date-GMT] => Tue, 27 Oct 2009 07:47:10 GMT
+[Event-Date-Timestamp] => 1256629630733916
+[Event-Calling-File] => sofia_reg.c
+[Event-Calling-Function] => sofia_reg_parse_auth
+[Event-Calling-Line-Number] => 1671
+[action] => sip_auth
+[sip_profile] => internal
+[sip_user_agent] => PolycomSoundPointIP-SPIP_320-UA/3.1.0.0084
+[sip_auth_username] => 1004
+[sip_auth_realm] => 域名1.awesomevoipdomain.faketld
+[sip_auth_nonce] => 533c5264-12cb-4f8b-bcdb-5ecabe5e540f
+[sip_auth_uri] => sip:域名1.awesomevoipdomain.faketld:5060
+[sip_contact_user] => 1004
+[sip_contact_host] => 192.168.1.100
+[sip_to_user] => 1004
+[sip_to_host] => 域名1.awesomevoipdomain.faketld
+[sip_from_user] => 1004
+[sip_from_host] => 域名1.awesomevoipdomain.faketld
+[sip_request_host] => 域名1.awesomevoipdomain.faketld
+[sip_request_port] => 5060
+[sip_auth_qop] => auth
+[sip_auth_cnonce] => hSVnPb32nA/OtkY
+[sip_auth_nc] => 00000001
+[sip_auth_response] => 6e4e611d7593d52e02451b70900071d8
+[sip_auth_method] => REGISTER
+[key] => id
+[user] => 1004
+[domain] => 域名1.awesomevoipdomain.faketld
+[ip] => 192.168.1.100
+
+RESPONSE:
+```
 
 ```xml
 <document type="freeswitch/xml">
@@ -718,19 +758,17 @@ RESPONSE:
 </document>
 ```
 
-  
-If you don't want to communicate passwords in plain text over your network, you can use the \`a1-hash\` param instead. Its value should be an md5sum containing \`[user:domain:password](http://userdomainpassword)\`.
+如果您不希望以明文的方式通过网络传输密码，您可以使用`a1-hash`参数。它的值应该是包含`[用户:域名:密码]`的md5sum。
 
-For example, if you have a user 1002 on domain 127.0.0.1 with password 1234, you can generate the proper hash by:
+例如，如果您有一个用户1002，域名为127.0.0.1，密码为1234，您可以通过以下方式生成正确的哈希值：
 
 echo -n 1002:127.0.0.1:1234 | md5sum
 
-The proper param tag for this example is:
+此示例的正确参数标签是：
 
 &lt;param name="a1-hash" value="50046ba744759aa83e045ba0b996e7a9"/>
 
-  
-##### Example: purpose=gateways
+##### 示例：purpose=gateways
 
 REQUEST:
 
@@ -754,58 +792,68 @@ REQUEST:
 [profile] => internal
 
 RESPONSE:
+```
 
 ```xml
 <document type="freeswitch/xml">
-  <section name="directory">	
+  <section name="directory">
     <domain name="domain1.awesomevoipdomain.faketld">
-      <params>
-        <param name="dial-string" value="{presence_id=${dialed_user}@${dialed_domain}}${sofia_contact(${dialed_user}@${dialed_domain})}"/>
-      </params>
-      <variables>
-        <variable name="example_var" value="example_value_1"/>
-      </variables>
-      <user id="default" />
+      <user id="user1" />
     </domain>
     <domain name="domain2.awesomevoipdomain.faketld">
-      <params>
-        <param name="dial-string" value="{presence_id=${dialed_user}@${dialed_domain}}${sofia_contact(${dialed_user}@${dialed_domain})}"/>
-      </params>
-      <variables>
-        <variable name="example_var" value="example_value_2"/>
-      </variables>
-      <user id="default" />
+      <user id="user2" />
     </domain>
   </section>
 </document>
 ```
 
-  
-##### Example: purpose=network-list
+RESPONSE:
 
+_TODO: Example needed_
+
+##### Example: action=voicemail-check
+    
 REQUEST:
 
-[hostname] => black
-[section] => directory
-[tag_name] => domain
-[key_name] => name
-[key_value] => 192.168.0.2
-[domain] => 192.168.0.2
-[purpose] => network-list
+```xml
+<document type="freeswitch/xml">
+  <section name="directory">
+    <domain name="domain1.awesomevoipdomain.faketld">
+      <user id="user1" />
+    </domain>
+    <domain name="domain2.awesomevoipdomain.faketld">
+      <user id="user2" />
+    </domain>
+  </section>
+</document>
+```
 
 RESPONSE:
 
 _TODO: Example needed_
 
-  
-##### Example: action=message-count
-
-[mod\_voicemail](https://wiki.freeswitch.org/wiki/Mod%5Fvoicemail "Mod voicemail") occasionally needs to look up a user's id.
-
-The request example is below and can be responded to in the same way as an authorization request for simplicity.
-
+##### Example: action=status
+    
 REQUEST:
 
+```xml
+<document type="freeswitch/xml">
+  <section name="directory">
+    <domain name="domain1.awesomevoipdomain.faketld">
+      <user id="user1" />
+    </domain>
+    <domain name="domain2.awesomevoipdomain.faketld">
+      <user id="user2" />
+    </domain>
+  </section>
+</document>
+```
+
+RESPONSE:
+
+_TODO: Example needed_
+
+```simplified_chinese
 [hostname] => testmachine
 [section] => directory
 [tag_name] => domain
@@ -815,7 +863,7 @@ REQUEST:
 [Core-UUID] => c5c8cbf4-60c3-45a2-b110-933da620cfd2
 [FreeSWITCH-Hostname] => testmachine
 [FreeSWITCH-IPv4] => 192.168.1.10
-[FreeSWITCH-IPv6] => ::1
+[FreeSWITCH-IPv6] => ::1
 [Event-Date-Local] => 2009-10-27 00:47:40
 [Event-Date-GMT] => Tue, 27 Oct 2009 07:47:40 GMT
 [Event-Date-Timestamp] => 1256629660158410
@@ -827,22 +875,22 @@ REQUEST:
 [user] => 1004
 [domain] => domain1.awesomevoipdomain.faketld
 
-##### Example: action=reverse-auth-lookup
+##### 示例: action=reverse-auth-lookup
 
-Here is an example of when an endpoint requests reverse authentication for a request, using reverse-auth-lookup;
+以下是终端请求反向验证时使用 reverse-auth-lookup 的示例：
 
-REQUEST:
+请求:
 
- ["url"]=> "freeswitch/directory"
- ["section"]=> "directory"
- ["key_value"]=> "default"
- ["Event-Name"]=> "REQUEST_PARAMS"
- ["Action"]=> "reverse-auth-lookup"
- ["key"]=> "id"
- ["user"]=> "walker"
- ["domain"]=> "domain-name"
+["url"]=> "freeswitch/directory"
+["section"]=> "directory"
+["key_value"]=> "default"
+["Event-Name"]=> "REQUEST_PARAMS"
+["Action"]=> "reverse-auth-lookup"
+["key"]=> "id"
+["user"]=> "walker"
+["domain"]=> "domain-name"
 
-RESPONSE:
+响应:
 
 ```xml
 <document type="freeswitch/xml">
@@ -859,13 +907,12 @@ RESPONSE:
 </document>
 ```
 
-  
-This tells FreeSWITCH™ what credentials to use for the challenge.
+这告诉FreeSWITCH™要使用哪些凭据进行挑战验证。
 
-  
-####  Section: not found 
+#### 无法找到该部分
 
-If your web application receives a request and you don't wish to serve a config, then you should respond with 200 status code and the following "not found" result.
+如果您的网络应用收到请求但不想提供配置文件，则应响应200状态码和以下的“未找到”结果。
+```
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -876,19 +923,17 @@ If your web application receives a request and you don't wish to serve a config,
 </document>
 ```
 
-  
-If you return an empty response instead of the not found, you may see the following error;
+如果您返回一个空响应而不是“not found”，您可能会看到以下错误：
 
 [ERR] switch_xml.c:1534 switch_xml_locate() Error[[error near line 1]: root tag missing]
 
-  
-####  post_load configuration 
+#### 加载后配置
 
-Due to the way FreeSWITCH loads modules and configuration, there are occasions where it will request a configuration in the format of 'post\_load'
+由于 FreeSWITCH 加载模块和配置的方式，有时会请求以“post_load”格式的配置。
 
-One of these is _post\_load\_switch.conf_, FreeSWITCH will still attempt to request the normal file name (switch.conf) but will silently ignore the content, therefore you need to ensure that you serve the same content from both (ensuring that _name_ attribute in _&lt;configuration>_ reflects the requested file name).
+其中之一是 _post\_load\_switch.conf_，FreeSWITCH 仍会尝试请求正常的文件名（switch.conf），但会静默忽略内容，因此您需要确保同时从两者提供相同的内容（确保 _&lt;configuration>_ 中的 _name_ 属性反映所请求的文件名）。
 
-For example, a request for switch.conf would look like this;
+例如，对于 switch.conf 的请求如下：
 
 ```xml
 <document type="freeswitch/xml">
@@ -900,8 +945,7 @@ For example, a request for switch.conf would look like this;
 </document>
 ```
 
-  
-And a request for post\_load\_switch.conf would look like this;
+而对于 post_load_switch.conf 的请求如下：
 
 ```xml
 <document type="freeswitch/xml">
@@ -913,14 +957,13 @@ And a request for post\_load\_switch.conf would look like this;
 </document>
 ```
 
-  
-The other example of this is _post\_load\_modules.conf_, because _modules.conf_ has to be initially loaded from disk for the module to be available in the first place.
+另一个示例是 _post\_load\_modules.conf_，因为必须从磁盘上最初加载 _modules.conf_，模块才能首次使用。
 
-### Caching
+### 缓存
 
-If you want to reduce the amount of HTTP requests FreeSWITCH needs to make to your web server you can supply the cacheable="true" attribute which will allow FreeSWITCH to manage a memory table with the information. You will still see HTTP requests being made but should definitely notice a decrease with this attribute set.
+如果你想减少FreeSWITCH向您的Web服务器发送的HTTP请求数量，您可以提供`cacheable="true"`属性，这将允许FreeSWITCH管理一个内存表来存储这些信息。您仍然会看到HTTP请求被发出，但是设置了这个属性后，您应该明显地注意到减少了。
 
-Here is an example of using this feature;
+以下是使用这个特性的示例：
 
 ```xml
 <?xml version="1.0"?>
@@ -942,60 +985,57 @@ Here is an example of using this feature;
 </document>
 ```
 
-  
-If you then make a change to the directory you should run the xml\_flush\_cache command to clear, some examples:
+如果您对目录进行更改，您应该运行`xml_flush_cache`命令来清除缓存，以下是一些示例：
 
-# This clears items for user 1001
+# 这会清除用户1001的项目
 xml_flush_cache id 1002 domain-name
 
-# This clears all items
+# 这会清除所有项目
 xml_flush_cache 
 
-You may also wish to enable an expiry on the cache entries by setting the cacheable attribute to a numeirc value which would be the number of milliseconds, see <http://jira.freeswitch.org/browse/FS-4871>
+您还可以通过将`cacheable`属性设置为一个数字值来启用缓存条目的过期时间，该数字值表示毫秒数，参见<http://jira.freeswitch.org/browse/FS-4871>
 
       &lt;user id="1002" cacheable="60000">
 
-will cache the result for 60 seconds (60000 milliseconds)
+将结果缓存60秒（60000毫秒）
 
-###  Alternative ways of storing static configurations 
+###  存储静态配置的其他方法
 
-For installations with heavy usage this module can cause delays in call handling.
+对于使用频繁的安装，这个模块可能会导致呼叫处理的延迟。
 
-For example;
+例如；
 
-If the the desired intent merely is to centrally store and/or share a common static dialplan with multiple FreeSWITCH installations an alternative to mod\_xml\_curl would be to create and use a git repository, or automatically retrieving an XML document stored on the webserver by using the exec command within an X-PRE-PROCESS. Within your dialplan add:
+如果只是希望将公共静态拨号计划集中存储和/或共享给多个FreeSWITCH安装的目的，可以选择使用git仓库来替代mod_xml_curl，或者使用exec命令在X-PRE-PROCESS中自动从web服务器获取存储的XML文档。在您的拨号计划中添加以下内容：
 
 &lt;X-PRE-PROCESS cmd="exec" data="wget -qO - http://www.example.com/dialplan.xml" />
-(Important: Note the ' - '.  This instructs wget to output the retrieved document to stdout.)
+（注意：重要提示-这会指示wget将检索到的文档输出到stdout。）
 
-This method will include the dialplan stored on the server at the location where the X-PRE-PROCESS exists, the dialplan will only be fetched from the webserver on start-up and upon reloadxml.
+这种方法将包括存储在X-PRE-PROCESS所在位置的服务器上的拨号计划，该拨号计划仅在启动时和reloadxml时从web服务器中获取。
 
-###  Client implementations 
+### 客户端实现
 
 #### PHP
 
-* [fs\_curl](https://github.com/intralanman/fs%5Fcurl) \- by Raymond (intralanman), last updated 2021
-* [FreeSWITCH-mod\_xml-with-PHP](https://github.com/avimar/FreeSWITCH-mod%5Fxml-with-PHP) \- by avimar, last updated 2010.
-* [PHP example](https://wiki.freeswitch.org/wiki/Mod%5Fxml%5Fcurl%5FPHP%5Fexample "Mod xml curl PHP example")
+* [fs_curl](https://github.com/intralanman/fs%5Fcurl) \- 由Raymond（intralanman）编写，最近更新于2021年
+* [FreeSWITCH-mod_xml-with-PHP](https://github.com/avimar/FreeSWITCH-mod%5Fxml-with-PHP) \- 由avimar编写，最近更新于2010年。
+* [PHP示例](https://wiki.freeswitch.org/wiki/Mod%5Fxml%5Fcurl%5FPHP%5Fexample "Mod xml curl PHP示例")
 
-#### Other languages
+#### 其他语言
 
-* [Perl/CGI example](https://wiki.freeswitch.org/wiki/Mod%5Fxml%5Fcurl%5FCGI%5Fexample "Mod xml curl CGI example") \- (by James Jones &lt;james \_at\_ virtualrealmsoftware.com>)
-* [Python/CGI example](https://wiki.freeswitch.org/wiki/Mod%5Fxml%5Fcurl%5FPython%5Fexample "Mod xml curl Python example") \- (by Mike Fedyk &lt;mfedyk \_at\_ mikefedyk.com>)
-* [C# example](https://wiki.freeswitch.org/wiki/Mod%5Fxml%5Fcurl%5FC%5Fsharp%5Fexample "Mod xml curl C sharp example")
-* [Ruby dialplan example](https://wiki.freeswitch.org/wiki/Mod%5Fxml%5Fcurl%5FRuby%5Fdialplan%5Fexample "Mod xml curl Ruby dialplan example") \- very simple database ([MySQL](http://www.mysql.com/)) driven [Dialplan](https://wiki.freeswitch.org/wiki/Dialplan "Dialplan") XML routing. (Jonathan Towne &lt;jontow \_at\_ zenbsd.net>)
-* [Ruby directory example](https://wiki.freeswitch.org/wiki/Mod%5Fxml%5Fcurl%5FRuby%5Fdirectory%5Fexample "Mod xml curl Ruby directory example") \- very simple database ([PostgreSQL](http://www.postgresql.org/)) driven [User Directory](https://wiki.freeswitch.org/wiki/XML%5FUser%5FDirectory%5FGuide "XML User Directory Guide"). (Jonathan Towne &lt;jontow \_at\_ zenbsd.net>)
-* [C++ Directory Example](https://wiki.freeswitch.org/wiki/Mod%5Fxml%5Fcurl%5FC%2B%2B%5FExample) \- Reads from a database and serves the directory to Xml\_Curl over HTTP.
-* [Ramaze Example](https://freeswitch.org/confluence/pages/viewpage.action?pageId=9634333) \- TinyQueue dynamic group dials. (By the rubyists &lt;admins \_at\_ rubyists.com>)
+* [Perl/CGI 示例](https://wiki.freeswitch.org/wiki/Mod%5Fxml%5Fcurl%5FCGI%5Fexample "Mod xml curl CGI 示例") \- （作者：James Jones &lt;james \_at\_ virtualrealmsoftware.com>）
+* [Python/CGI 示例](https://wiki.freeswitch.org/wiki/Mod%5Fxml%5Fcurl%5FPython%5Fexample "Mod xml curl Python 示例") \- （作者：Mike Fedyk &lt;mfedyk \_at\_ mikefedyk.com>）
+* [C# 示例](https://wiki.freeswitch.org/wiki/Mod%5Fxml%5Fcurl%5FC%5Fsharp%5Fexample "Mod xml curl C# 示例")
+* [Ruby 拨号计划 示例](https://wiki.freeswitch.org/wiki/Mod%5Fxml%5Fcurl%5FRuby%5Fdialplan%5Fexample "Mod xml curl Ruby 拨号计划 示例") \- 使用 [MySQL](http://www.mysql.com/) 驱动的非常简单的数据库驱动的 [拨号计划](https://wiki.freeswitch.org/wiki/Dialplan "拨号计划") XML 路由。（作者：Jonathan Towne &lt;jontow \_at\_ zenbsd.net>）
+* [Ruby 目录 示例](https://wiki.freeswitch.org/wiki/Mod%5Fxml%5Fcurl%5FRuby%5Fdirectory%5Fexample "Mod xml curl Ruby 目录 示例") \- 使用 [PostgreSQL](http://www.postgresql.org/) 驱动的非常简单的数据库驱动的 [用户目录](https://wiki.freeswitch.org/wiki/XML%5FUser%5FDirectory%5FGuide "XML 用户目录指南")。（作者：Jonathan Towne &lt;jontow \_at\_ zenbsd.net>）
+* [C++ 目录示例](https://wiki.freeswitch.org/wiki/Mod%5Fxml%5Fcurl%5FC%2B%2B%5FExample) \- 从数据库读取并通过 HTTP 将目录提供给 Xml\_Curl。
+* [Ramaze 示例](https://freeswitch.org/confluence/pages/viewpage.action?pageId=9634333) \- TinyQueue 动态群组拨号。（作者：Rubyists &lt;admins \_at\_ rubyists.com>）
 
 #### Lua
 
-Lua can be called directly without a web server. See: [Serving Configuration with Lua](./mod-lua/Serving-Configuration-with-Lua_3965134.mdx#xml)
+Lua 可直接调用，无需 Web 服务器。参见：[使用 Lua 提供配置](./mod-lua/Serving-Configuration-with-Lua_3965134.mdx#xml)
 
   
-### Comments:
+### 评论：
 
-| This module is fantastic!But currently, i failed to set custom request headers in mod\_xml\_curl gateway configuration. If you do not mind, please kindly let me know if there is any possibility to do so. Thank you very much. ![](/images/icons/contenttypes/comment_16.png) Posted by chhatrachhorm at Apr 08, 2018 13:31 |
+| 这个模块太棒了！但是，我目前在mod_xml_curl网关配置中无法设置自定义请求头。如果你不介意的话，请告诉我有没有可能做到这一点。非常感谢。![](/images/icons/contenttypes/comment_16.png) 发表者：chhatrachhorm，发布于2018年4月8日13:31 |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-
-

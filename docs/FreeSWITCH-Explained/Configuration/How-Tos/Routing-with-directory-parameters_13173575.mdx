@@ -1,19 +1,16 @@
+# 带有目录参数的路由
 
-# Routing with directory parameters 
+点击这里展开目录
 
- 
+* 1 [问题：您需要对一组端点应用不同的路由规则](#problem-you-need-to-apply-a-different-set-of-routing-rules-to-a-set-of-endpoints)
 
-Click here to expand Table of Contents
+下面的所有文本都是在2008年最后编辑的，所以可能过时、不准确，急需更新。
 
-* 1 [Problem: You need to apply a different set of routing rules to a set of endpoints](#problem-you-need-to-apply-a-different-set-of-routing-rules-to-a-set-of-endpoints)
+## 问题：您需要对一组端点应用不同的路由规则
 
-All the text below was last edited in 2008, it is therefore likely out-of-date, inaccurate and in dire need of a refresh
+**解决方案**：在目录条目中添加&lt;variables>部分。这些参数将被传递到拨号计划中，并且可以像其他变量一样进行测试。
 
-## Problem: You need to apply a different set of routing rules to a set of endpoints
-
-**Solution**: Add a &lt;variables> section to the directory entries. These parameters will be passed into the dialplan, and can be tested against just like other variables.
-
-**Note**: You must force per-call authentication in your sofia.xml.conf for &lt;variables> to be passed through to the dialplan.
+**注意**：您必须在sofia.xml.conf中强制对每个呼叫进行身份验证，以便将&lt;variables>传递到拨号计划中。
 
 **directory.xml**:
 
@@ -50,15 +47,15 @@ All the text below was last edited in 2008, it is therefore likely out-of-date, 
          <action application="bridge" data="sofia/gateway/[gateway_name]/$1" />
       </condition>
    </extension>
+```
 
-   <extension name="internal_phones">
-      <condition field="${ruleset}" value="courtesy" />
-      <condition field="destination_number" expression="^(\d{10})">   <!-- NO LD calls for you! -->
-         <action application="bridge" data="sofia/gateway/[gateway_name]/$1" />
-      </condition>
-   </extension>
+```xml
+<extension name="internal_phones">
+   <condition field="${ruleset}" value="courtesy" />
+   <condition field="destination_number" expression="^(\d{10})">   <!-- 你不能拨打长途电话！ -->
+      <action application="bridge" data="sofia/gateway/[gateway_name]/$1" />
+   </condition>
+</extension>
 
 </context>
 ```
-
-

@@ -1,51 +1,49 @@
+# mod_perl 示例 - Mitch Capper
 
-# mod_perl examples by Mitch Capper 
+## 关于
 
- 
+使用Perl脚本来控制FreeSWITCH，拦截会话。这些示例依赖于由Mitch Capper最初发布的[mod_perl](../Modules/mod_perl_1048930.mdx#about)脚本。
 
-## About
-
-Control FreeSWITCH, intercept a session with Perl scripts.These examples rely on [mod\_perl](../Modules/mod_perl_1048930.mdx#about) scripting, initially published by Mitch Capper.
-
-Click here to expand Table of Contents
+点击此处展开目录
 
 * 1 [](#-freeswitch--mod_perl-examples-by-mitch-capper-)
-* 2 [Console IVR Example](#console-ivr-example)
-* 3 [Live Session Intercept IVR Example](#live-session-intercept-ivr-example)
+* 2 [控制台IVR示例](#console-ivr-example)
+* 3 [实时会话拦截IVR示例](#live-session-intercept-ivr-example)
 
 ##   
 
-## Console IVR Example
+## 控制台IVR示例
 
-Expand source 
+展开源代码
 
 ```perl
 use strict;
 our $session;
 
-# A simple IVR system that is meant to allow you to dial into your own system, authenticate with a pin, and then perform various actions
-# Shows writing to the console log, getting/setting variables, listening for DTMF tones (passive and active)
+# 一个简单的IVR系统，可以让您拨打自己的系统，通过PIN码进行身份验证，然后执行各种操作
+# 显示写入控制台日志，获取/设置变量，监听DTMF音调（被动和主动）
 
-# Notes:
-#	This doesn't use the IVR module
-#	It uses pre-fabbed audio messages no speaking (just for easyness), everywere I have test.wav you would want to replace with whatever wav's you want to use.  I have a comment after each test.wav explaining what it would say.
-#	It relies on the rest of my dialplan to actually carry out some of the actions/bridging.  So once it sets things up it just uses return 1 to go on to the rest of the dialplan.
-#	It doesn't use mod_loopback to execute the rest of my dialplan, as my dialplan is actually carried out by perl I can simply set the various variables and when my perl dialplan executes it will import them.  If you are using the XML dialplan you will most likely want to use mod_loopback to feed the return back into the dialplan.
+# 注：
+# 这不使用IVR模块
+# 它使用预先准备好的音频消息而不是语音（仅为简便起见），每个test.wav后面都有一个注释，解释它将说什么。
+# 它依赖于我的拨号计划的其余部分来执行一些操作/接驳。所以一旦它设置好了，它只使用return 1来继续执行拨号计划的其余部分。
+# 它不使用mod_loopback来执行我的拨号计划的其余部分，因为我的拨号计划实际上是由Perl执行的，我可以简单地设置各种变量，当我的Perl拨号计划执行时，它会导入它们。如果您使用的是XML拨号计划，您很可能希望使用mod_loopback将返回反馈到拨号计划中。
 
 
-my $PLAY_TIMES = 5; #How many times to play the intro message before returning
-my $PASS_KEY = "1234"; #Pass key to get into the system
-my $MY_ACCT = "1000"; #Default account to take over once in
+my $PLAY_TIMES = 5; #播放介绍消息的次数
+my $PASS_KEY = "1234"; #进入系统的密码
+my $MY_ACCT = "1000"; #登录后默认帐户
 
-sub fprint($) #Dump string to the console
+```perl
+sub fprint($) #将字符串输出到控制台
 {
 	my ($msg) = @_;
 	freeswitch::consoleLog("CRIT",$msg . "\n");
 }
 my %VARS;
-{ ####The idea of these functions is to allow for easy pull in of variables and then automatically export any ones that have been changed when UPDATEV.  It will ensure you don't write to any non-imported variables, but as we are using a hash we cannot prevent invalid reads.  If you are really concerned about this then you could use a specific read function which first checks to make sure its defined in CLEAN_VARS before returning.
+{ ####这些函数的目的是方便导入变量，并在更新变量时自动导出任何已更改的变量。它将确保您不会写入任何未导入的变量，但由于我们使用的是哈希，我们无法防止无效的读取。如果您真的关心这个问题，那么您可以使用一个特定的读取函数，在返回之前首先检查它在CLEAN_VARS中是否被定义。
 	my %CLEAN_VARS;
-	sub GETV #takes one or more variables names to import in
+	sub GETV #导入一个或多个变量名
 	{
 		my @arr = @_;
 		foreach my $var (@arr)
@@ -55,41 +53,43 @@ my %VARS;
 			$CLEAN_VARS{$var}="" if (! defined $CLEAN_VARS{$var});
 		}
 	}
-	sub SETV($$) #Generally not called directly, but will set the variable to the value requested right away.
+	sub SETV($$) #通常不直接调用，但会立即设置变量的值。
 	{
 		my ($var,$value) = @_;
 		$session->setVariable($var,$value);
 		$VARS{$var} = $value;
 		$CLEAN_VARS{$var} = $value;
 	}
-	sub ADDV(@) #If we don't care about a variables value, but wan't to override it this will add it to the hash so that when we write to it, we don't consider it a typo
+	sub ADDV(@) #如果我们不关心变量的值，但想要覆盖它，这将将它添加到哈希中，以便当我们写入它时，我们不认为它是一个拼写错误。
 	{
 		my @arr = @_;
 		foreach my $var(@arr)
 		{
-			$CLEAN_VARS{$var}="123zzzzzZnzZZzz"; #something definately won't match
+			$CLEAN_VARS{$var}="123zzzzzZnzZZzz"; #一定不会匹配的内容
 			$VARS{$var} = "";
 		}
 	}
-	sub UPDATEV() #Updates any changed variables
+	sub UPDATEV() #更新任何已更改的变量
 	{
 		foreach my $var (keys %VARS)
 		{
-			die "Warning a variable of: $var was not found in CLEAN_VARS, did you forget to GET/ADD it first?" if (! defined $CLEAN_VARS{$var}); #make sure tehre were no typos
+			die "警告：$var 变量在 CLEAN_VARS 中未找到，您是否忘记了先 GET/ADD 它?" if (! defined $CLEAN_VARS{$var}); #确保没有拼写错误
 			SETV($var, $VARS{$var}) if ($VARS{$var} ne $CLEAN_VARS{$var});
 		}
 	}
 }
+```
 
+```perl
 my $press_so_far = "";
 sub got_press
 {
 	my ($session,$type,$data) = @_;
-	return if (length($press_so_far) > 30); #don't allow a string > 30 to be queued up
+	return if (length($press_so_far) > 30); # 不允许超过30个字符的字符串
 	$press_so_far .= $data->{digit};
 	return;
 }
-sub set_user($) #this function takes over as if we sip_authed as that user.
+sub set_user($) #该函数将模拟以该用户进行sip身份验证。
 {
 	my ($user_id) = @_;
 	$session->execute("set_user",$user_id. '@' . $VARS{domain});
@@ -98,109 +98,111 @@ sub set_user($) #this function takes over as if we sip_authed as that user.
 	$VARS{caller_id_number} = $user_id;
 }
 $session->answer();
-$session->setInputCallback('got_press',""); #listen for key presses in the background
+$session->setInputCallback('got_press',""); #后台监听按键操作
 my $x;
 GETV(qw/destination_number effective_caller_id_name effective_caller_id_number caller_id_number hangup_after_bridge sip_authorized app_rights domain/);
-if ( $VARS{sip_authorized} ne "true" || $VARS{caller_id_number} ne $MY_ACCT) #if we are not authorized or we are not the auto_allowed user then lets forece them to authenticate
+if ( $VARS{sip_authorized} ne "true" || $VARS{caller_id_number} ne $MY_ACCT) #如果没有授权或者不是auto_allowed用户，则要求进行身份验证
 {
 	for ($x = 0; $x < $PLAY_TIMES && $press_so_far ne $PASS_KEY && $session->ready(); $x++)
 	{
-		$session->streamFile("/root/test.wav"); #Please enter the pin number
+		$session->streamFile("/root/test.wav"); #请输入密码
 	}
 	return 1 if ($press_so_far ne $PASS_KEY);
 	$press_so_far="";
 }
-#Dial Number
-#Check Voicemail
-#Set Caller ID
-#Privacy Dial
-#Become Another User
-#Join Freeswitch Conference
-set_user($MY_ACCT); #Once authed we should tak over the default user account
+#拨号号码
+#检查语音邮件
+#设置主叫ID
+#私密拨号
+#切换用户
+#加入Freeswitch会议
+set_user($MY_ACCT); #验证通过后，我们应该切换到默认用户帐户
 $VARS{hangup_after_bridge} = "true";
+```
 
-###Functions the user can choose, they return 1 if they expect the ivr to exit out after running
-sub dial_number()
+###用户可选择的功能，如果他们在运行后希望退出ivr，则返回1
+子拨号号码()
 {
-	my $num_dial = $session->playAndGetDigits(4,20,999,10000,'#',"/root/test.wav","/root/test.wav",'^[0-9]+$'); #enter phone number to dial followed by pound sign
+	my $num_dial = $session->playAndGetDigits(4,20,999,10000,'#',"/root/test.wav","/root/test.wav",'^[0-9]+$'); #输入要拨打的电话号码，后面跟着井号
 	return 1 if (! $session->ready());
 	$VARS{destination_number} = $num_dial;
 	UPDATEV();
 	return 1;
 }
-sub check_voicemail()
+子检查语音信箱()
 {
 	$VARS{destination_number} = $MY_ACCT;
 	UPDATEV();
 	return 1;
 }
-sub enable_privacy()
+子启用隐私()
 {
 	$VARS{effective_caller_id_name} = "0000000000";
 	$VARS{effective_caller_id_number} = "0000000000";
 	$session->execute("privacy","yes");
-	$session->streamFile("/root/test.wav"); #Privacy Mode Enabled
+	$session->streamFile("/root/test.wav"); #隐私模式已启用
 	return 0;
 }
-sub assume_user()
+子假定用户()
 {
-	my $user_id = $session->playAndGetDigits(4,4,999,10000,'#',"/root/test.wav","/root/test.wav",'^[0-9]+$'); #enter the 4 digit user you want to spoof
+	my $user_id = $session->playAndGetDigits(4,4,999,10000,'#',"/root/test.wav","/root/test.wav",'^[0-9]+$'); #输入您想欺骗的4位数字用户
 	return 1 if (! $session->ready());
 	set_user($user_id);
-	$session->streamFile("/root/test.wav"); #You are now that user
+	$session->streamFile("/root/test.wav"); #您现在是该用户
 	return 0;
 }
-sub join_freeswitch_conference()
+子加入freeswitch会议()
 {
 	$VARS{destination_number} = "888";
-	$session->streamFile("/root/test.wav"); #Joining Conference
+	$session->streamFile("/root/test.wav"); #加入会议
 	UPDATEV();
 	return 1;
 }
-sub set_caller_id()
+子设置主叫号码()
 {
-	my $num_spoof = $session->playAndGetDigits(4,20,999,10000,'#',"/root/test.wav","/root/test.wav",'^[0-9]+$'); #enter phone number for the caller id followed by the pound sign
+	my $num_spoof = $session->playAndGetDigits(4,20,999,10000,'#',"/root/test.wav","/root/test.wav",'^[0-9]+$'); #输入主叫号码后跟着井号
 	return 1 if (! $session->ready());
 	$VARS{effective_caller_id_name} = $num_spoof;
 	$VARS{effective_caller_id_number} = $num_spoof;
-	$session->streamFile("/root/test.wav"); #Caller ID Set
+	$session->streamFile("/root/test.wav"); #主叫号码已设置
 	return 0;
 }
-my %OPTIONS = ( 1=>\&dial_number,2=>\&check_voicemail,3=>\&assume_user,4=>\&set_caller_id,5=>\&enable_privacy,6=>\&join_freeswitch_conference );
+我的 %选择 = ( 1=>\&dial_number,2=>\&check_voicemail,3=>\&assume_user,4=>\&set_caller_id,5=>\&enable_privacy,6=>\&join_freeswitch_conference );
 while($session->ready())
 {
-	my $opt = $session->playAndGetDigits(1,1,999,10000,'#',"/root/test.wav","/root/test.wav",'^[0-6]$'); #ivr munu,incorrect press
+	my $opt = $session->playAndGetDigits(1,1,999,10000,'#',"/root/test.wav","/root/test.wav",'^[0-6]$'); #ivr菜单，错误按键
 	return 1 if (! $session->ready());
-	if ($OPTIONS{$opt})
+	if ($选择{$opt})
 	{
-		return 1 if ($OPTIONS{$opt}->()); #if it returns 1 we should leave the ivr
+		return 1 if ($选择{$opt}->()); #如果返回1，我们应该离开ivr
 	}
+}
 
 }
 1;
 ```
 
-## Live Session Intercept IVR Example
+## 实时会话截取IVR示例
 
-This is a simple script to show how you can get the list of current sessions, present them to the user, and let them choose one to take over. This is part of one of my larger dial plans but it should be fairly obvious about how to integrate it into your own. Originally we used this with cepstral which allows you to announce caller ID names and such too, but this is a simpler version which doesn't require it. Each call is actually made up of two sessions, so we use some logic to try and skip the session we don't care about. This does assume 4 digit extensions always calling a non sip address or non sip address calling a 4 digit extension. Integrate this with Console IVR Example to provide an easy way to dial in on a cell phone and take over an active session for example.
+这是一个简单的脚本，展示了如何获取当前会话列表，向用户展示，并让他们选择一个会话接管。这是我一个更大的拨号计划的一部分，但它应该很明显如何集成到你自己的计划中。最初我们使用这个与cepstral一起使用，它允许您宣布呼叫者ID名称等等，但这是一个更简单的版本，不需要它。每个呼叫实际上由两个会话组成，因此我们使用一些逻辑来尝试跳过我们不关心的会话。这假设4位数分机始终调用非SIP地址或非SIP地址调用4位数分机。将其与Console IVR示例集成，以提供一种在手机上轻松拨入并接管活动会话的方法。
 
-Expand source 
+展开源码
 
 ```perl
- my $press_so_far = "";
+my $press_so_far = "";
 sub got_press
 {
 	my ($session,$type,$data) = @_;
-	return if (length($press_so_far) > 30); #don't allow a string > 30 to be queued up
+	return if (length($press_so_far) > 30); # 不允许超过30个字符的字符串加入队列
 	$press_so_far .= $data->{digit};
 	return;
 }
-$session->setInputCallback('got_press'); #listen for key presses in the background used on streamFile playing.
+$session->setInputCallback('got_press'); # 在播放streamFile时监听按键按下事件
 sub pick_intercept_session(){
 	my $api = new freeswitch::API();
 	my $chans = $api->executeString("show channels");
 	my @lines = split(/\n/,$chans);
-	#remove first line and last two lines
+	#移除首行和末尾两行
 	shift(@lines);
 	pop(@lines);
 	pop(@lines);
@@ -209,8 +211,8 @@ sub pick_intercept_session(){
 	foreach my $line(@lines){
 		chomp($line);
 		my ($uuid,$direction,$created,$trash,$name,$state,$cid_name,$cid_num,$trash,$dest,$trash) = split(/,/,$line,11);
-		next if ($direction eq "inbound" && $cid_num =~ /^[0-9]{4}$/); #skip inbound sessions of 4 digit extensions source as this is the caller on an outbound call
-		next if ($direction eq "outbound" && $dest =~ /^sip:/); #skip outbound sessions that have sip: in it as these are the destination on an inbound call
+		next if ($direction eq "inbound" && $cid_num =~ /^[0-9]{4}$/); # 忽略4位数字拨入会话，因为这是呼出呼叫的主叫方
+		next if ($direction eq "outbound" && $dest =~ /^sip:/); # 忽略sip开头的呼出会话，因为这是呼入呼叫的目标方
 		$calls{$cnt}{uuid} = $uuid;
 		$cid_name =~ s/^\+//;
 		$cid_num =~ s/^\+//;
@@ -223,43 +225,43 @@ sub pick_intercept_session(){
 		$calls{$cnt}{dest} = $dest;
 		$cnt++;
 	}
-	$session->streamFile("/usr/local/freeswitch/sounds/ivr_total_of.wav"); #There are a total of 
+	$session->streamFile("/usr/local/freeswitch/sounds/ivr_total_of.wav"); # 总共有 
 	my $total_calls= keys(%calls);
 	say_digits($total_calls);
-	$session->streamFile("/usr/local/freeswitch/sounds/ivr_active_calls.wav"); #active calls please choose which to take over from below
+	$session->streamFile("/usr/local/freeswitch/sounds/ivr_active_calls.wav"); # 请选择要接管的活动呼叫
 	sleep(0.5);
 	my $press;
 	foreach my $num (sort keys %calls){
-		$press_so_far = $session->playAndGetDigits(0,1,1,1,"#","/usr/local/freeswitch/sounds/ivr_call_from.wav","",""); #Call from
+		$press_so_far = $session->playAndGetDigits(0,1,1,1,"#","/usr/local/freeswitch/sounds/ivr_call_from.wav","",""); # 来自
 		say_digits($calls{$num}{cid_num});
 		if ($press_so_far ne ""){
 			$session->execute("intercept",$calls{$press_so_far}{uuid});
 			return 1;
 		}
-		$press_so_far = $session->playAndGetDigits(0,1,1,1,"#","/usr/local/freeswitch/sounds/ivr_calling.wav","",""); #Calling
+		$press_so_far = $session->playAndGetDigits(0,1,1,1,"#","/usr/local/freeswitch/sounds/ivr_calling.wav","",""); # 正在呼叫
 		say_digits($calls{$num}{dest});
 		if ($press_so_far ne ""){
 			$session->execute("intercept",$calls{$press_so_far}{uuid});
 			return 1;
 		}
-		$press_so_far = $session->playAndGetDigits(0,1,1,1,"#","/usr/local/freeswitch/sounds/ivr_hit_number.wav","",""); # hit number
+		$press_so_far = $session->playAndGetDigits(0,1,1,1,"#","/usr/local/freeswitch/sounds/ivr_hit_number.wav","",""); # 按号码
 		say_digits($num);
 		if ($press_so_far ne ""){
 			$session->execute("intercept",$calls{$press_so_far}{uuid});
 			return 1;
 		}
 	}
-	$press_so_far = $session->playAndGetDigits(0,1,1,1,"#","/usr/local/freeswitch/sounds/ivr_waiting_entry.wav","",""); # That is all the calls waiting for your choice
+	$press_so_far = $session->playAndGetDigits(0,1,1,1,"#","/usr/local/freeswitch/sounds/ivr_waiting_entry.wav","",""); # 所有呼叫都已显示完毕
 	if ($press_so_far ne ""){
 		$session->execute("intercept",$calls{$press_so_far}{uuid});
 		return 1;
 	}
 }
-sub say_digits($) #easier to control speak digits
+sub say_digits($) #方便控制播放数字
 {
 	my ($str) = @_;
 	return if ($press_so_far ne "");
-	$str =~ s/[^0-9]//gs;#get us just numbers
+	$str =~ s/[^0-9]//gs;#只保留数字
 	for (my $x = 0; $x < length($str);$x++)
  	{
 		my $num = substr($str,$x,1);
@@ -269,4 +271,68 @@ sub say_digits($) #easier to control speak digits
 }
 ```
 
+## Markdown 标题
 
+这是一篇使用 **Markdown** 编写的示例文本。
+
+以下是一些常见的 Markdown 标记：
+
+- **粗体**：用两个星号（**）将文本包围起来
+- *斜体*：用一个星号（*）将文本包围起来
+- ~~删除线~~：用两个波浪线（~~）将文本包围起来
+- `代码块`：使用反引号（`）包围文本
+
+### 列表
+
+有两种类型的列表可以是用 Markdown 创建：
+
+1. 有序列表
+2. 无序列表
+
+示例有序列表：
+
+1. 第一项
+2. 第二项
+3. 第三项
+
+示例无序列表：
+
+- 项目一
+- 项目二
+- 项目三
+
+### 链接和图像
+
+链接可以用 Markdown 直接创建，例如：[百度](https://www.baidu.com)。
+
+在 Markdown 中插入图像也很简单，例如：
+
+![图片描述](https://example.com/image.jpg)
+
+### 引用
+
+引用可以使用 Markdown 中的大于符号（>)进行创建，例如：
+
+> 这是一个引用示例。
+
+### 代码块
+
+可以使用三个连续的反引号（```）创建代码块。
+
+```python
+def hello_world():
+    print("Hello, World!")
+```
+
+### 表格
+
+Markdown 表格可以使用竖线（|）和减号（-）进行创建。
+
+| 名字 | 年龄 | 职业 |
+|------|------|------|
+| 小明 | 25 | 工程师 |
+| 小红 | 30 | 设计师 |
+
+### 结论
+
+这只是 Markdown 的一小部分功能。它是一种简单而强大的文本格式化工具，适用于多种应用场景，如编写文档、博客文章、README 文件等。

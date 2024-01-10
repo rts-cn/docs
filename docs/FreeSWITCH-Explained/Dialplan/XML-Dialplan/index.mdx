@@ -1,178 +1,173 @@
+# XML拨号计划
 
-# XML Dialplan 
+## 关于
 
- 
+XML拨号计划是FreeSwitch使用的默认拨号计划。XML可以轻松手动编辑，无需特殊工具，只需一个文本编辑器。
 
-## About
+一般来说，[拨号计划](../index.mdx#0-about)用于将呼叫路由到一个端点，可以是传统的分机、语音邮件、交互式语音应答（IVR）菜单或其他兼容应用程序。拨号计划非常灵活。
 
-The XML dialplan is the default dialplan used by FreeSwitch. XML is easily edited by hand without requiring special tools, other than a text editor. 
+拨号计划可以分为**上下文**，允许呼叫按照不同类型的呼叫路径进行处理。呼叫也可以转移到其他上下文。例如，您可以配置两个拨号计划：一个处理始于公共电话网络（[PSTN](http://en.wikipedia.org/wiki/Public%5Fswitched%5Ftelephone%5Fnetwork)）的呼叫，另一个处理始于内部分机的呼叫。在[FreeSWITCH默认（或原始）配置](../../Configuration/Default-Configuration_6587388.mdx#mod_vp8)中，示例拨号计划遵循同样的原则：将外部PSTN呼叫通过一些额外的审查（通过[conf/dialplan/public.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/dialplan/public.xml)中的**`public`**上下文）后转交给内部拨号计划（通过[conf/dialplan/default.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/dialplan/default.xml)中的**`default`**上下文）。
 
-In general, [dialplans](../index.mdx#0-about) are used to route a call to an endpoint, which can be a traditional extension, voicemail, interactive voice response (IVR) menu or other compatible application. Dialplans are extremely flexible.
+拨号计划上下文还可以让您在办公楼中与[多个租户](../../Examples/Multi-tenant_13173521.mdx#about)共用一个PBX。由于每个租户可能都有自己的一组（而且通常会有冲突的）分机、语音菜单等，将租户分别放在独立的拨号计划中以便于配置和维护是很合理的选择。
 
-Dialplans can be separated into **context**s, allowing calls to follow different pathways for different kinds of calls. Calls can be handed-off to other contexts as well. For example you might configure two dialplans: one that handles calls originating from the public phone network ([PSTN](http://en.wikipedia.org/wiki/Public%5Fswitched%5Ftelephone%5Fnetwork)) and one that handles calls originating from internal extensions. The sample dialplans in the [FreeSWITCH default (or vanilla) configuration](../../Configuration/Default-Configuration_6587388.mdx#mod_vp8) are following the exact same principle: forcing an incoming external PSTN call through some additional scrutiny (via the **`public`** context in [conf/dialplan/public.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/dialplan/public.xml) ) before being handed off to the internal dial plan (the **`default`** context in [conf/dialplan/default.xml](https://github.com/signalwire/freeswitch/blob/master/conf/vanilla/dialplan/default.xml) ).
+点击展开目录
 
-Dialplan contexts also allow you to share a single PBX with [multiple tenants](../../Examples/Multi-tenant_13173521.mdx#about) in an office building. Since each tenant will likely have their own set of (and often conflicting) extensions, voice menus, etc., it makes sense to separate tenants into their own independent dialplans to ease configuration and maintenance.
+* 1 [先决条件学习](#learning-prerequisites)
+* 2 [学习目标](#dialplan-variables)
+* 3 [总览](#the-10000-foot-view)
+* 4 [入门示例](#introductory-example)
+* 5 [呼叫计划配置目录结构](#dialplan-configuration-directory-structure-)
+* 6 [基础概念](#beginning-concepts)
+   * 6.1 [上下文](#context)
+   * 6.2 [扩展](#extensions)
+   * 6.3 [条件](#conditions)
+   * 6.4 [动作和反动作](#actions-and-anti-actions)
+   * 6.5 [呼叫计划变量](#dialplan-variables)
+* 7 [高级概念](#advanced-concepts)
+   * 7.1 [嵌套条件](#nested-conditions)
+   * 7.2 [执行时的行顺序 vs 嵌套顺序](#line-order-vs-nested-order-during-execution)
+* 8 [示例库](#example-library)
+* 9 [示例](#dialplan-variables)
+   * 9.1 [示例1：匹配条件](#example-1-matching-a-condition)
+   * 9.2 [示例2：匹配多个条件 (AND)](#example-2-matching-multiple-conditions-and-)
+   * 9.3 [示例3：去掉前导数字](#example-3-stripping-leading-digits)
+   * 9.4 [示例4：添加前缀](#example-4-adding-a-prefix)
+   * 9.5 [示例5：SIP配置文件（使用不同的配置拨号）](#example-5-sip-profiles-dialing-with-different-configurations-)
+   * 9.6 [示例6：呼叫已注册用户](#example-6-calling-registered-user)
+   * 9.7 [示例7：在动作失败时执行故障转移](#example-7-action-failover-on-failed-action)
+   * 9.8 [示例8：检查用户是否已验证](#example-8-check-user-is-authenticated)
+   * 9.9 [示例9：将DID路由到分机](#example-9-routing-did-to-an-extension)
+   * 9.10 [示例10：将呼叫路由到带有自定义呼叫者ID的网关分机](#example-10-route-to-a-gateway-extension-with-custom-caller-id)
+   * 9.11 [示例11：基于号码前缀进行路由](#example-11-route-based-on-number-prefix)
+   * 9.12 [示例12：处理无匹配分机的呼叫](#example-12-handle-calls-which-match-no-extension)
+   * 9.13 [示例13：呼叫筛选](#example-13-call-screening)
+   * 9.14 [示例14：媒体录音](#example-14-media-recording)
+   * 9.15 [示例15：报时钟](#example-15-speaking-clock)
+   * 9.16 [示例16：阻止特定代码](#example-16-block-certain-codes)
+   * 9.17 [示例17：接收来自入站DID的传真](#example-17-receive-fax-from-inbound-did)
+   * 9.18 [示例18：对入站BRI呼叫的effective_caller_id_number添加国际呼叫前缀](#example-18-add-international-call-prefix-to-effective_caller_id_number-on-incoming-bri-calls)
+   * 9.19 [示例20：修复无效的呼叫者ID](#example-20-fix-invalid-caller-id-)
+   * 9.20 [示例21：阻止出站呼叫者ID](#example-21-block-outbound-caller-id-)
+   * 9.21 [示例22：在进行数据库查询时播放MOH](#example-22-play-moh-while-doing-a-database-lookup-)
 
-Click to expand Table of Contents
+### 学习先决条件
 
-* 1 [Learning Prerequisites](#learning-prerequisites)
-* 2 [Learning Goals](#dialplan-variables)
-* 3 [The 10,000 Foot View](#the-10000-foot-view)
-* 4 [Introductory Example](#introductory-example)
-* 5 [Dialplan Configuration Directory Structure](#dialplan-configuration-directory-structure-)
-* 6 [Beginning Concepts](#beginning-concepts)  
-   * 6.1 [Context](#context)  
-   * 6.2 [Extensions](#extensions)  
-   * 6.3 [Conditions](#conditions)  
-   * 6.4 [Actions and Anti-Actions](#actions-and-anti-actions)  
-   * 6.5 [Dialplan Variables](#dialplan-variables)
-* 7 [Advanced Concepts](#advanced-concepts)  
-   * 7.1 [Nested Conditions](#nested-conditions)  
-   * 7.2 [Line order vs nested order during execution](#line-order-vs-nested-order-during-execution)
-* 8 [Example Library](#example-library)
-* 9 [Examples](#dialplan-variables)  
-   * 9.1 [Example 1: Matching a condition](#example-1-matching-a-condition)  
-   * 9.2 [Example 2: Matching multiple conditions (AND)](#example-2-matching-multiple-conditions-and-)  
-   * 9.3 [Example 3: Stripping leading digits](#example-3-stripping-leading-digits)  
-   * 9.4 [Example 4: Adding a prefix](#example-4-adding-a-prefix)  
-   * 9.5 [Example 5: SIP Profiles (dialing with different configurations)](#example-5-sip-profiles-dialing-with-different-configurations-)  
-   * 9.6 [Example 6: Calling registered user](#example-6-calling-registered-user)  
-   * 9.7 [Example 7: Action failover on failed action](#example-7-action-failover-on-failed-action)  
-   * 9.8 [Example 8: Check user is authenticated](#example-8-check-user-is-authenticated)  
-   * 9.9 [Example 9: Routing DID to an extension](#example-9-routing-did-to-an-extension)  
-   * 9.10 [Example 10: Route to a gateway extension with custom caller id](#example-10-route-to-a-gateway-extension-with-custom-caller-id)  
-   * 9.11 [Example 11: Route based on number prefix](#example-11-route-based-on-number-prefix)  
-   * 9.12 [Example 12: Handle calls which match no extension](#example-12-handle-calls-which-match-no-extension)  
-   * 9.13 [Example 13: Call Screening](#example-13-call-screening)  
-   * 9.14 [Example 14: Media recording](#example-14-media-recording)  
-   * 9.15 [Example 15: Speaking Clock](#example-15-speaking-clock)  
-   * 9.16 [Example 16: Block certain codes](#example-16-block-certain-codes)  
-   * 9.17 [Example 17: Receive fax from inbound did](#example-17-receive-fax-from-inbound-did)  
-   * 9.18 [Example 18: Add international call prefix to effective\_caller\_id\_number on incoming BRI calls](#example-18-add-international-call-prefix-to-effective_caller_id_number-on-incoming-bri-calls)  
-   * 9.19 [Example 20: Fix invalid caller ID](#example-20-fix-invalid-caller-id-)  
-   * 9.20 [Example 21: Block outbound caller ID](#example-21-block-outbound-caller-id-)  
-   * 9.21 [Example 22: Play MOH while doing a database lookup](#example-22-play-moh-while-doing-a-database-lookup-)
+了解本文档需要了解 [正则表达式] (../../Examples/Regular-Expression/index.mdx#42x)。XML 拨号计划在字段上使用常见的 Perl 兼容正则表达式 (PCRE) 匹配语法，这减少了创建和维护拨号计划时的“学习曲线”。
 
-### Learning Prerequisites
+只要具备对 PCRE 语法的工作知识，就能创建简单的拨号计划。
 
-Understanding this documentation requires an understanding of [regular expressions](../../Examples/Regular-Expression/index.mdx#42x). XML dialplans use the common Perl Compatible Regular Expression (PCRE) matching syntax on fields, which decreases the "learning curve" when creating and maintaining dialplans.
+对于较复杂的 XML 拨号计划的作者来说，深入了解 PCRE 以及脚本或编程语言中使用的变量和流控制的工作知识将会很有益处。
 
-Simple dialplans can be created by anyone with a working knowledge of PCRE syntax.
+### 学习目标
 
-Authors of moderately complex XML dialplans would benefit from in-depth PCRE experience along with a working knowledge of variables and flow-control used in scripting or programming languages.
+阅读本文档后，您应该能够：
 
-### Learning Goals 
+* 向 Sofia **SIP 配置文件** 中添加一个配置语句，以调用 XML 拨号计划。
+(有关 SIP 配置文件的详细信息，请参阅 [配置 FreeSWITCH#SIPProfiles sip-profiles] (../../Configuration/Configuring-FreeSWITCH/index.mdx#configuration-files)、[Sofia 配置文件](../../Configuration/Sofia-SIP-Stack/Sofia-Configuration-Files_7144453.mdx#--)、[Sofia SIP Stack](../../Configuration/Sofia-SIP-Stack/index.mdx#faq)、[mod_sofia](../../Modules/mod_sofia_1048707.mdx#about) 页面。)
+* 使用正则表达式创建一个较复杂的 XML 拨号计划，将一个包含1000个扩展的拨号计划缩减为一个扩展定义。
+* 理解条件和嵌套条件的流程修改功能，以及它们在拨号计划中的实用性。
 
-After reading this document, you should be able to:
+单击此处展开目录
 
-* Add a configuration statement to the Sofia **SIP profile** to call an XML dialplan.  
-(See [Configuring FreeSWITCH#SIPProfilessip-profiles](../../Configuration/Configuring-FreeSWITCH/index.mdx#configuration-files), [Sofia Configuration Files](../../Configuration/Sofia-SIP-Stack/Sofia-Configuration-Files_7144453.mdx#--), [Sofia SIP Stack](../../Configuration/Sofia-SIP-Stack/index.mdx#faq), [mod\_sofia](../../Modules/mod_sofia_1048707.mdx#about) pages for more information on SIP profiles.)
-* Create a moderately complex XML dialplan using regular expressions to reduce a 1000 extension dialplan to one extension definition.
-* Understand the flow-altering capabilities of conditions and nested conditions, and why they might be useful in a dialplan.
-
-  
-Click here to expand Table of Contents
-
-* 1 [Learning Prerequisites](#learning-prerequisites)
-* 2 [Learning Goals](#dialplan-variables)
-* 3 [The 10,000 Foot View](#the-10000-foot-view)
-* 4 [Introductory Example](#introductory-example)
-* 5 [Dialplan Configuration Directory Structure](#dialplan-configuration-directory-structure-)
-* 6 [Beginning Concepts](#beginning-concepts)  
-   * 6.1 [Context](#context)  
-   * 6.2 [Extensions](#extensions)  
-   * 6.3 [Conditions](#conditions)  
-      * 6.3.1 [Example 1: Capturing Digits](#example-1-capturing-digits)  
-         * 6.3.2 [Example 2: Logical AND](#example-2-logical-and)  
-         * 6.3.3 [Example 3: Logical OR](#example-3-logical-or)  
-         * 6.3.4 [Example 4: Logical XOR](#example-4-logical-xor)  
-   * 6.4 [Actions and Anti-Actions](#actions-and-anti-actions)  
-      * 6.4.1 [Anti-Actions](#anti-actions)  
-   * 6.5 [Dialplan Variables](#dialplan-variables)  
-      * 6.5.1 [Accessing Variables](#dialplan-variables)
-* 7 [Advanced Concepts](#advanced-concepts)  
-   * 7.1 [Nested Conditions](#nested-conditions)  
-   * 7.2 [Line order vs nested order during execution](#line-order-vs-nested-order-during-execution)  
+* 1 [学习前提条件](#学习前提条件)
+* 2 [学习目标](#拨号计划变量)
+* 3 [总览](#总览)
+* 4 [简单示例](#简单示例)
+* 5 [拨号计划配置目录结构](#拨号计划配置目录结构-)
+* 6 [入门概念](#入门概念)  
+   * 6.1 [上下文](#上下文)  
+   * 6.2 [扩展](#扩展)  
+   * 6.3 [条件](#条件)  
+      * 6.3.1 [示例1：捕获数字](#示例1捕获数字)  
+         * 6.3.2 [示例2：逻辑和](#示例2逻辑和)  
+         * 6.3.3 [示例3：逻辑或](#示例3逻辑或)  
+         * 6.3.4 [示例4：逻辑异或](#示例4逻辑异或)  
+   * 6.4 [动作和反动作](#动作和反动作)  
+      * 6.4.1 [反动作](#反动作)  
+   * 6.5 [拨号计划变量](#拨号计划变量)  
+      * 6.5.1 [访问变量](#拨号计划变量)
+* 7 [高级概念](#高级概念)  
+   * 7.1 [嵌套条件](#嵌套条件)  
+   * 7.2 [线路顺序与嵌套顺序执行](#线路顺序与嵌套顺序执行)  
       * 7.2.1 [break="on-true"](#breakon-true)  
          * 7.2.2 [break="never"](#breaknever)  
-         * 7.2.3 [Asterisk Pattern Matching](#asterisk-pattern-matching)
-* 8 [Example Library](#example-library)  
-   * 8.1 [Caller Profile Fields vs. Channel Variables](#caller-profile-fields-vs-channel-variables)  
-   * 8.2 [Actions and Anti-Actions](#actions-and-anti-actions)  
-   * 8.3 [Available Actions](#dialplan-variables)  
-   * 8.4 [Inline Actions](#inline-actions)  
-   * 8.5 [Complete Syntax](#complete-syntax)  
-   * 8.6 [Summary](#summary)  
-   * 8.7 [Other Dialplan Pearls of Wisdom](#other-dialplan-pearls-of-wisdom)  
-   * 8.8 [Auto Hunt](#auto-hunt)  
-   * 8.9 [Dialing through gateways](#dialing-through-gateways)
-* 9 [Examples](#dialplan-variables)  
-   * 9.1 [Example 1: Matching a condition](#example-1-matching-a-condition)  
-   * 9.2 [Example 2: Matching multiple conditions (AND)](#example-2-matching-multiple-conditions-and-)  
-   * 9.3 [Example 3: Stripping leading digits](#example-3-stripping-leading-digits)  
-   * 9.4 [Example 4: Adding a prefix](#example-4-adding-a-prefix)  
-   * 9.5 [Example 5: SIP Profiles (dialing with different configurations)](#example-5-sip-profiles-dialing-with-different-configurations-)  
-   * 9.6 [Example 6: Calling registered user](#example-6-calling-registered-user)  
-   * 9.7 [Example 7: Action failover on failed action](#example-7-action-failover-on-failed-action)  
-   * 9.8 [Example 8: Check user is authenticated](#example-8-check-user-is-authenticated)  
-   * 9.9 [Example 9: Routing DID to an extension](#example-9-routing-did-to-an-extension)  
-   * 9.10 [Example 10: Route to a gateway extension with custom caller id](#example-10-route-to-a-gateway-extension-with-custom-caller-id)  
-   * 9.11 [Example 11: Route based on number prefix](#example-11-route-based-on-number-prefix)  
-   * 9.12 [Example 12: Handle calls which match no extension](#example-12-handle-calls-which-match-no-extension)  
-   * 9.13 [Example 13: Call Screening](#example-13-call-screening)  
-   * 9.14 [Example 14: Media recording](#example-14-media-recording)  
-   * 9.15 [Example 15: Speaking Clock](#example-15-speaking-clock)  
-   * 9.16 [Example 16: Block certain codes](#example-16-block-certain-codes)  
-   * 9.17 [Example 17: Receive fax from inbound did](#example-17-receive-fax-from-inbound-did)  
-   * 9.18 [Example 18: Add international call prefix to effective\_caller\_id\_number on incoming BRI calls](#example-18-add-international-call-prefix-to-effective_caller_id_number-on-incoming-bri-calls)  
-   * 9.19 [Example 20: Fix invalid caller ID](#example-20-fix-invalid-caller-id-)  
-   * 9.20 [Example 21: Block outbound caller ID](#example-21-block-outbound-caller-id-)  
-   * 9.21 [Example 22: Play MOH while doing a database lookup](#example-22-play-moh-while-doing-a-database-lookup-)  
-      * 9.21.1 [Dialing A SIP URI](#dialing-a-sip-uri)  
-         * 9.21.2 [Dialing A Registered User](#dialing-a-registered-user)  
-         * 9.21.3 [Dialing Through A Gateway (SIP Provider)](#dialing-through-a-gateway-sip-provider)  
-         * 9.21.4 [Dialing With A Specific Transport](#dialing-with-a-specific-transport)  
-         * 9.21.5 [Specifying The Codec](#specifying-the-codec)  
-         * 9.21.6 [Getting Fancy With PortAudio](#getting-fancy-with-portaudio)  
-         * 9.21.7 [Changing the SIP Contact user](#changing-the-sip-contact-user)  
-         * 9.21.8 [Using a Custom SIP URI](#using-a-custom-sip-uri)  
-         * 9.21.9 [Testing the dialplan with a command line](#testing-the-dialplan-with-a-command-line)  
-         * 9.21.10 [Setting up SIP Diversion Header for call forward](#setting-up-sip-diversion-header-for-call-forward)
+         * 7.2.3 [Asterisk模式匹配](#Asterisk模式匹配)
+* 8 [示例库](#示例库)  
+   * 8.1 [呼叫者配置字段与频道变量](#呼叫者配置字段与频道变量)  
+   * 8.2 [动作和反动作](#动作和反动作)  
+   * 8.3 [可用动作](#拨号计划变量)  
+   * 8.4 [内联动作](#内联动作)  
+   * 8.5 [完整语法](#完整语法)  
+   * 8.6 [总结](#总结)  
+   * 8.7 [其他拨号计划的经验之谈](#其他拨号计划的经验之谈)  
+   * 8.8 [自动查找](#自动查找)  
+   * 8.9 [通过网关拨号](#通过网关拨号)
+* 9 [示例](#拨号计划变量)  
+   * 9.1 [示例1：匹配条件](#示例1匹配条件)  
+   * 9.2 [示例2：匹配多个条件（和）](#示例2匹配多个条件和-)  
+   * 9.3 [示例3：去除前导数字](#示例3去除前导数字)  
+   * 9.4 [示例4：添加前缀](#示例4添加前缀)  
+   * 9.5 [示例5：SIP配置文件（使用不同配置进行拨号）](#示例5sip配置文件使用不同配置进行拨号-)  
+   * 9.6 [示例6：呼叫已注册用户](#示例6呼叫已注册用户)  
+   * 9.7 [示例7：动作的故障转移](#示例7动作的故障转移)  
+   * 9.8 [示例8：检查用户是否已验证](#示例8检查用户是否已验证)  
+   * 9.9 [示例9：将DID路由到分机](#示例9将did路由到分机)  
+   * 9.10 [示例10：使用自定义呼叫方标识路由到网关分机](#示例10使用自定义呼叫方标识路由到网关分机)  
+   * 9.11 [示例11：基于号码前缀进行路由](#示例11基于号码前缀进行路由)  
+   * 9.12 [示例12：处理无法匹配的呼叫](#示例12处理无法匹配的呼叫)  
+   * 9.13 [示例13：呼叫筛选](#示例13呼叫筛选)  
+   * 9.14 [示例14：媒体录制](#示例14媒体录制)  
+   * 9.15 [示例15：报时功能](#示例15报时功能)  
+   * 9.16 [示例16：阻止某些代码](#示例16阻止某些代码)  
+   * 9.17 [示例17：从入站DID接收传真](#示例17从入站did接收传真)  
+   * 9.18 [示例18：在呼入BRI呼叫中向effective_caller_id_number添加国际呼叫前缀](#示例18在呼入bri呼叫中向effective_caller_id_number添加国际呼叫前缀)  
+   * 9.19 [示例20：修复无效的呼叫者ID](#示例20修复无效的呼叫者ID-)  
+   * 9.20 [示例21：阻止出站呼叫方标识](#示例21阻止出站呼叫方标识-)  
+   * 9.21 [示例22：在进行数据库查找时播放MOH](#示例22在进行数据库查找时播放MOH-)  
+      * 9.21.1 [拨打SIP URI](#拨打sip-uri)  
+         * 9.21.2 [拨打已注册用户](#拨打已注册用户)  
+         * 9.21.3 [通过网关拨打（SIP提供商）](#通过网关拨打sip提供商)  
+         * 9.21.4 [使用特定传输方式拨号](#使用特定传输方式拨号)  
+         * 9.21.5 [指定编解码器](#指定编解码器)  
+         * 9.21.6 [高级PortAudio设置](#高级portaudio设置)  
+         * 9.21.7 [更改SIP Contact用户](#更改sip-contact用户)  
+         * 9.21.8 [使用自定义SIP URI](#使用自定义sip-uri)  
+         * 9.21.9 [使用命令行测试拨号计划](#使用命令行测试拨号计划)  
+         * 9.21.10 [设置SIP转移标头以进行呼叫转接](#设置sip转移标头以进行呼叫转接)
 
-### The 10,000 Foot View
+## 10000英尺视角
 
-This overview uses the [Sofia](../../Configuration/Sofia-SIP-Stack/index.mdx#faq) SIP driver, [mod\_sofia](../../Modules/mod_sofia_1048707.mdx#about), as the source and destination (i.e., an endpoint) for calls handled by a dialplan. Other drivers have similar mechanisms.
+此概览使用[Sofia](../../Configuration/Sofia-SIP-Stack/index.mdx#faq) SIP驱动程序[mod_sofia](../../Modules/mod_sofia_1048707.mdx#about)作为呼叫处理的起点和终点（即端点）。其他驱动程序有类似的机制。
 
-When a call arrives at the FreeSWITCH™ PBX, Sofia is the first responder. She gathers information about the call, and decides which dialplan to invoke.
+当呼叫到达FreeSWITCH™ PBX时，Sofia是第一个响应者。她收集有关呼叫的信息，并决定要调用哪个拨号计划。
 
-Sofia passes information about the call to your dialplan inside **[channel variables](../Channel-Variables_16352493.mdx#about)**, which your dialplan accesses to make decisions about what to do with the call. Channel variables contain a wealth of information about the call being processed. For example, the `destination_number` variable contains the digits dialed by the caller. Other variables contain the caller-ID information for the call, the source IP address of the caller, etc.
+Sofia将有关呼叫的信息传递给您的拨号计划中的**[通道变量](../Channel-Variables_16352493.mdx#about)**，您的拨号计划使用这些变量来决定如何处理呼叫。通道变量包含有关正在处理的呼叫的丰富信息。例如，`destination_number`变量包含呼叫方拨打的号码。其他变量包含呼叫的呼叫者ID信息、呼叫者的源IP地址等。
 
-The XML dialplan is organized as a series of extension definitions (called **extensions**). FreeSWITCH™ steps through each extension definition until it finds one that matches.
+XML拨号计划组织为一系列扩展定义（称为**扩展**）。FreeSWITCH™逐个扩展定义步进，直到找到匹配的扩展为止。
 
-Matching is performed by evaluating condition definitions (called **conditions**) inside each extension. FreeSWITCH™ steps through each condition inside the extension.
+匹配是通过评估扩展内部的条件定义（称为**条件**）来执行的。FreeSWITCH™逐个步进扩展内的每个条件。
 
-When condition(s) for an extension are met, the extension's action definitions (called **actions**) are executed. In the simplest case, the action might be to connect the call to the physical extension. Of course there are a wide range of actions you can perform in a dialplan. For the purposes of this overview, we'll just use a few of them.
+当扩展的条件满足时，将执行扩展的动作定义（称为**动作**）。在最简单的情况下，动作可以是将呼叫连接到物理分机。当然，在拨号计划中您可以执行各种各样的操作。在本概述中，我们将仅使用其中一些。
 
-If the conditions for your extension are not met, there are optional action definitions (called "anti-actions") that can be executed.
+如果您的扩展的条件不满足，则可以执行可选的动作定义（称为“反动作”）。
 
-Of course these are just the basic concepts needed to start working with the XML dialplan. If you are familiar with other programming or scripting languages, XML dialplans offer logical operations and control-flow options allowing you to create amazingly complex dialplans. But don't think the XML dialplan is the answer to all your problems. Complex XML dialplans are sometimes difficult to read and understand, which is why other dialplan processors are available. That said, the XML dialplan is a good place to start, and usually does the bulk of the work when FreeSWITCH™ processes a call.
+当然，这只是开始使用XML拨号计划所需的基本概念。如果您熟悉其他编程或脚本语言，XML拨号计划提供了逻辑操作和控制流选项，可以让您创建复杂的拨号计划。但不要认为XML拨号计划能解决所有问题。复杂的XML拨号计划有时很难阅读和理解，这就是为什么还有其他拨号计划处理器可用的原因。话虽如此，XML拨号计划是一个很好的起点，在处理呼叫时通常可以完成大部分工作。
 
-### Introductory Example
+### 初级示例
 
-This following example shows a dialplan that understands how to route calls to only two extensions, 500 and 501\. But before it can be used, you'll need to tell the SIP driver the name of the dialplan (called the **context**) to use when a call needs processing. 
+以下示例显示了一个拨号计划，它只知道如何将呼叫路由到两个分机，500和501。但在使用之前，您需要告诉SIP驱动程序拨号计划的名称（称为“上下文”），以便在需要处理呼叫时使用。
 
-**conf/sip\_profiles/example.xml**
+**conf/sip_profiles/example.xml**
 
 ```xml
 <profile name="example_sip_profile">
-	<param name="context" value="example"/>
-	...other configuration statements...
+    <param name="context" value="example"/>
+    ...其他配置语句...
 </profile>
 ```
 
-The sample dialplan is shown below. 
+下面是示例拨号计划的代码。
 
-  
 **conf/dialplan/example.xml**
 
 ```xml
@@ -194,31 +189,32 @@ The sample dialplan is shown below.
 </context>
 ```
 
-When a call needs processing, FreeSWITCH™ evaluates each extension in the dialplan until it finds a match. 
+当一个呼叫需要处理时，FreeSWITCH™会对呼叫路由表中的每个分机进行逐一评估，直到找到匹配的分机。
 
-The first line in our example defines the context block. All items inside this block belong to the "example" dialplan context. Nested inside the context block are extension blocks, containing matching "conditions" and their corresponding "action" rules. Extensions are processed in the order that they appear in the configuration file.
+在我们的示例中，第一行定义了上下文块。该块中的所有项目属于“example”呼叫路由上下文。上下文块中嵌套了分机块，包含匹配的“条件”和相应的“动作”规则。分机按照它们在配置文件中出现的顺序进行处理。
 
-In the example, Sofia would start the dialplan after she receives an incoming SIP call. Here's what happens next:
+在本示例中，当Sofia接收到一个传入的SIP呼叫后，呼叫路由将开始执行。下面是接下来的步骤：
 
-* The first extension is block is evaluated, and since the destination number does not exactly match "500", the rest of the block is skipped.
-* The second extension block is evaluated next. The destination matches "501" exactly, which causes the actions under that condition to be executed. In this example, extension 501 rings. If the extension is not answered, the second action answers the call, and the following actions delay for 1000 milliseconds (1 second) and then connect the call to the voicemail system.
+* 首先评估第一个分机块，由于目标号码与“500”不完全匹配，该块的剩余部分被跳过。
+* 接下来评估第二个分机块。目标号码完全匹配“501”，导致条件下的动作被执行。在本示例中，分机501响铃。如果分机没有接听，第二个动作将接听呼叫，并且随后的动作延迟1000毫秒（1秒），然后将呼叫连接到语音邮件系统。
 
-Things to notice
+需要注意的事项：
 
-* Find the action in the example that bridges the call to voicemail. Notice how the value of the channel variables `domain_name` and `dialed_extension` are passed along to the voicemail application. You can refer to channel variables like this in your own dialplans.
-* The dialplan automatically stops processing additional actions and extensions when a call is bridged to another extension, or is handed-off to another dialplan. This means that in our example, if extension 501 is answered, the rest of the actions **will not** be executed after the call ends.
-* Creating a dialplan like this for thousands of extensions would be tedious and not very efficient. After reading this document, how would you construct a dialplan for 1000 extensions using only one extension definition?
+* 在例子中找到将呼叫传递到语音信箱的动作。注意`domain_name`和`dialed_extension`这两个通道变量的值是如何传递给语音信箱应用程序的。您可以在自己的拨号计划中像这样引用通道变量。
 
-  
-### Dialplan Configuration Directory Structure 
+* 当呼叫被桥接到另一个分机或者被移交给另一个拨号计划时，拨号计划会自动停止处理其他动作和扩展。这意味着在我们的例子中，如果501分机接听，呼叫结束后，其余的动作将不会被执行。
 
-Find under: `${conf_dir}/dialplan/`
+* 为数千个分机创建这样的拨号计划将会很繁琐，也不够高效。阅读完这篇文档后，您会如何使用只有一个分机定义来构建一个包含1000个分机的拨号计划呢？
 
-The FreeSWITCH "Vanilla" configuration stores dialplans in the `${conf_dir}/dialplans` directory, with each context stored in a subdirectory beneath it. This is the recommended configuration.
+### 拨号计划配置目录结构
 
-For example, this sample structure houses a dialplan for a simple PBX:
+在`${conf_dir}/dialplan/`下查找：
 
-**Dialplan hierarchy**
+FreeSWITCH的"原始"配置将拨号计划存储在`${conf_dir}/dialplans/`目录中，其中每个上下文都存储在其子目录中。这是推荐的配置方式。
+
+例如，这个示例结构存储了一个简单PBX的拨号计划：
+
+**拨号计划层次结构**
 
 ```text
 freeswitch/
@@ -238,45 +234,43 @@ freeswitch/
                 20_extension_2002.xml
 ```
 
-  
-Things to notice
+注意事项：
 
-* This dialplan structure is similar to the example configuration that ships with FreeSWITCH™. It is a good starting point to customize your own PBX, as we have done here.
-* Any .xml file placed in the dialplans directory will be loaded when FreeSWITCH starts.
-* `public.xml` contains all the common configuration information for the public context, then includes all the XML files in the public directory.
-* `default.xml` contains all the common configuration information for the default context, then includes all the XML files in the default directory.
-* Files are loaded in alphabetical order, so beginning file names with a number is a good practice to ensure the bits and pieces of your dialplan are loaded in the proper sequence, if needed.
+*这个拨号计划结构类似于随 FreeSWITCH™ 一起提供的示例配置。这是一个良好的起点，可以根据自己的需要定制自己的 PBX，就像我们在这里所做的一样。
+*在拨号计划目录中放置的任何 .xml 文件在 FreeSWITCH 启动时都会被加载。
+*`public.xml` 包含了公共上下文的所有常见配置信息，然后包含了 public 目录中的所有 XML 文件。
+*`default.xml` 包含了默认上下文的所有常见配置信息，然后包含了 default 目录中的所有 XML 文件。
+*文件按照字母顺序加载，因此以数字开头的文件名是确保拨号计划的各个部分按照正确顺序加载的良好做法（如果需要的话）。
 
-  
-### Beginning Concepts
+### 初步概念
 
-#### Context
+#### 上下文（Context）
 
-Contexts are a logical grouping of extensions.
+上下文是扩展的逻辑分组。
 
-The context tag has only one required parameter called name. This is the name that incoming call handlers (like the \[Sofia\] SIP driver) use when they need to route a call. There is often more than one context in a typical PBX dialplan. There is one reserved name, any which matches any context.
+context 标签只有一个必需的参数，名为 name。这是传入呼叫处理程序（如 \[Sofia\] SIP 驱动程序）在需要路由呼叫时使用的名称。在典型的 PBX 拨号计划中通常会有多个上下文。还有一个保留名称，即 any，它与任何上下文匹配。
 
 ```xml
 <context name="default">
-    <!-- one or more extension tags -->
+    <!-- 一个或多个 extension 标签 -->
 </context>
 ```
 
-  
-#### Extensions
 
-Inside each context are one or more extensions. Extensions are destinations for a call. In FreeSWITCH™, extensions are the primary way calls are routed. Don't be fooled by the name, since an extension does not always have a real phone attached. An extension can be used to process call routing logic, security restrictions, outgoing trunk selection and more.
+#### 扩展（Extension）
 
-The extension tag has one required parameter name, and it must be unique. Other dialplans can transfer control to your dialplan using this name.
+在每个上下文中可以有一个或多个扩展。扩展是呼叫的目的地。在 FreeSWITCH™ 中，扩展是呼叫路由的主要方式。不要被名称所迷惑，因为扩展不一定总是连接着真实的电话。扩展可以用于处理呼叫路由逻辑、安全限制、出站干线选择等。
 
-Inside an extension are one or more conditions. If the conditions are met, the actions belonging to that condition are executed. If the conditions are not met, optional anti-actions are executed. 
+扩展标签有一个必需的参数 name，并且必须是唯一的。其他拨号计划可以使用此名称将控制转移到您的拨号计划。
 
-For example:
+在一个扩展中，可能包含一个或多个条件。如果满足这些条件，则执行与该条件相关联的动作。如果不满足条件，则执行可选的反向动作。
 
-**XML Extension Template**
+例如：
+
+**XML 扩展模板**
 
 ```xml
-<extension name="Your extension name here">
+<extension name="在这里输入你的扩展名称">
   <condition/>
   <condition...
     <action .../>
@@ -285,19 +279,19 @@ For example:
 </extension>
 ```
 
-By default, when an extension is matched in your dialplan, the enclosed actions are performed and dialplan processing stops. An optional "continue" parameter allows your dialplan to continue evaluating the remaining extensions:
+默认情况下，当在你的拨号计划中匹配到一个扩展时，将执行其中的动作，并停止拨号计划的处理。一个可选的“continue”参数允许你的拨号计划继续评估剩余的扩展：
 
-**Continue routing**
+**继续路由**
 
 ```xml
 <extension name="500" continue="true">
 ```
 
-#### Conditions
+#### 条件
 
-Conditions do the hard work in a dial-plan. They are extremely flexible and, as such, are sometimes challenging to construct. This document will start with simple examples and progress to more complex examples.
+条件是拨号计划中的核心部分。它们非常灵活，因此有时构造起来比较困难。本文档将从简单的例子开始，逐渐过渡到更复杂的例子。
 
-Conditions allow you to match regular expressions against channel variables associated with each call. The first example in this document did just that, matching the destination number against "500", as shown below.
+条件允许你将正则表达式与每个呼叫关联的通道变量进行匹配。本文档中的第一个例子就是这样，它将目标号码与“500”进行匹配，如下所示。
 
 ```xml
 <extension name="500">
@@ -307,25 +301,25 @@ Conditions allow you to match regular expressions against channel variables asso
 </extension>
 ```
 
-Each condition is parsed using the Perl Compatible Regular Expression library. (See the [Perl Compatible Regular Expression](http://perldoc.perl.org/perlre.html) documentation to learn more.)
+每个条件都是使用 Perl 兼容的正则表达式库进行解析的。（请参阅 [Perl 兼容的正则表达式](http://perldoc.perl.org/perlre.html) 文档以了解更多信息。）
 
-##### Example 1: Capturing Digits
+##### 示例1：捕获数字
 
-The next example will use a feature of PCRE to show how to route a local call to the local [Telco/PTT](../../Introduction/Glossary_13173966.mdx#telco). (Local providers often insist that local calls be stripped of their country/area/city code.)
+下一个示例将利用 PCRE 的一个特性，展示如何将本地呼叫路由到本地[电信/公共交换电话网](../../Introduction/Glossary_13173966.mdx#telco)。（当地运营商通常要求将本地呼叫剥离其国家/地区/城市代码。）
 
-In the USA, the last 7 digits of the full 11 digit phone number are the local part. So, if our PBX is located in Los Angeles, the first four digits will always be 1213 for local calls, so we can check for that:
+在美国，完整的11位电话号码的最后7位数字是本地部分。因此，如果我们的PBX位于洛杉矶，本地通话的前四位数字将始终为1213，因此我们可以检查这一点：
 
 ```xml
 <condition field="destination_number" expression="^1213\d\d\d\d\d\d\d$">
 ```
 
-The condition will match any 11 digit number beginning with "1213". To capture the final seven digits, we write it this way, enclosing the last seven digits in parentheses.
+该条件将匹配以"1213"开头的任何11位数字。为了捕获最后的7位数字，我们将它写成这样，将最后的7位数字放在括号中。
 
 ```xml
 <condition field="destination_number" expression="^1213(\d\d\d\d\d\d\d)$">
 ```
 
-The condition will still match any 11 digit number beginning with 1213\. The added feature is that the final seven digits of the number are now available in the temporary variable $1\. Now we can make a complete dialplan extension that passes all local calls to the local phone company.
+该条件仍将匹配以1213开头的任何11位数字。添加的功能是现在可以在临时变量$1中获取号码的最后7位数字。现在，我们可以创建一个完整的拨号计划扩展，将所有本地通话转接给本地电信公司。
 
 ```xml
 <extension name="local_calls">
@@ -335,51 +329,49 @@ The condition will still match any 11 digit number beginning with 1213\. The add
 </extension>
 ```
 
-A destination number of 12135551212 would set $1 to 5551212 and then send the call out to the local phone company.
+目标号码为12135551212的情况下，$1将被设置为5551212，然后将呼叫发送给本地电信公司。
 
-Use caution when substituting captured text, especially when building numbers. Perhaps the local phone company requires that all local calls have the digit 5 added to the local number. We would be tempted to write "sofia/gateway/LocalTelco/$15", but that would be wrong. Surrounding the variable in braces fixes the ambiguity: "sofia/gateway/LocalTelco/${1}5" This works for all FreeSWITCH™ variables, and often improves the readability of your dialplan.
+在替换捕获的文本时要小心，特别是在构建号码时。也许本地电话公司要求所有本地通话的本地号码后面加上数字5。我们可能会写成"sofia/gateway/LocalTelco/$15"，但那是错误的。将变量括在大括号中可以消除歧义："sofia/gateway/LocalTelco/${1}5"。这适用于所有FreeSWITCH™变量，并且通常可以提高拨号计划的可读性。
 
-##### Example 2: Logical AND
+##### 示例2：逻辑与
 
-Suppose you wanted to redirect a call for extension 500 to extension 531, but only on Sunday.
+假设您想将分机号500的呼叫重定向到分机号531，但仅在星期日。
 
-In English you would say "if destination number is 500 and today is Sunday, then send the call to ext. 531, otherwise send it to ext. 500"
+在英语中，您会这样说：“如果目标号码是500并且今天是星期日，则将呼叫转移到分机531，否则转移到分机500”。
 
-In the XML dialplan, you can place more than one condition in an extension, and all conditions must match before the final condition's actions will be executed.
+在XML拨号计划中，您可以在一个分机中放置多个条件，并且所有条件必须匹配才能执行最终条件的操作。
 
-This does the trick:
+下面是实现的方法：
 
 ```xml
 <condition field="destination_number" expression="^500$"/>
 <condition wday="1">
-    <action      application="bridge" data="sofia/internal/531@example.com"/>     # It's Sunday: Forward the call.
-    <anti-action application="bridge" data="sofia/internal/500@example.com"/>     # It's not Sunday: Act normally.
+    <action application="bridge" data="sofia/internal/531@example.com"/>     # 星期日：转发呼叫。
+    <anti-action application="bridge" data="sofia/internal/500@example.com"/>     # 不是星期日：正常处理。
 </condition>
-
-
 ```
 
-###### Things to Notice
+###### 需要注意的事项
 
-* We use the "anti-action" here to ensure that if the final condition fails, the call will go to the proper place.
-* Don't be fooled: FreeSWITCH™ does not evaluate all the conditions to make its decision. This design pattern only works because FreeSWITCH™ stops processing an extension after the first condition failure.
-* Keep in mind that you must observe correct XML syntax when using this structure. Be sure to close all conditions except the last one with />. The last condition contains the final actions to be run, and is closed on the line following the last action.
+* 在这里使用“anti-action”是为了确保如果最终条件失败，呼叫将转到正确的位置。
+* 不要被误导：FreeSWITCH™不会评估所有条件以做出决定。这种设计模式之所以有效，是因为FreeSWITCH™会在第一个条件失败后停止处理分机。
+* 请记住，在使用此结构时，必须遵守正确的XML语法。请确保关闭除最后一个条件之外的所有条件，使用"/>进行关闭。最后一个条件包含要运行的最终操作，并且在最后一个操作的下一行进行关闭。
 
-##### Example 3: Logical OR
+##### 示例3：逻辑或
 
-It is possible to emulate the logical OR operation available in many programming languages, using multiple conditions. In this situation, if one of the conditions matches, the actions are executed.
+使用多个条件可以模拟许多编程语言中可用的逻辑或（OR）操作。在这种情况下，如果其中一个条件匹配，则执行操作。
 
-There are a few ways to do this. Use the one that meets your needs.
+有几种方法可以实现这一点。使用符合您需求的方法。
 
-The simplest version using a single regular expression that matches the destination number against 501 OR 502:
+最简单的版本是使用一个正则表达式，将目标号码与501或502进行匹配：
 
 ```xml
- <condition field="destination_number" expression="^501|502$">
+<condition field="destination_number" expression="^501|502$">
     action(s)...
 </condition>
 ```
 
-This method works well if your OR condition uses the same field. If you need to use two or more different fields, then the extended regular expression syntax will help:
+如果您的OR条件使用相同的字段，这个方法效果很好。如果您需要使用两个或多个不同的字段，那么扩展正则表达式语法将会帮助解决问题：
 
 ```xml
  <condition regex="any">
@@ -390,35 +382,35 @@ This method works well if your OR condition uses the same field. If you need to 
 </condition>
 ```
 
-Notice the regex="any" in the condition. This says that if any of the following regex statements match, then execute the actions. Of course if none of the regular expressions match, the anti-actions (if any) will be executed instead. Here's an example that executes the extension's actions if the caller's name is "Some User" OR the extension being called is 1001.
+请注意条件中的`regex="any"`。这意味着如果任何以下正则表达式语句匹配成功，那么将执行相应的操作。当然，如果所有的正则表达式都不匹配，则会执行相应的反操作（如果有的话）。下面是一个示例，如果来电者的姓名是“Some User”或被呼叫的分机是1001，则执行扩展的操作。
 
 ```xml
 <extension name="Regex OR Example">
   <condition regex="any">
-    <!-- If either of these is true then the subsequent actions are added to execute list -->
+    <!-- 如果其中任何一个条件为真，则后续的操作将会被添加到执行列表中 -->
     <regex field="caller_id_name" expression="Some User"/>
     <regex field="caller_id_number" expression="^1001$"/>
-    <action application="log" data="INFO At least one of the conditions matched!"/>
-    <!-- If *none* of the regexes is true then the anti-actions are added to the execute list -->
-    <anti-action application="log" data="WARNING None of the conditions matched!"/>
+    <action application="log" data="INFO 至少有一个条件匹配成功！"/>
+    <!-- 如果*没有一个*正则表达式为真，则将会添加反操作到执行列表中 -->
+    <anti-action application="log" data="WARNING 没有一个条件匹配成功！"/>
   </condition>
 </extension> 
 ```
 
-The `<condition regex=...>` has two other options: all and xor. So the full compliment of options looks like this:
+`<condition regex=...>`还有其他两个选项：`all`和`xor`。因此，完整的选项如下：
 
-* regex="any" — We used this above. Any of the regular expressions contained in the condition can match for the actions to be taken.
-* regex="all" — is equivalent to a logical AND operation. All of the regular expressions contained in the condition must match for the actions to be taken. This is another way to perform a logical AND, like we did in the previous section. Use the syntax that makes your dialplan clearer and easier to read.
-* regex="xor" — is the equivalent to a logical XOR operation. XOR is commonly known as "eXclusive-OR", because exactly one of the regular expressions must match for the actions to be taken.
+* regex="any" — 我们在上面使用了它。条件中包含的任何正则表达式都可以匹配执行相应的操作。
+* regex="all" — 等同于逻辑 AND 操作。条件中包含的所有正则表达式都必须匹配才能执行相应的操作。这是另一种执行逻辑 AND 的方式，就像我们在前一节中所做的那样。使用让拨号计划更清晰、更易于阅读的语法。
+* regex="xor" — 等同于逻辑 XOR 操作。XOR 通常被称为“异或”，因为只有一个正则表达式必须匹配才能执行相应的操作。
 
-Actions and anti-actions are executed like they would be in a standard condition block.
+动作和反动作的执行方式与标准条件块相同。
 
-This method makes it easier to match the caller's name OR caller ID number and execute actions when either is true.
+使用这种方法可以更轻松地匹配呼叫者的姓名或呼叫者 ID 号码，并在其中任一条件为真时执行操作。
 
-A slightly more advanced use of this method is demonstrated below. If the caller's name is "Michael S Collins" OR the caller ID is 1002, 3757, or 2816, then the variable calling\_user is set to "mercutioviz". If neither is true, then the calling\_user variable is set to "loser". After playing the welcome message, a custom message is played based on the calling\_user variable. 
+以下是对该方法的稍微高级使用示例。如果呼叫者的姓名是“Michael S Collins”或呼叫者 ID 是 1002、3757 或 2816，则变量 calling\_user 被设置为“mercutioviz”。如果两者都不符合条件，则 calling\_user 变量被设置为“loser”。播放完欢迎消息后，根据 calling\_user 变量播放自定义消息。
 
 ```xml
-<extension name="Regex OR example 2" continue="true">
+<extension name="正则表达式OR示例2" continue="true">
   <condition regex="any" break="never">
     <regex field="caller_id_name" expression="^Michael\s*S?\s*Collins"/>
     <regex field="caller_id_number" expression="^1001|3757|2816$"/>
@@ -440,14 +432,15 @@ A slightly more advanced use of this method is demonstrated below. If the caller
 </extension>  
 ```
 
-Notice the `inline="true"` option added to the actions that set the `calling_user` variable. Normally, when FreeSWITCH™ processes an extension, it collects all the actions together and executes them AFTER ALL the conditions in the extension are evaluated. Said another way: You cannot depend on an action being executed in an extension with more than one `<condition... />` statement until all the conditions are evaluated.
+注意，在设置`calling_user`变量的动作中增加了`inline="true"`选项。通常情况下，当FreeSWITCH™处理一个分机时，会将所有的动作集中起来，并在评估完所有条件之后执行它们。换句话说，在多个`<condition... />`语句的分机中，不能依赖于在条件全部评估完毕之前执行动作。
 
-The `inline="true"` options causes the variable to be set immediately, when the first condition matches. With out it, our example would not work properly because all the condition blocks would be checked before the variable was actually set. This would make the third condition block useless.
+`inline="true"`选项会在第一个条件匹配时立即设置该变量。如果没有它，我们的示例将无法正常工作，因为在变量实际设置之前，将检查所有的条件块。这将使第三个条件块失效。
 
   
-##### Example 4: Logical XOR
+##### 示例4: 逻辑异或操作
+```
 
-We've seen how the regex= clause can be used to implement AND and OR. For completeness, here is a final example showing how to use XOR. The actions are executed if either the first or second regular expression matches, but not if both match.
+我们已经看到了如何使用`regex=`子句来实现AND和OR的功能。为了完整起见，这里有一个最后的示例，展示了如何使用XOR。如果第一个或第二个正则表达式匹配，则执行操作，但如果两个都匹配则不执行。
 
 ```xml
  <extension name="Regex XOR example 3" continue="true">
@@ -462,302 +455,303 @@ We've seen how the regex= clause can be used to implement AND and OR. For comple
 </extension> 
 ```
 
-#### Actions and Anti-Actions
+#### 操作和反操作
 
-The final parts of an extension definition are its actions. These cause FreeSWITCH™ to do things on your behalf, like connect a call or provide other functions. The list of available actions is long and varied, and can be found [here](../../Modules/mod_dptools_1970333.mdx#-c). Some of the more useful actions are:
+扩展定义的最后部分是其操作。这些操作是让FreeSWITCH™代表你执行操作的，如连接呼叫或提供其他功能。可用的操作列表很长而且多样化，可以在[这里](../../Modules/mod_dptools_1970333.mdx#-c)找到。一些更有用的操作包括：
 
-| Action   | Description                             |
-| -------- | --------------------------------------- |
-| answer   | Answer the call                         |
-| bridge   | Bridge the call to another session      |
-| log      | Write a message in the log file         |
-| hangup   | Disconnect the call                     |
-| playback | Pay an audio file or tone stream        |
-| set      | Set a channel variable                  |
-| transfer | Transfer the call the another extension |
+| 操作     | 描述                              |
+| -------- | --------------------------------- |
+| answer   | 接听电话                          |
+| bridge   | 将呼叫桥接到另一个会话             |
+| log      | 写入日志文件                      |
+| hangup   | 断开电话连接                      |
+| playback | 播放音频文件或音调流               |
+| set      | 设置通道变量                      |
+| transfer | 将呼叫转移到另一个扩展              |
 
-It bears repeating: Actions are not executed "in-line" with the conditions they are bundled with. FreeSWITCH™ first checks all the conditions in an extension before it executes any actions1. In most cases you cannot rely on an action being performed and having its result be available for checking (or using in) a &lt;condition...> or &lt;action...> that follows it.
+这需要重申：动作不会与其绑定的条件"内联执行"。在执行任何动作之前，FreeSWITCH™ 会先检查扩展中的所有条件。在大多数情况下，您不能指望一个动作被执行并且其结果可用于检查（或在之后的&lt;condition...>或&lt;action...>中使用）。
 
-1In some cases, the action may support the inline="true" option which causes the action to execute along with its matching condition. Not all dialplan applications support this. The set application is probably the most likely place you would use this feature, as we showed in [this example](#dialplan-variables). 
+在某些情况下，动作可能支持inline="true"选项，它会导致动作与其匹配的条件同时执行。并非所有拨号计划应用都支持此选项。设置应用程序可能是您最有可能使用此功能的地方，就像我们在 [此示例](#dialplan-variables) 中展示的那样。
 
-##### Anti-Actions
+##### 反动作
 
-In a few of our introductory examples, we showed the use of the `anti-action` expression. As its name implies, anti-actions are executed when the condition they are contained in evaluate to false.
+在我们的一些介绍性示例中，我们展示了`反动作（anti-action）`表达式的使用。顾名思义，当包含它们的条件求值为false时，将执行反动作。
 
-For every condition, if the condition's actions aren't executed, the anti-actions will be executed, and vice-versa.
+对于每个条件，如果条件的动作未执行，则将执行反动作，反之亦然。
 
-#### Dialplan Variables
+#### 拨号计划变量
 
-So far you've seen the basic pieces of the dialplan and its structure. The examples have shown the basic use of:
+到目前为止，您已经看到了拨号计划及其结构的基本组成部分。示例展示了以下基本用法：
 
-* Extensions
-* Conditions
-* Simple Regular Expressions
-* Actions and Anti-Actions
+* 扩展
+* 条件
+* 简单正则表达式
+* 动作和反动作
 
-We have only touched upon dialplan variables. They are essential to do anything useful inside a FreeSWITCH™ dialplan.
+我们只涉及了拨号计划变量的方面。它们是在 FreeSWITCH™ 拨号计划中执行任何有用操作所必需的。
 
-Variables are named bits of information that are stored for later use. When a dialplan starts, a wealth of information comes pre-loaded in the form of variables. You can use regular expressions to match against a variable and control your dialplan execution as a result.
+变量是存储以供后续使用的命名信息片段。在拨号计划启动时，大量的信息会以变量的形式预加载。您可以使用正则表达式与变量匹配，并根据结果控制拨号计划的执行。
 
-We will touch on a few common variables here to solidify their proper use and demonstrate some features of variable substitution in FreeSWITCH™ .
+我们将介绍一些常用的变量，以巩固其正确使用，并演示FreeSWITCH™中的变量替换功能的一些特性。
 
-##### Accessing Variables
+##### 访问变量
 
-There are three kinds of variables available for you to access in your XML dialplan:
+在您的XML拨号计划中，有三种类型的变量可供您访问：
 
-* * Channel variables  
-   * Global variables  
-   * Built-in variables (time, date, etc.)
+* * 通道变量  
+   * 全局变量  
+   * 内置变量（时间、日期等）
 
-###### Channel Variables
+###### 通道变量
 
-Channel variables can be used to get information about a call and **control its behavior** as it progresses through your dialplan. Channel variables contain a wealth of information about the call being processed and an amazing array of options that can be set. You access the contents of a channel variable by surrounding its name with ${ }. For example, to append the default SIP domain to the end of a dial string, you can just reference `${domain_name}` in the dial string text, and its value will be substituted automatically:
+通道变量可用于获取有关呼叫的信息并**控制其行为**，以在拨号计划中逐步进行。通道变量包含大量关于正在处理的呼叫以及可设置的各种选项的信息。通过将变量名称用${ }括起来访问通道变量的内容。例如，要在拨号字符串的末尾附加默认SIP域，您只需在拨号字符串文本中引用`${domain_name}`，其值将自动替换：
 
 ```xml
     <action application="bridge" data="user/1000@${domain_name}/>
 ```
 
-You set the value of a channel variable like this:
+您可以像这样设置通道变量的值：
 
 ```xml
     <action application="set" data="call_timeout=30"/>
 ```
 
-For the complete list of Channel Variables and alternate ways to use them in dial strings, see: [Channel Variables](../Channel-Variables_16352493.mdx#about). We'll present a short list here to give you a sense of what's possible.
+有关通道变量的完整列表和在拨号字符串中使用它们的其他方式，请参见：[通道变量](../Channel-Variables_16352493.mdx#about)。我们在这里只列出一个简短的列表，以让您了解可能的操作。
 
-| Variable Name         | Description                                                                                                               |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| caller\_id\_name      | The name of the calling party.                                                                                            |
-| destination\_number   | The number that the calling party dialed.                                                                                 |
-| direction             | Whether this call leg is inbound or outbound                                                                              |
-| channel\_name         | The name of this call's inbound channel, for example:sofia/sales/John\_Smith@192.168.1.1                                  |
-| call\_timeout         | Set to the number of seconds to wait for a call to be answered before giving up.                                          |
-| state                 | The [state](../Channel-States_7144639.mdx#0-about) of this channel, for example CS\_EXECUTE or CS\_HANGUP                         |
-| bridge\_hangup\_cause | The [reason](../../Troubleshooting-Debugging/Hangup-Cause-Code-Table_3964945.mdx#about) a call ended, for example NO\_ANSWER, NORMAL\_CLEARING or USER\_BUSY |
+| 变量名                   | 描述                                                             |
+| ----------------------- | ---------------------------------------------------------------- |
+| caller\_id\_name        | 呼叫方的姓名                                                     |
+| destination\_number     | 呼叫方拨打的号码                                                 |
+| direction               | 该通话的方向是呼入还是呼出                                         |
+| channel\_name           | 该通话的呼入通道名称，例如：sofia/sales/John\_Smith@192.168.1.1       |
+| call\_timeout           | 设置等待通话接通的秒数，如果超过该时间将会放弃通话                      |
+| state                   | 该通道的状态，例如 CS\_EXECUTE 或 CS\_HANGUP                          |
+| bridge\_hangup\_cause   | 通话结束的原因，例如 NO\_ANSWER, NORMAL\_CLEARING 或 USER\_BUSY       |
 
-  
-###### Built-In Variables
+###### 内建变量
 
-Built-in variables are accessed by name, **without using the customary $ prefix**.
+通过名称访问内建变量，**不需要使用惯例的 $ 前缀**。
 
-The built-in variables are: (updated 29-July-2014, switch\_xml.c, switch\_xml\_std\_datetime\_check())
+内建变量列表：（更新于2014年7月29日，switch_xml.c, switch_xml_std_datetime_check()）
 
-| Built-In Name                                       | Description                                                                    |
-| --------------------------------------------------- | ------------------------------------------------------------------------------ |
-| _Standard Date and Time_                            |                                                                                |
-| date-time                                           | The current data and time: YYYY-MM-DD HH:MM:SSFor example: 2014-08-12 15:34:59 |
-| time-of-day                                         | The current local time: HH:MM:SSFor example: 15:34:59                          |
-| _Data and Time Parts (all based on local timezone)_ |                                                                                |
-| year                                                | The current year through. (1970 through 9999)                                  |
-| mon                                                 | The current month. (1 through 12)                                              |
-| mday                                                | The day of the current month. (1 through 31)                                   |
-| hour                                                | The hour of the current day. (0 through 23)                                    |
-| minute                                              | The minute of the current hour. (0 through 59)                                 |
-| _Advanced Data and Time Parts_                      |                                                                                |
-| wday                                                | The day of the current week. (Sunday = 1 through 7)                            |
-| week                                                | The current week since January 1st. (1 through 53)                             |
-| mweek                                               | The week of the current month. (1 through 6)                                   |
-| yday                                                | The day of the current year (1 through 366)                                    |
-| minday                                              | The current minute of the day starting at midnight. (0 through 1440)           |
-| tz-offset                                           | Timezone offset in hours from GMT. (-11 to +11)                                |
-| dst                                                 | Returns 1 if daylight savings time is in effect, or 0 if not.                  |
+| 内置名称                      | 描述                                                                                 |
+| -------------------------- | ----------------------------------------------------------------------------------- |
+| _标准日期和时间_                 |                                                                                     |
+| date-time                 | 当前日期和时间：YYYY-MM-DD HH:MM:SS，例如：2014-08-12 15:34:59                              |
+| time-of-day               | 当前本地时间：HH:MM:SS，例如：15:34:59                                                       |
+| _日期和时间部分（基于本地时区）_     |                                                                                     |
+| year                      | 当前年份。（1970 至 9999）                                                             |
+| mon                       | 当前月份。（1 至 12）                                                                 |
+| mday                      | 当前月份的日期。（1 至 31）                                                             |
+| hour                      | 当前小时。（0 至 23）                                                                  |
+| minute                    | 当前分钟。（0 至 59）                                                                  |
+| _高级日期和时间部分_              |                                                                                     |
+| wday                      | 当前星期几。（星期日为1，星期六为7）                                                         |
+| week                      | 自1月1日起的当前周数。（1 至 53）                                                             |
+| mweek                     | 当前月份的周数。（1 至 6）                                                              |
+| yday                      | 当前年份的第几天。（1 至 366）                                                           |
+| minday                    | 从午夜开始的当前分钟数。（0 至 1440）                                                      |
+| tz-offset                 | 与 GMT 相比的时区偏移量，以小时为单位。（-11 至 +11）                                         |
+| dst                       | 如果当前处于夏令时，则返回1；否则返回0。                                                       |
 
-In condition statements, you can compare against more than one built-in variable. All comparisons must match (logical AND) before its actions will be executed.
+在条件语句中，您可以与多个内置变量进行比较。所有比较都必须匹配（逻辑与）后，才会执行其操作。
 
-There are a number of ways match against a built-in variable. You can:
+有多种方法与内置变量匹配。您可以：
 
-| Kind        | Example                  | Description                                 |
-| ----------- | ------------------------ | ------------------------------------------- |
-| Equality    | &lt;condition wday="1">     | Is it Sunday?                               |
-| Range       | &lt;condition wday="2-4">   | Is it Monday, Tuesday, or Wednesday?        |
-| List        | &lt;condition wday="1,4">   | Is it Sunday or Wednesday?                  |
-| Combination | &lt;condition wday="1-3,7"> | Is it Sunday, Monday, Tuesday, or Saturday? |
+| 类型        | 示例                     | 描述                           |
+| ----------- | ------------------------ | ------------------------------ |
+| 相等        | <condition wday="1">      | 是星期天吗？                     |
+| 范围        | <condition wday="2-4">    | 是周一、周二还是周三？           |
+| 列表        | <condition wday="1,4">    | 是星期天还是星期三？             |
+| 组合        | <condition wday="1-3,7">  | 是星期天、星期一、星期二还是星期六？ |
 
-The range operation can be used on times and dates as well.
+范围操作也可以用于时间和日期。
 
 ```xml
 <condition time-of-day="08:00:00-09:00:00">
 <condition date-time="2010-10-01 00:00:01~2010-10-15 23:59:59">
 ```
 
-The range operator for dates is "**\~**", _**not**_  "–"
+日期的范围运算符为“**\~**”，**而不是**“–”。
 
-### Advanced Concepts
+### 高级概念
 
-#### Nested Conditions
+#### 嵌套条件
 
-Conditions can be nested one inside each other. Nested conditions is hard, very very hard to get right. You may want to use a script, instead (yes, yes, you want to use a script). See [mod\_lua](../../Modules/mod_lua_1048944.mdx#--) for Lua scripting.
+条件可以相互嵌套。嵌套条件很难，非常难以正确掌握。您可能想使用脚本替代（是的，您想使用脚本）。请参阅 [mod\_lua](../../Modules/mod_lua_1048944.mdx#--) 了解 Lua 脚本。
 
-When a (main) condition has nested conditions, **first its (main) expression is evaluated**, and its (main) actions are pushed in TODO list, **then nested conditions** are evaluated, and their actions pushed.
+当主条件具有嵌套条件时，**首先会评估主表达式**，并将其主动作推入待办事项列表中，**然后评估嵌套条件**，并将其动作推入待办事项列表中。
 
-Each condition has an implied parameter "**require-nested**", that is by **default** set to "**true**".
+每个条件都有一个隐含的参数“**require-nested**”，默认设置为“**true**”。
 
-When we have a condition with **require-nested** parameter set to "**true**", then **ALL** its **nested** conditions must evaluate to **true** (**AND** its **expression** must evaluate to **true**) for the condition to be evaluated to **true**.
+当我们的条件中设置了require-nested参数为"true"时，所有嵌套条件必须为true（[AND]其表达式必须为true），才能使整个条件为true。
 
-If "**require-nested**" is set to **false**, then **only the expression** must evaluate to true for the condition to be true, whatever the nested conditions are.
+如果"require-nested"设置为"false"，则只需表达式为true，无论嵌套条件如何，条件即为true。
 
-Conditions are checked the usual way (respecting the "**break**" parameter), and actions inside conditions added to TODO list.
+条件会按照通常的方式进行检查（遵循"break"参数），并且将条件内的操作添加到TODO列表。
 
-Let's see an **example extension** with nested conditions **you can play with**, checking all possible cases and corner cases.
+让我们看一个示例扩展，包含了可以进行测试的嵌套条件，检查所有可能的情况和边缘情况。
 
-  
 ```xml
 <extension name="nested_example">
     <condition field="destination_number" expression="^2901$" require-nested="false">
-        <action application="log" data="ERR 00 CIDnum is ${caller_id_number} CIDname is ${caller_id_name}" />
+        <action application="log" data="ERR 00 CID号码是${caller_id_number}，CID名称是${caller_id_name}" />
         <action application="set" data="var_01=N/A" inline="true"/>
         <action application="set" data="var_02=N/A" inline="true"/>
         <action application="set" data="var_03=N/A" inline="true"/>
         <action application="set" data="var_04=N/A" inline="true"/>
         <action application="set" data="var_05=N/A" inline="true"/>
-        <action application="log" data="ERR 01 I'm before..."/>
+        <action application="log" data="ERR 01 我在前面..."/>
         <action application="set" data="var_01=01" inline="true"/>
-        <action application="log" data="ERR 02 I'm before  ${var_01} ${var_02} ${var_03} ${var_04} ${var_05}"/>
+        <action application="log" data="ERR 02 我在前面 ${var_01} ${var_02} ${var_03} ${var_04} ${var_05}"/>
         <condition field="caller_id_number" expression="1011" break="on-false">
-            <action application="log" data="ERR 03 I'm the first..."/>
-            <action application="log" data="ERR 04 I'm the first CIDnum is ${caller_id_number}" />
+            <action application="log" data="ERR 03 我是第一个的..."/>
+            <action application="log" data="ERR 04 我是第一个CID号码是${caller_id_number}" />
             <action application="set" data="var_02=02" inline="true"/>
-            <action application="log" data="ERR 05 I'm the first ${var_01} ${var_02} ${var_03} ${var_04} ${var_05}"/>
+            <action application="log" data="ERR 05 我是第一个 ${var_01} ${var_02} ${var_03} ${var_04} ${var_05}"/>
         </condition>
-        <action application="log" data="ERR 06 I'm in between..."/>
+        <action application="log" data="ERR 06 我在中间..."/>
         <action application="set" data="var_03=03" inline="true"/>
-        <action application="log" data="ERR 07 I'm in between ${var_01} ${var_02} ${var_03} ${var_04} ${var_05}"/>
+        <action application="log" data="ERR 07 我在中间 ${var_01} ${var_02} ${var_03} ${var_04} ${var_05}"/>
         <condition field="${caller_id_name}" expression="Giovanni" break="on-false">
-            <action application="log" data="ERR 08 I'm the second..."/>
-            <action application="log" data="ERR 09 I'm the second CIDname is ${caller_id_name}" />
+            <action application="log" data="ERR 08 我是第二个的..."/>
+            <action application="log" data="ERR 09 我是第二个CID名称是${caller_id_name}" />
             <action application="set" data="var_04=04" inline="true"/>
-            <action application="log" data="ERR 10 I'm the second ${var_01} ${var_02} ${var_03} ${var_04} ${var_05}"/>
+            <action application="log" data="ERR 10 我是第二个 ${var_01} ${var_02} ${var_03} ${var_04} ${var_05}"/>
         </condition>
-        <action application="log" data="ERR 11 I'm after..."/>
+        <action application="log" data="ERR 11 我在后面..."/>
         <action application="set" data="var_05=05" inline="true"/>
-        <action application="log" data="ERR 12 I'm after ${var_01} ${var_02} ${var_03} ${var_04} ${var_05}"/>
+        <action application="log" data="ERR 12 我在后面 ${var_01} ${var_02} ${var_03} ${var_04} ${var_05}"/>
     </condition>
 </extension>
 <extension name="call_has_not_stopped_before_here">
     <condition field="destination_number" expression=".*">
-        <action application="log" data="ERR NOT STOPPED BEFORE HERE"/>
+        <action application="log" data="ERR 还没有停在这之前"/>
     </condition>
 </extension>
+```
 
 ```
 
-There are a lot of things you can change to test this example:
+你可以更改许多内容来测试这个例子：
 
-* Obviously, all the "expression": 2901, 1011, Giovanni
-* in first condition, require-nested can be set to "true" or "false"
-* the "inline" parameter of the "set" actions can be set to "true" or "false"
-* the "break" parameter of the nested conditions can be set to "on-false", "on-true", "never", "always"
+* 显然，所有的"表达式": 2901, 1011, Giovanni
+* 在第一个条件中，`require-nested` 可以设置为 "true" 或 "false"
+* "set" 动作的 `inline` 参数可以设置为 "true" 或 "false"
+* 嵌套条件的 `break` 参数可以设置为 "on-false"、"on-true"、"never" 或 "always"
 
-  
-Depending on how you nest conditions within conditions, you will get a nested order result, or a line order result.  
-Please observe the following two examples and the execution order of each.
+根据你是如何嵌套条件的，你将得到一个嵌套顺序的结果或一个行顺序的结果。
+请观察以下两个示例和每个示例的执行顺序。
 
-#### Line order vs nested order during execution
+#### 行顺序 vs 嵌套顺序的执行
 
 ![](/attachments/3966106/19595480.png)paste examples
 
-Click here to expand...
+点击这里展开...
+```
 
-    &lt;extension name="nested example">
-      &lt;condition field="destination_number" expression="^2901$" require-nested="false">
-        &lt;action application="log" data="ERR 1 Nest Level 1a"/>
-        &lt;action application="log" data="ERR 2 Nest Level 1b"/>
-        &lt;condition field="${direction}" expression="inbound" break="never">
-          &lt;action application="log" data="ERR 3 Nest Level 2a"/>
-          &lt;action application="log" data="ERR 4 Nest Level 2b"/>
-          &lt;condition field="${direction}" expression="inbound" break="never">
-            &lt;action application="log" data="ERR 5 Nest Level 3a"/>
-            &lt;action application="log" data="ERR 6 Nest Level 3b"/>
-          &lt;/condition>
-          &lt;action application="log" data="ERR 7 Nest Level 2c"/>
-          &lt;action application="log" data="ERR 8 Nest Level 2d"/>
-        &lt;/condition>
-        &lt;action application="log" data="ERR 9 Nest Level 1c"/>
-        &lt;action application="log" data="ERR 10 Nest Level 1d"/>
-      &lt;/condition>
-    &lt;/extension>
-	
-	
-EXECUTE verto.rtc/2901 log(ERR 1 Nest Level 1a)
-EXECUTE verto.rtc/2901 log(ERR 2 Nest Level 1b)
-EXECUTE verto.rtc/2901 log(ERR 9 Nest Level 1c)
-EXECUTE verto.rtc/2901 log(ERR 10 Nest Level 1d)
-EXECUTE verto.rtc/2901 log(ERR 3 Nest Level 2a)
-EXECUTE verto.rtc/2901 log(ERR 4 Nest Level 2b)
-EXECUTE verto.rtc/2901 log(ERR 7 Nest Level 2c)
-EXECUTE verto.rtc/2901 log(ERR 8 Nest Level 2d)
-EXECUTE verto.rtc/2901 log(ERR 5 Nest Level 3a)
-EXECUTE verto.rtc/2901 log(ERR 6 Nest Level 3b)
+```xml
+<extension name="嵌套示例">
+  <condition field="destination_number" expression="^2901$" require-nested="false">
+    <action application="log" data="ERR 1 嵌套级别1a"/>
+    <action application="log" data="ERR 2 嵌套级别1b"/>
+    <condition field="${direction}" expression="inbound" break="never">
+      <action application="log" data="ERR 3 嵌套级别2a"/>
+      <action application="log" data="ERR 4 嵌套级别2b"/>
+      <condition field="${direction}" expression="inbound" break="never">
+        <action application="log" data="ERR 5 嵌套级别3a"/>
+        <action application="log" data="ERR 6 嵌套级别3b"/>
+      </condition>
+      <action application="log" data="ERR 7 嵌套级别2c"/>
+      <action application="log" data="ERR 8 嵌套级别2d"/>
+    </condition>
+    <action application="log" data="ERR 9 嵌套级别1c"/>
+    <action application="log" data="ERR 10 嵌套级别1d"/>
+  </condition>
+</extension>
+```
 
- 
+执行 verto.rtc/2901 log(ERR 1 嵌套级别1a)
+执行 verto.rtc/2901 log(ERR 2 嵌套级别1b)
+执行 verto.rtc/2901 log(ERR 9 嵌套级别1c)
+执行 verto.rtc/2901 log(ERR 10 嵌套级别1d)
+执行 verto.rtc/2901 log(ERR 3 嵌套级别2a)
+执行 verto.rtc/2901 log(ERR 4 嵌套级别2b)
+执行 verto.rtc/2901 log(ERR 7 嵌套级别2c)
+执行 verto.rtc/2901 log(ERR 8 嵌套级别2d)
+执行 verto.rtc/2901 log(ERR 5 嵌套级别3a)
+执行 verto.rtc/2901 log(ERR 6 嵌套级别3b)
+
 ========================================================================================
- 
 
-    &lt;extension name="another nested example">
-      &lt;condition field="destination_number" expression="^2902$" require-nested="false">
-        &lt;action application="log" data="ERR 1 Nest Level 1a"/>
-        &lt;action application="log" data="ERR 2 Nest Level 1b"/>
-        &lt;condition field="${direction}" expression="inbound" break="never">
-          &lt;action application="log" data="ERR 3 Nest Level 2a"/>
-          &lt;action application="log" data="ERR 4 Nest Level 2b"/>
-        &lt;/condition>
-        &lt;condition field="${direction}" expression="inbound" break="never">
-          &lt;action application="log" data="ERR 5 Nest Level 3a"/>
-          &lt;action application="log" data="ERR 6 Nest Level 3b"/>
-        &lt;/condition>
-        &lt;condition field="${direction}" expression="inbound" break="never">
-          &lt;action application="log" data="ERR 7 Nest Level 2c"/>
-          &lt;action application="log" data="ERR 8 Nest Level 2d"/>
-        &lt;/condition>
-        &lt;condition field="${direction}" expression="inbound" break="never">
-          &lt;action application="log" data="ERR 9 Nest Level 1c"/>
-          &lt;action application="log" data="ERR 10 Nest Level 1d"/>
-        &lt;/condition>
-      &lt;/condition>
-    &lt;/extension>
+```xml
+<extension name="另一个嵌套示例">
+  <condition field="destination_number" expression="^2902$" require-nested="false">
+    <action application="log" data="ERR 1 Nest Level 1a"/>
+    <action application="log" data="ERR 2 Nest Level 1b"/>
+    <condition field="${direction}" expression="inbound" break="never">
+      <action application="log" data="ERR 3 Nest Level 2a"/>
+      <action application="log" data="ERR 4 Nest Level 2b"/>
+    </condition>
+    <condition field="${direction}" expression="inbound" break="never">
+      <action application="log" data="ERR 5 Nest Level 3a"/>
+      <action application="log" data="ERR 6 Nest Level 3b"/>
+    </condition>
+    <condition field="${direction}" expression="inbound" break="never">
+      <action application="log" data="ERR 7 Nest Level 2c"/>
+      <action application="log" data="ERR 8 Nest Level 2d"/>
+    </condition>
+    <condition field="${direction}" expression="inbound" break="never">
+      <action application="log" data="ERR 9 Nest Level 1c"/>
+      <action application="log" data="ERR 10 Nest Level 1d"/>
+    </condition>
+  </condition>
+</extension>
+```
 
-EXECUTE verto.rtc/2902 log(ERR 1 Nest Level 1a)
-EXECUTE verto.rtc/2902 log(ERR 2 Nest Level 1b)
-EXECUTE verto.rtc/2902 log(ERR 3 Nest Level 2a)
-EXECUTE verto.rtc/2902 log(ERR 4 Nest Level 2b)
-EXECUTE verto.rtc/2902 log(ERR 5 Nest Level 3a)
-EXECUTE verto.rtc/2902 log(ERR 6 Nest Level 3b)
-EXECUTE verto.rtc/2902 log(ERR 7 Nest Level 2c)
-EXECUTE verto.rtc/2902 log(ERR 8 Nest Level 2d)
-EXECUTE verto.rtc/2902 log(ERR 9 Nest Level 1c)
-EXECUTE verto.rtc/2902 log(ERR 10 Nest Level 1d)
+执行 verto.rtc/2902 log(ERR 1 Nest Level 1a)
+执行 verto.rtc/2902 log(ERR 2 Nest Level 1b)
+执行 verto.rtc/2902 log(ERR 3 Nest Level 2a)
+执行 verto.rtc/2902 log(ERR 4 Nest Level 2b)
+执行 verto.rtc/2902 log(ERR 5 Nest Level 3a)
+执行 verto.rtc/2902 log(ERR 6 Nest Level 3b)
+执行 verto.rtc/2902 log(ERR 7 Nest Level 2c)
+执行 verto.rtc/2902 log(ERR 8 Nest Level 2d)
+执行 verto.rtc/2902 log(ERR 9 Nest Level 1c)
+执行 verto.rtc/2902 log(ERR 10 Nest Level 1d)
 
   
-Advanced Condition/Action Rules
+高级条件/操作规则
 
 ##### break="on-true"
 
-Here is a more complex example, using the `break="on-true"` and `break="on-false"` statements to perform time-based routing for a support organization. The user dials extension 1100\. The actual support extension is 1105 and is staffed every day from 8am to 10pm, except Friday, when it is staffed between 8am and 1pm. At all other times, calls to 1100 are sent to the support "after-hours" mailbox.
+这是一个更复杂的示例，使用 `break="on-true"` 和 `break="on-false"` 语句为支持组织执行基于时间的路由。用户拨打分机号1100。实际的支持分机号是1105，在每天早上8点到晚上10点之间有人值班，除了星期五，那时有人值班从早上8点到下午1点。在其他所有时间，拨打1100的电话都会被发送到“非工作时间”语音信箱。
 
 ```xml
-<extension name="Time-of-day">                                                      
-	<condition field="destination_number" expression="^1100$" break="on-false"/>    <!--if this is false, FreeSWITCH skips to the next *extension*.-->
-    <condition wday="6" hour="8-12" break="on-true">                                <!--Don't bother evaluating the next condition set if this is true.-->
-        <action application="transfer" data="1105 XML default"/>                    <!--Fri, 8am-12:59pm-->
-    </condition>
-	<condition wday="1-5" hour="8-21" break="on-true">                              <!--Sunday-Thursday, 8am-9:59pm-->
+<extension name="Time-of-day">
+	<condition field="destination_number" expression="^1100$" break="on-false"/>    <!--如果为 False，则 FreeSWITCH 跳到下一个扩展。-->
+	<condition wday="6" hour="8-12" break="on-true">                                <!--如果为 True，则不再发起下一个条件集的评估。-->
+		<action application="transfer" data="1105 XML default"/>                    <!--周五，上午8点到下午12点59分-->
+	</condition>
+	<condition wday="1-5" hour="8-21" break="on-true">                              <!--星期日至星期四，上午8点到晚上9点59分-->
 		<action application="transfer" data="1105 XML default"/>
 	</condition>
-	<condition>                                                                     <!--this is a catch all, sending the call to voicemail at all other times. -->
+	<condition>                                                                    <!--这是一个全捕获条件，将呼叫发送到其他所有时间的语音信箱。-->
 		<action application="voicemail" data="default ${domain} 1105"/>
 	</condition>
 </extension>
 ```
 
-###### Thing to Notice
+###### 注意事项
 
-The `break="on-true"` statement causes the extension to halt processing when the condition test evaluates to True. In the example above, if the call arrives in the designated support hours, the call is transferred and the rest of the conditions **are not processed**.
+`break="on-true"` 语句会在条件测试评估为 True 时使扩展停止处理。在上面的示例中，如果呼叫在指定的支持时间内到达，呼叫将被转接，而其他条件**将不会被处理**。
 
-By default, `break="on-false"` behavior is assumed if it is not specified.
+如果未指定，将默认使用 `break="on-false"` 行为。
+
 
 ##### break="never"
 
-In this example, we use the `break="never"` statement to cause the first condition to always "fall through" to the next condition even if the first condition is false. This is useful to set various flags as part of extension processing. This example sets the variable `begins_with_one` if the destination number begins with 1\. 
+在这个例子中，我们使用`break="never"`语句来导致第一个条件即使为假也总是"穿透"到下一个条件。这对于在扩展处理中设置各种标志非常有用。如果目标号码以1开头，这个例子将设置变量`begins_with_one`。
 
 ```xml
 <extension name="break-demo">
@@ -765,16 +759,16 @@ In this example, we use the `break="never"` statement to cause the first conditi
 		<action application="set" data="begins_with_one=true"/>
 	</condition>
 	<condition field="destination_number" expression="^(\d+)$">
-	 ...other actions that may query begins_with_one...
+	 ...可能查询begins_with_one的其他操作...
 	</condition>
 </extension>
 ```
 
-##### Asterisk Pattern Matching
+##### Asterisk 模式匹配
 
-In addition to PCRE FreeSWITCH also supports Asterisk [patterns](http://www.voip-info.org/wiki/view/Asterisk+Dialplan+Patterns). Any expression starting with an underscore (\_) will be processed using asterisk pattern matching. See [mod\_dialplan\_asterisk](../../Modules/mod_dialplan_asterisk_3966416.mdx#about).
+除了 PCRE 外，FreeSWITCH 还支持 Asterisk [模式](http://www.voip-info.org/wiki/view/Asterisk+Dialplan+Patterns)。以下划线 (\_) 开头的任何表达式都将使用 Asterisk 模式匹配进行处理。请参阅 [mod\_dialplan\_asterisk](../../Modules/mod_dialplan_asterisk_3966416.mdx#about)。
 
-Since \* is normally reserved in regular expressions, its use in Asterisk patterns must be escaped with \\, as shown in the second part of the example below.
+由于在正则表达式中 * 通常是保留字符，因此在 Asterisk 模式中使用时必须使用 \\ 进行转义，如下面示例的第二部分所示。
 
 ```xml
 <extension name="US-Domestic">
@@ -792,9 +786,9 @@ Since \* is normally reserved in regular expressions, its use in Asterisk patter
 </extension>
 ```
 
-### Example Library
+### 示例库
 
-This example shows how to ensure that all expressions match before executing actions, otherwise the anti-actions will be executed. In this case, the SIP gateway must be the default provider, and it must be an emergency call, and the auto-answer option must be enabled and stored in the database:
+这个示例演示了如何在执行操作之前确保所有表达式均匹配，否则将执行相应的反操作。在此情况下，SIP网关必须是默认提供商，并且必须是紧急呼叫，并且必须启用并存储在数据库中的自动应答选项：
 
 ```xml
 <condition regex="all">
@@ -802,13 +796,13 @@ This example shows how to ensure that all expressions match before executing act
 	<regex field="${emergency_call}" expression="^true$"/>
 	<regex field="${db(select/emergency/autoanswer)}" expression="^1$"/>
  
-	<!-- the following actions get executed if all regexes PASS -->
+	<!-- 如果所有正则表达式都通过，则执行以下操作 -->
 	<action application="set" data="call_timeout=60"/>
 	<action application="set" data="effective_caller_id_name=${regex(${caller_id_name}|^Emerg(_.*)$|Auto%1)}"/>
 	<action application="set" data="autoanswered=true"/>
 	<action application="bridge" data="user/1000@${domain_name},sofia/gateway/1006_7217/${mobile_number}"/>
  
-	<!-- the following anti-actions are executed if any of the regexes FAIL -->
+	<!-- 如果任何一个正则表达式失败，则执行以下反操作 -->
 	<anti-action application="set" data="effective_caller_id_name=${regex(${caller_id_name}|^Emerg(_.*)$|NotAuto%1)}"/>
 	<anti-action application="set" data="call_timeout=30"/>
 	<anti-action application="set" data="autoanswered=false"/>
@@ -817,97 +811,92 @@ This example shows how to ensure that all expressions match before executing act
 ```
 
   
-##### Caller Profile Fields vs. Channel Variables
+##### 呼叫者配置文件字段 vs. 通道变量
 
-One thing that may seem confusing is the distinction between a [caller profile field](../Caller-Profile-Field_7144625.mdx#about) (the built-in variables) and a channel variable.
+可能让人感到困惑的一件事是[呼叫者配置文件字段](../Caller-Profile-Field_7144625.mdx#about)（内置变量）和通道变量之间的区别。
 
-Caller profile fields are accessed like this:
+呼叫者配置文件字段可以这样访问：
 
 ```xml
 <condition field="destination_number" attributes...>
 ```
 
   
-While channel variables are accessed like this:
+而通道变量可以这样访问：
 
 ```xml
 <condition field="${sip_has_crypto}" attributes...>
 ```
 
-  
-Please take note of the **${variable\_name}** syntax. Channel variables may also be used in action statements.
+请注意 **${variable\_name}** 的语法。通道变量也可以在操作语句中使用。
 
-In addition, API functions can be called from inside a condition statement to provide dynamic data.
+此外，可以在条件语句中调用API函数来提供动态数据。
 
-For example, you can use the **cond** API:
-
-```xml
-<condition field="${cond(${my_var} > 12 ? YES : NO)}" expression="^YES$">
-    <action application="log" data="INFO ${my_var} is indeed greater than 12"/>
-</condition>
-```
-
-  
-This example tests ${my\_var}. If it is more than 12, "YES" is returned. Otherwise "NO" is returned. The condition tests the results for "YES" and logs the resulting message to the FreeSWITCH log.
-
-Availability of Variables
-
-Asterisk users must read!
-
-  
-The XML Dialplan has the ability to test a number of conditions based upon variables with expressions; however, it needs to be understood that some variables may not be available for conditional testing until the first transfer or execute\_extension is performed (see workarounds below).
-
-###### Why
-
-In essence the XML Dialplan is to be used for Call Routing rather than for complex or extensive conditional tests and evaluations. This is why FreeSWITCH makes Lua, JavaScript, Perl, Python and other APIs available since they are far better alternatives than coming up with a convoluted XML solution, or worse yet some arcane and convoluted acronym such as "AEL".
-
-This may be confusing to former Asterisk users since the info application such as &lt;action application="info"/> will in fact display the variables as if they are available for a conditional test when in fact they may not.
-
-The reason for this is that FreeSWITCH does the **hunting** and the **executing** in two separate steps. First - based on conditions, actions and anti-actions - all applications that need to be executed are gathered. Second, that sequence of applications is executed. This means that channel variables set by the executed applications won't be available to conditions at hunting time.
-
-This is why you may find that your XML condition is failing even though the variable and its value are displayed with the &lt;action application="info"/>.
-
-###### Workarounds
-
-The workaround for this is to either implement the vast majority of your dialplan logic within Lua, JavaScript or one of the other Dialplan scripting languages, OR execute an extension which will make those variables you seek to do conditional evaluations on available for parsing within your XML Dialplan condition.
-
-**NOTE:** Since [f21b4a21374](https://freeswitch.org/stash/projects/FS/repos/freeswitch/commits/f21b4a2137410550b4ba9ee493ec27a555b53e90) it is possible for certain applications to be run **[inline](#inline-actions)** . This means that they are executed at hunting time which has the effect that channel variables set by these applications **are** available to the following conditions at hunting time.
-
-  
-##### Actions and Anti-Actions
-
-So far, we've seen example dialplan entries that contain conditions along with the actions that run when the conditions match.
-
-You can also specify 'anti-actions' that run if the conditions for the extension 'are not met'.
-
-In this example, the value of ${my\_var} is compared with 12, and a message is logged for either result.
+例如，可以使用 **cond** API：
 
 ```xml
 <condition field="${cond(${my_var} > 12 ? YES : NO)}" expression="^YES$">
-    <action application="log" data="INFO ${my_var} is indeed greater than 12"/>
-    <anti-action application="log" data="INFO ${my_var} is not greater than 12"/>
+    <action application="log" data="INFO ${my_var} 确实大于12"/>
 </condition>
 ```
 
+此示例测试 ${my\_var}。如果它大于12，则返回“YES”。否则返回“NO”。条件测试结果是否为“YES”，并将结果消息记录到FreeSWITCH日志中。
+
+变量的可用性
+
+Asterisk用户请注意！
+
+XML拨号计划可以根据包含表达式的变量来测试许多条件，然而，需要理解的是，在进行第一次转接或执行\_extension之前，并不是所有变量都可以用于条件测试（请参阅下面的解决方法）。
+
+###### 为什么
+
+实质上，XML拨号计划用于呼叫路由，而不是进行复杂或广泛的条件测试和评估。这就是为什么FreeSWITCH提供了Lua、JavaScript、Perl、Python等API的原因，因为它们是比提供一个复杂的XML解决方案（或更糟糕的，一些隐晦而复杂的首字母缩写，比如“AEL”）更好的选择。
+
+这可能会让以前使用Asterisk的用户感到困惑，因为诸如&lt;action application="info"/>之类的info应用程序实际上会显示变量，就好像它们可以用于条件测试，实际上可能是不可用的。
+
+这样设计的原因是，FreeSWITCH将**hunting**和**executing**分为两个独立的步骤。首先，根据条件、动作和反动作，收集所有需要执行的应用程序。然后，执行这些应用程序的顺序。这意味着被执行的应用程序设置的通道变量在hunting时不会对条件可用。
+
+这就是为什么即使变量及其值在&lt;action application="info"/>中显示，您可能会发现XML条件失败的原因。
+
+###### 解决方法
+
+解决方法是在Lua、JavaScript或其他Dialplan脚本语言中实现绝大部分拨号计划逻辑，或者执行一个扩展，使您要对其进行条件评估的变量能够在XML拨号计划条件中进行解析。
+
+**注意：**自从[f21b4a21374](https://freeswitch.org/stash/projects/FS/repos/freeswitch/commits/f21b4a2137410550b4ba9ee493ec27a555b53e90)以来，某些应用程序可以以**[inline](#inline-actions)**的方式运行。这意味着它们会在hunting时执行，这样由这些应用程序设置的通道变量将在后续的条件中对hunting时可用。
+
   
-##### Available Actions
+##### 动作和反动作
 
-See [Modules](../../Modules/index.mdx#about)and [dialplan functions](../../Modules/mod_dptools_1970333.mdx#-c)
+到目前为止，我们已经看到了包含条件以及当条件匹配时运行的动作的示例拨号计划条目。
 
-##### Inline Actions
+您还可以指定当分机的条件未满足时运行的`反动作`。
 
-You may set an extra attribute **inline="true"** on an action so that it will be executed during the hunting phase of the dialplan:
+在此示例中，将${my\_var}的值与12进行比较，并根据结果记录一条消息。
+
+```xml
+<condition field="${cond(${my_var} > 12 ? YES : NO)}" expression="^YES$">
+    <action application="log" data="INFO ${my_var} 的确大于12"/>
+    <anti-action application="log" data="INFO ${my_var} 不大于12"/>
+</condition>
+```
+
+##### 可用的动作
+
+请参阅[模块](../../Modules/index.mdx#about)和[拨号计划函数](../../Modules/mod_dptools_1970333.mdx#-c)
+
+##### 内联动作
+
+您可以在动作上设置额外的属性**inline="true"**，以便在拨号计划的寻呼阶段执行它：
 
 ```xml
 <action inline="true" application="set" data="some_var=some_val"/>
 ```
 
-  
-This makes it possible to have a condition in the following extension, that matches on the **${some\_var}** field.
+这样就可以在下一个分机上设置一个条件，匹配**${some\_var}**字段。
 
-**Note** that the only applications that may be run inline are the ones that quickly get- or set some variable(s) and that don't access or modify the state of the current session.
+请注意，只有那些能够快速获取或设置一些变量并且不访问或修改当前会话状态的应用程序才可以进行内联运行。
 
-Applications that are allowed to be run **inline** are:
+允许在内联中运行的应用程序有：
 
 [check\_acl](../../Modules/mod-dptools/6587574.mdx#about)
 
@@ -936,6 +925,9 @@ Applications that are allowed to be run **inline** are:
 [cidlookup](../../Modules/mod_cidlookup_1966667.mdx#-configuration-)
 
 [curl](../../Modules/mod_curl_3965033.mdx#application)
+```
+
+将文本翻译为简体中文：
 
 [easyroute](../../Modules/mod_easyroute_3966222.mdx#dialplan-examples)
 
@@ -945,61 +937,60 @@ Applications that are allowed to be run **inline** are:
 
 [nibblebill](../../Modules/mod_nibblebill_3966513.mdx#api-commands)
 
-[odbc\_query](../../Modules/mod_odbc_query_6587371.mdx#--)
+[odbc_query](../../Modules/mod_odbc_query_6587371.mdx#--)
 
-Also keep in mind that inline executed applications don't show up in your call detail records like normally run applications do.
+还要记住，内联执行的应用程序不会像通常运行的应用程序一样出现在您的通话详单记录中。
 
-##### Complete Syntax
+##### 完整语法
 
 ```xml
-<!-- For enumerated attributes the first value on the list is the default -->
+<!-- 对于枚举属性，列表上的第一个值是默认值 -->
  
 <extension name="unique_extension_name" continue="[false|true]">
-	<condition field="[field_name|${variable_name}|${api_func(api_args ${var_name})}]" expression="regular expression" break="[on-false|on-true|always|never]" require-nested="[true|false]">
-		<condition ...><!-- Conditions can be nested with great care --> ... </condition>
-		<action application="app name" data="app arg"/>
-		<anti-action application="app name" data="app arg"/>
-	</condition>                                             <!-- Any number of condition tags may follow where the same rules apply -->
+    <condition field="[field_name|${variable_name}|${api_func(api_args ${var_name})}]" expression="regular expression" break="[on-false|on-true|always|never]" require-nested="[true|false]">
+        <condition ...><!-- 条件可以嵌套使用 --> ... </condition>
+        <action application="app name" data="app arg"/>
+        <anti-action application="app name" data="app arg"/>
+    </condition>                                             <!-- 可以跟随任意数量的条件标签，规则相同 -->
 </extension>
 
 
 ```
 
-##### Summary
+##### 概要
 
-Extension hunting stops at the first extension where conditions evaluate to true and continue="false" (the default).
+扩展呼叫会在条件评估为true和continue="false"（默认值）的第一个扩展处停止。
 
-Conditions evaluate to true if the last checked condition is true.
+如果最后一个检查的条件为true，则条件评估为true。
 
-Conditions are checked depth-first until:  
- break="on-false" and the condition is false  
-or   
- break="on-true" and the condition is true  
-or   
- break="always".
+条件按深度优先方式进行检查，直到以下情况发生：  
+ break="on-false"且条件为false  
+或  
+ break="on-true"且条件为true  
+或  
+ break="always"。
 
-The condition is true if the expression test returns a match and either there are no nested conditions or require-nested="false" or nested conditions evaluate to true.
+如果表达式测试返回匹配项，并且没有嵌套条件或require-nested="false"或嵌套条件评估为true，则条件为true。
 
-If condition is true, each &lt;action> is collected for execution; if false, each &lt;anti-action> is collected for execution.
+如果条件为真，将收集每个`<action>`以供执行；如果条件为假，则将收集每个`<anti-action>`以供执行。
 
-If require-nested="true" (the default) and nested conditions evaluate to false, no &lt;anti-action> is collected. (Is this intentional?)
+如果`require-nested="true"`（默认情况），并且嵌套条件计算结果为假，则不会收集任何`<anti-action>`。（这是有意的吗？）
 
-  
-##### Other Dialplan Pearls of Wisdom
+##### 其他拨号计划的智慧宝贝
 
-The dialplan is parsed once when the call hits the dialplan parser in the ROUTING state. With one pass across the XML the result will be a complete list of instructions installed into the channel based on parsed &lt;action> or &lt;anti-action> tags.
+在呼叫进入拨号计划解析器处于ROUTING状态时，将对拨号计划进行一次解析。通过对XML进行一次解析，将根据解析的`<action>`或`<anti-action>`标签，将完整的指令列表安装到通道中。
 
-Those accustomed to Asterisk may expect the call to follow the dialplan by executing the applications as it parses them, allowing data obtained from one action to influence the next action. This is **not** the case, with the exception being the `${api func(api arg ${var_name})}` field type where a pluggable API call from a module may be executed as the parsing occurs. This is meant to be used to draw real-time information such as date and time or other quickly accessible information and should **not** be abused. In other words, do not execute long-running processes in the middle of the dialplan.
+习惯于Asterisk的人可能期望呼叫在解析拨号计划时按照顺序执行应用程序，从一个动作获取的数据可以影响下一个动作。但实际情况**并非**如此，例外情况是`${api func(api arg ${var_name})}`字段类型，其中一个可插拔的模块API调用可以在解析过程中执行。它用于获取实时信息，如日期时间或其他快速访问的信息，不应被滥用。换句话说，在拨号计划的中间不要执行长时间运行的进程。
 
-##### Auto Hunt
+##### 自动寻呼
 
-You many turn on [auto\_hunt](../Variables-Master-List_16352570.mdx#auto_hunt) and then if the Extension name precisely equals the dialed number, FreeSWITCH will jump to this extension to begin the searching. It may or may not match the conditions, though.
+你可以打开[auto\_hunt](../Variables-Master-List_16352570.mdx#auto_hunt)，然后如果分机名与拨出号码完全匹配，则FreeSWITCH将跳转到该分机开始搜索。尽管如此，它可能匹配或者不匹配条件。
 
-##### Dialing through gateways
+##### 通过网关拨号
 
-"gateway" is treated as a keyword by mod\_sofia, it obviously means the call will be placed through a configured gateway. This is an exception for the pattern sofia/profilename/extension@ip-address.
+"gateway"在mod\_sofia中被视为关键字，它明显意味着呼叫将通过配置的网关进行传输。这是对于sofia/profilename/extension@ip-address模式的一个例外。
 
-If a gateway, for instance, is named "gw", the bridge string for sending a call to gw's extension 100 would be:
+例如，如果一个网关被命名为"gw"，那么将呼叫发送到gw的分机100的桥接字符串为：
 
 ```xml
 <extension name="testing">
@@ -1009,44 +1000,43 @@ If a gateway, for instance, is named "gw", the bridge string for sending a call 
 </extension>
 ```
 
-`destination_number` is a FreeSWITCH variable; it shouldn't be changed.
+`destination_number` 是一个FreeSWITCH变量，不应该被更改。
 
-  
-### Examples
+### 示例
 
-**NOTE:** if you plan to include your extension in a separated .XML file:
+**注意：**如果您计划将您的扩展放在一个单独的.XML文件中：
 
-please disable or change enum extension if you don't need it
+如果您不需要它，请禁用或更改enum扩展
 
-add the tag &lt;include> and close it with &lt;/include>
+添加&lt;include>标签，并用&lt;/include>关闭。
 
-#### Example 1: Matching a condition
+#### 示例1：匹配条件
 
-The incoming call will be bridged only if it comes from 192.168.1.1\. If it does, the destination number will be captured in $1, and the call will be bridged to the same number, at 192.168.2.2.
+只有当呼入电话来自192.168.1.1时，才进行桥接。如果是，则目的地号码将在$1中被捕获，并将呼叫桥接到相同号码，位于192.168.2.2上。
 
-This is a bizarre example. We can do better.
+这是一个奇怪的例子。我们可以做得更好。
 
 ```xml
 <extension name="Test1">
-	<condition field="network_addr" expression="^192\.168\.1\.1$"/>
-	<condition field="destination_number" expression="^(\d+)$">
-		<action application="bridge" data="sofia/profilename/$1@192.168.2.2"/>
-	</condition>
+    <condition field="network_addr" expression="^192\.168\.1\.1$"/>
+    <condition field="destination_number" expression="^(\d+)$">
+        <action application="bridge" data="sofia/profilename/$1@192.168.2.2"/>
+    </condition>
 </extension>
 ```
 
-Note that this example is not the same as doing this:
+请注意，此示例与以下方式不同：
 
 ```xml
 <extension name="Test1Wrong">
-	<condition field="destination_number" expression="^(\d+)$"/>
-	<condition field="network_addr" expression="^192\.168\.1\.1$">
-		<action application="bridge" data="sofia/profilename/$1@192.168.2.2"/>
-	</condition>
+    <condition field="destination_number" expression="^(\d+)$"/>
+    <condition field="network_addr" expression="^192\.168\.1\.1$">
+        <action application="bridge" data="sofia/profilename/$1@192.168.2.2"/>
+    </condition>
 </extension>
 ```
 
-The call will **not** be routed properly because the captured destination number in $1 is not available outside of the condition that created it. This is a peculiarity of how captured values work. You can work around this by storing the captured value in a standard variable, like this:
+呼叫**将不能**正确路由，因为在创建它的条件之外，$1中捕获的目标号码是不可用的。这是捕获值工作的一种特殊情况。您可以通过将捕获的值存储在标准变量中来解决此问题，如下所示：
 
 ```xml
 <extension name="Test1_2">
@@ -1059,9 +1049,9 @@ The call will **not** be routed properly because the captured destination number
 </extension>
 ```
 
-#### Example 2: Matching multiple conditions (AND) 
+#### 示例2：匹配多个条件（AND）
 
-In this example we need to match a called number beginning with the prefix 1 AND match the incoming IP address at the same time.
+在这个例子中，我们需要同时匹配以前缀1开头的被叫号码和传入IP地址。
 
 ```xml
 <extension name="Test2">
@@ -1072,11 +1062,11 @@ In this example we need to match a called number beginning with the prefix 1 AND
 </extension>
 ```
 
-Notice that although we match with the rule 1(\\d+)$ we don't use the variable $1 which would contain only the rest of the dialed number with the leading 1 stripped off, we use the variable $0 which contains the original destination number.
+请注意，尽管我们使用规则1（\\d+）$进行匹配，但我们不使用只包含去掉前导1的拨号剩余号码的变量$1，而是使用包含原始目标号码的变量$0。
 
-#### Example 3: Stripping leading digits
+#### 示例3：去除前导数字
 
-In this example we need to match a called number beginning with 00 but we also need to strip the leading digits. Assuming that FreeSWITCH™ receives the number 00123456789 and we need to strip the leading 00 digits, then we can use the following extension:
+在这个例子中，我们需要匹配以00开头的被叫号码，但我们还需要去掉前导数字。假设FreeSWITCH™收到号码00123456789，我们需要去掉前导的00数字，然后我们可以使用以下扩展：
 
 ```xml
 <extension name="Test3.1">
@@ -1086,13 +1076,13 @@ In this example we need to match a called number beginning with 00 but we also n
 </extension>
 ```
 
-If you anticipate receiving non-digits, or you want to match on more than just digits, you can use "`.+`" instead of "`\d+`".
+如果你预计收到非数字字符，或者想匹配的内容不仅限于数字，你可以使用“.+”代替“\d+”。
 
-Exercise caution when using regular expressions containing (`.*`) or (`.+`). The more specific the regular expression, the less chance that your system can be exploited by an unauthorized user.
+在使用包含(`.*`)或(`.+`)的正则表达式时要小心。正则表达式越具体，系统被未经授权的用户攻击的可能性就越小。
 
-#### Example 4: Adding a prefix
+#### 示例4：添加前缀
 
-In this example, numbers beginning with 00 are transformed into the same number, only beginning with 011 instead. If FreeSWITCH™ receives 00123456789, we should dial 011123456789:
+在这个示例中，以00开头的号码将被转换成相同的号码，只是以011开头。如果FreeSWITCH™接收到00123456789，我们应该拨打011123456789：
 
 ```xml
 <extension name="Test4">
@@ -1102,9 +1092,9 @@ In this example, numbers beginning with 00 are transformed into the same number,
 </extension>
 ```
 
-#### Example 5: SIP Profiles (dialing with different configurations) 
+#### 示例5：SIP配置文件（带不同配置的拨号）
 
-In this example we will demonstrate the use of profiles when using a FreeSWITCH endpoint that supports profiles, like [mod\_sofia](../../Configuration/Sofia-SIP-Stack/index.mdx#faq). Assuming that we want to use different call settings (codecs, DTMF modes, etc) for sending the calls to different IP addresses, we can create different profiles. For example, in the configuration of sofia.conf, we see an example profile named "test", which we rename to profile1 for this example, and add a profile2 for comparison:
+在这个示例中，我们将演示在使用支持配置文件的FreeSWITCH终端时如何使用配置文件，比如[mod\_sofia](../../Configuration/Sofia-SIP-Stack/index.mdx#faq)。假设我们想要对不同的IP地址发送的呼叫使用不同的呼叫设置（编解码器、DTMF模式等），我们可以创建不同的配置文件。例如，在sofia.conf的配置中，我们可以看到一个名为"test"的示例配置文件，我们将其重命名为profile1，并添加一个profile2以进行比较：
 
 ```xml
 <profile name="profile1">
@@ -1129,9 +1119,9 @@ In this example we will demonstrate the use of profiles when using a FreeSWITCH 
 </profile> 
 ```
 
-The difference between the two profiles are in the codecs. The first uses G.711 u-law and the second G.711 A-law.
+这两个配置文件的区别在于所使用的音频编解码。第一个配置文件使用 G.711 u-law 编码，而第二个配置文件使用 G.711 A-law 编码。
 
-Continuing the examples above, we have:
+接下来是以上示例的一个延续：
 
 ```xml
  <extension name="Test5ulaw">
@@ -1142,7 +1132,7 @@ Continuing the examples above, we have:
 </extension>
 ```
 
-to send the call in G.711 uLaw and
+它用于以 G.711 u-law 格式发送呼叫，并且
 
 ```xml
 <extension name="Test5alaw">
@@ -1154,14 +1144,12 @@ to send the call in G.711 uLaw and
 ```
 
   
-#### Example 6: Calling registered user
+#### 示例 6：呼叫已注册用户
 
-This example shows how to bridge to devices that have registered with your FreeSWITCH box. In this example we assume that you have setup a sofia profile called 'local\_profile' and your phones are registering with the domain `example.com`.
+这个例子展示了如何与已经在你的FreeSWITCH盒子上注册的设备进行桥接。在这个例子中，我们假设你已经设置了一个名为'local_profile'的sofia配置文件，并且你的手机正在使用`example.com`域名进行注册。
 
-  
-The `%` instead of `@` in the dial string indicates an endpoint that is registered to FreeSWITCH.
+在拨号字符串中，`%`取代了`@`，表示一个已经注册到FreeSWITCH的终端。
 
-  
 ```xml
  <extension name="internal">
     <condition field="source" expression="mod_sofia" />
@@ -1171,14 +1159,13 @@ The `%` instead of `@` in the dial string indicates an endpoint that is register
 </extension>
 ```
 
-  
-#### Example 7: Action failover on failed action
+#### 示例7: 在动作失败时进行故障转移
 
-The following example shows how it is possible to call another action if the first action fails.
+下面的示例展示了如果第一个动作失败，如何调用另一个动作。
 
-If the first action is successful the call is bridged to `1111@example1.company.com` and will exist until one of the parties hangs up. After this, no other processing will be done because the caller's channel is closed. (i.e. `1111@example2.company.com` is **not** called)
+如果第一个动作成功，呼叫将被桥接到`1111@example1.company.com`，并直到一方挂断为止。之后，不会进行其他处理，因为呼叫者的通道已关闭。（即`1111@example2.company.com`不会被调用）
 
-If the initial call to `1111@example1.company.com` was **not** successful the channel will not be closed and the second action will be called.
+如果对`1111@example1.company.com`的初始呼叫**不**成功，则通道不会关闭，将调用第二个动作。
 
 ```xml
  <extension name="internal">
@@ -1190,15 +1177,13 @@ If the initial call to `1111@example1.company.com` was **not** successful the ch
 </extension>
 ```
 
-Note: If you have more than one action and the application of the first action 
+注意：如果你有多个动作，并且第一个动作的应用程序会**挂断通道**，则不会调用第二个动作。
 
-DOES hangup the channel, the second action will NOT be called.
+如果第一个动作的应用程序**不会挂断通道**，则会调用第二个动作。
 
-DOES NOT hangup the channel, the second action will be called.
+#### 示例8：检查用户是否已验证
 
-#### Example 8: Check user is authenticated
-
-The following example requires that a caller be authenticated before passing through. It was yanked from a mailing list post.
+以下示例要求调用者在通过之前进行身份验证。它是从邮件列表的帖子中摘录的。
 
 ```xml
  <extension name="9191">
@@ -1213,11 +1198,11 @@ The following example requires that a caller be authenticated before passing thr
 ```
 
   
-#### **Example 9: Routing DID to an extension**
+#### **示例9：将DID路由到分机**
 
-To route incoming calls which come in to a certain DID to a fixed extension 1001, do something LIKE the following (from a mailing list post) (where XXXxxxxxxx is the phone number of your incoming DID)
+要将来电路由到特定DID对应的固定分机1001，可以使用类似以下方式（源自邮件列表帖子）（其中XXXxxxxxxx是您的来电DID的电话号码）
 
-In public.xml:
+在public.xml中：
 
 ```xml
  <extension name="test_did">
@@ -1228,10 +1213,10 @@ In public.xml:
 ```
 
   
-and then in default.xml have something like this in the default context:
+然后在default.xml的默认上下文中添加类似以下内容：
 
 ```xml
- <extension name="Local_Extension">
+<extension name="本地扩展">
     <condition field="destination_number" expression="^(XXXxxxxxxx)$">
         <action application="set" data="dialed_ext=$1"/>
     </condition>
@@ -1253,31 +1238,30 @@ and then in default.xml have something like this in the default context:
 ```
 
   
-(the 1001 in the "bridge" line is the extension we're ringing)
+（"bridge"行中的1001是我们要呼叫的分机）
 
-FYI, calls from the "public" go into the public context where they then need to be transferred to another more friendly context for processing, like "default". That is why you add the entry to public and the 'data="$1 XML default"' says to transfer called number $1 to the context "default" using XML dialplan. In the "default" context is where the call is actually bridged to the desired phone.
+须知，来自“public”的呼叫进入公共上下文，然后需要转移到其他更友好的上下文进行处理，例如“default”。这就是为什么要添加条目到公共上下文，并且'data="$1 XML default"'表示使用XML拨号计划将被呼叫的号码$1转移到上下文"default"。实际上，在"default"上下文中，呼叫被连线到期望的电话。
 
-$${domain} a variable that is set in vars.xml to the domain, most likely your IP or the host name.
+$${domain}是在vars.xml中设置为域的变量，很可能是您的IP地址或主机名。
 
-#### Example 10: Route to a gateway extension with custom caller id
+#### 示例10：将呼叫路由到具有自定义呼叫ID的网关扩展
 
-In this example we demonstrate an outgoing call with 10 digits from extension 1000 then route it to the `asterlink.com` gateway. This examples shows how to route for a specific extension and allows custom caller id for that extension.
+在这个例子中，我们演示了通过10位数字从分机号1000发出的呼叫，然后将其路由到`asterlink.com`网关。这个例子展示了如何为特定的分机号设置路由，并允许自定义呼叫方标识。
 
 ```xml
 <extension name="asterlink.com">
     <condition field="caller_id_number" expression="^1000$"/>
     <condition field="destination_number" expression="^(\d{10})$">
         <action application="set" data="effective_caller_id_number=8001231234"/>
-        <action application="set" data="effective_caller_id_name=800 Number"/>
+        <action application="set" data="effective_caller_id_name=800号码"/>
         <action application="bridge" data="sofia/gateway/asterlink.com/1208$1"/>
     </condition>
 </extension>
 ```
 
-  
-#### Example 11: Route based on number prefix
+#### 示例11：基于号码前缀进行路由
 
-In this example we demonstrate routing to different destination based on NPANXX. Also how to respond to the calling party with a different failure message than the destination sends to FreeSWITCH.
+在这个例子中，我们演示了基于NPANXX进行不同目标地的路由。还演示了如何对呼叫方做出不同的失败消息响应，而不是目标发送给FreeSWITCH的消息。
 
 ```xml
 <extension>
@@ -1303,31 +1287,29 @@ In this example we demonstrate routing to different destination based on NPANXX.
     </condition>
 </extension>
 ```
-
   
-#### Example 12: Handle calls which match no extension
+#### 示例 12：处理未匹配到扩展的呼叫
 
-In this example we demonstrate how to catch invalid extensions/Destinations.
+在本示例中，我们演示了如何捕获无效的扩展或目标号码。
 
-You need to add this extension at the bottom of your dialplan before ENUM can get included.
+您需要在ENUM被包含之前，在您的呼叫计划的底部添加此扩展。
 
-See [mod\_enum](../../Modules/mod_enum_6587333.mdx#enum).
+查看 [mod\_enum](../../Modules/mod_enum_6587333.mdx#enum)。
 
 ```xml
- <extension name="catchall">
+<extension name="catchall">
     <condition field="destination_number" expression=".*" continue="true">
         <action application="playback" data="misc/invalid_extension.wav"/>
     </condition>
 </extension>
 ```
 
-  
-#### Example 13: Call Screening
+#### 示例13：来电筛选
 
-In this example, we ask the caller for a name, connect to the called party and announce that name. The called party may then press 1 to accept the call, or hang up. If the called party hangs up, the caller is connected with voicemail.
+在这个示例中，我们要求呼叫者提供姓名，连接到被呼叫方并宣布该姓名。然后被呼叫方可以按1接听呼叫，或挂断。如果被呼叫方挂断，呼叫者将连接到语音信箱。
 
 ```xml
- <extension name="screen">
+<extension name="screen">
     <condition field="destination_number" expression="^(\d{4})$">
         <action application="set" data="call_screen_filename=/tmp/${caller_id_number}-name.wav"/>
         <action application="set" data="hangup_after_bridge=true" />
@@ -1348,15 +1330,14 @@ In this example, we ask the caller for a name, connect to the called party and a
 </extension>
 ```
 
-  
-#### Example 14: Media recording
+#### 示例14：媒体录制
 
-This extension is used to play/record media in audio (wav) format recording / playback extension
+此扩展用于以音频（wav）格式播放/录制媒体的录制/回放扩展
 
-Thanks to rupa for the help.
+感谢 rupa 的帮助。
 
 ```xml
- <extension name="recording">
+  <extension name="recording">
     <condition field="destination_number" expression="^(2020)$">
         <action application="answer"/>
         <action application="set" data="playback_terminators=#"/>
@@ -1406,10 +1387,9 @@ This extension example is to demonstrate how to block certain NPAs that you do n
 </extension>
 ```
 
-  
-#### Example 17: Receive fax from inbound did
+#### 示例17：从入站DID接收传真
 
-To use the predefined fax\_receive extension in freeswitch/conf/dialplan/default.xml for inbound calls, put this in freeswitch/conf/dialplan/public/fax.xml:
+要在来电时使用freeswitch/conf/dialplan/default.xml中预定义的fax_receive扩展，请在freeswitch/conf/dialplan/public/fax.xml中添加以下内容：
 
 ```xml
 <include>
@@ -1422,47 +1402,42 @@ To use the predefined fax\_receive extension in freeswitch/conf/dialplan/default
 </include>
 ```
 
-  
-Then in freeswitch/conf/vars.xml you set your fax number to 1234 or whatever:
+然后在freeswitch/conf/vars.xml中将传真号码设置为1234或其他号码：
 
 ```xml
 <X-PRE-PROCESS cmd="set" data="local_fax_number=1234"/>
 ```
 
-  
-#### Example 18: Add international call prefix to effective_caller_id_number on incoming BRI calls
+#### 示例18：为呼入的BRI呼叫添加国际呼叫前缀
 
-When using FreeTDM with zaphfc on a BRI line, the incoming calls received will not contain the international call prefix in the caller\_id\_number. This extension adds it to the effective\_caller\_id\_number.
+在使用FreeTDM与BRI线路的情况下，接收到的呼入电话的caller_id_number中将不包含国际呼叫前缀。此扩展将其添加到effective_caller_id_number中。
 
-The international call prefix is explained here: <http://en.wikipedia.org/wiki/International%5Fprefix>.
+国际呼叫前缀的说明请参见：[国际前缀](http://en.wikipedia.org/wiki/International%5Fprefix)。
 
-In Germany, the international call prefix is called "Verkehrsausscheidungsziffer" (VAZ), see <http://de.wikipedia.org/wiki/Verkehrsausscheidungsziffer>.
+在德国，国际呼叫前缀称为“Verkehrsausscheidungsziffer”（VAZ），请参见[这里](http://de.wikipedia.org/wiki/Verkehrsausscheidungsziffer)。
 
-The international call prefix is never transmitted. It can be predicted by looking at the ToN information.
+国际呼叫前缀永远不会被传输。可以通过查看ToN信息来预测它。
 
 ```xml
 <extension name="Add-VAZ" continue="true">
-    <!-- On incoming BRI calls, the Verkehrsausscheidungsziffer (VAZ) is dropped. This extension adds it again to the caller_id_number. TODO: add support for international numbers -->
+    <!-- 在呼入的BRI呼叫中，Verkehrsausscheidungsziffer（VAZ）会被忽略。此扩展会将其再次添加到caller_id_number中。TODO：增加对国际号码的支持-->
     <condition field="source" expression="^mod_freetdm$">
         <action application="set" data="effective_caller_id_number=0${caller_id_number}"/>
     </condition>
 </extension>
-
-
 ```
 
-  
-Example 19: DISA 
+示例19：DISA
 
-Be able to dial into FS box and get a dialtone to dial again, just like in Asterisk's DISA()
+能够拨号进入FS盒子并获得拨号音来重新拨号，就像在Asterisk的DISA()函数中一样。
 
-In FS/conf/dialplan/public/\*.xml
+在FS/conf/dialplan/public/\*.xml中
 
 ```xml
- <!-- -->
 <!-- -->
 <!-- -->
-<!-- CAUTION!!! We TRANSFER here. Possible security breach. CAUTION!!! -->
+<!-- -->
+<!-- 注意！！！这里是转接。可能存在安全漏洞。注意！！！ -->
 <!-- -->
 <!-- -->
 <!-- -->
@@ -1477,7 +1452,7 @@ In FS/conf/dialplan/public/\*.xml
 <!-- -->
 <!-- -->
 <!-- -->
-<!-- CAUTION!!! We TRANSFER here. Possible security breach. CAUTION!!! -->
+<!-- 注意！！！这里是转接。可能存在安全漏洞。注意！！！ -->
 <!-- -->
 <!-- -->
 <!-- -->
@@ -1493,11 +1468,10 @@ In FS/conf/dialplan/public/\*.xml
 
 ```
 
-  
-In FS/conf/dialplan/default/03\_DISA.xml
+在FS/conf/dialplan/default/03_DISA.xml中
 
 ```xml
-<!-- DISA - allow to dial into the box and get a dialtone like new trunk -->
+<!-- DISA - 允许拨号进入盒子并获得一个像新建扩展线一样的拨号音 -->
 <include>
     <extension name="DISA for FS">
         <condition field="destination_number" expression="^(disa_target)$">
@@ -1510,14 +1484,13 @@ In FS/conf/dialplan/default/03\_DISA.xml
 </include>
 ```
 
-  
-Please replace "disa\_target" to you extension number.
+请将 "disa_target" 替换为您的分机号码。
 
-You can use this technique to dial into your box from a pstn / mobile phone and get a dialtone to do anything with.
+您可以使用此技术从公网电话/移动电话拨入您的设备，并获得拨号音以执行任何操作。
 
-#### Example 20: Fix invalid caller ID 
+#### 示例20：修复无效的呼叫方ID
 
-If you run into a problem where your B-Leg do not like the invalid caller ID; for instance, you have an INVITE message with From: header as From: &lt;sip:Unavailable@Unavailable.invalid:5060> You can force the invalid number to be replaced by a fixed caller ID number. The following example checks for a valid NANPA CLID:
+如果您遇到这样的问题：您的B-Leg不喜欢无效的呼叫方ID，例如，您收到一个带有 From: 头的 INVITE 消息，其格式为 From: &lt;sip:Unavailable@Unavailable.invalid:5060>，您可以强制使用固定的呼叫方ID号码替换无效的号码。以下示例检查一个有效的NANPA CLID：
 
 ```xml
 <extension name="invalid_caller_id_fix" continue="true">
@@ -1528,10 +1501,9 @@ If you run into a problem where your B-Leg do not like the invalid caller ID; fo
 </extension>
 ```
 
-  
-#### Example 21: Block outbound caller ID 
+#### 示例21：阻止出局呼叫方ID
 
-To have caller ID block for calling party by dialing \*67 follows by the dial number, you can do the following:
+要通过拨号 \*67 并输入拨号号码来阻止呼叫方的呼叫方ID，请执行以下操作：
 
 ```xml
 <extension name="block_caller_id">
@@ -1544,10 +1516,9 @@ To have caller ID block for calling party by dialing \*67 follows by the dial nu
 </extension>
 ```
 
-  
-#### Example 22: Play MOH while doing a database lookup 
+#### 示例 22：在进行数据库查询时播放MOH
 
-If you want to play MOH while doing a data dip that takes a long time, the non-ESL way to do this by making the dialplan use the FSAPI via variable expansion to call luarun on the script. This way a new thread will be launched to execute the Lua script.
+如果您想在进行长时间的数据查询时播放MOH，可以通过使用变量扩展使拨号计划调用FSAPI上的luarun脚本 实现。这样就会启动一个新的线程来执行Lua脚本。
 
 ```xml
 <extension name="Get_Data">
@@ -1559,156 +1530,137 @@ If you want to play MOH while doing a data dip that takes a long time, the non-E
 </extension>
 ```
 
-  
-In the Lua script you can use the "uuid" argument passed, to break the MOH or transfer to another extension
+在Lua脚本中，您可以使用传递的"uuid"参数来中断MOH或转接到其他分机。
 
 ```perl
 --GetDataFromLDAP.lua 
-key = argv[1] sessionId = argv[2] api = freeswitch.API() --Do your data dips here --Once the database operations are done you can simply stop the MOH or transfer to another extension 
-api:execute("uuid_break", sessionId) -- break the MOH
+key = argv[1] sessionId = argv[2] api = freeswitch.API() --在这里进行数据查询操作 --完成数据库操作后，您可以简单地停止MOH或转接到其他分机 
+api:execute("uuid_break", sessionId) -- 中断MOH
 ```
 
-  
-**SIP-Specific Dialstrings** 
+**SIP特定拨号字符串**
 
-SIP dialing has several options. Here are some aspects of what you might call the anatomy of a SIP dialstring.
+SIP拨号有几种选项。以下是您可能称之为SIP拨号字符串解剖的几个方面。
 
-##### Dialing A SIP URI
+##### 拨打SIP URI
 
-Basic syntax is: sofia/my\_profile/user@host Host can be a name or an IP address, for example:
+基本语法是：sofia/my\_profile/user@host Host可以是名称或IP地址，例如：
 
 ```xml
 sofia/my_profile/1234@192.168.0.1
 ```
 
-  
-This would dial 1234 at host 192.168.0.1 via the profile "my\_profile". If you use a name instead of an IP address, Sofia will try to resolve the name as a NAPTR or SRV record before trying it as a standard A record.
+这将通过"profile"连接，拨打192.168.0.1主机上的号码1234。如果你使用的是一个名称而不是IP地址，Sofia会尝试将该名称解析为NAPTR或SRV记录，然后再作为标准的A记录来尝试拨打。
 
-##### Dialing A Registered User
+##### 拨打已注册用户
 
-There are two options depending upon whether or not there is an [alias](../../Modules/mod_commands_1966741.mdx#command-2) for the domain.  
-Without an alias you can do this:
+根据域是否有[别名](../../Modules/mod_commands_1966741.mdx#command-2)，有两个选项可供选择。  
+如果没有别名，则可以这样做：
 
 ```xml
 sofia/my_profile/1234%mydomain.com
 ```
 
-  
-If you have an alias for the domain then this syntax is valid:
+如果域有别名，则此语法是有效的：
 
 ```xml
 sofia/mydomain.com/1234
 ```
 
-  
-Note how the profile does not need to be explicitly supplied in the dialstring.
+注意拨号字符串中不需要显式地提供配置文件。
 
-Also you can do it this way for users defined in the [directory](../../Directory/XML-User-Directory/index.mdx#about):
+还可以使用以下方式拨打在[目录](../../Directory/XML-User-Directory/index.mdx#about)中定义的用户：
 
 ```xml
 user/1234@mydomain.com
 ```
 
-##### Dialing Through A Gateway (SIP Provider)
+##### 通过网关拨打（SIP提供商）
 
-A gateway is a means for making outbound calls through a SIP provider. For example:
+网关是通过SIP提供商拨打出站电话的一种手段。例如：
 
 ```xml
 sofia/gateway/mygateway.com/1234
 ```
 
-  
-This will dial through the gateway named `mygateway.com` to user `1234`.
+这将通过名为"mygateway.com"的网关拨打到用户"1234"。
 
-Note how there is no need to append anything after the user "1234"  
-This is an example of how NOT to do it:
+注意，用户"1234"后面不需要添加任何内容。  
+以下是一个错误示例：
 
 ```xml
-sofia/gateway/mygateway.com/1234@mygateway.com <==== WRONG WRONG WRONG
+sofia/gateway/mygateway.com/1234@mygateway.com <==== 错误错误错误
 ```
 
-  
-##### Dialing With A Specific Transport
+##### 使用特定传输方式拨打
 
-Sometimes you will need to specify the transport, for example TCP, UDP, TLS, or SCTP.  
-This can be done by appending a semicolon and the transport method. For example:
+有时您需要指定传输方式，例如TCP，UDP，TLS或SCTP。可以通过在后面添加分号和传输方法来实现。例如：
 
 ```xml
 sofia/my_profile/1234@192.168.0.1;transport=tcp
 ```
 
-  
-##### Specifying The Codec
+##### 指定编解码器
 
-Occasionally you may want to force the system to use a specific codec. This syntax will accomplish that:
+有时您可能想强制系统使用特定的编解码器。以下语法可以实现这一目的：
 
 ```xml
 {absolute_codec_string=XXXX}sofia/my_profile/user@your.domain.com
 ```
 
-  
-In this example, XXXX represents the codec to be used. The possible codec values are listed [here](../../Codecs-and-Media/Audio-Codecs_1048675.mdx#--).   
-Additional dialstring examples from [Absolute Codec String variable](../Variables-Master-List_16352570.mdx#absolute_codec_string).
+在这个例子中，XXXX代表要使用的编解码器。可能的编解码器值列在[这里](../../Codecs-and-Media/Audio-Codecs_1048675.mdx#--)。
+来自[Absolute Codec String variables](../Variables-Master-List_16352570.mdx#absolute_codec_string)的其他拨号字符串示例。
 
-##### Getting Fancy With PortAudio
+##### 使用PortAudio进行高级设置
 
-If you have PortAudio running and would like to specify the codec you need to originate first and bridge second:
+如果您已经运行了PortAudio，并且希望指定您需要的编解码器以进行原始呼叫和桥接：
 
 ```xml
 originate {absolute_codec_string=XXXX}sofia/default/foo@bar.com bridge:portaudio/auto_answer inline
 ```
 
-  
-##### Changing the SIP Contact user
+##### 更改SIP联系人用户
 
-FreeSWITCH normally uses mod\_sofia@ip:port for the internal SIP contact. To change this to foo@ip:port, there is a variable, sip\_contact\_user:
+FreeSWITCH通常使用mod\_sofia@ip:port作为内部SIP联系人。要将其更改为foo@ip:port，有一个名为sip\_contact\_user的变量：
 
 ```xml
 {sip_contact_user=foo}sofia/my_profile/1234@192.168.0.1;transport=tcp
 ```
 
-  
-##### Using a Custom SIP URI
+##### 使用自定义SIP URI
 
-FreeSWITCH allows you to specify custom URI's as needed. For example, you may need to interoperate with equipment that accepts a URI only if it is formatted in a particular way. The key is to prefix your SIP URI with "sip:" in the dialstring. For example:
+FreeSWITCH允许您根据需要指定自定义URI。例如，您可能需要与仅接受具有特定格式的URI的设备进行互操作。关键是在拨号字符串中使用"sip:"前缀来指定您的SIP URI。例如：
 
 ```xml
 sofia/my_profile/sip:xxxx;phone-context=cdp.udp@somedomain.com;user=phone
 ```
 
-  
-The above example will send the the URI exactly as specified after the "sip:" prefix.
+上面的示例将以"sip:"前缀后指定的URI发送出去。
 
-##### Testing the dialplan with a command line
+##### 使用命令行测试拨号计划
 
-  
 ```xml
-originate loopback/<destination number>/<mycontext> hangup inline
+originate loopback/<目标号码>/<我的上下文> hangup inline
 ```
 
-  
-\- Note: You can also set your variables to match your dialplan requirement. See below example:
+注意：您还可以根据您的拨号计划要求设置您的变量。请参考以下示例：
 
 ```xml
 originate {toll_allow=international}loopback/0116628888888/default hangup inline
 ```
 
-  
-##### Setting up SIP Diversion Header for call forward
+##### 设置呼叫转发的SIP Diversion头
 
 ```xml
 <action application="export" data="sip_h_Diversion=<sip:2134445555@1.2.3.4>;reason=unavailable"/>
 ```
-  
-  
-### Attachments:
+
+### 附件：
 
 ![](/images/icons/bullet_blue.gif) [LineVsNestedOrder.png](/attachments/3966106/19595477.png) (image/png)  
 ![](/images/icons/bullet_blue.gif) [ExecutionOrder.png](/attachments/3966106/19595480.png) (image/png)  
 
-### Comments:
+### 评论：
 
-| Don't forget in the regex examples that we might want to use the \\d{4} format or atleast explain it as \\d{4} is the same as \\d\\d\\d\\d and can allow for variable length ![](/images/icons/contenttypes/comment_16.png) Posted by silik0n at Aug 12, 2014 15:28 |
+| 在正则表达式的示例中，不要忘记我们可能想要使用 `\d{4}` 的格式，或者至少解释一下 `\d{4}` 等同于 `\d\d\d\d`，并且可以允许长度可变。![](/images/icons/contenttypes/comment_16.png) 由 silik0n 在 2014年8月12日15:28发布 |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-
-

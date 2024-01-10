@@ -1,32 +1,29 @@
+# Polycom Presence 设置
 
-# Polycom Presence Setup 
+## 关于
 
- 
+Polycom Soundpoint IP 系列电话使用 SIP Notify 和 Presence 来支持 BLF（忙灯字段）。这样可以监控交换机上其他电话的状态。
 
-## About
+点击展开目录
 
-The Polycom Soundpoint IP Series phones use SIP Notify and Presence to enable BLF (Busy Lamp Field) support. This allows one to monitor the status of other phones on the switch.
+* [1 准备工作](#pre-requisites)
+* [2 配置](#configuration)  
+   * [2.1 启用 Presence](#enable-presence--)  
+   * [2.2 分配 BLF 按键](#allocate-blf-key)  
+   * [2.3 好友观察](#buddy-watch--)  
+   * [2.4 增强型 BLF](#enhanced-blf)
+* [3 来电接听](#answering-a-call)
 
-Click to expand Table of Contents
+## 准备工作
 
-* 1 [Pre Requisites](#pre-requisites)
-* 2 [Configuration](#configuration)  
-   * 2.1 [Enable Presence](#enable-presence--)  
-   * 2.2 [Allocate BLF Key](#allocate-blf-key)  
-   * 2.3 [Buddy Watch](#buddy-watch--)  
-   * 2.4 [Enhanced BLF](#enhanced-blf)
-* 3 [Answering A Call](#answering-a-call)
+* Polycom 固件 3.1
+* 外部配置（tftp、ftp、http 都可以使用）。
 
-## Pre Requisites
+## 配置
 
-* Polycom Firmware 3.1
-* Externally provisioned (tftp, ftp, http all work).
+### 启用 Presence  
 
-## Configuration
-
-### Enable Presence  
-
-Modify sip.cfg to enable the presence feature.
+修改 sip.cfg 文件以启用 Presence 功能。
 
 **sip.cfg**
 
@@ -34,64 +31,64 @@ Modify sip.cfg to enable the presence feature.
 <feature feature.1.name="presence" feature.1.enabled="1" ...
 ```
 
-### Allocate BLF Key
+### 分配 BLF 按键
 
-Ensure only the first line is registered. Leave the second line unregistered so it is free to act as a BLF. You can verify in the phone's configuration `MACADDR-phone.cfg:`
+确保只有第一行被注册。将第二行设置为未注册，以便作为 BLF 按键。您可以在电话的配置文件 `MACADDR-phone.cfg:` 中进行验证。
 
 ```xml
   <OVERRIDES ... reg.1.lineKeys="1" ... />
 ```
 
-There should be no reg.2.lineKeys="2" in there.
+这里不应该有 `reg.2.lineKeys="2"`。
 
-### Buddy Watch  
+### 好友观察  
 
-Presence works through Buddies with Polycom. Either add speed dial entries through the phone's Directories feature, or add entries in your remote directory file (000000000000-directory.xml) with the &lt;bw> tag. Busy Lamp Field operates on the principle of Buddy Watch (thus &lt;bw>). You can enable Buddy Watch on speed dial entries manually through the Directories interface. The &lt;sd> tag affects the order in which speed dial contacts will occupy your available line keys. sd is a unique index whereas bw is 1 or 0\. For more information see the 3.1 SIP Admin Guide at polycom.com. Below is an example directory file:
+Presence 通过 Polycom 的 Buddies 进行操作。可以通过电话的目录功能添加快速拨号条目，或在远程目录文件（000000000000-directory.xml）中使用 `<bw>` 标签添加条目。忙灯字段按照好友观察的原则工作（因此为 `<bw>`）。您可以通过目录界面手动启用快速拨号条目的好友观察。`<sd>` 标签影响快速拨号联系人在可用线路键中的顺序。sd 是唯一的索引，而 bw 是 1 或 0。更多信息请参阅 polycom.com 的 3.1 SIP 管理指南。以下是一个目录文件的示例：
 
-**Example Polycom Directory**
+**Polycom 目录示例**
 
 ```xml
 <?xml version="1.0" standalone="yes"?>
-<directory>
-	<item_list>
-		<item>
-			<fn>Tom</fn>
-			<ct>1001</ct>
-			<sd>1</sd>
-			<bw>1</bw>
-		</item>
-		<item>
-			<fn>Harry</fn>
-			<ct>1002</ct>
-			<sd>2</sd>
-			<bw>1</bw>
-		</item>
-	</item_list>
-</directory>
+<目录>
+	<项目列表>
+		<项目>
+			<姓>汤姆</姓>
+			<员工号>1001</员工号>
+			<状态>1</状态>
+			<忙闲状态>1</忙闲状态>
+		</项目>
+		<项目>
+			<姓>哈利</姓>
+			<员工号>1002</员工号>
+			<状态>2</状态>
+			<忙闲状态>1</忙闲状态>
+		</项目>
+	</项目列表>
+</目录>
 ```
 
-If setup correctly, the light should be off when the line is not in use, solid when the line is in use, and blinking if there is a problem. You can test the problem state by killing FreeSWITCH™ and waiting for the polycom to notice.
+如果设置正确，在未使用线路时，灯应该关闭；当线路正在使用时，灯应该常亮；如果出现问题，灯应该闪烁。您可以通过结束FreeSWITCH™并等待polycom设备的反应来测试故障状态。
 
-### Enhanced BLF
+### 增强型BLF
 
-Configuration with productivity license installed  
+配置需安装生产力许可证
 
-The following paragraph was added to this wiki-page in response to findings in [this discussion on the mailinglist](http://lists.freeswitch.org/pipermail/freeswitch-users/2011-April/071665.html), reader discretion advised (i.e. please read the discussion):  
+以下段落是针对[邮件列表上的这个讨论](http://lists.freeswitch.org/pipermail/freeswitch-users/2011-April/071665.html)的发现而添加到本维基页面的，请谨慎阅读（即请阅读讨论）：
 
-"Enhanced BLF" configuration as described below is supported on firmware 3.2.0 and newer. Therefore the configuration below does not seem to work on SoundPoint IP 301, 501, 600, 601 and SoundStation IP 4000, which are only supported by firmware up to 3.1.7
+"增强型BLF" 配置如下所述，仅支持固件版本3.2.0及更高。因此，下面的配置无法在SoundPoint IP 301、501、600、601和SoundStation IP 4000上工作，这些设备仅支持固件版本最高到3.1.7。
 
-See[UC\_Software\_Release\_Notes\_3\_3\_1F.pdf](http://downloads.polycom.com/voice/voip/uc/UC%5FSoftware%5FRelease%5FNotes%5F3%5F3%5F1F.pdf) page 44 for details."
+关于详情，请参阅[UC\_Software\_Release\_Notes\_3\_3\_1F.pdf](http://downloads.polycom.com/voice/voip/uc/UC%5FSoftware%5FRelease%5FNotes%5F3%5F3%5F1F.pdf)第44页。
 
-Enhanced BLF is also not available on **IP 320/330, 321/331/335, 5000, 6000, 7000 and VVX 1500/-C/-D** due to firmware- and hardware-restrictions (See page 3 and 4 of the aforementioned document).
+由于固件和硬件限制，增强型BLF也无法在**IP 320/330，321/331/335，5000，6000，7000**和**VVX 1500/-C/-D**上使用（请参阅上述文档第3和4页）。
 
 \--[Peletiah](https://wiki.freeswitch.org/wiki/User:Peletiah "User:Peletiah") 16:53, 26 April 2011 (UTC)
 
   
-**Enhanced BLF** provides ringing indication and directed call pick-up capability.
+**增强型BLF** 提供响铃指示和指定呼叫接听功能。
 
-Once a productivity license has been installed, the BLF configuration can be added to the phone1.cfg (resp. in a phone-specific settings file like "${MAC}-settings.cfg).
+一旦安装了工作能力许可证，就可以将BLF配置添加到phone1.cfg（或者类似于"${MAC}-settings.cfg"的特定电话设置文件中）。
 
-The following should be configured at the phone's file (e.g. phone1.cfg or MAC-address-settings.cfg):
+应在电话文件（例如phone1.cfg或MAC-address-settings.cfg）中进行以下配置：
 
 **phone1.cfg**
 
@@ -105,7 +102,7 @@ The following should be configured at the phone's file (e.g. phone1.cfg or MAC-a
  attendant.resourceList.1.type="automata"
 ```
 
-append to the above for each user you want to watch:
+针对每个要监视的用户在上述配置的后面添加：
 
 **phone1.cfg continued**
 
@@ -115,7 +112,7 @@ append to the above for each user you want to watch:
 />
 ```
 
-And finally, the following line should be added into local-sip.cfg:
+最后，在local-sip.cfg中添加以下行：
 
 **local-sip.cfg**
 
@@ -123,8 +120,6 @@ And finally, the following line should be added into local-sip.cfg:
     <call call.directedCallPickupString="**"  />
 ```
 
-## Answering A Call
+## 接听电话
 
-On a FreeSWITCH installation with a default dialplan, "intercept-ext" in conf/dialplan/default.xml is configured to catch `**${destination_number}`. Pressing the line-button on a ringing extension will cause the phone to call intercept-ext with \*\* and the ringing extension number to connect the phone to the caller - a perfect setup for an attendant console.
-
-
+在默认拨号计划下的FreeSWITCH安装中，conf/dialplan/default.xml中配置了"intercept-ext"以捕获`**${destination_number}`。按下响铃分机上的线路按钮将导致电话呼叫intercept-ext，并使用\*\*和响铃的分机号码将电话连接给呼叫方，这是一个完美的应对接线员台的设置。

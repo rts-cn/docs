@@ -1,57 +1,52 @@
-
 # mod_dialplan_asterisk 
 
- 
+## 关于
 
-## About
+一旦在 `modules.conf.xml` 中加载它，您可以通过将 "asterisk" 添加为 dialplan 参数在 sofia 配置文件中使用它。您还可以通过在 transfer 或 execute_extension 应用程序中指定它作为 dialplan 参数来将呼叫转接给它。
 
-Once loaded in modules.conf.xml it can be used in your sofia profile by adding "asterisk" as the dialplan parameter. You can also transfer calls to it by specifying it as the dialplan param in the transfer or execute\_extension apps.
+它并不完全像真正的 asterisk dialplan，但至少是相似的。在我们的 dialplan 逻辑在呼叫之前完成，所以您不能在其中包含彼此的上下文。
 
-It's not entirely like the real asterisk dialplan but it is at least a close familiarity. You cannot include contexts in each other in ours because we do all our dialplan logic before the call.
-
-It's structured in the same way so you can create context default.
+它的结构和原始的 asterisk dialplan 非常相似，所以您可以创建 `default` 上下文。
 
 ```xml
 [default]
-; and you can use comments the same way
-; here is a demo that is close to the extensions.conf in tree that installs by default
+; 在这里您可以使用和平常一样的注释
+; 这里是一个演示，与默认安装的 extensions.conf 类似
 
 [default]
-; Things you're used to....
+; 你所熟悉的...
 exten => music,n,Dial(SIP/1234@conference.freeswitch.org|120)
 
-; similar pattern matching and caller-id match.
+; 类似的模式匹配和 caller-id 匹配。
 exten => _1XXXXX,n,set(cool=${EXTEN})
 exten => _1XXXXX,n,set(myvar=true)
 exten => _1XXXXX,n,Goto(default|music)
 exten => 2137991400/1000,n,Goto(default|music)
 
 
-; we also embellished things a bit and added some of our own goodies
-; Some new magic you can do.... if you start the exten string with a ~ it implies PCRE regex
-; *NOTE* the ,n, is there for familiarity purposes we do not parse it anyway nor will we honor line numbers.
+; 我们还加了一些自己的特别之处
+; 一些新的魔法... 如果您以 ~ 开头的 exten 字符串，意味着它是一个 PCRE 正则表达式
+; *注意* 中间的 `,n,` 是为了照顾对称性，我们不解析它，也不遵循行号。
 exten => ~^(18(0{2}|8{2}|7{2}|6{2})\d{7})$,n,enum($1)
 exten => ~^(18(0{2}|8{2}|7{2}|6{2})\d{7})$,n,bridge(${enum_auto_route})  
 
 
-; instead of exten, put anyting about the call you would rather match on.
-; either the names of a field in caller_profile or a string of variables to expand.
+; 而不是 exten，可以使用呼叫时要匹配的任何内容。
+; 可以是 caller_profile 中的字段名称或要展开的变量字符串。
 caller_id_number => 2137991400,n,Goto(default|music)
 ${sip_from_user} => bill,n,Goto(default|music)
 ```
 
-Anyway you will find the XML dialplan more flexible but this may serve as a stepping stone for beginners.
+无论如何，您会发现 XML dialplan 更加灵活，但对于初学者来说，这可能是一个入门的阶梯。
 
-### Variables
+### 变量
 
-The standard dollar notation allows using any valid channel variable in the dialplan: `${variable_name}`. For the sake of Asterisk compatibility, the following additional channel variables are added by this module:
+标准的美元符号表示法允许在拨号计划中使用任何有效的通道变量：`${variable_name}`。为了与Asterisk兼容，此模块还添加了以下附加通道变量：
 
-* `EXTEN`: equals to the destination number
-* `CHANNEL`: equals to the channel name
-* `UNIQUEID`: channel UUID
+* `EXTEN`：等于目标号码
+* `CHANNEL`：等于通道名称
+* `UNIQUEID`：通道UUID
 
-### See Also
+### 另请参阅
 
-* [XML Dialplan](../Dialplan/XML-Dialplan/index.mdx#about)
-
-
+* [XML拨号计划](../Dialplan/XML-Dialplan/index.mdx#about)

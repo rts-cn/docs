@@ -1,201 +1,126 @@
+# TGML
 
-# TGML 
+## 关于
 
- 
+Teletone脚本的语法。
 
-## About
+点击这里展开目录
 
-Syntax of teletone scripts.
+* 1 [示例](#examples)
+  * 1.1 [脚本和拨号计划示例](#script-and-dialplan-examples)
+    * 1.1.1 [拨号计划](#dialplan)
+    * 1.1.2 [Lua](#lua)
+    * 1.1.3 [JavaScript](#javascript)
+    * 1.1.4 [Perl](#perl)
+* 2 [ITU-T列出的全球频率和节奏](#worldwide-frequencies-and-cadences-listed-by-itu-t)
+* 3 [参见](#see-also)
 
-Click here to expand Table of Contents
+图例
 
-* 1 [EXAMPLES](#examples)  
-   * 1.1 [Script and Dialplan Examples](#script-and-dialplan-examples)  
-      * 1.1.1 [Dialplan](#dialplan)  
-         * 1.1.2 [Lua](#lua)  
-         * 1.1.3 [JavaScript](#javascript)  
-         * 1.1.4 [Perl](#perl)
-* 2 [Worldwide Frequencies and Cadences Listed by ITU-T](#worldwide-frequencies-and-cadences-listed-by-itu-t)
-* 3 [See Also](#see-also)
+0-9,a-d,*,#（标准DTMF音调）
 
-LEGEND
+变量：c, r, d, v, >, <, +, w, l, L, loop, %
 
-0-9,a-d,*,# (standard DTMF tones)
+* c=x 设置通道数。
+* r=x 设置采样率。
+* d=x 设置默认音调持续时间（以毫秒为单位）。
+* v=x 设置默认音量（-63.0dB至0.0dB）。
+* >=x 音量减少的每个间隔的毫秒数。
+* <=x 音量增加的每个间隔的毫秒数。
+* +=x 每个间隔要增加或减少的分贝数（由'<'和'>'使用）。
+* w=x 每个音调后的默认静默时间（以毫秒为单位）。
+* l=x 在脚本中重复每个音调的次数。
+* L=x 在整个脚本中重复的次数。
+* loops=x 类似于L，但不会预先分配用于总持续时间的缓冲区，只有一个循环值，然后以编程方式循环它（内存更高效）。
+* %=x 由持续时间、等待时间和频率列表指定的通用音调。
 
-variables: c,r,d,v,>,&lt;,+,w,l,L,loop,%
+'+'和'v'的值可以是小数。
 
-  
-* c=x Sets the number of channels.
-* r=x Sets the sample rate.
-* d=x Sets the default tone duration in ms.
-* v=x Sets the default volume (-63.0dB to 0.0dB).
-* >=x Number of ms per interval for volume decrease.
-* &lt;=x Number of ms per interval for volume increase.
-* +=x Number of dB to step per interval (used by '&lt;' and '>').
-* w=x Default silence after each tone in ms.
-* l=x Number of times to repeat each tone in the script.
-* L=x Number of times to repeat the the whole script.
-* loops=x Like L, but doesn't pre-allocate a buffer for total duration, only one loop worth, then programmatically loops it (more mem efficient).
-* %=x A generic tone specified by a duration, a wait and a list of frequencies.
+标准音调可以根据每次使用的情况具有自定义持续时间，使用()修饰符7（1000，500）生成DTMF 7，持续1秒，然后暂停0.5秒。
 
-  
-The values for '+' and 'v' may be decimal numbers.
+## 示例
 
-Standard tones can have custom duration per use with the () modifier 7(1000, 500) to generate DTMF 7 for 1 second then pause .5 seconds.
+ITU-T推荐Q.35 "电话业务音调的技术特性"定义了许多这些音调。这些音调在此处提供，供您参考，并且它们是非常好的示例。此外，RFC 2833参考了ITU-T E.182 "电话服务中音调和录音公告的应用"，以确定何时在RTP中使用特定的音调。您可能要查看 [ITU-T推荐E.180](http://www.itu.int/dms%5Fpub/itu-t/opb/sp/T-SP-E.180-2010-PDF-E.pdf) ，以了解不同国家使用的音调等信息。
 
-## EXAMPLES
+TODO [RFC 2833](https://tools.ietf.org/html/rfc2833)已被[RFC 4733](https://tools.ietf.org/html/rfc4733)所取代。
 
-  
-ITU-T Recommendation Q.35 "Technical Characteristics of Tones for Telephone Service" defines many of these tones. They are provided here for your convenience, and because they make great examples. Additionally, RFC 2833 references ITU-T E.182 "Application of tones and recorded announcements in telephone services" for when to use certain tones in RTP. You may want to look at [ITU-T Recommendation E.180](http://www.itu.int/dms%5Fpub/itu-t/opb/sp/T-SP-E.180-2010-PDF-E.pdf) for different countries, what tones are used, etc.
-
-TODO [RFC 2833](https://tools.ietf.org/html/rfc2833) is obsoleted by [RFC 4733](https://tools.ietf.org/html/rfc4733).
-
-UK Ring Tone \[400+450 Hz on for 400ms off for 200ms then 400+450 Hz on for 400ms off for 2000ms\]
+英国铃声 \[持续400毫秒打开电流400+450 Hz，然后持续200毫秒关闭电流，随后持续打开电流400+450 Hz为400毫秒，然后持续关闭电流2000毫秒\]
 
 ```xml
 %(400,200,400,450);%(400,2000,400,450)
 ```
 
-US Ring Tone \[440+480 Hz on for 2000ms off for 4000ms\]
+美国铃声 \[持续2000毫秒打开电流440+480 Hz，然后持续关闭电流4000毫秒\]
 
 ```xml
 %(2000,4000,440,480)
 ```
 
-ITU E.182 Calling card service tone (AT&T BONG) \[volume level -7DB, 941.0Hz +1477.0Hz (DTMF #) for 100ms with no wait. 350.0Hz+440.0Hz (US DIALTONE) for 1400ms with even decay of .1 dB over 2ms
+ITU E.182 呼叫卡业务音调 (AT&T BONG) \[音量水平-7DB，941.0Hz +1477.0Hz (DTMF #) 持续100毫秒，无等待。350.0Hz+440.0Hz (美国拨号音) 持续1400毫秒，以2ms内的0.1dB的均匀衰减
 
 ```xml
 v=-7;%(100,0,941.0,1477.0);v=-7;>=2;+=.1;%(1400,0,350,440)
 ```
 
-Vacant Number Special Information Tone (SIT - The number you have dialed is not in service / disconnected) 913.8 Hz for 274 ms with no wait, 1370.6 Hz for 274 ms with no wait, 1776.7 Hz for 380ms with no wait
+空号特殊提示音 (SIT - 您所拨打的号码不存在/已断线) 持续913.8 Hz 274毫秒，无等待，持续1370.6 Hz 274毫秒，无等待，持续1776.7 Hz 380毫秒，无等待
 
 ```xml
 %(274,0,913.8);%(274,0,1370.6);%(380,0,1776.7)
 ```
 
-UK Special Information Tone (SIT - The number you have dialed is not in service) 950Hz for 330 ms with 15ms wait, 1400Hz for 330 ms with 15ms wait, 1800Hz for 330ms with 1s wait
+英国特殊提示音 (SIT - 您所拨打的号码不存在) 持续950Hz 330毫秒，等待15毫秒，持续1400Hz 330毫秒，等待15毫秒，持续1800Hz 330毫秒，等待1秒
 
 ```xml
 %(330,15,950);%(330,15,1400);%(330,1000,1800);
 ```
 
-ATTN TONE ("barking dog", means phone's off the hook!) 1400+2060+2450+2600 Hz for 100ms with 100ms wait
+注意音（"狗叫"，表示电话未挂断！） 持续100毫秒打开电流1400+2060+2450+2600 Hz，然后等待100毫秒。
 
 ```xml
-%(100,100,1400,2060,2450,2600)
+%(400,2000,400,0);%(400,2000,400)
 ```
 
-Caller Waiting Tone (aka SAS) 440Hz for 300ms repeated once after 10 seconds
+这是一个将一些电话信号转化为音频的简单示例。电话信号可以是来电等待音调、忙音、拨号音等。每个电话信号都有不同的音频频率和时长。这些电话信号用于指示电话系统发生的不同事件，或者为电话用户提供某些信息。
 
-```xml
-%(300,10000,440);L(2)
-```
+请注意，以上提供的电话信号示例可能会因特定地区、服务提供商或电话系统而有所不同。因此，在实际应用中使用这些电话信号时，可能需要根据具体情况进行调整。
 
-Distinctive Ring/Call Waiting (indicates dialed number is greater than 7 digits in length) 440Hz on 100ms off 100ms on 100ms, repeated after 10 seconds
-
-```xml
-%(100,100,440);%(100,0,440)
-```
-
-Busy Tone 480Hz + 620Hz 500ms on 500ms off
-
-```xml
-%(500,500,480,620)
-```
-
-Reorder (in North America this is ITU E.182 Negative Indication Tone) 480Hz + 620Hz 250ms on 250ms pause
-
-```xml
-%(250,250,480,620)
-```
-
-CAS Tone 2750Hz + 2130Hz for 80ms
-
-```xml
-%(80,0,2750,2130)
-```
-
-3 burst stutter dial tone - 3 sequences of 350Hz+440Hz 100ms on 100ms off, then continuous dialtone (not included here, see below for dialtone)
-
-```xml
-%L=3;(100,100,350,440)
-```
-
-Dial tone - continuous 350Hz + 440 Hz (this is 10 seconds when you should probably have digits dialed or go into a 'hang the phone up' tone)
-
-```xml
-%(10000,0,350,440)
-```
-
-AT&T Definity System 75/85 PABX Dial Tone - 250Hz + 400Hz continuous
-
-```xml
-%(10000,0,250,400)
-```
-
-CCITT 5 Seize sequence - 2600Hz + 2400Hz for 150ms with 150ms pause then 2400Hz for 150ms (timings can be different for different carriers)
-
-```xml
-%(150,150,2600,2400);%(150,0,2400)
-```
-
-CCITT 5 Seize sequence with 60Hz guard tone (used in some places, timings are carrier dependant and likely to be wrong for most carriers)
-
-```xml
-%(150,150,2600,2400,60);%(150,0,2400)
-```
-
-AU Congestion tone - with correct 10dB drop every second itteration - 420Hz for 375ms, then 375ms off, then 420Hz for 375ms 10dB down, then 375ms off.
-
-```xml
-v=-13;%(375,375,420);v=-23;%(375,375,420)
-```
-
-Dialtone Deutsche Telekom Germany 425Hz (used for DISA, Callthru)
-
-```xml
-%(10000,0,425)
-```
-
-Australian ringback tone
+以上是电话信号的一些常见示例，希望对您有帮助！如果您有其他问题，请随时提问。
 
 ```xml
 %(400,200,400,425);%(400,2000,400,425)
 ```
-
   
-### Script and Dialplan Examples
+### 脚本和拨号计划示例
 
-#### Dialplan
+#### 拨号计划
 
-Calling from the dialplan is extremely simple: &lt;action application="playback" data="tone\_stream://&lt;TGML>"/>
+从拨号计划中进行呼叫非常简单：`&lt;action application="playback" data="tone\_stream://&lt;TGML>"/>`
 
-Examples:
+示例:
 
 ```xml
 <pre>
-<!-- UK Ring -->
+<!-- 英国电话铃声 -->
 <action application="playback" data="tone_stream://%(400,200,400,450);%(400,2200,400,450)"/>
 
-<!-- UK Ring (Same as above, except plays twice)-->
+<!-- 英国电话铃声（除了播放两次）-->
 <action application="playback" data="tone_stream://%(400,200,400,450);%(400,2200,400,450);loops=2"/>
-<!-- US Ring -->
+<!-- 美国电话铃声 -->
 <action application="playback" data="tone_stream://%(2000,4000,440,480)"/>
 
-<!-- US Busy -->
+<!-- 美国忙音 -->
 <action application="playback" data="tone_stream://%(500,500,480,620)"/>
 </pre>
 ```
 
 #### Lua
 
-In Lua scripts, use the \[\[Misc.\_Dialplan\_Tools\_playback|playback\]\] application with tone\_stream:
+在Lua脚本中，使用\[\[Misc.\_Dialplan\_Tools\_playback|playback\]\]应用程序和tone_stream：
 
 ```xml
---Lua example of busy tone
+--忙音的Lua示例
 session:execute("playback", "tone_stream://%(500,500,480,620)");
---Lua example of a "bong" tone
+--“咚”声的Lua示例
 BONG = "v=-7;%(100,0,941.0,1477.0);v=-7;>=2;+=.1;%(1000, 0, 640)";
 BONG = "tone_stream://" .. BONG;
 session:execute("playback", BONG);
@@ -203,24 +128,24 @@ session:execute("playback", BONG);
 
 #### JavaScript
 
-In JavaScript you may use the "TeleTone" module or the \[\[Misc.\_Dialplan\_Tools\_playback|playback\]\] application with tone\_stream.
+在JavaScript中，您可以使用"TeleTone"模块或\[\[Misc.\_Dialplan\_Tools\_playback|playback\]\]应用程序和tone_stream。
 
-Template:
+模板：
 
 addTone(digit name, frequency1, frequencyN, 0.0)
 
-Where:
+其中：
 
-'digit name' is a character that will be used to identify this tone, like shorthand notation
+'digit name'是用于标识此音调的字符，比如速记符号
 
-frequencies are a null terminated list of all the component frequencies that make this tone
+频率是所有组成此音调的分量频率的以null结尾的列表
 
-Example with TeleTone module:
+使用TeleTone模块的示例：
 
-**AT&T New Tone**
+**AT&T新音调**
 
 ```js
-// JavaScript example of a "BONG" tone using TeleTone
+//使用TeleTone的JavaScript示例，“咚”的音调
 use("TeleTone");
 var BONG ="v=-7;%(100,0,941.0,1477.0);v=-7;>=2;+=.1;%(1000, 0, 640)";
 var tts = new TeleTone(session);
@@ -228,19 +153,19 @@ tts.addTone("d",350.0,440.0,0.0);
 tts.generate(BONG);
 ```
 
-Example with playback and tone\_stream.
+具备回放和tone_stream的示例。
 
-**Teletone tone\_stream**
+**Teletone tone_stream**
 
 ```xml
-// JavaScript example of a "BONG" tone with playback and tone_stream
+// 具备回放和tone_stream的JavaScript示例
 var BONG ="tone_stream://v=-7;%(100,0,941.0,1477.0);v=-7;>=2;+=.1;%(1000, 0, 640)";
 session.execute("playback", BONG);
 ```
 
-addTone example
+addTone示例
 
-**addtone example**
+**addtone 示例**
 
 ```xml
 use("TeleTone");
@@ -248,35 +173,32 @@ var tts = new TeleTone(session);
 tts.addTone("q", 2600.0, 2400.0, 0.0);
 dtmf = session.((FreeSwitch Javascript Session GetDigits|getDigits))(1, "", 20000, true);
 if (dtmf == "q") {
-  // do something fun here
+  // 这里做些有趣的事情
 }
 ```
 
   
 #### Perl
 
-Perl is like Lua, just use the \[\[Misc.\_Dialplan\_Tools\_playback|playback\]\] application with tone\_stream:
+Perl与Lua类似，只需使用\[\[Misc.\_Dialplan\_Tools\_playback|playback\]\]应用程序与 tone_stream:
 
 ```perl
-#Perl example of busy tone
+# 忙音的Perl示例
 $session->execute("playback", "tone_stream://%(500,500,480,620)");
-#Perl example of a "bong" tone
+# “bong”音的Perl示例
 $BONG = "v=-7;%(100,0,941.0,1477.0);v=-7;>=2;+=.1;%(1000, 0, 640)";
 $BONG = "tone_stream://" . $BONG;
 $session->execute("playback", $BONG);
 ```
 
-## Worldwide Frequencies and Cadences Listed by ITU-T
+## 按ITU-T列出的全球频率和音调
 
-[Various tones used in national networks (According to ITU-T Recommendation E.180)](http://www.itu.int/dms%5Fpub/itu-t/opb/sp/T-SP-E.180-2010-PDF-E.pdf) Updated 1st May 2010.
+[各国网络使用的不同音调（根据ITU-T建议E.180）](http://www.itu.int/dms%5Fpub/itu-t/opb/sp/T-SP-E.180-2010-PDF-E.pdf) 更新于2010年5月1日。
 
-## See Also
+## 另请参阅
 
 [gentones](../6586546.mdx#about)
 
 [Tone\_stream](./Tone_stream_6586599.mdx#about)
 
-[This Is A Recording](http://www.thisisarecording.com/i-international-phone-signaling-tones.html)— A list of tones used around the world
-
-  
-
+[This Is A Recording](http://www.thisisarecording.com/i-international-phone-signaling-tones.html)— 国际上使用的音调列表

@@ -1,22 +1,19 @@
+# `max_forwards`
 
-# max_forwards 
+创建者：Ryan Harris，最后修改日期：2018.02.08
 
- Created by  Ryan Harris, last modified on 2018.02.08
+## `max_forwards`
 
-## max_forwards
+整数，包含在源请求中提供的当前 `Max-Forwards` 值。在SIP呼叫的每一跳中，`Max-Forwards` 值会递减一次，当 `Max-Forwards` 值用尽时，接收方代理不能再将呼叫传递出去。
 
-integer Contains the current `Max-Forwards` value provided in the originating request. The `Max-Forwards` value is decremented by one for each hop in a SIP call, when the `Max-Forwards` value is depleted the receiving agent must not pass the call onwards.
+`max_forwards` 变量可以在出站通道上设置，一些提供商（例如BT IP Exchange）要求设置最小值以正确终止呼叫，在BT的情况下，最小值为50。
 
-The `max_forwards` variable may be set on an outbound channel, some providers such as BT IP Exchange insist on a minimum value to faithfully terminate the call, 50 in BT's case.
+![(warning)](/images/icons/emoticons/warning.svg) 如果重置 `max_forwards` 值，可能会导致两个运营商之间潜在的循环呼叫，它们错误地将呼叫彼此返回。请谨慎使用。
 
-![(warning)](/images/icons/emoticons/warning.svg) If the `max_forwards` value is reset it can cause potential cyclic calls between two operators who loop calls back to each other in error. Use wisely.
+**使用方法**
 
-**Usage**
-
-Bridge an incoming call to a provider requiring a minimum `Max-Forwards` value:
+将传入呼叫桥接到需要最小 `Max-Forwards` 值的提供商：
 
 ```xml
 <action application="bridge" data="{max_forwards=65}sofia/gateway/ipexchange/442920180123"/>
 ```
-
-

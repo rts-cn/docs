@@ -1,46 +1,42 @@
+# 事件套接字出站
 
-# Event Socket Outbound 
+## 关于
 
- 
+讨论和示例，以使用出站事件套接字。
 
-## About
+[mod_event_socket](../../Modules/mod_event_socket_1048924.mdx#11-acl)的“socket”应用程序类似于基于网络的Asterisk的快速AGI ([FAGI](http://www.voip-info.org/wiki/index.php?page=Asterisk+FastAGI))。此应用程序与指定的ip:port建立出站TCP连接，另一端可以通过类似于Asterisk AGI的方式来控制呼叫，只不过方言大不相同，并且它支持异步操作，例如告诉呼叫播放foo.wav，并且在文件播放的同时立即返回以监听DTMF，而不是阻塞直到文件结束。
 
-Discussion and examples for using the Outbound Event Socket.
+本文档重点介绍了[mod_event_socket](../../Modules/mod_event_socket_1048924.mdx#11-acl)的出站操作模式，但请注意，该模块还可以在[入站模式](../../Modules/mod_event_socket_1048924.mdx#11-acl)下运行。
 
-[mod\_event\_socket](../../Modules/mod_event_socket_1048924.mdx#11-acl)'s "socket" app is similar to the network based fast-agi ([FAGI](http://www.voip-info.org/wiki/index.php?page=Asterisk+FastAGI)) of Asterisk. This application makes an outbound TCP connection to the specified ip:port and the other end can control the call in similar ways to an Asterisk AGI only the dialect is much different and it supports async operations e.g. telling the call to play foo.wav and getting an immediate return to listen for DTMF as the file plays rather than block till the file is over.
+当您呼叫出站套接字时，FS会自动将呼叫放入PARK状态。您可以通过监视CHANNEL_PARK事件来验证。
 
-This document focuses on the outbound operation mode of [mod\_event\_socket](../../Modules/mod_event_socket_1048924.mdx#11-acl), but take note that this module also operates in [inbound mode](../../Modules/mod_event_socket_1048924.mdx#11-acl).
+当您使用“**sync**”模式时，**许多事情将无法正常工作**，正如您所期望的那样。特别是，您将**无法获得DTMF**等。请检查“**async**”选项。
 
-When you call outbound socket, FS automatically puts the call in PARK. You can validate that by monitoring the CHANNEL\_PARK event.
+单击展开目录。
 
-When you use "**sync**" mode, **many things will not works** as you may expect. Particularly, you will **not get DTMF**s, etc. Please check "**async**" option.
-
-  
-Click to expand Table of Contents
-
-* 1 [Diagram](#diagram)
-* 2 [Configuration](#configuration)  
-   * 2.1 [Keywords](#keywords)  
-      * 2.1.1 [async](#events)  
-         * 2.1.2 [full](#events)  
-   * 2.2 [Variables](#variables)  
+* 1 [图表](#diagram)
+* 2 [配置](#configuration)  
+   * 2.1 [关键词](#keywords)  
+      * 2.1.1 [异步](#events)  
+         * 2.1.2 [完整](#events)  
+   * 2.2 [变量](#variables)  
       * 2.2.1 [socket\_resume](#socket_resume)  
-   * 2.3 [Examples](#server-examples)
-* 3 [Server Examples](#server-examples)  
+   * 2.3 [示例](#server-examples)
+* 3 [服务器示例](#server-examples)  
    * 3.1 [sock.pl](#sockpl)  
-   * 3.2 [Using Netcat](#using-netcat)  
+   * 3.2 [使用Netcat](#using-netcat)  
    * 3.3 [socket2me](#socket2me)  
-   * 3.4 [Java ESL Client](#java-esl-client)  
-   * 3.5 [Javascript / Node.js server](#javascript--nodejs-server-)
-* 4 [Events](#socket2me)  
+   * 3.4 [Java ESL客户端](#java-esl-client)  
+   * 3.5 [Javascript / Node.js服务器](#javascript--nodejs-server-)
+* 4 [事件](#socket2me)  
    * 4.1 [Verto Live Array](#verto-live-array)
-* 5 [FAQ](#events)  
-   * 5.1 [Q: Ordering and async keyword](#q-ordering-and-async-keyword-)  
-   * 5.2 [Q: Should I use sync mode or async mode?](#q-should-i-use-sync-mode-or-async-mode-)  
-   * 5.3 [Q: Why are API commands returning 'command not found'?](#q-why-are-api-commands-returning-command-not-found-)  
-   * 5.4 [Q: Can I bridge a call with an Outbound socket?](#q-can-i-bridge-a-call-with-an-outbound-socket-)
+* 5 [常见问题解答](#events)  
+   * 5.1 [问：顺序和异步关键字](#q-ordering-and-async-keyword-)  
+   * 5.2 [问：我应该使用同步模式还是异步模式？](#q-should-i-use-sync-mode-or-async-mode-)  
+   * 5.3 [问：为什么API命令返回'command not found'?](#q-why-are-api-commands-returning-command-not-found-)  
+   * 5.4 [问：我可以用外部套接字桥接通话吗？](#q-can-i-bridge-a-call-with-an-outbound-socket-)
 
-## Diagram
+## 图表
 
 ```xml
     *************************************
@@ -58,41 +54,39 @@ Click to expand Table of Contents
 
 ```
 
-## Configuration
+## 配置
 
-The data syntax to invoke the event socket outbound from FreeSWITCH in the dialplan is &lt;ip>:&lt;port> \[&lt;keywords>\]
+在拨号计划中调用FreeSWITCH的事件套接字外发的数据语法是&lt;ip>:&lt;port> \[&lt;keywords>\]
 
 ```xml
-<action application="socket" data="address:port [async|full]"/>
+<action application="socket" data="地址:端口 [异步|完整]"/>
 ```
 
-  
-Since revision git-8c794ac on 14/03/2012 you can also connect to IPv6 addresses. When using IPv6 addresses the port parameter is required: &lt;action application="socket" data="::1:8021"/> connects to ::1 on port 8021\. Since this revision hostnames resolving to IPv6 addresses can be used.
+自从14/03/2012的git-8c794ac修订版开始，您还可以连接到IPv6地址。在使用IPv6地址时，端口参数是必需的: &lt;action application="socket" data="::1:8021"/> 连接到端口8021的 ::1。自此修订版以来，可以使用解析为IPv6地址的主机名。
 
-  
-### Keywords
+### 关键词
 
-#### async
+#### 异步
 
-The "async" keyword indicates that all commands will return instantly, allowing voice processing to proceed and making it possible to monitor the socket for events while the stack of commands are executing.
+"异步"关键词表示所有命令将立即返回，允许语音处理继续进行，并且可以在执行命令堆栈时监视套接字上的事件。
 
-If the async keyword is absent then all calls on this channel will block until the command has finished.
+如果没有异步关键词，那么在此通道上的所有调用都会阻塞，直到命令执行完毕。
 
-#### full
+#### 完整
 
-The "full" keyword indicates that the other end will have the full command set for event\_socket. This is the same command set on an event socket inbound connection so you can execute API commands, get global events, etc.
+"完整"关键词表示另一端将具备完整的事件套接字命令集。这与事件套接字的传入连接上的命令集相同，因此您可以执行API命令、获取全局事件等。
 
-If the "full" keyword is absent the command set and events are limited to that particular call.
+如果没有"完整"关键词，命令集和事件将限于特定的调用。
 
-### Variables
+### 变量
 
 #### socket_resume
 
-If this variable is set to true, the dialplan will resume execution with the next action after the call to the socket application. This can be used for example to allow you to do something intelligent in the dialplan if your IVR application dies in an unclean way. If there is a bridge active when the disconnect happens, it is killed. To do this from your application after the socket is already connected, issue the resume command.
+如果将此变量设置为true，拨号计划将在调用socket应用程序后继续执行下一个动作。例如，如果您的IVR应用程序以不干净的方式终止，这可以用于在拨号计划中做一些智能处理。如果断开连接时存在桥接，它将被终止。要在套接字已连接之后从应用程序中执行此操作，请发出resume命令。
 
-### Examples
+### 示例
 
-Here are examples of how to use it in the dialplan.
+以下是在拨号计划中使用它的示例。
 
 ```xml
 <action application="socket" data="127.0.0.1:8084"/>
@@ -101,127 +95,126 @@ Here are examples of how to use it in the dialplan.
 <action application="socket" data="127.0.0.1:8084 async full"/>
 ```
 
-  
-Event Lock
+事件锁定
 
-If you are using async, you need to pay attention to potential race condition. The commands you send may not execute in sequential order. You may force the command to wait by setting event lock until the critical or long-running command finishes:
+如果你正在使用 `async`，你需要注意潜在的竞态条件。你发送的命令可能不会按照顺序执行。你可以通过设置事件锁定来强制命令等待关键或长时间运行的命令完成：
 
 sendmsg 
 call-command: set
 execute-app-name: foo=bar\n\n
 event-lock:true  
- 
-You may obtain the same result (setting event-lock to true) in scripting using the setEventLock method of connection object:
+
+你也可以在脚本中通过连接对象的 setEventLock 方法来获得相同的结果（将 event-lock 设置为 true）：
 
 $con->setEventLock("1");
 
-  
-## Server Examples
+
+## 服务器示例
 
 ### sock.pl
 
-There are several example Perl scripts that use the ESL library. Here's good one to review:
+有几个使用 ESL 库的 Perl 示例脚本。这是一个不错的脚本供您参考：
 
 [libs/esl/perl/server2.pl](https://freeswitch.org/stash/projects/FS/repos/freeswitch/browse/libs/esl/perl/server2.pl)
 
-To run it you will need to compile ESL and perlmod. More information is available on the [ESL](./index.mdx#-new-) page.
+要运行它，您需要编译 ESL 和 perlmod。更多信息可在 [ESL](./index.mdx#-new-) 页面上查找。
 
-### Using Netcat
+### 使用 Netcat
 
-Here is a small tutorial on how to use outbound event socket:
+以下是如何使用出站事件套接字的简短教程：
 
-This was used to call this via the dialplan:
+以下是通过拨号计划调用的示例：
 
 ```xml
 <action application="socket" data="127.0.0.1:8084 async full"/>
 ```
 
-Now lets make netcat listen for connections from our call.
+现在让我们让 netcat 监听我们的呼叫连接。
 
-Linux :
+Linux：
 
 ```bash
 nc -v -l 127.0.0.1 -p 8084
 ```
 
-On CentOS 5.3 my syntax is this:
+在 CentOS 5.3 中，我的语法是：
 
 ```bash
 nc -v -l 127.0.0.1 8084
 ```
 
-On Windows :
+在 Windows 中：
 
 ```bash
 nc -v -L -n -p 8084
 ```
 
-Connection from 127.0.0.1 port 8084 [tcp/*] accepted
+来自 127.0.0.1 端口 8084 的连接 [tcp/*] 已接受
 
-Once the connection is accepted you type:
+连接被接受后，您输入：
 
 ```xml
 connect\n\n
 ```
 
-Note: The command 'connect' is the first command at your ESL server side to send to FreeSWITCH side.  
-      If without 'connect', FreeSWITCH side would response nothing and waiting.  
-      If first command is not 'connect', FreeSWITCH also output nothing and waiting.
+注意: 命令 'connect' 是在您的ESL服务器端发送到FreeSWITCH端的第一个命令。
+      如果没有 'connect'，FreeSWITCH端将不返回任何响应并等待。
+      如果第一个命令不是 'connect'，FreeSWITCH也不会输出任何内容并等待。
 
-Once you do this you'll be presented the name value pairs of everything related to this call including all variables.
+一旦您这样做，您将会看到与此通话相关的所有内容的名称-值对，包括所有变量。
 
-Example:
+示例: 
 
-Expand source 
+展开源代码
 
 ```xml
-Channel-Username: 1001
-Channel-Dialplan: XML
-Channel-Caller-ID-Name: 1001
-Channel-Caller-ID-Number: 1001
-Channel-Network-Addr: 10.0.1.241
-Channel-Destination-Number: 886
-Channel-Unique-ID: 40117b0a-186e-11dd-bbcd-7b74b6b4d31e
-Channel-Source: mod_sofia
-Channel-Context: default
-Channel-Channel-Name: sofia/default/1001%4010.0.1.100
-Channel-Profile-Index: 1
-Channel-Channel-Created-Time: 1209749769132614
-Channel-Channel-Answered-Time: 0
-Channel-Channel-Hangup-Time: 0
-Channel-Channel-Transfer-Time: 0
-Channel-Screen-Bit: yes
-Channel-Privacy-Hide-Name: no
-Channel-Privacy-Hide-Number: no
-Channel-State: CS_EXECUTE
-Channel-State-Number: 4
-Channel-Name: sofia/default/1001%4010.0.1.100
-Unique-ID: 40117b0a-186e-11dd-bbcd-7b74b6b4d31e
-Call-Direction: inbound
-Answer-State: early
-Channel-Read-Codec-Name: G722
-Channel-Read-Codec-Rate: 16000
-Channel-Write-Codec-Name: G722
-Channel-Write-Codec-Rate: 16000
-Caller-Username: 1001
-Caller-Dialplan: XML
-Caller-Caller-ID-Name: 1001
-Caller-Caller-ID-Number: 1001
-Caller-Network-Addr: 10.0.1.241
-Caller-Destination-Number: 886
-Caller-Unique-ID: 40117b0a-186e-11dd-bbcd-7b74b6b4d31e
-Caller-Source: mod_sofia
-Caller-Context: default
-Caller-Channel-Name: sofia/default/1001%4010.0.1.100
-Caller-Profile-Index: 1
-Caller-Channel-Created-Time: 1209749769132614
-Caller-Channel-Answered-Time: 0
-Caller-Channel-Hangup-Time: 0
-Caller-Channel-Transfer-Time: 0
-Caller-Screen-Bit: yes
-Caller-Privacy-Hide-Name: no
-Caller-Privacy-Hide-Number: no
-variable_sip_authorized: true
+渠道-用户名: 1001
+渠道-拨号计划: XML
+渠道-呼叫者ID名称: 1001
+渠道-呼叫者ID号码: 1001
+渠道-网络地址: 10.0.1.241
+渠道-目标号码: 886
+渠道-唯一ID: 40117b0a-186e-11dd-bbcd-7b74b6b4d31e
+渠道-来源: mod_sofia
+渠道-上下文: default
+渠道-通道名称: sofia/default/1001%4010.0.1.100
+渠道-配置文件索引: 1
+渠道-通道创建时间: 1209749769132614
+渠道-通道应答时间: 0
+渠道-通道挂断时间: 0
+渠道-通道转接时间: 0
+渠道-屏幕显示: 是
+渠道-隐私隐藏名称: 否
+渠道-隐私隐藏号码: 否
+渠道状态: CS_EXECUTE
+渠道状态编号: 4
+渠道名称: sofia/default/1001%4010.0.1.100
+唯一ID: 40117b0a-186e-11dd-bbcd-7b74b6b4d31e
+呼叫方向: 入站
+应答状态: 早期
+渠道读取编解码器名称: G722
+渠道读取编解码器速率: 16000
+渠道写入编解码器名称: G722
+渠道写入编解码器速率: 16000
+呼叫方用户名: 1001
+呼叫方拨号计划: XML
+呼叫方呼叫者ID名称: 1001
+呼叫方呼叫者ID号码: 1001
+呼叫方网络地址: 10.0.1.241
+呼叫方目标号码: 886
+呼叫方唯一ID: 40117b0a-186e-11dd-bbcd-7b74b6b4d31e
+呼叫方来源: mod_sofia
+呼叫方上下文: default
+呼叫方通道名称: sofia/default/1001%4010.0.1.100
+呼叫方配置文件索引: 1
+呼叫方通道创建时间: 1209749769132614
+呼叫方通道应答时间: 0
+呼叫方通道挂断时间: 0
+呼叫方通道转接时间: 0
+呼叫方屏幕显示: 是
+呼叫方隐私隐藏名称: 否
+呼叫方隐私隐藏号码: 否
+variable_sip_authorized: 是
 variable_sip_mailbox: 1001
 variable_sip_auth_username: 1001
 variable_sip_auth_realm: 10.0.1.100
@@ -230,7 +223,7 @@ variable_user_name: 1001
 variable_domain_name: 10.0.1.100
 variable_accountcode: 1001
 variable_user_context: default
-variable_effective_caller_id_name: Extension%201001
+variable_effective_caller_id_name: 分机%201001
 variable_effective_caller_id_number: 1001
 variable_sip_from_user: 1001
 variable_sip_from_uri: 1001%4010.0.1.100
@@ -269,17 +262,17 @@ variable_read_codec: G722
 variable_read_rate: 16000
 variable_write_codec: G722
 variable_write_rate: 16000
-variable_open: true
+variable_open: 是
 variable_socket_host: 127.0.0.1
 variable_local_media_ip: 10.0.1.100
 variable_local_media_port: 62258
-variable_endpoint_disposition: EARLY%20MEDIA
-Content-Type: command/reply
-Socket-Mode: async
-Control: full
+variable_endpoint_disposition: 早期媒体
+内容类型: 命令/回复
+套接字模式: 异步
+控制: 完整
 ```
 
-Now lets answer this call: (Note: sendmsg doesn't need uuid arg when in outbound mode)
+现在让我们来应答这个呼叫：（注：在呼出模式下，sendmsg 不需要 uuid 参数）
 
 ```xml
 sendmsg
@@ -288,7 +281,7 @@ execute-app-name: answer\n\n
 ```
 
   
-Which will reply:  
+这会得到回复：
 
 ```xml
 Content-Type: command/reply
@@ -296,9 +289,9 @@ Reply-Text: +OK
 ```
 
   
-This call is now answered but its sitting there waiting on your every command.
+这个呼叫已经被应答，但是它正在等待您的每一个命令。
 
-Now lets play this call a sound file:
+现在让我们播放一个声音文件给这个呼叫：
 
 ```xml
 sendmsg
@@ -307,7 +300,7 @@ execute-app-name: playback
 execute-app-arg: /tmp/swimp.raw\n\n
 ```
 
-It is also possible to play tones:
+也可以播放音调：
 
 ```xml
 sendmsg
@@ -316,14 +309,14 @@ execute-app-name: playback
 execute-app-arg: tone_stream://%(2000,4000,440,480)\n\n
 ```
 
-The reply should be:
+回复应该是：
 
 ```xml
 Content-Type: command/reply
 Reply-Text: +OK
 ```
 
-Now how do you stop the file playing? Here is how you would do that:
+那么如何停止播放文件呢？这是您要做的操作：
 
 ```xml
 sendmsg
@@ -331,14 +324,14 @@ call-command: execute
 execute-app-name: break\n\n
 ```
 
-The reply should be:
+回复应该是：
 
 ```xml
 Content-Type: command/reply
 Reply-Text: +OK
 ```
 
-Now lets hang this call up:
+现在让我们挂断这个呼叫：
 
 ```xml
 sendmsg
@@ -346,68 +339,64 @@ call-command: execute
 execute-app-name: hangup\n\n
 ```
 
-  
-The reply should be:  
+回复应该是：
 
 ```xml
 Content-Type: command/reply
 Reply-Text: +OK
 ```
 
-  
-Netcat will exit now.
+Netcat 现在将退出。
 
-You can also issue "myevents\\n\\n" or subscribe to other events in the normal way ie "events heartbeat\\n\\n"
+您还可以以以下方式执行 "myevents\\n\\n" 或订阅其他事件，例如 "events heartbeat\\n\\n"
 
-  
-In addition, you can execute API with:
+此外，您还可以使用以下命令执行 API：
 
 api uuid_bridge &lt;uuid> &lt;uuid>
 
 ### socket2me
 
-We have someone working on a C library to use as an event socket library also. but in the meantime there is also a crude C example with no client library but just inline commands in [scripts/c/socket2me](http://svn.freeswitch.org/svn/freeswitch/trunk/scripts/c/socket2me/) this small C program demonstrates how you can use the interface to not only control the call but to also request a 2 way media stream and process the data. This application uses spandsp to implement a fax send/recv similar to asterisk's rxfax txfax only over the loopback interface.
+我们有人在开发一个C库，用作事件套接字库。但与此同时，也有一个简陋的C示例，没有客户端库，只是在 [scripts/c/socket2me](http://svn.freeswitch.org/svn/freeswitch/trunk/scripts/c/socket2me/) 中的内联命令。这个小型C程序演示了如何使用接口来控制通话，并请求一个双向媒体流并处理数据。此应用程序使用spandsp来实现类似于asterisk的rxfax txfax的传真发送/接收功能，只是通过环回接口实现。
 
-### Java ESL Client
+### Java ESL客户端
 
-The [Java ESL Client](../Java-ESL/Java-ESL-Client_7144076.mdx#about) provides an Outbound socket mode, with a simple example of how to implement land run it.
+[Java ESL客户端](../Java-ESL/Java-ESL-Client_7144076.mdx#about) 提供了一个出站套接字模式，并提供了一个简单示例来实现并运行它。
 
-### Javascript / Node.js server 
+### Javascript / Node.js服务器
 
-* Node.js esl module [(available using npm)](http://search.npmjs.org/#/esl) offers both a client and a server implementation. The code is [on github](https://github.com/shimaore/esl) with [documentation](http://shimaore.github.com/esl/esl.html). Examples: [Voicemail with CouchDB storage](https://github.com/shimaore/ccnq3/tree/master/applications/voicemail/node) and [CNAM injection](https://github.com/shimaore/ccnq3/blob/master/private/cnam-client/node/cnam-client.coffee) (short example showing how to set a variable using an async web query).
+* Node.js的esl模块（[可以通过npm获取](http://search.npmjs.org/#/esl)）提供了客户端和服务器的实现。代码在 [github 上](https://github.com/shimaore/esl) ，有相应的 [文档](http://shimaore.github.com/esl/esl.html)。示例：[使用CouchDB存储的语音邮箱](https://github.com/shimaore/ccnq3/tree/master/applications/voicemail/node) 和 [CNAM注入](https://github.com/shimaore/ccnq3/blob/master/private/cnam-client/node/cnam-client.coffee)（显示如何使用异步网络查询设置变量的简短示例）。
 
-## Events
+## 事件
 
-By default, the connected socket will not receive any FreeSWITCH events. You can issue the following event commands to let FreeSWITCH send events to the connected socket.
+默认情况下，连接的套接字将不会接收到任何FreeSWITCH事件。您可以发送以下事件命令，让FreeSWITCH将事件发送到连接的套接字。
 
-Receive only events from this channel
+只接收来自该通道的事件
 
 myevents
 
-Receive all events from FreeSWITCH
+接收所有FreeSWITCH的事件
 
 event text all
 
-Get lingering events on a hung up channel
+获取挂断通道上的挂留事件
 
 linger
 
-To make sure you do not miss any events when the channel is hungup, you need to send the "linger command". I found this comment from Anthony Minessale on the FreeSWITCH-users mailing list.
+为了确保在通道挂断时不会错过任何事件，你需要发送"linger command"。我在FreeSWITCH用户邮件列表中找到了Anthony Minessale的评论。
 
-> it's a race,
-> 
-> sometimes the socket connection ends before the channel
-> 
-> the linger socket command was added to tell FS to wait for the last channel event before ending the connection
-> 
-> just send the command
-> 
-> linger
+>这是一场比赛，
+>
+>有时候套接字连接会在通道结束之前断开。
+>
+>添加了linger套接字命令，告诉FS在结束连接之前等待最后一个通道事件。
+>
+>只需发送该命令
+>
+>linger
 
-  
-#### Verto Live Array
+#### Verto实时数组
 
-From a post to the freeswitch-users mailing list dated 2016.03.28 12:02 EDT the following JavaScript code snippet reveals the basics of how to get raw conference events using $.verto.livearray() from the Verto library:  
+从2016.03.28 12:02 EDT的freeswitch-users邮件列表的一篇帖子中，下面的JavaScript代码片段展示了如何使用Verto库的$.verto.livearray()函数获取原始会议事件的基本方法:
 
 **$.verto.livearray()**
 
@@ -421,26 +410,25 @@ var la = new $.verto.liveArray(verto, data.pvtData.laChannel, data.pvtData.laNam
   };
 ```
 
-You can build on this template in your own JS code.
+您可以在您自己的JS代码中根据这个模板进行开发。
 
-  
-## FAQ
+## 常见问题解答
 
-### Q: Ordering and async keyword 
+### Q: 有关排序和async关键字
 
-_When using async keyword, is there any guarantee regarding ordering?_
+_在使用async关键字时，是否有任何关于排序的保证？_
 
-Once you send a command you always get the reply before anything else.
+在发送命令后，您始终会在其他任何事情之前收到回复。
 
-In the case of a bgapi command, your reply will simply contain a job id, and when the command has actually finished it will send an event. See [Event\_Socket](../../Modules/mod_event_socket_1048924.mdx#11-acl)
+在使用bgapi命令的情况下，您的回复将只包含一个作业ID，当命令实际完成时，它将发送一个事件。请参阅[Event\_Socket](../../Modules/mod_event_socket_1048924.mdx#11-acl)
 
-In some situations (for example, when using the bridge app) you want to ensure the application completely executes before the next command is parsed. Use the following to achieve this:
+在某些情况下（例如使用桥接应用程序时），您希望确保应用程序在解析下一条命令之前完全执行。使用以下内容来实现：
 
 event-lock: true
 
-When you send the command.
+在发送命令时使用。
 
-Example:
+示例：
 
 ```xml
 SendMsg <uuid>
@@ -450,22 +438,23 @@ execute-app-arg: /tmp/test.wav
 event-lock: true
 ```
 
-  
-You may obtain the same result (setting event-lock to true) in scripting using the setEventLock method of connection object:
+你可以在脚本中使用连接对象的setEventLock方法来实现相同的结果（将事件锁设置为true）：
 
- $con->setEventLock("1");
+```php
+$con->setEventLock("1");
+```
 
-### Q: Should I use sync mode or async mode? 
+### 问：我应该使用同步模式还是异步模式？
 
-In sync mode many things may not work as you expect, for example no DTMFs are received. When you're playing a file in sync mode it blocks till the file is done playing. In async mode you are returned control instantly. You can stop the playback, transfer the call and various other things in async mode.
+在同步模式下，许多事情可能无法按照您的期望工作，例如无法接收到DTMF信号。当您在同步模式下播放文件时，它会阻塞直到文件播放完成。在异步模式下，您会立即恢复对控制的控制权。您可以在异步模式下停止播放、转接通话和执行其他各种操作。
 
-### Q: Why are API commands returning 'command not found'? 
+### 问：为什么API命令返回'command not found'？
 
-Remember to use "async full" for full API.
+请记住使用 "async full" 以获得完整的API。
 
-### Q: Can I bridge a call with an Outbound socket? 
+### 问：我可以使用出站套接字连接通话吗？
 
-Yes you can, simple execute a 'Bridge'
+是的，您可以简单地执行 'Bridge' 操作。
 
 ```xml
 sendmsg 
@@ -475,7 +464,4 @@ execute-app-arg: {ignore_early_media=true}sofia/gateway/myGW/177808
 event-lock: true
 ```
 
-The event-lock is key here, if you don't have it set, other events you might have sent can terminate the call, even if you've sent them _before_ the bridge command. Remember that if you want to hangup the call when the bridge completes, either look for the event \[CHANNEL\_UNBRIDGE\], or send a hangup event after the bridge.
-  
-  
-
+在上面的代码中，event-lock 是关键。如果您没有设置它，其他您可能发送的事件可能会中断通话，即使这些事件在桥接命令之前已经发送。请记住，如果您想在桥接完成后挂断通话，可以查找事件 `[CHANNEL_UNBRIDGE]`，或者在桥接之后发送一个挂断事件。

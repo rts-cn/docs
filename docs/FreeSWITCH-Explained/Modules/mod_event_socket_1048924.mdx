@@ -1,89 +1,86 @@
-
-# mod_event_socket 
-
- 
+# mod_event_socket
 
 ---
 
-Table of Contents (click to expand)
+目录（点击展开）
 
-* [1\. Configuration](#1-configuration)  
-   * [1.1 ACL](#11-acl)  
+* [1\. 配置](#1-configuration)
+   * [1.1 ACL](#11-acl)
    * [1.2 nat-map](#12-nat-map)
-* [2\. Modes of operation](#2-modes-of-operation)  
-   * [2.1 Inbound mode](#21-inbound-mode)  
-   * [2.2 Outbound mode](#22-outbound-mode)
-* [3\. Command Documentation](#3-command-documentation)  
-   * [3.1 api](#31-api)  
-   * [3.2 bgapi](#32-bgapi)  
-   * [3.3 linger](#33-linger)  
-   * [3.4 nolinger](#34-nolinger)  
-   * [3.5 event](#35-event)  
-      * [3.5.1 event plain format](#351-event-plain-format)  
-         * [3.5.1.1 Header section](#3511-header-section)  
-            * [3.5.1.2 Event body](#3512-event-body)  
-         * [3.5.2 event plain parsing instructions](#352-event-plain-parsing-instructions)  
-         * [3.5.3 Special Cases](#353-special-cases)  
-            * [3.5.3.1 myevents](#3531-myevents)  
-               * [3.5.3.2 divert\_events](#3532-divert_events)  
-   * [3.6 filter](#36-filter)  
-   * [3.7 filter delete](#37-filter-delete)  
-   * [3.8 sendevent](#38-sendevent)  
-      * [3.8.1.1 Switch phone MWI led (tested on yealink)](#3811-switch-phone-mwi-led-tested-on-yealink)  
-         * [3.8.1.2 Make Snom phones reread their settings from the settings server](#3812-make-snom-phones-reread-their-settings-from-the-settings-server)  
-         * [3.8.1.3 sendevent examples with a message body](#3813-sendevent-examples-with-a-message-body)  
-         * [3.8.1.4 SIP Proxy Example](#3814-sip-proxy-example-)  
-         * [3.8.1.5 Sipura/Linksys/Cisco phone or ATA to resync config with a specified profile URL](#3815-sipuralinksyscisco-phone-or-ata-to-resync-config-with-a-specified-profile-url)  
-         * [3.8.1.6 Example usage for CSTA event:](#3816-example-usage-for-csta-event)  
-         * [3.8.1.7 Display a text message on a Snom 370 or Snom 820](#3817-display-a-text-message-on-a-snom-370-or-snom-820)  
-   * [3.9 sendmsg](#39-sendmsg)  
-      * [3.9.1 Commands](#391-commands)  
-         * [3.9.1.1 execute](#3911-execute)  
-            * [3.9.1.2 hangup](#3912-hangup)  
-               * [3.9.1.3 unicast](#3913-unicast)  
-                  * [3.9.1.4 nomedia](#3914-nomedia)  
-                  * [3.9.1.5 xferext](#3915-xferext)  
-   * [3.10 exit](#310-exit)  
-   * [3.11 auth](#311-auth)  
-   * [3.12 log](#312-log)  
-   * [3.13 nolog](#313-nolog)  
-   * [3.14 nixevent](#314-nixevent)  
+* [2\. 工作模式](#2-modes-of-operation)
+   * [2.1 入境模式](#21-inbound-mode)
+   * [2.2 出境模式](#22-outbound-mode)
+* [3\. 命令文档](#3-command-documentation)
+   * [3.1 api](#31-api)
+   * [3.2 bgapi](#32-bgapi)
+   * [3.3 linger](#33-linger)
+   * [3.4 nolinger](#34-nolinger)
+   * [3.5 event](#35-event)
+      * [3.5.1 普通事件格式](#351-event-plain-format)
+         * [3.5.1.1 头部区域](#3511-header-section)
+            * [3.5.1.2 事件正文](#3512-event-body)
+         * [3.5.2 普通事件解析指令](#352-event-plain-parsing-instructions)
+         * [3.5.3 特殊情况](#353-special-cases)
+            * [3.5.3.1 myevents](#3531-myevents)
+               * [3.5.3.2 divert\_events](#3532-divert_events)
+   * [3.6 filter](#36-filter)
+   * [3.7 filter delete](#37-filter-delete)
+   * [3.8 sendevent](#38-sendevent)
+      * [3.8.1.1 切换电话 MWI LED 灯（在 Yealink 上测试过）](#3811-switch-phone-mwi-led-tested-on-yealink)
+         * [3.8.1.2 使 Snom 电话从设置服务器上重新读取配置](#3812-make-snom-phones-reread-their-settings-from-the-settings-server)
+         * [3.8.1.3 带有消息正文的 sendevent 示例](#3813-sendevent-examples-with-a-message-body)
+         * [3.8.1.4 SIP 代理示例](#3814-sip-proxy-example)
+         * [3.8.1.5 Sipura/Linksys/Cisco 电话或 ATA 通过指定的配置文件 URL 同步配置](#3815-sipuralinksyscisco-phone-or-ata-to-resync-config-with-a-specified-profile-url)
+         * [3.8.1.6 CSTA 事件示例用法](#3816-example-usage-for-csta-event)
+         * [3.8.1.7 在 Snom 370 或 Snom 820 上显示文本消息](#3817-display-a-text-message-on-a-snom-370-or-snom-820)
+   * [3.9 sendmsg](#39-sendmsg)
+      * [3.9.1 命令](#391-commands)
+         * [3.9.1.1 execute](#3911-execute)
+            * [3.9.1.2 hangup](#3912-hangup)
+               * [3.9.1.3 unicast](#3913-unicast)
+                  * [3.9.1.4 nomedia](#3914-nomedia)
+                  * [3.9.1.5 xferext](#3915-xferext)
+   * [3.10 exit](#310-exit)
+   * [3.11 auth](#311-auth)
+   * [3.12 log](#312-log)
+   * [3.13 nolog](#313-nolog)
+   * [3.14 nixevent](#314-nixevent)
    * [3.15 noevents](#315-noevents)
-* [See Also](#see-also)
+* [另请参阅](#see-also)
 
-Subpages (click to expand)
+子页面（点击展开）
 
-* [Debugging Event Socket Message](../Introduction/Event-System/Debugging-Event-Socket-Message_9634071.mdx#using-netcat-as-middleman)
-* [Making Event Socket behave like the console](../Introduction/Event-System/Making-Event-Socket-behave-like-the-console_10682474.mdx#about)
-* [ESL Example Clients](../Introduction/Event-System/ESL-Example-Clients_27591923.mdx#liverpie)
+* [调试事件套接字消息](../Introduction/Event-System/Debugging-Event-Socket-Message_9634071.mdx#using-netcat-as-middleman)
+* [使事件套接字行为类似于控制台](../Introduction/Event-System/Making-Event-Socket-behave-like-the-console_10682474.mdx#about)
+* [ESL示例客户端](../Introduction/Event-System/ESL-Example-Clients_27591923.mdx#liverpie)
 
 ---
 
-0\. About
+0\. 关于
 
-[mod\_event\_socket](./mod_event_socket_1048924.mdx#11-acl) is a TCP-based interface to control FreeSWITCH, and it operates in two modes, **inbound** and **outbound**. (These terms are relative to FreeSWITCH).
+[mod\_event\_socket](./mod_event_socket_1048924.mdx#11-acl)是一个基于TCP的接口，用于控制FreeSWITCH，它在**入站**和**出站**两种模式下运行（这些术语是相对于FreeSWITCH而言的）。
 
-By default, connections are only allowed from `localhost`, but this can be changed via configuration files (see **Configuration** section below for details). 
+默认情况下，只允许从`localhost`建立连接，但可以通过配置文件进行更改（有关详细信息，请参阅下面的**配置**部分）。
 
-## 1\. Configuration
+## 1\. 配置
 
-First enable the [mod\_event\_socket](./mod_event_socket_1048924.mdx#11-acl) module in `<conf_dir>/autoload_configs/`[modules.conf.xml](https://github.com/signalwire/freeswitch/blob/a5cecbfc2a5e0ea2d3f45489f2681a67e32ce955/conf/vanilla/autoload%5Fconfigs/modules.conf.xml) by removing the comment marks (`<!--` and `-->` ).
+首先，在`<conf_dir>/autoload_configs/`[modules.conf.xml](https://github.com/signalwire/freeswitch/blob/a5cecbfc2a5e0ea2d3f45489f2681a67e32ce955/conf/vanilla/autoload%5Fconfigs/modules.conf.xml)中启用[mod\_event\_socket](./mod_event_socket_1048924.mdx#11-acl)模块，删除注释标记（`<!--` 和 `-->` ）。
 
-Enabled by default
+默认已启用
 
-[mod\_event\_socket](./mod_event_socket_1048924.mdx#11-acl) is enabled by default for installations with [vanilla configuration](https://github.com/signalwire/freeswitch/blob/a5cecbfc2a5e0ea2d3f45489f2681a67e32ce955/conf/vanilla/) (i.e., when compiled from source or installed via package managers).
+对于安装有[原始配置](https://github.com/signalwire/freeswitch/blob/a5cecbfc2a5e0ea2d3f45489f2681a67e32ce955/conf/vanilla/)的安装，默认情况下已启用[mod\_event\_socket](./mod_event_socket_1048924.mdx#11-acl)（即通过源代码编译或通过软件包管理器安装时）。
 
-Find the location of &lt;conf\_dir>
+查找&lt;conf\_dir&gt;的位置
 
-To get the location of `<conf_dir>` , use **`eval $${conf_dir}`** in [fs\_cli](../Client-and-Developer-Interfaces/1048948.mdx#or) or `fs_cli -x 'eval $${conf_dir}'` on your terminal.
+要获取&lt;conf\_dir&gt;的位置，在[fs\_cli](../Client-and-Developer-Interfaces/1048948.mdx#or)中使用**`eval $${conf_dir}`**，或在终端上使用`fs_cli -x 'eval $${conf_dir}'`。
 
-See [Command-Line Interface (fs\_cli)](../Client-and-Developer-Interfaces/1048948.mdx#or) and the available configuration options.
+参见[命令行界面（fs_cli）](../Client-and-Developer-Interfaces/1048948.mdx#或)和可用的配置选项。
 
-TODO There is no real link for configuration options - the closest would be [Global Variables](../Introduction/Variables/Global-Variables_13173994.mdx#about) (which is just a list) and [Default Configuration](../Configuration/Default-Configuration_6587388.mdx#mod_vp8) (which only implicitly defines `conf_dir` ). So update them.
+TODO：配置选项没有真正的链接 - 最接近的可能是[全局变量](../Introduction/Variables/Global-Variables_13173994.mdx#关于)（仅仅是一个列表）和[默认配置](../Configuration/Default-Configuration_6587388.mdx#mod_vp8)（仅隐式定义了`conf_dir`）。所以请更新它们。
 
-The default [mod\_event\_socket](./mod_event_socket_1048924.mdx#11-acl) configuration binds to `::` (i.e., to listen to connections from **any** host), which will work on IPv4 or IPv6\. 
+默认的[mod_event_socket](./mod_event_socket_1048924.mdx#11-acl)配置绑定到`::`（即监听来自**任何**主机的连接），这适用于IPv4或IPv6。
 
-`::` means that [mod\_event\_socket](./mod_event_socket_1048924.mdx#11-acl) will listen to connections from **any** host (see vanilla `<conf_dir>/autoload_configs/[event_socket.conf.xml](https://github.com/signalwire/freeswitch/blob/a5cecbfc2a5e0ea2d3f45489f2681a67e32ce955/conf/vanilla/autoload%5Fconfigs/event%5Fsocket.conf.xml)` configuration file in the [SignalWire GitHub repository](https://github.com/signalwire/freeswitch)). **There are obvious security risks**, so one would want to change this (e.g., to localhost only, `::1` ), and perhaps also limit access via a firewall and/or [ACL](https://wiki.freeswitch.org/wiki/ACL "ACL"), as well as never using the default password.
+`::`表示[mod_event_socket](./mod_event_socket_1048924.mdx#11-acl)将监听来自**任何**主机的连接（请参见[SignalWire GitHub存储库](https://github.com/signalwire/freeswitch)中的vanilla `<conf_dir>/autoload_configs/[event_socket.conf.xml](https://github.com/signalwire/freeswitch/blob/a5cecbfc2a5e0ea2d3f45489f2681a67e32ce955/conf/vanilla/autoload%5Fconfigs/event%5Fsocket.conf.xml)`配置文件）。**这存在明显的安全风险**，所以我们应该做出更改（例如，仅限本地`::1`），并且可能还要通过防火墙和/或[ACL](https://wiki.freeswitch.org/wiki/ACL "ACL")限制访问，并且永远不要使用默认密码。
 
 ```xml
 <configuration name="event_socket.conf" description="Socket Client">
@@ -97,13 +94,13 @@ The default [mod\_event\_socket](./mod_event_socket_1048924.mdx#11-acl) configur
 </configuration>
 ```
 
-To change the default behaviour, use the `listen-ip` parameter. For example, to allow connections from localhost only:
+要更改默认行为，请使用 `listen-ip` 参数。例如，仅允许本地主机连接的示例：
 
 ```xml
 <configuration name="event_socket.conf" description="Socket Client">
   <settings>
     <param name="nat-map" value="false"/>
-    <!-- ::1 is the IPv6 version of 127.0.0.0/8 in IPv4 -->
+    <!-- ::1 是 IPv6 版本的 IPv4 中的 127.0.0.0/8 -->
     <param name="listen-ip" value="::1"/>
     <param name="listen-port" value="8021"/>
     <param name="password" value="ClueCon"/>
@@ -113,46 +110,45 @@ To change the default behaviour, use the `listen-ip` parameter. For example, to 
 </configuration>
 ```
 
-IPv6 support
+IPv6 支持
 
-You can listen on IPv6 addresses (with the `listen-ip` parameter) since [revision 8c794ac](https://github.com/signalwire/freeswitch/commit/8c794ac).
+您可以使用 `listen-ip` 参数监听 IPv6 地址，自 [revision 8c794ac](https://github.com/signalwire/freeswitch/commit/8c794ac) 起适用。
 
-For example, the above example using `::` (IPv6 equivalent of 0.0.0.0) will enable listening on both IPv4 and IPv6 addresses on dual stack hosts.
+例如，上述示例使用 `::`（IPv6 中的 0.0.0.0）将在双栈主机上同时监听 IPv4 和 IPv6 地址。
 
-### 1.1 ACL
+### 1.1 访问控制列表（ACL）
 
-Using [Access Control List (ACL)](../Networking/3965687.mdx#-acl-)s is recommended for enhanced security if you allow ESL connections from another machine. One can either enable named [Access Control List (ACL)](../Networking/3965687.mdx#-acl-)s (defined in `<conf_dir>/autoload_configs/[acl.conf.xml](https://github.com/signalwire/freeswitch/blob/a5cecbfc2a5e0ea2d3f45489f2681a67e32ce955/conf/vanilla/autoload%5Fconfigs/acl.conf.xml)`) or allow IP ranges directly in [event\_socket.conf.xml](https://github.com/signalwire/freeswitch/blob/a5cecbfc2a5e0ea2d3f45489f2681a67e32ce955/conf/vanilla/autoload%5Fconfigs/event%5Fsocket.conf.xml):
+如果允许来自另一台机器的 ESL 连接，建议使用[访问控制列表（ACL）](../Networking/3965687.mdx#-acl-)来实现增强的安全性。可以启用命名的[访问控制列表（ACL）](../Networking/3965687.mdx#-acl-)（在 `<conf_dir>/autoload_configs/[acl.conf.xml](https://github.com/signalwire/freeswitch/blob/a5cecbfc2a5e0ea2d3f45489f2681a67e32ce955/conf/vanilla/autoload%5Fconfigs/acl.conf.xml)` 中定义），或直接在 [event_socket.conf.xml](https://github.com/signalwire/freeswitch/blob/a5cecbfc2a5e0ea2d3f45489f2681a67e32ce955/conf/vanilla/autoload%5Fconfigs/event%5Fsocket.conf.xml) 中允许 IP 范围：
 
-**Syntax**
+**语法**
 
 ```xml
 <param name="apply-inbound-acl" value="<acl_list|cidr>"/>
 ```
 
   
-**Examples**
+**示例**
 
 ```xml
 <param name="apply-inbound-acl" value="10.20.0.0/16"/>
 <param name="apply-inbound-acl" value="loopback.auto"/>
 ```
 
-  
-Multiple `apply-inbound-acl` params will **not** work.
+多个 `apply-inbound-acl` 参数**将不起作用**。
 
-As of 1.6 you must supply an ACL. In order to allow all IPs you can use `**any_v4.auto** `in [event\_socket.conf.xml](https://github.com/signalwire/freeswitch/blob/a5cecbfc2a5e0ea2d3f45489f2681a67e32ce955/conf/vanilla/autoload%5Fconfigs/event%5Fsocket.conf.xml).
+自 1.6 版本开始，您必须提供一个 ACL。如果要允许所有的 IP，您可以在 [event\_socket.conf.xml](https://github.com/signalwire/freeswitch/blob/a5cecbfc2a5e0ea2d3f45489f2681a67e32ce955/conf/vanilla/autoload%5Fconfigs/event%5Fsocket.conf.xml) 中使用 `**any_v4.auto** `。
 
 ### 1.2 nat-map
 
-nat-map will try to use uPNP or PMP to tell your router to allow inbound connections to the specified port if the router supports dynamic port mapping. 
+nat-map 会尝试使用 uPNP 或 PMP 来告诉您的路由器允许入站连接到指定的端口，如果路由器支持动态端口映射。
 
-This was useful when the router sat behind a firewall on an RFC1918 address and you wanted to pass port 8021 from your public i.p. down to your FreeSWITCH. When nat-map is enabled it will ping the router with the NAT mapping protocol and, if it supports it, will configure itself for you on demand. This is not recommended in modern installations.
+当路由器位于 RFC1918 地址的防火墙后面，并且您希望将端口 8021 从您的公共 IP 传递到 FreeSWITCH 上时，这是非常有用的。当启用 nat-map 时，它会使用 NAT 映射协议向路由器发送 ping，并在需要时自动为您配置。在现代安装中不建议使用该功能。
 
-## 2\. Modes of operation
+## 2\. 运行模式
 
-### 2.1 Inbound mode
+### 2.1 入站模式
 
-Inbound mode means you run your applications (in whatever languages) as clients, and connect to the FreeSWITCH server to invoke commands and control FreeSWITCH.
+入站模式意味着您将您的应用程序（以任何语言）作为客户端运行，并连接到 FreeSWITCH 服务器以调用命令并控制 FreeSWITCH。
 
 ```xml
     ********************************************
@@ -169,68 +165,67 @@ Inbound mode means you run your applications (in whatever languages) as clients,
        ******************       ******************
 ```
 
-  
-In inbound mode, your application (Client A: Python, Client B: Perl, etc.) connects to the FreeSWITCH™ server on the given port and sends commands, as shown in the above diagram. The rest of this document is biased toward this inbound mode, though there is a lot of overlap with outbound mode. Using inbound socket connections you can check status, make outbound calls, etc.
+在入站模式下，您的应用程序（客户端A：Python，客户端B：Perl等）连接到给定端口的FreeSWITCH™服务器，并发送命令，如上图所示。本文档的其余部分偏向于入站模式，尽管与出站模式有很多重叠。使用入站套接字连接，您可以检查状态，进行呼出电话等操作。
 
-If you would like to handle incoming calls using inbound mode, you should add the `uuid_park` command (see [mod\_commands](./mod_commands_1966741.mdx#--)) to your dialplan. Otherwise the dialplan might complete executing before your client can send commands to the event socket.
+如果您想使用入站模式来处理传入呼叫，您应该在呼叫计划中添加`uuid_park`命令（参见[mod\_commands](./mod_commands_1966741.mdx#--)）。否则，在您的客户端发送命令到事件套接字之前，呼叫计划可能会完成执行。
 
-### 2.2 Outbound mode
+### 2.2 出站模式
 
-Outbound mode means you make a daemon (with whatever language), and then have FreeSWITCH connect to it. You add an extension to the dialplan, and put &lt;action application="socket" data="[ip:port](http://ipport) sync full"/> and create a script that runs on that [ip:port](http://ipport) and answer, playback and everything else you need on the script. Since revision git-8c794ac on 14/03/2012 you can connect to IPv6 addresses. When using IPv6 addresses the port parameter is required: &lt;action application="socket" data="::1:8021"/> connects to ::1 on port 8021\. Since this revision hostnames resolving to IPv6 addresses can be used.
+出站模式意味着您创建一个守护进程（使用任何语言），然后让FreeSWITCH连接到它。在呼叫计划中添加一个扩展，然后放置`<action application="socket" data="[ip:port](http://ipport) sync full"/>`并创建一个运行在该[ip:port](http://ipport)上的脚本，该脚本可以回答、播放和执行其他所需的操作。自2012年3月14日的git-8c794ac版本以来，您可以连接到IPv6地址。当使用IPv6地址时，端口参数是必需的：`<action application="socket" data="::1:8021"/>`连接到端口8021上的::1。自此版本以来，可以使用将解析为IPv6地址的主机名。
 
-In outbound mode, also known as the "socket application" (or socket client), FreeSWITCH™ makes outbound connections to another process (similar to Asterisk's FAGI model). Using outbound connections you can have FreeSWITCH™ call your own application(s) when particular events occur. See [Event Socket Outbound](../Client-and-Developer-Interfaces/Event-Socket-Library/Event-Socket-Outbound_3375460.mdx#faq) for more details regarding things specific to outbound mode.
+在出站模式下，也称为“套接字应用程序”（或套接字客户端），FreeSWITCH™会向另一个进程建立出站连接（类似于Asterisk的FAGI模型）。使用出站连接，当发生特定事件时，您可以让FreeSWITCH™调用您自己的应用程序。有关出站模式的特定事项，请参阅[Event Socket Outbound](../Client-and-Developer-Interfaces/Event-Socket-Library/Event-Socket-Outbound_3375460.mdx#faq)。
 
-## 3\. Command Documentation
+## 3. 命令文档
 
-The following section aims at documenting all commands that can be sent. This section is a work in progress.
+以下章节旨在记录所有可发送的命令。此章节仍在进行中。
 
 ### 3.1 api
 
-Send a [FreeSWITCH API](../Introduction/FreeSWITCH-API_30867723.mdx#-freeswitch--freeswitch-api-) command, **blocking mode**. That is, the FreeSWITCH instance won't accept any new commands until the `api` command finished execution.
+发送一个 [FreeSWITCH API](../Introduction/FreeSWITCH-API_30867723.mdx#-freeswitch--freeswitch-api-) 命令，**阻塞模式**。这意味着在 `api` 命令执行完成之前，FreeSWITCH 实例不会接受任何新的命令。
 
-**Usage**
+**使用方法**
 
 ```xml
 api <command> <arg>
 ```
 
   
-**Examples**
+**示例**
 
 ```xml
-api originate sofia/mydomain.com/ext@yourvsp.com 1000   # connect sip:ext@yourvsp.com to extension 1000
+api originate sofia/mydomain.com/ext@yourvsp.com 1000   # 将 sip:ext@yourvsp.com 连接到分机1000
 api msleep 5000
 ```
 
 ### 3.2 bgapi
 
-Send a [FreeSWITCH API](../Introduction/FreeSWITCH-API_30867723.mdx#-freeswitch--freeswitch-api-) command, **non-blocking mode**. This will let you execute a job in the background, and the result will be sent as an event with an indicated UUID to match the reply to the command.
+发送一个 [FreeSWITCH API](../Introduction/FreeSWITCH-API_30867723.mdx#-freeswitch--freeswitch-api-) 命令，**非阻塞模式**。这将允许您在后台执行一个作业，并以标识的UUID作为事件发送结果以匹配该命令的响应。
 
-**Usage**
+**使用方法**
 
 ```xml
 bgapi <command> <arg>
 ```
 
-The same API commands available as with the `api` command, however the server returns immediately and is available for processing more commands.
+和 `api` 命令一样，这里提供了相同的API命令，然而服务器会立即返回并可用于处理更多命令。
 
-Example return value:
+示例返回值：
 
 ```xml
 Content-Type: command/reply
 Reply-Text: +OK Job-UUID: c7709e9c-1517-11dc-842a-d3a3942d3d63
 ```
 
-When the command is done executing, FreeSWITCH fires an event with the result and you can compare that to the Job-UUID to see what the result was. In order to receive this event, you will need to subscribe to [BACKGROUND_JOB](../Introduction/Event-System/Event-List_7143557.mdx#nat) events.
+当命令执行完毕时，FreeSWITCH会触发一个事件，您可以将其与Job-UUID进行比较以查看结果是什么。为了接收此事件，您需要订阅 [BACKGROUND_JOB](../Introduction/Event-System/Event-List_7143557.mdx#nat) 事件。
 
-If you want to set your own custom Job-UUID over plain socket:
+如果您希望在普通套接字上设置自定义的Job-UUID：
 
 ```xml
 bgapi status
 Job-UUID: d8c7f660-37a6-4e73-9170-1a731c442148
 ```
 
-Reply:
+响应：
 
 ```xml
 Content-Type: command/reply
@@ -240,9 +235,9 @@ Job-UUID: d8c7f660-37a6-4e73-9170-1a731c442148
 
 ### 3.3 linger
 
-Tells FreeSWITCH not to close the socket connection when a channel hangs up. Instead, it keeps the socket connection open until the last event related to the channel has been received by the socket client.
+告诉FreeSWITCH在通道挂断时不要关闭套接字连接。相反，它会保持套接字连接的开放状态，直到与通道相关的最后一个事件被套接字客户端接收到。
 
-**Usage**
+**用法**
 
 ```xml
 linger
@@ -250,32 +245,31 @@ linger
 
 ### 3.4 nolinger
 
-Disable socket lingering. See **linger** above.
+禁用套接字滞留。请参见上文的**linger**。
 
-**Usage**
+**用法**
 
 ```xml
 nolinger
 ```
 
-### 3.5 event
+### 3.5 事件
 
-The `event` command is used to subscribe on [events from FreeSWITCH](../Introduction/Event-System/index.mdx#0-about) (plain text, XML, or JSON output format)
+`event`命令用于订阅来自FreeSWITCH的事件（以纯文本、XML或JSON输出格式）
 
-**Usage**
+**用法**
 
 ```xml
-event plain <list of events to log or all>
-event xml <list of events to log or all>
-event json <list of events to log or all>
+event plain <要记录的事件列表或全部>
+event xml <要记录的事件列表或全部>
+event json <要记录的事件列表或全部>
 ```
 
-You may specify any number events on the same line that should be separated with spaces. 
+您可以在同一行上指定任意数量的事件，它们之间应以空格分隔。
 
-See [Event List](../Introduction/Event-System/Event-List_7143557.mdx#nat) page for a comprehensive list of events.
+请参阅[事件列表](../Introduction/Event-System/Event-List_7143557.mdx#nat)页面，了解详细的事件列表。
 
-  
-**Examples**
+**示例**
 
 ```xml
 event plain ALL
@@ -284,66 +278,66 @@ event xml ALL
 event json CHANNEL_ANSWER
 ```
 
-**Subsequent calls to `event` won't override the previous event sets**. Supposing, you've first registered for `DTMF`,
+**对`event`的后续调用不会覆盖之前设置的事件集**。假设，您首先注册了`DTMF`，
 
 ```xml
 event plain DTMF
 ```
 
-but you want to register for `CHANNEL_ANSWER` also, then it is enough to do
+但您还想注册`CHANNEL_ANSWER`，那么只需执行以下操作即可
 
 ```xml
 event plain CHANNEL_ANSWER
 ```
 
-and you will continue to receive `DTMF` along with `CHANNEL_ANSWER`.
+您将继续接收`DTMF`和`CHANNEL_ANSWER`。
 
-#### 3.5.1 `event plain` format
+#### 3.5.1 `event plain` 格式
 
-[Events](../Introduction/Event-System/Events_32178330.mdx#0-about) consist of
+[事件](../Introduction/Event-System/Events_32178330.mdx#0-about)由以下部分组成：
 
-* a **header section**, and
-* an optional **event body**.
+* **头部部分**，
+* 可选的**事件正文**。
 
-##### 3.5.1.1 Header section
+##### 3.5.1.1 头部部分
 
-Headers are key/value pairs separated by a colon, and headers are separated by 1 line feed.
+头部由键值对组成，用冒号分隔，头部之间用一个换行符分隔。
 
-Some header values may contain multiple line breaks, but because FreeSWITCH URL-encodes all of them, these multi-line header values will still appear as 1 line.
+部分头部值可能包含多个换行符，但由于FreeSWITCH对所有头部进行URL编码，这些多行头部值仍然会显示为一行。
 
-**Example of multi-line header values** Expand source 
+**多行头部值示例** 展开源代码
 
 ```xml
-# header BEFORE URL-encoding
-variable_switch_r_sdp: v=0
-o=UAC 6407 6867 IN IP4 192.168.27.72
-s=SIP Media Capabilities
-c=IN IP4 61.231.8.102
-t=0 0
-m=audio 12916 RTP/AVP 0 18 101
-a=rtpmap:0 PCMU/8000
-a=rtpmap:18 G729/8000
-a=fmtp:18 annexb=no
-a=rtpmap:101 telephone-event/8000
-a=fmtp:101 0-15
-a=maxptime:20
+# URL编码前的头部
+variable_switch_r_sdp：v = 0
+o = UAC 6407 6867 IN IP4 192.168.27.72
+s = SIP媒体能力
+c = IN IP4 61.231.8.102
+t = 0 0
+m =音频12916 RTP / AVP 0 18 101
+a = rtpmap：0 PCMU / 8000
+a = rtpmap：18 G729 / 8000
+a = fmtp：18 annexb = no
+a = rtpmap：101 telephone-event / 8000
+a = fmtp：101 0-15
+a = maxptime：20
 
-# header AFTER URL-encoding
-variable_switch_r_sdp: v%3D0%0D%0Ao%3DUAC%206407%206867%20IN%20IP4%20192.168.27.72%0D%0As%3DSIP%20Media%20Capabilities%0D%0Ac%3DIN%20IP4%2061.231.8.102%0D%0At%3D0%200%0D%0Am%3Daudio%2012916%20RTP/AVP%200%2018%20101%0D%0Aa%3Drtpmap%3A0%20PCMU/8000%0D%0Aa%3Drtpmap%3A18%20G729/8000%0D%0Aa%3Dfmtp%3A18%20annexb%3Dno%0D%0Aa%3Drtpmap%3A101%20telephone-event/8000%0D%0Aa%3Dfmtp%3A101%200-15%0D%0Aa%3Dmaxptime%3A20%0D%0A
+# URL编码后的头部
+variable_switch_r_sdp：v%3D0%0D%0Ao%3DUAC%206407%206867%20IN%20IP4%20192.168.27.72%0D%0As%3DSIP%20Media%20Capabilities%0D%0Ac%3DIN%20IP4%2061.231.8.102%0D%0At%3D0%200%0D%0Am%3Daudio%2012916%20RTP/AVP%200%2018%20101%0D%0Aa%3Drtpmap%3A0%20PCMU/8000%0D%0Aa%3Drtpmap%3A18%20G729/8000%0D%0Aa%3Dfmtp%3A18%20annexb%3Dno%0D%0Aa%3Drtpmap%3A101%20telephone-event/8000%0D%0Aa%3Dfmtp%3A101%200-15%0D%0Aa%3Dmaxptime%3A20%0D%0A
 
 ```
 
-##### 3.5.1.2 Event body
+##### 3.5.1.2 事件主体
 
-Events may have a body, carrying additional content generated with the event. It is usually not in the key/value form of headers, and may contain its own native formatting. 
+事件可能有一个主体，携带与事件生成的附加内容。它通常不是以键/值形式的头部，可能包含自己的原生格式。
 
-The presence of `Content-Length` in the **header section** is an indicator that there is an **event body**. The value of the `Content-Length` header is the size of the **body** in bytes.
+**头部部分**中出现的`Content-Length`是指示是否有**事件主体**的指示器。`Content-Length`头部的值是**主体**的大小（以字节为单位）。
 
-**(e.g., DETECTED\_SPEECH event example from Event List page**
+（例如，来自事件列表页面的DETECTED\_SPEECH事件示例
 
 ```xml
 Speech-Type: detected-speech
-Event-Name: DETECTED_SPEECH
+Event-Name: 检测到语音
 Core-UUID: aac0f73e-b822-e54c-a02a-06a839ca3e5a
 FreeSWITCH-Hostname: AMONROY
 FreeSWITCH-IPv4: 192.168.1.220
@@ -373,31 +367,29 @@ Content-Length: 435
 </result>
 ```
 
-  
 ---
 
-**Event structure**
+**事件结构**
 
 ```xml
-Content-Length: <size>\n                                         | Headers in the TCP/IP
-Content-Type: text/event-plain\n                                 | packet's payload.
+Content-Length: <size>\n                                         | TCP/IP报文头
+Content-Type: text/event-plain\n                                 | 负载的报文类型。
 \n
-event-hdr1: a\n       <-- size starts here    | FreeSWITCH       | Event headers and body
-event-hdr2: b\n                               | event headers    | in the the body of the
-...                                           |                  | TCP/IP packet's body.
+event-hdr1: a\n       <-- size starts here    | FreeSWITCH       | 事件头和正文
+event-hdr2: b\n                               | 事件头           | 在TCP/IP报文的正文部分。
+...                                           |                  |
 event-hdrN: x\n                               *----------------  |
 \n                    <-- size ends here                         |
 body line 1               (if no body)        *----------------  |
 ...                                           | FreeSWITCH       |
-body line N           <-- or here if there's  | event body       |
+body line N           <-- or here if there's  | 事件正文         |
                           a body              |                  |
-
---------------------------------------------------------------------
-\n is a line feed in the form of CRLF.
 ```
 
-  
-**Example event: BACKGROUND\_JOB**
+\n 是以CRLF形式的换行符。
+```
+
+**示例事件：BACKGROUND_JOB**
 
 ```xml
 Content-Length: 625
@@ -422,39 +414,41 @@ Content-Length: 41
 +OK 7f4de4bc-17d7-11dd-b7a0-db4edd065621
 ```
 
-#### 3.5.2 `event plain` parsing instructions
+#### 3.5.2 `event plain` 解析说明
 
-1. **Look for 2 line feeds** or end-of-line sequences(EOL)  
-TODO The original text contains LF, the FreeSWITCH book says CRLF. Figure out which is correct.
-2. **Get the event data**  
-Read exactly as many bytes from the socket as specified in the `Content-Length` header  
-Note that since this is TCP, this may take more than one read so if you are supposed to read 200 bytes and the next read only returns 50, you must continue to read another 150, and so on until you have read 200 bytes or the socket has an error.  
-Once you have read all the bytes in the `Content-Length` header, the next packet will start on the subsequent byte.
-3. **Parse event data**  
-Is the `Content-Length` header among the event headers? (Implying that there is an event body.)  
-   1. **No** → All done.  
-   2. **Yes** →  
-         1. Evaluate `Content-Length` value  
-         2. Read that many bytes  
-         `Content-Length` is the length of the event (in bytes) beginning **AFTER** the double LF line ("\\n\\n") of the event header.
+1. **查找2个换行符**或行尾序列（EOL） 
+TODO：原始文本包含LF，FreeSWITCH手册说的是CRLF，弄清哪个是正确的。
 
-#### 3.5.3 Special Cases
+2. **获取事件数据** 
+从套接字中读取与`Content-Length`头部中指定的字节数量完全相同的字节。 
+请注意，由于这是TCP，这可能需要多次读取，因此如果你需要读取200个字节，而下一次读取只返回50个字节，你必须继续读取另外的150个字节，依此类推，直到你读取了200个字节或套接字发生错误。 
+一旦你读取了`Content-Length`头部中的所有字节，下一个数据包将从下一个字节开始。
+
+3. **解析事件数据** 
+`Content-Length`头部是否在事件头部之中？（意味着存在事件主体。） 
+   1. **否** → 全部完成。
+   2. **是** → 
+         1. 评估`Content-Length`的值。
+         2. 读取相应数量的字节。
+         `Content-Length`是事件的长度（以字节为单位），始于事件头部的双重LF行（"\\n\\n"）之后。
+
+#### 3.5.3 特殊情况
 
 ##### 3.5.3.1 myevents
 
-The 'myevents' subscription allows your inbound socket connection to behave like an outbound socket connect. It will "lock on" to the events for a particular uuid and will ignore all other events, closing the socket when the channel goes away or closing the channel when the socket disconnects and all applications have finished executing.
+'myevents'订阅使得你的入站套接字连接行为类似于出站套接字连接。它将"锁定"到特定uuid的事件，并忽略所有其他事件，在通道消失时关闭套接字，或在套接字断开连接并且所有应用程序执行完成时关闭通道。
 
-**Usage**
+**用法**
 
 ```xml
 myevents <uuid>
 ```
 
-Once the socket connection has locked on to the events for this particular uuid it will NEVER see any events that are not related to the channel, even if subsequent **event** commands are sent. If you need to monitor a specific channel/uuid _and_ you need watch for other events as well then it is best to use a filter.
+一旦套接字连接锁定到这个特定uuid的事件，它将永远不会看到与通道无关的任何事件，即使后续发送了**event**命令。如果你需要监控特定的通道/uuid，同时也需要观察其他事件，那么最好使用过滤器。
 
-You can also set the event format (plain, xml or json):
+你也可以设置事件格式（plain、xml或json）：
 
-**Usage**
+**用法**
 
 ```xml
 myevents plain <uuid>
@@ -462,34 +456,34 @@ myevents json <uuid>
 myevents xml <uuid>
 ```
 
-The default format is plain.
+默认格式是plain。
 
 ##### 3.5.3.2 divert_events
 
-The divert\_events switch is available to allow events that an embedded script would expect to get in the inputcallback to be diverted to the event socket.
+divert\_events开关可用于将内嵌脚本期望从inputcallback中获取的事件转到事件套接字。
 
-**Examples**
+**示例**
 
 ```xml
 divert_events on
 divert_events off
 ```
 
-An inputcallback can be registered in an embedded script using setInputCallback(). Setting divert\_events to "on" can be used for chat messages like gtalk channel, ASR events and others.
+可以使用setInputCallback()在内嵌脚本中注册inputcallback。将divert\_events设置为"on"可以用于类似gtalk频道的聊天消息、ASR事件等。
 
 ### 3.6 filter
 
-Specify event types to listen for. Note, this is not a filter out but rather a "filter in," that is, when a filter is applied only the filtered values are received. Multiple filters on a socket connection are allowed.
+指定要监听的事件类型。注意，这不是一个过滤器，而是一个"筛选器"，即应用筛选器后只接收筛选后的值。套接字连接可以有多个筛选器。
 
-**Usage**
+**用法**
 
 ```xml
 filter <EventHeader> <ValueToFilter>
 ```
 
-Example:
+示例：
 
-The following example will subscribe to all events and then create two filters, one to listen for HEARTBEATS and one to listen for CHANNEL\_EXECUTE events.
+以下示例将订阅所有事件，然后创建两个筛选器，一个用于监听HEARTBEATS事件，另一个用于监听CHANNEL\_EXECUTE事件。
 
 ```xml
   events plain all
@@ -511,74 +505,91 @@ The following example will subscribe to all events and then create two filters, 
 
 ```
 
-Now only HEARTBEAT and CHANNEL\_EXECUTE events will be received. You can filter on any of the event headers. To filter for a specific channel you will need to use the uuid:
+现在只有HEARTBEAT和CHANNEL\_EXECUTE事件将被接收。你可以根据任何事件头部进行筛选。要筛选特定的通道，你需要使用uuid：
 
-  filter Unique-ID d29a070f-40ff-43d8-8b9d-d369b2389dfe 
+  filter Unique-ID d29a070f-40ff-43d8-8b9d-d369b2389dfe
 
-This method is an alternative to the [myevents](https://wiki.freeswitch.org/wiki/Mod%5Fevent%5Fsocket#Special%5FCase%5F-%5F.27myevents.27 "Mod event socket") event type. If you need _only_ the events for a specific channel then use **myevents**, otherwise use a combination of filters to narrow down the events you wish to receive on the socket.
+这种方法是 [myevents](https://wiki.freeswitch.org/wiki/Mod%5Fevent%5Fsocket#Special%5FCase%5F-%5F.27myevents.27 "Mod event socket") 事件类型的替代方法。如果您只需要特定通道的事件，请使用 **myevents**。否则，可以使用多个过滤器的组合来缩小您希望在套接字上接收的事件范围。
 
-To filter multiple unique IDs, you can just add another filter for events for each UUID. This can be useful for example if you want to receive start/stop-talking events for multiple users on a particular conference. ``
+要筛选多个唯一的ID，您可以为每个UUID添加一个事件过滤器。例如，如果您希望接收特定会议上多个用户的开始/停止讲话事件，则这非常有用。
 
-  filter plain all
-  filter plain CUSTOM conference::maintenance
-  filter Unique-ID $participantB
-  filter Unique-ID $participantA
-  filter Unique-ID $participantC
-
-  
-This will give you events for Participant A,B and C on any conference. To receive events for all users on a conference you can use something like:`filter Conference-Unique-ID $ConfUUID`
-
-You can filter on any of the parameters you get in a freeSWITCH event:
-
-  filter plain all
-  filter call-direction Inbound
-  filter Event-Calling-File mod_conference.c
-  filter Conference-Unique-ID $ConfUUID
-
-You can use them individually or compound them depending on whatever end result you desire for the type of events you want to receive
-
-### 3.7 filter delete
-
-Specify the events which you want to revoke the filter. filter delete can be used when some filters are applied wrongly or when there is no use of the filter.
-
-Usage:
-
-  filter delete &lt;EventHeader> &lt;ValueToFilter>
-
-Example:
-
-  filter delete Event-Name HEARTBEAT
-
-Now, you will no longer receive HEARTBEAT events. You can delete any filter that is applied by this way.
-
-  filter delete Unique-ID d29a070f-40ff-43d8-8b9d-d369b2389dfe
-
-This is to delete the filter which is applied for the given unique-id. After this, you won't receive any events for this unique-id.
-
-  filter delete Unique-ID
-
-This deletes all the filters which are applied based on the unique-id.
-
-### 3.8 sendevent
-
-Send an event into the event system (multi line input for headers).
-
-```xml
-sendevent <event-name>
-<headers>
-
-<body>
+```plaintext
+filter plain all
+filter plain CUSTOM conference::maintenance
+filter Unique-ID $participantB
+filter Unique-ID $participantA
+filter Unique-ID $participantC
 ```
 
-Some phones require authentication for NOTIFY requests. FreeSWITCH can respond to a digest challenge if reverse authentication credentials are supplied for the user. See [XML User Directory](../Directory/XML-User-Directory/index.mdx#about).
+这将为任何会议上的参与者 A、B 和 C 提供事件。要接收会议上所有用户的事件，您可以使用类似以下的过滤器：`filter Conference-Unique-ID $ConfUUID`。
 
-Uncategorized content
+您可以筛选任意 freeSWITCH 事件中的参数：
 
-I've not found any documentation of any additional event headers, hopefully someone else with add that information. The events themselves can be found here: [Event List](https://wiki.freeswitch.org/wiki/Event%5FList "Event List")
+```plaintext
+filter plain all
+filter call-direction Inbound
+filter Event-Calling-File mod_conference.c
+filter Conference-Unique-ID $ConfUUID
+```
 
+您可以单独使用它们，或者根据您希望接收的事件类型进行组合。
+
+### 3.7 删除过滤器
+
+指定要撤销过滤器的事件。当某些过滤器应用错误或者过滤器没有用处时，可以使用 filter delete。
+
+用法：
+
+```plaintext
+filter delete <EventHeader> <ValueToFilter>
+```
+
+示例：
+
+```plaintext
+filter delete Event-Name HEARTBEAT
+```
+
+现在，您将不再接收 HEARTBEAT 事件。您可以通过这种方式删除任何已应用的过滤器。
+
+```plaintext
+filter delete Unique-ID d29a070f-40ff-43d8-8b9d-d369b2389dfe
+```
+
+这是用于删除已应用于给定唯一标识符的过滤器的操作。删除后，您将不会收到与此唯一标识符相关的任何事件。
+
+删除过滤器的命令：
+
+```xml
+filter delete Unique-ID
+```
+
+这将删除所有基于唯一标识符应用的过滤器。
+
+### 3.8 发送事件
+
+将事件发送到事件系统（标题部分可多行输入）。
+
+```xml
+sendevent <事件名称>
+<标题>
+
+<正文>
+```
+
+某些手机要求对于NOTIFY请求进行身份验证。如果向用户提供了反向身份验证凭据，FreeSWITCH可以响应摘要挑战。有关详情，请参阅[XML用户目录](../Directory/XML-User-Directory/index.mdx#about)。
+
+未分类内容
+
+我没有找到有关任何其他事件标头的文档，希望其他人可以提供这些信息。有关事件本身，请参阅：[事件列表](https://wiki.freeswitch.org/wiki/Event%5FList "事件列表")
+
+发送CHANNEL_HANGUP事件：
+
+```xml
 sendevent CHANNEL_HANGUP
+```
 
-Something that was undocumented but is supported; SIP INFO messages can be sent to every IP you need.
+以下是一个未记录但支持的例子；可以将SIP INFO消息发送到所需的每个IP。
 
 ```xml
 sendevent SEND_INFO
@@ -591,20 +602,20 @@ content-length: 15
 test
 ```
 
-3.8.1 Examples
+3.8.1 示例
 
-##### 3.8.1.1 Switch phone MWI led (tested on yealink)
+##### 3.8.1.1 切换电话的MWI指示灯（在yealink上测试过）
 
-For [MWI](http://en.wikipedia.org/wiki/Message%5FWaiting%5FIndicator) you make the FreeSWITCH event SWITCH\_EVENT\_MESSAGE\_WAITING with headers:
+对于[消息等待指示器（MWI）](http://en.wikipedia.org/wiki/Message%5FWaiting%5FIndicator)，您可以使用以下标题让FreeSWITCH触发SWITCH\_EVENT\_MESSAGE\_WAITING事件：
 
-MWI-Messages-Waiting (yes/no)
-MWI-Message-Account &lt;any sip url you want>
-MWI-Voice-Message x/y (a/b)
-read/unread (urgent read/urgent unread)
+- MWI-Messages-Waiting (yes/no)
+- MWI-Message-Account（任何您想要的SIP URL）
+- MWI-Voice-Message x/y（a/b）
+- read/unread（urgent read/urgent unread）
 
-No Message:
+无消息：
 
-**MWI No Message**
+**无消息 MWI**
 
 ```xml
 sendevent  message_waiting
@@ -612,9 +623,9 @@ MWI-Messages-Waiting: no
 MWI-Message-Account: sip:user1@192.168.1.14
 ```
 
-Some Message:
+有消息：
 
-**MWI With Message**
+**带有消息的 MWI**
 
 ```xml
 sendevent  message_waiting
@@ -623,9 +634,9 @@ MWI-Message-Account: sip:user1@192.168.1.14
 MWI-Voice-Message: 0/1 (0/0)
 ```
 
-##### 3.8.1.2 Make Snom phones reread their settings from the settings server
+##### 3.8.1.2 使 Snom 电话重新从设置服务器读取其设置
 
-**Snom NOTIFY**
+**Snom 通知**
 
 ```xml
 sendevent NOTIFY
@@ -636,9 +647,9 @@ host: 192.168.10.4
 content-type: application/simple-message-summary
 ```
 
-##### 3.8.1.3 `sendevent` examples with a message body
+##### 3.8.1.3 `sendevent`示例与消息主体
 
-The length of the body is specified by the `Content-Length` header.
+消息主体的长度由 `Content-Length` 头部指定。
 
 ```xml
 sendevent NOTIFY
@@ -652,9 +663,9 @@ content-length: 2
 OK
 ```
 
-or
+或者
 
-**Send Message**
+**发送消息**
 
 ```xml
 sendevent SEND_MESSAGE
@@ -667,9 +678,9 @@ host: 99.157.44.194
 OK
 ```
 
-Results in a packet like this:
+结果如下:
 
-**Send Message result**
+**发送消息结果**
 
 ```xml
 MESSAGE sip:1005@99.157.44.203 SIP/2.0
@@ -689,108 +700,108 @@ Content-Length: 2
 OK
 ```
 
-##### **3.8.1.4 SIP Proxy Example** 
+##### **3.8.1.4 SIP 代理示例**
 
-To send through a proxy, use the event headers: contact-uri, to-uri, and from-uri  
-In this example, the SIP proxy is 192.168.207.156:5060 and the UA can be reached at 1002@192.168.0.99:11710
+要通过代理发送，请使用以下事件头: contact-uri、to-uri 和 from-uri
+在本示例中，SIP 代理是 192.168.207.156:5060，UA 可以通过 1002@192.168.0.99:11710 访问
 
 ```xml
-sendevent NOTIFY
-profile: internal
-content-type: application/simple-message-summary
-event-string: check-sync
-user: 1002
-host: 3.local
-to-uri: 1002@3.local
-from-uri: 1002@3.local
-contact-uri: sip:1002@192.168.0.99:11710;fs_path=sip:192.168.207.156:5060
+发送事件 NOTIFY
+配置文件: internal
+内容类型: application/simple-message-summary
+事件字符串: check-sync
+用户: 1002
+主机: 3.local
+目标URI: 1002@3.local
+来源URI: 1002@3.local
+联系人URI: sip:1002@192.168.0.99:11710;fs_path=sip:192.168.207.156:5060
 ```
 
-Another example with a notify:
+另一个带有 NOTIFY 的例子:
 
-**NOTIFY Example**
+**NOTIFY 例子**
 
 ```xml
-sendevent NOTIFY
-profile: internal
-content-type: application/simple-message-summary
-event-string: check-sync
-user: 1005
-host: 99.157.44.194
-content-length: 2
+发送事件 NOTIFY
+配置文件: internal
+内容类型: application/simple-message-summary
+事件字符串: check-sync
+用户: 1005
+主机: 99.157.44.194
+内容长度: 2
 
 OK
 ```
 
-Results in a packet like this:
+结果如下所示的数据包:
 
-**NOTIFY Result**
+**NOTIFY 结果**
 
 ```xml
 NOTIFY sip:1005@99.157.44.203 SIP/2.0
-Via: SIP/2.0/UDP 99.157.44.194;rport;branch=z9hG4bKpH2DtBDcDtg0N
-Max-Forwards: 70
-From: <sip:1005@99.157.44.194>;tag=Dy3c6Q1y15v5S
-To: <sip:1005@99.157.44.194>
-Call-ID: 129d1446-0063-122c-15aa-001a923f6a0f
-CSeq: 104766492 NOTIFY
-Contact: <sip:mod_sofia@99.157.44.194:5060>
-User-Agent: FreeSWITCH-mod_sofia/1.0.trunk-9578:9586
-Allow: INVITE, ACK, BYE, CANCEL, OPTIONS, PRACK, MESSAGE, SUBSCRIBE, NOTIFY, REFER, UPDATE, REGISTER, INFO, PUBLISH
-Supported: 100rel, timer, precondition, path, replaces
-Event: check-sync
-Allow-Events: talk, presence, dialog, call-info, sla, include-session-description, presence.winfo, message-summary
-Subscription-State: terminated;timeout
-Content-Type: application/simple-message-summary
-Content-Length: 2
+经过: SIP/2.0/UDP 99.157.44.194;rport;branch=z9hG4bKpH2DtBDcDtg0N
+最大转发次数: 70
+从: <sip:1005@99.157.44.194>;tag=Dy3c6Q1y15v5S
+至: <sip:1005@99.157.44.194>
+呼叫标识: 129d1446-0063-122c-15aa-001a923f6a0f
+序列号: 104766492 NOTIFY
+联系人: <sip:mod_sofia@99.157.44.194:5060>
+用户代理: FreeSWITCH-mod_sofia/1.0.trunk-9578:9586
+允许: INVITE, ACK, BYE, CANCEL, OPTIONS, PRACK, MESSAGE, SUBSCRIBE, NOTIFY, REFER, UPDATE, REGISTER, INFO, PUBLISH
+支持: 100rel, timer, precondition, path, replaces
+事件: check-sync
+允许的事件: talk, presence, dialog, call-info, sla, include-session-description, presence.winfo, message-summary
+订阅状态: 终止;超时
+内容类型: application/simple-message-summary
+内容长度: 2
 
 OK
 ```
 
-##### 3.8.1.5 Sipura/Linksys/Cisco phone or ATA to resync config with a specified profile URL
+##### 3.8.1.5 Sipura/Linksys/Cisco电话或ATA与指定配置文件URL同步
 
-**Cisco Resync**
+**Cisco 同步**
 
 ```xml
-sendevent NOTIFY
-profile: internal
-event-string: resync;profile=http://10.20.30.40/profile.xml
-user: 1000
-host: 10.20.30.40
-content-type: application/simple-message-summary
-to-uri: sip:1000@10.20.30.40
-from-uri: sip:1000@10.20.30.40 
+发送事件 NOTIFY
+配置文件: internal
+事件字符串: resync;profile=http://10.20.30.40/profile.xml
+用户: 1000
+主机: 10.20.30.40
+内容类型: application/simple-message-summary
+目标URI: sip:1000@10.20.30.40
+来源URI: sip:1000@10.20.30.40
 ```
 
-Results in a packet like this:
+结果如下所示的数据包:
 
-**Cisco Resync result**
+**Cisco 同步结果**
 
 ```xml
-NOTIFY sip:1000@10.20.30.41:5060 SIP/2.0
-Via: SIP/2.0/UDP 10.20.30.40:5060;rport;branch=z9hG4bKyK4gHN28Hpyaa
-Max-Forwards: 70
-From: <sip:1000@10.20.30.40>;tag=FDXet6B470F6B
-To: <sip:1000@10.20.30.40>
-Call-ID: 19ff59fb-2cfc-1230-66b7-00199988ac0c
+通知 sip:1000@10.20.30.41:5060 SIP/2.0
+经由: SIP/2.0/UDP 10.20.30.40:5060;rport;branch=z9hG4bKyK4gHN28Hpyaa
+最大转发数: 70
+来自: <sip:1000@10.20.30.40>;tag=FDXet6B470F6B
+目标: <sip:1000@10.20.30.40>
+呼叫标识: 19ff59fb-2cfc-1230-66b7-00199988ac0c
 CSeq: 29295547 NOTIFY
-Contact: <sip:mod_sofia@10.20.30.40:5060>
-User-Agent: FreeSWITCH-mod_sofia/1.0.head-git-12f2bdf 2011-11-28 16-45-59 -0600
-Allow: INVITE, ACK, BYE, CANCEL, OPTIONS, MESSAGE, UPDATE, INFO, REGISTER, REFER, NOTIFY, PUBLISH, SUBSCRIBE
-Supported: timer, precondition, path, replaces
-Event: resync;profile=http://10.20.30.40/profile.xml
-Allow-Events: talk, hold, presence, dialog, line-seize, call-info, sla, include-session-description, presence.winfo, message-summary, refer
-Subscription-State: terminated;reason=timeout
-Content-Type: application/simple-message-summary
-Content-Length: 0 
+联系方式: <sip:mod_sofia@10.20.30.40:5060>
+用户代理: FreeSWITCH-mod_sofia/1.0.head-git-12f2bdf 2011-11-28 16-45-59 -0600
+允许: INVITE, ACK, BYE, CANCEL, OPTIONS, MESSAGE, UPDATE, INFO, REGISTER, REFER, NOTIFY, PUBLISH, SUBSCRIBE
+支持的功能: timer, precondition, path, replaces
+事件: resync;profile=http://10.20.30.40/profile.xml
+允许的事件: talk, hold, presence, dialog, line-seize, call-info, sla, include-session-description, presence.winfo, message-summary, refer
+订阅状态: terminated;reason=timeout
+内容类型: application/simple-message-summary
+内容长度: 0
 ```
 
-* If 'Auth Resync-Reboot' is set to yes (default) in the phone than you have to specify the `reverse-auth-user` and `reverse-auth-pass` fields
-* If you only put '`event-string: resync`' in the body then the unit will use its stored profile URI
+* 如果电话中的 'Auth Resync-Reboot' 字段设置为是（默认），那么您必须指定 `reverse-auth-user` 和 `reverse-auth-pass` 字段
+* 如果您只在正文中放入 '`event-string: resync`'，那么该设备将使用存储的配置文件URI
 
-##### 3.8.1.6 Example usage for CSTA event:
+##### 3.8.1.6 CSTA事件的示例用法:
 
-**CSTA Event**
+**CSTA事件**
 
 ```xml
 sendevent SWITCH_EVENT_PHONE_FEATURE
@@ -802,13 +813,13 @@ Feature-Event: DoNotDisturbEvent
 doNotDisturbOn: on
 ```
 
-##### 3.8.1.7 Display a text message on a Snom 370 or Snom 820
+##### 3.8.1.7 在Snom 370或Snom 820上显示文本消息
 
-The message must be of type "text/plain".
+消息的类型必须是"text/plain"。
 
 ### `3.9 sendmsg`
 
-**Usage**
+**用法**
 
 ```xml
 sendmsg <UUID>
@@ -817,16 +828,15 @@ sendmsg <UUID>
 <body>
 ```
 
-`sendmsg` is used to control the behavior of FreeSWITCH. `UUID` is mandatory, and it refers to a specific call (i.e., a channel or call leg or session; see [Call Legs](../Introduction/Call-Legs_7143972.mdx#0-about) and [Creating a New Endpoint: Lifecycle of a Session](../Community/Contributing-Code/Creating-New-Modules/9634354.mdx#0-about)).
+`sendmsg` 用于控制 FreeSWITCH 的行为。`UUID` 是必需的，并且它是指特定的呼叫（即通道、呼叫腿或会话；参见[呼叫腿](../Introduction/Call-Legs_7143972.mdx#0-about)和[创建新端点：会话生命周期](../Community/Contributing-Code/Creating-New-Modules/9634354.mdx#0-about)）。
 
-TODO What does this line mean? "_originate a call directly to park by making an ext the ext part of the originate command &park()_"
+TODO 这一行的意思是什么？"_originate a call directly to park by making an ext the ext part of the originate command &park()_"
 
-**All `sendmsg` commands must be followed by 2 returns.**
+**所有 `sendmsg` 命令后面必须跟着两个换行符。**
 
-Since messaging format is similar to [RFC 2822](https://tools.ietf.org/html/rfc2822), if you are using any libraries that follow the line wrapping recommendation of [RFC 2822](https://tools.ietf.org/html/rfc2822) then make sure that you disable line wrapping as FreeSWITCH will ignore wrapped lines. See ["FreeSWITCH EventSocket header length"](http://blog.godson.in/2010/12/freeswitch-eventsocket-header-length.html) post for more.
+由于消息格式与[RFC 2822](https://tools.ietf.org/html/rfc2822)类似，如果您正在使用任何遵循[RFC 2822](https://tools.ietf.org/html/rfc2822)的换行建议的库，请确保禁用换行，因为FreeSWITCH将忽略换行的行。了解更多信息，请参见["FreeSWITCH EventSocket 头长度"](http://blog.godson.in/2010/12/freeswitch-eventsocket-header-length.html)文章。
 
-  
-**Example without a body (note the extra line feed at the end!)**
+**没有正文的示例（注意最后的额外换行符！）**
 
 ```xml
 sendmsg <uuid>
@@ -837,33 +847,32 @@ execute-app-arg: /tmp/test.wav
 
 ```
 
-#### 3.9.1 Commands
+#### 3.9.1 命令
 
 ##### 3.9.1.1 `execute`
 
-`execute` is used to invoke dialplan applications, mirroring the function of the `ESLconnection` object's `execute` method (in the [Event Socket Library](../Client-and-Developer-Interfaces/Event-Socket-Library/index.mdx#-new-)).
+`execute` 用于调用拨号计划应用程序，类似于`ESLconnection`对象的`execute`方法（在[Event Socket Library](../Client-and-Developer-Interfaces/Event-Socket-Library/index.mdx#-new-)中）。
 
-Check the [XML Dialplan](../Dialplan/XML-Dialplan/index.mdx#about) and [mod\_dptools](./mod_dptools_1970333.mdx#-c) pages for available applications.
+请查看[XML拨号计划](../Dialplan/XML-Dialplan/index.mdx#about)和[mod_dptools](./mod_dptools_1970333.mdx#-c)页面以了解可用的应用程序。
 
-  
-Force synchronous operations in async mode
+在异步模式中强制同步操作
 
-If you are using `async` outbound mode, you need to pay attention to potential race conditions, as the commands you send may not execute in sequential order.
+如果您正在使用`async`出站模式，需要注意潜在的竞争条件，因为您发送的命令可能不会按顺序执行。
 
-You may force the command to wait by setting `event-lock` until the critical or long-running command finishes:
+你可以通过设置 `event-lock` 来强制命令等待，直到关键或长时间运行的命令完成：
 
 ```xml
-sendmsg 
+sendmsg
 call-command: set
 execute-app-name: foo=bar\n\n
-event-lock:true
+event-lock: true
 
 
 ```
 
-TODO Is `event-lock` common to all commands? Examples here in [mod\_event\_socket](./mod_event_socket_1048924.mdx#11-acl) and most in [Event Socket Outbound](../Client-and-Developer-Interfaces/Event-Socket-Library/Event-Socket-Outbound_3375460.mdx#faq) are using `sendmsg` with `call-command: execute`, and `setEventLock` in [Event Socket Library](../Client-and-Developer-Interfaces/Event-Socket-Library/index.mdx#-new-) also only mentions `execute`, yet [Event Socket Outbound](../Client-and-Developer-Interfaces/Event-Socket-Library/Event-Socket-Outbound_3375460.mdx#faq) also shows the above snippet. 
+待办事项 使用 `event-lock` 属性对所有命令都有效吗？[mod\_event\_socket](./mod_event_socket_1048924.mdx#11-acl) 提供了示例，并且大多数示例在[Event Socket Outbound](../Client-and-Developer-Interfaces/Event-Socket-Library/Event-Socket-Outbound_3375460.mdx#faq)中使用了 `sendmsg` 和`call-command: execute`，而 [Event Socket 库](../Client-and-Developer-Interfaces/Event-Socket-Library/index.mdx#-new-) 也只提到了`execute` 命令，但是[Event Socket Outbound](../Client-and-Developer-Interfaces/Event-Socket-Library/Event-Socket-Outbound_3375460.mdx#faq) 也展示了上述片段。
 
-TODO Is `call-command: set` still an available command? Taken from [Event Socket Outbound](../Client-and-Developer-Interfaces/Event-Socket-Library/Event-Socket-Outbound_3375460.mdx#faq), but haven't seen documented anywhere else, and [it is also not listed in the source](https://github.com/signalwire/freeswitch/blob/15ad4c23e259c1c2dff58f89e9124e5f36dd2e94/src/switch%5Fivr.c#L503). Was the intention something like this?
+待办事项 `call-command: set` 命令仍然有效吗？该命令来自 [Event Socket Outbound](../Client-and-Developer-Interfaces/Event-Socket-Library/Event-Socket-Outbound_3375460.mdx#faq)，但是在其他地方没有找到相关文档，而且 [源代码](https://github.com/signalwire/freeswitch/blob/15ad4c23e259c1c2dff58f89e9124e5f36dd2e94/src/switch%5Fivr.c#L503) 中也没有该命令的列表。这里的意图是什么，类似于以下结构吗？
 
 ```xml
 sendmsg
@@ -873,83 +882,82 @@ execute-app-arg: foo=bar\n\n
 event-lock: true
 ```
 
-The format should be:
+格式应为：
 
-**Execute format**
+**Execute 格式**
 
 ```xml
 sendmsg <uuid>
 call-command: execute
-execute-app-name: <one of the applications>
-execute-app-arg: <application data>
-loops: <number of times to invoke the command, default: 1>
+execute-app-name: <其中一个应用程序>
+execute-app-arg: <应用程序数据>
+loops: <要调用命令的次数，默认为 1>
 
 
 ```
 
-This alternate format can be used for app args that are truncated by the module's 2048 octet limit:
+对于模块只提供 2048 字节限制的应用程序参数，可以使用此备选格式：
 
 ```xml
 sendmsg <uuid>
 call-command: execute
-execute-app-name: <one of the applications>
-loops: <number of times to invoke the command, default: 1>
+execute-app-name: <其中一个应用程序>
+loops: <调用命令的次数，默认值为1>
 content-type: text/plain
-content-length: <content length>
+content-length: <内容长度>
 
-<application data>
+<应用程序数据>
 ```
 
-When an application is executed via `sendmsg`, [CHANNEL\_EXECUTE](../Introduction/Event-System/Event-List_7143557.mdx#nat) and [CHANNEL\_EXECUTE\_COMPLETE](../Introduction/Event-System/Event-List_7143557.mdx#nat) events are going to be generated. If you would like to correlate these two events then add an `Event-UUID` header with your custom UUID. In the corresponding events, the UUID will be in the `Application-UUID` header. If you do not specify an `Event-UUID`, Freeswitch will automatically generate a UUID for the `Application-UUID`.
+当通过`sendmsg`执行应用程序时，将生成[CHANNEL\_EXECUTE](../Introduction/Event-System/Event-List_7143557.mdx#nat)和[CHANNEL\_EXECUTE\_COMPLETE](../Introduction/Event-System/Event-List_7143557.mdx#nat)事件。如果您想要关联这两个事件，则可以添加一个带有自定义UUID的`Event-UUID`头标。在相应的事件中，UUID将在`Application-UUID`头标中。如果您没有指定`Event-UUID`，FreeSWITCH将自动生成一个UUID作为`Application-UUID`。
 
-Example:
+示例：
 
 Event-UUID: 22075ce5-b67b-4f04-a6dd-1726ec14c8bf
 
 ##### 3.9.1.2 `hangup`
 
-Hang up the call.
+挂断电话。
 
-**Format**
+**格式**
 
 ```xml
 sendmsg <uuid>
 call-command: hangup
-hangup-cause: <one of the causes listed below>
-
+hangup-cause: <下面的原因之一>
 
 ```
 
-Additional information
+附加信息
 
-* [Hangup Causes](../Troubleshooting-Debugging/Hangup-Cause-Code-Table_3964945.mdx#about)
+* [挂断原因](../Troubleshooting-Debugging/Hangup-Cause-Code-Table_3964945.mdx#about)
 
 ##### 3.9.1.3 `unicast`
 
-`unicast` is used to hook up [mod\_spandsp](./mod_spandsp_6587021.mdx#--) for faxing over a socket.
+`unicast`用于通过套接字进行传真，与[mod\_spandsp](./mod_spandsp_6587021.mdx#--)连接。
 
-**Brian's note**
+**Brian的说明**
 
-> That is a nice way for a script or app that uses the socket interface to get at the media. It's good because then spandsp isn't living inside of FreeSWITCH and it can run on a box sitting next to it. It scales better.
+> 这是一种使用套接字接口来访问媒体的脚本或应用程序的好方法。这很好，因为spandsp不会在FreeSWITCH内部运行，而是可以运行在旁边的一台机器上。它的可伸缩性更好。
 
   
-**unicast example**
+**unicast示例**
 
 ```xml
 sendmsg <uuid>
 call-command: unicast
-local-ip: <default is 127.0.0.1>
-local-port: <default is 8025>
-remote-ip: <default is 127.0.0.1>
-remote-port: <default is 8026>
-transport: <either "tcp" or "udp", without the quotes>
-and optionally
-flags: native - don't transcode audio to/from L16
+local-ip: <默认为127.0.0.1>
+local-port: <默认为8025>
+remote-ip: <默认为127.0.0.1>
+remote-port: <默认为8026>
+transport: <要么是"tcp"，要么是"udp"，不带引号>
+并且可以选择
+flags: native - 不对音频进行编解码转换为/from L16
 ```
 
 ##### 3.9.1.4 `nomedia`
 
-No description.
+无描述。
 
 ```xml
 sendmsg <uuid>
@@ -961,13 +969,13 @@ nomedia-uuid: <noinfo>
 
 ##### `3.9.1.5 xferext`
 
-TODO Document this command.
+TODO 文档化这个命令。
 
-From [Stéphane Alnet](https://freeswitch.org/confluence/display/~stephalnet)'s comment:
+来自[Stéphane Alnet](https://freeswitch.org/confluence/display/~stephalnet)的评论：
 
-> The description is missing \`xferext\`, which adds \`application\` to an extension then transfer the channel to that extension (whatever that means! ![(big grin)](/images/icons/emoticons/biggrin.svg) ).
+> 缺少对`xferext`的描述，它将`application`添加到扩展名，然后将通道转移到该扩展名（无论这意味着什么![(大笑)](/images/icons/emoticons/biggrin.svg) ）。
 
-[switch\_ivr.c:503](https://github.com/signalwire/freeswitch/blob/15ad4c23e259c1c2dff58f89e9124e5f36dd2e94/src/switch%5Fivr.c#L503) lists the available commands, and that C file also contains the logic.
+[switch\_ivr.c:503](https://github.com/signalwire/freeswitch/blob/15ad4c23e259c1c2dff58f89e9124e5f36dd2e94/src/switch%5Fivr.c#L503) 列出了可用的命令，该C文件还包含了相关逻辑。
 
 **src/switch\_ivr.c**
 
@@ -985,7 +993,7 @@ From [Stéphane Alnet](https://freeswitch.org/confluence/display/~stephalnet)'s 
 exit
 ```
 
-Close the socket connection.
+关闭套接字连接。
 
 ### 3.11 auth
 
@@ -999,7 +1007,7 @@ auth <password>
 log <level>
 ```
 
-Enable log output, and change the [log level](./mod_console_1048950.mdx#about).
+启用日志输出，并更改[日志级别](./mod_console_1048950.mdx#about)。
 
 ### 3.13 nolog
 
@@ -1007,7 +1015,7 @@ Enable log output, and change the [log level](./mod_console_1048950.mdx#about).
 nolog
 ```
 
-Disable log output previously enabled by the log command
+禁用之前由`log`命令启用的日志输出。
 
 ### 3.14 nixevent
 
@@ -1015,7 +1023,7 @@ Disable log output previously enabled by the log command
 nixevent <event types | ALL  | CUSTOM custom event sub-class>
 ```
 
-Suppress the specified type of event. Useful when you want to allow 'event all' followed by 'nixevent &lt;some\_event>' to see all but 1 type of event.
+抑制指定类型的事件。当您想要使用'event all'之后的'nixevent <some\_event>'来查看除了一种类型的事件之外的所有事件时，这将很有用。
 
 ### 3.15 noevents
 
@@ -1023,16 +1031,13 @@ Suppress the specified type of event. Useful when you want to allow 'event all' 
 noevents
 ```
 
-Disable all events that were previously enabled with event.
+禁用之前由`event`启用的所有事件。
 
-## See Also
+## 参见
 
-* [Event Socket Library](../Client-and-Developer-Interfaces/Event-Socket-Library/index.mdx#-new-)
-* [Event Socket Outbound](../Client-and-Developer-Interfaces/Event-Socket-Library/Event-Socket-Outbound_3375460.mdx#faq)
-* [Debugging Event Socket Message](../Introduction/Event-System/Debugging-Event-Socket-Message_9634071.mdx#using-netcat-as-middleman) \[[old wiki](https://wiki.freeswitch.org/wiki/Debugging%5FEvent%5FSocket%5FMessage)\]
-* [Making Event Socket behave like the console](../Introduction/Event-System/Making-Event-Socket-behave-like-the-console_10682474.mdx#about)
-* [Event List](../Introduction/Event-System/Event-List_7143557.mdx#nat)
-* [Email2callback](https://wiki.freeswitch.org/wiki/Email2callbackhttps://freeswitch.org/confluence/display/FREESWITCH/Email2callback) \- Email to callback application with Python and freepy.
-  
-  
-
+* [事件套接字库](../Client-and-Developer-Interfaces/Event-Socket-Library/index.mdx#-new-)
+* [出站事件套接字](../Client-and-Developer-Interfaces/Event-Socket-Library/Event-Socket-Outbound_3375460.mdx#faq)
+* [调试事件套接字消息](../Introduction/Event-System/Debugging-Event-Socket-Message_9634071.mdx#using-netcat-as-middleman) \[[旧维基](https://wiki.freeswitch.org/wiki/Debugging%5FEvent%5FSocket%5FMessage)\]
+* [使事件套接字行为类似控制台](../Introduction/Event-System/Making-Event-Socket-behave-like-the-console_10682474.mdx#about)
+* [事件列表](../Introduction/Event-System/Event-List_7143557.mdx#nat)
+* [Email2callback](https://wiki.freeswitch.org/wiki/Email2callbackhttps://freeswitch.org/confluence/display/FREESWITCH/Email2callback) \- 使用Python和freeswitch开发的邮件回调应用。

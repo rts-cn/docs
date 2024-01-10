@@ -1,17 +1,15 @@
+# 示例: directory.py
 
-# Example: directory.py 
 
- 
+## 关于
 
-## About
+这是一个旧的示例
 
-This is an old example
+**注意**下面的所有文本都是在2008年最后编辑的，因此很可能过时、不准确并且急需更新
 
-**NOTE** All the text below was last edited in 2008, it is therefore likely out-of-date, inaccurate and in dire need of a refresh
+点击此处展开目录
 
-Click here to expand Table of Contents
-
-NOTE: There appears to be an issue with mod\_python on FreeSWITCH ( or with this .py file ) since segfaults occur when used.
+注意: 在使用FreeSWITCH时，似乎存在与mod_python（或该.py文件）有关的问题，会导致段错误发生。
 
 **directory.py**
 
@@ -26,7 +24,7 @@ def checkforgreeting(extension):
     conn = sqlite3.connect("/usr/local/freeswitch/db/voicemail_default.db")
     c = conn.cursor()
     c.execute("select name_path from voicemail_prefs where username=?", (extension,) )
-    # retrieve recorded_name path
+    # 检索已记录名称的路径
     row=c.fetchone()
     console_log("alert", "row: %s\n" % (str(row)))
     c.close()
@@ -36,51 +34,56 @@ def checkforgreeting(extension):
         return False
        
 def handler(uuid):
+```
 
-    alphabet = "abcdefghijklmnopqrstuvwxyz"
-    numbers = "22233344455566677778889999"
-    
-    code_to_name = {}
+```python
+alphabet = "abcdefghijklmnopqrstuvwxyz"
+numbers = "22233344455566677778889999"
+
+code_to_name = {}
+code = ""
+
+names = {
+    "Allen, Larry": 1000,
+    "Monroe, Beckey": 1001,
+}
+
+lnames = {}
+
+for name in names:
+    lnames[name.lower()] = names[name]
+
+names = lnames
+
+
+def sayname(fullname):
+    console_log("alert", "现在说的是：" + fullname + "\n")
+    # 将姓和名字颠倒位置，去掉逗号
+    split_fullname = fullname.split(',')
+    fname_lname = split_fullname[1].lstrip() + " " + split_fullname[0]
+    # 将名字的每个字符单独说出来
+    session.execute("phrase", "spell," + fname_lname);
+
+
+# 在评估参数输入之前的预处理
+# 从姓名字典中生成代码
+for name in names:
+    name3char = name[0:3]
+    # 清空 code 变量
     code = ""
-    
-    names = { 
-        "Allen, Larry": 1000,
-        "Monroe, Beckey": 1001,
-        }
-    
-    lnames = {}
-    
-    for name in names:
-        lnames[name.lower()] = names[name]
-    
-    names = lnames
-    
-    def sayname(fullname):
-        console_log("alert", "Now saying: " + fullname + "\n")
-        # flip first and last... remove comma
-        split_fullname = fullname.split(',')
-        fname_lname = split_fullname[1].lstrip() + " " + split_fullname[0]
-        # take the chars of a name and say each one
-        session.execute("phrase", "spell," + fname_lname);
-    
-    
-    # preprocessing before evaluating arg input
-    # build codes from names dict
-    for name in names:
-        name3char = name[0:3]
-        # empty out the code var
-        code = ""
-        for char in name3char:
-            code = code + numbers[alphabet.index(char)]
-        # code is the 3 digits code generated from the first 3 chars of the last name
-        if not code in code_to_name:
-            code_to_name[code] = [ name ]
-        else:
-            code_to_name[code].append(name)
+    for char in name3char:
+        code = code + numbers[alphabet.index(char)]
+    # code 是由姓的前三个字符生成的三位代码
+    if not code in code_to_name:
+        code_to_name[code] = [name]
+    else:
+        code_to_name[code].append(name)
+```
 
+```python
     session = PySession(uuid)
     session.answer()
-    session.execute( "sleep", "2000" )
+    session.execute("sleep", "2000")
     digits_keyed = session.playAndGetDigits(3,
                                             3,
                                             10,
@@ -88,27 +91,27 @@ def handler(uuid):
                                             "*#",
                                             custom_sounds_path + "dir-intro.wav",
                                             "",
-                                            "");
+                                            "")
     # evaluate input
     # we want 3 digits
-    console_log("alert", "digits_keyed: %s\n" % ( str(digits_keyed) ))
+    console_log("alert", "digits_keyed: %s\n" % (str(digits_keyed)))
     if len(digits_keyed) == 3:
         # it must be in the code db generated from last names earlier
         if digits_keyed in code_to_name:
             console_log("alert", "Yes: %s\n" % (str(code_to_name[digits_keyed])))
             if len(code_to_name[digits_keyed]) == 1:
                 # only one extension matches
-                console_log("alert", "Extension found: %s\n" % ( str(names[code_to_name[digits_keyed][0]])))
+                console_log("alert", "Extension found: %s\n" % (str(names[code_to_name[digits_keyed][0]])))
                 # transfer to the extension
                 extension = str(names[code_to_name[digits_keyed][0]])
                 recorded_name = checkforgreeting(extension)
                 if recorded_name:
                     console_log("alert", "Saying recorded name\n")
-                    session.streamFile( str(recorded_name[0]) )
+                    session.streamFile(str(recorded_name[0]))
                 else:
                     sayname(code_to_name[digits_keyed][0])
-                session.execute("phrase", "spell," + extension);
-                session.execute( "sleep", "1000" )
+                session.execute("phrase", "spell," + extension)
+                session.execute("sleep", "1000")
                 # give option of if correct to press 1 otherwise * and start over
                 digits_keyed = session.playAndGetDigits(1,
                                                         1,
@@ -117,23 +120,77 @@ def handler(uuid):
                                                         "#",
                                                         custom_sounds_path + "dir-instr.wav",
                                                         "",
-                                                        "1|\*");
-                console_log("alert", "digits_keys: %s\n" % ( digits_keyed ))
+                                                        "1|\*")
+                console_log("alert", "digits_keyed: %s\n" % (digits_keyed))
                 if digits_keyed == "1":
-                    session.transfer( extension, "XML", "default")
+                    session.transfer(extension, "XML", "default")
                 else:
                     if digits_keyed == "*":
-                        session.streamFile( custom_sounds_path + "dir-nomatch.wav" )
+                        session.streamFile(custom_sounds_path + "dir-nomatch.wav")
                         handler(uuid)
-                        # session.transfer( "777", "XML", "default")
+                        # session.transfer("777", "XML", "default")
                         # session.hangup("1")
+```
 
+```python
+    session = PySession(uuid)
+    session.answer()
+    session.execute("sleep", "2000")
+    digits_keyed = session.playAndGetDigits(3,
+                                            3,
+                                            10,
+                                            5000,
+                                            "*#",
+                                            custom_sounds_path + "dir-intro.wav",
+                                            "",
+                                            "")
+    # 评估输入
+    # 我们需要3位数字
+    console_log("alert", "输入的数字: %s\n" % (str(digits_keyed)))
+    if len(digits_keyed) == 3:
+        # 它必须在之前生成的姓氏 code db 中
+        if digits_keyed in code_to_name:
+            console_log("alert", "是的: %s\n" % (str(code_to_name[digits_keyed])))
+            if len(code_to_name[digits_keyed]) == 1:
+                # 只有一个匹配的分机号
+                console_log("alert", "找到分机号: %s\n" % (str(names[code_to_name[digits_keyed][0]])))
+                # 转接到分机号
+                extension = str(names[code_to_name[digits_keyed][0]])
+                recorded_name = checkforgreeting(extension)
+                if recorded_name:
+                    console_log("alert", "播放已录制的姓名\n")
+                    session.streamFile(str(recorded_name[0]))
+                else:
+                    sayname(code_to_name[digits_keyed][0])
+                session.execute("phrase", "spell," + extension)
+                session.execute("sleep", "1000")
+                # 提供按1确认或按*重新开始的选项
+                digits_keyed = session.playAndGetDigits(1,
+                                                        1,
+                                                        3,
+                                                        2000,
+                                                        "#",
+                                                        custom_sounds_path + "dir-instr.wav",
+                                                        "",
+                                                        "1|\*")
+                console_log("alert", "输入的数字: %s\n" % (digits_keyed))
+                if digits_keyed == "1":
+                    session.transfer(extension, "XML", "default")
+                else:
+                    if digits_keyed == "*":
+                        session.streamFile(custom_sounds_path + "dir-nomatch.wav")
+                        handler(uuid)
+                        # session.transfer("777", "XML", "default")
+                        # session.hangup("1")
+```
+
+```python
             else:
-                # we matched more than one name
+                # 匹配到多个名字
                 for item in code_to_name[digits_keyed]:
-                    console_log("alert", "Found more than one extension: %s\n" % ( str(names[item])))
-                    # say each one and give option of if not that one to continue
-                    console_log("alert", "item: %s\n" % (item))
+                    console_log("alert", "发现多个分机号： %s\n" % ( str(names[item])))
+                    # 逐一列出每个名字，并给出选项，如果不是这个名字则继续
+                    console_log("alert", "项目： %s\n" % (item))
                     extension = str(names[item])
                     recorded_name = checkforgreeting(extension)
                     if recorded_name:
@@ -142,7 +199,7 @@ def handler(uuid):
                         sayname(item)
                     session.execute("phrase", "spell," + extension);
                     session.execute( "sleep", "1000" )
-                    # give option of if correct to press 1 otherwise * and start over
+                    # 给出选项，如果输入正确则按1，否则按*并重新开始
                     digits_keyed = session.playAndGetDigits(1,
                                                             1,
                                                             3,
@@ -151,7 +208,7 @@ def handler(uuid):
                                                             custom_sounds_path + "dir-instr.wav",
                                                             "",
                                                             "1|\*");
-                    console_log("alert", "digits_keys: %s\n" % ( digits_keyed ))
+                    console_log("alert", "按键：%s\n" % ( digits_keyed ))
                     if digits_keyed == "1":
                         session.transfer( extension, "XML", "default")
                         # session.hangup("1")
@@ -160,14 +217,18 @@ def handler(uuid):
                 # session.transfer("777", "XML", "default")
                 # session.hangup("1")
         else:
-            # no valid extension found so transfer back
+            # 未找到有效的分机号，转回原来的流程
             session.streamFile( custom_sounds_path + "dir-nomatch.wav" )
             handler(uuid)
             # session.transfer("777", "XML", "default")
             # session.hangup("1")
-
-    session.hangup("1")
 ```
 
-  
+```
 
+session.hangup("1")
+```
+
+​
+
+```

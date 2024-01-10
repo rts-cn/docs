@@ -1,31 +1,28 @@
-
-# Provider VoipCheap (Luxembourg & Global) 
-
- 
+# Provider VoipCheap (卢森堡和全球)
 
 ## [www.voipcheap.com](https://www.voipcheap.com)
 
-Last Update: 17 November 2010
+最后更新日期：2010年11月17日
 
-## About VoipCheap
+## 关于VoipCheap
 
-[Voipcheap](http://www.voipcheap.com/) is one of the VoIP wholesale labels of a German company called [Betamax GmbH & Co.Kg.](http://www.betamax.com/about.php). See [wikipedia](http://en.wikipedia.org/wiki/Betamax%5F%28VoIP%5Fcompany%29) for more info on their labels. Voipcheap offers low cost PSTN termination all over the world and even to some countries for [free](http://www.voipcheap.com/en/calling-rates.html). Besides SIP they also provide their own softphone.
+[Voipcheap](http://www.voipcheap.com/) 是德国公司 [Betamax GmbH & Co.Kg.](http://www.betamax.com/about.php) 的VoIP批发品牌之一。详细信息请参阅 [维基百科](http://en.wikipedia.org/wiki/Betamax%5F%28VoIP%5Fcompany%29) 上关于他们的品牌的更多信息。Voipcheap提供全球范围内的低成本PSTN终止服务，甚至可以向某些国家提供[免费](http://www.voipcheap.com/en/calling-rates.html)服务。除了SIP，他们还提供自己的软电话。
 
-To make SIP working with freeswitch make sure the contact field include the username. For example, if my username is USER1, the contact field will look like:
+为了使SIP与freeswitch配合使用，请确保联系字段包含用户名。例如，如果我的用户名是USER1，联系字段将如下所示：
 
 ```xml
  Contact: <sip:USER1@IPADDRESS:5080;transport=udp;gw=voipcheap.com>
 ```
 
-If you don't include the username in the contact field you will NOT be able to get incoming calls from their DIDs or the voipcheap network. To make this work add the following param in you gateway configuration:
+如果您在联系字段中不包含用户名，您将无法通过他们的DIDs或voipcheap网络接收来电。要使此功能正常工作，请在网关配置中添加以下参数：
 
 ```xml
 <param name="extension-in-contact" value="true"/>
 ```
 
-## Working example
+## 工作示例
 
-Below is a copy of a fully (incoming and outgoing) working configuration. Replace USERNAME and PASSWORD with your own. Gateway configuration: conf/sip\_profiles/external/voipcheap.xml
+以下是一个完全（呼入和呼出）工作配置的副本。将USERNAME和PASSWORD替换为您自己的信息。网关配置：conf/sip\_profiles/external/voipcheap.xml
 
 ```xml
 <include>
@@ -40,21 +37,21 @@ Below is a copy of a fully (incoming and outgoing) working configuration. Replac
 </include>
 ```
 
-Incoming dialplan: conf/dialplan/public/0\_voipcheap\_did.xml
+呼入拨号计划：conf/dialplan/public/0\_voipcheap\_did.xml
 
 ```xml
 <include>
   <extension name="public_did">
     <condition field="destination_number" expression="^(USERNAME)$">
       <action application="set" data="domain_name=$${domain}"/>
-      <!-- This example maps the DID 5551212 to ring 1000 in the default context -->
+      <!-- 这个例子将DID 5551212映射到默认上下文中的1000号分机 -->
       <action application="transfer" data="1000 XML default"/>
     </condition>
   </extension>
 </include>
 ```
 
-Outgoing dialplan: conf/dialplan/default.xml
+外拨拨号计划：conf/dialplan/default.xml
 
 ```xml
 <extension name="voipcheap_out" continue="true">
@@ -66,6 +63,4 @@ Outgoing dialplan: conf/dialplan/default.xml
 </extension>
 ```
 
-The outgoing dialplan compares the domainname (the name after the @ sign) against the local domainname. If it's not true (what should always be) it passes the condition. The variabele domainname comes from **${sip\_req\_host}**. Since the invite needs to go to the Voipcheap proxy server ([sip.voipcheap.com](http://sip.voipcheap.com)) you have to insert **sip.** otherwise it connects NOT to the proxy. So instead of calling USER@DOMAIN, we're gonna call to [USER@sip.DOMAIN](mailto:USER@sip.DOMAIN).
-
-
+外拨拨号计划会将域名（@符号后面的部分）与本地域名进行比较。如果不匹配（应该总是匹配），则会通过条件。变量domainname来自于**${sip\_req\_host}**。由于邀请需要发送到Voipcheap代理服务器（[sip.voipcheap.com](http://sip.voipcheap.com)），您必须插入**sip.**，否则它将不能连接到代理服务器。所以，我们要拨打的是[USER@sip.DOMAIN](mailto:USER@sip.DOMAIN)，而不是USER@DOMAIN。

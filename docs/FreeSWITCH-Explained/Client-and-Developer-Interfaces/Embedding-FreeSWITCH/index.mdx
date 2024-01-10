@@ -1,96 +1,93 @@
+# 在应用中嵌入FreeSWITCH
 
-# Embedding FreeSWITCH 
+## 关于
 
- 
+就像FreeSWITCH™可以运行[嵌入式语言](https://web.archive.org/web/20170201173729/https://wiki.freeswitch.org/wiki/Languages%5Ffor%5FCall%5FControl)一样，您也可以将FreeSWITCH™嵌入到其他语言的程序中。FreeSWITCH™被设计为您可以通过模块与其交互，在其他应用程序中嵌入FreeSWITCH，或通过[Event Socket](https://wiki.freeswitch.org/wiki/Event%5FSocket "Event Socket")与其进行交互。
 
-## About
+点击展开目录
 
-Just as FreeSWITCH™ can run [embedded languages](https://web.archive.org/web/20170201173729/https://wiki.freeswitch.org/wiki/Languages%5Ffor%5FCall%5FControl) you can also embed FreeSWITCH™ into other programs in a variety of languages. FreeSWITCH™ is designed so you can interact with it through modules, embedding freeswitch in other applications, or through the [Event Socket](https://wiki.freeswitch.org/wiki/Event%5FSocket "Event Socket").
+**错误渲染宏'toc'**
 
-Click to expand Table of Contents
+空
 
-**Error rendering macro 'toc'**
+### 在应用中使用嵌入式FreeSWITCH的优势
 
-null
+* FreeSWITCH被称为用于数据的多协议软交换。如果您的应用程序需要使用freeswitch的某个部分，这可能是最简单的添加功能的方式。
+* 简单易用
+* 庞大的代码库
+* 由他人维护
+* 稳定（当您的应用程序仅使用语音作为一部分时，您不希望糟糕的语音库崩溃或需要重新启动）
+* 免费
+* 迅速发展
+* 在单独的线程中运行，因此不会因为您的其他代码出现音频问题（通常是由于应用程序执行其他操作）
+* NAT处理
+* 文档支持
+* 跨协议/网络通信
 
-### Benefits of using Embedded FreeSWITCH in your application
+### 嵌入式FreeSWITCH的缺点
 
-* FreeSWITCH is billed as a multi-protocol softswitch for data. If you have an application that requires even a segment of what freeswitch requires, it can be the easiest way to add that functionality in.
-* simple
-* large code base
-* maintained by others
-* stable (and when you are only using voice as part of your application you don't want a bad voice library crashing your application or requiring a restart)
-* free
-* Rapidly evolving
-* Runs in separate threads so not really effected by your other code (no audio issues generally due to the application doing something else)
-* Nat handling
-* Documentation
-* Cross protocol/network communication
+* 您必须包含FreeSWITCH的核心，该核心有几MB（大约4-8MB）
+* 如果需要嵌入SQL/UPNP NAT检测，则加载时间不是很好。可能可以进行优化，但默认情况下启动时间需要10-15秒（虽然可以在后台进行，但必须在进行呼叫之前完成）。
+* Windows暂时不支持g729
 
-### Downsides of Embedded FreeSWITCH
+### 使用嵌入式FreeSWITCH
 
-* You have to include the core of freeswitch which is several megabytes (4-8mb or so)
-* Load time is not great if you need embedded SQL/UPNP NAT detection. Most likely optimization here could be made but you are looking at 10-15 seconds on startup by default (although this can be done in the background but must be done before you can make calls with FS).
-* No g729 support in windows yet
+#### 环境设置
 
-### Using Embedded FreeSWITCH
-
-#### Environment Setup
-
-The first thing you need to do once you have freeswitch compiling (or the binary installed) is setup your working environment. For any platform you will want to make a mod folder and copy and modules you want from freeswitch's mod folder to yours. You will also want to move your languages runtime from the mod folder to your working environment (for .net this is mod\_managed.dll). Generally when you are using the bindings for your language it will try to load the dll/lib from the working directory rather than mod/. Finally there are a few language specific changes:
+编译或安装完FreeSWITCH后，首先要做的事情是设置您的工作环境。不论使用哪个平台，您都需要创建一个mod文件夹，并将您想要的模块从FreeSWITCH的mod文件夹复制到您的文件夹中。您还需要将您的语言运行时从mod文件夹移到您的工作环境中（对于.net来说，这是mod_managed.dll）。通常，当您使用语言绑定时，它会尝试从工作目录中加载dll/lib，而不是从mod/目录中加载。最后，还有一些特定于语言的变更：
 
 ##### Linux
 
-For Linux this means you want the copy of the contents of the lib folder in to your working directory
+对于Linux，这意味着您希望将lib文件夹中的内容复制到您的工作目录中。
 
 ##### Windows
 
-In windows this means lib\*.dll, ssleay\*.dll, Freeswitch.dll from the build folder to your working directory
+在Windows中，这意味着将lib/*.dll、ssleay/*.dll和Freeswitch.dll从构建文件夹移动到您的工作目录中。
 
-#### FreeSWITCH Config
+#### FreeSWITCH配置
 
-FreeSWITCH must have a conf folder and that must contain a freeswitch.xml file in it that tells freeswitch its initial config. You may be able to embed this (or provide it internally) but it does need to have a config of some sort. You can start with all the configs in the freeswitch build conf folder, but it may be easier to start with the simple example under the resources part of this page.
+FreeSWITCH必须有一个conf文件夹，并且其中必须包含一个名为freeswitch.xml的文件，该文件告诉FreeSWITCH其初始配置。您可以将此文件嵌入或提供内部文件，但是它必须包含某种配置。您可以从FreeSWITCH构建的conf文件夹中开始配置，但是从本页面的资源部分开始使用简单的示例可能会更容易。
 
-#### Starting Up FreeSWITCH
+#### 启动FreeSWITCH
 
-Note some of the functions mentioned here may be a little bit different depending on the language (the swig binding call should be similar though). Theoretically all you would have to do is call switch\_core\_init\_and\_modload it would do everything needed. switch\_core\_init\_and\_modload takes 3 params, flags which specifies things like SQL or NAT support, if a console is present (only use this if using c++ generally and even still you probably don't want the console spew) and a reference to an error string for an error if one happens. Of course it isn't actually quite that easy. The proper way to spin it up is:
+请注意，这里提到的一些功能可能会因语言而有所不同（尽管 swig 绑定调用应该相似）。理论上，您只需调用 `switch_core_init_and_modload`，它将完成所有必要的工作。`switch_core_init_and_modload` 接受 3 个参数：`flags`（指定 SQL 或 NAT 支持等内容）、控制台是否存在（只有在通常使用 C++ 的情况下才使用此选项，即使如此，您可能仍不需要控制台输出）以及错误字符串的引用（如果发生错误）。当然，实际情况并不那么简单。正确启动它的方式为：
 
-* call switch\_core\_set\_globals
-* call switch\_core\_init
-* finally spin freeswitch up with: switch\_core\_init\_and\_modload
+- 调用 `switch_core_set_globals`
+- 调用 `switch_core_init`
+- 最后使用 `switch_core_init_and_modload` 启动 FreeSWITCH
 
-Now the switch\_core\_init call is not needed unless you want to tie into the initial loading. The most likely reason to be involved in the initial loading is for tying into the xml\_search binding to be able to return custom XML during load from code. Why must the call pattern follow that? Technically switch\_core\_init calls switch\_core\_set\_globals, however switch\_core\_set\_globals must be called independently as switch\_core\_set\_globals is not called high enough in the function for it to work properly.
+如不需要与初始加载相关联，则无需调用 `switch_core_init`。参与初始加载的最可能原因是为了与 `xml_search` 绑定进行关联，以便能够在代码加载期间返回自定义 XML。为什么要遵循这种调用模式呢？技术上说，`switch_core_init` 会调用 `switch_core_set_globals`，但 `switch_core_set_globals` 必须独立调用，因为在函数中，其调用位置不够高，无法正常工作。
 
-#### Interacting with freeswitch
+#### 与 FreeSWITCH 交互
 
-Now you could tie your own app into also handling sessions (much like traditional dialplan calls) from your app. Depending on the application however it may be better to do as a traditional module/script just for code cleanness / separation. You of course do want to have some interaction with the core directly from your application most likely. The event module you can still use and then communicate over the event socket like external applications. You can also rely on the swig calls and interact with freeswitch through the native functions themselves. Swig allows you to call just about any native code, code with callbacks can be a bit more complex but in general you can call most native methods without issue. A best practice may be to instead use the API interface for dealing with freeswitch. Using the API most tasks can be accomplished and has the added safety of making it much harder to decrease the stability of freeswitch itself. There is also a large amount of documentation for the public API for freeswitch vs all the internal functions themselves. There are a few situations however where direct swig calls can be useful, most of the time it has to do with complex callbacks or function ties. There are two examples that frequently come up. The first is the switch\_xml\_bind\_search function, this allows you to return XML configuration during loading. There is a .net binding that the managed dll has to make it easier to add a callback (other bindings may or may not provide this). This allows you to return the config for any module directly. The second example is for events. Now you can tie into events several ways, for example through the event socket, but you can also tie into the main event loop (switch\_event\_bind) . Now doing this is risky, as its part of the main event loops events are not fully processed until you are done with them, so its suggested you duplicate events if you aren't handling them very quickly. The managed dll binding for this has a parameter for that.
+现在，您可以将自己的应用程序集成到会话处理中（就像传统的拨号计划呼叫一样）。取决于应用程序的特点，最好将其作为传统的模块/脚本来处理，以保持代码的整洁和分离。当然，您肯定希望从应用程序直接与核心进行一些交互。您仍然可以使用事件模块，并通过事件套接字与外部应用程序进行通信。您还可以依赖于swig调用，并通过原生函数与freeswitch进行交互。Swig允许您调用几乎任何本地代码，具有回调的代码可能会更复杂一些，但通常情况下，您可以调用大多数本地方法而不会出现问题。最佳实践可能是使用API接口来处理freeswitch。使用API接口，可以完成大多数任务，并且还增加了稳定性的安全性。公共API的文档数量远远超过所有内部函数的文档数量。然而，有一些情况下，直接使用swig调用可能会很有用，大多数情况下与复杂的回调或函数绑定有关。经常出现两个例子。第一个示例是`switch_xml_bind_search`函数，它允许您在加载过程中返回XML配置。由于托管DLL插件提供了`.net binding`来简化添加回调的过程（其他binding可能或可能不提供此功能），因此可以直接返回任何模块的配置。第二个示例是事件。现在，您可以通过多种方式与事件进行关联，例如通过事件套接字，但您还可以将其连接到主事件循环（`switch_event_bind`）。不过，这样做有一定的风险，因为事件是作为主事件循环的一部分进行处理的，直到您完成处理它们之前，事件不会完全被处理，所以建议如果您无法快速处理它们，最好复制事件。此托管DLL绑定的参数提供了这个选项。
 
-## Language Examples
+## 语言示例
 
-Note the below examples use the SQL and AUTO\_NAT flags. If you do not need these (and many softphones using embedded FS do not) do not turn them on (instead pass 0). Turning them on delays FS loading by 5-15 seconds each.
+请注意下面的示例使用了 SQL 和 AUTO\_NAT 标志。如果您不需要这些标志（许多使用嵌入式 FS 的软电话也不需要），请不要打开它们（而是传递 0）。打开它们会延迟 FS 加载 5-15 秒钟。
 
 ### .NET / C#
 
-You must add a reference to the FreeSWITCH.Managed.dll to your .net project. The two lines that start with `search_bind` and `event_bind` are not needed, they are only used if you want to bind to the XML search path or the internal event loop; otherwise they can be completely skipped.
+您必须为您的 .net 项目添加一个引用 FreeSWITCH.Managed.dll 。以 `search_bind` 和 `event_bind` 开头的两行不需要，只有在您希望绑定到 XML 搜索路径或内部事件循环时才使用；否则完全可以跳过它们。
 
-**.Net C# Embedded Example**
+**.Net C# 嵌入示例**
 
 ```c#
 String err = "";
 const uint flags = (uint)(switch_core_flag_enum_t.SCF_USE_SQL | switch_core_flag_enum_t.SCF_USE_AUTO_NAT);
 freeswitch.switch_core_set_globals();
-/*Next 3 lines only needed if you want to bind to the initial event or xml config search loops */
+/* 下面 3 行只有在您想绑定到初始事件或 xml 配置搜索循环时才需要 */
        freeswitch.switch_core_init(flags, switch_bool_t.SWITCH_FALSE, ref err);		
        search_bind = FreeSWITCH.SwitchXmlSearchBinding.Bind(your_xml_search_func, switch_xml_section_enum_t.SWITCH_XML_SECTION_CONFIG);
        event_bind = FreeSWITCH.EventBinding.Bind("SampleClient", switch_event_types_t.SWITCH_EVENT_ALL, null, your_event_handler_func, true);
-/* End Optional Lines */
+/* 可选行结束 */
 freeswitch.switch_core_init_and_modload(flags, switch_bool_t.SWITCH_FALSE, ref err);
 ```
   
   
 ### C/C++
 
-**Embedded C Example**
+**嵌入式 C 示例**
 
 ```cpp
 #include <switch.h>
@@ -108,32 +105,28 @@ int main(int argc, char** argv)
 
 ### PHP
 
-**Embedded PHP Example**
+**嵌入式 PHP 示例**
 
 ```php
 <?php
- include("freeswitch.php");
- fs_core_set_globals();
- fs_core_init("");
- fs_loadable_module_init();
- fs_console_loop();
- fs_core_destroy();
+include("freeswitch.php");
+fs_core_set_globals();
+fs_core_init("");
+fs_loadable_module_init();
+fs_console_loop();
+fs_core_destroy();
 ?>
 ```
 
-  
-## Projects that use Embedded FreeSWITCH
+## 使用嵌入式FreeSWITCH的项目
 
-* [Softphones](https://wiki.freeswitch.org/wiki/Softphones "Softphones") \- There are SIP Clients/Softphones that use Embedded FreeSWITCH, see that page for which
+- [软电话](https://wiki.freeswitch.org/wiki/Softphones "软电话") \- 有一些使用嵌入式FreeSWITCH的SIP客户端/软电话，详情请参考该页面。
 
-## References
+## 参考资料
 
-* .NET Example project that starts up and performs a simple phone call - [http://fisheye.freeswitch.org/browse/\~raw,r=HEAD/freeswitch-contrib/mitchcapper/SampleClient/FSSampleEmbeddedClient.zip](http://fisheye.freeswitch.org/browse/%7Eraw,r=HEAD/freeswitch-contrib/mitchcapper/SampleClient/FSSampleEmbeddedClient.zip)
-* Check out some of the projects using embedded freeswitch many are open source
+- .NET示例项目，启动并执行简单电话呼叫 - [http://fisheye.freeswitch.org/browse/\~raw,r=HEAD/freeswitch-contrib/mitchcapper/SampleClient/FSSampleEmbeddedClient.zip](http://fisheye.freeswitch.org/browse/%7Eraw,r=HEAD/freeswitch-contrib/mitchcapper/SampleClient/FSSampleEmbeddedClient.zip)
+- 了解一些使用嵌入式FreeSWITCH的项目，其中许多是开源的。
 
-## See Also
+## 参见
 
-* [Developer Documentation](https://wiki.freeswitch.org/wiki/Documentation/Developer%5FDocumentation "Documentation/Developer Documentation")
-
-  
-
+- [开发者文档](https://wiki.freeswitch.org/wiki/Documentation/Developer%5FDocumentation "Documentation/Developer Documentation")

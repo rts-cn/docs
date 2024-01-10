@@ -1,119 +1,97 @@
+# mod_posix_timer
 
-# mod_posix_timer 
+## 关于
 
- 
+mod_posix_timer使用POSIX timers API（timer_create、timer_settime、timer_delete）创建和使用一个内核定时器，通过sigevent发送定时器到期通知。
 
-## About
+此定时器适用于较早的Linux内核，如2.6.18。
 
-mod\_posix\_timer uses the POSIX timers API (timer\_create, timer\_settime, timer\_delete) to create and use a kernel timer that delivers timer expire notifications via a sigevent.
+单击此处展开目录
 
-This timer works on older Linux kernels like 2.6.18.
+1[配置](#configuration)
+2[在FreeSwitch git中测试POSIX定时器功能](#testing-posix-timer-feature-in-freeswitch-git)
+   2.1[mod_posix_timer中的POSIX定时器支持](#posix-timer-support-in-mod_posix_timer)
 
-  
-Click here to expand Table of Contents
+## 配置
 
-* 1 [Configuration](#configuration)
-* 2 [Testing POSIX timer feature in FreeSwitch git](#testing-posix-timer-feature-in-freeswitch-git)  
-   * 2.1 [POSIX timer support in mod\_posix\_timer](#posix-timer-support-in-mod_posix_timer)
-
-## Configuration
-
-You can enable it per channel with:
+您可以通过以下方式为每个通道启用它：
 
 ```xml
 <action application="set" data="rtp_timer_name=posix"/>
 ```
 
-  
-or per [Sofia](../Configuration/Sofia-SIP-Stack/index.mdx#faq) profile with:
+或者可以为[Sofia](../Configuration/Sofia-SIP-Stack/index.mdx#faq)配置文件启用它：
 
-  
 ```xml
 <param name="rtp-timer-name" value="posix"/>
 ```
 
-## Testing POSIX timer feature in FreeSwitch git
+## 在FreeSwitch git中测试POSIX定时器功能
 
-Note that POSIX timer support is experimental and thus you should always use latest git when trying to use it.
+请注意，POSIX定时器支持是实验性的，因此在尝试使用时应始终使用最新的git。
 
-### POSIX timer support in mod_posix_timer
+### mod_posix_timer中的POSIX定时器支持
 
-To check whether the module is running, do:
+要检查模块是否正在运行，请执行以下操作：
 
 ```xml
 freeswitch@internal> show modules mod_posix_timer
 type,name,ikey,filename
 timer,posix,mod_posix_timer,/usr/local/freeswitch/mod/mod_posix_timer.so
 
-1 total.
+总计 1 个。
 ```
 
-  
-If the module is not running, check if it is available:
+如果模块未运行，请检查是否可用：
 
-  
 ```xml
 find /usr/local/freeswitch/mod/ -name mod_posix_timer.*
 ```
 
-  
-To build the mod\_posix\_timer in case it's not already there, add this line to freeswitch/modules.conf:
+如果mod_posix_timer不存在，请将以下行添加到freeswitch/modules.conf：
 
-  
 ```xml
  timers/mod_posix_timer
 ```
 
-  
-Then build the module with this command:
+然后使用以下命令构建模块：
 
-  
 ```xml
 make mod_posix_timer
 ```
 
-  
-Finally install the module with this command:
+最后使用以下命令安装模块：
 
-  
 ```xml
  make mod_posix_timer-install
 ```
 
-  
-Then you need to configure FreeSWITCH to load mod\_posix\_timer on startup. In /usr/local/freeswitch/conf/autoload\_configs/modules.conf.xml put a line like this:
+然后，您需要配置FreeSWITCH在启动时加载mod\_posix\_timer。在/usr/local/freeswitch/conf/autoload\_configs/modules.conf.xml中添加如下一行代码：
 
-  
 ```xml
- <load module="mod_posix_timer"/>
+<load module="mod_posix_timer"/>
 ```
 
-  
-Then restart FreeSWITCH:
+然后重新启动FreeSWITCH：
 
-  
 ```xml
 /etc/init.d/freeswitch restart
 ```
 
-  
-Alternatively load the module from the CLI:
+或者在CLI中加载模块：
 
-  
 ```xml
 /usr/local/freeswitch/bin/fs_cli
- freeswitch@internal> load mod_posix_timer
+freeswitch@internal> load mod_posix_timer
 ```
 
-Verify that mod\_posix\_timer is loaded:
+确认mod\_posix\_timer已加载：
 
 ```xml
- freeswitch@internal> show timer
- type,name,ikey
- timer,soft,CORE_SOFTTIMER_MODULE
- timer,posix,mod_posix_timer
- 
- 2 total.
+freeswitch@internal> show timer
+type,name,ikey
+timer,soft,CORE_SOFTTIMER_MODULE
+timer,posix,mod_posix_timer
+
+总计2个。
 ```
-
-

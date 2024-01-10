@@ -1,44 +1,46 @@
+# **mod_valet_parking**
 
-# mod_valet_parking 
+## 关于
 
- 
+将通道放在交换机上，而不是电话上，使其处于“等待接听”状态。提供多种不同的选项，包括：
 
-## About
+- 将呼叫者放置在一个位置，以避免通话等待时被挂断。
+- 通用的“等待”机制，可以将呼叫者转接到此机制。
 
-Places a channel "on hold" in the switch, instead of in the phone. Allows for a number of different options, including:
+_valet\_park_ 与 [park](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Fpark "Misc. Dialplan Tools park") 的区别在于，通话是通过“停车场”号码进行停放和检索的。通过盲目转接到 valet\_park 分机将呼叫置于停车场中。可以通过调用相同的分机来检索呼叫。或者，可以设置一个分机来询问呼叫者要从哪个停车位检索呼叫。
 
-* Set caller in a place where the channel won't be hung up on while waiting for someone to talk to.
-* Generic "hold" mechanism, where you transfer a caller to it.
+代客泊车机制非常简单：将第一个人放入停车位并将其等待，同时播放等候音乐。下一个放入（或拨入）该停车位的人将与已经停放的人连接。现在，这两个方通话被接通，而停车位又重新可用。
 
-_valet\_park_ differs from [park](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Fpark "Misc. Dialplan Tools park") in that calls are parked and retrieved with "parking lot" numbers. A call is placed into a parking lot with a blind transfer to a valet\_park extension. Calls can be retrieved by calling the same extension. Alternatively, an extension can be set up to ask the caller which parking stall from which to retrieve a call.
+[点击此处](#table-of-contents-标题点击查看)展开目录
 
-Valet parking uses a very simple formula: the first person put into a parking stall will be parked and on hold, listening to hold music. The next person put into (or who dials into) that parking stall will be bridged to the person already parked. The two parties are now bridged and the parking stall is now available.
+**1 [示例](#examples-示例)**
+   - 1.1 [盲目转接](#blind-transfer-盲目转接)
+   - 1.2 [询问呼叫者检索](#ask-caller-retrieval-询问呼叫者检索)
+   - 1.3 [代客泊车自动选择停车位](#valet-autoselect-parking-stall-代客泊车自动选择停车位)
+   - 1.4 [通过绑定元应用程序进行转接](#bind-meta-app-for-transfering-通过绑定元应用程序进行转接)
+   - 1.5 [使用Presence](#using-presence-使用Presence)
+   
+**2 [事件](#events-事件)**
+   
+**3 [通道变量](#channel-variables-通道变量)**
+   
+**4 [API valet\_info](#api-valet_info-API-valet_info)**
+   
+**5 [DTMF](#api-valet_info-DTMF)**
+   
+**6 [参见](#see-also-参见)**
 
-Click here to expand Table of Contents
+## 示例
 
-* 1 [Examples](#examples)  
-   * 1.1 [Blind Transfer](#blind-transfer)  
-   * 1.2 [Ask Caller Retrieval](#ask-caller-retrieval)  
-   * 1.3 [Valet Autoselect Parking Stall](#valet-autoselect-parking-stall)  
-   * 1.4 [Bind meta app for transfering](#bind-meta-app-for-transfering)  
-   * 1.5 [Using Presence](#using-presence)
-* 2 [Events](#events)
-* 3 [Channel Variables](#channel-variables)
-* 4 [API valet\_info](#api-valet_info)
-* 5 [DTMF](#api-valet_info)
-* 6 [See Also](#see-also)
+下面是几个实施代客泊车的示例。
 
-## Examples
-
-Below are several examples of how to implement valet parking.
-
-### Blind Transfer
+### 盲目转接
 
 ```xml
  <action application="valet_park" data="mylot 5555"/>
 ```
 
-The above will automatically put the call into "mylot, parking stall number 5555." The next call to this extension will be bridged to the parked caller. Here is a more complete example:
+上述代码将自动将呼叫转接到"mylot，停车位号5555"。对该分机的下一个呼叫将会与被停放的呼叫桥接。下面是一个更完整的示例：
 
 ```xml
 <extension name="valet_parking_dest_ext">
@@ -49,24 +51,24 @@ The above will automatically put the call into "mylot, parking stall number 5555
 </extension>
 ```
 
-The above example matches calls made to 6001-6099 and automatically performs a valet park on the caller. If no one is in the parking stall then the call is parked, listening to hold music. If someone is already in the parking stall then the two calls are bridge and the parking stall is available again. Here is an example call flow:
+上述示例将匹配到6001-6099之间的呼叫，并自动将呼叫者停放。如果停车位上没有人，则呼叫会被停放，并播放音乐等待。如果停车位上已经有人，则两个呼叫会桥接在一起，停车位又可用了。以下是一个示例呼叫流程：
 
-Alice answers a call from Bob.  
-Alice transfers Bob to 6001 and hangs up.  
-Bob is now in parking stall 6001, hearing MOH.  
-Alice calls Charlie and tells him that he has a call parked in 6001.  
-Charlie calls 6001.  
-Charlie and Bob are now bridged and parking stall 6001 is now empty.
+Alice接听了Bob的呼叫。  
+Alice将Bob转接到6001，并挂断电话。  
+Bob现在在停车位6001，听到了等待音乐。  
+Alice给Charlie打电话，告诉他在6001停放了一个呼叫。  
+Charlie拨打6001。  
+Charlie和Bob现在桥接在一起，停车位6001又变为空闲。
 
-### Ask Caller Retrieval
+### 询问呼叫者检索
 
-The usage for the ask method is:
+ask方法的使用方式如下：
 
 ```xml
- <action application="valet_park" data="[lot] ask [min digits] [max digits] [timeout] [prompt]"/>
+ <action application="valet_park" data="[停车场名称] ask [最小输入位数] [最大输入位数] [超时时间] [提示音]"/>
 ```
 
-This example goes along with the one listed under the blind transfer section above:
+该示例与上面的盲转移部分中的示例配套使用：
 
 ```xml
 <extension name="valet_parking_dest_ext">
@@ -77,71 +79,70 @@ This example goes along with the one listed under the blind transfer section abo
 </extension>
 ```
 
-In this case, the one retrieving the parked call will dial 6000 and then dial the stall number and #. Here's the example call flow:
+在这种情况下，检索被停放呼叫的人需要先拨打6000，然后拨打停车位号码和#。以下是一个示例呼叫流程：
 
-Alice answers a call from Bob.  
-Alice transfers Bob to 6001 and hangs up.  
-Bob is now in parking stall 6001, hearing MOH.  
-Alice calls Charlie and tells him that he has a call parked in 6001.  
-Charlie calls 6000, waits for prompt, then dials 6001#.  
-Charlie and Bob are now bridged and parking stall 6001 is now empty.
+Alice接到了Bob的电话。  
+Alice将Bob转接到6001并挂断电话。  
+Bob现在位于停车位6001，可以听到音乐。  
+Alice给Charlie打电话，告诉他6001号停车位有一个已接电话。  
+Charlie拨打6000，等待提示音后拨打6001#。  
+Charlie和Bob现在连线在一起，停车位6001现在是空的。
 
-Having a single extension for park retrieval allows for extra features, like programming a button on phone that dials into the valet parking lot. 
+使用单个分机来检索停车可以提供额外的功能，比如在电话上编程一个按钮，可以拨入代客泊车场。
 
-### Valet Autoselect Parking Stall
+### 代客自动选择停车位
 
-You can let the valet choose the slot for you like this:
-
-```xml
- <extension name="park-in">
-    <condition field="destination_number" expression="^(8500)$">
-       <action application="valet_park" data="my_lot auto in 8501 8599"/>
-    </condition>
- </extension>
-
- <extension name="park-out">
-    <condition field="destination_number" expression="^(8600)$">
-       <action application="valet_park" data="my_lot auto out 8501 8599"/>
-    </condition>
- </extension>
-```
-
-The above extension will find the first stall between 8501 and 8599, park the call there, and then voice the stall number to the transferring user. The call can then be retrieved in the normal fashion by dialing the slot number:
+您可以让代客为您选择停车位，如下所示：
 
 ```xml
- <extension name="park-out">
-   <condition field="destination_number" expression="^(85\d\d)$">
-     <action application="answer"/>
-     <action application="valet_park" data="my_lot $1"/>
-   </condition>
- </extension>
+    <extension name="park-in">
+        <condition field="destination_number" expression="^(8500)$">
+            <action application="valet_park" data="my_lot auto in 8501 8599"/>
+        </condition>
+    </extension>
+
+    <extension name="park-out">
+        <condition field="destination_number" expression="^(8600)$">
+            <action application="valet_park" data="my_lot auto out 8501 8599"/>
+        </condition>
+    </extension>
 ```
 
-The advantage to this method is that calls parked in this stall will queue up in FIFO fashion, so a receptionist can "stack" calls up and then pop them off one at a time in the order that they were parked.
+上述分机将在8501和8599之间找到第一个停车位，将电话停放在那里，然后将停车位号码告知接听用户。然后可以通过拨打停车位号码以常规方式检索电话：
 
-### Bind meta app for transfering
+```xml
+    <extension name="park-out">
+        <condition field="destination_number" expression="^(85\d\d)$">
+            <action application="answer"/>
+            <action application="valet_park" data="my_lot $1"/>
+        </condition>
+    </extension>
+```
 
-you can add this before any call
+这种方法的优点是，停放在此停车位上的电话将按照FIFO的方式排队，因此前台接待员可以将电话“堆叠”起来，然后按照停车的顺序逐个处理。
+
+### 绑定元应用进行呼叫转移
+
+您可以在任何呼叫之前添加以下内容
 
 ```xml
 <action application="bind_meta_app" data="1 a s valet_park::my_lot auto in 8001 8999"/>
 ```
 
-so when on the phone you can dial \*1 to park the call to the next free slot 8001-8999
+当使用电话时，您可以拨打*1将呼叫停在下一个空闲插槽8001-8999。
 
-### Using Presence
+### 使用Presence
 
-When using git head after October 18, 2011, it is now possible to subscribe to the status of an individual slot or the entire lot. To do this simply subscribe to park+my\_lot for the status of the entire lot or park+&lt;slotnumber> to monitor the status of an individual slot. Note that for a multi domain environment the lot name must include the domain name.
+在使用2011年10月18日之后的git head时，现在可以订阅单个插槽或整个停车场的状态。要做到这一点，只需订阅park+my_lot以获取整个停车场的状态，或者park+<slotnumber>以监控单个插槽的状态。注意，在多域环境中，停车场名称必须包括域名。
 
-For example:
+例如：
 
 ```xml
 <action application="valet_park" data="my_lot@${domain_name} $1"/>
 ```
+## 事件
 
-## Events
-
-Custom events with subclass valet\_parking::info
+具有子类valet_parking::info的自定义事件
 
 ```xml
 hold
@@ -149,23 +150,23 @@ bridge
 exit
 ```
 
-## Channel Variables
+## 渠道变量
 
-valet_parking_timeout  - Timeout in Seconds
+valet_parking_timeout - 超时时间（以秒为单位）
 
-valet_parking_orbit_exten - Extensions to transfer to when timeout happens.
+valet_parking_orbit_exten - 超时发生时要转移到的分机。
 
-valet_parking_orbit_dialplan - What dialplan (defaults to current sessions dialplan)
+valet_parking_orbit_dialplan - 要使用的拨号计划（默认为当前会话的拨号计划）
 
-valet_parking_orbit_context - What context (defaults to current sessions context)
+valet_parking_orbit_context - 要使用的上下文（默认为当前会话的上下文）
 
-valet_hold_music - Set hold music (defaults to ${hold_music} value)
+valet_hold_music - 设置保持音乐（默认为${hold_music}值）
 
-valet_announce_slot - Enable/disable the park slot announcement (default announcement is enabled)
+valet_announce_slot - 启用/禁用停车插槽公告（默认启用公告）
 
 ## API valet_info
 
-Use api valet\_info, you can find the status of parking lots. This is can be useful because if you blind transfer a second call to an occupied parking lot, it is connected to the parked call. That means that two customers might talk to each other. A sample output is like this. The lot is park@example.com and parking extension 10 has a call with that uuid.
+使用api valet_info，您可以找到停车场的状态。这可能很有用，因为如果您将第二个呼叫盲转移到一个被占用的停车场，它将连接到停放的呼叫。这意味着两个客户可能彼此交谈。示例输出如下所示。停车场为park@example.com，停车扩展10具有与该uuid的呼叫。
 
 ```xml
  <lots>
@@ -176,12 +177,11 @@ Use api valet\_info, you can find the status of parking lots. This is can be use
 ```
 
 ## DTMF
+```
 
-valet\_parking will listen for DTMF # and when received will break out of media. This currently cannot be disabled or changed
+valet\_parking会监听DTMF #，并在收到后中断媒体。目前无法禁用或更改此功能。
 
-## See Also
+## 参见
 
-* [park](./mod-dptools/6586687.mdx#0-about) \- traditional park
-* [mod\_fifo](./mod_fifo_3966031.mdx#-add) \- Alternative means of parking and retrieving calls
-
-
+* [park](./mod-dptools/6586687.mdx#0-about) \- 传统的停靠
+* [mod\_fifo](./mod_fifo_3966031.mdx#-add) \- 其他停靠和接听电话的方法

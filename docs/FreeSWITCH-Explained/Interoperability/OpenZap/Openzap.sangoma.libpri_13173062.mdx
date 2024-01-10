@@ -1,37 +1,36 @@
-
-# Openzap.sangoma.libpri 
+# Openzap.sangoma.libpri
 
  
 
-Click here to expand Table of Contents
+点击此处展开目录
 
-* 1 [Disclaimer](#disclaimer)
-* 2 [Introduction](#introduction)
-* 3 [Installation](#installation)  
-   * 3.1 [Sangoma Wanpipe Driver and Utilities](#sangoma-wanpipe-driver-and-utilities)  
-   * 3.2 [libpri ISDN Library](#libpri-isdn-library)  
+* 1 [免责声明](#disclaimer)
+* 2 [简介](#introduction)
+* 3 [安装](#installation)  
+   * 3.1 [Sangoma Wanpipe 驱动程序和实用工具](#sangoma-wanpipe-driver-and-utilities)  
+   * 3.2 [libpri ISDN 库](#libpri-isdn-library)  
    * 3.3 [FreeSWITCH](#freeswitch)
-* 4 [Configuration](#configuration)  
-   * 4.1 [Sangoma T1/E1 Cards](#sangoma-t1e1-cards)  
-   * 4.2 [FreeSWITCH Configuration Files](#configuration)
-* 5 [Operation](#-freeswitch--openzapsangomalibpri-)  
+* 4 [配置](#configuration)  
+   * 4.1 [Sangoma T1/E1卡](#sangoma-t1e1-cards)  
+   * 4.2 [FreeSWITCH 配置文件](#configuration)
+* 5 [操作](#-freeswitch--openzapsangomalibpri-)  
    * 5.1 [Sangoma wanrouter](#sangoma-wanrouter)  
    * 5.2 [FreeSWITCH](#freeswitch)
 
-## Disclaimer
+## 免责声明
 
-This page is a work-in-progress and I reserve the right to be totally wrong.
+本页面为正在进行的工作，我保留彻底错误的权利。
 
-## Introduction
+## 简介
 
-This brief note documents the steps required to download, install, and configure the various drivers, modules and configuration required to support PRI with Sangoma A10x cards and libpri. The steps are based the Centos 5.3 i386 OS, may not be exactly the same for other operating systems and versions.
+本简短说明记录了下载、安装和配置支持Sangoma A10x卡和libpri的各种驱动程序、模块和配置所需的步骤。这些步骤是基于Centos 5.3 i386操作系统的，对于其他操作系统和版本可能不完全相同。
 
-## Installation
+## 安装
 
-### Sangoma Wanpipe Driver and Utilities
+### Sangoma Wanpipe 驱动程序和实用工具
 
- 1\. Download the driver software from the Sangoma site. The latest version of the driver software which seems to work well is [3.4.1](ftp://ftp.sangoma.com/linux/current%5Fwanpipe/wanpipe-3.4.1.tgz).  
- 2\. Untar the driver code, make, and install (if not already done, install _flex_, _bison_, _libtermcap-devel_, _kernel-devel_, _autoconf_, _automake_, _subversion_, and _libtool_ first)
+ 1\. 从Sangoma网站下载驱动软件。似乎工作得很好的最新版本是[3.4.1](ftp://ftp.sangoma.com/linux/current%5Fwanpipe/wanpipe-3.4.1.tgz)。  
+ 2\. 解压驱动代码，执行 make 和 install（如果尚未安装，请先安装 _flex_、_bison_、_libtermcap-devel_、_kernel-devel_、_autoconf_、_automake_、_subversion_ 和 _libtool_）
 
 ```xml
 cd /usr/local/src
@@ -46,43 +45,37 @@ make install
 cd ../..
 ```
 
- 3\. Configure your wanrouter using the _Setup_ utility.
+ 3\. 使用 _Setup_ 实用工具配置您的 wanrouter。
 
 ```xml
 # ./Setup install
 ```
 
- 4\. Configure your PRI spans using the _wancfg\_fs_ utility.
+**4.** 使用_wancfg_fs_工具配置您的PRI线路。
 
 ```xml
 # wancfg_fs
 ```
 
-Configure all your channels. (In case of EuroISDN (dialect=Q931), set HW HDLC channel to 16).
+配置所有通道。（对于EuroISDN（方言=Q931），将HW HDLC通道设置为16）。
 
- 5\. Install the _init.d_ script and links using the _Setup_ utility.
+**5.** 使用_Setup_工具安装_init.d_脚本和链接。
 
 ```xml
 # ./Setup install_init
- 
-        ----------------------------------------------------------
-                  WANPIPE v3.4.1 Installation Script
-            Copyright (c) 1995-2009, Sangoma Technologies Inc.
-         ----------------------------------------------------------
+
+----------------------------------------------------------
+         WANPIPE v3.4.1 安装脚本
+    版权所有 (c) 1995-2009, Sangoma Technologies Inc.
+----------------------------------------------------------
 
 
-WANPIPE BOOTSTRAP CONFIGURATION
-Your system uses System V -style initialization scripts.  You have an option
-to add router start-up script to those scripts so that the router will start
-automatically when system enters multi-user mode and shut down when it enters
-single-user mode or when it is halted.
+WANPIPE 引导配置
+您的系统使用 System V 风格的初始化脚本。您可以选择将路由器启动脚本添加到这些脚本中，以便在系统进入多用户模式时自动启动路由器，并在进入单用户模式或关机时关闭。
 
+即选择此选项时，WANPIPE 将在系统启动时启动并在系统关机时停止。
 
-i.e. By selecting this option WANPIPE will startup on system bootup and
-     stop on system shutdown.
-
-
-Would you like to install WANPIPE start-up scripts? (y/n) y
+您是否希望安装 WANPIPE 启动脚本？(y/n) y
 
 
 ########################################################################
@@ -94,16 +87,15 @@ Would you like to install WANPIPE start-up scripts? (y/n) y
 ########################################################################
 
 
-Current boot level is 3
+当前引导级别为 3
 
 
-Wanrouter boot scripts configuration...
+配置 Wanrouter 引导脚本...
 
-
-Removing existing wanrouter boot scripts...OK
-Verifying  boot scripts...
-Enabling wanrouter boot scripts ...(level:8)
-Enabling wanrouter shutdown scripts ...(level:91)
+移除现有的wanrouter引导脚本...完成
+验证引导脚本...
+启用wanrouter引导脚本...(等级:8)
+启用wanrouter关机脚本...(等级:91)
 /etc/rc.d/rc4.d/S08wanrouter
 /etc/rc.d/rc0.d/K91wanrouter
 /etc/rc.d/rc6.d/K91wanrouter
@@ -112,12 +104,11 @@ Enabling wanrouter shutdown scripts ...(level:91)
 /etc/rc.d/init.d/wanrouter
 /etc/rc.d/rc2.d/S08wanrouter
 /etc/rc.d/rc1.d/K91wanrouter
-```
 
-### libpri ISDN Library
+### libpri ISDN库
 
-1. Download the library software from the Digium site. Version [1.14.10](http://downloads.asterisk.org/pub/telephony/libpri/libpri-1.4.10.tar.gz) seems to work well.
-2. Untar the driver code, make, and install.
+1. 从Digium网站下载库软件。版本[1.14.10](http://downloads.asterisk.org/pub/telephony/libpri/libpri-1.4.10.tar.gz)似乎工作良好。
+2. 解压驱动代码，编译和安装。
 
 ```xml
 cd /usr/local/src
@@ -127,13 +118,13 @@ make
 make install
 ```
 
-_The libpri software is made available under the GPL license, which is not distribution compatible with the MPL license used by FreeSWITCH. Because of this, libpri may not be included in any FreeSWITCH distribution, but can be added to FreeSWITCH by the end-user (you) for their own use._
+_libpri软件在GPL许可下提供，该许可与FreeSWITCH使用的MPL许可不兼容。因此，libpri可能不会被包含在任何FreeSWITCH发行版中，但可以由最终用户（您）添加到FreeSWITCH以供个人使用。_
 
 ### FreeSWITCH
 
 #### modules.conf
 
-Uncomment the line for _mod\_openzap_ in **modules.conf**.
+取消注释**modules.conf**中的_mod\_openzap_行。
 
 ```xml
 #endpoints/mod_skypiax
@@ -142,9 +133,9 @@ Uncomment the line for _mod\_openzap_ in **modules.conf**.
 ```
 
  ####   
-Build
+构建
 
-Run _configure_ with the **\--with-libpri** option, then build and install FreeSWITCH.
+使用**\--with-libpri**选项运行_configure_，然后构建和安装FreeSWITCH。
 
 ```xml
 ./configure --with-libpri
@@ -152,47 +143,56 @@ make
 make install
 ```
 
- ## Configuration
+ ## 配置
 
-### Sangoma T1/E1 Cards
+### Sangoma T1/E1卡
 
-The Sangoma hardware must be installed to continue.
+必须安装Sangoma硬件才能继续。
 
-#### Hardware Probe
+#### 硬件探测
 
-1. Run the _hwprobe_ utility to discover and report on Sangoma hardware installed in the platform.
-2. Make note of the **SLOT** and **BUS** of the T1/E1 device -- this will be required in the next step.
+1. 运行_hwprobe_实用程序以发现并报告安装在平台上的Sangoma硬件。
+2. 记下T1/E1设备的**SLOT**和**BUS**--在下一步中将需要这些信息。
 
 ```xml
 # wanrouter hwprobe
 
+--------------------------
+| Wanpipe硬件探测信息 |
+--------------------------
 
--------------------------------
-| Wanpipe Hardware Probe Info |
--------------------------------
-1 . AFT-A101-SH : SLOT=4 : BUS=3 : IRQ=5 : CPU=A : PORT=1 : HWEC=32 : V=34
+1. AFT-A101-SH: 插槽=4: 总线=3: 中断=5: CPU=A: 端口=1: HWEC=32: V=34
 
-
-Card Cnt: A101-2=1
-
+卡数量: A101-2=1
 
 ```
-
 **wanpipe_n_.conf**
 
-A seperate wanpipe_n_.conf file is required for each T1 or E1 span to used by FreeSWITCH. The first file would be named **wanpipe1.conf**, the second **wanpipe2.conf**, etc. Create the _/etc/wanpipe/wanpipe_n_.conf_ file with using a text editor (recommended). The Sangoma _wancfg\_fs_ utility can also be used to create the _/etc/wan/wanpipe1.conf_ file, but it may need to be modified manually after.
+每个T1或E1信道在FreeSWITCH中需要一个独立的wanpipe_n_.conf文件。第一个文件应命名为**wanpipe1.conf**，第二个文件命名为**wanpipe2.conf**，依此类推。使用文本编辑器（推荐）创建`/etc/wanpipe/wanpipe_n_.conf`文件。也可以使用Sangoma的`wancfg\_fs`实用程序创建`/etc/wan/wanpipe1.conf`文件，但可能需要手动修改该文件。
 
-1. The **\[devices\]** section describes device name and the type of hardware. The device name should match the span number. For example, **wanpipe1** would be used for span1, **wanpipe2** would be used for span2\. For Samgoma A101/A102/A104/A108 T1/E1 cards, the hardware is **WAN\_AFT\_TE1**.
-2. The **\[interfaces\]** section describes interface name, device name, and the interface API for a span. The interface and device names should match the span number. For example, **w1g1** would be used for span1, **w2g1** would be used for span2\. FreeSWITCH requires that the **TDM\_VOICE\_API** be configured.
-3. **PCISLOT** and **PCIBUS** should be the same as the values reported for **SLOT** and **BUS** by the hwprobe utility.
-4. **FE\_MEDIA** should be set to either **T1** or **E1** \-- depending what the TDM interface will be connecting to. The span number is also used in the _conf/openzap.conf_ file.
-5. **FE\_LCODE** defines the zero suppression method to be used on the TDM interface. Valid values are **B8ZS** and **AMI** for T1, and **HDB3** or **AMI** for E1 spans.
-6. **TE\_FRAME** defines the framing structure to be used on the TDM interface. Valid values are **ESF** and **D4** for T1 (D4 in this context means Super Frame, ESF means Extended Superframe. By default in NA, ESF is your default value.) , and **CRC4** or **NCRC4** for E1 spans.
-7. **FE\_CLOCK** specifies which end of the TDM link provides the _master_ clock for synchronization. A value of **NORMAL** indicates that the other end (typically the PSTN telco) is the master (this is the most common). A value of **MASTER** indicates that the card is the master (possibly when using a two span card, where one span connects to the PSTN and the other span connects to another PBX or channel bank). (Normal = Derived Clock, master = internal clock)
-8. **TDMV\_LAW** specifies the coding for voice content. Normally **MULAW** is used for T1, and **ALAW** is used for E1.
-9. **TDMV\_SPAN** defines the span number. The span number is also used in the _conf/openzap.conf_ file.
-10. **TDMV\_DCHAN** defines the timeslot to be used for D-channel signalling. Timeslot 24 is normally used with T1, and timeslot 16 for E1\. The span number is also used in the _conf/openzap.conf_ file. If set to 0, no D-channel will be configured.
-11. **TDMV\_HW\_DTMF** specifies if hardware-based DTMF detection should be enabled (this is only available if the card is equipped with a echo cancellation module and **TDMV\_HWEC** is set to **YES**). This should be set to **NO** to work-around a open issue).
+1. **\[devices\]**
+   该部分描述设备名称和硬件类型。设备名称应与跨度编号相匹配。例如，span1应使用wanpipe1，span2应使用wanpipe2。对于Samgoma A101/A102/A104/A108 T1/E1卡，硬件类型是WAN_AFT_TE1。
+
+2. **\[interfaces\]**
+   该部分描述接口名称、设备名称和跨度的接口API。接口名称和设备名称应与跨度编号相匹配。例如，span1应使用w1g1，span2应使用w2g1。FreeSWITCH要求配置TDM_VOICE_API。
+
+3. PCISLOT和PCIBUS应与hwprobe工具报告的SLOT和BUS值相同。
+
+4. FE_MEDIA应设置为T1或E1，取决于TDM接口要连接到的设备。跨度编号也在_conf/openzap.conf文件中使用。
+
+5. FE_LCODE定义在TDM接口上使用的零抑制方法。有效值为T1的B8ZS和AMI，以及E1跨度的HDB3或AMI。
+
+6. TE_FRAME定义需在TDM接口上使用的帧结构。T1的有效值为ESF和D4（此处的D4指超级帧，ESF指扩展超级帧，在北美地区，ESF是默认值）；E1跨度的有效值为CRC4或NCRC4。
+
+7. FE_CLOCK指定TDM链路的哪一端提供主时钟进行同步。NORMAL表示另一端（通常是PSTN电信）是主时钟的源（这是最常见的情况）。MASTER表示卡是主时钟的源（可能用于使用两个跨度的卡，其中一个跨度连接到PSTN，另一个跨度连接到另一个PBX或信道银行）。Normal表示衍生时钟，master表示内部时钟。
+
+8. TDMV_LAW指定语音内容的编码方式。通常在T1上使用MULAW，在E1上使用ALAW。
+
+9. TDMV_SPAN定义跨度编号。跨度编号也在_conf/openzap.conf文件中使用。
+
+10. TDMV_DCHAN定义用于D通道信令的时隙。通常在T1上使用时隙24，在E1上使用时隙16。跨度编号也在_conf/openzap.conf文件中使用。如果设置为0，则不配置D通道。
+
+11. TDMV_HW_DTMF指定是否启用基于硬件的DTMF检测（仅在卡上配备有回声抵消模块并且TDMV_HWEC设置为YES时可用）。这应设置为NO以解决一个已知问题。
 
 ```xml
 [devices]
@@ -238,24 +238,24 @@ IDLE_FLAG          = 0x7E
 ####   
 wanrouter.rc
 
-The **WAN\_DEVICES** line in the wanrouter.rc file must be updated to include all the wanpipe_n_ configurations (do not inclide the _.conf_ file suffix).
+在wanrouter.rc文件中，需要更新WAN_DEVICES一行，包括所有wanpipe_n_的配置（不要包含.conf文件后缀）。
 
 ```xml
 WAN_DEVICES="wanpipe1 wanpipe2"
 ```
 
 ###   
-FreeSWITCH Configuration Files
+FreeSWITCH配置文件
 
 #### openzap.conf
 
-Modify the _conf/openzap.conf_ file to match your hardware configuration.
+修改_conf/openzap.conf文件以匹配您的硬件配置。
 
-1. Assign a meaningful name for the span following the keyword _wanpipe_ to the in the section header (PRI\_1 in the example). This name is also used in the _openzap.conf.xml_ configuration file.
-2. The **number** parameter must be the same as the value of **TDMV\_SPAN** in the associated wanpipe configuration file.
-3. The **trunk\_type** must be the same as the value of **FE\_MEDIA** in the associated wanpipe configuration file.
-4. The **d-channel** parameter has two values, separated by a colon (:). The left-hand-side indicates the span where the d-channel is located. This should be the same as the value of **TDMV\_SPAN** in the associated wanpipe configuration file. The right hand-side indicates the timeslot where the d-channel is located. This should be the same as the value of **TDMV\_DCHAN** in the associated wanpipe configuration file.
-5. The **b-channel** parameter also has two values, separated by a colon (:). The left-hand-side indicates the span where the b-channels are located. This should be the same as the value of **TDMV\_SPAN** in the associated wanpipe configuration file. The right hand-side indicates the timeslots where the b-channel are located. These should be all other timeslots on the span (all except the timeslot being used for the d-channel).
+1. 为关键字_wanpipe_后面的段落分配一个有意义的名称，作为部分标题的一部分（例如在示例中的PRI_1）。该名称还将用于_openzap.conf.xml_配置文件中。
+2. **number** 参数必须与关联的wanpipe配置文件中的**TDMV\_SPAN**值相同。
+3. **trunk\_type** 参数必须与关联的wanpipe配置文件中的**FE\_MEDIA**值相同。
+4. **d-channel** 参数有两个值，用冒号（:）分隔。左侧指示D通道所在的跨度。这应该与关联的wanpipe配置文件中的**TDMV\_SPAN**值相同。右侧指示D通道所在的时隙。这应该与关联的wanpipe配置文件中的**TDMV\_DCHAN**值相同。
+5. **b-channel** 参数也有两个值，用冒号（:）分隔。左侧指示B通道所在的跨度。这应该与关联的wanpipe配置文件中的**TDMV\_SPAN**值相同。右侧指示B通道所在的时隙。这应该是跨度上的所有其他时隙（除正在用于D通道的时隙之外）。
 
 ```xml
 [span wanpipe PRI_1]
@@ -266,8 +266,7 @@ b-channel => 1:1-23
 d-channel => 1:24
 ```
 
-  
-Example for Q931 (Euroisdn) with 2 PRI channels
+Q931（Euroisdn）的示例，具有2个PRI通道
 
 ```xml
 [span wanpipe PRI_1]
@@ -289,11 +288,11 @@ b-channel => 2:17-31
 ####   
 openzap.conf.xml
 
-Modify the _conf/autoload\_configs/openzap.conf.xml_ to match. Spans using _libpri_ are configured within the **&lt;libpri\_spans>** tags.
+修改_conf/autoload_configs/openzap.conf.xml_ 文件以匹配。使用 _libpri_ 的 spans 配置在 **&lt;libpri\_spans>** 标签内。
 
-1. The _name_ attribute of the _span_ tag must be set to the name assigned in the _openzap.conf_ configuration file.
-2. The value of the _node_ parameter must be set to either **cpe** (or user) or **net** (or network). The value **cpe** is normally used when the span in connected to a PSTN telco. When connecting to another PBX, the value must be coordinated with the other system. One end must be **cpe** and the other **net**.
-3. The value of the _switch_ parameter must be set to either **ni1**, **ni2**, **dms100**, **lucent5e**, **att4ess**, or **euroisdn**. The ISDN variant configured should match the configuration on the connecting switch.
+1. _span_ 标签的 _name_ 属性必须设置为 _openzap.conf_ 配置文件中的分配的名称。
+2. _node_ 参数的值必须设置为 **cpe**（或 user）或 **net**（或 network）。当 span 连接到 PSTN 电信网时，一般使用 **cpe**。当连接到另一个 PBX 时，该值必须与另一个系统协调。一端必须为 **cpe**，另一端必须为 **net**。
+3. _switch_ 参数的值必须设置为 **ni1**、**ni2**、**dms100**、**lucent5e**、**att4ess** 或 **euroisdn** 中的一个。配置的 ISDN 变体应与连接交换机上的配置相匹配。
 
 ```xml
 <configuration name="openzap.conf" description="OpenZAP Configuration">
@@ -314,7 +313,7 @@ Modify the _conf/autoload\_configs/openzap.conf.xml_ to match. Spans using _libp
 
 **modules.conf.xml**
 
-Modify the _conf/autoload\_configs/modules.conf.xml_ and remove the XML comment tags around the line for mod\_openzap.
+修改 _conf/autoload\_configs/modules.conf.xml_，并删除对 mod\_openzap 的行周围的 XML 注释标签。
 
 ```xml
 <!-- <load module="mod_woomera"/> -->
@@ -323,92 +322,108 @@ Modify the _conf/autoload\_configs/modules.conf.xml_ and remove the XML comment 
 ```
 
 ##   
-Operation
+操作
 
 ### Sangoma wanrouter
 
-Start the _wanpipe_ service to load the kernel modules, configure and start the drivers, and bring-up the TDM interfaces. Start the wanrouter
+启动_wanpipe_ 服务以加载内核模块，配置和启动驱动程序，并启动 TDM 接口。启动 wanrouter。
 
 ```xml
 # service wanrouter start
-
-
-Starting WAN Router...
-Loading WAN drivers: wanpipe done.
-Starting up device: wanpipe1
---> Loading ec image OCT6116-64S.ima...
-Configuring interfaces: w1g1
-done.
 ```
 
-NOTE: Make sure that you are not running sangoma\_prid. Stop sangoma\_prid by using smg\_ctrl stop.
+启动广域网路由器...
+加载广域网驱动程序：wanpipe 完成。
+正在启动设备：wanpipe1
+--> 正在加载 ec 镜像 OCT6116-64S.ima...
+配置接口：w1g1
+完成。
+
+注意：确保您未运行 sangoma\_prid。请使用 smg\_ctrl stop 停止 sangoma\_prid。
 
 ### FreeSWITCH
 
-Start FreeSWITCH and conform that openzap successfully opens and starts all configured channels.
+启动 FreeSWITCH，并确保 openzap 成功打开并启动了所有配置的通道。
 
 ```xml
 ...
-2009-06-16 17:25:32.623714 [NOTICE] zap_io.c:2609 Modules configured: 1
-2009-06-16 17:25:32.624071 [INFO] zap_io.c:2430 Loading IO from /usr/local/freeswitch/mod/ozmod_wanpipe.so [wanpipe]
-2009-06-16 17:25:32.624130 [INFO] zap_io.c:2230 auto-loaded 'wanpipe'
-2009-06-16 17:25:32.624250 [INFO] ozmod_wanpipe.c:261 configuring device s1c1 as OpenZAP device 1:1 fd:38 DTMF: software
-2009-06-16 17:25:32.624286 [INFO] ozmod_wanpipe.c:261 configuring device s1c2 as OpenZAP device 1:2 fd:39 DTMF: software
-2009-06-16 17:25:32.624309 [INFO] ozmod_wanpipe.c:261 configuring device s1c3 as OpenZAP device 1:3 fd:40 DTMF: software
-2009-06-16 17:25:32.624347 [INFO] ozmod_wanpipe.c:261 configuring device s1c4 as OpenZAP device 1:4 fd:41 DTMF: software
-2009-06-16 17:25:32.624381 [INFO] ozmod_wanpipe.c:261 configuring device s1c5 as OpenZAP device 1:5 fd:42 DTMF: software
-2009-06-16 17:25:32.624412 [INFO] ozmod_wanpipe.c:261 configuring device s1c6 as OpenZAP device 1:6 fd:43 DTMF: software
-2009-06-16 17:25:32.624434 [INFO] ozmod_wanpipe.c:261 configuring device s1c7 as OpenZAP device 1:7 fd:44 DTMF: software
-2009-06-16 17:25:32.624461 [INFO] ozmod_wanpipe.c:261 configuring device s1c8 as OpenZAP device 1:8 fd:45 DTMF: software
-2009-06-16 17:25:32.624493 [INFO] ozmod_wanpipe.c:261 configuring device s1c9 as OpenZAP device 1:9 fd:46 DTMF: software
-2009-06-16 17:25:32.624529 [INFO] ozmod_wanpipe.c:261 configuring device s1c10 as OpenZAP device 1:10 fd:47 DTMF: software
-2009-06-16 17:25:32.624563 [INFO] ozmod_wanpipe.c:261 configuring device s1c11 as OpenZAP device 1:11 fd:48 DTMF: software
-2009-06-16 17:25:32.624599 [INFO] ozmod_wanpipe.c:261 configuring device s1c12 as OpenZAP device 1:12 fd:49 DTMF: software
-2009-06-16 17:25:32.624632 [INFO] ozmod_wanpipe.c:261 configuring device s1c13 as OpenZAP device 1:13 fd:50 DTMF: software
-2009-06-16 17:25:32.624671 [INFO] ozmod_wanpipe.c:261 configuring device s1c14 as OpenZAP device 1:14 fd:51 DTMF: software
-2009-06-16 17:25:32.624712 [INFO] ozmod_wanpipe.c:261 configuring device s1c15 as OpenZAP device 1:15 fd:52 DTMF: software
-2009-06-16 17:25:32.624797 [INFO] ozmod_wanpipe.c:261 configuring device s1c16 as OpenZAP device 1:16 fd:53 DTMF: software
-2009-06-16 17:25:32.624845 [INFO] ozmod_wanpipe.c:261 configuring device s1c17 as OpenZAP device 1:17 fd:54 DTMF: software
-2009-06-16 17:25:32.624891 [INFO] ozmod_wanpipe.c:261 configuring device s1c18 as OpenZAP device 1:18 fd:55 DTMF: software
-2009-06-16 17:25:32.624955 [INFO] ozmod_wanpipe.c:261 configuring device s1c19 as OpenZAP device 1:19 fd:56 DTMF: software
-2009-06-16 17:25:32.624990 [INFO] ozmod_wanpipe.c:261 configuring device s1c20 as OpenZAP device 1:20 fd:57 DTMF: software
-2009-06-16 17:25:32.625030 [INFO] ozmod_wanpipe.c:261 configuring device s1c21 as OpenZAP device 1:21 fd:58 DTMF: software
-2009-06-16 17:25:32.625068 [INFO] ozmod_wanpipe.c:261 configuring device s1c22 as OpenZAP device 1:22 fd:59 DTMF: software
-2009-06-16 17:25:32.625105 [INFO] ozmod_wanpipe.c:261 configuring device s1c23 as OpenZAP device 1:23 fd:60 DTMF: software
-2009-06-16 17:25:32.625134 [INFO] ozmod_wanpipe.c:261 configuring device s1c24 as OpenZAP device 1:24 fd:61 DTMF: none
-2009-06-16 17:25:32.625153 [INFO] zap_io.c:2353 Configured 24 channel(s)
-2009-06-16 17:25:32.625451 [INFO] zap_io.c:2430 Loading IO from /usr/local/freeswitch/mod/ozmod_libpri.so [libpri]
-2009-06-16 17:25:32.625478 [INFO] zap_io.c:2447 Loading SIG from /usr/local/freeswitch/mod/ozmod_libpri.so
-2009-06-16 17:25:32.625489 [INFO] zap_io.c:2563 auto-loaded 'libpri'
-...
-2009-06-16 17:25:32.625526 [CONSOLE] switch_loadable_module.c:889 Successfully Loaded [mod_openzap]
-2009-06-16 17:25:32.625539 [NOTICE] switch_loadable_module.c:142 Adding Endpoint 'openzap'
-2009-06-16 17:25:32.625580 [NOTICE] switch_loadable_module.c:248 Adding Application 'disable_ec'
-2009-06-16 17:25:32.625734 [NOTICE] switch_loadable_module.c:270 Adding API Function 'oz'
-...
-2009-06-16 17:25:37.154938 [NOTICE] ozmod_libpri.c:920 -- Restarting 1:2
-2009-06-16 17:25:37.655850 [NOTICE] ozmod_libpri.c:920 -- Restarting 1:3
-2009-06-16 17:25:38.151764 [NOTICE] ozmod_libpri.c:920 -- Restarting 1:4
-2009-06-16 17:25:38.645679 [NOTICE] ozmod_libpri.c:920 -- Restarting 1:5
-2009-06-16 17:25:39.152589 [NOTICE] ozmod_libpri.c:920 -- Restarting 1:6
-2009-06-16 17:25:39.647504 [NOTICE] ozmod_libpri.c:920 -- Restarting 1:7
-2009-06-16 17:25:40.153416 [NOTICE] ozmod_libpri.c:920 -- Restarting 1:8
-2009-06-16 17:25:40.648329 [NOTICE] ozmod_libpri.c:920 -- Restarting 1:9
-2009-06-16 17:25:41.153243 [NOTICE] ozmod_libpri.c:920 -- Restarting 1:10
-2009-06-16 17:25:41.651155 [NOTICE] ozmod_libpri.c:920 -- Restarting 1:11
-2009-06-16 17:25:42.151068 [NOTICE] ozmod_libpri.c:920 -- Restarting 1:12
-2009-06-16 17:25:42.654980 [NOTICE] ozmod_libpri.c:920 -- Restarting 1:13
-2009-06-16 17:25:43.155895 [NOTICE] ozmod_libpri.c:920 -- Restarting 1:14
-2009-06-16 17:25:43.655806 [NOTICE] ozmod_libpri.c:920 -- Restarting 1:15
-2009-06-16 17:25:44.151720 [NOTICE] ozmod_libpri.c:920 -- Restarting 1:16
-2009-06-16 17:25:44.647633 [NOTICE] ozmod_libpri.c:920 -- Restarting 1:17
-2009-06-16 17:25:45.155545 [NOTICE] ozmod_libpri.c:920 -- Restarting 1:18
-2009-06-16 17:25:45.654458 [NOTICE] ozmod_libpri.c:920 -- Restarting 1:19
-2009-06-16 17:25:46.149373 [NOTICE] ozmod_libpri.c:920 -- Restarting 1:20
-2009-06-16 17:25:46.656284 [NOTICE] ozmod_libpri.c:920 -- Restarting 1:21
-2009-06-16 17:25:47.151198 [NOTICE] ozmod_libpri.c:920 -- Restarting 1:22
-2009-06-16 17:25:47.655110 [NOTICE] ozmod_libpri.c:920 -- Restarting 1:23
-...
-```
+2009-06-16 17:25:32.623714 [NOTICE] zap_io.c:2609 配置的模块: 1
+2009-06-16 17:25:32.624071 [INFO] zap_io.c:2430 从 /usr/local/freeswitch/mod/ozmod_wanpipe.so 加载 IO [wanpipe]
+2009-06-16 17:25:32.624130 [INFO] zap_io.c:2230 自动加载 'wanpipe'
+2009-06-16 17:25:32.624250 [INFO] ozmod_wanpipe.c:261 将设备 s1c1 配置为 OpenZAP 设备 1:1 fd:38 DTMF: 软件
+2009-06-16 17:25:32.624286 [INFO] ozmod_wanpipe.c:261 将设备 s1c2 配置为 OpenZAP 设备 1:2 fd:39 DTMF: 软件
+2009-06-16 17:25:32.624309 [INFO] ozmod_wanpipe.c:261 将设备 s1c3 配置为 OpenZAP 设备 1:3 fd:40 DTMF: 软件
+2009-06-16 17:25:32.624347 [INFO] ozmod_wanpipe.c:261 将设备 s1c4 配置为 OpenZAP 设备 1:4 fd:41 DTMF: 软件
+2009-06-16 17:25:32.624381 [INFO] ozmod_wanpipe.c:261 将设备 s1c5 配置为 OpenZAP 设备 1:5 fd:42 DTMF: 软件
+2009-06-16 17:25:32.624412 [INFO] ozmod_wanpipe.c:261 将设备 s1c6 配置为 OpenZAP 设备 1:6 fd:43 DTMF: 软件
+2009-06-16 17:25:32.624434 [INFO] ozmod_wanpipe.c:261 将设备 s1c7 配置为 OpenZAP 设备 1:7 fd:44 DTMF: 软件
+2009-06-16 17:25:32.624461 [INFO] ozmod_wanpipe.c:261 将设备 s1c8 配置为 OpenZAP 设备 1:8 fd:45 DTMF: 软件
+2009-06-16 17:25:32.624493 [INFO] ozmod_wanpipe.c:261 将设备 s1c9 配置为 OpenZAP 设备 1:9 fd:46 DTMF: 软件
+2009-06-16 17:25:32.624529 [INFO] ozmod_wanpipe.c:261 将设备 s1c10 配置为 OpenZAP 设备 1:10 fd:47 DTMF: 软件
+2009-06-16 17:25:32.624563 [INFO] ozmod_wanpipe.c:261 将设备 s1c11 配置为 OpenZAP 设备 1:11 fd:48 DTMF: 软件
+2009-06-16 17:25:32.624599 [INFO] ozmod_wanpipe.c:261 将设备 s1c12 配置为 OpenZAP 设备 1:12 fd:49 DTMF: 软件
+2009-06-16 17:25:32.624632 [INFO] ozmod_wanpipe.c:261 将设备 s1c13 配置为 OpenZAP 设备 1:13 fd:50 DTMF: 软件
+2009-06-16 17:25:32.624671 [INFO] ozmod_wanpipe.c:261 将设备 s1c14 配置为 OpenZAP 设备 1:14 fd:51 DTMF: 软件
+2009-06-16 17:25:32.624712 [INFO] ozmod_wanpipe.c:261 将设备 s1c15 配置为 OpenZAP 设备 1:15 fd:52 DTMF: 软件
+2009-06-16 17:25:32.624797 [INFO] ozmod_wanpipe.c:261 将设备 s1c16 配置为 OpenZAP 设备 1:16 fd:53 DTMF: 软件
+2009-06-16 17:25:32.624845 [INFO] ozmod_wanpipe.c:261 将设备 s1c17 配置为 OpenZAP 设备 1:17 fd:54 DTMF: 软件
+2009-06-16 17:25:32.624891 [INFO] ozmod_wanpipe.c:261 将设备 s1c18 配置为 OpenZAP 设备 1:18 fd:55 DTMF: 软件
+2009-06-16 17:25:32.624955 [INFO] ozmod_wanpipe.c:261 将设备 s1c19 配置为 OpenZAP 设备 1:19 fd:56 DTMF: 软件
+2009-06-16 17:25:32.624990 [INFO] ozmod_wanpipe.c:261 将设备 s1c20 配置为 OpenZAP 设备 1:20 fd:57 DTMF: 软件
+2009-06-16 17:25:32.625030 [INFO] ozmod_wanpipe.c:261 将设备 s1c21 配置为 OpenZAP 设备 1:21 fd:58 DTMF: 软件
+2009-06-16 17:25:32.625068 [INFO] ozmod_wanpipe.c:261 将设备 s1c22 配置为 OpenZAP 设备 1:22 fd:59 DTMF: 软件
+2009-06-16 17:25:32.625105 [INFO] ozmod_wanpipe.c:261 将设备 s1c23 配置为 OpenZAP 设备 1:23 fd:60 DTMF: 软件
+2009-06-16 17:25:32.625134 [INFO] ozmod_wanpipe.c:261 将设备 s1c24 配置为 OpenZAP 设备 1:24 fd:61 DTMF: 无
+2009-06-16 17:25:32.625153 [INFO] zap_io.c:2353 配置了 24 个通道
+2009-06-16 17:25:32.625451 [INFO] zap_io.c:2430 从 /usr/local/freeswitch/mod/ozmod_libpri.so 加载 IO [libpri]
+2009-06-16 17:25:32.625478 [INFO] zap_io.c:2447 从 /usr/local/freeswitch/mod/ozmod_libpri.so 加载 SIG
+2009-06-16 17:25:32.625489 [INFO] zap_io.c:256
 
+## **标题 [to_be_replace1]**
 
+这是一个示例标题
+
+### **小标题 [to_be_replace2]**
+
+这是一个示例小标题
+
+- 列表项1
+- 列表项2
+- 列表项3
+
+### **小标题 [to_be_replace3]**
+
+这是另一个示例小标题
+
+1. 列表项1
+2. 列表项2
+3. 列表项3
+
+### **小标题 [to_be_replace4]**
+
+这是第三个示例小标题
+
+![图片描述](http://example.com/images/example.png)
+
+### **小标题 [to_be_replace5]**
+
+这是最后一个示例小标题
+
+`print("Hello World")`
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce quis ante sit amet nunc consequat euismod. Sed interdum, augue et pellentesque convallis, orci sem pretium dui, in facilisis erat nibh vitae arcu. Donec lorem est, tempor sed imperdiet ut, finibus a nunc. Sed feugiat odio sodales massa ultricies semper. Donec laoreet tellus quis eleifend euismod. Vestibulum dictum ultrices metus eget venenatis. Sed pretium, lacus at tempus tincidunt, arcu ligula euismod purus, ac dapibus lectus enim auctor mi.
+
+### **引用 [to_be_replace6]**
+
+> 这是一个引用示例
+
+### **表格 [to_be_replace7]**
+
+| 列1 | 列2 | 列3 |
+| --- | --- | --- |
+| 内容1 | 内容2 | 内容3 |
+| 内容4 | 内容5 | 内容6 |
+
+### **小标题 [to_be_replace8]**
+
+这是一个示例小标题

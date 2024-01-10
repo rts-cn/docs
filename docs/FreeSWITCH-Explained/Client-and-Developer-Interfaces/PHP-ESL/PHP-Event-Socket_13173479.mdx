@@ -1,106 +1,110 @@
+# PHP事件套接字
 
-# PHP Event Socket 
+## 关于
 
- 
+下面的代码最后是在2008年编辑的，但在2013年仍能在PHP v5.3上工作。
 
-## About
+PHP5的其他实现方式：
 
-The code below was last edited in 2008, but is still working in 2013 on php v5.3
+- [freeswitcheventsocketlistener（2013）](https://bitbucket.org/lrichard/freeswitcheventsocketlistener)
+- [bluebox（2008）](https://github.com/2600hz/bluebox/tree/master/modules/esl-1.1/libraries)
 
-Other implementation in PHP5:
+点击此处展开目录
 
-* [freeswitcheventsocketlistener (2013)](https://bitbucket.org/lrichard/freeswitcheventsocketlistener)
-* [bluebox (2008)](https://github.com/2600hz/bluebox/tree/master/modules/esl-1.1/libraries)
+- 1 [PHP客户端示例](#php-client-examle)
 
-Click here to expand Table of Contents
+#### PHP客户端示例
 
-* 1 [PHP client examle](#php-client-examle)
-
-#### PHP client examle
-
-Website based PHP event socket example. Make sure to change $host to the ip address of your FreeSWITCH server.
+基于网站的PHP事件套接字示例。确保将$host更改为您的FreeSWITCH服务器的IP地址。
 
 ```xml
- <?php
- 
- $password = "ClueCon";
- $port = "8021";
- $host = "127.0.0.1";
- 
- function event_socket_create($host, $port, $password) {
-     $fp = fsockopen($host, $port, $errno, $errdesc) 
-       or die("Connection to $host failed");
-     socket_set_blocking($fp,false);
-     
-     if ($fp) {
-         while (!feof($fp)) {
-            $buffer = fgets($fp, 1024);
-            usleep(100); //allow time for reponse
-            if (trim($buffer) == "Content-Type: auth/request") {
-               fputs($fp, "auth $password\n\n");
-               break;
-            }
-         }
-         return $fp;
-     }
-     else {
-         return false;
-     }           
- }
- 
- 
- function event_socket_request($fp, $cmd) {
+<?php
+
+$password = "ClueCon";
+$port = "8021";
+$host = "127.0.0.1";
+
+function event_socket_create($host, $port, $password) {
+    $fp = fsockopen($host, $port, $errno, $errdesc) 
+    or die("连接到 $host 失败");
+    socket_set_blocking($fp,false);
     
-     if ($fp) {    
-         fputs($fp, $cmd."\n\n");    
-         usleep(100); //allow time for reponse
-         
-         $response = "";
-         $i = 0;
-         $contentlength = 0;
-         while (!feof($fp)) {
+    if ($fp) {
+        while (!feof($fp)) {
+            $buffer = fgets($fp, 1024);
+            usleep(100); //给响应一个时间
+            if (trim($buffer) == "Content-Type: auth/request") {
+                fputs($fp, "auth $password\n\n");
+                break;
+            }
+        }
+        return $fp;
+    }
+    else {
+        return false;
+    }           
+}
+
+
+function event_socket_request($fp, $cmd) {
+
+    if ($fp) {    
+        fputs($fp, $cmd."\n\n");    
+        usleep(100); //给响应一个时间
+
+        $response = "";
+        $i = 0;
+        $contentlength = 0;
+        while (!feof($fp)) {
             $buffer = fgets($fp, 4096);
             if ($contentlength > 0) {
-               $response .= $buffer;
+                $response .= $buffer;
             }
-            
-            if ($contentlength == 0) { //if contentlenght is already don't process again
-                if (strlen(trim($buffer)) > 0) { //run only if buffer has content
+
+            if ($contentlength == 0) { //如果已经设置了 contentlenght 就不再处理
+                if (strlen(trim($buffer)) > 0) { //只在缓冲区有内容时运行
                     $temparray = split(":", trim($buffer));
                     if ($temparray[0] == "Content-Length") {
-                       $contentlength = trim($temparray[1]);
+                        $contentlength = trim($temparray[1]);
                     }
                 }
             }
-            
-            usleep(100); //allow time for reponse
-            
-            //optional because of script timeout //don't let while loop become endless
+
+            usleep(100); //给响应一个时间
+
+            //由于脚本超时的原因，这是可选项，不要让 while 循环无休止地运行
             if ($i > 10000) { break; } 
-            
-            if ($contentlength > 0) { //is contentlength set
-                //stop reading if all content has been read.
+
+            if ($contentlength > 0) { //是否设置了 contentlength
+                //当读取完成所有内容时停止读取
                 if (strlen($response) >= $contentlength) {  
-                   break;
+                    break;
                 }
             }
             $i++;
-         }
-         
-         return $response;
-     }
-     else {
-       echo "no handle";
-     }
- }
- 
- $fp = event_socket_create($host, $port, $password);
- $cmd = "api help";
- $response = event_socket_request($fp, $cmd);
- echo $response; 
- fclose($fp);  
- 
- ?>
+        }
+
+        return $response;
+    }
+    else {
+        echo "无处理";
+    }
+}
+
+$fp = event_socket_create($host, $port, $password);
+$cmd = "api help";
+$response = event_socket_request($fp, $cmd);
+echo $response; 
+fclose($fp);  
+
+?>
 ```
 
+# Markdown
 
+## 欢迎使用翻译引擎！
+
+你是一个专业的翻译引擎，请将以下文本翻译成通俗、专业、优雅、流畅的内容，不要使用机器翻译的样式。请保持原始的 Markdown 格式。请仅翻译文本内容，不要解释其含义。
+
+## 文本
+欢迎使用翻译引擎！

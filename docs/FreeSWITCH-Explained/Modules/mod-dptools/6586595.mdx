@@ -1,70 +1,63 @@
+# mod_dptools：执行扩展
 
-# mod_dptools: execute_extension 
+## 关于
 
- 
+从另一个扩展中执行一个扩展并返回。execute\_extension像一个宏一样执行一个扩展，然后返回，而[transfer](../mod_dptools_1970333.mdx#-c)则不返回。当你不需要做其他任何事情时，使用transfer并退出当前操作，通道回到拨号计划。
 
-## About
+execute\_extension将保持当前的作用域并构建一个一次性扩展，执行它，然后返回到原来的调用位置。
 
-  
-Execute an extension from within another extension and return. execute\_extension executes an extension like a macro then returns, whereas [transfer](../mod_dptools_1970333.mdx#-c) does not return. When you don't need to do anything else, use transfer and exit what you are doing and the channel goes back to the dialplan.
+transfer实际上改变了通道的状态，所以如果你在一个脚本中，应该在调用transfer后尽快退出脚本。
 
-  
-execute\_extension will keep the current scope and build a one time extension, execute it, and return right back to where it was called from.
+请注意，这会在指定的整个拨号计划中查找，所以目标上下文中的所有扩展仍然会被检查是否匹配。请小心避免循环和歧义。
 
-The transfer actually alters the channel's state, so if you are in a script you should exit the script as soon as you call transfer.
+点击展开目录
 
-Note that this hunts through the entire specified dialplan, so all extensions in the target context are still checked for matches. Be careful to avoid loops and ambiguities.
+* 1 [用法](#-freeswitch--mod_dptools-execute_extension-)
+* 2 [示例](#-freeswitch--mod_dptools-execute_extension-)
+* 3 [参见](#-freeswitch--mod_dptools-execute_extension-)  
 
-Click to expand Table of Contents
-
-* 1 [Usage](#-freeswitch--mod_dptools-execute_extension-)
-* 2 [Examples](#-freeswitch--mod_dptools-execute_extension-)
-* 3 [See Also](#-freeswitch--mod_dptools-execute_extension-)
-
-## Usage
+## 用法
 
 ```xml
 <action application="execute_extension" data="extension [dialplan] [context]"/>
 ```
 
-If you do not specify the dialplan and context, it defaults to the current one. Please note that the extension parameter indicates a value that will be matched by dialplan\_hunt() as a destination\_number. It will not match on the extension's name= value. See the is\_transfer example below on how to match on a name.
+如果你不指定dialplan和context，它默认为当前的。请注意，extension参数表示将由dialplan\_hunt()作为destination\_number匹配的值。它不会匹配extension的name= value。请参考下面的is\_transfer示例，了解如何匹配name。
 
-## Examples
+## 示例
 
 ```xml
 <extension name="hold_music">
- <condition field="destination_number" expression="^9999$"/>
- <condition field="${sip_has_crypto}" expression="^(AES_CM_128_HMAC_SHA1_32|AES_CM_128_HMAC_SHA1_80)$">
-   <action application="answer"/>
-   <action application="execute_extension" data="is_secure XML features"/>
-   <action application="playback" data="$${moh_uri}"/>
-   <anti-action application="answer"/>
-   <anti-action application="playback" data="$${moh_uri}"/>
- </condition>
+  <condition field="destination_number" expression="^9999$"/>
+  <condition field="${sip_has_crypto}" expression="^(AES_CM_128_HMAC_SHA1_32|AES_CM_128_HMAC_SHA1_80)$">
+    <action application="answer"/>
+    <action application="execute_extension" data="is_secure XML特性"/>
+    <action application="playback" data="$${moh_uri}"/>
+    <anti-action application="answer"/>
+    <anti-action application="playback" data="$${moh_uri}"/>
+  </condition>
 </extension>
 ```
 
-Another example is in features.xml:
+另一个范例在features.xml中:
 
 ```xml
 <extension name="dx">
- <condition field="destination_number" expression="^dx$">
-   <action application="answer"/>
-   <action application="read" data="11 11 'tone_stream://%(10000,0,350,440)' digits 5000 #"/>
-   <action application="execute_extension" data="is_transfer XML features"/>
- </condition>
+  <condition field="destination_number" expression="^dx$">
+    <action application="answer"/>
+    <action application="read" data="11 11 'tone_stream://%(10000,0,350,440)' digits 5000 #"/>
+    <action application="execute_extension" data="is_transfer XML特性"/>
+  </condition>
 </extension>
 <extension name="is_transfer">
- <condition field="destination_number" expression="^is_transfer$"/>
- <condition field="${digits}" expression="^(\d+)$">
-   <action application="transfer" data="-bleg ${digits} XML default"/>
-   <anti-action application="eval" data="w00t"/>
- </condition>
+  <condition field="destination_number" expression="^is_transfer$"/>
+  <condition field="${digits}" expression="^(\d+)$">
+    <action application="transfer" data="-bleg ${digits} XML默认"/>
+    <anti-action application="eval" data="w00t"/>
+  </condition>
 </extension>
 ```
 
-## See Also
+## 参考资料
 
-* [Dialplan](../../Dialplan/index.mdx#0-about)
-
-
+* [拨号计划](../../Dialplan/index.mdx#0-about)

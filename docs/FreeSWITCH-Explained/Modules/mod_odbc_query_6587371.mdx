@@ -1,55 +1,52 @@
+# mod_odbc_query
 
-# mod_odbc_query 
+## 关于
 
- 
+此模块可以用作从拨号计划或通过API接口进行ODBC查询的应用程序。
 
-## About
+单击此处展开目录
 
-This module can be used for doing ODBC queries as an APP from the dialplan or through the API interface.
+* 1 [编译/启用](#compilingenabling)
+   * 1.1 [v1.4特定更改](#v14-specific-changes)
+* 2 [应用程序](#app)
+   * 2.1 [用法](#usage)
+   * 2.2 [示例foo/bar](#example-foo--bar)
+   * 2.3 [示例name/value](#example-name--value)
+   * 2.4 [示例查找网关并桥接](#example-find-gateway-and-bridge-to-it)
+* 3 [API](#--)
+   * 3.1 [用法](#usage)
+   * 3.2 [格式txt](#format-txt)
+   * 3.3 [格式tab](#format-tab)
+   * 3.4 [格式xml](#format-xml)
 
-Click here to expand Table of Contents
+## 编译/启用
 
-* 1 [Compiling/Enabling](#compilingenabling)  
-   * 1.1 [v1.4 specific changes](#v14-specific-changes)
-* 2 [APP](#app)  
-   * 2.1 [Usage](#usage)  
-   * 2.2 [example foo / bar](#example-foo--bar)  
-   * 2.3 [example name / value](#example-name--value)  
-   * 2.4 [example find gateway and bridge to it](#example-find-gateway-and-bridge-to-it)
-* 3 [API](#--)  
-   * 3.1 [Usage](#usage)  
-   * 3.2 [format txt](#format-txt)  
-   * 3.3 [format tab](#format-tab)  
-   * 3.4 [format xml](#format-xml)
+1. 您可以在[github贡献库](../Community/Contributing-Code/Tips-For-Using-Git_1048694.mdx#xkcd)中找到源代码，位于ledr/c/mod\_odbc\_query.
+2. 使用make/gmake编译模块
+3. 安装模块 make install
+4. 复制.xml配置文件 cp odbc\_query.conf.xml /usr/local/freeswitch/conf/autoload\_configs/
+5. 在xml中设置您的ODBC访问权限
+6. 在CLI中运行 "load mod\_odbc\_query"，并将其添加到conf/autoload\_configs/modules.conf.xml的自动加载模块列表中
 
-## Compiling/Enabling
+### v1.4特定更改
 
-1. You can find the source in the [git contrib repository](../Community/Contributing-Code/Tips-For-Using-Git_1048694.mdx#xkcd) in ledr/c/mod\_odbc\_query.
-2. make/gmake the mod
-3. make install
-4. copy the .xml config file cp odbc\_query.conf.xml /usr/local/freeswitch/conf/autoload\_configs/
-5. Set your ODBC access in the xml
-6. Run "load mod\_odbc\_query" in the CLI and add it to your auto-load modules list in conf/autoload\_configs/modules.conf.xml
+由于函数名称更改，该模块无法与v1.4.beta或master分支（截至2014年04月04日）编译通过。编辑：修补程序已更新（2014年04月15日），因为另一个函数更改。下面的修补程序解决了此问题：
 
-### v1.4 specific changes
+展开源代码
 
-  
-Due to a function name change, the module doesn't compile cleanly with the v1.4.beta or master branches (as of 04.04.2014). Edit: Patch updated (15.04.2014), because of another function change. The following patch resolves the problem:
+ ```diff
+ diff --git a/ledr/c/mod_odbc_query/mod_odbc_query.c b/ledr/c/mod_odbc_query/mod_odbc_query.c
+ index 7d802b2..2f4d3e1 100644
+ --- a/ledr/c/mod_odbc_query/mod_odbc_query.c
+ +++ b/ledr/c/mod_odbc_query/mod_odbc_query.c
+ @@ -117,10 +117,10 @@ static switch_status_t do_config(switch_bool_t reload)
+ }
+```
 
-Expand source 
-
-```diff
-diff --git a/ledr/c/mod_odbc_query/mod_odbc_query.c b/ledr/c/mod_odbc_query/mod_odbc_query.c
-index 7d802b2..2f4d3e1 100644
---- a/ledr/c/mod_odbc_query/mod_odbc_query.c
-+++ b/ledr/c/mod_odbc_query/mod_odbc_query.c
-@@ -117,10 +117,10 @@ static switch_status_t do_config(switch_bool_t reload)
-}
-
-/* empty the globals.queries hash */
-- for (hi = switch_hash_first(NULL, globals.queries); hi;) {
+/* 清空全局变量的哈希表 */
+- 对于(hi = switch_hash_first(NULL, globals.queries); hi;) {
 - switch_hash_this(hi, &key, NULL, &val);
-+ for (hi = switch_core_hash_first(globals.queries); hi;) {
++ 对于(hi = switch_core_hash_first(globals.queries); hi;) {
 + switch_core_hash_this(hi, &key, NULL, &val);
 query = (char *) val;
 - hi = switch_hash_next(hi);
@@ -60,7 +57,7 @@ switch_core_hash_delete(globals.queries, (char *) key);
 @@ -466,7 +466,7 @@ SWITCH_MODULE_LOAD_FUNCTION(mod_odbc_query_load)
 switch_mutex_init(&globals.mutex, SWITCH_MUTEX_NESTED, globals.pool);
 
-/* allocate the queries hash */
+/* 分配查询哈希表 */
 - if (switch_core_hash_init(&globals.queries, globals.pool) != SWITCH_STATUS_SUCCESS) {
 + if (switch_core_hash_init(&globals.queries) != SWITCH_STATUS_SUCCESS) {
 switch_log_printf(SWITCH_CHANNEL_LOG, SWITCH_LOG_ERROR, "Error initializing the queries hash\n");
@@ -70,9 +67,9 @@ return SWITCH_STATUS_GENERR;
 switch_event_unbind_callback(reload_event_handler);
 
 switch_mutex_lock(globals.mutex);
-- for (hi = switch_hash_first(NULL, globals.queries); hi;) {
+- 对于(hi = switch_hash_first(NULL, globals.queries); hi;) {
 - switch_hash_this(hi, &key, NULL, &val);
-+ for (hi = switch_core_hash_first(globals.queries); hi;) {
++ 对于(hi = switch_core_hash_first(globals.queries); hi;) {
 + switch_core_hash_this(hi, &key, NULL, &val);
 query = (char *) val;
 - hi = switch_hash_next(hi);
@@ -84,39 +81,39 @@ switch_core_hash_delete(globals.queries, (char *) key);
 
 ## APP
 
-When using odbc\_query as an APP you can call it from the dialplan. Returned rows will then be stored as channel variables for later use.
+当将odbc\_query作为APP使用时，您可以从拨号计划中调用它。返回的行将存储为通道变量以供以后使用。
 
-### Usage
+### 用法
 
-Create an ''odbc\_query.conf.xml'' file in ''autoload\_configs'', that at least contains an ''odbc-dsn'':
+在''autoload\_configs''中创建一个名为''odbc\_query.conf.xml''的文件，其中至少包含一个''odbc-dsn'':
 
 ```xml
-<configuration name="odbc_query.conf" description="ODBC Query Module">
+<configuration name="odbc_query.conf" description="ODBC查询模块">
   <settings>
     <param name="odbc-dsn" value="freeswitch:freeswitch:secret"/>
   </settings>
 </configuration>
 ```
 
-Load ''mod\_odbc\_query'' in your ''modules.conf.xml'':
+在你的''modules.conf.xml''中加载''mod\_odbc\_query'':
 
 ```xml
 <load module="mod_odbc_query"/>
 ```
 
-Then you can do queries directly from your xml dialplan:
+然后你可以直接从你的xml拨号计划进行查询:
 
 ```xml
 <action application="odbc_query" data="SELECT some_column_name AS target_channel_variable_name FROM some_table_name WHERE 1;"/>
 ```
 
-Or,
+或者，
 
 ```xml
  <action application="odbc_query" data="'''my-query'''"/>
 ```
 
-The module simply checks whether the data attr contains a space. If it does, then that field will be seen as an SQL query, otherwise it will be seen as a query 'name' which then has to be defined in the modules configuration in a &lt;queries> section like this:
+该模块简单地检查数据属性是否包含空格。如果有空格，那么该字段将被视为SQL查询，否则将被视为查询“名称”，然后必须在 modules 的配置中定义在&lt;queries>部分，如下所示:
 
 ```xml
 <queries>
@@ -124,19 +121,19 @@ The module simply checks whether the data attr contains a space. If it does, the
 </queries> 
 ```
 
-The module will do the query and store each returned column name as channel variable name together with its corresponding value.
+该模块将执行查询，并将每个返回的列名作为通道变量名和相应的值存储起来。
 
-Another feature is, that if only two columns are returned, which have the column names "name" and "value", then the channel variables will be set according to them. This way you can have the query return multiple rows with different channel variables. If the query returns something else than column-names "name" and "value" and it returns multiple rows, then the channel variables will be overwritten with each iteration of the rows - which is probably useless.
+另一个功能是，如果只返回两列，列名分别为“name”和“value”，那么通道变量将按照它们进行设置。这样，您可以使查询返回多个具有不同通道变量的行。如果查询返回的不是列名“name”和“value”，并且返回多行，那么通道变量将在每次迭代行时被覆盖 - 这可能是无用的。
 
-The query may contain '''${blah}''' variables that will be '''expanded''' from '''channel variables''' before the query is performed.
+查询可能包含'''${blah}'''变量，这些变量将在执行查询之前从通道变量中进行'''展开'''。
 
-This application may be run [inline](./mod-dptools/6586667.mdx#about) from the XML dialplan.
+这个应用可以从XML拨号计划中的[inline](./mod-dptools/6586667.mdx#about)中运行。
 
-### example foo / bar
+### 示例 foo/bar
 
-Query: ''"SELECT foo, bar FROM some\_table;"''
+查询：''"SELECT foo, bar FROM some\_table;"''
 
-returns:
+返回结果：
 
 ```xml
 foo    bar
@@ -147,18 +144,18 @@ c      d
 
 ```
 
-then the channel variables that will be set are:
+然后将设置以下通道变量：
 
 ```xml
 foo=c
 bar=d
 ```
 
-### example name / value
+### 示例 name/value
 
-Query: ''"SELECT foo AS name, bar AS value FROM some\_table;"''
+查询：''"SELECT foo AS name, bar AS value FROM some\_table;"''
 
-returns:
+返回结果：
 
 ```xml
 name    value
@@ -167,23 +164,22 @@ a       b
 c       d
 ```
 
-then the channel variables that will be set are:
+然后将设置以下通道变量：
 
 ```xml
 a=b
 c=d
 ```
 
-  
-So, the first example should only be used when you know that only zero or one row will be returned, and second one if you know zero or more rows will be returned.
+所以，只有当你知道只返回零行或一行时，才应使用第一个示例；如果你知道可能返回零行或多行，则应使用第二个示例。
 
-If zero rows are returned (in either foo/bar or name/value case) then no channel variables will be set, overwritten or deleted.
+如果没有返回任何行（无论是foo/bar还是name/value情况），则不会设置、覆盖或删除任何通道变量。
 
-### example find gateway and bridge to it
+### 示例查找网关并桥接到它
 
-For selecting gateways, you should probably use mod\_lcr, this is just for explanation's sake.
+对于选择网关，你应该使用mod\_lcr，这只是为了解释的目的。
 
-For example, you have a table named gateways:
+例如，你有一个名为gateways的表：
 
 ```xml
 id    condition    gateway
@@ -192,7 +188,7 @@ id    condition    gateway
 2     bar          sip.provider2.com
 ```
 
-Then in your odbc\_query.conf.xml:
+然后在你的odbc\_query.conf.xml中：
 
 ```xml
 <configuration name="odbc_query.conf">
@@ -206,74 +202,34 @@ Then in your odbc\_query.conf.xml:
 </configuration> 
 ```
 
-Then in your xml dialplan, do:
+然后在你的xml拨号计划中进行以下操作：
 
 ```xml
- <include>
-  <context name="my_context">
-    <extension name="lookup_the_gateway" continue="true">
-      <condition>
-        <action application="set" inline="true" data="what=bar"/>
-        <action application="odbc_query" inline="true" data="my_query"/> <!-- now ${gateway} will be 'sip.provider2.com' -->
-      </condition>
-    </extension>
-    <extension name="route_to_gateway">
-      <condition field="${gateway}" expression="^.+$"/>
-      <condition field="destination_number" expression="^(\d+)$">
-        <action application="bridge" data="sofia/some_profile/$1@${gateway}"/>
-      </condition>
-    </extension>
-  </context>
-</include>
-
-```
-
-##   
-API
-
-The API interface is accessable from several places, for easy testing use it from your fs\_cli console.
-
-### Usage
-
-```xml
-odbc_query [txt|tab|xml] [db:user:pass] <SELECT * FROM foo WHERE true;>
-```
-
-* If you omit the first argument (formatting) then the default 'txt' will be used.
-* If you omit the second argument (odbc dsn) then the default odbc-dsn as set in the odbc\_query.conf.xml will be used.
-* The third argument (the query itself) is mandatory.
-
-  
-As stated above, the formatting can be txt, tab or xml. Here are examples of their output:
-
-### format txt
-
-```xml
-fscli> odbc_query txt select 1 as foo, 2 as bar
-
-foo : 1
-bar : 2
-
-Got 1 rows returned in 1 ms. 
-```
-
-### format tab
-
-```xml
-fscli> odbc_query tab select 1 as foo, 2 as bar
-
-foo          bar 
-========================================
-1            2 
+<result>
+  <row>
+    <column name="foo">1</column>
+    <column name="bar">2</column>
+  </row>
+</result>
 
 Got 1 rows returned in 1 ms.
 ```
 
-### format xml
+## Explanation
+
+The given XML code is a configuration for  FreeSWITCH (an open-source communication platform). It includes two extensions: "lookup_the_gateway" and "route_to_gateway", which are defined in the "my_context" context. These extensions are used to route calls based on the gateway and destination number.
+
+The "lookup_the_gateway" extension uses the "odbc_query" application to query a database and set the value of the "gateway" variable. This variable is used in the "route_to_gateway" extension to determine the routing destination.
+
+The "route_to_gateway" extension checks if the "gateway" variable has a value and if the "destination_number" matches a specific pattern. If the conditions are met, the call is bridged to the appropriate destination using the value of the "gateway" variable.
+
+The provided API documentation explains the usage and options of the "odbc_query" application, including the available formatting options for the query results (txt, tab, xml). It also provides examples of the output in each format.
+
+Overall, this configuration allows for dynamic routing of calls based on the database query result and destination number.
 
 ```xml
 fscli> odbc_query xml select 1 as foo, 2 as bar
- 
+
 <result>
   <rows>
     <row>
@@ -287,14 +243,10 @@ fscli> odbc_query xml select 1 as foo, 2 as bar
     <elapsed_ms>1</elapsed_ms>
   </meta>
 </result>
-
-
 ```
 
-### Comments:
+### 评论：
 
-| Step 1 of "Compiling/Enabling" isn't very clear.Could it be changed to something likecd /usr/src/freeswitch/git clone <https://freeswitch.org/stash/scm/fs/freeswitch-contrib.git>cd freeswitch-contrib/ledr/c/mod\_odbc\_query ![](/images/icons/contenttypes/comment_16.png) Posted by werebear73 at May 08, 2015 15:59 |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Apparently this module stil does not accept the normalized odb-dsn syntax likepgsql://, etc.. it only accepts db:user:password syntax and uses the odbc driver...![(question)](/images/icons/emoticons/help_16.svg) ![](/images/icons/contenttypes/comment_16.png) Posted by madovsky at Oct 03, 2019 13:45                |
+第1步的"编译/启用"不太清晰。可否改为类似以下内容：`cd /usr/src/freeswitch/git clone <https://freeswitch.org/stash/scm/fs/freeswitch-contrib.git>cd freeswitch-contrib/ledr/c/mod_odbc_query` 
 
-
+看起来这个模块还不支持标准的ODB-DSN语法，如`pgsql://`等，它只接受`db:user:password`语法并使用ODBC驱动。

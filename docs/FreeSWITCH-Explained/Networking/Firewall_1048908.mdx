@@ -1,196 +1,189 @@
+# 防火墙
 
-# Firewall 
+## 关于
 
- 
+如果您要在网络上路由流量，您需要确保没有防火墙阻止指定网络路径上的流量。通常，防火墙安装在出口点，即您的本地网络连接到互联网的地方。您还可以在服务器本身上运行防火墙。在一些企业环境中，这并不总是必要的。如果您不负责网络，您可能希望联系负责网络的团队或个人。
 
-  
-## About
+他们可能需要启用流量的信息包括端口号。不同的协议使用不同的端口执行不同的功能。有些协议需要双向连接，有些只需要出站连接。根据您的呼叫场景，您可能只需要允许由系统发起的连接。**如果协议无法正常工作，建议您禁用FreeSWITCH™系统的防火墙，进行测试呼叫，查看问题是否仍然存在。** 配置错误的防火墙是许多常见问题的原因。
 
-If you are going to route traffic across your network, you need to ensure that you do not have a firewall blocking traffic on the specified network paths. Commonly firewalls are installed at egress points, where your local network connects to the internet. You may also run a firewall on the server itself. This is not always the case in some corporate environments. If you are not responsible for your network, you may wish to contact the group or individuals who are responsible for it.
+* 1 [关于](#about)
+* 2 [常见端口](#typical-ports)
+* 3 [Linux netfilter iptables](#linux-netfilter-iptables)
+   * 3.1 [模块选项](#module-options)
+   * 3.2 [配置](#configuration)
+      * 3.2.1 [注意事项](#notes)
+         * 3.2.2 [副作用](#side-effects)
+* 4 [示例](#example)
+   * 4.1 [备份当前的iptables规则](#back-up-your-current-iptables-rules)
+   * 4.2 [创建新规则](#create-new-rules)
+   * 4.3 [启用规则](#turn-on-the-rules)
+   * 4.4 [保存最终规则](#save-the-final-rules)
+   * 4.5 [启动时加载规则](#load-rules-on-boot)
 
-Information they may need to enable traffic would include the port numbers. Various protocols use different ports for different things. Some you need bi-directional connectivity, some you only need outbound. Depending on your call scenario you may only need to allow connections that are initiated by your system. **If you have any problems with protocols not working, it is recommended that you disable your firewall to the FreeSWITCH™ system, place a test call, and see if the problem persists.** A misconfigured firewall is responsible for many common problems.
+## 常见端口
 
-* 1 [About](#about)
-* 2 [Typical Ports](#typical-ports)
-* 3 [Linux netfilter iptables](#linux-netfilter-iptables)  
-   * 3.1 [Module options](#module-options)  
-   * 3.2 [Configuration](#configuration)  
-      * 3.2.1 [Notes](#notes)  
-         * 3.2.2 [Side effects](#side-effects)
-* 4 [Example](#example)  
-   * 4.1 [Back up your current iptables rules](#back-up-your-current-iptables-rules)  
-   * 4.2 [Create new rules](#create-new-rules)  
-   * 4.3 [Turn on the rules](#turn-on-the-rules)  
-   * 4.4 [Save the final rules](#save-the-final-rules)  
-   * 4.5 [Load rules on boot](#load-rules-on-boot)
+| 防火墙端口      | 网络协议 | 应用协议          | 描述                                           |
+| -------------- | -------- | ----------------- | ---------------------------------------------- |
+| 1719           | UDP      | H.323 Gatekeeper RAS port      |                                              |
+| 1720           | TCP      | H.323 Call Signaling           |                                              |
+| 2855-2856      | TCP      | MSRP                           | 用于具有消息功能的通话                           |
+| 3478           | UDP      | STUN service                   | 用于NAT穿越                                     |
+| 3479           | UDP      | STUN service                   | 用于NAT穿越                                     |
+| 5002           | TCP      | MLP protocol server            |                                              |
+| 5003           | UDP      | Neighborhood service           |                                              |
+| 5060           | UDP & TCP| SIP UAS                        | 用于SIP信令（默认内部配置配置文件的标准SIP端口）   |
+| 5070           | UDP & TCP| SIP UAS                        | 用于SIP信令（默认“NAT”配置文件）                  |
+| 5080           | UDP & TCP| SIP UAS                        | 用于SIP信令（默认“External”配置文件）            |
+| 8021           | TCP      | ESL                            | 用于[mod\_event\_socket](../Modules/mod_event_socket_1048924.mdx#11-acl) **\*** |
+| 16384-32768    | UDP      | RTP/ RTCP multimedia streaming | 用于SIP、Verto和其他协议的音视频数据             |
+| 5066           | TCP      | Websocket                      | 用于WebRTC                                      |
+| 7443           | TCP      | Websocket                      | 用于WebRTC                                      |
+| 8081-8082      | TCP      | Websocket                      | 用于Verto                                       |
 
-## Typical Ports
+ESL安全风险
 
-| FireWall Ports | Network Protocol | Application Protocol           | Description                                                                                                     |
-| -------------- | ---------------- | ------------------------------ | --------------------------------------------------------------------------------------------------------------- |
-| 1719           | UDP              | H.323 Gatekeeper RAS port      |                                                                                                                 |
-| 1720           | TCP              | H.323 Call Signaling           |                                                                                                                 |
-| 2855-2856      | TCP              | MSRP                           | Used for call with messaging                                                                                    |
-| 3478           | UDP              | STUN service                   | Used for NAT traversal                                                                                          |
-| 3479           | UDP              | STUN service                   | Used for NAT traversal                                                                                          |
-| 5002           | TCP              | MLP protocol server            |                                                                                                                 |
-| 5003           | UDP              | Neighborhood service           |                                                                                                                 |
-| 5060           | UDP & TCP        | SIP UAS                        | Used for SIP signaling (Standard SIP Port, for default Internal Profile)                                        |
-| 5070           | UDP & TCP        | SIP UAS                        | Used for SIP signaling (For default "NAT" Profile)                                                              |
-| 5080           | UDP & TCP        | SIP UAS                        | Used for SIP signaling (For default "External" Profile)                                                         |
-| 8021           | TCP              | ESL                            | Used for [mod\_event\_socket](../Modules/mod_event_socket_1048924.mdx#11-acl) **\*** |
-| 16384-32768    | UDP              | RTP/ RTCP multimedia streaming | Used for audio/video data in SIP, Verto, and other protocols                                                    |
-| 5066           | TCP              | Websocket                      | Used for WebRTC                                                                                                 |
-| 7443           | TCP              | Websocket                      | Used for WebRTC                                                                                                 |
-| 8081-8082      | TCP              | Websocket                      | Used for Verto                                                                                                  |
+仔细考虑是否开放ESL端口给外部世界，并**更改默认密码**。ESL允许运行任何系统命令，甚至可能导致FreeSWITCH崩溃以进行呼叫恢复测试。因此，允许公共访问存在安全风险。
 
-ESL SECURITY RISK
+请注意，端口可能会根据加载的模块和其配置而异，例如您可能拥有更多或更少的SIP配置文件，并且可能已更改了上述包括SIP、RTP、ESL等的多个端口。
 
-Think carefully about opening the ESL port to the external world and **change the default password**. ESL allows any system commands to be run or even to crash FreeSWITCH for call recovery testing. Allowing public access is therefore a security risk.
+## Linux网络过滤iptables
 
-  
-Note that the ports may vary depending on which modules you have loaded and their configuration, for instance you may have more or fewer SIP profiles, and you may have changed many of the above ports including SIP,RTP,ESL etc.
+**如果您使用的是iptables防火墙，则需要执行此步骤！！！**
 
-## Linux netfilter iptables
+您必须为安装FreeSWITCH的每个sip_profile添加接口和端口号。
 
-  
-**THIS IS REQUIRED IF YOU ARE USING AN IPTABLES FIREWALL!!!** 
+nf_conntrack_sip和nf_conntrack_h323模块将监视**未加密**的SIP/H323并自动打开RTP所需的防火墙端口，如果您接受带有RELATED状态的数据包。第一个数据包之后的SIP和H323数据包将处于已建立状态。如果在处理新/未知数据包之前允许任何RELATED、ESTABLISHED的数据包通过防火墙，那么防火墙将更早地接受后续数据包，从而降低CPU使用率和延迟。
 
-You must add the interface and port numbers for each sip\_profile used in your FreeSWITCH installation.
-  
-  
-The nf\_conntrack\_sip and nf\_conntrack\_h323 modules will watch **unencrypted** SIP/H323 and automatically open the firewall ports required for RTP if you are accepting packets with the RELATED state. SIP and H323 packets after the first packet will be in the ESTABLISHED state. If you allow any RELATED,ESTABLISHED packets before processing new/unknown packets, then your firewall will accept subsequent packets much sooner, resulting in lower CPU usage and latency.
+这可能仅适用于标准端口的数据包（UDP/5060、TCP/5060、TCP/1720），因为需要防火墙识别数据包所使用的SIP/H323协议。
 
-This may only apply to packets on the standard ports (UDP/5060, TCP/5060, TCP/1720) as it requires that the firewall recognizes the SIP/H323 protocol the packets are using.
+对于加密连接，这显然是不可能的，因为防火墙无法查看VoIP数据包以获取RTP的IP和端口。为了允许流量通过防火墙，需要遵循加密通信的要求。
 
-This is of course not possible for encrypted connections, as the firewall cannot look inside the VoIP packets to get the RTP IPs and ports. With the imperative of encrypted communications, these steps are necessary to allow traffic through the firewall.
+### 模块选项
 
-### Module options
+您可能需要调整一些配置中的以下选项，例如，为了绕过媒体流（可以通过FreeSWITCH的绕过媒体流功能或网关的方式）设置`sip_direct_media=0`。
 
-You may need to adjust the following options in some configurations, e.g. setting sip\_direct\_media=0 for bypass media (either done by FreeSWITCH's bypass\_media or by a gateway).
+| **模块**               | **选项**                | **描述**                                                        | **取值**                                                               | **默认值*** |
+| ---------------------- | ------------------------ | ---------------------------------------------------------------- | ---------------------------------------------------------------------- | ----------- |
+| nf_conntrack_sip       | sip_direct_signalling    | 只接受来自注册服务器的呼入电话*\*                               | 0/1                                                                    | 1           |
+| nf_conntrack_sip       | sip_direct_media         | 只允许信令终端之间的媒体流                                      | 0/1                                                                    | 1           |
+| nf_conntrack_sip       | sip_timeout              | SIP会话的超时时间                                                 | 整数                                                                   | 3600        |
+| nf_conntrack_sip       | ports                    | SIP服务器的端口号*\*                                              | 最多8个端口号的列表（逗号分隔），例如5060,5070,5080                  | 5060        |
+| nf_conntrack_h323      | default_rrq_ttl          | 如果RRQ中缺少TTL，则使用此TTL                                    | 整数                                                                   | 300         |
+| nf_conntrack_h323      | gkrouted_only            | 只接受来自网关的通话                                              | 整数                                                                   | 1           |
+| nf_conntrack_h323      | callforward_filter       | 只有当两个终端位于不同的边缘（由路由信息决定）时才创建呼叫转发期望 | 整数                                                                   | 1           |
 
-| **Module**          | **Option**              | **Description**                                                                                                       | **Values**                                                        | **Default\*** |
-| ------------------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- | ------------- |
-| nf\_conntrack\_sip  | sip\_direct\_signalling | Expect incoming calls from registrar only\*                                                                           | 0/1                                                               | 1             |
-| nf\_conntrack\_sip  | sip\_direct\_media      | Expect Media streams between signalling endpoints only                                                                | 0/1                                                               | 1             |
-| nf\_conntrack\_sip  | sip\_timeout            | Timeout for the master SIP session                                                                                    | Integer                                                           | 3600          |
-| nf\_conntrack\_sip  | ports                   | Port numbers of SIP servers\*                                                                                         | List of up to 8 port numbers (comma-separated) eg. 5060,5070,5080 | 5060          |
-| nf\_conntrack\_h323 | default\_rrq\_ttl       | Use this TTL if it's missing in RRQ                                                                                   | Integer                                                           | 300           |
-| nf\_conntrack\_h323 | gkrouted\_only          | Only accept calls from gatekeeper                                                                                     | Integer                                                           | 1             |
-| nf\_conntrack\_h323 | callforward\_filter     | Only create call forwarding expectations if both endpoints are on different sides (determined by routing information) | Integer                                                           | 1             |
+在加载模块时可以给出模块选项，例如使用非默认设置的命令"modprobe nf_conntrack_sip ports=5060,5080"。要更改模块选项，需要卸载并重新加载模块。
 
-Module options are given when loading the module, e.g. "modprobe nf\_conntrack\_sip ports=5060,5080" to use a non-default setting. Modules will need to be unloaded and reloaded to change their options.
+最常用的两个选项是"ports"和"sip_direct_media"。
 
-The two most commonly used options are "ports" and "sip\_direct\_media".
+你可以通过查看/sys/module/nf_conntrack_sip/parameters/下的特殊文件来检查当前模块参数的值。
 
-You can check the current module parameter values by viewing the special files in /sys/module/nf\_conntrack\_sip/parameters/
+### 配置
 
-### Configuration
-
-If your distribution supports /etc/modules.conf:
+如果你的发行版支持/etc/modules.conf：
 
 **/etc/modules.conf**
 
-open /etc/modules.conf in an editor
+用编辑器打开/etc/modules.conf
 
-add the line:
+添加以下行：
 
-options nf_conntrack_sip [options]
+options nf_conntrack_sip [选项]
 
-If your distribution supports /etc/modprobe.d/:
+如果你的发行版支持/etc/modprobe.d/：
 
 **/etc/modprobe.d/**
 
-Create a file 50-nf\_conntrack\_sip.conf and open it in an editor
+创建一个文件50-nf_conntrack_sip.conf并用编辑器打开它
 
-add the line:
+添加以下行：
 
-options nf_conntrack_sip [options]
+options nf_conntrack_sip [选项]
 
-If your module is loaded using modprobe (eg. in rc.local):
+如果你的模块使用modprobe加载（例如在rc.local中）：
 
 **modprobe**
 
-modprobe nf_conntrack_sip [options] 
+modprobe nf_conntrack_sip [选项]
 
-#### Notes
+#### 注意事项
 
-sip\_direct\_signalling=1 and gkrouted\_only=1 will still allow all incoming calls if you have a rule such as "-p udp --dport 5060 -j ACCEPT" for the protocol, since you are explicitly allowing signaling instead of relying on the module.
+如果你有一个如"-p udp --dport 5060 -j ACCEPT"的规则，即使所有包都被允许，sip_direct_signalling=1和gkrouted_only=1仍然会允许所有进入的呼叫，因为你明确地允许信令而不依赖于该模块。
 
-Default values are taken from linux-source-2.6.26 on Debian 2010/02/26, and may vary in later versions.
+默认值是从2010/02/26的Debian linux-source-2.6.26中获取的，后续版本可能有所变化。
 
-#### Side effects
+#### 副作用
 
-Invalid SIP packets may be silently dropped by iptables even if all packets are allowed (e.g. if they have no CSeq header). This should not be an issue for FreeSWITCH, since it only sends valid SIP packets.
+即使所有包被允许（例如，它们没有CSeq标题），iptables也可能会默默地丢弃无效的SIP数据包。对于FreeSWITCH来说，这不应该是什么问题，因为它只发送有效的SIP数据包。
 
-## Example
+## 示例
 
-This is a basic firewall setup using just IPTABLES on Debian Squeeze.
+这是一个在Debian Squeeze上只使用IPTABLES的基本防火墙设置。
 
-### Back up your current iptables rules
+### 备份当前的iptables规则
 
 iptables-save > ~/iptables.up.rules.vanilla
 
-### Create new rules
+### 创建新规则
 
-**Example iptables rules** Expand source 
+**示例iptables规则** 展开源代码 
 
 ```xml
 vim ~/iptables.fs.rules
+```
 
+```
 *mangle
-# mark SIP UDP packets with CS3
+# 使用 CS3 标记 SIP UDP 数据包
 -A OUTPUT -p udp -m udp --sport 5060 -j DSCP --set-dscp-class cs3
-# mark SIP UDP packets with CS3
+# 使用 CS3 标记 SIP TCP 数据包
 -A OUTPUT -p tcp --sport 5060 -j DSCP --set-dscp-class cs3
-# mark SIP TLS packets with CS3
+# 使用 CS3 标记 SIP TLS 数据包
 -A OUTPUT -p tcp --sport 5061 -j DSCP --set-dscp-class cs3
-# mark RTP packets with EF
+# 使用 EF 标记 RTP 数据包
 -A OUTPUT -p udp -m udp --sport 16384:32768 -j DSCP --set-dscp-class ef
 COMMIT
 *filter
-# Allows all loopback (lo0) traffic
+# 允许所有回环 (lo0) 流量
 -A INPUT -i lo -j ACCEPT
-# Drop all traffic to 127/8 that doesn't use lo0
+# 拒绝所有发送到 127/8 的流量，除非使用 lo0
 -A INPUT ! -i lo -d 127.0.0.0/8 -j REJECT
-# Accepts all established inbound connections
+# 允许所有已建立的入站连接
 -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
-# Allow all outbound traffic
+# 允许所有出站流量
 -A OUTPUT -j ACCEPT
-# Allow SSH connections (THE -dport NUMBER IS THE SAME ONE YOU SET UP IN THE SSHD_CONFIG FILE)
+# 允许 SSH 连接（-dport NUMBER 与 SSHD_CONFIG 文件中设置的一致）
 -A INPUT -p tcp -m state --state NEW --dport 6245 -j ACCEPT
-# Allow STUN service (Used for NAT traversal)
+# 允许 STUN 服务（用于 NAT 穿越）
 -A INPUT -p udp --dport 3478 -j ACCEPT
 -A INPUT -p udp --dport 3479 -j ACCEPT
-# Allow MLP protocol server 
+# 允许 MLP 协议服务器
 -A INPUT -p tcp --dport 5002 -j ACCEPT
-# Allow Neighborhood service
+# 允许 Neighborhood 服务
 -A INPUT -p udp --dport 5003 -j ACCEPT
-# Allow SIP UDP
+# 允许 SIP UDP
 -A INPUT -p udp --dport 5060 -j ACCEPT
-# Allow SIP TCP
+# 允许 SIP TCP
 -A INPUT -p tcp --dport 5060 -j ACCEPT
-# Allow SIP TLS
+# 允许 SIP TLS
 -A INPUT -p tcp --dport 5061 -j ACCEPT
-# Allow RTP
+# 允许 RTP
 -A INPUT -p udp --dport 16384:32768 -j ACCEPT
-# Allow XML_RPC from another server (replace 192.168.0.122 with the IP that will access FS ESL)
+# 允许从另一台服务器接收 XML_RPC（将 192.168.0.122 替换为访问 FS ESL 的 IP）
 -A INPUT -p tcp --dport 8080 -s 192.168.0.122 -j ACCEPT
-# Allow ping
+# 允许 Ping
 -A INPUT -p icmp -m icmp --icmp-type 8 -j ACCEPT
-# log iptables denied calls (access via 'dmesg' command)
+# 记录 iptables 拒绝的调用（通过 'dmesg' 命令访问）
 -A INPUT -m limit --limit 5/min -j LOG --log-prefix "iptables denied: " --log-level 7
-# Reject all other inbound - default deny unless explicitly allowed policy:
+# 拒绝所有其他入站流量 - 默认拒绝，除非明确允许
 -A INPUT -j REJECT
 -A FORWARD -j REJECT
 COMMIT
-
 ```
-  
-  
-These six rules below will block the vast majority of all sip scanner traffic that randomly scans the Internet. Use these rules in conjunction with [Fail2Ban ](../Security/Fail2Ban_1049236.mdx#centos)and you will be in good shape to avoid rogue attackers.
 
-**SIP scanner iptables block**
+以下六个规则将会阻止大部分在互联网上随机扫描的SIP扫描器流量。将这些规则与[Fail2Ban](../Security/Fail2Ban_1049236.mdx#centos)一起使用，您将能够有效地避免不法攻击者的侵扰。
+
+**阻止SIP扫描器的iptables规则**
 
 ```bash
 iptables -I INPUT -j DROP -p udp --dport 5060 -m string --string "VaxSIPUserAgent" --algo bm
@@ -202,19 +195,21 @@ iptables -I INPUT -j DROP -p udp --dport 5080 -m string --string "sipcli" --algo
 ```
 
   
-### Turn on the rules
+### 打开规则
+
+执行以下命令打开规则：
 
 iptables-restore &lt; ~/iptables.fs.rules
 
-The rules are now turned on. Test and make changes to your firewall as necessary.
+规则现在已经打开。根据需要对防火墙进行测试和更改。
 
-### Save the final rules
+### 保存最终的规则
 
-Once you are happy with your rules, save them.
+当您对规则满意时，请保存它们。
 
 iptables-save > /etc/iptables.up.rules
 
-### Load rules on boot
+### 在启动时加载规则
 
 ```bash
 vim /etc/network/if-pre-up.d/iptables
@@ -227,10 +222,64 @@ chmod +x /etc/network/if-pre-up.d/iptables
 ```
   
   
-### Comments:
+### 注释：
 
-| _What is_5003UDPNeighborhood servicedoing here?MLP protocol server also is also only going to be used by a few - opening all of these by default is a bad practiceFerinstance - someone using callcentric would only want to open UDP/TCP 5060:5080 and something for RTP: For RTP -If you have the following in autoload\_configs/switch.conf.xml &lt;!-- RTP port range --> &lt;!-- &lt;param name="rtp-start-port" value="16384"/> --> &lt;!-- &lt;param name="rtp-end-port" value="16484"/> -->That will provide for 100 audio channels - and you need to open the same range of UDP in your firewall. ![](/images/icons/contenttypes/comment_16.png) Posted by xtronics at Mar 16, 2016 14:13 |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| It's a simple list of ports, not a mandatory requirement. If one happens to be clueless, one probably should not be mucking around with the firewall in the first place without educating oneself as to best practices. ![](/images/icons/contenttypes/comment_16.png) Posted by boteman at Mar 28, 2016 14:18                                                                                                                                                                                                                                                                                                                                                                      |
+| _什么是_5003UDPNeighborhood Service？MLP协议服务器也是只会被少数人使用的-默认打开所有这些是一种不好的做法比如-使用callcentric的人只想打开UDP/TCP 5060:5080和用于RTP的某些端口：对于RTP-如果你在autoload_configs/switch.conf.xml文件中有以下内容&lt;!-- RTP端口范围 -->  ，那么这将提供100个音频通道-您需要在防火墙中打开相同范围的UDP。![](/images/icons/contenttypes/comment_16.png) [to_be_replaced0[by xtronics]]在2016年3月16日下午2:13发表 |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 这只是一个简单的端口列表，而不是强制要求。如果一个人对此一无所知，那么最好不要在没有了解最佳实践的情况下乱动防火墙。![](/images/icons/contenttypes/comment_16.png) [to_be_replaced0[by boteman]]在2016年3月28日下午2:18发表
 
+## GFM (GitHub Flavored Markdown)简介
 
+GFM是GitHub开发的一种扩展的Markdown语法，用于在GitHub平台上撰写和呈现文档。GFM提供了一些额外的功能和语法，使得文档更加丰富和易读。本文将介绍GFM的一些主要特性和用法。
+
+### 任务列表
+
+GFM支持任务列表功能，可以使用`- [ ]`或`- [x]`语法创建一个任务列表。例如：
+
+```
+- [ ] 任务1
+- [x] 任务2
+```
+
+创建的任务列表会在渲染时显示相应的勾选框。勾选框可以点击进行勾选或取消勾选。
+
+### 表情符号
+
+GFM支持在文档中插入表情符号，可以使用`:emojicode:`语法插入。例如：
+
+```
+这是一个笑脸符号:smile:
+```
+
+插入的表情符号会在渲染时自动替换为相应的图像。
+
+### 自动链接
+
+GFM支持自动链接功能，可以直接在文档中插入URL或邮箱地址，会自动渲染为可点击的链接。例如：
+
+```
+这是一个链接: http://example.com
+这是一个邮箱地址: example@example.com
+```
+
+插入的链接会在渲染时自动转化为可点击的链接。
+
+### 表格
+
+GFM支持创建表格，可以使用`|`和`-`来定义表格的列和行。例如：
+
+```
+| 列1      | 列2      |
+| -------- | -------- |
+| 单元格1 | 单元格2 |
+```
+
+此外，还可以对表格进行对齐，如左对齐、右对齐、居中对齐。例如：
+
+```
+| 左对齐     | 右对齐     | 居中对齐    |
+| :-------- | --------: | :-------: |
+| 单元格1  | 单元格2  | 单元格3 |
+```
+
+以上是GFM的一些主要特性和用法介绍。希望能对在GitHub上撰写和呈现文档有所帮助！

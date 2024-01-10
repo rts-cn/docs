@@ -1,29 +1,26 @@
+# Lua 数字寻呼机示例 
 
-# Lua Numeric Paging Example 
+## 关于
 
- 
+数字寻呼机正逐渐不再流行，但仍在使用中。在这个示例中，我们将合成多个FreeSWITCH™概念，创建一个Lua脚本，调用一个数字寻呼机并输入一个数字信息。
 
-## About
+点击此处展开目录
 
-Numeric pagers have become less fashionable, but are still in use. In this example, we will synthesize multiple FreeSWITCH™ concepts to create a Lua script that calls a numeric pager and enters a numeric message
+* 1 [数字寻呼机](#数字寻呼机)
+   * 1.1 [创建寻呼机参考表](#创建寻呼机参考表)
+   * 1.2 [第一次尝试](#数字寻呼机)
+   * 1.3 [等待提示音和等待确认](#等待提示音和等待确认)
+   * 1.4 [审核和灵活运用](#审核和灵活运用)
+   * 1.5 [最后的修饰](#最后的修饰)
+   * 1.6 [我们的最终产品](#我们的最终产品)
 
-Click here to expand Table of Contents
+## 数字寻呼机
 
-* 1 [Numeric Pagers](#numeric-pagers)  
-   * 1.1 [Creating a Pagerdex](#creating-a-pagerdex)  
-   * 1.2 [First Attempt](#numeric-pagers)  
-   * 1.3 [Waiting for the prompt and waiting for acknowledgement](#waiting-for-the-prompt-and-waiting-for-acknowledgement)  
-   * 1.4 [Auditing and being resourceful](#auditing-and-being-resourceful)  
-   * 1.5 [Finishing Touches](#finishing-touches)  
-   * 1.6 [Our final product](#our-final-product)
+数字寻呼机已经存在几十年了。它的概念很简单：使用电话拨打寻呼机号码，当提示时，在电话小键盘上输入数字信息。不幸的是，这变得有点繁琐且容易出错。在更大的呼叫群组中，要管理哪个寻呼机拨打数字信息可能很困难。也许更容易的方法是仅需提到某人的名字，然后让脚本找出应拨打的正确寻呼机号码。
 
-## Numeric Pagers
+### 创建寻呼机参考表
 
-Numeric pagers have been around for decades. The concept is simple: one dials the pager number on the telephone and, when prompted, enters the numeric message on the telephone keypad. Unfortunately this gets a little tedious and can be error prone. In larger call groups, it can be difficult to manage which pager to dial for a numeric message. It might be easier to be able to simply reference someone's name and have the script figure out the right pager number to dial.
-
-### Creating a Pagerdex
-
-First, let's start by creating a pagerdex, a "host file" for our call group. We will store a name and a number:
+首先，我们从创建寻呼机参考表开始，这是我们通话组的“主机文件”。我们将存储一个姓名和一个号码：
 
 **/usr/share/freeswitch/scripts/pagers.conf**
 
@@ -34,9 +31,9 @@ jane 8005553629
 john 8005550000
 ```
 
-For simplicity's sake, we are going to keep this file in the script dir on a default FreeSWITCH™ install on Debian.
+为简单起见，我们将在Debian上的默认FreeSWITCH™安装的脚本目录中保存此文件。
 
-Now we'll create a function that looks up the name in our pager file:
+现在，我们将创建一个函数，在我们的寻呼机文件中查找姓名：
 
 **/usr/share/freeswitch/scripts/send\_page.lua**
 
@@ -51,25 +48,25 @@ local function get_pager(arg)
    return arg
 end
  
+
 ```
+首先，我们创建一个循环，使用[io.lines](http://www.lua.org/manual/5.2/manual.html#pdf-io.lines)对文件的每一行进行迭代。对于每一行，我们使用[string.gmatch](http://www.lua.org/manual/5.2/manual.html#pdf-string.gmatch)来获取名称和数字。如果名称与参数匹配，则返回该人的数字。否则，我们返回`arg`，因为它可能是一个数字。
 
-First we create a loop that iterates over each line in the file using [io.lines](http://www.lua.org/manual/5.2/manual.html#pdf-io.lines). For each line we us [string.gmatch](http://www.lua.org/manual/5.2/manual.html#pdf-string.gmatch) to get the name and the number. If the name matches the arg, we return the number for that person. Otherwise, we just return `arg` as it's probably a number.
+### 第一次尝试
 
-### First Attempt
-
-Let's get started with our first attempt. We're going to build on what we have above:
+让我们从上面已有的内容开始构建第一次尝试：
 
 ```bash
-local s = freeswitch.Session("sofia/gateway/flowroute.com/1" .. get_pager(argv[1])) -- the first argument will be either a name or a pager number
- 
+local s = freeswitch.Session("sofia/gateway/flowroute.com/1" .. get_pager(argv[1])) -- 第一个参数可以是姓名或寻呼机号码
+
 if (s:ready() == true) then
-   s:execute("wait_for_answer") -- we don't want to generate tones until the far end picks up
-   s:execute("gentones", tostring(argv[2]) .. "#") -- this is where we play the tones to the pager, numeric message end with #
+   s:execute("wait_for_answer") -- 在对方接听之前，我们不想生成拨号音
+   s:execute("gentones", tostring(argv[2]) .. "#") -- 在这里，我们播放拨号音给寻呼机，以数字信息结尾的话要加上#
    s:hangup()
 end
 ```
 
-Now if we run 
+现在，如果我们运行
 
 **fs\_cli**
 
@@ -77,43 +74,43 @@ Now if we run
  luarun send_page.lua bob 5552121
 ```
 
-Bob's pager will get the numeric message!
+Bob的寻呼机将收到数字信息！
 
-Well, sometimes. 
+好吧，有时候。
 
-### Waiting for the prompt and waiting for acknowledgement
+### 等待提示音和等待确认
 
-There are a few problems with our current implementation:
+我们当前的实现存在一些问题：
 
-* As soon as the pager answers, we start to generate tones. If the other line isn't ready to receive our DTMF digits, the message might be clipped or not sent at all!
-* We hangup almost _immediately_ after generating the tones. Some pagers will not accept messages this way - they want the person entering the message to _wait_ for the acknowledgement tones.
+* 一接通呼叫寻呼机，我们就开始产生音调。如果对方线路没有准备好接收我们的DTMF数字，消息可能会被截断或根本不发送！
+* 产生音调后我们几乎立即挂断。一些寻呼机不会以这种方式接受消息，它们希望输入消息的人等待确认音调。
 
-So, let's iterate on what we already have. Let's make some changes to our `s:ready()` block in `send_page.lua:`
+所以，让我们对已有内容进行迭代。让我们对`send_page.lua`中的`s:ready()`块进行一些更改：
 
 ```bash
 if (s:ready() == true) then
    s:execute("wait_for_answer")
-   s:execute("wait_for_silence", "20 30 20 10000") -- wait for the pager to shutup before we start sending tones
+   s:execute("wait_for_silence", "20 30 20 10000") -- 在我们开始发送音调之前，等待寻呼机静音
    s:execute("gentones", tostring(argv[2]) .. "#")
-   s:execute("playback", "silence_stream://-1") -- play silence to the pager until it hangs up on its own
+   s:execute("playback", "silence_stream://-1") -- 播放静音到寻呼机直到它自己挂断
 end
 ```
 
-Now we're waiting for silence after the pager says, "_please enter a numeric message after the tone. beep beep beep_."
+现在我们在寻呼机说"_请在听到声音后输入数字消息，嘟..嘟..嘟.._"后等待静音。
 
-### Auditing and being resourceful
+### 审计和善用资源
 
-Our current version does exactly what we need it to do, but we can go a few steps further:
+我们当前的版本完全符合我们的需求，但我们可以再进一步：
 
-* What if the numeric pager never hangs up? The call could sit there for a long time just wasting resources.
-* How will we know that this actually works? Of course, we can look at the logs and see that `gentones` was called, but a better way would be to record our interaction with the pager.
-* Let's make sure comfort noise is suppressed on the channel, pagers don't get uncomfortable.
+* 如果数字寻呼机永远不挂断怎么办？呼叫可能就会一直占用资源，浪费时间。
+* 我们如何知道这实际上是有效的？当然，我们可以查看日志并看到`gentones`被调用了，但更好的方法是录制我们与寻呼机的互动。
+* 让我们确保通道上的舒适噪音被抑制，以免寻呼机感到不适。
 
 ```bash
 if (s:ready() == true) then
-   s:setVariable("suppress_cng", "true") -- pagers don't get uncomfortable
-   s:setVariable("execute_on_answer", "sched_hangup +180 NORMAL_CLEARING") -- hang up automatically after 3 minutes
-   s:execute("record_session", "/tmp/pager_audit-" .. s:get_uuid() .. ".wav") -- record the session for auditing purposes
+   s:setVariable("suppress_cng", "true") -- 不让呼机太不舒服
+   s:setVariable("execute_on_answer", "sched_hangup +180 NORMAL_CLEARING") -- 3分钟后自动挂断
+   s:execute("record_session", "/tmp/pager_audit-" .. s:get_uuid() .. ".wav") -- 为审查目的记录通话记录
    s:execute("wait_for_answer")
    s:execute("wait_for_silence", "20 30 20 10000")
    s:execute("gentones", tostring(argv[2]) .. "#")
@@ -121,56 +118,56 @@ if (s:ready() == true) then
 end
 ```
 
-### Finishing Touches
+### 精心设计
 
-Let's add the finishing touches:
+让我们进行一些精心设计：
 
-* It would be much better if we can _detect the pager acknowledgement tones_ instead of arbitrarily hanging up after a timeout or assuming the pager will hang up on its own.
-* In some cases, pagers have a hard time hearing the DTMF digits if we go too fast, let's slow things down a bit so that we can be sure the pager hears us.
+* 如果我们能够_检测呼机的确认音_，而不是在超时后随意挂断或假设呼机会自动挂断，效果会更好。
+* 在某些情况下，如果我们播放得太快，呼机可能很难听到DTMF数字，请让我们稍微放慢速度，以确保呼机听得到我们。
 
 ```bash
-local api = freeswitch.API() -- we're going to asynchronously detect the tone so we can keep the line alive while playing silence
+local api = freeswitch.API() -- 我们将异步检测音调，以保持通话线路畅通，同时播放静音
 local s = freeswitch.Session("sofia/gateway/flowroute.com/1" .. get_pager(argv[1]))
+```
 
-if (s:ready() == true) then
+如果（s:ready() == true）then
    s:setVariable("suppress_cng", "true")
    s:setVariable("execute_on_answer", "sched_hangup +180 NORMAL_CLEARING")
-   s:setVariable("execute_on_tone_detect", "sched_hangup +20 NORMAL_CLEARING") -- this will be called when FreeSWITCH detects our pager_ack tone
-   s:setVariable("tone_detect_hits", "4") -- let's assume the pager is going to play the acknowledgement tone at least 4 tiems
+   s:setVariable("execute_on_tone_detect", "sched_hangup +20 NORMAL_CLEARING") -- 当FreeSWITCH检测到我们的响铃tone时将调用此函数
+   s:setVariable("tone_detect_hits", "4") -- 让我们假设呼叫器至少会播放4次确认音
    s:execute("record_session", "/tmp/pager_audit-" .. s:get_uuid() .. ".wav")
    s:execute("wait_for_answer")
    s:execute("wait_for_silence", "20 30 20 10000")
-   s:execute("gentones", "d=1000;w=500;" .. tostring(argv[2]) .. "#") -- d=1000 sets the length of the digit to 1000ms and w=500 waits 500ms between each digit
-   api:executeString("tone_detect " .. s:get_uuid() .. " pager_ack 1390-1430 r +60000") -- begin tone detection and move along to playing silence
+   s:execute("gentones", "d=1000;w=500;" .. tostring(argv[2]) .. "#") -- d=1000设置数字长度为1000毫秒，w=500将每个数字之间等待500毫秒
+   api:executeString("tone_detect " .. s:get_uuid() .. " pager_ack 1390-1430 r +60000") -- 开始音调检测并继续播放静音
    s:execute("playback", "silence_stream://-1")
 end
-```
 
-Totally cool! FreeSWITCH™ will now call the pager, dial the tones, and wait for acknowledgement. We use a liberal range of frequencies in [tone\_detect](../../../Modules/mod-dptools/6586957.mdx#about) to make sure we can hear a pager that plays a weird acknowledgement tone. If FreeSWITCH™ hears the tones, it will hang up after 20 seconds. The other `sched_hangup` task in `execute_on_answer` will be executed if the tones are never detected.
+太棒了！FreeSWITCH™将会呼叫呼叫器，拨打音调，并等待确认。我们在[tone\_detect](../../../Modules/mod-dptools/6586957.mdx#about)中使用广泛的频率范围，以确保我们可以听到播放奇怪确认音的呼叫器。如果FreeSWITCH™听到音调，它将在20秒后挂断。如果从未检测到音调，则会执行`execute_on_answer`中的另一个`sched_hangup`任务。
 
 ```text
-b5b167b2-8692-47b3-a650-e9a6ce87ed72 2018-02-18 11:23:13.556240 [DEBUG] switch_ivr_async.c:3765 Adding tone spec 1390-1430 index 0 hits 4
-b5b167b2-8692-47b3-a650-e9a6ce87ed72 2018-02-18 11:23:13.556240 [DEBUG] switch_core_media_bug.c:945 Attaching BUG to sofia/external/18005553482
+b5b167b2-8692-47b3-a650-e9a6ce87ed72 2018-02-18 11:23:13.556240 [DEBUG] switch_ivr_async.c:3765 添加音调规范 1390-1430 索引 0，命中 4 次
+b5b167b2-8692-47b3-a650-e9a6ce87ed72 2018-02-18 11:23:13.556240 [DEBUG] switch_core_media_bug.c:945 将 BUG 附加到 sofia/external/18005553482
 b5b167b2-8692-47b3-a650-e9a6ce87ed72 EXECUTE sofia/external/18005553482 playback(silence_stream://-1)
-b5b167b2-8692-47b3-a650-e9a6ce87ed72 2018-02-18 11:23:13.556240 [DEBUG] switch_ivr_play_say.c:1498 Codec Activated L16@8000hz 1 channels 20ms
-b5b167b2-8692-47b3-a650-e9a6ce87ed72 2018-02-18 11:23:13.736257 [DEBUG] switch_ivr_async.c:3625 TONE pager_ack HIT 1/4
-b5b167b2-8692-47b3-a650-e9a6ce87ed72 2018-02-18 11:23:14.396287 [DEBUG] switch_ivr_async.c:3625 TONE pager_ack HIT 2/4
-b5b167b2-8692-47b3-a650-e9a6ce87ed72 2018-02-18 11:23:15.176253 [DEBUG] switch_ivr_async.c:3625 TONE pager_ack HIT 3/4
-b5b167b2-8692-47b3-a650-e9a6ce87ed72 2018-02-18 11:23:15.736290 [DEBUG] switch_ivr_async.c:3625 TONE pager_ack HIT 4/4
-b5b167b2-8692-47b3-a650-e9a6ce87ed72 2018-02-18 11:23:15.736290 [DEBUG] switch_ivr_async.c:3631 TONE pager_ack DETECTED
+b5b167b2-8692-47b3-a650-e9a6ce87ed72 2018-02-18 11:23:13.556240 [DEBUG] switch_ivr_play_say.c:1498 解码器激活 L16@8000hz 1 通道 20ms
+b5b167b2-8692-47b3-a650-e9a6ce87ed72 2018-02-18 11:23:13.736257 [DEBUG] switch_ivr_async.c:3625 呼叫音 TONE pager_ack 命中 1/4
+b5b167b2-8692-47b3-a650-e9a6ce87ed72 2018-02-18 11:23:14.396287 [DEBUG] switch_ivr_async.c:3625 呼叫音 TONE pager_ack 命中 2/4
+b5b167b2-8692-47b3-a650-e9a6ce87ed72 2018-02-18 11:23:15.176253 [DEBUG] switch_ivr_async.c:3625 呼叫音 TONE pager_ack 命中 3/4
+b5b167b2-8692-47b3-a650-e9a6ce87ed72 2018-02-18 11:23:15.736290 [DEBUG] switch_ivr_async.c:3625 呼叫音 TONE pager_ack 命中 4/4
+b5b167b2-8692-47b3-a650-e9a6ce87ed72 2018-02-18 11:23:15.736290 [DEBUG] switch_ivr_async.c:3631 探测到呼叫音 TONE pager_ack
 b5b167b2-8692-47b3-a650-e9a6ce87ed72 EXECUTE sofia/external/18005553482 sched_hangup(+15 NORMAL_CLEARING)
-2018-02-18 11:23:15.736290 [DEBUG] switch_scheduler.c:249 Added task 40 switch_ivr_schedule_hangup (b5b167b2-8692-47b3-a650-e9a6ce87ed72) to run at 1518953010
-b5b167b2-8692-47b3-a650-e9a6ce87ed72 2018-02-18 11:23:30.256267 [NOTICE] switch_ivr_async.c:4847 Hangup sofia/external/18005553482 [CS_SOFT_EXECUTE] [NORMAL_CLEARING]
-2018-02-18 11:23:30.256267 [DEBUG] switch_scheduler.c:144 Deleting task 40 switch_ivr_schedule_hangup (b5b167b2-8692-47b3-a650-e9a6ce87ed72)
+2018-02-18 11:23:15.736290 [DEBUG] switch_scheduler.c:249 已添加任务 40 switch_ivr_schedule_hangup (b5b167b2-8692-47b3-a650-e9a6ce87ed72)，将在 1518953010 执行
+b5b167b2-8692-47b3-a650-e9a6ce87ed72 2018-02-18 11:23:30.256267 [NOTICE] switch_ivr_async.c:4847 挂断 sofia/external/18005553482 [CS_SOFT_EXECUTE] [NORMAL_CLEARING]
+2018-02-18 11:23:30.256267 [DEBUG] switch_scheduler.c:144 删除任务 40 switch_ivr_schedule_hangup (b5b167b2-8692-47b3-a650-e9a6ce87ed72)
 ```
 
-Success! The pager heard us loud and clear and it happily beeped to let us know.
+成功！寻呼机听到了我们清晰而响亮的声音，并愉快地响起了蜂鸣声来告诉我们。
 
-### Our final product
-
-**/usr/share/freeswitch/scripts/send\_page.lua**
+### 我们的最终产品
 
 ```bash
+**/usr/share/freeswitch/scripts/send_page.lua**
+
 local function get_pager(arg)
    local f = "/usr/share/freeswitch/scripts/pagers.conf"
    for line in io.lines(f) do
@@ -180,7 +177,7 @@ local function get_pager(arg)
    end
    return arg
 end
- 
+
 local api = freeswitch.API()
 local s = freeswitch.Session("sofia/gateway/flowroute.com/1" .. get_pager(argv[1]))
 
@@ -197,5 +194,3 @@ if (s:ready() == true) then
    s:execute("playback", "silence_stream://-1")
 end
 ```
-
-

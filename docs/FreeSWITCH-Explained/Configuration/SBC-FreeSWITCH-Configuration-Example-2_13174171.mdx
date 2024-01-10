@@ -1,25 +1,21 @@
+# SBC FreeSWITCH 配置示例2
 
-# SBC FreeSWITCH Configuration Example 2 
+## 关于
 
- 
+本示例假设您已经完成了FreeSWITCH的基本安装，并且已经有了某种类型的SIP代理 (Sonus PSX、Kamailio、OpenSIPS等) 来控制您的LCR。这个示例是为批发模式而设计的，考虑到了基于交换机的有限安全性和无注册的情况。（有关与此配套使用的OpenSIPS示例配置，请向下滚动查看。）
 
-## About
+点击此处展开目录
 
-This example assumes that you have completed the basic installation of FreeSWITCH and some sort of SIP proxy (Sonus PSX, Kamailio, OpenSIPS, etc.) that will be controlling your LCR. This is designed for a wholesale model in mind with limited switch based security and no registrations. (see further down for OpenSIPS example config to use with this.)
+* 1 [配置](#-freeswitch--sbc-freeswitch-configuration-example-2-)
+* 2 [OpenSIPS 示例](#-freeswitch--sbc-freeswitch-configuration-example-2-)
 
-  
-Click here to expand Table of Contents
+## 配置
 
-* 1 [Configuration](#-freeswitch--sbc-freeswitch-configuration-example-2-)
-* 2 [OpenSIPS Example](#-freeswitch--sbc-freeswitch-configuration-example-2-)
+首先要明确的一点是，我们不会对任何呼叫进行注册或验证，所以`/conf/directory/default.xml`和`default/*`文件除了默认域设置外应该为空（就我所知，甚至不需要默认域设置）。
 
-## Configuration
+sip_profiles中的网关信息也应该为空，因为从现实情况看，供应商不需要从您这里进行网关注册。通常在批发模式中，认证和拒绝是通过防火墙或内部系统返回特定响应来完成的。
 
-The first thing to realize is that we are not registering or authenticating any calls, so the /conf/directory/default.xml and default/\* will be empty except for the default domain setting (which as far as i can tell isn't even needed).
-
-The gateways information in the sip\_profiles will also be empty since realistically your vendors would not need any kind of gateway registration from you. Typically in the wholesale model, authentications and rejections are done via firewalling or internal systems sending back certain responses.
-
-Now that we have that set up, we want to set up a baseline rejection that will allow the customers to always route advance, so we're going to overwrite any negative responses back with a 503\. Since no calls are registered, there is no differentiation between default and public contexs, so you can put this in both, but I believe it's only required in /conf/dialplan/public.xml at the very end. (You can also put it at the very end of the /conf/dialplan/default.xml as a precaution if you wish).
+现在我们已经设置好了基础拒绝规则，这样客户就可以始终进行高级路由了，因此我们将使用503覆盖任何负面响应。由于没有呼叫注册，所以默认上下文和公共上下文之间没有区别，所以您可以将其放在两个地方，但我认为只有在`/conf/dialplan/public.xml`的最后才是必需的。（如果您希望可以作为一种预防措施，也可以将其放在`/conf/dialplan/default.xml`的最后。）
 
 ```xml
 <extension name="nothing_left_private" continue="false">
@@ -30,8 +26,7 @@ Now that we have that set up, we want to set up a baseline rejection that will a
 </extension>
 ```
 
-  
-Now you will need to define your customers. I do this in /conf/dialplan/public/00\_customer\_list.xml.
+现在您需要定义您的客户。我会在 /conf/dialplan/public/00_customer_list.xml 中进行配置。
 
 ```xml
 <include>
@@ -40,9 +35,9 @@ Now you will need to define your customers. I do this in /conf/dialplan/public/0
     <condition field="destination_number" expression="^\+?1?(\d+)$">
       <action application="set" data="hangup_after_bridge=true"/>
       <action application="set" data="continue_on_fail=true"/>
-      <\!-- THIS WORKS FOR CALL DISTRIBUTION --\>
+      <\!-- 这对于呼叫分配有效 --\>
       <\!--    <action application="bridge" data="sofia/external/${destination_number}@${distributor(dist_list)}"/> -->
-      <\!-- THIS WORKS FOR SINGLE PROXY  --\>
+      <\!-- 这对于单个代理有效  --\>
       <action application="bridge" data="sofia/external/${destination_number}@127.0.0.1:5062"/>
     </condition>
   </extension>
@@ -57,17 +52,17 @@ Now you will need to define your customers. I do this in /conf/dialplan/public/0
 </include>
 ```
 
-Replace the keywords below with your own informations.
+请使用您自己的信息替换以下关键词。
 
-* &lt;condition field="${network\_addr}" expression="**pu.bl.ic.ip**"/>
-* &lt;\\!-- &lt;action application="bridge" data="sofia/external/${destination\_number}@${[distributor](https://wiki.freeswitch.org/wiki/Mod%5Fdistributor "Mod distributor")(**dist\_list**)}"/> -->
+* &lt;condition field="${network\_addr}" expression="**公网IP**"/>
+* &lt;\\!-- &lt;action application="bridge" data="sofia/external/${destination\_number}@${distributor(**dist\_list**)}"/> -->
 * &lt;action application="bridge" data="sofia/**external**/${destination\_number}@**127.0.0.1:5062**"/>
-* &lt;condition field="${network\_addr}" expression="**pr.iv.ate.ip**"/>
+* &lt;condition field="${network\_addr}" expression="**私网IP**"/>
 * &lt;action application="bridge" data="sofia/**internal**/${destination\_number}@**127.0.0.1:5062**"/>
 
-This will send the request to your proxy LCR engine which will return to you a 30x response that FreeSWITCH automatically dumps into the XML redirected context. This context must be defined in /conf/dialplan/public.xml if you want it to load properly. You can use a single destination, such as a localhost OpenSIPS proxy as I have shown here, or you can use load balancing to distribute the traffic over multiple proxies (see [Mod\_distributor](../Modules/mod_distributor_3966220.mdx#about)). Depending on the ingress IP/location, you should set the sip\_profile of sofia to the external or internal to keep the call on the same side of FreeSWITCH so you don't have to traverse internally unless you have to.
+这将发送请求到您的代理LCR引擎，该引擎将返回一个30x响应，并由FreeSWITCH自动转储到XML重定向上下文中。如果您希望正确加载它，此上下文必须在/conf/dialplan/public.xml中定义。您可以使用单个目标，如我在这里展示的localhost OpenSIPS代理，或者您可以使用负载均衡将流量分发到多个代理（参见[Mod\_distributor](../Modules/mod_distributor_3966220.mdx#about)）。根据入口IP/位置，您应该将sofia的sip\_profile设置为external或internal以保持呼叫保持在FreeSWITCH的同一端，除非必须进行内部遍历。
 
-In your redirected context, you will put as many list checks in as you will be sending from your LCR engine in the 30x.
+在您的重定向上下文中，您需要放置与从LCR引擎发送的30x相符的列表检查。
 
 ```xml
 <context name="redirected">
@@ -85,11 +80,8 @@ In your redirected context, you will put as many list checks in as you will be s
 </context>
 ```
 
-What this does is check the location of the contact to see if the destination resides on the internal or external side of FreeSWITCH. That way it does not try to send the new INVITEs out of the wrong ethernet interface.
+这段代码的作用是检查联系人的位置，以确定目标是否位于FreeSWITCH的内部或外部。这样它就不会试图通过错误的以太网接口发送新的INVITE。
 
-## OpenSIPS Example
+## OpenSIPS示例
 
-This is an very minimal example configuration to generate a 300 Multiple Choice to test this FreeSWITCH configuration with if you don't already have some LCR engines in place. (I WILL INSERT THE EXAMPLE HERE)
-
-  
-
+这是一个非常简单的配置示例，用于生成300多重选择，以便测试此FreeSWITCH配置，如果您还没有安装LCR引擎。(我将在这里插入示例)

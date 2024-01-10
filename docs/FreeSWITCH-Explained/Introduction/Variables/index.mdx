@@ -1,127 +1,122 @@
-
-# Variables 
-
- 
+# 变量
 
 ---
 
-Table of Contents (click to expand)
+目录（点击展开）
 
-* [0\. About](#0-about)
-* [1\. Referring to Variables](#1-referring-to-variables)  
-   * [1.1 Difference between $ and $$ prefixes](#11-difference-between--and--prefixes)
-* [2\. Show variables](#2-show-variables)  
-   * [2.1 Use eval from mod\_commands](#0-about)  
-   * [2.2 Use global\_getvar from mod\_commands for global variables](#3-global-variables)  
-   * [2.3 Use uuid\_getvar from mod\_commands for channel variables](#4-channel-variables)  
-   * [3\. Global Variables](#3-global-variables)
-* [4\. Channel Variables](#4-channel-variables)
-* [5\. System Defined Variables](#5-system-defined-variables)
+* [0\. 关于](#0-关于)
+* [1\. 关于变量](#1-关于变量)  
+   * [1.1 $ 和 $$ 前缀的区别](#11-$-和-$$-前缀的区别)
+* [2\. 显示变量](#2-显示变量)  
+   * [2.1 使用 mod\_commands 的 eval 函数](#2.1-使用-mod\_commands-的-eval-函数)  
+   * [2.2 使用 mod\_commands 的 global\_getvar 函数获取全局变量](#2.2-使用-mod\_commands-的-global\_getvar-函数获取全局变量)  
+   * [2.3 使用 mod\_commands 的 uuid\_getvar 函数获取通道变量](#2.3-使用-mod\_commands-的-uuid\_getvar-函数获取通道变量)  
+   * [3\. 全局变量](#3-全局变量)
+* [4\. 通道变量](#4-通道变量)
+* [5\. 系统定义变量](#5-系统定义变量)
 
 ---
 
-## 0\. About
+## 0\. 关于
 
-A variable gives a name to a piece of information, so instead of using something like 192.168.1.1 you can create a variable named [local\_ip\_v4](../../../Channel-Variables-Catalog/local_ip_v4_16353556.mdx#local_ip_v4). From this point on, whenever you need to refer to this IP address, use **`${local_ip_v4}`** instead of typing the actual IP address. Variable values are stored in memory on your server, and when you retrieve the variable, FreeSWITCH pulls the current value from memory.
+变量给信息赋予了一个名称，所以你可以为192.168.1.1创建一个名为[local\_ip\_v4](../../../Channel-Variables-Catalog/local_ip_v4_16353556.mdx#local_ip_v4)的变量。从此时起，每当你需要引用该 IP 地址时，使用 **`${local_ip_v4}`** 代替输入实际的 IP 地址。变量的值存储在服务器的内存中，当你检索变量时，FreeSWITCH 会从内存中获取当前的值。
 
-There are several benefits to using variables:
+使用变量有以下几个好处：
 
-* **Manage changes** \- _If a value changes, it only has to be changed at one place_.  
-For example, by using a variable to define an IP address, you only specify the actual IP address once, then wherever you need the IP address, you use the variable.
-* **Readability** \- _Provides context to configuration values_.  
-By giving a name to a specific value, it's much easier to understand the configuration. For example, if you would see a number 1000 in the configuration file it's not obvious what that number means: Is it an extension? Is it a timeout period? You wouldn't know. You would have to spend valuable time trying to get context from the surrounding text. By using a variable with a meaningful name you can avoid the guesswork.
-* **Passing Data**  
-Since FreeSWITCH is built on a modular architecture, variables provide a convenient way of sharing data between different modules.
-* **Configuration**  
-The FreeSWITCH core and many modules have predefined variables that are used as configuration settings. These usually have a default value which can be overridden. The behavior of FreeSWITCH can be controlled by changing the value of one of the predefined variables.
+* **管理变更** - _如果一个值发生变化，只需要在一个地方修改_.  
+例如，通过使用变量来定义IP地址，您只需在一个地方指定实际的IP地址，然后在需要使用IP地址的任何地方都可以使用该变量。
+* **可读性** - _为配置值提供上下文_.  
+通过为特定值指定一个名称，更容易理解配置。例如，如果在配置文件中看到一个数字1000，不明显知道该数字代表什么：是一个扩展吗？还是一个超时时间？您不会知道。您需要花费宝贵的时间，从周围的文本中获取上下文。通过使用一个有意义的名称的变量，可以避免猜测。
+* **传递数据**  
+由于FreeSWITCH是基于模块化架构构建的，变量为在不同模块之间共享数据提供了方便的方法。
+* **配置**  
+FreeSWITCH核心和许多模块都有预定义的变量，用作配置设置。这些通常有一个默认值，可以进行覆盖。通过更改预定义变量之一的值，可以控制FreeSWITCH的行为。
 
-See the list of variables in the [Channel Variables Catalog](../../../Channel-Variables-Catalog/index.mdx#comments), at [Global Variables](./Global-Variables_13173994.mdx#about), [Variables Master List](../../Dialplan/Variables-Master-List_16352570.mdx#id), and probably a bunch other obscure places (e.g., [Some Variables](../../Dialplan/Variables-Archive/some-variable/Some-Variables_16352547.mdx#some_variable), [FS Channel Variables](../../Dialplan/Variables-Archive/--Channel-Variables/FS-Channel-Variables_13173384.mdx#about--), [Switch core variables](../../Dialplan/-Variables-(work-in-progress)/Switch-core-variables_7766279.mdx#about), [CDR and accounting variables](../../Dialplan/-Variables-(work-in-progress)/CDR-and-accounting-variables_7766283.mdx#--), [\_\_DTMF Variables](../../Dialplan/Variables-Archive/x__DTMF-Variables_16352562.mdx#about), and the [FreeSWITCH source code](https://github.com/signalwire/freeswitch)).
+请查看[Channel Variables Catalog](../../../Channel-Variables-Catalog/index.mdx#comments)中的变量列表，还可以在[Global Variables](./Global-Variables_13173994.mdx#about)、[Variables Master List](../../Dialplan/Variables-Master-List_16352570.mdx#id)以及其他一些隐蔽的地方查找（例如，[Some Variables](../../Dialplan/Variables-Archive/some-variable/Some-Variables_16352547.mdx#some_variable)、[FS Channel Variables](../../Dialplan/Variables-Archive/--Channel-Variables/FS-Channel-Variables_13173384.mdx#about--)、[Switch core variables](../../Dialplan/-Variables-(work-in-progress)/Switch-core-variables_7766279.mdx#about)、[CDR and accounting variables](../../Dialplan/-Variables-(work-in-progress)/CDR-and-accounting-variables_7766283.mdx#--)、[\_\_DTMF Variables](../../Dialplan/Variables-Archive/x__DTMF-Variables_16352562.mdx#about)以及[FreeSWITCH源代码](https://github.com/signalwire/freeswitch)）。
 
-## 1\. Referring to Variables
+## 1\. 参考变量
 
-Variables can be referred to using the dollar syntax :
+可以使用美元符号语法引用变量：
 
 ```text
 ${variable_name}
 ```
 
- Wherever you use this syntax the FreeSWITCH engine will replace it with the current value of the variable.
+无论在何处使用此语法，FreeSWITCH引擎将用变量的当前值替换它。
 
-* For **[global variables](./Global-Variables_13173994.mdx#about)** the value will be the same for all [channels](../../Dialplan/Channel-States_7144639.mdx#0-about) (i.e., calls).
-* **[Channel variables](../../Dialplan/Channel-Variables_16352493.mdx#about)** are only available in the context of a channel, and will evaluate to the value for the current channel.  
-For example, in the [dialplan](../../Dialplan/index.mdx#0-about), you can create rules based on the [destination\_number](../../../Channel-Variables-Catalog/destination_number_16353647.mdx#destination_number) channel variable. As the dialplan is evaluated for a channel, it will retrieve the dialed number for this particular channel.
+对于**[全局变量](./Global-Variables_13173994.mdx#about)**，其值在所有[通道](../../Dialplan/Channel-States_7144639.mdx#0-about)（即呼叫）中都相同。
+**[通道变量](../../Dialplan/Channel-Variables_16352493.mdx#about)**仅在通道上下文中可用，并将评估为当前通道的值。
+例如，在[dialplan](../../Dialplan/index.mdx#0-about)中，您可以基于[destination_number](../../../Channel-Variables-Catalog/destination_number_16353647.mdx#destination_number)通道变量创建规则。由于dialplan是针对通道进行评估的，因此它将检索特定通道的拨号号码。
 
-### 1.1 Difference between `$` and `$$` prefixes
+### 1.1 `$` 和 `$$` 前缀的区别
 
-The difference between variable names prefixed with a single $ or a double $$ **only has significance in** [**configuration files**](../../Configuration/index.mdx#about):
+以单个 $ 或双个 $$ 作为前缀的变量名称之间的差异**仅在**[**配置文件**](../../Configuration/index.mdx#about)中有意义：
 
-* The `$$` (or double $) syntax is only for **[global variables](./Global-Variables_13173994.mdx#about)**.  
-    
-`$${variable_name}` will be completely removed by the **[pre-processor](../Understanding-the-Configuration-Files_15696295.mdx)**, and replaced with the value of the variable. If there is no matching global variable it will just remain blank. Because this is done by the **[pre-processor](../Understanding-the-Configuration-Files_15696295.mdx)**, it is evaluated only when the configuration file is loaded into memory (either at startup or when reloading).
-* The $ (or single $) syntax is not affected by the **pre-processor**, instead it's evaluated at runtime.  
-    
-For example, if you use it in the [dialplan](../../Dialplan/index.mdx#0-about), it will be evaluated from scratch for every call. Therefore, if you change the value of a global variable, the $ syntax will reflect the new value.
+* `$$`（或双$）语法仅用于**[全局变量](./Global-Variables_13173994.mdx#about)**。
+
+`$${variable_name}` 将被**[预处理器](../Understanding-the-Configuration-Files_15696295.mdx)**完全移除，并替换为变量的值。如果没有匹配的全局变量，它将保持空白。因为这是由**[预处理器](../Understanding-the-Configuration-Files_15696295.mdx)**执行的，所以它只有在配置文件被加载到内存中时（无论是启动时还是重新加载时）才会被评估。
+
+* `$`（或单$）语法不受**预处理器**的影响，它会在运行时被评估。
+
+例如，如果在[dialplan](../../Dialplan/index.mdx#0-about)中使用它，它将在每一个呼叫中从头开始被评估。因此，如果您更改全局变量的值，$语法将反映新的值。
 
 ---
 
-Another difference (outside the configuration files) is that
+另一个区别（在配置文件之外）是：
 
-* the $ syntax can be used to retrieve both global variable and [channel variables](../../Dialplan/Channel-Variables_16352493.mdx#about), while
-* the $$ syntax is only for global variables.
+* `$`语法可用于检索全局变量和[通道变量](../../Dialplan/Channel-Variables_16352493.mdx#about)，
+* 而`$$`语法仅适用于全局变量。
 
-To add to the confusion, **the distinction only applies to the _configuration files_**. In scripts, CLI, API calls, etc., there is no difference between the $ and $$ syntax; both can be used to retrieve global and channel variables, and are by definition evaluated at runtime.
+增加混淆的是，**这种区别仅适用于_配置文件_**。在脚本、CLI、API调用等中，$和$$语法之间没有区别；两者都可以用于检索全局和通道变量，并且根据定义在运行时被评估。
 
-## 2\. Show variables
+## 2. 展示变量
 
-### 2.1 Use `eval` from [mod_commands](../../Modules/mod_commands_1966741.mdx#--) 
+### 2.1 使用[mod_commands](../../Modules/mod_commands_1966741.mdx#--)的`eval`
 
-For **[global variables](./Global-Variables_13173994.mdx#about)**, use the following in [fs\_cli](../../Client-and-Developer-Interfaces/1048948.mdx#or):
+对于**[全局变量](./Global-Variables_13173994.mdx#about)**，在[fs_cli](../../Client-and-Developer-Interfaces/1048948.mdx#or)中使用以下命令：
 
 ```text
 freeswitch@lofa> eval ${variable_name}
 ```
 
-Or from the terminal of your operating system:
+从您的操作系统终端：
 
 ```text
 $ fs_cli -x '${variable_name}'
 ```
 
-Single or double quotes?
+使用单引号还是双引号？
 
-If you do use the terminal, make sure to use the right quotes. In Bash for example, it is recommended to use single quotes as they cause everything in between the quotes to be interpreted literally; otherwise Bash will try to evaluate a local variable because the $ character has a special meaning there, and the double quotes will allow it to evaluate these variables first.
+如果您使用终端，请确保使用正确的引号。例如在Bash中，建议使用单引号，因为单引号会将引号之间的所有内容逐字解释；否则Bash将尝试评估本地变量，因为$字符在这里具有特殊意义，双引号将允许它先评估这些变量。
 
-  
-**`eval`** can be used for **[channel variables](../../Dialplan/Channel-Variables_16352493.mdx#about)** too, but as these variables are only set during a call session, **`eval`** will require the UUID of the desired session, or else it will return `-ERR no reply`. See full description at [mod\_commands](../../Modules/mod_commands_1966741.mdx#--).
+**`eval`**也可以用于**[通道变量](../../Dialplan/Channel-Variables_16352493.mdx#about)**，但由于这些变量仅在呼叫会话期间设置，**`eval`**将需要所需会话的UUID，否则它将返回`-ERR no reply`。请参阅[mod_commands](../../Modules/mod_commands_1966741.mdx#--)的完整说明。
 
-### 2.2 Use `global_getvar` from [mod_commands](../../Modules/mod_commands_1966741.mdx#--) for [global variables](./Global-Variables_13173994.mdx#about)
+### 2.2 使用[mod_commands](../../Modules/mod_commands_1966741.mdx#--)中的 `global_getvar` 获取[全局变量](./Global-Variables_13173994.mdx#about)
 
 ```text
 freeswitch@lofa> global_getvar variable_name
 ```
 
-### 2.3 Use `uuid_getvar` from [mod_commands](../../Modules/mod_commands_1966741.mdx#--) for [channel variables](../../Dialplan/Channel-Variables_16352493.mdx#about)
+### 2.3 使用[mod_commands](../../Modules/mod_commands_1966741.mdx#--)中的 `uuid_getvar` 获取[通道变量](../../Dialplan/Channel-Variables_16352493.mdx#about)
 
 ```text
 freeswitch@lofa> uuid_getvar <uuid> variable_name
 ```
 
-### 3\. Global Variables
+### 3\. 全局变量
 
-As their name implies, global variables are available to the entire FreeSWITCH system, and their values are the same for all channels. It's intended to be used for variables that don't change often.
+顾名思义，全局变量对整个FreeSWITCH系统可用，它们的值对所有通道都相同。它适用于不经常更改的变量。
 
-Global variables can be created/modified in the configuration using the [set](../Understanding-the-Configuration-Files_15696295.mdx#-freeswitch--understanding-the-configuration-files-) pre-processor command (see [Understanding the Configuration Files](../Understanding-the-Configuration-Files_15696295.mdx)). You can also set a global variable using the [global\_setvar ](../../Modules/mod_commands_1966741.mdx#global_setvar)API command (see [mod\_commands](../../Modules/mod_commands_1966741.mdx#--)).
+全局变量可以在配置中使用`[set](../Understanding-the-Configuration-Files_15696295.mdx#-freeswitch--understanding-the-configuration-files-)`预处理命令进行创建/修改（参见 [了解配置文件](../Understanding-the-Configuration-Files_15696295.mdx)）。您还可以使用`[global_setvar ](../../Modules/mod_commands_1966741.mdx#global_setvar)`API命令来设置全局变量（参见 [mod_commands](../../Modules/mod_commands_1966741.mdx#--)）。
 
-The FreeSWITCH core as well as individual modules have many predefined variables, some of which are set in [vars.xml](../../Configuration/Configuring-FreeSWITCH/vars.xml_7144079.mdx#about) in the [default configuration](../../Configuration/Default-Configuration_6587388.mdx#mod_vp8), others have a default value assigned by the FreeSWITCH core.
+FreeSWITCH核心以及各个模块都有许多预定义变量，其中一些在[vars.xml](../../Configuration/Configuring-FreeSWITCH/vars.xml_7144079.mdx#about)中设置在[默认配置](../../Configuration/Default-Configuration_6587388.mdx#mod_vp8)中，其他的由FreeSWITCH核心分配默认值。
 
-See the [Global Variables](./Global-Variables_13173994.mdx#about) page for a full list of predefined global variables (but the [Channel Variables Catalog](../../../Channel-Variables-Catalog/index.mdx#comments) also lists them).
+请在[全局变量](./Global-Variables_13173994.mdx#about)页面查看完整的预定义全局变量列表（但[通道变量目录](../../../Channel-Variables-Catalog/index.mdx#comments)也会列出它们）。
 
-## 4\. Channel Variables
+## 4. 通道变量
 
-[Channel variables](../../Dialplan/Channel-Variables_16352493.mdx#about) are variables that are specific to a single channel (or a single call, to put it another way) such as [caller\_id\_number](../../../Channel-Variables-Catalog/caller_id_number_16352836.mdx#caller_id_number), etc. You can create a channel variable with the [set ](../../Modules/mod-dptools/6586661.mdx#about)pre-processor directive (see [Understanding the Configuration Files](../Understanding-the-Configuration-Files_15696295.mdx)). Because channel variables are specific to a channel, they are only available in the context of a channel such as in the [dialplan](../../Dialplan/index.mdx#0-about), or in scripts running as part of a [dialplan](../../Dialplan/index.mdx#0-about).
+[通道变量](../../Dialplan/Channel-Variables_16352493.mdx#about)是特定于单个通道（或换句话说，特定于单个呼叫）的变量，例如[caller\_id\_number](../../../Channel-Variables-Catalog/caller_id_number_16352836.mdx#caller_id_number)等。您可以使用[set](../../Modules/mod-dptools/6586661.mdx#about)预处理指令来创建通道变量（详见[理解配置文件](../Understanding-the-Configuration-Files_15696295.mdx)）。由于通道变量是特定于通道的，所以只能在通道的上下文中使用，如[dialplan](../../Dialplan/index.mdx#0-about)中或作为[dialplan](../../Dialplan/index.mdx#0-about)的一部分运行的脚本中。
 
-## 5\. System Defined Variables
+## 5. 系统定义的变量
 
-In addition to variables you create using the [set ](../../Modules/mod-dptools/6586661.mdx#about)pre-processor directive, there are hundreds of variables that are created by the FreeSWITCH core and by the many modules that are loaded. A full list of variables is documented on the [Variables Master List](../../Dialplan/Variables-Master-List_16352570.mdx#id).
-
-
+除了使用[set](../../Modules/mod-dptools/6586661.mdx#about)预处理指令创建的变量外，FreeSWITCH核心和加载的许多模块也会创建数百个变量。完整的变量列表在[变量主列表](../../Dialplan/Variables-Master-List_16352570.mdx#id)中有文档记录。

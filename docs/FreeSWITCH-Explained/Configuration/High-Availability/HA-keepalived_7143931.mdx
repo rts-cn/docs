@@ -1,47 +1,41 @@
-
 # HA keepalived 
 
- 
+## 关于
 
-## About
+使用Keepalived设置Freeswitch的示例配置，以管理IP地址故障转移。
 
-Example configuration for setting up Freeswitch using Keepalived to manage the IP address failover.
+由于corosync/pacemaker方法的复杂性以及在响应“fsctl crash”时难以实现正确故障转移的困难，因此进行了这项工作。
 
-This was done due to heavy complexity of the corosync/pacemaker approach, and difficulties getting that setup to actually fail over properly in response to a 'fsctl crash'.
+按照[Freeswitch高可用性](./index.mdx#about)页面中的说明进行呼叫跟踪、ODBC等设置。
 
-Follow the instructions in the [Freeswitch High Availability](./index.mdx#about) page to set up call tracking, odbc, etc.
+点击此处展开目录
 
-  
-Click here to expand Table of Contents
+* 1 [Perl脚本](#perl-scripts)
+* 2 [节点配置](#node-configurations--)  
+   * 2.1 [节点1](#node-1-)  
+   * 2.2 [节点2](#node-1-)
 
-* 1 [Perl Scripts](#perl-scripts)
-* 2 [Node Configurations](#node-configurations--)  
-   * 2.1 [Node 1](#node-1-)  
-   * 2.2 [Node 2](#node-1-)
+拓扑结构
 
-Topology
+此示例具有公共网络（在eth0上）和私有/内部网络（在eth1上）。
 
-This example has both a public network (on eth0) and a private/internal network (on eth1).
+ 节点1 公共：10.0.0.1
+ 节点2 公共：10.0.0.2
+ 公共虚拟IP：10.0.0.10
+ 初始状态为Master
 
- Node 1 Public: 10.0.0.1
- Node 2 Public: 10.0.0.2
- Public Virtual IP: 10.0.0.10
- Initially Master
+ 节点1 内部：10.1.0.1
+ 节点2 内部：10.1.0.2
+ 内部虚拟IP：10.1.0.10
+ 初始状态为Standby/Backup
 
- Node 1 Internal: 10.1.0.1
- Node 2 Internal: 10.1.0.2
- Internal Virtual IP: 10.1.0.10
- Initially Standby/Backup
+在此示例中，FreeSWITCH安装在/local/freeswitch/server目录下，请相应调整路径。
 
-  
-In this example FreeSWITCH is installed to /local/freeswitch/server, so adjust paths accordingly.
+### Perl脚本
 
-  
-### Perl Scripts
+/local/freeswitch/ka-status.pl
 
- /local/freeswitch/ka-status.pl
-
-**ka-status.pl** Expand source 
+**ka-status.pl** 源码 
 
 ```perl
 #!/usr/bin/perl
@@ -77,88 +71,7 @@ exit(0);
 
 /local/freeswitch/ka-notify.pl
 
-**ka-notify.pl** Expand source 
-
-```perl
-#!/usr/bin/perl
-
-# INSTANCE|VI_FREESW|BACKUP|50
-my ($what,$id,$state,$prio) = @ARGV;
-open(STDOUT, "|/usr/bin/logger -t ka-notify");
-
-print "what($what) id($id) state($state) prio($prio)\n";
-
-if ( $state eq "MASTER" )
-{
-    print "Instance went to master, issuing sofia recover.\n";
-    system("/local/freeswitch/server/bin/fs_cli", "-x", "sofia recover");
-
-    # Not ideal, but it seems to fail over too quickly for skinny devices
-    # and since they don't actually handle the failover, need to poke them
-    # Comment this out if you're not using mod_skinny/SCCP
-    system("/local/freeswitch/server/bin/fs_cli", "-x", "reload mod_skinny");
-}
-```
-
-  
-### Node Configurations  
-
-#### Node 1 
-
- /etc/keepalived/keepalived.conf
-
-**keepalived.conf** Expand source 
-
-```bash
-global_defs {
-    notification_email {
-        your_email_address
-    }
-    smtp_server smtp_server_ip_or_hostname
-    smtp_connect_timeout 30
-    router_id FREESW
-}
-
-vrrp_script chk_fs {
-    script "/local/freeswitch/ka-status.pl"
-    interval 10
-}
-
-vrrp_script chk_fs_port {
-    script "</dev/tcp/127.0.0.1/8080"
-    interval 1
-}
-
-vrrp_instance VI_FREESW {
-    state MASTER
-    interface eth0
-    virtual_router_id 51
-    # higher is preferred for master
-    # disable to have failover be sticky
-    #priority 100
-    advert_int 1
-    authentication {
-        auth_type PASS
-        auth_pass xxxxxxxxxxxxxxxx
-    }
-    notify "/local/freeswitch/ka-notify.pl"
-    virtual_ipaddress {
-        10.0.0.10 dev eth0
-        10.1.0.10 dev eth1
-    }
-    track_script {
-        chk_fs
-        chk_fs_port
-    }
-    smtp_alert
-} 
-```
-
-#### Node 2 
-
- /etc/keepalived/keepalived.conf
-
-**keepalived.conf** Expand source 
+**ka-notify.pl** 源码
 
 ```bash
 global_defs {
@@ -184,8 +97,74 @@ vrrp_instance VI_FREESW {
     state BACKUP
     interface eth0
     virtual_router_id 51
-    # higher is preferred for master
-    # disable to have failover be sticky
+    # 优先级越高，则为主节点的可能性越大
+    # 您可以禁用以使故障转移保持固定（粘性）
+    priority 50
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass xxxxxxxxxxxxxxxx
+    }
+    notify "/local/freeswitch/ka-notify.pl"
+    virtual_ipaddress {
+        10.0.0.10 dev eth0
+        10.1.0.10 dev eth1
+    }
+    track_script {
+        chk_fs
+        chk_fs_port
+    }
+    smtp_alert
+} 
+```
+
+```perl
+#!/usr/bin/perl
+
+# 实例|VI_FREESW|备份|50
+my ($what,$id,$state,$prio) = @ARGV;
+open(STDOUT, "|/usr/bin/logger -t ka-notify");
+
+print "what($what) id($id) state($state) prio($prio)\n";
+
+if ( $state eq "MASTER" )
+{
+    print "实例转至主节点，发出 sofia recover 命令。\n";
+    system("/local/freeswitch/server/bin/fs_cli", "-x", "sofia recover");
+
+    # 不是最理想的，但对于 skinny 设备来说，故障转移速度过快
+    # 由于它们实际上不处理故障转移，需要手动去触发它们
+    # 如果您没有使用 mod_skinny/SCCP，请将此部分注释掉
+    system("/local/freeswitch/server/bin/fs_cli", "-x", "reload mod_skinny");
+}
+```
+
+```bash
+global_defs {
+    notification_email {
+        your_email_address
+    }
+    smtp_server smtp_server_ip_or_hostname
+    smtp_connect_timeout 30
+    router_id FREESW
+}
+
+vrrp_script chk_fs {
+    script "/local/freeswitch/ka-status.pl"
+    interval 10
+}
+
+vrrp_script chk_fs_port {
+    script "</dev/tcp/127.0.0.1/8080"
+    interval 1
+}
+
+vrrp_instance VI_FREESW {
+    state BACKUP
+    interface eth0
+    virtual_router_id 51
+    # 较高的值被首选为主机
+    # 禁止以使故障转移操作为粘滞的
     #priority 50
     advert_int 1
     authentication {
@@ -204,6 +183,3 @@ vrrp_instance VI_FREESW {
     smtp_alert
 } 
 ```
-  
-  
-

@@ -1,28 +1,27 @@
-
 # Googletalk 
 
  
 
-Click here to expand Table of Contents
+点击这里展开目录
 
-* 1 [FreeSWITCH and Google Talk](#freeswitch-and-google-talk)
-* 2 [FreeSWITCH – Google Talk – Dingaling – Jingle All The Way](#freeswitch--google-talk--dingaling--jingle-all-the-way)
+* [1 FreeSWITCH 和 Google Talk](#freeswitch-and-google-talk)
+* [2 FreeSWITCH – Google Talk – Dingaling – Jingle All The Way](#freeswitch--google-talk--dingaling--jingle-all-the-way)
 
-## FreeSWITCH and Google Talk
+## FreeSWITCH 和 Google Talk
 
-One of the reasons I chose to spend time with freeswitch over yate was google talk integration. Was a good choice, I think, for more than just gtalk.
+我选择花时间研究 freeswitch 而不是 yate 的一个原因就是因为它与 Google Talk 的集成。我认为这是一个很好的选择，不仅仅是针对 gtalk。
 
-The endpoint that talks to gtalk is mod\_dingaling, and it’s not compiled by default. So to enable it, uncomment #endpoints/mod\_dingaling from modules.conf in your source tree and recompile.
+与 gtalk 进行通信的端口是 mod\_dingaling，但它在默认情况下不会被编译。所以要启用它，需要取消 modules.conf 中源代码树中的 #endpoints/mod\_dingaling 的注释，并重新编译。
 
-I had to install gnutls-devel to get gtalk working, but check freeswitch.spec for other build packages you might need.
+为了让 gtalk 工作，我需要安装 gnutls-devel，但请查看 freeswitch.spec 是否还需要其他构建包。
 
-The configuration is pretty straight forward. Make sure in conf/autoload\_configs/modules.conf.xml mod\_dingaling is loaded.
+配置非常简单。确保在 conf/autoload\_configs/modules.conf.xml 中加载了 mod\_dingaling。
 
-I set it up as a client, I think later I might play around with it as a server. My conf/jingle\_profiles/client.xml looks like this:
+我将它设置为一个客户端，之后我可能会尝试把它作为服务器玩一下。我的 conf/jingle\_profiles/client.xml 的设置如下：
 
 ```xml
 <include>
-  <!– Client Profile (Original mode) –>
+  <!– 客户端配置（原始模式） –>
   <profile type="client">
     <param name="name" value="gmail.com"/>
     <param name="login" value="michael.chesterton@gmail.com/gtalk"/>
@@ -30,21 +29,21 @@ I set it up as a client, I think later I might play around with it as a server. 
     <param name="server" value="talk.google.com"/>
     <param name="dialplan" value="XML"/>
     <param name="context" value="public"/>
-    <param name="message" value="Press Belly Button to Begin"/>
+    <param name="message" value="按下肚脐开始"/>
     <param name="rtp-ip" value="$${bind_server_ip}"/>
     <param name="ext-rtp-ip" value="$${external_rtp_ip}"/>
     <param name="auto-login" value="true"/>
     <!– SASL “plain" or “md5? –>
     <param name="sasl" value="plain"/>
-    <!– if the server where the jabber is hosted is not the same as the one in the jid –>
+    <!– 如果托管jabber的服务器与jid中的不同 –>
     <!–<param name="server" value="alternate.server.com"/>–>
-    <!– Enable TLS or not –>
+    <!– 是否启用TLS –>
     <param name="tls" value="true"/>
-    <!– disable to trade async for more calls –>
+    <!– 是否禁用异步交换以实现更多呼叫 –>
     <param name="use-rtp-timer" value="true"/>
-    <!– default extension (if one cannot be determined) –>
+    <!– 默认扩展（如果无法确定） –>
     <param name="exten" value="5551212?/>
-    <!– VAD choose one –>
+    <!– VAD 选择一个 –>
     <!– <param name="vad" value="in"/> –>
     <!– <param name="vad" value="out"/> –>
     <param name="vad" value="both"/>
@@ -53,18 +52,18 @@ I set it up as a client, I think later I might play around with it as a server. 
 </include>
 ```
 
-  
-When editing conf/jingle\_profiles/client.xml, pay attention to the line &lt;profile type="client"> make sure it’s profile , and not x-profile. It comes as x-profile out of the box to stop it from loading. 5551212 is the phone gtalk calls will go to as defined by exten
 
-One other thing is do is add a vcard to your directory entry, I added it to conf/directory/default/1000.xml and directory/default/5551212.xml, mine looks like:
+编辑 conf/jingle_profiles/client.xml 时，请注意行&lt;profile type="client"> 确保它是 profile，并非 x-profile。默认情况下，它会被命名为 x-profile 以防止加载。5551212 是 gtalk 呼叫所转到的电话，由 exten 定义。
+
+另外还有一件事是在您的目录条目中添加一个vcard，我将其添加到 conf/directory/default/1000.xml 和 directory/default/5551212.xml，我的配置如下：
 
 ```xml
 <include>
-  <user id="1000? mailbox="1000?>
+  <user id="1000? mailbox="1000?">
     <params>
-      <param name="password" value="1234?/>
-      <param name="vm-password" value="1234?/>
-       <param name="vm-mailto" value="chesty@chesterton.id.au"/>
+      <param name="password" value="1234?"/>
+      <param name="vm-password" value="1234?"/>
+      <param name="vm-mailto" value="chesty@chesterton.id.au"/>
 <!–
        <param name="vm-email-all-messages" value="true"/>
 –>
@@ -73,7 +72,7 @@ One other thing is do is add a vcard to your directory entry, I added it to conf
       <variable name="user_context" value="default"/>
       <variable name="ruleset" value="internal" />
       <variable name="effective_caller_id_name" value="Michael Chesterton"/>
-      <variable name="effective_caller_id_number" value="1000?/>
+      <variable name="effective_caller_id_number" value="1000?"/>
     </variables>
     <vcard xmlns=’vcard-temp’>
       <FN>Michael Chesterton</FN>
@@ -119,15 +118,14 @@ One other thing is do is add a vcard to your directory entry, I added it to conf
       <EMAIL><INTERNET/><PREF/><USERID>michael.chesterton@barrang.com.au</USERID></EMAIL>
       <JABBERID>michael.chesterton@gmail.com</JABBERID>
       <DESC>
-        More information about me is located on my
-        personal website: http://barrang.com.au/
+        更多关于我个人的信息，请查看我的个人网站：http://barrang.com.au/
       </DESC>
     </vcard>
   </user>
 </include>
 ```
 
-That will get you signed in to gtalk ready to receive and make calls. Now we need a dialplan to direct gtalk calls to a SIP phone. Part of my conf/dialplan/public.xml looks like:
+那样就可以登录gtalk，准备接收和拨打电话了。现在我们需要一个拨号计划来将gtalk的通话转接到SIP电话上。我的conf/dialplan/public.xml的一部分如下：
 
 ```xml
 <extension name="public_did">
@@ -145,23 +143,21 @@ That will get you signed in to gtalk ready to receive and make calls. Now we nee
 </extension>
 ```
 
-The first condition field strips out the @ character from the caller id number, my e65 doesn’t like the @ character and rejects the call. Gtalk sets the caller id number as something like [barrang.com@gmail.com](mailto:barrang.com@gmail.com)/Talk.v1047F0FC7A5\. The rest I’ve already talked about here
+第一个条件字段将呼叫者ID号码中的@字符去除掉，我的e65不喜欢@字符，会拒绝接听电话。Gtalk将呼叫者ID号码设置为类似[barrang.com@gmail.com](mailto:barrang.com@gmail.com)/Talk.v1047F0FC7A5的形式。其他部分我已经在这里讨论过了。
 
-I’ve only tested setting up a call from an XP vm to my SIP enabled mobile phone, I haven’t tested audio yet. But I’m getting there, I’m waiting for a friend to install gtalk so they can test with me. Then I just need a dialplan entry so I can make gtalk calls from SIP clients.
+我只在XP虚拟机和我的启用SIP功能的手机之间尝试设置通话，还没有测试音频。但我正在努力，正在等待一个朋友安装gtalk，他们可以和我一起测试。然后我只需要一个拨号计划条目，这样我就可以从SIP客户端拨打gtalk电话了。
 
-Related posts:
+相关帖子：
 
 FreeSWITCH – Google Talk – Dingaling – Jingle All The Way Freeswitch – Softswitch, Softphone, PBX FreeSWITCH and Voicemail Latest FreeSWITCH, PennyTel and Billion 5200N development Freeswitch on Ubuntu Feisty
 
-This entry was written by chesty, posted on December 31, 2007 at 8:29 am.
+此条目由chesty编写，于2007年12月31日上午8:29发布。
 
-## FreeSWITCH – Google Talk – Dingaling – Jingle All The Way
+我成功地将Freeswitch与Google Talk整合起来了。在mod\_dingaling中有一些错误导致了段错误，这些错误在最新的更新中已经修复。
 
-I got freeswitch working with google talk. There were a few bugs in mod\_dingaling that were causing segfaults, they’re fixed in the latest update.
+我使用我的XP虚拟机通过SIP从gtalk呼叫我的e65手机，音频正常工作。我将conf/jingle\_profiles/client.xml文件中的&lt;param name="ext-rtp-ip" value="$${external\_rtp\_ip}"/>这一行注释掉了。
 
-I called from gtalk on my XP vm to my e65 via SIP, audio is working. I commented out the line &lt;param name="ext-rtp-ip" value="$${external\_rtp\_ip}"/> from conf/jingle\_profiles/client.xml .
-
-To make calls from the SIP e65 to google talk users, I added to the dialplan conf/dialplan/default.xml
+为了能够从SIP e65手机拨打Google Talk用户，我在dialplan conf/dialplan/default.xml中添加了如下内容：
 
 ```xml
 <extension name="sip2jingle">
@@ -172,11 +168,8 @@ To make calls from the SIP e65 to google talk users, I added to the dialplan con
 </extension>
 ```
 
-Then from the e65 I dial [gmail+user@switch.gruntn](mailto:gmail+user@switch.gruntn)et .
+然后我在e65手机上拨打了[gmail+user@switch.gruntn](mailto:gmail+user@switch.gruntn)et。
 
-See FreeSWITCH and Google Talk for the rest of the setup.
+有关其余设置，请参阅FreeSWITCH和Google Talk。
 
-I still need to do more testing, and understand how it traverses through the NAT firewall before I give out my google talk address to people. Did I mention the I love freeswitch?
-
-  
-
+在我向其他人透露我的Google Talk地址之前，我还需要进行更多的测试，并了解它如何穿越NAT防火墙。我提到我喜欢Freeswitch了吗？

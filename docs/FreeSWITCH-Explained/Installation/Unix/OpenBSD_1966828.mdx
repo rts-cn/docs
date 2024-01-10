@@ -1,43 +1,42 @@
-
 # OpenBSD 
 
  
 
-## About
+## 关于
 
-This is part of the [Installation](../index.mdx#about) documentation which you should review first. It provides notes unique to OpenBSD, updated to work with OpenBSD 5.5,
+这是[安装](../index.mdx#about)文档的一部分，请先阅读。它提供了适用于 OpenBSD 的独特注释，已更新为与 OpenBSD 5.5 兼容。
 
-Because OpenSSL is buggy 1.0.1c from 2012 we'll have to build our own.
+因为 OpenSSL 1.0.1c（2012 年）的版本存在问题，我们将不得不自己构建。
 
-In addition the libedit they ship is out of date so we will build our own also.
+此外，他们提供的 libedit 已过时，所以我们也将自己构建。
 
-This assumes you already know a little bit about how to get an OpenBSD system prepared and ready for this task. 
+这假设您已经对如何准备和准备 OpenBSD 系统有一些了解。 
 
-Maintainer Needed
+需要维护者
 
-We need YOU to maintain this port of FreeSWITCH. Please contact one of the FreeSWITCH core developers on Freenode IRC channel #freeswitch or the [freeswitch-users@lists.freeswitch.org](mailto:freeswitch-users@lists.freeswitch.org) mailing list to help them keep the code current for this operating system.
+我们需要您来维护此 FreeSWITCH 的端口。请在 Freenode IRC 频道 #freeswitch 上联系其中一位 FreeSWITCH 核心开发人员或发送邮件至 [freeswitch-users@lists.freeswitch.org](mailto:freeswitch-users@lists.freeswitch.org) 邮件列表，以帮助他们使该代码适应此操作系统的当前版本。
 
   
-Click to expand Table of Contents
+点击展开目录
 
-* 1 [Installation](#installation)
-* 2 [Starting FreeSWITCH](#starting-freeswitch)
+* 1 [安装](#installation)
+* 2 [启动 FreeSWITCH](#starting-freeswitch)
 
-## Installation
+## 安装
 
-The FreeSWITCH™ team has prepared a Makefile in the source tree that pulls down all dependencies and builds FreeSWITCH. It is available in the repository at
+FreeSWITCH™ 团队在源代码树中准备了一个 Makefile，它会下载所有依赖项并构建 FreeSWITCH。它在存储库中可用，路径为
 
 <https://github.com/signalwire/freeswitch/blob/master/build/Makefile.openbsd>
 
-Simply copy the contents of the above link into Makefile, then run make in the same directory. When finished, FreeSWITCH should be located under `/usr/local/freeswitch`
+只需将上述链接中的内容复制到 Makefile，然后在相同目录中运行 make 命令。完成后，FreeSWITCH 将位于 `/usr/local/freeswitch` 目录下
 
-If you find any errors please sign up for an account to help update the documentation.
+如果发现任何错误，请注册账户以协助更新文档。
 
-## Starting FreeSWITCH
+## 启动 FreeSWITCH
 
-Add a user and group "\_freeswitch" to the system
+将用户和组 "\_freeswitch" 添加到系统中
 
-**Create freeswitch user**
+**创建 freeswitch 用户**
 
 ```xml
 useradd -c "FreeSWITCH" -d /usr/local/freeswitch -g =uid -L daemon -s /sbin/nologin -u 5060 _freeswitch
@@ -45,7 +44,7 @@ chown -R _freeswitch:_freeswitch /usr/local/freeswitch
 ```
 
   
-Copy the following file to "/etc/rc.d/freeswitch"
+将以下文件复制到 "/etc/rc.d/freeswitch"
 
 **rc.d/freeswitch**
 
@@ -59,8 +58,7 @@ rc_reload=NO
 rc_cmd $1
 ```
 
-  
-You may now configure automatic startup and parameters of the FreeSWITCH in /etc/rc.conf.local:
+现在您可以在 /etc/rc.conf.local 中配置 FreeSWITCH 的自动启动和参数：
 
 **rc.conf.local**
 
@@ -69,14 +67,27 @@ pkg_scripts="$pkg_scripts freeswitch"
 freeswitch_flags="-ncwait -nonat -nonatmap -np"
 ```
 
-By adding "freeswitch" to the "pkg\_scripts", you make FS known to rc.conf. As default flags include "-ncwait" this will also enable FS to be started with the system. Custom startup flags may be configured in "freeswitch\_flags". Setting them to "NO" will disable the daemon.
+通过将 "freeswitch" 添加到 "pkg_scripts"，您使得 rc.conf 知道了 FS 的存在。由于默认标志中包含 "-ncwait"，这也将使得 FS 能够随系统启动。自定义的启动标志可以在 "freeswitch_flags" 中进行配置。将其设置为 "NO" 将禁用守护进程。
 
-  
-### Comments:
+### 评论：
 
-| Compilation works, running works only with until it hits the OpenSSL libraries ... seems, they are kind of half-linked against the native libraries, halve against the custom version of OpenSSL. But as 5.6 will be released in October with a more recent version of then LibreSSL, I consider further investigations not worthy and will run the FS with TLS disabled until then. ![](/images/icons/contenttypes/comment_16.png) Posted by daviddahlberg at Jul 18, 2014 05:43                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Installing a rc script:Add an user and group "\_freeswitch" to the systemuseradd -c "FreeSWITCH" -d /usr/local/freeswitch -g =uid -L daemon -s /sbin/nologin -u 5060 \_freeswitchchown -R \_freeswitch:\_freeswitch /usr/local/freeswitchCopy the following file to "/etc/rc.d/freeswitch"#!/bin/shdaemon="/usr/local/freeswitch/bin/freeswitch"daemon\_user="\_freeswitch"freeswitch\_flags="-ncwait". /etc/rc.d/rc.subrrc\_reload=NOrc\_cmd $1You may now configure automatic startup and parameters of the FreeSWITCH in /etc/rc.conf.local:pkg\_scripts="$pkg\_scripts freeswitch"freeswitch\_flags="-ncwait -nonat -nonatmap -rp"By adding "freeswitch" to the "pkg\_scripts", you make FS known to rc.conf. As default flags are "-ncwait" this will also enable FS to be started with the system. Custom startup flags may be configured in "freeswitch\_flags". Setting them to "NO" will disable the daemon. ![](/images/icons/contenttypes/comment_16.png) Posted by daviddahlberg at Jul 18, 2014 06:22 |
-| The issue is there were some missing steps since 5.5 ripped out OpenSSL. ![](/images/icons/contenttypes/comment_16.png) Posted by brian at Jul 18, 2014 15:13                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| 编译工作正常进行，只有在遇到 OpenSSL 库之前才能正常运行... 似乎他们有点与本地库连接不完全，又与 OpenSSL 的自定义版本连接不完全。但是由于5.6将在十月份发布，其中包含一个更新版本的 LibreSSL，我认为进一步调查不值得，并将在此之前以禁用 TLS 的方式运行 FS。 ![](/images/icons/contenttypes/comment_16.png) daviddahlberg 于 Jul 18, 2014 05:43 发表 |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 安装一个 rc 脚本：在系统中添加一个用户和组"\_freeswitch" useradd -c "FreeSWITCH" -d /usr/local/freeswitch -g =uid -L daemon -s /sbin/nologin -u 5060 \_freeswitchchown -R \_freeswitch:\_freeswitch /usr/local/freeswitch将以下文件复制到 "/etc/rc.d/freeswitch"中#!/bin/shdaemon="/usr/local/freeswitch/bin/freeswitch"daemon\_user="\_freeswitch"freeswitch\_flags="-ncwait". /etc/rc.d/rc.subrrc\_reload=NOrc\_cmd $1现在可以在 /etc/rc.conf.local 中配置 FreeSWITCH 的自动启动和参数：pkg\_scripts="$pkg\_scripts freeswitch"freeswitch\_flags="-ncwait -nonat -nonatmap -rp"通过将 "freeswitch" 添加到 "pkg\_scripts"，使得 FS 在 rc.conf 中可见。默认标志是 "-ncwait"，这将使得 FS 随系统启动。可以在 "freeswitch\_flags" 中配置自定义启动标志。将其设置为 "NO" 将禁用守护进程。 ![](/images/icons/contenttypes/comment_16.png) daviddahlberg 于 Jul 18, 2014 06:22 发表 |
+| 问题是自从5.5中去除了 OpenSSL，有一些关键步骤被省略了。 ![](/images/icons/contenttypes/comment_16.png) brian 于 Jul 18, 2014 15:13 发表 |
 
+## Title: Get the Best Deals on Electronics at Our Store
 
+Welcome to our store, where you can find the best deals on a wide range of electronic products. We pride ourselves on offering top-quality items at affordable prices.
+
+Whether you are in the market for a new smartphone, laptop, or gaming console, we have you covered. Our extensive selection includes the latest models from all the major brands. We constantly update our inventory to ensure that you have access to the most cutting-edge technology.
+
+At our store, customer satisfaction is our top priority. Our knowledgeable staff is always ready to assist you in finding the perfect product to suit your needs. We understand that purchasing electronics can be a significant investment, which is why we strive to provide exceptional service and support.
+
+In addition to our competitive prices, we also offer special promotions and discounts on selected items. Be sure to check our website regularly for the latest deals. Shopping with us means getting the best value for your money.
+
+We also provide convenient payment options, including various online payment methods, to make your shopping experience as smooth as possible. We guarantee the security of your transactions and ensure that your personal information is kept confidential.
+
+Located in a convenient and easily accessible location, our store is the go-to destination for all your electronic needs. Visit us today and discover the incredible selection and unbeatable prices that have made us the preferred choice for tech enthusiasts.
+
+Don't miss out on the opportunity to save big on your next electronics purchase. Shop with us now and experience the best the industry has to offer. > 原文地址: <https://wiki-power.com/>

@@ -1,11 +1,8 @@
-
-# Provider DIDforSale (US, Canada, UK) 
-
- 
+# 提供商 DIDforSale（美国、加拿大、英国）
 
 ## [didforsale.com](http://didforsale.com)
 
-Last update: 15 January 2010
+最后更新日期：2010年1月15日
 
 /conf/directory/default
 
@@ -24,27 +21,26 @@ Last update: 15 January 2010
     </variables>
   </user>
 </include>
-
 ```
 
- /conf/dialplan/extensions
+/conf/dialplan/extensions
 
 ```xml
- <extension name="exten_19498858961">
-      <condition field="destination_number" expression="^(19498858961)$">
-        <action application="set" data="dialed_ext=$1"/>
-        <action application="export" data="dialed_ext=$1"/>
-      </condition>
-      <condition field="destination_number" expression="^${caller_id_number}$">
-        <!--<anti-action application="set" data="continue_on_fail=NORMAL_TEMPORARY_FAILURE,USER_BUSY,NO_ANSWER,TIMEOUT,NO_ROUTE_DESTINATION"/> -->
-        <anti-action application="set" data="continue_on_fail=true"/>
-        <anti-action application="bridge" data="user/${dialed_ext}@$${domain}"/>
-        <anti-action application="answer"/>
-      </condition>
-    </extension> 
+<extension name="exten_19498858961">
+  <condition field="destination_number" expression="^(19498858961)$">
+    <action application="set" data="dialed_ext=$1"/>
+    <action application="export" data="dialed_ext=$1"/>
+  </condition>
+  <condition field="destination_number" expression="^${caller_id_number}$">
+    <!--<anti-action application="set" data="continue_on_fail=NORMAL_TEMPORARY_FAILURE,USER_BUSY,NO_ANSWER,TIMEOUT,NO_ROUTE_DESTINATION"/> -->
+    <anti-action application="set" data="continue_on_fail=true"/>
+    <anti-action application="bridge" data="user/${dialed_ext}@$${domain}"/>
+    <anti-action application="answer"/>
+  </condition>
+</extension>
 ```
 
-Until here I was able to call this number from my local extensions 1001-1019 and vice versa. But Call did not come from PSTN number, I was getting SIP: 404 Error. Then I added these lines in /usr/local/freeswitch/conf/dialplan/public.xml and it worked:
+到这里，我已经可以从我的本地分机1001-1019拨打这个号码，反之亦然。但是来自PSTN号码的呼叫没有到达，我收到了 SIP：404 错误。然后我在 /usr/local/freeswitch/conf/dialplan/public.xml 中添加了这些行，问题解决了：
 
 ```xml
 <extension name="public_did_didforsale">
@@ -53,6 +49,3 @@ Until here I was able to call this number from my local extensions 1001-1019 and
       </condition>
     </extension> 
 ```
-
-  
-

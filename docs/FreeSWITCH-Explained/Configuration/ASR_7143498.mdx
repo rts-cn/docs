@@ -1,27 +1,23 @@
+# ASR
 
-# ASR 
+## 关于
 
- 
+自动语音识别（ASR）引擎用于将语音转换为文本。它是语音交互应用程序中DTMF的另一种用户界面选择。
 
-## About
+点击这里展开目录
 
-The Automatic Speech Recognition engine is used to convert speech to text. It is an alternative User Interface to DTMF in IVR applications.
-
-  
-Click here to expand Table of Contents
-
-* 1 [Introduction](#introduction)
+* 1 [简介](#introduction)
 * 2 [Nuance](#nuance)  
-   * 2.1 [Download](#download)  
-   * 2.2 [System](#system)  
-   * 2.3 [Installation](#installation)  
-   * 2.4 [License Manager](#license-manager)  
-   * 2.5 [Start and Test Speech Server](#start-and-test-speech-server)  
-   * 2.6 [Logs](#logs)  
-   * 2.7 [mod\_unimrcp configuration](#mod_unimrcp-configuration)  
-   * 2.8 [Sample Lua IVR](#sample-lua-ivr)  
-   * 2.9 [Sample English Grammar](#sample-english-grammar)  
-   * 2.10 [Sample Hindi Grammar](#sample-hindi-grammar)
+   * 2.1 [下载](#download)  
+   * 2.2 [系统要求](#system)  
+   * 2.3 [安装](#installation)  
+   * 2.4 [许可证管理器](#license-manager)  
+   * 2.5 [启动和测试语音服务器](#start-and-test-speech-server)  
+   * 2.6 [日志](#logs)  
+   * 2.7 [mod\_unimrcp配置](#mod_unimrcp-configuration)  
+   * 2.8 [示例Lua IVR](#sample-lua-ivr)  
+   * 2.9 [示例英语语法](#sample-english-grammar)  
+   * 2.10 [示例印地语语法](#sample-hindi-grammar)
 * 3 [LumenVox](#lumenvox)
 * 4 [Vestec](#vestec)
 * 5 [Simmortel](#simmortel)
@@ -30,17 +26,17 @@ Click here to expand Table of Contents
 * 8 [HTK](#htk)
 * 9 [Kaldi](#kaldi)
 
-## Introduction
+## 简介
 
-Automated Speech Recognition is currently available via [mod\_pocketsphinx](../20709629.mdx#--) and [mod\_unimrcp](../Modules/mod_unimrcp_6586728.mdx#tts).
+自动语音识别目前可以通过[mod\_pocketsphinx](../20709629.mdx#--)和[mod\_unimrcp](../Modules/mod_unimrcp_6586728.mdx#tts)实现。
 
-Engines from the following vendors have been evaluated.
+以下供应商的引擎已经进行了评估。
 
 ## Nuance
 
-Nuance is the monopolistic supplier of speech recognition engines. Accuracy and performance are good but cost is prohibitively high for most applications. The SDK is free trial for 2 months. Cost of per port perpetual license varies from $800 - $2000 depending on vocabulary size and natural language. Indian English and Hindi are good. Other Indian languages are available but need to be evaluated for accuracy.
+Nuance是语音识别引擎的垄断供应商。准确性和性能良好，但是对于大多数应用来说，成本过高。SDK可免费试用2个月。每个端口的永久许可证费用根据词汇量和自然语言的不同而有所变化，从800美元到2000美元不等。印度英语和印地语效果良好。其他印度语言也可用，但需要评估准确性。
 
-### Download
+### 下载
 
  NRec-9.0.19-i386-rhel3.tar.gz
  NRec-9.0.1-en-IN.i386-rhel3.tar.gz
@@ -48,39 +44,41 @@ Nuance is the monopolistic supplier of speech recognition engines. Accuracy and 
  NLICMGR-11.7.0-x86_64-linux.tar.gz
  eval-rec-9.lic
 
-### System
+### 系统要求
 
- CentOS 5.5 x86_64
+ 中文名和具体版本号
 
-### Installation
+### 安装
 
- tar xvzf NRec-9.0.19-i386-rhel3.tar.gz
- ./install.sh
- tar xvzf NRec-9.0.1-en-IN.i386-rhel3.tar.gz
- tar xvzf NRec-9.0.1-hi-IN.i386-rhel3.tar.gz
- rpm -ivh NRec-en-IN-9.0-1.i386-rhel3.rpm
- rpm -ivh NRec-hi-IN-9.0-1.i386-rhel3.rpm
+```bash
+tar xvzf NRec-9.0.19-i386-rhel3.tar.gz
+./install.sh
+tar xvzf NRec-9.0.1-en-IN.i386-rhel3.tar.gz
+tar xvzf NRec-9.0.1-hi-IN.i386-rhel3.tar.gz
+rpm -ivh NRec-en-IN-9.0-1.i386-rhel3.rpm
+rpm -ivh NRec-hi-IN-9.0-1.i386-rhel3.rpm
+```
 
-### License Manager
+### 许可证管理器
 
- yum -y install redhat-lsb
- tar xvzf NLICMGR-11.7.0-x86_64-linux.tar.gz
- cd Nuance_License_Manager
- ./install.sh
- cd /usr/local/Nuance/license_manager/license
- cp /root/eval-rec-9.lic .
- cd ../components
- ./set-new-lic-file.sh /usr/local/Nuance/license_manager/license/eval-rec-9.lic
- 
-Check that the license log file /usr/local/Nuance/license\_manager/license/nuance-lic.log has the following contents, which means that the evaluation license file has been correctly configured by the License Manager.
+yum -y install redhat-lsb
+tar xvzf NLICMGR-11.7.0-x86_64-linux.tar.gz
+cd Nuance_License_Manager
+./install.sh
+cd /usr/local/Nuance/license_manager/license
+cp /root/eval-rec-9.lic .
+cd ../components
+./set-new-lic-file.sh /usr/local/Nuance/license_manager/license/eval-rec-9.lic
 
- 19:55:22 (lmgrd) License file(s): /usr/local/Nuance/license_manager/license/eval-rec-9.lic
- 19:55:22 (lmgrd) lmgrd tcp-port 27000
- 19:55:22 (lmgrd) Starting vendor daemons ...
+请检查许可证日志文件/usr/local/Nuance/license\_manager/license/nuance-lic.log是否具有以下内容，这表示许可证管理器已正确配置评估许可证文件。
 
-Check that the Nuance License Manager is running.
+19:55:22 (lmgrd) License file(s): /usr/local/Nuance/license_manager/license/eval-rec-9.lic
+19:55:22 (lmgrd) lmgrd tcp-port 27000
+19:55:22 (lmgrd) Starting vendor daemons ...
 
-**Nuance License Manager**
+请检查Nuance许可证管理器是否正在运行。
+
+**Nuance许可证管理器**
 
 ```bash
 # ps aux | grep -i nuance
@@ -88,18 +86,17 @@ root      4887  0.0  0.0  15912  1244 pts/0    S    19:55   0:00 /usr/local/Nuan
 root      4888  0.0  0.0  32236  2084 ?        Ssl  19:55   0:00 swilmgrd -T localhost.localdomain 11.7 3 -c /usr/local/Nuance/license_manager/license/eval-rec-9.lic --lmgrd_start 4f8988d2
 ```
 
-  
-### Start and Test Speech Server
+### 启动并测试语音服务器
 
- service NSSservice start
+service NSSservice start
 
-Check that Nuance client is able to talk to Nuance Speech Server from a different machine.
+检查Nuance客户端是否能够从其他机器与Nuance语音服务器通信。
 
-### Logs
+### 日志
 
-Nuance Recognizer logs are in /usr/local/Nuance/Recognizer/data
+Nuance Recognizer日志位于/usr/local/Nuance/Recognizer/data
 
-### mod_unimrcp configuration
+### mod_unimrcp配置
 
 cat conf/mrcp\_profiles/nuance-5.0-mrcp-v2.xml
 
@@ -152,28 +149,84 @@ cat conf/autoload\_configs/unimrcp.conf.xml
 ```
 
   
-### Sample Lua IVR
+### 示例Lua语音应答系统
 
-In dialplan conf/dialplan/default.xml put the following extension
+在拨号计划conf/dialplan/default.xml中添加以下扩展
 
-**Dialplan Example**
+**拨号计划示例**
 
 ```xml
- <extension name="unimrcp">
+<extension name="unimrcp">
    <condition field="destination_number" expression="^(.*)4948611$">
      <action application="answer"/>
-     <action application="lua" data="names.lua"/>
+     <action application="lua" data="scripts/names.lua"/>
    </condition>
  </extension>
 ```
-  
-  
+
+
 cat scripts/names.lua
 
 **Lua ASR Script**
 
 ```xml
- session:answer()
+session:answer()
+-- freeswitch.consoleLog("INFO","Called extension is '" .. argv[1] .. "'\n")
+welcome = "abhishek/welcome_to_knowlarity.wav"
+menu = "abhishek/speak_name.wav"
+nohear = "abhishek/sorry_no_hear.wav"
+nounderstand = "abhishek/sorry_no_understand.wav"
+forward = "abhishek/forwarding_to.wav"
+thankyou = "ivr/8000/ivr-thank_you_for_calling.wav"
+goodbye = "voicemail/8000/vm-goodbye.wav"
+--
+grammar = "names"
+asrtag = "names"
+no_input_timeout = 5000
+recognition_timeout = 5000
+confidence_threshold = 0.2
+--
+session:streamFile(welcome)
+-- freeswitch.consoleLog("INFO","Prompt file is '" .. prompt .. "'\n")
+--
+tryagain = 1
+while (tryagain == 1) do
+    --
+    session:execute("play_and_detect_speech", menu .. "detect:unimrcp {start-input-timers=false,no-input-timeout=" .. no_input_timeout .. ",recognition-timeout=" .. recognition_timeout .. "}" .. grammar)
+    xml = session:getVariable('detect_speech_result')
+    _, _, pre, result, suf = string.find(xml, "(.*)" .. asrtag .. ":(.*)}(.*)")
+    _, _, pre, confidence, suf = string.find(xml, "(.*)confidence=\"(.*)\"(.*)")
+    --
+    if (result == nil) then
+        freeswitch.consoleLog("CRIT", "Result is 'nil'\n")
+        freeswitch.consoleLog("CRIT", "Confidence is 'nil'\n")
+        session:streamFile(nohear)
+        tryagain = 1
+    elseif (tonumber(confidence) < confidence_threshold) then
+        freeswitch.consoleLog("CRIT", "Result is '" .. result .. "'\n")
+        freeswitch.consoleLog("CRIT", "Confidence is LOW '" .. confidence .. "'\n")
+        session:streamFile(nounderstand)
+        tryagain = 1
+    else
+        freeswitch.consoleLog("CRIT", "Result is '" .. result .. "'\n")
+        freeswitch.consoleLog("CRIT", "Confidence is HIGH '" .. confidence .. "'\n")
+        prompt = "abhishek/" .. result .. ".wav"
+        session:streamFile(prompt)
+        tryagain = 0
+    end
+end
+--
+session:streamFile(forward)
+-- put logic to forward call here
+--
+session:streamFile(thankyou)
+session:sleep(250)
+session:streamFile(goodbye)
+session:hangup()
+```
+
+```xml
+session:answer()
  --freeswitch.consoleLog("INFO","Called extension is '" .. argv[1] .. "'\n")
  welcome= "abhishek/welcome_to_knowlarity.wav"
  menu = "abhishek/speak_name.wav"
@@ -228,12 +281,11 @@ cat scripts/names.lua
  session:hangup()
 ```
 
-  
-### Sample English Grammar
+### 英语语法示例
 
 cat grammar/sr.gram
 
-**English Grammar File**
+**英语语法文件**
 
 ```xml
  <?xml version="1.0" encoding="UTF-8"?>
@@ -281,85 +333,80 @@ cat grammar/sr.gram
  </grammar>
 ```
 
-### Sample Hindi Grammar
+### 印地语语法示例
 
 cat grammar/test.gram
 
-**Hindi Grammar File**
+**印地语语法文件**
 
 ```xml
- <?xml version="1.0" encoding="UTF-8"?>
- <grammar xmlns="http://www.w3.org/2001/06/grammar" version="1.0" xml:lang="hi-IN" root="names" tag-format="swi-semantics/1.0">
- <rule id="names" scope="public">
-   <one-of>
-     <item>
-       <ruleref uri="#avni"/>
-       <tag>names='avni'</tag>
-     </item>
-     <item>
-       <ruleref uri="#bhagirath"/>
-       <tag>names='bhagirath'</tag>
-     </item>
-     <item>
-       <ruleref uri="#abhishek"/>
-       <tag>names='abhishek singh'</tag>
-     </item>
-   </one-of>
- </rule>
- <rule id="avni">
-   <one-of>
-     <item>अवनी</item>
-   </one-of>
- </rule>
- <rule id="bhagirath">
-   <one-of>
-     <item>भागीरथ</item>
-   </one-of>
- </rule>
- <rule id="abhishek">
-   <one-of>
-     <item>अभिषेक</item>
-     <item>अभिषेक सिंह</item>
-   </one-of>
- </rule>
- </grammar>
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar xmlns="http://www.w3.org/2001/06/grammar" version="1.0" xml:lang="hi-IN" root="names" tag-format="swi-semantics/1.0">
+<rule id="names" scope="public">
+  <one-of>
+    <item>
+      <ruleref uri="#avni"/>
+      <tag>names='avni'</tag>
+    </item>
+    <item>
+      <ruleref uri="#bhagirath"/>
+      <tag>names='bhagirath'</tag>
+    </item>
+    <item>
+      <ruleref uri="#abhishek"/>
+      <tag>names='abhishek singh'</tag>
+    </item>
+  </one-of>
+</rule>
+<rule id="avni">
+  <one-of>
+    <item>अवनी</item>
+  </one-of>
+</rule>
+<rule id="bhagirath">
+  <one-of>
+    <item>भागीरथ</item>
+  </one-of>
+</rule>
+<rule id="abhishek">
+  <one-of>
+    <item>अभिषेक</item>
+    <item>अभिषेक सिंह</item>
+  </one-of>
+</rule>
+</grammar>
 ```
 
 ## LumenVox
 
-Started off from Sphinx, the free and open source project at CMU but considerable proprietary development has been done for MRCP and acoustic modelling. Indian English and Hindi are available but the cost of SDK is around $4000, so evaluation looks expensive.
+起源于CMU的Sphinx是一个自由开源的项目，但是对于MRCP和声学建模做了许多专有开发。可获得印度英语和印地语版本，但SDK的成本约为4000美元，所以评估显得非常昂贵。
 
 ## Vestec
 
-Vestec provides SDK for $25 or free evaluation. Per port license fee is around $200\. Indian English and Hindi are available and to be evaluated.
+Vestec提供每个端口授权费用约为200美元的SDK，或免费试用。可获得印度英语和印地语版本，可以进行评估。
 
 ## Simmortel
 
-Simmortel uses a mix of open source and proprietary product to deliver good accuracy for medium vocabulary applications in Indian English and Hindi. However, MRCP is not available and CPU usage for concurrent calls is very high.
+Simmortel使用了开源和专有产品的混合方式，为印度英语和印地语的中等词汇量应用提供了良好的准确度。然而，无法获得MRCP，并且并发呼叫的CPU使用率非常高。
 
 ## Loquendo
 
-Provides good European languages. Acquired by Nuance.
+提供良好的欧洲语言。已被Nuance收购。
 
 ## CMU Sphinx
 
-[CMU Sphinx](https://cmusphinx.github.io) is open source and free. It works well if you have a trained acoustic model for your language and application. MRCP integration needs to be done for any real application.
+[CMU Sphinx](https://cmusphinx.github.io) 是一个开源的免费项目。如果你拥有您所使用语言和应用的训练声学模型，它可以很好地工作。然而，对于任何真实应用，都需要进行MRCP集成。
 
-  
 ## HTK
 
-The Hidden Markov Model Toolkit ([HTK](http://htk.eng.cam.ac.uk)) is a portable toolkit for building and manipulating hidden Markov models. HTK is primarily used for speech recognition research although it has been used for numerous other applications including research into speech synthesis, character recognition and DNA sequencing. HTK is in use at hundreds of sites worldwide.
+[HTK（Hidden Markov Model Toolkit）](http://htk.eng.cam.ac.uk) 是一个用于构建和操作隐马尔可夫模型的便携式工具包。HTK主要用于语音识别研究，但也广泛应用于其他诸如语音合成、字符识别和DNA测序等领域的研究。HTK在全球数百个机构使用。
 
-HTK consists of a set of library modules and tools available in C source form. The tools provide sophisticated facilities for speech analysis, HMM training, testing and results analysis. The software supports HMMs using both continuous density mixture Gaussians and discrete distributions and can be used to build complex HMM systems. The HTK release contains extensive documentation and examples.
+HTK由一系列以C源代码形式提供的库模块和工具组成。这些工具提供高级的语音分析、HMM训练、测试和结果分析功能。该软件支持使用连续密度混合高斯模型和离散分布模型的HMM，并可用于构建复杂的HMM系统。HTK发布版本包含了详细的文档和示例。
 
-HTK was originally developed at the [Machine Intelligence Laboratory ](http://mi.eng.cam.ac.uk/)(formerly known as the Speech Vision and Robotics Group) of the Cambridge University Engineering Department (CUED) where it has been used to build CUED's large vocabulary speech recognition systems (see [CUED HTK LVR](http://htk.eng.cam.ac.uk/docs/cuhtk.shtml)). In 1993 Entropic Research Laboratory Inc. acquired the rights to sell HTK and the development of HTK was fully transferred to Entropic in 1995 when the Entropic Cambridge Research Laboratory Ltd was established. HTK was sold by Entropic until 1999 when Microsoft bought Entropic. Microsoft has now licensed HTK back to CUED and is providing support so that CUED can redistribute HTK and provide development support via the HTK3 web site. See [History of HTK](http://htk.eng.cam.ac.uk/docs/history.shtml) for more details.
+HTK最初是在剑桥大学工程系机器智能实验室（前身为语音、视觉和机器人组）开发的（详见[CUED HTK LVR](http://htk.eng.cam.ac.uk/docs/cuhtk.shtml)）。1993年，Entropic Research Laboratory Inc.获得了HTK的销售权，并于1995年全权接管了HTK的开发工作，成立了Entropic Cambridge Research Laboratory Ltd。Entropic公司在1999年将HTK销售给微软公司。微软公司现已将HTK以许可的方式再授权给剑桥大学工程系，同时提供支持，以便剑桥大学工程系能够通过HTK3网站重新发布HTK并提供开发支持。更多详细信息，请参阅[HTK的历史](http://htk.eng.cam.ac.uk/docs/history.shtml)。
 
-While Microsoft retains the copyright to the original HTK code, everybody is encouraged to make changes to the source code and contribute them for inclusion in HTK3.
+虽然 Microsoft 保留了原始 HTK 代码的版权，但鼓励每个人对源代码进行更改，并为其贡献自己的代码以便纳入 HTK3 中。
 
-  
 ## Kaldi
 
-[Kaldi](http://kaldi-asr.org) is a toolkit for speech recognition written in C++ and licensed under the Apache License v2.0\. Kaldi is intended for use by speech recognition researchers.
-
-  
-
+[Kaldi](http://kaldi-asr.org) 是一个用 C++ 编写的语音识别工具包，采用 Apache License v2.0 许可。Kaldi 旨在供语音识别研究人员使用。

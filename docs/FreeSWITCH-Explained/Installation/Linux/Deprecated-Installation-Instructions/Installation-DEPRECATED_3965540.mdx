@@ -1,309 +1,292 @@
+# 安装已废弃
 
-# Installation DEPRECATED 
+## 操作系统
 
- 
+### **Linux和Unix**
 
-  
-## Operating Systems
+主要支持的Linux发行版包括最新的Debian和CentOS版本。请确保使用的CentOS版本高于6.3，以避免影响FreeSWITCH正确运行的内核定时错误。不支持CentOS 5！
 
-### **Linux and Unix**
-
-The primary Linux distributions supported include the latest versions of Debian and CentOS. Be sure to use CentOS versions later than 6.3 to avoid a kernel timing bug that affected the proper operation of FreeSWITCH. CentOS 5 is RIGHT OUT!
-
-Successful installations have been reported on FreeBSD and Ubuntu, although the FS team would appreciate devoted \*BSD and Ubuntu users to maintain those ports and build systems.
+某些用户成功地在FreeBSD和Ubuntu上安装了FreeSWITCH，尽管FS团队希望有专门的\*BSD和Ubuntu用户来维护这些端口和构建系统。
 
 ### **Mac OS X**
 
-The comprehensive [Installation and Setup on OS X](../../macOS/MacOS-Archive/Installation-and-Setup-on-OS-X_1966082.mdx#ssh) guide has detailed installation steps and instructions for setting up a 24x7 Mac. OS X is based on BSD Unix so there are similarities to the Linux installation.
+详细的[Mac OS X安装和设置指南](../../macOS/MacOS-Archive/Installation-and-Setup-on-OS-X_1966082.mdx#ssh)提供了安装步骤和设置24x7的Mac的说明。由于OS X基于BSD Unix，因此在安装过程中与Linux有些相似。
 
 ### **Windows**
 
-Information for source and binary installation is found at [Windows Install](../../Windows-Install_1966780.mdx#about) which also contains [Quick Start](../../Windows-Install_1966780.mdx#install-from-source) information. Very little information on this page applies to Windows other than the [Source Options](https://wiki.freeswitch.org/wiki/Installation%5FGuide#Source%5FOptions).
+有关源码和二进制安装的信息，请参阅[Windows安装](../../Windows-Install_1966780.mdx#about)，其中还包含[快速入门](../../Windows-Install_1966780.mdx#quick-start)信息。本页面上的大部分信息都不适用于Windows，除了[源码选项](https://wiki.freeswitch.org/wiki/Installation%5FGuide#Source%5FOptions)。
 
-## Preparation
+## 准备工作
 
-### Directory Permissions
+### 目录权限
 
-FreeSWITCH™ can be placed in any directory. However, for Unix and Linux the source code is typically installed in /usr/local/src/freeswitch and binaries in /usr/local/freeswitch. Some systems drop 'local' and use /usr/src. These directories are usually root protected after initial OS installation. You should change the owner and group so that root is not needed for installation or execution of FreeSWITCH. You should create and set permissions on /usr/local/freeswitch in this fashion:
+FreeSWITCH™可以安装在任何目录中。但是，在Unix和Linux上，源代码通常安装在/usr/local/src/freeswitch目录中，而二进制文件安装在/usr/local/freeswitch目录中。某些系统中会去掉'local'，而使用/usr/src目录。安装操作系统后，这些目录通常受到root保护。因此，您应该更改所有者和组，以便不需要root权限即可安装或运行FreeSWITCH。您应该按以下方式创建和设置/usr/local/freeswitch目录的权限：
 
-**Set Permissions**
+**设置权限**
 
 ```bash
 sudo mkdir /usr/local/freeswitch
 sudo chown -R newid:newgroup /usr/local/freeswitch
 ```
 
-  
-Executive summary: deploy the **latest official release** for production systems, **master** from git for test and development systems that require the very latest features or patches.
+概述：部署适用于生产系统的**最新官方发布版**，对于需要最新功能或补丁的测试和开发系统，使用来自Git的**master**版本。
 
-The current release is recommended for production use. The yum and Debian packages provide the easiest path to a working FreeSWITCH installation. 
+推荐在生产环境中使用当前版本。Yum和Debian软件包提供了安装FreeSWITCH的最简单方法。
 
-The 1.4 release is available in Git branch v1.4 Patches will be made here and periodically released as the next minor version. Since not every patch will mean a newer version you will get the very latest patches to the current release by using this branch. This branch is a moving target - the checkout date and revision will form part of the version number.
+1.4版本可在Git分支v1.4中找到。补丁将在此处进行，并定期发布为下一个小版本。由于不是每个补丁都表示较新的版本，使用该分支将获得当前版本的最新补丁。此分支是一个持续变化的目标 - 检出日期和修订版本将构成版本号的一部分。
 
-The current release in a tarball of FreeSWITCH is [version 1.4.4](http://files.freeswitch.org/freeswitch-1.4.4.tar.bz2), released on 23 May 2014\. Older releases and other files are in [the file archive](http://files.freeswitch.org), along with digital signatures that you can use to verify your download.
+FreeSWITCH的当前版本为[tarball 1.4.4](http://files.freeswitch.org/freeswitch-1.4.4.tar.bz2)，发布于2014年5月23日。旧版本和其他文件可在[文件存档](http://files.freeswitch.org)中找到，以及您可以用于验证下载的数字签名。
 
-If you wish to compile your own build with the very latest features you can use the Master branch from Git. New features will only be added to the Master branch. This will have the newest, latest, and greatest features, but due to upgrading of the bundled libraries it _might_ be less stable than the current release for a short while. If you use this branch you should **test the installation before releasing it to production use** to confirm that it is stable in your environment. You can then use 'git checkout' to install the same tested revision on all your systems.
+如果您希望使用最新功能自行编译构建，可以使用来自Git的Master分支。新功能只会添加到Master分支中。这将具有最新、最新和最棒的功能，但由于捆绑库的升级，其稳定性可能会在短时间内有所下降。如果您使用此分支，您应该在将其发布到生产环境之前 **在测试环境中进行安装测试**，以确认其在您的环境中的稳定性。然后，您可以使用'git checkout'在所有系统上安装相同经过测试的修订版。
 
-**NOTE that this is a formal change of development practice;** Master used to be the recommended deployment target for all users, but now the tarballs and the Git current release version number serve that purpose. Older documentation and tutorials may still exist recommending using Master, but these will now be out-of-date.
+**注意，这是一次正式的开发实践更改；**之前，Master被推荐用作所有用户的部署目标，但现在tarballs和Git当前发布的版本号已经可以用作部署目标了。旧的文档和教程可能还在推荐使用Master，但这些已经过时了。
 
-**When upgrading** please review the [Release Notes](https://wiki.freeswitch.org/wiki/Release%5FNotes "Release Notes") page to see whether there are any behavior changes since previous versions.
+**升级之前**请查看[发行说明](https://wiki.freeswitch.org/wiki/Release%5FNotes "Release Notes")页面，看看是否有与之前版本不同的行为变化。
 
-####  Recommended: Git
+#### 推荐使用：Git
 
-Git provides access to the latest features and bug fixes added throughout the day. Most often you will only use the **clone** and **pull** commands. There is an excellent [Online Git Book](http://progit.org/book) available in multiple languages. For help installing Git see [Git\_Install](http://wiki.freeswitch.org/wiki/Git%5FInstall). The following creates a freeswitch directory and downloads a "clone" of the current source:
+Git提供了每天添加的最新功能和错误修复的访问。通常，您只会使用**clone**和**pull**命令。有一本出色的[在线Git书籍](http://progit.org/book)，提供多种语言版本。安装Git的帮助，请参见[Git\_Install](http://wiki.freeswitch.org/wiki/Git%5FInstall)。以下命令将创建一个freeswitch目录并下载当前源代码的"clone"版本：
 
 ```bash
 cd /usr/local/src
 git clone git://git.freeswitch.org/freeswitch.git
 OR
 git clone -b v1.4 git://git.freeswitch.org/freeswitch.git
-(SEE BELOW)
+(见下方)
 ```
 
-Note: git reset --hard &lt;commit\_id> - will revert all local changes and reset the working copy to the specified commit.
+注意：git reset --hard <commit\_id> - 将回滚所有本地更改并将工作副本重置为指定的提交。
 
-##### Selecting version
+##### 选择版本
 
-There are 2 branches in Git - Master and v1.4
+Git中有2个分支 - Master和v1.4
 
-v1.4 is the branch for the 1.4 series. It contains the current release, plus any patches made since that release.
+v1.4是1.4系列的分支。它包含当前发布的版本以及自该版本以来所做的补丁。
 
 ```bash
 git clone -b v1.4 git://git.freeswitch.org/freeswitch.git
 ```
 
-Master is where the development for the future 1.4 release is being done. New features are added to this branch, but it may be less stable than 1.4 at times.
+Master是正在进行未来1.4发布的开发所在的分支。新功能会添加到该分支，但有时可能比1.4不太稳定。
 
 ```bash
 git clone git://git.freeswitch.org/freeswitch.git
 ```
 
-You can switch branches on an already cloned Git tree:
+您可以在已经克隆的Git树上切换分支：
 
 ```bash
 git checkout v1.4
 git checkout master
 ```
 
-If you get an error on GIT PULL on v1.4 saying `You asked me to pull without telling me which branch you want to merge with`
+如果在 GIT PULL v1.4 上出现错误，提示 `You asked me to pull without telling me which branch you want to merge with`
 
-Then run this to add the definition for that branch to .git/config:
+然后运行以下命令将该分支的定义添加到 .git/config 文件中：
 
 ```bash
 git branch --set-upstream v1.4 origin/v1.4
 ```
 
-You can see all remote branches with git branch -r. You can check out 1.4beta for example with
+你可以通过 git branch -r 命令查看所有远程分支。例如，你可以使用以下命令检出 1.4beta 分支：
 
 ```bash
 git checkout v1.4.beta
 ```
 
-  
-Some more information for people trying git tag: 1.4beta is snapshots of the 1.5 development code base. Version 1.4 has replaced 1.2 as the current release.
+关于使用 git tag 的一些额外信息：1.4beta 是基于 1.5 开发代码的快照。版本 1.4 已经取代 1.2 成为当前发布的版本。
 
-##### Reverting to an Earlier Commit in Git
+##### 在 Git 中还原到之前的提交
 
-Sometimes when things go terribly wrong with the latest commits (regression-type bugs), you can always revert to an earlier commit with git. Simply type in:
+当最新的提交出现严重问题（如回归性错误）时，你可以使用 git 还原到之前的提交。只需输入以下命令：
 
 ```bash
 git checkout <revhash>
 ```
 
-  
-where &lt;revhash> is the hash of an earlier commit. You can find the commit hashes [here](http://fisheye.freeswitch.org).
+其中&lt;revhash>是一个之前提交的哈希值。你可以在[这里](http://fisheye.freeswitch.org)找到提交的哈希值。
 
-After reverting to a previous version, it is strongly recommended that you (in the following order):
+在还原到之前的版本后，强烈建议按照以下顺序操作：
 
-* Report the issue to the [FreeSWITCH JIRA](http://jira.freeswitch.org)
-* Run 'git clean -d -f -x' on the root directory of the sources of FreeSWITCH to remove non-git files and spare compilation files.
-* Run 'rm -rf /usr/local/freeswitch/{lib,mod,bin}/\*' to remove the current binary files in those 3 directories.
-* Re-bootstrap the code
-* Re-run the configure process
+* 向[FreeSWITCH JIRA](http://jira.freeswitch.org)报告问题
+* 在 FreeSWITCH 源代码的根目录上运行 'git clean -d -f -x' 命令，以删除非 git 文件和多余的编译文件
+* 运行 'rm -rf /usr/local/freeswitch/{lib,mod,bin}/\*' 命令，以删除这三个目录中的当前二进制文件
+* 重新引导代码
+* 重新运行配置过程
 
-... before you re-build the code from an earlier revision.
+... 在使用之前的修订版重新构建代码之前。
 
-To go back to the very latest commit from the development branch, simply type in
+要返回到开发分支的最新提交，只需输入以下命令：
 
 ```bash
 git checkout master
 ```
 
-  
-##### Revert only certain commit
+##### 只还原特定的提交
 
-To reverse only the one commit change on newer build
+要仅还原较新版本中的某个提交更改，可以使用以下命令：
 
 ```bash
 git log -1 -p <revhash> | patch -p1 -R
 ```
 
-  
 ##### freeswitch-contrib
 
-Contributed source may be obtained from the freeswitch-contrib tree as follows (this will compile and install updates):
+可以通过以下方式从freeswitch-contrib树获得贡献源码（这将编译和安装更新）：
 
 ```bash
 git clone git://git.freeswitch.org/freeswitch-contrib.git
 ```
 
-Sample configs can be downloaded as well:
+也可以下载示例配置：
 
 ```bash
 git clone git://git.freeswitch.org/freeswitch-sample-configs.git
 ```
 
-The Latest Build site [latest.freeswitch.org](http://latest.freeswitch.org) is currently empty.
+最新版本的构建网站[latest.freeswitch.org](http://latest.freeswitch.org)目前为空。
 
-### Compiling and Installation
+### 编译和安装
 
-Ensure that the required [prerequisites](https://wiki.freeswitch.org/wiki/Download%5F%26%5FInstallation%5FGuide#Common%5FPrerequisites) are installed. Also check if there are notes for your distribution in [Distribution Information and Installation](https://wiki.freeswitch.org/wiki/Download%5F%26%5FInstallation%5FGuide#Distribution%5FInformation%5Fand%5FInstallation).
+确保已安装所需的[先决条件](https://wiki.freeswitch.org/wiki/Download%5F%26%5FInstallation%5FGuide#Common%5FPrerequisites)。还要检查在[Distribution Information and Installation](https://wiki.freeswitch.org/wiki/Download%5F%26%5FInstallation%5FGuide#Distribution%5FInformation%5Fand%5FInstallation)中是否有有关您的发行版的注释。
 
-#### Switch to the src/freeswitch Directory
+#### 切换到src/freeswitch目录
 
-The remaining commands are executed from the directory containing the FreeSWITCH™ source (use whatever directory the source is located in):
+余下的命令将从包含FreeSWITCH™源代码的目录中执行（使用源代码所在的任何目录）：
 
 ```bash
 cd /usr/local/src/freeswitch
 ```
 
-  
-#### Installed from Git
+#### 从Git安装
 
-If Git was used to download, the configuration files must be built before the first compile. ./bootstrap.sh creates many files including modules.conf. Once this is performed it's not normally required to be performed again. If you're installing from a tarball, this script was run before packaging, and you shouldn't need to run it.
+如果使用Git下载了源代码，则必须在第一次编译之前构建配置文件。./bootstrap.sh将创建许多文件，包括modules.conf。执行此操作后，通常不需要再次执行此操作。如果从tarball安装，此脚本将在打包前运行，您不需要运行它。
 
 ```bash
  ./bootstrap.sh
 ```
 
-You can use multiple cores for your bootstrap/config/build, by specifying it at the start, e.g.: (note this may make build errors harder to spot)
+您可以在启动时指定多个核心进行启动/配置/构建，例如：（请注意，这可能会使构建错误更难发现）
 
 ```bash
 ./bootstrap.sh -j
 ```
 
-However, its not recommended to use the -j flag for either bootstrap.sh or make, on bootstrap.sh on a slow machine (older machines or say a raspberry pi) -j will fail randomly due to how it is handled. on the make this may also randomly fail. (quoted from Ken Rice in FS-4891)
+然而，不建议在较慢的机器上（较旧的机器或树莓派）的bootstrap.sh或make中使用-j标志，由于其处理方式，-j可能会随机失败。在make中，这也可能会随机失败。（引自FS-4891的Ken Rice）
 
-#### Configure for Compilation
+#### 为编译进行配置
 
-./configure sets compilation options. Invoke the following command to configure for compilation:
+./configure设置编译选项。调用以下命令进行配置：
 
 ```bash
 ./configure
 ```
 
-You can have the checks cached for each module, by using:
+你可以使用以下命令将检查结果缓存到每个模块中：
 
 ```bash
 ./configure -C
 ```
 
-If you want to install FreeSWITCH to a non-standard location you can simply append the --prefix option to the configure script as shown in this example:
+如果你想将FreeSWITCH安装到非标准位置，可以在configure脚本中附加--prefix选项，如下所示：
 
 ```bash
-./configure --prefix=<example of non standard location>
+./configure --prefix=<非标准位置示例>
 ```
 
-  
-#### Edit modules.conf
+#### 编辑modules.conf
 
-The modules.conf file contains the list of modules to be compiled, some are commented as they are not required. As your FreeSWITCH™ configuration becomes more complex additional modules may be required. **If you plan to test the sample IVR after installation, FLITE must be added to the compile as follows:**
+modules.conf文件包含要编译的模块列表，其中一些是被注释的，因为它们不是必需的。随着您的FreeSWITCH™配置变得更加复杂，可能需要添加其他模块。**如果您计划在安装后测试示例IVR，则必须按照以下方式将FLITE添加到编译中：**
 
-1. Use an editor to navigate to and edit /usr/local/src/freeswitch/modules.conf (or whatever directory it was placed into)
-2. Search for "flite" and remove the # to uncomment.
-3. Save the file.
+1. 使用编辑器打开并修改/usr/local/src/freeswitch/modules.conf（或相应放置的目录）。
+2. 搜索"flite"并移除#以取消注释。
+3. 保存文件。
 
-_If this is your first experience with FreeSWITCH™ don't add more than FLITE. Adding functions may result in additional prerequisites that must be installed._
+_如果这是你第一次使用FreeSWITCH™，请只添加FLITE。添加其他功能可能需要额外安装预备条件。_
 
-Building FLITE requires about 450 megabytes of addressable memory, so if you are building on a device with limited RAM, you'll need to create a swap file (a.k.a. Virtual Memory or paging file) of sufficient size to allow the build to proceed, or simply do not include mod\_flite in the build. (Please refer to your operating system's documentation for instructions on how to create a swap file.) All other modules in the default configuration will build successfully on devices with less than 100MB of available RAM.
+构建FLITE需要约450兆字节的可寻址内存，因此，如果您在一台内存有限的设备上构建，您需要创建一个足够大的交换文件（也称为虚拟内存或分页文件），以便允许构建继续进行，或者在构建中不包含`mod_flite`模块。（请参考您的操作系统文档以获取有关如何创建交换文件的说明。）默认配置中的所有其他模块都可以在可用RAM小于100兆字节的设备上成功构建。
 
-#### Compile and Install
+#### 编译和安装
 
-Invoke the following commands to compile and create the binaries:
+调用以下命令编译和创建二进制文件：
 
 ```bash
 make && make install
 ```
 
-"make install" does not overwrite existing configuration files in freeswitch/conf if a freeswitch.xml file already exists in conf.
+如果`freeswitch/conf`目录中已经存在`freeswitch.xml`文件，那么 `make install` 不会覆盖现有的配置文件。
 
-#### Compile and Install Sounds
+#### 编译和安装声音文件
 
-There are IVR sound prompts and music on hold files that are optional but must be compiled and installed to run the sample IVR. There are four versions available:
+运行示例IVR需要编译和安装IVR声音提示和保持音乐文件。有四个版本可用：
 
-* sounds-install moh-install (8 kHz)
-* hd-sounds-install hd-moh-install (16 kHz)
-* uhd-sounds-install uhd-moh-install (32 kHz)
-* cd-sounds-install cd-moh-install (48 kHz)
+* sounds-install moh-install（8千赫）
+* hd-sounds-install hd-moh-install（16千赫）
+* uhd-sounds-install uhd-moh-install（32千赫）
+* cd-sounds-install cd-moh-install（48千赫）
 
-The cd sounds are recommended since all the sampling rates are provided resulting in fewer problems. Invoke the following command:
+建议使用CD声音，因为提供了所有采样率，从而减少了问题。调用以下命令：
 
 ```bash
 make all cd-sounds-install cd-moh-install
 ```
 
-  
-#### Ready to Test!
+#### 准备测试！
 
-Switch to the freeswitch/bin directory and [try some stuff](https://wiki.freeswitch.org/wiki/Getting%5FStarted%5FGuide#Some%5Fstuff%5Fto%5Ftry%5Fout.21 "Getting Started Guide")! When you're done read the [Getting Started Guide](http://wiki.freeswitch.org/wiki/Getting%5FStarted%5FGuide) to learn how to configure FreeSWITCH™.
+切换到`freeswitch/bin`目录并尝试一些[操作](https://wiki.freeswitch.org/wiki/Getting%5FStarted%5FGuide#Some%5Fstuff%5Fto%5Ftry%5Fout.21)！完成后，阅读[入门指南](http://wiki.freeswitch.org/wiki/Getting%5FStarted%5FGuide)以了解如何配置FreeSWITCH™。
 
 ```bash
 cd /usr/local/freeswitch/bin
 ./freeswitch
-
 ```
 
-### Upgrading and Re-installation
+### 升级和重新安装
 
-#### Upgrading
+#### 升级
 
-When upgrading please review the [Release Notes](https://wiki.freeswitch.org/wiki/Release%5FNotes "Release Notes") page to see whether there are any behavior changes since previous versions.
+请在升级前查看[发布说明](https://wiki.freeswitch.org/wiki/Release%5FNotes "发布说明")页面，以了解自上一个版本以来是否有任何行为变化。
 
-See the [Download & Installation Guide](../../index.mdx#about).
+请查看[下载与安装指南](../../index.mdx#about)。
 
-#### Updating the Source
+#### 更新源代码
 
-If FreeSWITCH™ was previously installed using a Git based installation, and only a clean update to the latest tree is required, issue this command:
-
+如果之前使用 Git 安装了 FreeSWITCH™，并且只需要对最新代码进行干净的更新，请执行以下命令：
 ```bash
 make current
 ```
 
-The **make current** command will clean your build environment, do a git pull, and then do a make install for you.
+**make current** 命令将清理您的构建环境，执行 git pull 操作，然后为您执行 make install。
 
-#### Rebuilding
+#### 重新构建
 
-After doing a "git pull" or changing source files, it may be desirable to clean out your build area:
-
+在执行 "git pull" 或更改源代码文件之后，可能需要清理构建区域：
 ```bash
 make clean modwipe
 ```
 
-Alternatively, you can execute "make current" which will handle the git pull, clean up, and rebuild in one step:
+或者，您可以执行 "make current"，它将一次处理 git pull、清理和重建：
 
-make current **completely** cleans the build environment and rebuilds FreeSWITCH™ so it runs a long time. However, it will **not overwrite** files in a pre-existing "conf" directory. Also, the clean targets leave the "modules.conf" file.
+make current 将完全清理构建环境并重新构建 FreeSWITCH™，所需时间较长。然而，它不会覆盖预先存在的 "conf" 目录中的文件。此外，清理操作将保留 "modules.conf" 文件。
 
 ```bash
 make current
 ```
 
-To check if there are any new modules execute:
+要检查是否有任何新模块，请执行：
 
 ```bash
 diff build/modules.conf.in modules.conf
 ```
 
-If a previously disabled module is now enabled, or there is a requirement to rebuild a single module, execute the following (replace mod\_name with the name of the module to build):
+如果以前已禁用的模块现在启用了，或者需要重新构建单个模块，请执行以下操作（用模块名称替换 mod\_name）:
 
-#### Upgrading on-the-fly
+#### 在运行时升级
 
-It is highly inadvisable to upgrade FreeSWITCH on-the-fly (aka while running) as this can cause unexpected behavior and may potentially hang the entire system.
+强烈不建议在运行时（也就是在 FreeSWITCH 正在运行时）进行升级，因为这可能会导致意外行为并可能挂起整个系统。
 
-However it can be done by following these steps below:
+但是，您可以按照以下步骤完成升级：在重新编译后，FreeSWITCH 仍在运行时，您仍然可以安装：
 
-After recompilation while FS is still running you can still install:
-
-Note, this will automatically install, and it even first cleans the build dir and the installation dir, which should even work while FS is running, provided no modules are reloaded or loaded:
+注意，这将自动安装，甚至会先清除构建目录和安装目录，这在FS运行时应该也可以工作，只要没有重新加载或加载模块：
 
 ```bash
 make mod_name-install
@@ -313,132 +296,133 @@ make mod_name-install
 make current
 ```
 
-To make the changes of the new build take effect, FS has to be restarted:
+为了使新构建的更改生效，必须重新启动FS：
 
 ```bash
 /usr/local/freeswitch/bin/fs_cli -x shutdown elegant restart
 ```
 
-This will wait for all traffic to end, yet still allow new traffic. &lt;--ERROR\*\*\*
+这将等待所有流量结束，但仍允许新的流量。&lt;--错误\*\*\*
 
-If you want to restart as soon as possible, you can use:
+如果您想尽快重新启动，可以使用：
 
 ```bash
 /usr/local/freeswitch/bin/fs_cli -x shutdown asap restart
 ```
 
-This will restart FS as soon as there is no more traffic and it will not allow any new traffic to make this happen as soon as possible.
+这将在没有更多流量的情况下尽快重新启动FS，并且它不会允许任何新的流量，以便尽快完成这个过程。
 
-If you want a faster rebuild, you can make use of make's dependency system. Note that this will not make the version command reflect the actual git revision, as the modules making use of it will not be rebuild if there is no change of them in the git tree.
+如果要进行更快的重建，可以使用make的依赖系统。请注意，这不会使版本命令反映实际的git版本，因为如果在git树中没有更改它们，那些使用它的模块将不会重新构建。
 
-Be aware some things might not be rebuilt which might be important to be and there might occur compile errors / runtime errors / segfaults. In my experience, this is rare, but if you encounter any problems, a clean rebuild is advisable to see if the problem persists.
+请注意，可能不会重新构建一些可能很重要的内容，并且可能出现编译错误/运行时错误/段错误。根据我的经验，这种情况很少见，但如果遇到任何问题，建议进行干净的重建以查看问题是否仍然存在。
 
 ```bash
 make sync all install
 ```
 
-  
-To always reflect the actual git version and revision in every module, there should be a function switch\_core\_get\_version() which would be in an object always rebuilt and giving the actual version in return. So far a preprocessor variable is used.
+为了始终在每个模块中反映实际的git版本和修订版本，应该有一个`switch_core_get_version()`函数，该函数将被始终重新构建，并返回实际的版本。目前使用了一个预处理变量。
 
-### Troubleshooting
+### 故障排除
 
-#### Compile Errors
+#### 编译错误
 
-If you encounter compile errors or other bugs be sure to test it again with the latest Git version, then file a bug report at <http://jira.freeswitch.org> or email [freeswitch-dev@lists.freeswitch.org](mailto:freeswitch-dev@lists.freeswitch.org) (we prefer that you use Jira so that we can track all issues). Remember FreeSWITCH™ development is always ongoing and requires contributions from everybody.
+如果您遇到编译错误或其他错误，请务必使用最新的Git版本再次进行测试，然后在<http://jira.freeswitch.org>上提交错误报告，或发送电子邮件至[freeswitch-dev@lists.freeswitch.org](mailto:freeswitch-dev@lists.freeswitch.org)（我们建议您使用Jira，以便我们能够追踪所有问题）。请记住，FreeSWITCH™的开发始终在进行中，并需要大家的贡献。
 
-#### Compiling 32-bit Target on 64-bit System
+#### 在64位系统上编译32位目标
 
-To compile a 32-bit binary on a 64-bit system:
+要在64位系统上编译32位二进制文件，请执行以下操作：
 
 ```bash
 CFLAGS=-m32 CXXFLAGS=-m32 LDFLAGS=-m32 ./configure
 ```
 
-  
-## Is below still needed?  
+## 下面的内容是否仍然需要？
 
-#### Python 3.x build workaround (e.g. Arch linux)
+#### Python 3.x构建解决方法（例如Arch Linux）
 
-On systems where Python 3.x is the system default FreeSWITCH will fail to build some modules such as v8\. Use the following workaround to build them using Python 2.7x
+在系统默认使用Python 3.x的情况下，FreeSWITCH将无法构建一些模块，如v8。使用以下解决方法，使用Python 2.7x构建这些模块。
 
-Create file /usr/local/bin/python with content like this:
+创建文件/usr/local/bin/python，内容如下：
 
 ```py
 #!/bin/bash
 script=`readlink -f -- "$1"`
 case "$script" in (/home/user/freeswitch-source-dir)
    exec python2 "$@"
-   ;;
+   ;;
 esac
 script=`readlink -f -- "$2"`
 case "$script" in (/home/user/freeswitch-source-dir)
    exec python2 "$@"
-   ;;
+   ;;
 esac
 exec python3 "$@"
 
 ```
 
-Where /home/user/freeswitch-source-dir is the path to the build directory containing the FreeSWITCH source files.
+其中/home/user/freeswitch-source-dir是包含FreeSWITCH源文件的构建目录的路径。
 
-Don't forget to make it executable:
+不要忘记将其设为可执行：
 
 ```bash
 # chmod +x /usr/local/bin/python
 ```
 
-This information was reposted from the Arch wiki[\[1\]](https://wiki.archlinux.org/index.php/Python#Dealing%5Fwith%5Fversion%5Fproblem%5Fin%5Fbuild%5Fscripts)
+此信息来自Arch wiki[\[1\]](https://wiki.archlinux.org/index.php/Python#Dealing%5Fwith%5Fversion%5Fproblem%5Fin%5Fbuild%5Fscripts)
 
-### Common Prerequisites
+### 常见的先决条件
 
-#### Mandatory
+#### 强制性
 
-These mandatory prerequisites provide for compiling the standard FreeSWITCH™ installation and test the supplied configuration and sample IVR. They are sufficient for many production systems.
+这些强制性的先决条件用于编译标准的FreeSWITCH™安装，并测试所提供的配置和示例IVR。对于许多生产系统来说，它们已经足够了。
 
-* [**GIT**](http://en.wikipedia.org/wiki/Git%5F%28software%29) or [**WGET**](http://en.wikipedia.org/wiki/Wget)
-* [**AUTOCONF**](http://en.wikipedia.org/wiki/Autoconf)
-* [**AUTOMAKE**](http://en.wikipedia.org/wiki/Automake)
-* [**GAWK**](http://en.wikipedia.org/wiki/Gawk%5F%28GNU%5Fpackage%29)
-* [**GCC-C++**](http://en.wikipedia.org/wiki/C%2B%2B)
-* [**LIBJPEG-DEVEL**](http://en.wikipedia.org/wiki/Libjpeg) Used by mod\_spandsp for basic codecs
-* [**LIBTOOL**](http://en.wikipedia.org/wiki/Libtool)
-* [**MAKE**](http://en.wikipedia.org/wiki/Make%5F%28software%29)
-* [**NCURSES-DEVEL**](http://en.wikipedia.org/wiki/Ncurses)
+* [**MOD\_SPANDSP**](http://wiki.freeswitch.org/wiki/Modules) for basic codecs 
+* [**MOD\_OPUS**](http://wiki.freeswitch.org/wiki/Modules) for Opus codec support
+* [**MOD\_VPX**](http://wiki.freeswitch.org/wiki/Modules) for VP8 codec support
+* [**MOD\_SPEEX**](http://wiki.freeswitch.org/wiki/Modules) for Speex codec support
+* [**MOD\_ILBC**](http://wiki.freeswitch.org/wiki/Modules) for iLBC codec support
+* [**MOD\_SILK**](http://wiki.freeswitch.org/wiki/Modules) for Silk codec support
+* [**MOD\_AMR**](http://wiki.freeswitch.org/wiki/Modules) for AMR codec support
+* [**MOD\_LADSPA**](http://wiki.freeswitch.org/wiki/Modules) for LADSPA audio processing support
+* [**MOD\_OPENSSL**](http://wiki.freeswitch.org/wiki/Modules) for OpenSSL support
+* [**MOD\_PYTHON**](http://wiki.freeswitch.org/wiki/Modules) for Python scripting support
+* [**MOD\_SNMP**](http://wiki.freeswitch.org/wiki/Modules) for SNMP support
 
-#### Optional
+#### Others
 
-There are [optional modules](http://wiki.freeswitch.org/wiki/Modules) that can be built and if so may require one or more of the following;
+* **GNUPG**, **GMAKE**, **OPENLDAP-DEVEL**, **ESOUND-DEVEL**, **PULSEAUDIO-DEVEL**, **MAD-DEVEL**, **LAME-DEVEL**, **SHOUT-DEVEL**, **ILBC-DEVEL**, **SPEEX-DEVEL**, **OPUS-DEVEL**, **VPX-DEVEL**, **SILK-DEVEL**, **AMR-DEVEL**, **SWIG**, **EPILOG**, **MANDOC**, **HUP**, **MAME**, **TONEZONE**
+* **STUN**, **TURN**, **SRTP**
 
-* [**curl-devel**](http://en.wikipedia.org/wiki/Curl%5F%28programming%5Flanguage%29) for [mod\_xml\_curl](https://wiki.freeswitch.org/wiki/Mod%5Fxml%5Fcurl "Mod xml curl")
+* [**curl-devel**](http://en.wikipedia.org/wiki/Curl%5F%28programming%5Flanguage%29) 用于[mod\_xml\_curl](https://wiki.freeswitch.org/wiki/Mod%5Fxml%5Fcurl "Mod xml curl")
 * [**expat-devel**](http://en.wikipedia.org/wiki/Expat%5F%28XML%29)
-* [**libtiff**](http://en.wikipedia.org/wiki/Libtiff) for fax support
-* [**libx11-devel**](http://en.wikipedia.org/wiki/X%5FWindow%5FSystemf) for [Mod\_skypopen](https://wiki.freeswitch.org/wiki/Mod%5Fskypopen "Mod skypopen")
-* [**ODBC or UNIX-ODBC and ODBC-devel**](http://en.wikipedia.org/wiki/Odbc) see the [ODBC page](http://wiki.freeswitch.org/wiki/Mod%5Fspidermonkey%5Fodbc) for information
-* [**OpenSSL**](http://en.wikipedia.org/wiki/Openssl) (libssl-dev / openssl-devel) for [SIP SSL & TLS](https://wiki.freeswitch.org/wiki/SIP%5FTLS "SIP TLS") and [Dingaling](https://wiki.freeswitch.org/wiki/Dingaling "Dingaling")
-* [**python-devel**](http://www.python.org) for the [python interface](https://wiki.freeswitch.org/wiki/Mod%5Fpython "Mod python")
-* [**ZLIB and ZLIB-devel**](http://en.wikipedia.org/wiki/Zlib)
-* [**libzrtp**](http://en.wikipedia.org/wiki/ZRTP) ZRTP encryption support, see the FreeSWITCH™ **ZRTP IS NOW DEPREICATED and will be removed out of the docs**
+* [**libtiff**](http://en.wikipedia.org/wiki/Libtiff)用于传真支持
+* [**libx11-devel**](http://en.wikipedia.org/wiki/X%5FWindow%5FSystemf) 用于[Mod\_skypopen](https://wiki.freeswitch.org/wiki/Mod%5Fskypopen "Mod skypopen")
+* [**ODBC或UNIX-ODBC和ODBC-devel**](http://en.wikipedia.org/wiki/Odbc) 参见[ODBC页面](http://wiki.freeswitch.org/wiki/Mod%5Fspidermonkey%5Fodbc)了解详情
+* [**OpenSSL**](http://en.wikipedia.org/wiki/Openssl) (libssl-dev / openssl-devel) 用于[SIP SSL & TLS](https://wiki.freeswitch.org/wiki/SIP%5FTLS "SIP TLS")和[Dingaling](https://wiki.freeswitch.org/wiki/Dingaling "Dingaling")
+* [**python-devel**](http://www.python.org) 用于[python接口](https://wiki.freeswitch.org/wiki/Mod%5Fpython "Mod python")
+* [**ZLIB和ZLIB-devel**](http://en.wikipedia.org/wiki/Zlib)
+* [**libzrtp**](http://en.wikipedia.org/wiki/ZRTP) 提供ZRTP加密支持, 查看FreeSWITCH™的**ZRTP IS NOW DEPREICATED并将在文档中删除**
 
-### Distribution Information and Installation
+### 发行版信息和安装
 
-####  Arch Linux 
+#### Arch Linux 
 
-[Arch Linux](http://www.archlinux.org) uses the [pacman](http://wiki.archlinux.org/index.php/Pacman) package manager. It also has a ports-like build system called [Arch Build System](http://wiki.archlinux.org/index.php/ABS%5F-%5FThe%5FArch%5FBuild%5FSystem).
+[Arch Linux](http://www.archlinux.org) 使用[pacman](http://wiki.archlinux.org/index.php/Pacman)包管理器。它还有一个类似于端口的构建系统，称为[Arch Build System](http://wiki.archlinux.org/index.php/ABS%5F-%5FThe%5FArch%5FBuild%5FSystem)。
 
-To build FreeSWITCH from the latest git, use the [freeswitch-fixed](https://aur.archlinux.org/packages/freeswitch-fixed/) package. This package is documented on the [Arch Linux Wiki](http://wiki.archlinux.org/index.php/Freeswitch)
+要从最新的git构建FreeSWITCH，请使用[freeswitch-fixed](https://aur.archlinux.org/packages/freeswitch-fixed/)包。该包在[Arch Linux Wiki](http://wiki.archlinux.org/index.php/Freeswitch)上有详细记录。
 
-The packages for FreeSWITCH™ current release (and the zaptel dependency for mod\_openzap) are available at the [AUR](http://wiki.archlinux.org/index.php/AUR) repository:
+当前版本的FreeSWITCH™软件包（以及mod_openzap所需的zaptel依赖）可以在[AUR](http://wiki.archlinux.org/index.php/AUR)存储库中获得：
 
 * [Zaptel](http://aur.archlinux.org/packages.php?ID=24364)
 * [FreeSWITCH](http://aur.archlinux.org/packages.php?ID=24373)
 
-To build these packages follow the instructions of the [Makepkg](http://wiki.archlinux.org/index.php/Makepkg) build system. You will need the following pre-requisites:
+要构建这些软件包，请按照[Makepkg](http://wiki.archlinux.org/index.php/Makepkg)构建系统的说明进行操作。您需要以下预备条件：
 
 ```bash
 pacman -S base-devel libjpeg python2 unixodbc git
 ```
 
-Alternatively, if you have an AUR helper installed, you may install with:
+或者，如果您已安装AUR帮助程序，可以使用以下命令安装：
 
 ```bash
 packer -S freeswitch-git
@@ -446,20 +430,19 @@ yaourt -S freeswitch-git
 
 ```
 
-  
 #### CentOS & RedHat Enterprise Linux
 
-CentOS 5.5 x86\_64 \- Tested 2010-11-26  
-There were no issues during installation and testing other than EPEL requirements. Installation of Git required adding the [EPEL](http://fedoraproject.org/wiki/EPEL) repository to obtain Git.
+CentOS 5.5 x86\_64 - 2010-11-26 测试通过  
+在安装和测试过程中没有任何问题，除了需要安装EPEL软件包。安装Git需要添加[EPEL](http://fedoraproject.org/wiki/EPEL)仓库以获取Git。
 
-CentOS 6.4 x86\_64 2013-05-03  
-There were no issues during installation and testing.
+CentOS 6.4 x86\_64 - 2013-05-03  
+在安装和测试过程中没有任何问题。
 
-2012-08 - CentOS6 older than 6.3 may display performance problems on higher-performance installations; if you're planning on needing lots of performance, Ken Rice recommends you stick with 5.x for the nonce. (See the [RHEL6 notes](https://wiki.freeswitch.org/wiki/Download%5F%26%5FInstallation%5FGuide#Release.28es.29%5F6%5Fand%5FLater) at the end of this page for more)
+2012-08 - CentOS 6.3之前的旧版本可能在高性能的安装中显示性能问题；如果您计划需要高性能，请暂时保持使用5.x版本。 （请参阅本页面末尾的[RHEL6注释](https://wiki.freeswitch.org/wiki/Download%5F%26%5FInstallation%5FGuide#Release.28es.29%5F6%5Fand%5FLater)以了解更多信息）
 
-##### Prerequisites
+##### 先决条件
 
-Use the yum package manager tool or Add/Remove Applications menu function to add the following packages to a basic installation:
+使用yum软件包管理工具或添加/删除应用程序菜单功能将以下软件包添加到基本安装中：
 
 * autoconf
 * automake
@@ -470,69 +453,65 @@ Use the yum package manager tool or Add/Remove Applications menu function to add
 * make
 * ncurses-devel
 
-  
 ```bash
 yum install autoconf automake gcc-c++ git-core libjpeg-devel libtool make ncurses-devel pkgconfig
 ```
 
-To install the optional packages needed to enable all FreeSWITCH modules to be built:
-
+要安装必需的可选包，以使所有FreeSWITCH模块都能够构建：
 ```bash
-yum install unixODBC-devel openssl-devel libogg-devel libvorbis-devel libcurl-devel libtiff-devel libjpeg-devel python-devel expat-devel zlib zlib-devel bzip2 which pcre pcre-devel speex-devel sqlite-devel 
+yum install unixODBC-devel openssl-devel libogg-devel libvorbis-devel libcurl-devel libtiff-devel libjpeg-devel python-devel expat-devel zlib zlib-devel bzip2 which pcre pcre-devel speex-devel sqlite-devel
 ```
+如果需要以下模块，则还需要安装以下包：
+* mod_event_zmq 需要 "openssl-devel" 和 "libuuid-devel" 包。
+* mod_erlang_event 需要 "openssl-devel" 和 "erlang-devel" 包。
+* mod_flite 需要 "openssl-devel" 和 "bzip2" 包。
+* mod_osp 需要 "openssl-devel" 包和 "OSP Toolkit"，请参考 [mod_osp](https://wiki.freeswitch.org/wiki/Mod%5Fosp "Mod osp").
+* mod_snmp 需要 "openssl-devel" 和 "net-snmp-devel" 包。
+* mod_xml_ldap 需要 "openssl-devel" 和 "cyrus-sasl-devel" 包。
 
-You will also need to install the following packages if you need the modules listed below:
+##### 基于YUM的安装
 
-* mod\_event\_zmq needs "openssl-devel" and "libuuid-devel" packages.
-* mod\_erlang\_event needs "openssl-devel" and "erlang-devel" packages.
-* mod\_flite needs "openssl-devel" and "bzip2" packages.
-* mod\_osp needs "openssl-devel" package and the "OSP Toolkit" see [mod\_osp](https://wiki.freeswitch.org/wiki/Mod%5Fosp "Mod osp").
-* mod\_snmp needs "openssl-devel" and "net-snmp-devel" packages.
-* mod\_xml\_ldap needs "openssl-devel" and "cyrus-sasl-devel" packages.
+FreeSWITCH 现在可以通过 yum 安装。您需要添加 FreeSWITCH yum 存储库
 
-##### YUM Based Installation
-
-FreeSWITCH is now available via yum. You will need to add the FreeSWITCH yum repository
-
-To install the FreeSWITCH Repo
+安装 FreeSWITCH 存储库
 
 ```bash
 rpm -Uvh http://files.freeswitch.org/freeswitch-release-1-0.noarch.rpm
 ```
 
-Then to install FreeSWITCH with the generic vanilla example configs
+然后使用通用的 vanilla 示例配置安装 FreeSWITCH
 
 ```bash
 yum install --nogpgcheck freeswitch-config-vanilla
 ```
 
-This will give you a base working FreeSWITCH. At the time of this update (2012-FEB-13) these RPMs are Beta but should be working fine. Please report any bugs in them via [JIRA](http://jira.freeswitch.org)
+这将为您提供一个基础工作的 FreeSWITCH。在此更新时间（2012年2月13日），这些 RPM 是 Beta 版，但应该可以正常工作。请通过 [JIRA](http://jira.freeswitch.org) 向我们报告任何错误。
 
-After that you need to install FreeSWITCH sound related files. For that you need to issue following command.
+之后，您需要安装 FreeSWITCH 的语音相关文件。为此，请执行以下命令。
 
 ```bash
 yum install sox freeswitch-sounds*
 ```
 
-##### Automatic Startup At Boot
+##### 启动自动启动
 
-To get FreeSWITCH to start up automatically at system start, just copy the FreeSWITCH init script into the /etc/init.d directory. An example init script is included in the git repository, under the build directory, named as freeswitch.init.redhat. You may need to modify the script to get FreeSWITCH starting up from the directory where the binaries are installed. After the file has been modified to suit your needs, simply run this command:
+要使FreeSWITCH在系统启动时自动启动，只需将FreeSWITCH init脚本复制到/etc/init.d目录中。示例init脚本包含在git存储库中的build目录下，命名为freeswitch.init.redhat。您可能需要修改脚本以使FreeSWITCH从二进制文件所在的目录启动。将文件修改为符合您的需求后，只需运行以下命令：
 
 ```bash
 chkconfig --add freeswitch && chkconfig --levels 35 freeswitch on
 ```
 
-This procedure will also work exactly the same way on Fedora systems.
+此过程在Fedora系统上也适用。
 
-##### Installation
+##### 安装
 
-Continue with the normal [installation steps](https://wiki.freeswitch.org/wiki/Download%5F%26%5FInstallation%5FGuide#Preparation) or the [Linux Quick Install Guide Downloads](http://wiki.freeswitch.org/wiki/Linux%5FQuick%5FInstall%5FGuide#Download) section.
+继续执行正常的[安装步骤](https://wiki.freeswitch.org/wiki/Download%5F%26%5FInstallation%5FGuide#Preparation)或[Linux快速安装指南下载](http://wiki.freeswitch.org/wiki/Linux%5FQuick%5FInstall%5FGuide#Download)部分。
 
-##### FreeSWITCH v.1.4/master openssl requirement change
+##### FreeSWITCH v.1.4/master openssl要求更改
 
-Required: openssl version 1.0.1g or later to build
+要求：使用openssl版本1.0.1g或更高版本进行构建
 
-For CentOS 5:
+对于CentOS 5：
 
 ```bash
 wget http://www.openssl.org/source/openssl-1.0.1g.tar.gz
@@ -542,107 +521,107 @@ cd openssl-1.0.1g
 make 
 make install
 
-# then go over to the FS build root (even on an existing build that had picked up the dependency by a git pull)
+# 然后转到FS构建根目录（即使是通过git pull获取了依赖项的现有构建）
 ./configure CFLAGS="-I/usr/openssl101g/include" LDFLAGS="-L/usr/openssl101g/lib"  
 ```
 
-then build as normal
+然后按正常方式构建。
 
-##### Release(es) 6 and Later
+##### Release(es) 6及更高版本
 
-A change by Red Hat in RHEL 6 and later releases was to compile the kernel to run tickless by default. As previously brought up on the mailing lists, it is recommended that the kernel's tickless feature should be disabled for optimum performance when running FreeSWITCH under the newer operating system's kernel. You can disable the tickless feature by appending nohz=off to your boot options under GRUB. The GRUB start up configuration file is located under /boot/grub or as /etc/grub.conf. Add it to the line beginning with "kernel". This is also applicable to Fedora releases 8 and later.
+Red Hat在RHEL 6及以后的版本中进行了更改，将内核默认编译为无中断方式运行。如之前在邮件列表中讨论的那样，建议在较新的操作系统内核下运行FreeSWITCH时禁用内核的无中断功能以获得最佳性能。您可以在GRUB下的启动选项中添加nohz=off来禁用无中断功能。GRUB启动配置文件位于/boot/grub或/etc/grub.conf。将其添加到以"kernel"开头的行上。这也适用于Fedora的8及以后的版本。
 
-FS may not behave 100% correctly in CentOS 6.x, please review Jira issues: FS-4396, FS-4316, FS-4291\. We have anecdotal evidence that CentOS 6.3 does not seem to have the problems listed above. If you experience any of the above symptoms with CentOS 6.3 please comment on the Jira cases listed.
+FS可能在CentOS 6.x上的表现并非完全正确，请查看Jira问题：FS-4396，FS-4316，FS-4291。我们有一些经验证明CentOS 6.3似乎没有上述问题。如果您在CentOS 6.3上遇到以上任何症状，请在列出的Jira案例中评论。
 
-#### Errors
+#### 错误
 
-Linking fails on CentOS with
+在CentOS上链接失败，显示以下错误：
 
 /usr/lib64/libnss3.so: undefined reference to `PR_FindSymbol'
 
-This is due to the deprecated mod\_spidermonkey being installed already; FS has switched to mod\_v8 as its JavaScript engine.
+这是由于已安装了已弃用的mod\_spidermonkey导致的；FS已切换到mod\_v8作为其JavaScript引擎。
 
-To solve this problem:
+解决此问题的方法：
 
-edit modules.conf in the root of the FS source tree to comment out mod\_spidermonkey
+在FS源代码根目录中编辑modules.conf，将mod\_spidermonkey注释掉
 
-rm -rf /usr/local/freeswitch/lib/* && reconfigure 
+rm -rf /usr/local/freeswitch/lib/* && 重新配置
 
 make install
 
 #### Debian
 
-##### Debian packages
+##### Debian包
 
-There are precompiled Debian packages available for several Debian releases, including Wheezy, 32 bit and 64 bit. Currently FreeSWITCH is not in the main Debian repositories because it's very hard to make the FreeSWITCH code & build system comply with the rules for that.
+有预编译的Debian包可用于多个Debian版本，包括Wheezy、32位和64位。目前，FreeSWITCH不在主要的Debian软件仓库中，因为将FreeSWITCH代码和构建系统符合规则非常困难。
 
-1. Add the freeswitch APT repository: (for Debian Wheezy)  
-```bash  
-#for 1.4 Release Branch  
-echo 'deb http://files.freeswitch.org/repo/deb/debian/ wheezy main' >> /etc/apt/sources.list.d/freeswitch.list  
-#For 1.4 Beta Branch  
-echo 'deb http://files.freeswitch.org/repo/deb-beta/debian/ wheezy main' >> /etc/apt/sources.list.d/freeswitch.list  
-#For 1.5 Master/Dev Branch  
-echo 'deb http://files.freeswitch.org/repo/deb-master/debian/ wheezy main' >> /etc/apt/sources.list.d/freeswitch.list  
+1. 添加 freeswitch APT 软件源（适用于 Debian Wheezy）：
+```bash
+# For 1.4 版本分支
+echo 'deb http://files.freeswitch.org/repo/deb/debian/ wheezy main' >> /etc/apt/sources.list.d/freeswitch.list
+# For 1.4 Beta 版本分支
+echo 'deb http://files.freeswitch.org/repo/deb-beta/debian/ wheezy main' >> /etc/apt/sources.list.d/freeswitch.list
+# For 1.5 主开发分支
+echo 'deb http://files.freeswitch.org/repo/deb-master/debian/ wheezy main' >> /etc/apt/sources.list.d/freeswitch.list
 ```
-2. Import the repo signing key  
-```bash  
-curl http://files.freeswitch.org/repo/deb/debian/freeswitch_archive_g0.pub | apt-key add -  
-```  
-or  
-```bash  
-gpg --keyserver pool.sks-keyservers.net --recv-key D76EDC7725E010CF  
-gpg -a --export D76EDC7725E010CF | sudo apt-key add -  
+2. 导入软件源的签名密钥：
+```bash
+curl http://files.freeswitch.org/repo/deb/debian/freeswitch_archive_g0.pub | apt-key add -
 ```
-3. Update apt-get.  
-```bash  
-apt-get update  
+或者
+```bash
+gpg --keyserver pool.sks-keyservers.net --recv-key D76EDC7725E010CF
+gpg -a --export D76EDC7725E010CF | sudo apt-key add -
 ```
-4. Search for the FreeSWITCH™ packages in apt. Choose from the packages listed to complete your FreeSWITCH™ installation.  
-```bash  
-apt-cache search freeswitch  
+3. 更新 apt-get：
+```bash
+apt-get update
 ```
-5. There's also a meta package to get a reasonably running installation.  
-```bash  
-apt-get install freeswitch-meta-vanilla  
+4. 在 apt 中搜索 FreeSWITCH™ 的软件包列表，并从中选择以完成安装：
+```bash
+apt-cache search freeswitch
 ```
-6. The packages do not set up the configuration in /etc/freeswitch, and you need to copy files manually:  
-```bash  
-cp -a /usr/share/freeswitch/conf/vanilla /etc/freeswitch  
+5. 还有一个元包可以安装一个基本可用的 FreeSWITCH™ 系统：
+```bash
+apt-get install freeswitch-meta-vanilla
+```
+6. 软件包不会自动在 /etc/freeswitch 目录下设置配置文件，您需要手动复制文件：
+```bash
+cp -a /usr/share/freeswitch/conf/vanilla /etc/freeswitch
 ```
 
-##### Create your own Debian packages
+##### 创建自定义的 Debian 软件包
 
-If the precompiled Debian packages don't suite your needs you can [build your own custom debian packages](https://wiki.freeswitch.org/wiki/Debian%5Fpackages%5Fbuildscript "Debian packages buildscript").
+如果预编译的 Debian 软件包不能满足您的需求，您可以[自己构建自定义的 Debian 软件包](https://wiki.freeswitch.org/wiki/Debian%5Fpackages%5Fbuildscript "Debian packages buildscript")。
 
-A new version of the above script which also installs all dependencies and downloads and builds the new seperate sounds & music from github can be found [here](https://wiki.freeswitch.org/wiki/Debianbuild2 "Debianbuild2"). Tested on Squeeze with FreeSWITCH 1.2.10.
+一个新的版本的以上脚本，它还安装所有依赖项，并从github下载并构建了新的独立声音和音乐，可以在[这里](https://wiki.freeswitch.org/wiki/Debianbuild2 "Debianbuild2")找到。在Squeeze上测试了FreeSWITCH 1.2.10。
 
-Packages can either be installed locally, or upload them to your local Debian repository and install them via APT.
+软件包可以在本地安装，也可以将它们上传到本地的Debian存储库，并通过APT进行安装。
 
 ```bash
 dpkg -i $DEB_PACKAGE_NAMES
 ```
 
-This also allows you to build once and install the packages on multiple servers.
+这样你就可以构建一次，并在多台服务器上安装软件包。
 
-##### From source
+##### 从源码编译
 
-Tested June 28, 2012 with Debian "wheezy" (public beta 18\. June 2012) for Raspberry PI ARMv6.  
-There was a problem using apt-get, gone after sudo apt-get update --fix-missing. Install took several hours, compilation without mod\_flite, worked fine, find debian .img here: [\[2\]](http://www.raspberrypi.org/archives/1435)
+使用Debian "wheezy" (公共Beta版于2012年6月18日)版本进行了测试，时间为2012年6月28日，Raspberry PI ARMv6平台。  
+apt-get在使用时出现问题，执行sudo apt-get update --fix-missing后问题消失。安装耗时数小时，未导入mod\_flite时正常工作，可在此处找到Debian镜像文件：[\[2\]](http://www.raspberrypi.org/archives/1435)
 
-Tested Nov 27, 2010 with Debian 5.0 AMD64.  
-There were no issues during installation and testing. Benefits from a custom kernel with "CONFIG\_HZ\_1000=y" and "CONFIG\_HZ=1000" defined to avoid performance issues. Follow Debian guidelines [\[3\]](http://www.debian.org/doc/FAQ/ch-kernel.en.html).
+测试于2010年11月27日，Debian 5.0 AMD64版本。  
+安装和测试过程中没有出现任何问题。由于使用了具有"CONFIG\_HZ\_1000=y"和"CONFIG\_HZ=1000"的自定义内核，以避免性能问题。请按照Debian的指南进行操作：[\[3\]](http://www.debian.org/doc/FAQ/ch-kernel.en.html)。
 
-###### Prerequisites
+###### 先决条件
 
-There are a variety of [Debian package manager tools](http://www.debian.org/doc/FAQ/ch-pkgtools.en.html) such as dpkg, apt, aptitude, and synaptic. The synaptic GUI tool was used for this installation. The System menu Add/Remove Applications function does not offer the required packages, Add the following to a basic Debian installation:
+有许多[Debian软件包管理工具](http://www.debian.org/doc/FAQ/ch-pkgtools.en.html)，例如dpkg、apt、aptitude和synaptic。这次安装使用了synaptic GUI工具。系统菜单中的添加/删除应用程序功能没有提供所需的软件包，请将以下内容添加到基本的Debian安装中：
 
-* autoconf
-* automake
-* devscripts
-* gawk (mawk does not work)
+* 自动配置(autoconf)
+* 自动化工具(automake)
+* 开发脚本(devscripts)
+* gawk（mawk不可用）
 * g++
-* git-core
+* git核心(git-core)
 * libjpeg-dev
 * libncurses5-dev
 * libtool
@@ -665,39 +644,39 @@ There are a variety of [Debian package manager tools](http://www.debian.org/doc/
 apt-get install autoconf automake devscripts gawk g++ git-core libjpeg-dev libncurses5-dev libtool make python-dev gawk pkg-config libtiff5-dev libperl-dev libgdbm-dev libdb-dev gettext libssl-dev libcurl4-openssl-dev libpcre3-dev libspeex-dev libspeexdsp-dev libsqlite3-dev libedit-dev
 ```
 
-Some of these modules may have additional dependencies.
+其中一些模块可能具有其他依赖项。
 
-Continue with the normal [installation steps](https://wiki.freeswitch.org/wiki/Download%5F%26%5FInstallation%5FGuide#Preparation) or the [Linux Quick Install Guide Downloads](http://wiki.freeswitch.org/wiki/Linux%5FQuick%5FInstall%5FGuide#Download) section.
+可以按照[安装步骤](https://wiki.freeswitch.org/wiki/Download%5F%26%5FInstallation%5FGuide#Preparation)或者[Linux快速安装指南下载](http://wiki.freeswitch.org/wiki/Linux%5FQuick%5FInstall%5FGuide#Download)继续进行。
 
 #### Fedora
 
-Fedora 20 works fine!
+Fedora 20运行良好！
 
 #### NetBSD
 
-NetBSD information can be found at [NetBSD](../../Unix/NetBSD_1966834.mdx#introduction).
+有关NetBSD的信息，请访问[NetBSD](../../Unix/NetBSD_1966834.mdx#introduction)。
 
 #### OpenBSD
 
-OpenBSD information can be found at [OpenBSD](../../Unix/OpenBSD_1966828.mdx#about).
+有关OpenBSD的信息，请访问[OpenBSD](../../Unix/OpenBSD_1966828.mdx#about)。
 
 #### FreeBSD
 
-FreeBSD information can be found at [FreeBSD](../../Unix/FreeBSD_1966823.mdx#about).
+有关FreeBSD的信息，请访问[FreeBSD](../../Unix/FreeBSD_1966823.mdx#about)。
 
 #### Gentoo Linux
 
-The FreeSWITCH™ ebuilds are maintained by [stkn](https://wiki.freeswitch.org/wiki/User:Stkn "User:Stkn") in the [freeswitch-overlay](http://oss.axsentis.de/gitweb/?p=freeswitch-overlay.git;a=summary) at [oss.axsentis.de](http://oss.axsentis.de).  
-Installation instructions: [Installation:Gentoo](https://wiki.freeswitch.org/wiki/Installation:Gentoo "Installation:Gentoo")
+FreeSWITCH™的ebuild由[stkn](https://wiki.freeswitch.org/wiki/User:Stkn "User:Stkn")在[oss.axsentis.de](http://oss.axsentis.de)的[freeswitch-overlay](http://oss.axsentis.de/gitweb/?p=freeswitch-overlay.git;a=summary)中维护。
+安装说明：[Installation:Gentoo](https://wiki.freeswitch.org/wiki/Installation:Gentoo "Installation:Gentoo")
 
 #### openSUSE
 
-Tested Nov 23, 2010 with openSUSE 11.3 x86\_64  
-There were no issues during installation and testing.
+在2010年11月23日测试了openSUSE 11.3 x86\_64。
+安装和测试过程中没有出现任何问题。
 
-##### Prerequisites
+##### 先决条件
 
-Use the YAST tool or [zypper](http://en.opensuse.org/SDB:Zypper%5Fusage%5F11.3) to add the following packages to a basic installation, the "base development" group contains most but not all of these items:
+使用 YAST 工具或 [zypper](http://en.opensuse.org/SDB:Zypper%5Fusage%5F11.3) 将以下软件包添加到基本安装中，"base development" 组中包含大多数但不是全部这些项目:
 
 * autoconf
 * automake
@@ -708,45 +687,45 @@ Use the YAST tool or [zypper](http://en.opensuse.org/SDB:Zypper%5Fusage%5F11.3) 
 * make
 * ncurses-devel
 
-##### Installation
+##### 安装
 
-Continue with the normal [installation steps](https://wiki.freeswitch.org/wiki/Download%5F%26%5FInstallation%5FGuide#Preparation) or the [Linux Quick Install Guide Downloads](http://wiki.freeswitch.org/wiki/Linux%5FQuick%5FInstall%5FGuide#Download) section.
+继续按照[安装步骤](https://wiki.freeswitch.org/wiki/Download%5F%26%5FInstallation%5FGuide#Preparation)或者[Linux 快速安装指南下载](http://wiki.freeswitch.org/wiki/Linux%5FQuick%5FInstall%5FGuide#Download)章节中的正常步骤进行安装。
 
-#### pfSense package with GUI
+#### 带有 GUI 的 pfSense 包
 
-pfSense FreeSWITCH™ package is available for pfSense 1.2.3\. The package includes a GUI for FreeSWITCH's configuration. The naming convention for the GUI has been designed to closely match the XML tag names and file names used in the default XML configuration as closely as possible. Install pfSense 1.2.3 based on FreeBSD7, Then go to System -> Packages and click the '+' add button on the right to install FreeSWITCH™ from the packages list. The package is around 50mb because it includes 8khz sounds and music on hold. After the installation FreeSWITCH™ will automatically start. By default it will bind to the WAN IP address.
+pfSense FreeSWITCH™ 包适用于 pfSense 1.2.3\. 该包含一个用于配置 FreeSWITCH 的图形界面。GUI 的命名约定已经设计得尽可能接近默认 XML 配置中使用的 XML 标签名和文件名。根据 FreeBSD7 安装 pfSense 1.2.3，然后转到系统 -> 包，并点击右边的 "+" 按钮将 FreeSWITCH™ 安装磁盘中的列表中的包安装。该包大小约 50MB，因为其中包含了8khz的声音和音乐。安装完成后，FreeSWITCH™ 将自动启动。默认情况下，它将绑定到 WSN IP 地址。
 
-To download pfSense 1.2.3 go to: <http://www.pfsense.com/>
+下载 pfSense 1.2.3，请访问： <http://www.pfsense.com/>
 
-Screenshots are here: [http://portableusbapps.com/images/freeswitch/](http://portableusbapps.com/images/FreeSWITCH/)
+这里有一些截图： [http://portableusbapps.com/images/freeswitch/](http://portableusbapps.com/images/FreeSWITCH/)
 
-The pfSense FreeSWITCH™ package is being used on many live systems on dedicated hardware and on some virtual machines.
+pfSense FreeSWITCH™ 包已经在许多专用硬件和部分虚拟机的实时系统上得到了使用。
 
-If you already have a firewall in place and just want to use this package as an easy FreeSWITCH™ install you can simply use it as a dedicated device and if desired turn off the firewall in pfSense by going to System -> Advanced -> Disable Firewall then put a check mark in 'Disable all packet filtering.'
+如果您已经有一个防火墙，并且只想将这个软件包用作一个简单的FreeSWITCH™安装，您可以将其作为一个专用设备使用，如果需要的话，通过转到系统 -> 高级 -> 禁用防火墙然后在“禁用所有数据包过滤”处打上√来关闭pfSense中的防火墙。
 
 #### Solaris
 
-Solaris information can be found at [Solaris](../../Unix/Solaris_1966840.mdx#about).
+有关Solaris的信息可以在[Solaris](../../Unix/Solaris_1966840.mdx#about)找到。
 
 #### Ubuntu
 
-Visit the [Ubuntu Quick Start](http://wiki.freeswitch.org/wiki/Ubuntu%5FQuick%5FStart) page.
+请访问[Ubuntu快速入门](http://wiki.freeswitch.org/wiki/Ubuntu%5FQuick%5FStart)页面。
 
-#### Cross Compiling for ARM on Linux
+#### 在Linux上交叉编译ARM
 
-These instructions were tested on Linux 2.6.18 (Centos 5) Cross compiling Linux 2.6.21 for ARM using gcc 3.4.6 All commands should be executed from within the main source repository.
+这些说明在Linux 2.6.18 (CentOS 5)上进行测试，使用gcc 3.4.6交叉编译Linux 2.6.21以用于ARM。所有命令都应该在主代码存储库中执行。
 
-Create a modules.conf. (this can be done after configure but it is convenient to do it now)
+创建一个modules.conf文件（这可以在配置后完成，但现在这样做比较方便）
 
 ```bash
 cp build/modules.conf.in modules.conf
 ```
 
-Decide if you want to include cpp code, if you are running on a small embedded system and don't want to install the 2+MBytes libstdc++.so edit [Makefile.am](http://Makefile.am) in the root of the source repository and remove all references to switch\_cpp.cpp and switch\_cpp.h, there is one of each. This will also disable all of FreeSWITCH™'s language modules, edit modules.conf and comment out all the language modules, that is all the lines starting with "language". You can still write C applications with the cpp disabled.
+决定是否要包括cpp代码，如果您在一个嵌入式系统上运行，并且不想安装2+兆字节的libstdc++.so，请编辑源代码存储库的根目录中的[Makefile.am](http://Makefile.am)，并删除所有对switch\_cpp.cpp和switch\_cpp.h的引用，每个文件都有一个。这也将禁用所有FreeSWITCH™的语言模块，请编辑modules.conf并注释掉所有语言模块，即所有以“language”开头的行。您仍然可以在禁用cpp的情况下编写C应用程序。
 
-I was not able to get javascript working so you should comment out languages/mod\_spidermonkey\* from modules.conf and comment out the line "AC\_CONFIG\_SUBDIRS(libs/js)" in the file [configure.in](http://configure.in). If you figure out a way to get it working update this page, I wasn't motivated as I did not intend to use it.
+我无法使javascript工作，所以您应该在modules.conf中注释掉languages/mod\_spidermonkey\*，并在[configure.in](http://configure.in)文件中注释掉"AC\_CONFIG\_SUBDIRS(libs/js)"这一行。如果您找到了使其工作的方法，请更新此页面，我并没有动力去使用它。
 
-If you want to reduce the build time you can comment out other support libraries from [configure.in](http://configure.in), I only used and tested the following, it saves a lot of build time and I don't know if the other libraries will build:
+如果你想减少构建时间，可以在[configure.in](http://configure.in)中注释掉其他支持库，我只使用和测试了以下这些，它们可以大大节省构建时间，但我不知道其他库能否编译成功：
 
 * libs/srtp
 * libs/sqlite
@@ -759,18 +738,17 @@ If you want to reduce the build time you can comment out other support libraries
 * libs/libsndfile
 * libs/voipcodecs
 
-I already had a version of curl cross compiled so I did not use the version that comes with FreeSWITCH.
+我已经使用交叉编译方式准备了一个版本的curl，因此没有使用FreeSWITCH提供的版本。
 
-Run this command next, it will create all the configure scripts
+接下来运行以下命令，它将会创建所有的configure脚本
 
 ```bash
 ./bootstrap.sh
 ```
 
-  
-Several of the packages cannot detect capabilities of the Cross Compile environment correctly so configure needs to be called with many options to get it to work correctly. Check that the options I have match your Cross Compile environment. Prior to running this the following environment variables must be set: TARGET\_CC - the cross compiler HOSTCC - the host compiler CFLAGS - CFLAGS for the cross compiler CPPFLAGS - CPPFLAGS for the cross compiler LDFLAGS - LDFLAGS for the cross compiler These environment variables also need to be set to point to the appropriate tool in the cross compiler's toolchain CC, CXX, AR, LD, GCC, AS, NM, RANLIB, STRIP, SIZE, OBJCOPY & OBJDUMP. Not sure if they are all used, but this is what worked for me.
+由于有些软件包无法正确检测到交叉编译环境的能力，所以需要调用configure时加上许多选项才能使其正常工作。请检查我所提供的选项是否与你的交叉编译环境匹配。在运行之前，下列环境变量必须设置好：TARGET_CC - 交叉编译器 HOST_CC - 主机编译器 CFLAGS - 交叉编译器的CFLAGS CPPFLAGS - 交叉编译器的CPPFLAGS LDFLAGS - 交叉编译器的LDFLAGS 这些环境变量还需要设置为指向交叉编译工具链中适当的工具，如CC、CXX、AR、LD、GCC、AS、NM、RANLIB、STRIP、SIZE、OBJCOPY和OBJDUMP。不确定是否全部被使用到，但这是对我有效的设置。
 
-You will need to adjust some setting to fit your environment, set the "path" in ac\_cv\_path\_\_libcurl\_config and --with-curl, or remove them if you use the version that comes with FreeSWITCH™. Set --with-modinstdir to point to where the FreeSWITCH™ modules will be on the target filesystem.
+你需要根据自己的环境进行一些调整，设置ac_cv_path__libcurl_config和--with-curl中的"path"，或者如果你使用FreeSWITCH™提供的版本，则将它们删除。将--with-modinstdir设置为指向FreeSWITCH™模块在目标文件系统上的位置。
 
 ```bash
 export config_TARGET_CC="$(TARGET_CC)"; \
@@ -796,54 +774,52 @@ export config_TARGET_CC="$(TARGET_CC)"; \
        --with-modinstdir=/mod \
 ```
 
-If you have not done so edit modules.conf so that it will build the modules you desire. If you are unsure, leave this to the defaults. FreeSWITCH™ comes with a good set of modules as the default, until you become more familiar with FreeSWITCH™ it is advised that you not edit modules.conf. A # at the beginning will omit that module from being built. A list of the modules can be obtained from the [Modules](https://wiki.freeswitch.org/wiki/Modules "Modules") page.
+如果你还没有这样做，请编辑modules.conf文件以便构建你需要的模块。如果你不确定，可以使用默认设置。FreeSWITCH™默认有一组很好的模块，直到你更熟悉FreeSWITCH™之前，建议不要编辑modules.conf文件。在模块名称前面加#号表示不构建该模块。你可以从[Modules](https://wiki.freeswitch.org/wiki/Modules "Modules")页面获取模块列表。
 
-Once you are done configuring the build environment you need to run the following command. (Your PATH must point to the cross compiler toolchain)
+一旦你完成了构建环境的配置，你需要运行以下命令（你的PATH必须指向交叉编译工具链）。
 
 ```bash
 make
 ```
 
-I found little use for make install as I didn't want the Cross Compiled version installed on the build system. You will need to copy the FreeSWITCH™ binary, library and modules directly out of the build tree into where ever you need them.
+我发现make install几乎没有用处，因为我不想将交叉编译版本安装到构建系统上。你需要将FreeSWITCH™二进制文件、库文件和模块直接从构建树复制到你需要的位置。
 
-#### Cross Compiling for OpenWrt
+#### 交叉编译OpenWrt
 
 <http://wiki.freeswitch.org/wiki/OpenWrt>
 
-### Prebuilt Binaries
+### 预编译的二进制文件
 
-The FreeSWITCH™ team **strongly** recommends installing from the latest [**Git tree**](https://wiki.freeswitch.org/wiki/Download%5F%26%5FInstallation%5FGuide#Git) which is extremely stable! Many reported bugs in older versions of FreeSWITCH™ are fixed in the current Git version. The developers **require** testing an issue on the current Git version prior to filing a bug report.
+FreeSWITCH™团队**强烈推荐**从最新的[**Git tree**](https://wiki.freeswitch.org/wiki/Download%5F%26%5FInstallation%5FGuide#Git)安装，这个版本非常稳定！许多在较旧版本的FreeSWITCH™中报告的错误在当前的Git版本中已经修复。开发人员**要求**在提交错误报告之前在当前Git版本上测试问题。
 
-The FreeSWITCH™ project maintains binary packages for a number of Linux distributions on the [openSUSE](http://opensuse.org) [Build Service](http://build.opensuse.org). All external dependencies required by these FreeSWITCH™ packages are either part of the base Linux distros or available in the repository at: <http://software.opensuse.org/download/network:/telephony/>. If your preferred Linux distro and version is listed there, then we recommend you use these packages.
+FreeSWITCH™项目在[openSUSE](http://opensuse.org) [Build Service](http://build.opensuse.org)上维护了许多Linux发行版的二进制包。这些FreeSWITCH™软件包所需的所有外部依赖项都是Linux基本发行版的一部分，或者可以在<http://software.opensuse.org/download/network:/telephony/>存储库中找到。如果您喜欢的Linux发行版和版本在那里列出，我们建议您使用这些软件包。
 
-### Special Considerations
+### 特殊考虑
 
-##### ODBC Support
+##### ODBC支持
 
-See the [ODBC Support document](http://wiki.freeswitch.org/wiki/Mod%5Fspidermonkey%5Fodbc).
+请查看[ODBC支持文档](http://wiki.freeswitch.org/wiki/Mod%5Fspidermonkey%5Fodbc)。
 
-###### ODBC Installed in non-standard locations
+###### 在非标准位置安装ODBC
 
-As of April 23 2012, a change was made to the configure script to check if the ODBC library is installed. As a consequence, the check fails due to the way how the macro behaves. To resolve this issue, you would issue the following command before you initiate the configure script:
+自2012年4月23日以来，configure脚本已更改，检查ODBC库是否已安装。结果，由于宏的行为方式，检查失败。要解决此问题，在启动configure脚本之前，您需要执行以下命令：
 
 ```bash
-export LIBRARY_PATH="<path to ODBC lib here>"
+export LIBRARY_PATH="<ODBC库的路径>"
 ```
 
-  
-##### No Root Access
+##### 无root访问权限
 
-If you don’t have root access add --prefix=\~/freeswitch to the command. **This is a really bad idea on production systems, _not_ recommended.**
+如果您没有root访问权限，请将 --prefix=\~/freeswitch 添加到命令中。**在生产系统上，这是一个非常糟糕的主意，_不_推荐使用。**
 
 ```bash
 ./configure --prefix=/usr/local/freeswitch
 ```
 
-### Graphical User Interfaces
+### 图形用户界面
 
-See: [FreeSWITCH Gui](https://wiki.freeswitch.org/wiki/Freeswitch%5FGui "Freeswitch Gui")
-  
-  
+参见: [FreeSWITCH Gui](https://wiki.freeswitch.org/wiki/Freeswitch%5FGui "Freeswitch Gui")
+
+
+
 mkdir /export/home/freeswitch; zfs create rpool/export/home/freeswitch
-
-

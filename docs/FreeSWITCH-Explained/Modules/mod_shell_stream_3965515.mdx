@@ -1,23 +1,20 @@
+# mod_shell_stream
 
-# mod_shell_stream 
+## 关于
 
- 
+mod_shell_stream 是一个模块，允许您从任意 shell 命令流式传输音频。您可以使用它从数据库、声卡等读取音频。
 
-## About
+## 使用方法
 
-Mod shell stream is a module to allow you to stream audio from an arbitrary shell command. You could use it to read audio from a database, from a soundcard, etc.
-
-## Usage
-
-To use it, you call it from the dialplan like this:
+要使用它，您可以在 dialplan 中这样调用：
 
 ```xml
 <action application="playback" data="shell_stream:///tmp/moh"/>
 ```
 
-Now, when this application is triggered, the command /tmp/moh is called with 2 arguments -r &lt;rate> and -c &lt;channelcount>, which in the usual case are 8000 and 1 respectively.
+现在，当触发此应用程序时，将使用 2 个参数 -r &lt;rate> 和 -c &lt;channelcount> 调用 /tmp/moh 命令，通常这两个参数分别为 8000 和 1。
 
-The contents of my sample /tmp/moh script is as follows:
+我示例的 /tmp/moh 脚本的内容如下所示：
 
 ```xml
 #!/bin/sh
@@ -25,17 +22,17 @@ The contents of my sample /tmp/moh script is as follows:
 cat /tmp/tt-weasels.wav | sox -t wav - $@ -t raw -
 ```
 
-Which cats an audio file into sox on stdin and tells sox to output raw audio at 8000hz, 1 channel to stdout. You could of course replace the cat command with anything that outputs audio and use sox to process it into the requested raw output.
+该脚本将一个音频文件读入到 sox 中，并告诉 sox 输出原始音频，采样率为 8000hz，通道数为 1，并将其输出到标准输出。当然，您也可以使用任何输出音频的命令，并使用 sox 将其处理为所需的原始输出格式。
 
-### Arguments
+### 参数
 
-You can also pass arguments to the command, by doing something like this:
+您还可以通过以下方式向命令传递参数：
 
 ```xml
 <action application="playback" data="shell_stream:///tmp/moh /tmp/tt-weasels.wav wav"/>
 ```
 
-And the corresponding script becomes:
+相应的脚本变为：
 
 ```xml
 #!/bin/sh
@@ -46,12 +43,10 @@ shift 2
 cat $AUDIO | sox -t $TYPE - $@ -t raw -
 ```
 
-Basically the sky is the limit, if you're willing to write the script or program to do what you need.
+基本上，如果您愿意编写一个满足您需求的脚本或程序，那么天空就是无限的。
 
-## See Also
+## 参见
 
 * [mod\_shout](mod_shout_3965531.mdx#21-play)
 * [mod\_local\_stream](mod_local_stream_6587466.mdx#api)
 * [mod\_tts\_commandline](mod_tts_commandline_13172802.mdx#about)
-
-

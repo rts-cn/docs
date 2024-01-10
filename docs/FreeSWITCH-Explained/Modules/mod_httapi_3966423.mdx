@@ -1,49 +1,45 @@
+# mod_httapi
 
-# mod_httapi 
+## 关于
 
- 
+该模块提供基于HTTP的电话API，使用标准的FreeSWITCH应用程序接口以及缓存的HTTP文件格式接口。
 
-## About
+点击此处展开目录
 
-This module provides an HTTP based Telephony API using a standard FreeSWITCH application interface as well as a cached http file format interface.
+* 1 [用法](#usage)
+   * 1.1 [示例](#example)
+   * 1.2 [绑定](#binding)
+   * 1.3 [工作标签](#work-tag)
+* 2 [配置](#configuration)
+* 3 [应答和早期媒体](#answer-and-early-media)
+   * 3.1 [何时应答](#when-to-answer)
+   * 3.2 [接听电话](#answering-calls)
 
-Click here to expand Table of Contents
+## 用法
 
-* 1 [Usage](#usage)  
-   * 1.1 [Example](#example)  
-   * 1.2 [Binding](#binding)  
-   * 1.3 [Work Tag](#work-tag)
-* 2 [Configuration](#configuration)
-* 3 [Answer and Early Media](#answer-and-early-media)  
-   * 3.1 [When to answer](#when-to-answer)  
-   * 3.2 [Answering calls](#answering-calls)
-
-## Usage
-
-The file format plugin can be used like this:
+文件格式插件可以像这样使用：
 
 ```xml
 <action application="playback" data="http://some.com/sounds/foo.wav"/>
 ```
 
-This syntax is valid anywhere a filename parameter is requested in FreeSWITCH. If your URL contains query parameters (after a "?"), use
+该语法可以在FreeSWITCH的任何需要文件名参数的位置使用。如果您的URL包含查询参数（在“？”之后），请使用以下格式：
 
 ```xml
 <action application="record" data="http://(file=/tmp/part1.ul,name=part1.PCMU)example.net/part1.PCMU?rev=47"/>
 ```
 
-The available parameters are: file, profile, method, name.
+可用的参数有：file、profile、method、name。
 
-  
- The application is called like this:
+应用程序可以如下调用：
 
 ```xml
 <action application="httapi" data="{url=http://some.host.com/app.cgi}"/>
 ```
 
-The target url is expected to be a CGI returning text/xml using the documentation below.
+目标URL应该是一个返回text/xml的CGI，并按照下面的文档进行编写。
 
-The format is roughly as described below (We could use a DTD maybe).
+格式大致如下（也许可以使用DTD）：
 
 ```xml
 <document type="xml/freeswitch-httapi">
@@ -59,9 +55,11 @@ The format is roughly as described below (We could use a DTD maybe).
 </document>
 ```
 
-The profile name must be chosen to bind to a preset series of settings and permissions to use as a basis for the client session. It's chosen from the specified params or from the channel variable using the keyname 'httapi\_profile' and if not specified will default to 'default' Any params specified in the initial data of the application encased in curly braces {} will be parsed into the initial parameters similar to originate. These params remain set until the call ends and are supplied as form elements on each hit to the HTTP server. If the permissions allow, a &lt;params> tag is parsed from the resulting document and set into this data set and will be mirrored back on subsequent http posts. Also, if the permissions allow, a &lt;variables> tag is parsed the same way to set channel variables. The &lt;work> tag is required and contains one or more of the supported command tags that generally manipulate the call behavior. The application will continue to do the task in the work section until an error is encountered or when an action from the work tag warrants it. If the session exits the httapi app without hanging up it can do other tasks and make another call to httapi and the session data will remain preserved.
+简体中文：
 
-### Example
+配置文件名必须选择绑定到预设系列的设置和权限，以用作客户会话的基础。它可以从指定的参数或通过键名“httapi\_profile”从频道变量中选择，并且如果未指定，则默认为“default”。在应用程序的初始数据中，用花括号{}括起来的任何指定的参数都将被解析为初始参数，类似于原始呼叫。这些参数保持设置，直到呼叫结束，并在每次向HTTP服务器发送请求时作为表单元素提供。如果权限允许，将从返回的文档中解析出&lt;params>标记，并设置到此数据集中，并在后续的HTTP POST中返回。同样，如果权限允许，将以同样的方式解析&lt;variables>标记以设置频道变量。&lt;work>标记是必需的，并包含一个或多个支持的命令标记，通常用于操作呼叫行为。应用程序将在工作部分中继续执行任务，直到遇到错误或工作标记要求执行其他操作。如果会话在不挂断的情况下退出httapi应用程序，则可以执行其他任务，并再次调用httapi，会话数据将保留。
+
+### 示例
 
 ```xml
 <document type="xml/freeswitch-httapi">
@@ -74,235 +72,240 @@ The profile name must be chosen to bind to a preset series of settings and permi
 </document>
 ```
 
-  
-Note that the value from bind strip is returned to the same page as the parameter exten (taken from name in playback).
+请注意，从绑定的strip值将返回给与参数exten（从playback的name中获取）相同的页面。
 
-### Binding
+### 绑定
 
-Several of the work tags that indicate they support bindings can contain one or more bind tags that function in similar fashion to bind\_digit\_action
+以下是几个工作标签，它们表示支持绑定功能，可以包含一个或多个bind标签，其功能类似于bind\_digit\_action。
 
 ```xml
 <bind action strip>*EXPR*</bind>
 ATTRS:
-action              : a specific url to go to next if the binding is dialed
-strip               : a character to strip from the result string, such as #
+action              : 绑定拨号后下一步跳转的特定URL
+strip               : 从结果字符串中去除的字符，例如 #
 ```
 
-NOTE : Srigg reported that multiple &lt;bind strip> tags are needed when you want it to post digits after the timeout expired (in fact, as many tags as the quantity of digits expected)
+注意：Srigg报告说，当您希望超时后继续发送按键时，需要多个&lt;bind strip>标签（实际上，与预期按键数量相同的标签）
 
-### Work Tag
+### 工作标签
 
 ```xml
 <work>*ACTIONS*</work>
 
 <playback file name error-file action digit-timeout input-timeout loops asr-engine asr-grammar><bind action strip>*EXPR*</bind></playback> 
-                    : Plays a file and optionally collects input.
+                    : 播放文件并可选择收集输入。
 ATTRS:
-file                : The file
-name                : Parameter name into which to save result
-error-file          : Error file to play on invalid input
-action              : Change the new target url
-temp-action         : Change url to submit to, just for the next loop
-digit-timeout       : Pause to wait for digits after file plays (when input bindings are present)
-input-timeout       : Pause to wait for more digits in a multi-digit input
-loops               : Maximum number of times to play the file when input bindings are present
-asr-engine          : Automatic speech recognition engine to use
-asr-grammar         : ASR grammar to use
+file                : 文件
+name                : 保存结果的参数名称
+error-file          : 无效输入时播放的错误文件
+action              : 更改新的目标URL
+temp-action         : 更改要提交的URL，仅适用于下一次循环
+digit-timeout       : 文件播放后暂停等待按键（当存在输入绑定时）
+input-timeout       : 多位数输入时等待更多按键的暂停时间
+loops               : 当存在输入绑定时播放文件的最大次数
+asr-engine          : 自动语音识别引擎
+asr-grammar         : 使用的ASR语法
 
-<record file name error-file action digit-timeout input-timeout><bind action strip>*EXPR*</bind></record> 
-                    : Records a file, optionally collecting input, then posts the file back to the target url.
+```
+<record file name error-file action digit-timeout input-timeout><bind action strip>*EXPR*</bind></record>
+                    : 记录一个文件，可以选择收集输入，然后将文件发送回目标URL。
 ATTRS:
-file                : The file
-name                : Parameter name into which to save result
-error-file          : Error file to play on invalid input
-action              : Change the new target url
-temp-action         : Change url to submit to, just for the next loop
-digit-timeout       : Pause to wait for digits after file plays (when input bindings are present)
-input-timeout       : Pause to wait for more digits in a multi-digit input
+file                : 文件
+name                : 参数名，用于保存结果
+error-file          : 在无效输入时播放的错误文件
+action              : 更改新的目标URL
+temp-action         : 更改要提交给的URL，仅适用于下一个循环
+digit-timeout       : 播放文件后等待数字的暂停时间（当存在输入绑定时）
+input-timeout       : 等待多位数输入的暂停时间
 
 <pause name error-file action digit-timeout input-timeout loops milliseconds><bind action strip>*EXPR*</bind></pause>
-                    : Waits for input for a specific amount of time.
+                    : 等待一定时间的输入。
 ATTRS:
-milliseconds        : Number of milliseconds to pause
-name                : Parameter name into which to save result
-error-file          : Error file to play on invalid input
-action              : Change the new target url
-temp-action         : Change url to submit to, just for the next loop
-digit-timeout       : Pause to wait for digits after file plays (when input bindings are present)
-input-timeout       : Pause to wait for more digits in a multi-digit input
-loops               : Maximum number of times to play the file when input bindings are present
+milliseconds        : 要暂停的毫秒数
+name                : 参数名，用于保存结果
+error-file          : 在无效输入时播放的错误文件
+action              : 更改新的目标URL
+temp-action         : 更改要提交给的URL，仅适用于下一个循环
+digit-timeout       : 播放文件后等待数字的暂停时间（当存在输入绑定时）
+input-timeout       : 等待多位数输入的暂停时间
+loops               : 当存在输入绑定时，播放文件的最大次数
+```
 
+```yaml
 <speak file name error-file action digit-timeout input-timeout loops engine voice><bind action strip>*EXPR*</bind></speak>
-                    : Read Text to Speech with optional input.
+                    : 使用文本到语音功能，可选附加输入。
 ATTRS:
-file                : The file
-name                : Parameter name into which to save result
-error-file          : Error file to play on invalid input
-action              : Change the new target url
-temp-action         : Change url to submit to, just for the next loop
-digit-timeout       : Pause to wait for digits after file plays (when input bindings are present)
-input-timeout       : Pause to wait for more digits in a multi-digit input
-loops               : Maximum number of times to play the file when input bindings are present
-engine              : Text-to-speech engine to use
-voice               : tts voice to use
+file                : 文件
+name                : 保存结果的参数名称
+error-file          : 无效输入时要播放的错误文件
+action              : 更改新的目标URL
+temp-action         : 更改要提交的URL，仅适用于下一次循环
+digit-timeout       : 播放文件后等待按键的暂停时间（当存在输入绑定时）
+input-timeout       : 多位数字输入时等待更多按键的暂停时间
+loops               : 存在输入绑定时播放文件的最大次数
+engine              : 要使用的文本到语音引擎
+voice               : 要使用的TTS语音
 
 <say file name error-file action digit-timeout input-timeout loops language type method gender><bind action strip>*EXPR*</bind></say>
-                    : Use the FreeSWITCH 'say' engine to iterate sounds to simulate a human speaker.
+                    : 使用FreeSWITCH的'say'引擎迭代声音以模拟人声。
 ATTRS:
-file                : The file
-name                : Parameter name into which to save result
-error-file          : Error file to play on invalid input
-action              : Change the new target url
-temp-action         : Change url to submit to, just for the next loop
-digit-timeout       : Pause to wait for digits after file plays (when input bindings are present)
-input-timeout       : Pause to wait for more digits in a multi-digit input
-loops               : Maximum number of times to play the file when input bindings are present
-language            : language to speak
-type                : type (fs param)
-method              : method (fs param)
-gender              : gender (fs param)
+file                : 文件
+name                : 保存结果的参数名称
+error-file          : 无效输入时要播放的错误文件
+action              : 更改新的目标URL
+temp-action         : 更改要提交的URL，仅适用于下一次循环
+digit-timeout       : 播放文件后等待按键的暂停时间（当存在输入绑定时）
+input-timeout       : 多位数字输入时等待更多按键的暂停时间
+loops               : 存在输入绑定时播放文件的最大次数
+language            : 要阅读的语言
+type                : 类型（fs参数）
+method              : 方法（fs参数）
+gender              : 性别（fs参数）
+```
 
-<execute application data action>*DATA*</execute>
-                    : Execute a FreeSWITCH app.
-ATTRS:
-application         : The app to run
-action              : Change the new target url
-temp-action         : Change url to submit to, just for the next loop
-data                : Alternate source for app data
-*DATA*              : The app data
+<执行应用程序数据操作>\*数据\*</执行>
+                    ：执行FreeSWITCH应用程序。
+属性：
+application         ：要运行的应用程序
+action              ：更改新的目标URL
+temp-action         ：更改要提交到的URL，仅用于下一次循环
+data                ：应用程序数据的替代源
+\*数据\*              ：应用程序数据
 
-<sms to action>DATA</sms>
-                    : Send a SMS (Short Message Service) message.
-ATTRS:
-to                  : The destination phone number
-action              : Change the new target url
-temp-action         : Change url to submit to, just for the next loop
-*DATA*              : The message data
+<发送短信到操作>数据</发送短信到操作>
+                    ：发送短信（短消息服务）。
+属性：
+to                  ：目标电话号码
+action              ：更改新的目标URL
+temp-action         ：更改要提交到的URL，仅用于下一次循环
+\*数据\*              ：消息数据
 
-<dial context dialplan caller-id-name caller-id-number action>*DATA*</dial>
-                    : Place an outbound call or transfer.
-ATTRS:
-context             : Dialplan context.
-dialplan            : Dialplan dialplan.
-caller-id-name      : Caller ID Name
-caller-id-number    : Caller ID Number
-action              : Change the new target url
-temp-action         : Change url to submit to, just for the next loop
-*DATA*              : Number to dial or originate string
+<拨号上下文拨号计划呼叫者ID名称呼叫者ID号码操作>\*数据\*</拨号>
+                    ：进行呼出或转接。
+属性：
+context             ：拨号计划上下文。
+dialplan            ：拨号计划拨号计划。
+caller-id-name      ：呼叫者ID名称
+caller-id-number    ：呼叫者ID号码
+action              ：更改新的目标URL
+temp-action         ：更改要提交到的URL，仅用于下一次循环
+\*数据\*              ：要拨打的号码或发起字符串
 
-<recordCall limit name action>
-                    : Begin recording the call audio.  The file will be posted when the call ends.
-ATTRS:
-limit               : Timeout in seconds
-name                : Name to use for input values
-action              : URL action to use
+<记录通话限制名称操作>
+                    ：开始录制通话音频。通话结束时将发布文件。
+属性：
+limit               ：超时时间（秒）
+name                ：用于输入值的名称
+action              ：要使用的URL操作
 
-<conference profile action>
-                    : Start a conference call.
-ATTRS:
-profile             : Conference profile to use
-action              : Change the new target url
+<开始会议配置操作>
+                    ：开始会议呼叫。
+属性：
+profile             ：要使用的会议配置
+action              ：更改新的目标URL
 
-<hangup cause action>
-                    : Hangup the call.
-ATTRS:
-cause               : Hangup cause
-action              : Change the new target url
+<挂断原因操作>
+                    ：挂断通话。
+属性：
+cause               ：挂断原因
+action              ：更改新的目标URL
 
 <break>
-                    : Exit the httapi application and continue in the dialplan.
+                    ：退出httapi应用程序并继续执行拨号计划。
 
 <log level clean action>
-                    : Exit the httapi application and continue in the dialplan.
+                    ：退出httapi应用程序并继续执行拨号计划。
 ATTRS:
-level               : The log level to use
-clean               : If true do not print log prefix
-action              : Change the new target url
+level               ：要使用的日志级别
+clean               ：如果为true，则不打印日志前缀
+action              ：更改新的目标URL
 
 <continue action>
-                    : Just continue (no-op).
+                    ：只是继续（无操作）。
 ATTRS:
-action              : Change the new target url
+action              ：更改新的目标URL
 
 <getVar action temp-action permanent>
-                    : Get a Channel variable (depends on permissions).
+                    ：获取一个通道变量（取决于权限）。
 ATTRS:
-action              : Change the new target url
-temp-action         : Change url to submit to, just for the next loop
-permanent           : Add as a permanent param or just once
+action              ：更改新的目标URL
+temp-action         ：更改提交的URL，仅适用于下一个循环
+permanent           ：将其作为永久参数添加还是仅添加一次
 
 <voicemail action temp-action check auth-only profile domain id>
-                    : Check or record voice mail
+                    ：检查或录制语音邮件
 ATTRS:
-action              : Change the new target url
-temp-action         : Change url to submit to, just for the next loop
-check               : true to check, omit to record a message for this mailbox
-auth-only           : authenticate only and continue
-profile             : profile name to use, omit for "default"
-domain              : domain to use, omit for global domain variable
-id                  : mailbox id to use, omit to prompt for id
+action              ：更改新的目标URL
+temp-action         ：更改提交的URL，仅适用于下一个循环
+check               ：设为true以检查邮件箱，省略以录制此邮箱的留言
+auth-only           ：仅进行身份验证并继续
+profile             ：要使用的配置文件名称，省略为"default"
+domain              ：要使用的域，省略为全局域变量
+id                  ：要使用的邮件箱ID，省略以提示输入ID
 
 ```
 
   
-## Configuration
+## 配置
 
 ```xml
-<settings>:
+<settings>：
 
 <param name="" value="">
-debug                           : <true|false>          false           Print debug data
-file-cache-ttl                  : <number of sec>       300             How long to wait before checking the server to see if audio
-file has changed.               
-file-not-found-expires          : <number of sec>       300             How long to preserve cached audio files that are not found by the server.
+debug                           ：<true|false>          false           打印调试数据
+file-cache-ttl                  ：<秒数>                300             等待多长时间后检查服务器是否更改音频
+文件。
+file-not-found-expires          ：<秒数>                300             保留未找到的缓存音频文件的时间。
 
-<profile name="<name>">         : CREATE NEW PROFILE TO REFERENCE BY NAME
-gateway-url                     : <string>              ""              Initial URL to which to connect
-gateway-credentials             : <string>              ""              HTTP credentials
-auth-scheme                     : <string               >               basic authentication scheme to use. [basic|digest|NTLM|GSS-NEGOTIATE|any]
-disable-100-continue            : <true|false>          true            Disable the 100 continue feature
-method                          : <string>              ""              METHOD name to send
-timeout                         : <number>              0               Timeout waiting for response
-enable-cacert-check             : <true|false>          false           Check CA/CERT
-ssl-cert-path                   : <string>              ""              path to file
-ssl-cacert-file                 : <string>              ""              CA/CERT file
-ssl-key-path                    : <string>              ""              path to file
-ssl-key-password                : <string>              ""              password to use
-ssl-version                     : <string>              ""              ssl version
-enable-ssl-verifyhost           : <true|false>          ""              Verify ssl host
-cookie-file                     : <string>              ""              Path to file to use for cookie
-enable-post-var                 : <param_name>          ""              Specify param names ok to send
-bind-local                      : <string>              ""              Interface to which to bind
-default-profile                 : <string>              default         Profile to use when not specified
-user-agent                      : <string>              mod_httapi/1.0  User Agent header value
+```markdown
+<profile name="<name>">         : 新建一个以名称引用的配置文件
+gateway-url                     : <string>              ""              初始连接的URL
+gateway-credentials             : <string>              ""              HTTP证书
+auth-scheme                     : <string               >               使用的基本认证方案。[basic|digest|NTLM|GSS-NEGOTIATE|any]
+disable-100-continue            : <true|false>          true            禁用"100 Continue"功能
+method                          : <string>              ""              发送请求的方法名称
+timeout                         : <number>              0               等待响应的超时时间
+enable-cacert-check             : <true|false>          false           检查CA/CERT
+ssl-cert-path                   : <string>              ""              证书文件路径
+ssl-cacert-file                 : <string>              ""              CA/CERT文件
+ssl-key-path                    : <string>              ""              密钥文件路径
+ssl-key-password                : <string>              ""              密钥密码
+ssl-version                     : <string>              ""              SSL版本
+enable-ssl-verifyhost           : <true|false>          ""              验证SSL主机
+cookie-file                     : <string>              ""              用于Cookie的文件路径
+enable-post-var                 : <param_name>          ""              指定可发送的参数名
+bind-local                      : <string>              ""              绑定的接口
+default-profile                 : <string>              default         在未指定时使用的配置文件
+user-agent                      : <string>              mod_httapi/1.0  User Agent头部的值
+```
 
-<permissions>: * = default
+<permissions>: * = 默认
 
 <permission name="" value="">
-*set-params                     : <params> tag can be parsed for session params
-set-vars                        : <variables> tag can be parsed to set channel vars
-extended-data                   : Extended data is sent like full channel event data
-execute-apps                    : <execute> tag is enabled to execute apps
-expand-vars                     : Allow expansion of FS ${variables} (this opens up all FSAPI calls)
-*dial                           : <dial> tag is enabled allowing outbound dialing
-dial-set-context                : <dial context=""> context attribute is permitted
-dial-set-dialplan               : <dial dialplan=""> dialplan attribute is permitted
-dial-set-cid-name               : <dial cid_name=""> cid_name attribute is permitted
-dial-set-cid-number             : <dial cid_number=""> cid_number attribute is permitted
-dial-full-originate             : <dial> full originate syntax is permitted instead of just a number
-*conference                     : <conference> tag is enabled allowing creation of conferences
-conference-set-profile          : <conference profile=""> attribute is permitted
-all                             : all permissions are set
-none                            : no permissions are set
+set-params                     : 可以解析<params>标签以获取会话参数
+set-vars                        : 可以解析<variables>标签以设置通道变量
+extended-data                   : 扩展数据以完整通道事件数据的形式发送
+execute-apps                    : 启用<execute>标签以执行应用程序
+expand-vars                     : 允许扩展FS ${variables}（这将打开所有FSAPI调用）
+dial                           : 启用<dial>标签以进行呼出拨号
+dial-set-context                : 允许使用<dial context="">属性
+dial-set-dialplan               : 允许使用<dial dialplan="">属性
+dial-set-cid-name               : 允许使用<dial cid_name="">属性
+dial-set-cid-number             : 允许使用<dial cid_number="">属性
+dial-full-originate             : 允许使用<dial>完整发起的语法，而不仅限于号码
+conference                     : 启用<conference>标签以创建会议
+conference-set-profile          : 允许使用<conference profile="">属性
+all                             : 所有权限已设置
+none                            : 没有设置权限
 
 ```
 
   
-## Answer and Early Media
+## 答复和早期媒体
 
-### When to answer
+### 何时答复呼叫
 
-You don't need to answer the call in the dialplan before calling into httapi. These both extensions below will make httapi requests to my application:
+在调用httapi之前，您不需要在拨号计划中应答呼叫。以下两个扩展将向我的应用程序发出httapi请求：
 
 ```xml
    <extension name="test1">
@@ -319,10 +322,8 @@ You don't need to answer the call in the dialplan before calling into httapi. Th
    </extension>
 ```
 
-You can play back sounds or 'say' something without explicitly 'answering' the call. But the call is early media only and in this state you won't be able to collect dtmf, for example. If you want to interact with the call you have to answer then since early media is an intermediate state and doesn't mean the call will stay alive for much long.
+您可以播放声音或使用'say'之类的指令而无需明确地'answer'来接听电话。但是，此时的通话仅处于早期媒体状态，您将无法收集DTMF信号。如果您想与通话进行互动，您必须先接听电话，因为早期媒体只是中间状态，并不意味着通话会很长时间保持活动状态。
 
-### Answering calls
+### 接听电话
 
-You can answer the call with &lt;application name="answer"/> but by default there's no permission to run the 'answer' application from httapi script so you need to enable it in httapi.conf.xml.
-
-
+您可以使用&lt;application name="answer"/>来接听电话，但默认情况下，httapi脚本没有运行'answer'指令的权限，因此您需要在httapi.conf.xml中启用它。

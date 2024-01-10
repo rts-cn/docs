@@ -1,28 +1,25 @@
+# sip_route_uri
 
-# sip_route_uri 
-
- Created by  Ryan Harris, last modified on 2018.02.08
+由Ryan Harris创建，在2018.02.08修改
 
 ## sip_route_uri
 
-string This sets where the INVITE packet should actually be sent to.
+string 此设置确定INVITE数据包实际发送到何处。
 
-This should normally be needed in situations where the TO field contains a hostname which points back at itself, and would cause an endless loop if this variable is not set.
+通常需要在TO字段包含一个指向自身的主机名的情况下使用，否则会造成无限循环。
 
-See also: [FS-5349](https://freeswitch.org/jira/browse/FS-5349?src=confmacro)  \-[Authenticate](https://freeswitch.org/confluence/plugins/servlet/applinks/oauth/login-dance/authorize?applicationLinkID=c4b15fa3-ad57-3c05-af05-8c167cb92266) to see issue details 
+参见：[FS-5349](https://freeswitch.org/jira/browse/FS-5349?src=confmacro) - [Authenticate](https://freeswitch.org/confluence/plugins/servlet/applinks/oauth/login-dance/authorize?applicationLinkID=c4b15fa3-ad57-3c05-af05-8c167cb92266) 查看问题详情
 
-**Usage**
+**用法**
 
-Very simple usage, set during bridge immediately before the endpoint to bridge to:
+非常简单的用法，在传输到终端之前立即设置：
 
 ```xml
 bridge {sip_route_uri=sip:USER@HOSTNAME.or.IP.ADDRESS}
 ```
 
-A real-life example where this was needed. It changes the `Request-URI` and sends the INVITE packet to the correct destination by looking up the contact details for the registered endpoint. This is used to send an incoming call to a registered endpoint (PBX in this case) but set a `Request-URI` so the call can be routed by the receiving party. Without the `sip_route_uri` variable set, the call would loop back to FreeSWITCH endlessly until the originating party cancels the call. The incoming number routes to another extension, and exports the original dialled DDI (as dialled\_ddi) so this can be used with this bridge command.
+下面是一个实际应用的例子。它修改了`Request-URI`并通过查找已注册终端的联系方式将INVITE数据包发送到正确的目的地。这用于将呼入呼叫发送到已注册的终端（在本例中是PBX），但设置了一个`Request-URI`，以便接收方可以根据需要路由呼叫。如果不设置`sip_route_uri`变量，呼叫将无限循环回到FreeSWITCH，直到发起方取消呼叫。呼入号码路由到另一个分机，并导出原始拨号的DDI（作为dialled_ddi），以便在使用此桥接命令时使用。
 
 ```xml
 bridge {sip_route_uri=sip:${sofia_contact(${dialed_extension}@${domain_name})},sip_invite_req_uri=sip:${dialled_ddi}@${domain_name}}user/${user_data(${dialed_extension}@${domain_name} attr id)}@${domain_name}
 ```
-
-

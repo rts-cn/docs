@@ -1,68 +1,62 @@
+# mod_event_multicast
 
-# mod_event_multicast 
+## 关于
 
- 
+mod_event_multicast从机器通过组播发送FreeSWITCH事件到可配置的地址/端口组合。其他主机可以配置为监听这些事件并解析它们， 
+可能也触发这些主机上的事件发生。
 
-## About
+您可以访问与[mod_event_socket](./mod_event_socket_1048924.mdx#11-acl)和"event plain ALL"相同的所有事件。
+**这既是一种祝福也是一种诅咒。** 请务必仔细审查这些事件，因为它们将被发送到您所在子网的路由器和邻近路由器配置为发送组播数据包的所有地方。
+您可能希望明确计划并使用[VLAN](http://en.wikipedia.org/wiki/Vlan)或类似的预防措施，以防止信息泄漏到不必要的地方。
 
-mod\_event\_multicast sends FreeSWITCH events from the machine via multicast to a configurable address/port combination.  
-Other hosts can be configured to listen for these events and parse them, potentially also triggering events to happen on those  
-hosts.  
-  
-You get access to all of the same events that you would get with [mod\_event\_socket](./mod_event_socket_1048924.mdx#11-acl) and "event plain ALL".  
-**This can be both a blessing and a curse.** Please take care to audit the events, as they'll be sent everywhere that the  
-router of your subnet and the adjoining routers are configured to send multicast packets. You may wish to explicitly  
-plan for this and use a [VLAN](http://en.wikipedia.org/wiki/Vlan) or similar precaution to protect yourself from information leaking to places it need not go.
+单击此处展开目录
 
-Click here to expand Table of Contents
+* 1 [待办事项](#-freeswitch--mod_event_multicast-)
+* 2 [复制Sofia注册](#replicating-sofia-registrations)  
+   * 2.1 [配置](#multicast-configuration-file)
+* 3 [示例](#examples)
+* 4 [其他自定义事件](#other-custom-events)
+* 5 [事件加密](#event-encryption)
+* 6 [故障排除](#troubleshooting)  
+   * 6.1 [无法注册子类](#couldnt-register-subclass)  
+   * 6.2 [绑定错误](#bind-error)  
+   * 6.3 [找不到魔术字符串的起始位置](#failed-to-find-start-of-magic-string)  
+   * 6.4 [不能使用预共享密钥加密，没有OpenSSL支持](#cannot-use-pre-shared-key-encryption-without-openssl-support)
+* 7 [在联网FS中使用组播](#using-multicast-in-networked-fss)  
+   * 7.1 [介绍](#introduction)  
+   * 7.2 [组播配置文件](#multicast-configuration-file)  
+   * 7.3 [Lua配置文件](#multicast-configuration-file)  
+   * 7.4 [Lua脚本](#lua-scripts)
 
-* 1 [TODO](#-freeswitch--mod_event_multicast-)
-* 2 [Replicating Sofia Registrations](#replicating-sofia-registrations)  
-   * 2.1 [Configuration](#multicast-configuration-file)
-* 3 [Examples](#examples)
-* 4 [Other Custom Events](#other-custom-events)
-* 5 [Event Encryption](#event-encryption)
-* 6 [Troubleshooting](#troubleshooting)  
-   * 6.1 [Couldn't register subclass](#couldnt-register-subclass)  
-   * 6.2 [Bind Error](#bind-error)  
-   * 6.3 [Failed to find start of magic string](#failed-to-find-start-of-magic-string)  
-   * 6.4 [Cannot use pre shared key encryption without OpenSSL support](#cannot-use-pre-shared-key-encryption-without-openssl-support)
-* 7 [Using multicast in networked FSs](#using-multicast-in-networked-fss)  
-   * 7.1 [Introduction](#introduction)  
-   * 7.2 [Multicast configuration file](#multicast-configuration-file)  
-   * 7.3 [Lua configuration file](#multicast-configuration-file)  
-   * 7.4 [Lua scripts](#lua-scripts)
+## 待办事项
 
-## TODO
+对于我（[Vagabond](https://wiki.freeswitch.org/wiki/User:Vagabond "User:Vagabond")）来说，此模块的一些待办事项包括：
 
-Some TODOs for this module that I ([Vagabond](https://wiki.freeswitch.org/wiki/User:Vagabond "User:Vagabond")) am interested in adding:
+* 配置文件重新加载（可以更改多播的事件，主要用途） - **基本完成**
+* 使用预共享密钥加密数据包以确保安全性，并允许两组FreeSWITCH机器共享相同的IP/Port组合而不相互冲突 - **已完成，我想**
+* 使用多播的心跳事件来确定同行是否上线/下线，并生成一个自定义的内部事件来指示此情况 - **基本完成**
+* 可配置数据包的TTL - **已完成**
 
-* Config file reloading (so you can change the events being multicasted, mainly) - **Sorta done**
-* Use pre shared key encryption to encrypt the packets for security and to allow 2 groups of FreeSWITCH machines to share the same IP/Port combination without stepping on each other - **Done, I think**
-* Use multicasted HEARTBEAT events to determine when peers go up/down and generate a custom internal event to indicate this - **Sorta Done**
-* Make the TTL on the packets configurable - **Done**
+## 复制Sofia注册
 
-## Replicating Sofia Registrations
+作为使用ODBC和共享数据库来复制sofia注册的替代方法，您还可以使用mod_event_multicast。这样，您可以复制sofia注册而无需共享数据库，因为某些时候可能无法使用（例如，您的某台机器位于不同的位置）。
 
-As an alternative to using ODBC and a shared database to replicate sofia registrations, you can also use mod\_event\_multicast. This lets you replicate sofia registrations without the requirement of sharing a database which may not always be available (if, for example, one of your machines is in a different location).
+### 配置
 
-### Configuration
+您想要在每台机器上广播注册的话，您需要以下内容：
+- 编译并加载mod_event_multicast
+- 编译并加载mod_sofia（这是默认的设置）
+- 在event_multicast.conf的“bindings”参数中添加“CUSTOM sofia::register”（您也可以在这里添加其他事件）
 
-On each machine you want to \*broadcast\* registrations on, you'll need the following:
+而如果您只想要“接收”，那么只需编译并运行mod_event_multicast和mod_sofia即可。
 
-* mod\_event\_multicast compiled and loaded
-* mod\_sofia compiled and loaded (this is default)
-* "CUSTOM sofia::register" in the "bindings" parameter of event\_multicast.conf (you can put other events here too)
+现在，一旦您在一台机器上注册一个电话，您应该能够在监听该组播IP/端口的任何其他机器上看到新的注册。
 
-On each machine you just want to \*receive\*, you just need mod\_event\_multicast and mod\_sofia compiled and running.
+## 示例
 
-Now, once you register a phone on one machine, you should be able to see the new registration on any of the other machines listening on that multicast IP/port combo.
+事件与[事件列表](https://wiki.freeswitch.org/wiki/Event%5Flist "Event list")页面上的相同，只是所有原始标头都以“Orig-”为前缀，并且事件类型为CUSTOM，子类型为multicast::event。还添加了一个Multicast-Sender标头。下面是一个之前和之后的示例：
 
-## Examples
-
-Events are the same as on the [Event list](https://wiki.freeswitch.org/wiki/Event%5Flist "Event list") page except that all original headers are prefixed with 'Orig-' and the event is of type CUSTOM with a subtype of multicast::event. A Multicast-Sender header is also added. Here's a before-after example:
-
-Before:
+之前：
 
 ```xml
 Event-Subclass: sofia%3A%3Aregister
@@ -96,106 +90,104 @@ realm: dev-cs2.fusedsolutions.com
 user-agent: SIPPER%20for%20PhonerLite
 ```
 
-After:
-
 ```xml
-Event-Name: CUSTOM
-Core-UUID: 74929b3e-57ce-11de-9be6-99a22d850f40
-FreeSWITCH-Hostname: DEV-CS1
-FreeSWITCH-IPv4: 192.168.1.17
-FreeSWITCH-IPv6: %3A%3A1
-Event-Date-Local: 2009-06-16%2018%3A15%3A10
-Event-Date-GMT: Tue,%2016%20Jun%202009%2022%3A15%3A10%20GMT
-Event-Date-Timestamp: 1245190510366825
-Event-Calling-File: mod_event_multicast.c
-Event-Calling-Function: mod_event_multicast_runtime
-Event-Calling-Line-Number: 313
-Event-Subclass: multicast%3A%3Aevent
-Multicast: yes
-Orig-Event-Name: CUSTOM
-Orig-Core-UUID: 662db344-5ecc-4eaa-9002-9992b7ab7c4d
-Orig-FreeSWITCH-Hostname: DEV-CS2
-Orig-FreeSWITCH-IPv4: 192.168.1.15
-Orig-FreeSWITCH-IPv6: %3A%3A1
-Orig-Event-Date-Local: 2009-06-16%2018%3A15%3A46
-Orig-Event-Date-GMT: Tue,%2016%20Jun%202009%2022%3A15%3A46%20GMT
-Orig-Event-Date-Timestamp: 1245190546126571
-Orig-Event-Calling-File: sofia_reg.c
-Orig-Event-Calling-Function: sofia_reg_handle_register
-Orig-Event-Calling-Line-Number: 1113
-Orig-Event-Subclass: sofia%3A%3Aregister
-Orig-profile-name: internal
-Orig-from-user: 1000
-Orig-from-host: 192.168.1.15
-Orig-presence-hosts: 192.168.1.15
-Orig-contact: %221000%22%2 %3Csip%3A1000%40192.168.1.23%3A5060%3Bfs_nat%3Dyes%3Bfs_path%3Dsip%253A1000%2540192.168.1.23%253A5060%3E
-Orig-call-id: 002D61B2-5F3A-DD11-BF4B-00132019B750%40192.168.1.23
-Orig-rpid: unknown
-Orig-statusd: Registered(UDP-NAT)
-Orig-expires: 900
-Orig-to-user: 1000
-Orig-to-host: dev-cs2.fusedsolutions.com
-Orig-network-ip: 192.168.1.23
-Orig-network-port: 5060
-Orig-username: 1000
-Orig-realm: dev-cs2.fusedsolutions.com
-Orig-user-agent: SIPPER%20for%20PhonerLite
-Orig-Multicast-Sender: DEV-CS2
+活动名称: 自定义
+核心UUID: 74929b3e-57ce-11de-9be6-99a22d850f40
+FreeSWITCH主机名: DEV-CS1
+FreeSWITCH IPv4 地址: 192.168.1.17
+FreeSWITCH IPv6 地址: %3A%3A1
+本地事件日期: 2009-06-16%2018%3A15%3A10
+GMT事件日期: 周二，2009年6月16日 22%3A15%3A10 GMT
+事件时间戳: 1245190510366825
+调用文件: mod_event_multicast.c
+调用函数: mod_event_multicast_runtime
+调用行数: 313
+事件子类: multicast%3A%3Aevent
+多播: 是
+原始事件名称: 自定义
+原始核心UUID: 662db344-5ecc-4eaa-9002-9992b7ab7c4d
+原始FreeSWITCH主机名: DEV-CS2
+原始FreeSWITCH IPv4 地址: 192.168.1.15
+原始FreeSWITCH IPv6 地址: %3A%3A1
+原始本地事件日期: 2009-06-16%2018%3A15%3A46
+原始GMT事件日期: 周二，2009年6月16日 22%3A15%3A46 GMT
+原始事件时间戳: 1245190546126571
+原始调用文件: sofia_reg.c
+原始调用函数: sofia_reg_handle_register
+原始调用行数: 1113
+原始事件子类: sofia%3A%3Aregister
+原始配置文件名: internal
+原始发起用户: 1000
+原始发起主机: 192.168.1.15
+原始存在主机: 192.168.1.15
+原始联系方式: %221000%22%2 %3Csip%3A1000%40192.168.1.23%3A5060%3Bfs_nat%3Dyes%3Bfs_path%3Dsip%253A1000%2540192.168.1.23%253A5060%3E
+原始呼叫ID: 002D61B2-5F3A-DD11-BF4B-00132019B750%40192.168.1.23
+原始远程ID: 未知
+原始状态: 注册(UDP-NAT)
+原始过期时间: 900
+原始接收用户: 1000
+原始接收主机: dev-cs2.fusedsolutions.com
+原始网络IP地址: 192.168.1.23
+原始网络端口: 5060
+原始用户名: 1000
+原始领域: dev-cs2.fusedsolutions.com
+原始用户代理: SIPPER for PhonerLite
+原始多播发送者: DEV-CS2
 ```
 
-## Other Custom Events
+## 其他自定义事件
 
-In addition to multicast::event described above, the module now also can send events to notify of the status of other multicast peers. If you have the 'heartbeat' event in the 'bindings' parameter when a multicasted heartbeat is received you'll receive a multicast::peerup if there was no previous heartbeat from this peer or if the last heartbeat was more than 60 seconds ago. If a heartbeat from that peer is not received at least once every 60 seconds a multicast::peerdown event will be fired.
+除了上述描述的multicast::event外，该模块现在还可以发送事件以通知其他多播节点的状态。如果在“bindings”参数中有“heartbeat”事件，当收到多播的心跳时，如果这个节点之前没有收到心跳，或者最后一次心跳时间超过60秒，您将会收到一条multicast::peerup事件。如果来自该节点的心跳没有至少每60秒接收一次，将会触发一个multicast::peerdown事件。
 
-## Event Encryption
+## 事件加密
 
-If you set the 'psk' parameter in the config file, and you had the openssl development headers installed when you ran ./configure, the packets generated by the module will be encrypted using the blowfish cipher in CBC (cipher block chaining) mode. Only other peers with the same pre-shared key set will be able to decrypt those packets. Events received by a peer in plaintext when it's configured for encryption will be**discarded**.
+如果在配置文件中设置了“psk”参数，并且在运行./configure时安装了openssl开发头文件，则该模块生成的数据包将使用CBC（密码块链接）模式下的blowfish密码进行加密。只有具有相同预共享密钥的其他节点才能解密这些数据包。当配置为加密时，对等方接收到的明文事件将被**丢弃**。
 
-The use of encryption protects you from malicious event injection as well as allows you to share a multicast/port combination without conflict (if you had some valid reason to do so).
+使用加密可以保护您免受恶意事件注入，并且可以允许您共享多播/端口组合而不会导致冲突（如果您有一些有效的理由）。
 
-## Troubleshooting
+## 故障排除
 
-### Couldn't register subclass
+### 无法注册子类
 
-This probably means that mod\_sofia has already been loaded and grabbed the multicast::event subclass registration. Ensure that mod\_event\_multicast appears before mod\_sofia in your modules.conf.xml.
+这可能意味着mod\_sofia已经加载并占用了multicast::event子类的注册。请确保mod\_event\_multicast在modules.conf.xml中出现在mod\_sofia之前。
 
-### Bind Error
+### 绑定错误
 
-This means that the module failed to bind to the multicast address to receive events from other FS instances. FreeBSD jails restrict you to one one IP, so for example this will fail there.
+这意味着模块无法绑定到多播地址以接收来自其他FS实例的事件。FreeBSD容器限制您只能使用一个IP，因此在那里会失败。
 
-### Failed to find start of magic string
+### 找不到魔术字符串的起始点
 
-The event failed to decrypt properly or was received in plain-text when a encrypted event was expected. 
+事件无法正确解密或者在期望接收到加密事件时以明文形式接收到。
 
-### Cannot use pre shared key encryption without OpenSSL support
+### 没有OpenSSL支持，无法使用预共享密钥加密
 
-Install the development headers for openssl and re-run ./configure or don't try to use a pre-shared key.
+安装openssl的开发头文件并重新运行./configure命令，或者不要尝试使用预共享密钥。
 
-## Using multicast in networked FSs
+## 在网络化的文件系统中使用组播
 
-### Introduction
+### 简介
 
-The example below illustrates how the multicast can be used in a networked setup. The scripting language examples are written in Lua.
+下面的示例说明了如何在网络化设置中使用组播。脚本语言示例是用Lua编写的。
 
-The topology considered is:
+考虑的拓扑结构是：
 
 ```xml
-                       Central hub
+                       中央枢纽
 		          /         |         \
-        Satellite 1   Satellite 2 . . . Satellite N
+        卫星1   卫星2 ... 卫星N
 ```
 
-SIP phones are connected to the satellites as well as to the central hub.
+SIP电话连接到卫星和中央枢纽。
 
-Regarding BLF, we want the lamps on a “local" phone to switch on and off according to other phones busy state – and this should work even when the other phones are connected to a non-local FS.
+关于BLF，我们希望“本地”电话的灯根据其他电话的忙碌状态切换开关 - 即使其他电话连接到非本地的文件系统上，这也应该正常工作。
 
-Regarding registration, we want the system to route via the hub, if the user is connected to a non-local FS. This is subject to your own design considerations. The dialplan implementing the specific routing is not included in the example.
+关于注册，如果用户连接到非本地的文件系统，我们希望系统通过中央枢纽路由。这取决于您自己的设计考虑。实现特定路由的拨号计划不在示例中。
 
-The event multicast modules is used to propagate relevant information among the networked FSs, and Lua scripts listen to the events and act. The network between the switches must support multicasting.
+事件组播模块用于在网络化文件系统之间传播相关信息，Lua脚本监听事件并做出响应。交换机之间的网络必须支持组播。
 
-### Multicast configuration file
+### 组播配置文件
 
-The configuration file for event\_multicast:
+事件\_组播的配置文件：
 
 ```xml
 <configuration name="event_multicast.conf" description="Multicast Event">
@@ -208,11 +200,11 @@ The configuration file for event\_multicast:
 </configuration>
 ```
 
-It includes three event types: PRESENCE\_IN, which is used to propagate the BLF information; CUSTOM sofia::register used for propagation of registrations; and CUSTOM multicast::event, used for the reception of the two types mentioned.
+它包括三种事件类型：PRESENCE_IN，用于传播BLF信息；使用于注册信息传播的CUSTOM sofia::register；使用于接收这两种类型的CUSTOM multicast::event。
 
-### Lua configuration file
+### Lua配置文件
 
-The events are treated in scripts, in this case Lua scripts, which are started when the FS starts:
+事件在脚本中处理，例如在这种情况下是Lua脚本，这些脚本在FreeSWITCH启动时启动：
 
 ```xml
 <configuration name="lua.conf" description="LUA Configuration">
@@ -224,19 +216,17 @@ The events are treated in scripts, in this case Lua scripts, which are started w
 </configuration>
 ```
 
-All three scripts listen to and act on events:
+这三个脚本监听并对事件进行操作：
 
-startup\_script\_1.lua listens the PRESENCE\_IN events and turns BLF on the local FS on/off accordingly. The locationlocal.lua and locationforeign.lua scripts listens to register events and records in a table (db\_data table in call\_limit core database) the host ip of the FS registered to. This table is then used to lookup the host ip during the preparation of the dialstring for local calls.
+startup_script_1.lua监听PRESENCE_IN事件，并相应地打开/关闭本地FS上的BLF。locationlocal.lua和locationforeign.lua脚本监听注册事件，并在一个表（call_limit核心数据库中的db_data表）中记录FS所注册的主机IP。然后在准备本地呼叫的拨号字符串时使用该表进行主机IP的查找。
 
-### Lua scripts
+### Lua脚本
 
-The three scripts are shown below (not thoroughly tested):
+以下为三个脚本的示例（未经全面测试）：
 
 ```xml
 -- file: startup_script_1.lua
--- Keeps track of foreign presence events and turn on/off
--- bysy lamps. Tested on Snom 320. Can easily be
--- changed to include ringing state as well.
+-- 跟踪外来事件并打开/关闭忙音灯。在 Snom 320 上经过测试。可以轻松更改以包含振铃状态。
 con = freeswitch.EventConsumer("CUSTOM","multicast::event")
 for e in (function() return con:pop(1) end) do
   -- freeswitch.consoleLog("notice","event\n" .. e:serialize("xml"))
@@ -262,9 +252,8 @@ end
 ```
 
 ```xml
--- file: locationforeign.lua
--- Keeps track of foreign registrations and records them 
--- in the db_data table.
+-- 文件：locationforeign.lua
+-- 跟踪外部注册，并将其记录在db_data表中。
 conforeign = freeswitch.EventConsumer("CUSTOM","multicast::event")
 for e in (function() return conforeign:pop(1) end) do
   -- freeswitch.consoleLog("notice","event:" .. e:serialize("xml") .. "\n")
@@ -298,10 +287,9 @@ end
 ```
 
 ```xml
--- file: locationlocal.lua
--- Keeps track of local registrations and records them 
--- in the db_data table.
-conlocal = freeswitch.EventConsumer("CUSTOM","sofia::register")
+-- 文件：locationlocal.lua
+-- 跟踪本地注册并在db_data表中记录它们。
+conlocal = freeswitch.EventConsumer("CUSTOM", "sofia::register")
 
 for e in (function() return conlocal:pop(1) end) do
   -- freeswitch.consoleLog("notice","event:" .. e:serialize("xml") .. "\n")
@@ -311,14 +299,14 @@ for e in (function() return conlocal:pop(1) end) do
     name = e:getHeader("FreeSWITCH-Hostname")
     unitnumber = e:getHeader("from-user")
     customerid = e:getHeader("from-host")
-    -- freeswitch.consoleLog("notice","Local registration: " .. registerstatus .. " ip: " .. ip .. " name: " .. name .. " unitnumber: " .. unitnumber .. " customerid: " .. customerid .. "\n")
+    -- freeswitch.consoleLog("notice","Local registration: " .. registerstatus .. " ip: " .. ip .. " name: " .. name .. "     unitnumber: " .. unitnumber .. " customerid: " .. customerid .. "\n")
     varfamily = "LOCATION"
     require "luasql.sqlite3"
     env = luasql.sqlite3()
     con = env:connect("/usr/local/freeswitch/db/call_limit.db")
-    deletesql = "DELETE FROM db_data WHERE hostname = '"..name.."' AND realm = '"..customerid.."' AND data_key = '"..varfamily.."_"..unitnumber.."'"
+    deletesql = "DELETE FROM db_data WHERE hostname = '" .. name .. "' AND realm = '" .. customerid .. "' AND data_key =      '" .. varfamily .. "_" .. unitnumber .. "'"
     result = con:execute(deletesql)
-    sql="INSERT INTO db_data (hostname,realm,data_key,data) VALUES ('"..name.."','"..customerid.."','"..varfamily.."_"..unitnumber.."','"..ip.."')"
+    sql = "INSERT INTO db_data (hostname,realm,data_key,data) VALUES ('" .. name .. "','" .. customerid .. "','" ..     varfamily .. "_" .. unitnumber .. "','" .. ip .. "')"
     result = con:execute(sql)
     -- freeswitch.consoleLog("notice","\n" .. "SQL statement:  " .. sql .."\n result: " .. result .. "\n");
     con:close()
@@ -327,11 +315,9 @@ for e in (function() return conlocal:pop(1) end) do
 end
 ```
 
-In the modules.xml.conf, mod\_lua is the last module loaded. If other modules load after Lua has started, the system may crash.
+在modules.xml.conf文件中，mod_lua模块是最后一个加载的模块。如果其他模块在Lua启动后加载，则系统可能会崩溃。
 
-### Comments:
+### 注释：
 
-| &lt;param name\="bindings" value\="PRESENCE\_IN CUSTOM sofia::register CUSTOM multicast::event"/>With this param "multicast\_peers" shows "No multicast peers seen".Right value:&lt;param name\="bindings" value\="RE\_SCHEDULE HEARTBEAT PRESENCE\_IN CUSTOM sofia::register CUSTOM multicast::event"/> ![](/images/icons/contenttypes/comment_16.png) Posted by denis at Dec 22, 2014 07:39 |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-
-
+| &lt;param name\="bindings" value\="PRESENCE\_IN CUSTOM sofia::register CUSTOM multicast::event"/>这个参数中的"multicast\_peers"显示为"未发现组播对等方"。正确的值是:&lt;param name\="bindings" value\="RE\_SCHEDULE HEARTBEAT PRESENCE\_IN CUSTOM sofia::register CUSTOM multicast::event"/> ![](/images/icons/contenttypes/comment_16.png) 发表者: denis，发表于2014年12月22日07:39 |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

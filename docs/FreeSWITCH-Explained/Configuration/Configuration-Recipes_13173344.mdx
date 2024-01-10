@@ -1,41 +1,38 @@
+# 配置指南
 
-# Configuration Recipes 
+## 关于
 
- 
+本页面的目的是提供一系列“配方”，描述在FreeSWITCH中如何完成各种“标准”任务。希望通过给出足够的功能描述，配以示例，以便新用户可以使用这些配方来快速设置FreeSWITCH，而不是尝试阅读所有文档。FreeSWITCH是复杂的，所以可能有许多解决这些问题的方式，但这些说明和示例应该为起点或参考不同技术提供了一个良好的起点。
 
-## About
+点击这里展开目录
 
-The intention of this page is to come up with a series of 'recipes' which describe how to do various 'standard' tasks in FreeSWITCH. The hope is that enough of a functional description of the process is given, perhaps with examples, so that a new user can setup FreeSWITCH using these recipes as a basis much faster than trying to read all the documentation. FreeSWITCH is complex so there may be many ways to solve these problems, but these descriptions and examples should hopefully provide a good starting point or reference different techniques.
+* 1 [从空配置开始](#从空配置开始)
+* 2 [配置sofia用户代理（在哪里监听呼叫）](#配置sofia用户代理（在哪里监听呼叫）)
+* 3 [配置分机](#配置分机)
+* 4 [配置用于外拨的网关](#配置用于外拨的网关)
+* 5 [配置呼叫组](#配置呼叫组)
+* 6 [配置从网关接收的呼入呼叫](#配置从网关接收的呼入呼叫)
+* 7 [配置语音信箱](#配置语音信箱)
 
-Click here to expand Table of Contents
+#### 从空配置开始
 
-* 1 [Start with an empty configuration](#start-with-an-empty-configuration)
-* 2 [Configure the sofia user agents (where freeswitch will listen for calls)](#configure-the-sofia-user-agents-where-freeswitch-will-listen-for-calls)
-* 3 [Configure extensions](#configure-extensions)
-* 4 [Configure gateways for making outgoing calls](#configure-extensions)
-* 5 [Configure call groups](#configure-call-groups)
-* 6 [Configure incoming calls from gateways](#configure-incoming-calls-from-gateways)
-* 7 [Configure voicemail](#configure-voicemail)
+目前还没有空的配置。创建一个空配置的最好方法是清除默认配置。默认配置中有很多条目是有用的，所以按照下面的步骤清除不需要的条目。
 
-#### Start with an empty configuration
+注意：空配置可能不一定就是一个空的conf/目录，而是在该配置中没有激活的用户代理、没有配置的分机和没有激活的网关。当然，除了将更多功能应用到配置中外，这个配置在其他方面是没有用处的。
 
-Right now there is no empty configuration. The the best way to create an empty configuration is to clean out the default configuration. Many entries in the default configuration are good so follow the next steps to clean out what is not needed.
+注意：正如显而易见的，本页面是正在进行中的工作，需要进行完善。
 
-Note: an empty configuration may not necessarily be an empty conf/ directory but simply a configuration where there are no user agents active, where no extensions are configured, and no gateways are active. This configuration would of course not be useful for anything except applying further recipes to provide more functionality.
+#### 配置 sofia 用户代理（freeswitch 监听呼叫的位置）
 
-Note: as will be apparent this page is work in progress and needs to be completed.
+#### 配置分机
 
-#### Configure the sofia user agents (where freeswitch will listen for calls)
+默认配置中的分机通过在 directory/default/&lt;extension_number>.xml 中添加条目来进行配置。
 
-#### Configure extensions
+这些文件的格式可以通过 directory/default/1000.xml 到 directory/default/1019.xml 中的示例配置进行查看。
 
-The extensions in the default configuration are configured by adding entries in directory/default/&lt;extension\_number>.xml.
+##### 限制本地网络注册呼叫的分机
 
-The format of these files can be seen by the example configurations in directory/default/1000.xml to directory/default/1019.xml.
-
-##### Limiting extensions to register call from local networks
-
-If you want to limit registration and usage of these extensions to your local network you can add the option:
+如果您想限制这些分机的注册和使用只在本地网络中进行，可以添加以下选项：
 
 ```xml
 <include>
@@ -48,20 +45,20 @@ If you want to limit registration and usage of these extensions to your local ne
 </include>
 ```
 
-This requires the following entry in sip\_profiles/internal.xml:
+这需要在 sip\_profiles/internal.xml 中添加以下条目：
 
 ```xml
 <param name="auth-calls" value="true"/>
 ```
 
 ####   
-Configure gateways for making outgoing calls
+配置用于发出呼叫的网关
 
-#### Configure call groups
+#### 配置呼叫组
 
-Call groups are a way in which you can treat a group of extensions together, and then via that name call them all together. This recipe tries to explain how you can add a new call group using the default configuration. This assumes you have several extensions configured and want to create a new call group number through which these extensions can be called.
+呼叫组是一种您可以将一组分机一起处理的方式，然后通过该名称同时呼叫它们。本文尝试解释如何使用默认配置添加新的呼叫组。假设您已经配置了多个分机，并且想要创建一个新的呼叫组号码，通过该号码可以呼叫这些分机。
 
-First add the call group name into the directory/default/&lt;extension\_number>.xml:
+首先，在 directory/default/&lt;extension_number>.xml 中添加呼叫组名称：
 
 ```xml
 <include>
@@ -75,8 +72,11 @@ First add the call group name into the directory/default/&lt;extension\_number>.
     </variables>
   </user>
 </include>
+```
 
-In directory/default.xml:
+在 directory/default.xml 中：
+
+```xml
 <groups>
   <group name="<call_group_name>">
     <users>
@@ -89,9 +89,7 @@ In directory/default.xml:
 </groups>
 ```
 
-Finally to use the call group you need something like:
-
-In dialplan/default.xml:
+最后要使用呼叫组，你需要在 dialplan/default.xml 中添加以下代码：
 
 ```xml
 <extension name="group_extension_name">
@@ -101,14 +99,12 @@ In dialplan/default.xml:
    </extension>
 ```
 
-Dialing the numbers in the call group can be done in many ways. See ... for more details.
+打电话给呼叫组可以使用多种方式。更多详情请参阅...。
 
-#### Configure incoming calls from gateways
+#### 配置来自网关的呼入电话
 
-#### Configure voicemail
+#### 配置语音信箱
 
-##### Configure voicemail so it doesn't ask you for your extension
+##### 配置语音信箱，使其不要要求输入分机号码
 
-If you call the voicemail extension then it asks you to provide your extension number and password. However, in most cases, and this is especially true of mobile phone networks, if the PBX is able to recognize an authenticated caller this should not be necessary and it would be convenient if you directly bypass the authentication phase and get a list of messages in your voicemail box.
-
-
+当你拨打语音信箱号码时，它会要求你提供分机号码和密码。然而，在大多数情况下，特别是对于移动电话网络，如果PBX能够识别出已验证的呼叫者，这是不必要的，如果能够直接绕过验证阶段并获得语音信箱中的消息列表将非常方便。

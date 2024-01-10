@@ -1,69 +1,63 @@
-
 # mod_dptools: export 
 
- 
+## 关于
 
-## About
+将 A leg 中的通道变量导出到 B leg。在以 export 被调用的通道中创建的任何新通道中，变量及其值将被复制。
 
-Exports a channel variable from the A leg to the B leg. Variables and their values will be replicated in any new channels created in the one in which export was called.
+点击此处展开目录
 
-Click here to expand Table of Contents
+* 1 [用法](#usage)
+* 2 [示例](#examples)
+* 3 [参见](#see-also)
 
-* 1 [Usage](#usage)
-* 2 [Examples](#examples)
-* 3 [See Also](#see-also)
-
-### Usage
+### 用法
 
 ```xml
 <action application="export" data="name_of_var_to_export=value"/>
 ```
 
-  
-Note: if you want to override these exported channel variables in your dial-string, you have to also set the global variable _local\_var\_clobber_ to true, for example:
+注意：如果您想要在拨号字符串中覆盖这些导出的通道变量，您还必须将全局变量 _local\_var\_clobber_ 设置为 true，例如：
 
 ```xml
 <action application="export" data="foo=one"/>
 <action application="bridge" data="{local_var_clobber=true}[foo=two]sofia/gateway/someprovider/123"/>
 ```
 
-Only now foo gets the value 'two' on your b-leg, if local_var_clobber is not set then it will keep the value 'one'.
+只有当 local_var_clobber 没有设置时，foo 的值才会变成 'two'，否则将保留值 'one'。
 
-This application may be run _[inline](../../Dialplan/XML-Dialplan/index.mdx#inline-actions)_ from the XML dialplan.
+这个应用程序可以从 XML 拨号计划中的 _[内联](../../Dialplan/XML-Dialplan/index.mdx#inline-actions)_ 运行。
 
-### Examples
+### 示例
 
 ```xml
 <action application="export" data="foo=${foo}"/>
 ```
 
-This typically also sets the A leg.
+这通常也设置了 A leg。
 
 ```xml
 <action application="export" data="foo=bar"/>
 ```
 
-To only export to the B leg, prefix the variable name with 'nolocal:', like below:
+要仅导出到 B leg，将变量名前缀设置为 'nolocal:'，例如：
 
 ```xml
 <action application="export" data="nolocal:foo=bar"/>
 ```
 
-It is also possible to prefix your to-be-exported channel variable with '\_nolocal\_', like below:
+也可以将要导出的通道变量前缀设置为 '\_nolocal\_'，例如：
 
 ```xml
 <action application="export" data="_nolocal_foo=bar"/>
 ```
 
-Both prefixes work the same as far as FreeSWITCH is concerned.
+在 FreeSWITCH 中，这两种前缀的功能相同。
 
-Reason of this alternate prefix is that the 'nolocal:' variables will end up in the xml cdr of the a-leg and some xml parsers will choke on this because the nolocal: part will be regarded as namespace, which is not defined. Also, it is not possible to use ${nolocal:foo} anywhere in your dialplan because the colon (:) is used to get everything from the nth character in ${foo:n}. ${\_nolocal\_foo} works fine.
+此备选前缀的原因是'nolocal:'变量会出现在a-leg的XML CDR中，某些XML解析器对此会出现故障，因为'nolocal:'部分将被视为未定义的命名空间。另外，在您的拨号计划中无法使用`${nolocal:foo}`，因为冒号（:）用于从`${foo:n}`获取从第n个字符开始的所有内容。`${\_nolocal\_foo}`可以正常工作。
 
-### See Also
+### 参见
 
 * [export\_vars](../../../Channel-Variables-Catalog/export_vars_16353767.mdx#export_vars)
 * [Dialplan](../../Dialplan/index.mdx#0-about)
 * [Variable\_import](../../Introduction/Variables/index.mdx#0-about)
 * [mod\_dptools: set](./6586661.mdx#about)
-
-

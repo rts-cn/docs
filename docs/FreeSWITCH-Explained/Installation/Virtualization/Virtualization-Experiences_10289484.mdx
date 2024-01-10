@@ -1,172 +1,164 @@
+# 虚拟化经验
 
-# Virtualization Experiences 
+## 关于
 
- 
+本页面记录了一些在虚拟环境中部署FreeSWITCH™的用户的评论。每个安装都有其自己的考虑因素，所以虚拟化没有固定的规则。希望这些报告能对您有所指导。
 
-## About
+最重要的是，我们需要关于托管您的FreeSWITCH™安装的虚拟机配置的**具体数据**。仅仅说“它运行正常”或“我们遇到了问题”是不够的。没有具体的数据，我们无法选择与需求匹配的虚拟平台。谢谢。
 
-This page captures some comments from user who have deployed FreeSWITCH™ in virtual environments. Each installation has its own considerations so there are no hard and fast rules for virtualization. Hopefully, these reports can guide you.
-
-Most importantly, we need **specific data** on the configuration of virtual machine that hosts your FreeSWITCH™ installation. It is not enough to say that "it worked OK" or "we had problems". Without specifics there is no way to choose a virtual platform to match it to the need. Thanks.
-
-Click here to expand Table of Contents
+点击这里展开目录
 
 * 1 [Amazon AWS](#-freeswitch--virtualization-experiences-)
-* 2 [CPU Resources](#-freeswitch--virtualization-experiences-)
+* 2 [CPU 资源](#-freeswitch--virtualization-experiences-)
 * 3 [ESXi](#-freeswitch--virtualization-experiences-)
 * 4 [LXC](#-freeswitch--virtualization-experiences-)
 * 5 [OpenVZ](#-freeswitch--virtualization-experiences-)
 * 6 [ProfitBricks](#profitbricks)
 
-## Amazon AWS
+## 亚马逊AWS
 
-**Amazon AWS**
+**亚马逊AWS**
 
-(07:05:42) playnet: is amazon compatible with FS?  
-(07:11:45) bigmoose: playnet: as long as it's running Debian 8 (as recommended here <https://freeswitch.org/confluence/display/FREESWITCH/Debian+8+Jessie>) I don't see why not. Also, read <https://freeswitch.org/confluence/display/FREESWITCH/FAQ#FAQ-Q:DoesitrunonAmazonElasticCloud?>  
-(07:12:41) bigmoose: woops - ignore that last link, I meant <https://freeswitch.org/confluence/display/FREESWITCH/Amazon+EC2> of course ;)  
-(08:26:52) eschmidbauer: bigmoose: you deploy on AWS ?  
-(08:33:18) bigmoose: nope  
-(08:33:51) playnet: i create amazon account...  
-(08:34:10) playnet: who have AMI with fs-compatible centos 6&  
-(08:40:17) \*\*\*eschmidbauer wonders if anyone deploys FS in AWS production environments  
-(08:42:26) crienzo: i'm going to try that out at some point this year... i've seen FS run well on Xen, but not in AWS  
-(09:22:47) lwm459: eschmidbauer: I'm been testing with it and seen good results  
-(09:24:41) crienzo: lwm459, what size instance and which OS are you using?  
-(09:25:44) lwm459: crienzo: just use the debian ami that's on their wiki  
-(09:26:04) lwm459: haven't put any real load on it yet though but don't see why it should be an issue  
-(09:26:18) lwm459: started messing around with t2.micro but have since moved to m4.large  
-(09:28:33) BoteMan: The problem with virtualized hosts is that you never know what other loads are being placed on the entire bare metal machine, unless you control the entire system. With Amazon, who knows? They could starve your FreeSWITCH instance, cause problems, then by the time you troubleshoot it the problems are gone.  
-(09:29:35) crienzo: With enough money, you can pay to guarantee that isn't the case. I haven't check on that pricing or if it's even worth it.  
-(09:29:48) BoteMan: Ahhh, there's the rub.  
-(09:30:13) lwm459: BoteMan: Agreed. But spreading the load across multiple FS instances might help...?  
-(09:31:07) BoteMan: I go through this all the time with prospective customers. Everybody wants to virtualize EVERYTHING. I get why, but when you're streaming real-time media you can't cut corners the way you can with a web, email, database server that can withstand some latency.  
-(09:31:33) crienzo: nice thing with virtualization is you can deploy to regions of the world that you lack presence  
-(09:31:41) crienzo: so that helps with latency  
-(09:32:08) lwm459: Sounds like it's very much based on requirement and need (plus personal experience)  
-(09:32:12) BoteMan: I mean internal system latency. Every 20 milliseconds those RTP packets MUST go out, can't wait for the machine to service other virtual hosts on the same box.  
-(09:32:29) BoteMan: Yep.  
-(09:32:48) BoteMan: People want hard and fast assurances and you can't provide them with a VM.  
-(09:33:44) BoteMan: There are considerations of system clock stability and CPU scheduling, to name 2\. There was a recent discussion on the -users mailing list I think last week about this.  
-(09:37:36) lwm459: I think there are probably quite a few people running FreeSWITCH on AWS EC2\. Maybe not processing huge amounts of traffic but I'm sure there are those that have had success with it. But even then, 'huge amounts of traffic' is a matter of perspective.  
-(09:37:50) DigiDaz\_: eschmidbauer, I have seen a few people report good success on AWS, that NAT alone puts me off  
-(09:53:48) mase2hot: I'm running freeswitch on AWS  
-(09:54:38) mase2hot: I have ran asterisk for 2+ years on AWS too without any issues which I would put down to virtualisation.  
-(09:55:40) mase2hot: I have had issues with Digital Ocean some time back, which resulted in bad call quality and random CPU usage even when moving to a 32 core.  
-(09:56:10) mase2hot: It turned out another user was taking all the CPU, no doubt for bitcoin mining..  
-(09:56:43) saratogga: it's just so much simpler to just run FS on a bare metal and not worry about all these things  
-(09:57:00) saratogga: so many other things to worry about, at least you get rid of this part  
-(09:58:19) mase2hot: That is true, but if you want to scale up in minutes then scale back hours later, there is no beating it. Plus takes out the worry for massive investment etc. But I would say **there is no right or wrong solution it needs to be done case by case.**  
-(09:58:20) BoteMan: saratogga: SO TRUE! But it's very difficult to convince people of that.  
-(09:59:24) MafooUK: we use virtualization on our instances, but we own and operate the others so they don't share with anything that can spike any of the pbx hosts  
-(10:00:11) mase2hot: You can go for single tenant on AWS if you feel the need as an option.
+(07:05:42) playnet: 亚马逊兼容FS吗？  
+(07:11:45) bigmoose: playnet: 只要它运行Debian 8（建议在此处 <https://freeswitch.org/confluence/display/FREESWITCH/Debian+8+Jessie>），我不明白为什么不行。此外，请阅读<https://freeswitch.org/confluence/display/FREESWITCH/FAQ#FAQ-Q:DoesitrunonAmazonElasticCloud?>  
+(07:12:41) bigmoose: 糟糕了 - 忽略掉最后一个链接，我是指 <https://freeswitch.org/confluence/display/FREESWITCH/Amazon+EC2> 当然 ;)  
+(08:26:52) eschmidbauer: bigmoose: 你在AWS上部署吗？  
+(08:33:18) bigmoose: 不是  
+(08:33:51) playnet: 我创建了亚马逊账号...  
+(08:34:10) playnet: 谁有FS兼容的CentOS 6 AMI ？  
+(08:40:17) \*\*\*eschmidbauer不知道是否有人在AWS生产环境中部署FS  
+(08:42:26) crienzo: 我今年有机会试试...我看到FS在Xen上运行得很好，但在AWS上不行  
+(09:22:47) lwm459: eschmidbauer: 我一直在测试并取得了好结果  
+(09:24:41) crienzo: lwm459，你使用的是哪个类型的实例和操作系统？  
+(09:25:44) lwm459: crienzo: 只需使用他们维基上的Debian AMI  
+(09:26:04) lwm459: 但还没有给它施加真正的负载，不过我觉得应该没问题  
+(09:26:18) lwm459: 开始时使用了t2.micro，后来改成了m4.large  
+(09:28:33) BoteMan: 虚拟主机的问题是，除非你控制整个系统，否则无法知道裸机上的其他负载有多高。在亚马逊上，谁知道呢？他们可能会让你的FreeSWITCH实例负荷过高，造成问题，然后你排查问题的时候问题又解决了。  
+(09:29:35) crienzo: 花钱多了，你可以付费保证不会有这种情况。我没有查过价格，也不知道是否值得。  
+(09:29:48) BoteMan: 啊，这就是问题所在。  
+(09:30:13) lwm459: BoteMan: 有道理。但是将负载分散到多个FS实例可能会有所帮助，不是吗？  
+(09:31:07) BoteMan: 我经常与潜在客户讨论这个问题。每个人都希望将一切都虚拟化。我明白为什么，但是当你在实时传输媒体时，你不能像处理一些延迟问题的Web、邮件、数据库服务器那样敷衍了事。  
+(09:31:33) crienzo: 虚拟化的好处是可以部署到你没有服务器的地区  
+(09:31:41) crienzo: 所以可以减少延迟  
+(09:32:08) lwm459: 听起来这非常根据需求和实际情况（还有个人经验）  
+(09:32:12) BoteMan: 我指的是内部系统的延迟。每隔20毫秒RTP数据包必须发送出去，不能等待机器服务同一台主机上的其他虚拟主机。  
+(09:32:29) BoteMan: 是的。  
+(09:32:48) BoteMan: 人们希望获得明确的保证，但在虚拟机上无法提供。  
+(09:33:44) BoteMan: 还需要考虑系统时钟的稳定性和CPU调度，只是其中两个方面。我觉得最近在-users邮件列表上还有一次讨论。  
+(09:37:36) lwm459: 我觉得在AWS EC2上有很多人在运行FreeSWITCH。也许处理的流量不大，但我相信有些人获得了成功。但是，即使是“巨大的流量”也是一个相对而言的问题。  
+(09:37:50) DigiDaz\_: eschmidbauer，我见过一些人在AWS上取得良好的成功，但NAT就让我放弃了。  
+(09:53:48) mase2hot: 我在AWS上运行FreeSWITCH  
+(09:54:38) mase2hot: 我之前在AWS上运行了2+年的Asterisk，也没有任何问题，我认为是虚拟化技术的功劳。  
+(09:55:40) mase2hot: 我曾经在Digital Ocean上遇到问题，导致通话质量不好，而且即使转移到了32核也有随机CPU使用率问题。  
+(09:56:10) mase2hot: 结果发现另一个用户占用了所有的CPU，毫无疑问是为了比特币挖矿。  
+(09:56:43) saratogga: 只需在裸机上运行FS就简单多了，不需要担心所有这些问题  
+(09:57:00) saratogga: 还有许多其他问题需要担心，至少这部分可以解决掉  
+(09:58:19) mase2hot: 这是真的，但如果你想在几分钟内扩展，然后几个小时后缩小规模，那没有什么能胜过它。此外，可以避免巨额投资等问题。但我想说**没有正确或错误的解决方案，需要根据具体情况进行决策。**  
+(09:58:20) BoteMan: saratogga: 真理！但是很难说服别人。  
+(09:59:24) MafooUK: 我们在实例上使用虚拟化，但我们拥有和运作其他服务器，所以它们不与任何可能影响pbx主机的东西共享。  
+(10:00:11) mase2hot: 如果你需要，你可以选择在AWS上使用专用主机。
 
-(10:17:09) eschmidbauer: how much memory/cpu and how many cps ?
+(10:17:09) eschmidbauer: 内存、CPU和并发呼叫数量有多少？
 
-(10:40:34) mase2hot: sorry I was busy, treat it like bare metal put at much into it as you can afford. A M3.large will do around 200 concurrent calls, but depends what else you ahve running. Never touch G729 stick with alaw / ulaw.
+(10:40:34) mase2hot: 对不起刚刚有点忙，就像裸金属一样，尽量投入你能承受的资源。M3.large 能处理约200个并发呼叫，但这取决于你运行的其他内容。不要使用G729，老老实实用alaw/ulaw。
 
-## CPU Resources
+## CPU资源
 
-**CPU Resources**
+**CPU资源**
 
-From: Stanislav Sinyagin  
- Sent: Thursday, 28 January, 2016 17:37  
- To: FreeSWITCH Users Help  
- Subject: Re: \[Freeswitch-users\] FreeSWITCH in virtual environments
+发件人: Stanislav Sinyagin  
+ 发送时间: 2016年1月28日星期四 17:37  
+ 收件人: FreeSWITCH用户帮助  
+ 主题: Re: \[Freeswitch-users\] 虚拟环境中的FreeSWITCH
 
-A relatively modern VMWare server should not be a problem, but you need to provide the VM some guaranteed CPU cycles.
+相对较新的VMWare服务器不应该是个问题，但你需要为虚拟机提供一定数量的保证CPU周期。
 
-I made a number of tests in various cloud hosting offerings, and the hardware clock is not any more an issue. But there was always the issue that the VM was serviced in best-effort manner, and there's never a guaranteed CPU resource for it. So, with 10+ simultaneous calls, FreeSWITCH sometimes failed to send RTP on time, simply because the CPU cycles were not available when needed.
+我在各种云主机上进行了多次测试，硬件时钟已经不再是问题。但总是存在一个问题，虚拟机的服务方式是尽力而为的，并没有对其进行保证的CPU资源。所以，当有10个以上的并发呼叫时，FreeSWITCH有时会因为需要的CPU周期无法及时发送RTP。
 
-You can perform the tests relatively easily, by firing calls from an automated dialer, and analyzing the RTP streams with tshark.
+你可以通过使用自动拨号器发起来电，并用tshark分析RTP流来相对轻松地进行测试。
 
 ## ESXi
 
 **ESXi**
 
-From: Grant Bagdasarian  
- Sent: Friday, 29 January, 2016 03:04  
- Subject: Re: \[Freeswitch-users\] FreeSWITCH in virtual environments
+发件人: Grant Bagdasarian  
+ 发送时间: 2016年1月29日星期五 03:04  
+ 主题: Re: \[Freeswitch-users\] 虚拟环境中的FreeSWITCH
 
-We're currently running around 20 FS VM's on multiple physical ESXi hosts and some on vCenter clusters with no issues at all. The current versions are still 1.4 (updating soon) but haven't had any issues with timing or RTP streams. We do limit the number of VM's per physical host not to overcommit resources, but in some cases overcommitting resources worked out fine too.
+我们目前在多个物理ESXi主机和一些vCenter集群上运行约20个FS虚拟机，一直没有任何问题。当前版本仍然是1.4版（即将更新），但在时序或RTP流方面没有遇到任何问题。我们确实限制每个物理主机上的虚拟机数量，以避免资源超负荷，但在某些情况下超负荷工作也没问题。
 
-We've been running FS virtualized on VMWare for almost 2-3 years now and haven't had any issues with timing or rtp.
+我们已经在VMWare上虚拟化运行FS将近2-3年了，时序或RTP方面都没有遇到任何问题。
 
-A single VM host (6 Cores, 12 Threads) with 3 FS VM's (bridging calls between the FS instances) should be able to handle close to 500 calls active without any issues. In this setup and our load test of this setup we had in total 5 call legs, bridged from the first to the last FS VM in the chain.
+一个单独的虚拟机主机（6个核心，12个线程），配备3个FS虚拟机（用于在FS实例之间建立通信），应该能够处理近500个呼叫同时活动而没有任何问题。在这个设置中以及我们对该设置的负载测试中，总共有5个呼叫链路，从第一个FS虚拟机桥接到最后一个FS虚拟机。
 
-We never tested with 300 CPS, but the host itself has 8 GB of memory. Our VM’s usually have 2-4 CPU’s and 1-2 GB of memory, but memory is hardly used. It’s CPU you need.
+我们从未测试过300CPS，但主机本身配备8GB内存。我们的虚拟机通常有2-4个CPU和1-2GB内存，但几乎不使用内存。您需要的是CPU。
 
 ## LXC
 
 **LXC**
 
-From: Peter Steinbach  
-Sent: Tuesday, 02 February, 2016 06:41  
-Subject: Re: \[Freeswitch-users\] FreeSWITCH in virtual environments  
-  
-we have just setup Freeswitch on Debian 8 inside LXC. We are examinating to switch from OpenVZ zu LXC.  
-  
-Freeswitch works so far productive, but with almost no load, so I have no performance figures yet. We will do some load and stress tests during this month to compare against OpenVZ.  
-  
-We expect advantages compared to OpenVZ with a newer kernel and in networking, let's see then where the drawbacks are.  
-  
-Best regards  
+发件人：Peter Steinbach  
+发送时间：2016年2月2日星期二06:41  
+主题：Re: \[Freeswitch-users\]在虚拟环境中使用FreeSWITCH  
+
+我们刚刚在Debian 8上安装了运行在LXC内部的FreeSWITCH。我们正在考虑从OpenVZ切换到LXC。
+
+FreeSWITCH目前已经在生产环境中运行，但是几乎没有负载，所以我还没有性能数据。在这个月内，我们将进行一些负载测试和压力测试，以与OpenVZ进行比较。
+
+我们期望相对于OpenVZ有一些优势，如更新的内核和网络方面的优势，让我们拭目以待，看看其中的不足之处。
+
+最好的问候，
 Peter
 
 ## OpenVZ
 
 **OpenVZ**
 
-**From:** Volodymyr Fedorov  
-**Sent:** Friday, 29 January, 2016 13:09  
-**Subject:** Re: \[Freeswitch-users\] FreeSWITCH in virtual environments
+**发件人：**Volodymyr Fedorov
+**发送时间：**2016年1月29日星期五13:09
+**主题：**Re: \[Freeswitch-users\]在虚拟环境中使用FreeSWITCH
 
-Hi all. From behind, we used OpenVz container and freeswitch 1.4 without any performance impact. Stats 300-500 calls, cps around 10-15 without transcoding, but sometimes record-session was involved.  
- Actually, it depends on transcoding, dtmf-conversion, conferencing.
+大家好。在这里，我们使用OpenVZ容器和freeswitch 1.4，没有任何性能影响。统计数据为300-500个呼叫，cps约为10-15（无需进行转码），但有时涉及录制会话。
+实际上，这取决于转码、dtmf转换和会议。
 
 ## ProfitBricks
 
 **ProfitBricks**
 
-From: Chad Phillips  
- Sent: Thursday, 28 January, 2016 17:56  
- To: FreeSWITCH Users Help  
- Subject: Re: \[Freeswitch-users\] FreeSWITCH in virtual environments
+发件人：Chad Phillips
+发送时间：2016年1月28日星期四17:56
+收件人：FreeSWITCH用户帮助
+主题：Re: \[Freeswitch-users\]在虚拟环境中使用FreeSWITCH
 
-I've had very good luck running the newer video branch (1.6) code on ProfitBricks: <https://www.profitbricks.com/>
+我在ProfitBricks上运行了更新的视频分支（1.6）代码，运气非常好：<https://www.profitbricks.com/>
 
-As far as I understand, the CPU cycles are guaranteed on their platform. I've had to put as many as 20 cores on a server to handle some of our busier video conference calls, but with that it runs quite smoothly.
+据我了解，他们平台上的CPU周期是有保障的。为了处理一些繁忙的视频会议呼叫，我不得不将服务器上的核心数增加到20个，但即便如此，它运行得非常顺畅。
 
-That was with 15 - 18 connected participants. My setup is probably a bit different than most, though, as I only have 2 video feeds up at a time (the rest are video muted). Guessing it would require quite a few more cores if I had more active video feeds.
+这是在连接了15-18个参与者的情况下。然而，我的设置可能与大多数人不同，因为我每次只显示2个视频（其他都是视频静音状态）。如果我有更多的活跃视频流，猜测可能需要更多的核心。
 
-From: freeswitch-users-bounces@lists.freeswitch.org \[mailto:freeswitch-users-bounces@lists.freeswitch.org\] On Behalf Of Peter Steinbach  
- Sent: Tuesday, 02 February, 2016 06:41  
- To: FreeSWITCH Users Help  
- Subject: Re: \[Freeswitch-users\] FreeSWITCH in virtual environments
+来自：freeswitch-users-bounces@lists.freeswitch.org [mailto:freeswitch-users-bounces@lists.freeswitch.org] 代表Peter Steinbach  
+ 发送时间：2016年2月2日 星期二 06:41  
+ 收件人：FreeSWITCH用户帮助  
+ 主题：Re: [Freeswitch-users] 虚拟环境中的FreeSWITCH
 
-Hello Stanislav,
+你好，Stanislav，
 
-we have just setup Freeswitch on Debian 8 inside LXC. We are examinating
+我们刚刚在Debian 8中使用LXC设置了Freeswitch。我们正在考虑从OpenVZ切换到LXC。
 
-to switch from OpenVZ zu LXC.
+目前，Freeswitch在生产环境中正常工作，但负载几乎没有，所以我还没有性能数据。我们将在本月进行一些负载和压力测试，与OpenVZ进行比较。
 
-Freeswitch works so far productive, but with almost no load, so I have
+我们预期在内核和网络方面与OpenVZ相比有一些优势，让我们拭目以待看看其不足之处在哪里。
 
-no performance figures yet. We will do some load and stress tests during
-
-this month to compare against OpenVZ.
-
-We expect advantages compared to OpenVZ with a newer kernel and in
-
-networking, let's see then where the drawbacks are.
-
-Best regards
+祝好，
 
 Peter
 
 ### Comments:
 
-| Freeswitch in LXCCommented out the following in /lib/systemd/system/freeswitch.service#IOSchedulingClass=realtime #IOSchedulingPriority=2 #CPUSchedulingPolicy=rrand Freeswitch service is working fine. ![](/images/icons/contenttypes/comment_16.png) Posted by rlieback at Oct 19, 2018 10:13 |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+在LXC中运行的Freeswitch中，请在/lib/systemd/system/freeswitch.service中注释掉以下内容：
 
+#IOSchedulingClass=realtime 
+#IOSchedulingPriority=2 
+#CPUSchedulingPolicy=rr
 
+Freeswitch服务正常运行。![](/images/icons/contenttypes/comment_16.png) 由rlieback于2018年10月19日10:13发布。

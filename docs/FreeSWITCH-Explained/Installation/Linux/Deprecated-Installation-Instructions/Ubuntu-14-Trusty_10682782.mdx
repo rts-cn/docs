@@ -1,57 +1,58 @@
-
 # Ubuntu 14 Trusty 
 
  
 
   
-**DEPRECATED** \- FreeSWITCH has not provided binary packages for Ubuntu since 2018, so the PPA's below are severely out of date. DO NOT USE.
+**已过时** - 自2018年起，FreeSWITCH在Ubuntu上未提供二进制软件包，因此下方的PPA已大大过时。请勿使用。
 
-## About
+## 关于
 
-Ubuntu 14.04 packages are provided by FreeSWITCH™ in a deb repository as of version 1.6\. It is strongly recommended to use this repo as additional system libraries are updated as required.  
+自1.6版本起，FreeSWITCH™为Ubuntu 14.04提供了deb仓库的软件包。强烈建议使用此仓库，以确保系统库的更新。
 
-Click here to expand Table of Contents
+点击此处展开目录
 
-* 1 [Installing from Ubuntu Packages packages](#installing-from-ubuntu-packages-packages-)  
-   * 1.1 [Building Debian packages from master branch](#building-debian-packages-from-master-branch)
+* 1 [从Ubuntu软件包安装](#installing-from-ubuntu-packages-packages-)  
+   * 1.1 [从主分支构建Debian软件包](#building-debian-packages-from-master-branch)
 
   
-## Installing from Ubuntu Packages packages 
+## 从Ubuntu软件包安装 
 
-master branch (eg: "git"):
+主分支（例如：git）：
 
-WARNING not suitable for production
+警告：不适用于生产环境
 
 ```bash
 wget -O - https://files.freeswitch.org/repo/ubuntu/freeswitch-unstable/freeswitch_archive_g0.pub | apt-key add -
 
 echo "deb http://files.freeswitch.org/repo/ubuntu/freeswitch-unstable/ trusty main" > /etc/apt/sources.list.d/freeswitch.list
 
-# you may want to populate /etc/freeswitch at this point.
-# if /etc/freeswitch does not exist, the standard vanilla configuration is deployed
+# 可以在此时填充/etc/freeswitch目录。
+# 如果/etc/freeswitch目录不存在，则部署标准基本配置
 apt-get update && apt-get install -y freeswitch-all
 
 ```
 
-### Building Debian packages from master branch
+### 从主分支构建Debian软件包
 
-WARNING not suitable for production
+警告：不适用于生产环境
 
-The master branch depends on video libraries which are not available as packages in Debian distribution, but are available from FreeSWITCH repository. Thus, you will need internet access to the FreeSWITCH DEB repository.  
-This build process requires the use of the devscripts and cowbuilder packages. The cowbuilder package allows for creating the packages in a clean chrooted environment.
+主分支依赖于在Debian发行版中不作为软件包提供的视频库，但可从FreeSWITCH仓库获取。因此，您需要访问FreeSWITCH DEB仓库的网络。
+
+此构建过程需要使用devscripts和cowbuilder软件包。cowbuilder软件包允许在一个干净的chrooted环境中创建软件包。
 
 ```bash
 echo "deb http://files.freeswitch.org/repo/ubuntu/freeswitch-unstable/ trusty main" > /etc/apt/sources.list.d/freeswitch.list
 
 apt-get update
 
-# we need some prepackaged libraries for video support from this repo
+```markdown
+# 从这个仓库中，我们需要一些预打包的视频支持库
 wget -O - https://files.freeswitch.org/repo/ubuntu/freeswitch-1.6/freeswitch_archive_g0.pub | apt-key add -
 
-# if you have not already installed git and the devscripts packages please install them now
+# 如果你还没有安装 git 和 devscripts 包，请现在安装它们
 apt-get install devscripts git
 
-# get the latest master. Use the -b flag to get a specific branch
+# 获取最新的主分支。使用 -b 标志来获取特定的分支
 mkdir /usr/src/freeswitch-debs
 cd /usr/src/freeswitch-debs
 
@@ -60,17 +61,17 @@ git clone https://github.com/signalwire/freeswitch.git freeswitch
 cd freeswitch
 ./debian/util.sh build-all -aamd64 -ctrusty
 
-# The build may last about an hour, depending on your CPU speed.
-# If the build is successful, you will have a bunch of .deb files in /usr/src/freeswitch-debs
-# please see the log files in /usr/src/freeswitch-debs/log/ folder to monitor the build or look for failures
+# 构建可能要花费大约一个小时，取决于你的 CPU 速度。
+# 如果构建成功，你将在 /usr/src/freeswitch-debs 中拥有一堆 .deb 文件
+# 请查看 /usr/src/freeswitch-debs/log/ 文件夹中的日志文件来监控构建或寻找失败
+
 ```
 
-Note that when installed from packages FreeSWITCH Packages use an FHS complaint directory layout. Binaries are installed in "/usr/bin/freeswitch", configs in "/etc/freeswitch", etc.
+请注意，从软件包中安装的 FreeSWITCH 软件包使用符合 FHS 规定的目录布局。二进制文件安装在 "/usr/bin/freeswitch"，配置文件安装在 "/etc/freeswitch" 等目录下。
 
-  
-### Comments:
+### 评论:
 
-| \`apt-get install cowbuilder\` should also be included ![](/images/icons/contenttypes/comment_16.png) Posted by jnankin at Jun 13, 2017 15:21 |
+| \`apt-get install cowbuilder\` 也应该包括进来 [^1^] 发表于 2017年6月13日15:21 |
 | -------------------------------------------------------------------------------------------------------------------------------------------- |
 
-
+[^1^]: https://files.freeswitch.org/repo/ubuntu/freeswitch-1.6/freeswitch_archive_g0.pub

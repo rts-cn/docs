@@ -1,27 +1,26 @@
-
 # mod_fsv 
 
  
 
-## About
+## 关于
 
-mod\_fsv implements functions to record and play back RTP video frames in FreeSWITCH.
+mod\_fsv 实现了在 FreeSWITCH 中记录和回放 RTP 视频帧的功能。
 
-* [play\_fsv](./mod-fsv/Play-fsv_13173498.mdx#about)
-* [record\_fsv](./mod-fsv/Record-FSV_13173603.mdx#about)
+* [播放\_fsv](./mod-fsv/Play-fsv_13173498.mdx#about)
+* [录制\_fsv](./mod-fsv/Record-FSV_13173603.mdx#about)
 
-Click here to expand Table of Contents
+单击此处展开目录
 
-* 1 [Format Interface](#format-interface)
-* 2 [File Format](#file-format)
-* 3 [Conversation About Packetization and File Formatting](#conversation-about-packetization-and-file-formatting)
-* 4 [Other](#other)
+* 1 [格式接口](#format-interface)
+* 2 [文件格式](#file-format)
+* 3 [有关分组和文件格式的对话](#conversation-about-packetization-and-file-formatting)
+* 4 [其他](#other)
 
-## Format Interface
+## 格式接口
 
-You could use the file interface for audio only record/playback
+您可以使用文件接口仅进行音频记录/播放。
 
-Dialplan app:
+拨号计划应用:
 
 ```xml
 <action application="record" data="/tmp/testrecord.fsv">
@@ -34,21 +33,21 @@ API:
 ```
 
   
-uuid\_record also can record video, but at this time it only records one leg of audio and video.
+uuid\_record 也可以录制视频，但此时它只会录制一条音频和视频。
 
-Recording in conference is also possible with:
+还可以在会议中录制:
 
 ```xml
 conference 3000 record /tmp/testrecord.fsv
 ```
 
-## File Format
+## 文件格式
 
-FSV probably means "FreeSWITCH Video". An FSV file is a native format to store audio (L16) and video (codec native) frames as seen inside RTP packets. The format is machine-dependent; especially there seems to be no allowance in the code for endian-ness (so files recorded on a big-endian machine for example would not work on a little-endian machine, etc).
+FSV 可能是指“FreeSWITCH 视频”。FSV 文件是一种用于存储音频（L16）和视频（编解码器原生）帧的本地格式，这些帧可以在 RTP 数据包中看到。该格式与机器相关；特别是代码中似乎没有考虑字节序（因此，在大端机器上记录的文件无法在小端机器上使用，反之亦然）。
 
-The file header consists of a 4 byte version ID, 32 byte IANA video codec name (presumably RFC4855 and similarly-registered names), 128 byte video format descriptor (the content of the SDP format-specific parameters "fmtp" attribute field), 4 byte audio rate, 4 byte audio packetization time, and a creation time tag.
+文件头由 4 字节的版本 ID、32 字节的 IANA 视频编解码器名称（可能是 RFC4855 和类似注册的名称）、128 字节的视频格式描述符（SDP 格式特定参数“fmtp”字段的内容）、4 字节的音频速率、4 字节的音频分组时间和一个创建时间标记组成。
 
-The frames are stored in the order received. A frame header, presumably 4 bytes in length (but stored as an "int", in native endian), is used; the top bit is one if frame is video, zero if audio; the 31 lower bits are used to store the frame length.
+帧按照接收顺序存储。使用一个帧头来标识，假设长度为4个字节（但以本机字节序存储为"int"类型）。帧头的最高位为1表示视频帧，为0表示音频帧；低31位用于存储帧长度。
 
 ```xml
 struct file_header {
@@ -61,43 +60,40 @@ struct file_header {
 };
 ```
 
-## Conversation About Packetization and File Formatting
+## 包封装和文件格式的讨论
 
-I'm going to come back and clean this up when i have a little more time to think about how to word it as documentation. – [Chris Tunbridge](https://freeswitch.org/confluence/display/~Destreyf) Destreyf
+我会在有更多时间思考如何将其以文档形式表达清楚之后回来整理。- [Chris Tunbridge](https://freeswitch.org/confluence/display/~Destreyf) Destreyf
 
-Related Conversation:
+相关讨论：
 
 **irc #freeswitch**
 
 ```text
-[14:38:27] <SwK> j0sh: fsv just strips the frames out and writes them to disk
-[14:40:44] <j0sh> SwK: so it does a full depacketization? i didn't see any codec-specific RTP parsing, but maybe I'm missing it
-[14:42:16] <MikeJ> j0sh: rtp is already parsed out.. its just using the pointer to the data payload directly
-[14:43:38] <j0sh> MikeJ: yes, but each codec has its own specific RTP format (aside from the standard RTP headers), it seems those codec specific headers are included in the disk format
-[14:44:11] <MikeJ> iirc we put our own header on their.. not the rtp header.. let me peek
-[14:45:41] <j0sh> MikeJ: yeah I read the length/tag byte, was trying to feed the payload to ffmpeg but it isn't working, the leftover RTP data for the codec is my guess as to why it's not working
-[14:48:25] <MikeJ> look at struct file_header
-[14:48:32] <MikeJ> that's OUR header we write to the file
-[14:51:29] <MikeJ> so you've got 12 byte headers
-[14:51:42] <MikeJ> per frame
-[14:51:45] <MikeJ> and then the payload
-[14:52:55] <j0sh> yeah it's not clear if the payload has codec specific RTP headers still in it
-[14:53:40] <bkw_> it would, its a dumb record playback app
-[14:54:07] <MikeJ> that's the 12
-[14:55:45] <j0sh> MikeJ: isn't the fsv type/length tag just 4 bytes per frame?
-[14:59:07] <j0sh> because if that is the case (which i suspect), the original 12-ish rtp header bytes have to be re-added before feeding it into the ffmpeg rtp demuxer
-[14:59:31] <MikeJ> re added?
-[14:59:43] <MikeJ> are they not already there?
-[15:05:04] <j0sh> but i see now that the original rtp headers should still be there (looking at the code now)
-[15:05:18] <MikeJ> exactly!!
-[15:05:39] <MikeJ> so you read the file header..
-[15:05:47] <MikeJ> then you read 12 bytes + payload size
-[15:05:57] <MikeJ> and that should be a complete rtp frame 
+[14:38:27] <SwK> j0sh: fsv只是将帧剥离并写入磁盘
+[14:40:44] <j0sh> SwK: 所以它会完全去报文化吗？我没有看到任何特定于编解码器的RTP解析，但可能我遗漏了一些东西
+[14:42:16] <MikeJ> j0sh: RTP已经被解析出来了..它直接使用了数据有效负载的指针
+[14:43:38] <j0sh> MikeJ: 是的，但是每种编解码器都有自己特定的RTP格式（除了标准的RTP头），似乎这些编解码器特定的头已经被包含在磁盘格式中
+[14:44:11] <MikeJ> 我记得我们在那上面加了我们自己的头，不是RTP头..让我看看
+[14:45:41] <j0sh> MikeJ: 是的，我读取了长度/标签字节，试图将有效负载提供给ffmpeg，但它不起作用，我猜测原因是编解码器的剩余RTP数据
+[14:48:25] <MikeJ> 看一下结构体file_header
+[14:48:32] <MikeJ> 那是我们写入文件的头
+[14:51:29] <MikeJ> 所以你有12字节的头
+[14:51:42] <MikeJ> 每帧
+[14:51:45] <MikeJ> 然后是有效负载
+[14:52:55] <j0sh> 是的，不确定有效负载中是否还包含特定于编解码器的RTP头
+[14:53:40] <bkw_> 会有的，它是一个简单的录制回放应用程序
+[14:54:07] <MikeJ> 那就是那12字节
+[14:55:45] <j0sh> MikeJ: fsv类型/长度标签每帧只有4个字节，对吗？
+[14:59:07] <j0sh> 因为如果是这种情况（我怀疑是这样的），在将其提供给ffmpeg的RTP解复用器之前，原始的约12个字节的RTP头必须被重新添加
+[14:59:31] <MikeJ> 重新添加？
+[14:59:43] <MikeJ> 它们不是已经在那里了吗？
+[15:05:04] <j0sh> 但我现在看到原始的RTP头应该还在（现在看代码）
+[15:05:18] <MikeJ> 没错！！
+[15:05:39] <MikeJ> 所以你读取文件头..
+[15:05:47] <MikeJ> 然后你读取12个字节+有效负载大小
+[15:05:57] <MikeJ> 那应该是一个完整的RTP帧
 ```
 
-## Other
+## 其他
 
-Try calling 9193 and 9194 in the 'vanilla' dialplan with a video phone.
-
-  
-
+尝试使用视频电话在“普通”拨号计划中拨打9193和9194。

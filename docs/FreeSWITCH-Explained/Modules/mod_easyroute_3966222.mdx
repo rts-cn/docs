@@ -1,70 +1,69 @@
-
 # mod_easyroute 
 
  
 
-## About
+## 关于
 
-Easyroute is a simple DID routing engine that uses a database lookup to determine how to route an incoming call. It uses a simple principle of numbers and gateways, with a many-to-one relationship. The lookup is performed by submitting the DID number to the database and getting a set of data fields in return. Easyroute can also perform number translation and set the account code for later processing. The database is supplied by the user. Easyroute can be called from the dialplan or from the API Event Socket interface.
+Easyroute是一个简单的DID路由引擎，它使用数据库查找确定如何路由传入的呼叫。它使用一个简单的数字和网关原则，具有多对一的关系。通过将DID号码提交到数据库并收到一组数据字段返回来执行查找。Easyroute还可以执行号码转换和设置账户代码以供以后处理。数据库由用户提供。Easyroute可以从拨号计划或API事件插座接口调用。
 
-Click here to expand Table of Contents
+单击此处展开目录
 
-* 1 [Setup notes](#setup-notes)
-* 2 [API/Event Socket](#apievent-socket)
-* 3 [Usage](#usage)  
-   * 3.1 [Dialplan Examples](#dialplan-examples)
-* 4 [Field Definitions](#field-definitions)  
+* 1 [配置说明](#setup-notes)
+* 2 [API/事件插座](#apievent-socket)
+* 3 [使用方法](#usage)  
+   * 3.1 [拨号计划示例](#dialplan-examples)
+* 4 [字段定义](#field-definitions)  
    * 4.1 [destnum](#destnum)  
    * 4.2 [dialstring](#dialstring)  
    * 4.3 [group](#group)  
    * 4.4 [limit](#limit)  
    * 4.5 [acctcode](#acctcode)
-* 5 [Database Setup](#database-setup)  
+* 5 [数据库设置](#database-setup)  
    * 5.1 [ODBC](#odbc)  
-   * 5.2 [Configuration](#configuration--)  
-   * 5.3 [Custom Query](#custom-query)  
-   * 5.4 [MySQL Sample Setup](#mysql-sample-setup)  
-   * 5.5 [PostgreSQL Sample Setup](#postgresql-sample-setup)
+   * 5.2 [配置](#configuration--)  
+   * 5.3 [自定义查询](#custom-query)  
+   * 5.4 [MySQL示例设置](#mysql-sample-setup)  
+   * 5.5 [PostgreSQL示例设置](#postgresql-sample-setup)
 
-## Setup notes
+## 配置说明
 
-* Enable mod\_easyroute in trunk/modules.conf by uncommenting the line: #applications/mod\_easyroute before building
-* Enable ODBC in the core when running configure: ./configure --enable-core-odbc-support
-* Enable the module in the config, edit modules.conf.xml, add the line: &lt;load module="mod\_easyroute"/>
+* 在trunk/modules.conf中取消注释以下行来启用mod_easyroute：#applications/mod_easyroute
+* 在运行configure时启用ODBC：./configure --enable-core-odbc-support
+* 在配置中启用该模块，编辑modules.conf.xml，添加以下行：&lt;load module="mod_easyroute"/>
 
-## API/Event Socket
+## API/事件插座
 
-The syntax for the easyroute API is:
+easyroute API的语法为：
 
-easyroute &lt;phonenumber> [field]
+easyroute &lt;电话号码> [字段]
 
-The field can be one of the five fields returned from the database. If the field is not specified then the following channel variables are set:
+字段可以是从数据库返回的五个字段之一。如果未指定字段，则设置以下通道变量：
 
-* easy\_destnum
-* easy\_dialstring
-* easy\_group
-* easy\_limit
-* easy\_acctcode
+* easy\_destnum（目标号码）
+* easy\_dialstring（拨号字符串）
+* easy\_group（组名）
+* easy\_limit（限制值）
+* easy\_acctcode（账号代码）
 
-From there your application can use the variables for routing, processing, etc.
+从这里开始，您的应用程序可以使用这些变量进行路由、处理等操作。
 
-## Usage
+## 用法
 
-The syntax for easyroute in the dialplan:
+dialplan中easyroute的语法：
 
-&lt;action application="easyroute" data="[phone number]"/>
+&lt;action application="easyroute" data="[电话号码]"/>
 
-or,
+或者，
 
-&lt;action application="set" data="chan_var={easyroute([phone number] [data field])}"/>
+&lt;action application="set" data="chan_var={easyroute([电话号码] [数据字段])}"/>
 
-### Dialplan Examples
+### dialplan示例
 
-**Easyroute Examples**
+**Easyroute示例**
 
 ```xml
-<!-- This example will test the limit value for the DID number being checked -->
-<!-- If over limit, send 503 -->
+<!-- 此示例将测试被检查的DID号码的限制值 -->
+<!-- 超过限制值则发送503 -->
 <extension name="easyroute">
         <condition field="destination_number" expression="^1?(\d{10})$" break="on-true">
                 <action application="easyroute" data="$1"/>
@@ -75,11 +74,11 @@ or,
 
 <extension name="easyroute_limit_exceeded">
         <condition field="destination_number" expression="^LE-(\d{10})$" break="on-true">
-                <action application="respond" data="503 Buzz Off You Ran Out of Channels"/>
+                <action application="respond" data="503 基于通道数量的限制已达上限，无法接通"/>
         </condition>
 </extension>
 
-<!-- Simple example - just grab the dialstring and send the call -->
+<!-- 简单示例 - 仅获取拨号字符串并进行呼叫 -->
 <extension name="easyroute">
         <condition field="destination_number" expression="^1?(\d{10})$" break="on-true">
                 <action application="set" data="dialstring={easyroute($1 dialstring)"/>
@@ -89,65 +88,66 @@ or,
 
 ```
 
-## Field Definitions
+## 字段定义
 
 ### destnum
 
-Destination number, i.e. DID number
+目标号码，即DID号码
 
 ### dialstring
 
-Dialstring to use for outbound leg
+外呼环节要使用的拨号字符串
 
 ### group
 
-Group name
+组名
 
 ### limit
 
-Limit value
+限制值
 
 ### acctcode
 
-Account code
+账号代码
 
-## Database Setup
+## 数据库设置
 
 ### ODBC
 
-FreeSWITCH will need to be compiled with ODBC support. Please see the [instructions](https://wiki.freeswitch.org/wiki/Using%5FODBC%5Fin%5Fthe%5Fcore "Using ODBC in the core") for how to do this.
+FreeSWITCH需要编译添加ODBC支持。请查看以下[说明](https://wiki.freeswitch.org/wiki/Using%5FODBC%5Fin%5Fthe%5Fcore "在核心中使用ODBC")了解如何操作。
 
-### Configuration  
+### 配置  
 
 `$${conf_dir}/autoload_configs/easyroute.conf.xml`
 
-The easyroute.conf.xml file will need to be configured with the settings for your database:
+需要对easyroute.conf.xml文件进行配置，以适配您的数据库设置：
 
     &lt;param name="db-username" value="root"/>
     &lt;param name="db-password" value="password"/>
     &lt;param name="db-dsn" value="easyroute"/>
 
-    &lt;!-- Default Technology and profile -->
+    &lt;!-- 默认技术和配置文件 -->
     &lt;param name="default-techprofile" value="sofia/default"/>
     
-    &lt;!-- IP or Hostname of Default Route -->
+    &lt;!-- 默认路由的IP或主机名 -->
     &lt;param name="default-gateway" value="192.168.66.6"/>
 
-The default technology profile and default gateway will be returned if the db lookup fails.
+如果数据库查询失败，将返回默认技术配置文件和默认路由。
 
-### Custom Query
+### 自定义查询
 
-You can provide your own custom query instead of using the table layout suggested below. However, the query **must** have these fields **in this order**:
+您可以提供自己的自定义查询语句，而不使用下面建议的表格布局。但是，查询语句**必须**按照**这个顺序**包含以下字段：
 
-**gateway varchar(128)** - contains destination gateway host:port pair (ex: 192.168.1.1:5060 )
-**group varchar(128)** - contains optional group name
-**call_limit varchar(16)** - contains optional call limit
-**tech_prefix varchar(128)** - tech prefix used to build dial string (ex: sofia/default )
-**acctcode varchar(128)** - used to set channel variable acctcode for logging into the CDRs
-**destination_number varchar(16)** - Number returned in the query for building the dial string. (ex: 18005551212)
+**gateway varchar(128)** - 包含目标网关的主机:端口对（例如: 192.168.1.1:5060 ）
+**group varchar(128)** - 包含可选的分组名称
+**call_limit varchar(16)** - 包含可选的呼叫限制
+**tech_prefix varchar(128)** - 用于构建拨号字符串的技术前缀（例如: sofia/default ）
+**acctcode varchar(128)** - 用于在CDR中设置通道变量acctcode
+**destination_number varchar(16)** - 查询返回的号码，用于构建拨号字符串（例如: 18005551212）
 
-### MySQL Sample Setup
+### MySQL示例设置
 
+```sql
 CREATE TABLE `numbers` (
   `number_id` int(10) unsigned NOT NULL auto_increment,
   `gateway_id` int(10) unsigned NOT NULL,
@@ -194,6 +194,53 @@ CREATE TABLE numbers
   acctcode varchar(16) NOT NULL,
   translated VARCHAR(16) NOT NULL
 );
+```
 
-  
+```sql
+创建表 `numbers` (
+  `number_id` int(10) unsigned NOT NULL auto_increment,
+  `gateway_id` int(10) unsigned NOT NULL,
+  `number` varchar(16) NOT NULL,
+  `acctcode` varchar(16) NOT NULL,
+  `translated` varchar(16) NOT NULL,
+  PRIMARY KEY  (`number_id`),
+  UNIQUE KEY `number` (`number`),
+  KEY `gateway_id` (`gateway_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='Numbers Table'
 
+创建表 `gateways` (
+  `gateway_id` int(10) unsigned NOT NULL auto_increment,
+  `gateway_ip` varchar(16) NOT NULL,
+  `group` varchar(15) NOT NULL,
+  `limit` int(10) unsigned NOT NULL,
+  `techprofile` varchar(128) NOT NULL,
+  PRIMARY KEY  (`gateway_id`),
+  KEY `gateway_ip` (`gateway_ip`,`group`)
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='Gateways Table'
+
+### PostgreSQL 配置示例
+
+-- DROP TABLE gateways;
+
+CREATE TABLE gateways
+(
+  gateway_id serial NOT NULL PRIMARY KEY,
+  gateway_ip varchar(16) NOT NULL,
+  "group" varchar(15) NOT NULL,
+  "limit" integer NOT NULL,
+  techprofile varchar(128) NOT NULL
+);
+
+CREATE INDEX gateways_ip_group on gateways(gateway_ip, "group");
+
+-- DROP TABLE numbers;
+
+CREATE TABLE numbers
+(
+  number_id serial NOT NULL PRIMARY KEY,
+  gateway_id integer REFERENCES gateways(gateway_id),
+  number varchar(16) UNIQUE NOT NULL,
+  acctcode varchar(16) NOT NULL,
+  translated VARCHAR(16) NOT NULL
+);
+```

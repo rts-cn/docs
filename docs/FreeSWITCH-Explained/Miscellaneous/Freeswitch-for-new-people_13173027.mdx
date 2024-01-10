@@ -1,188 +1,162 @@
+# 对于新手的FreeSWITCH指南
 
-# Freeswitch for new people 
+## 关于
 
- 
+这是一篇简单易懂的FreeSWITCH快速入门指南。我们假设您已经安装了FreeSWITCH（或者将在应用本指南之前安装），了解XML是什么，知道正则表达式是什么，知道如何编译某些东西，或者至少可以按照指示操作，而且您需要一个简单的文件编辑器。除此之外，我们将为您提供其他所有所需的内容。
 
-## About
+这个教程不包含以下内容：
 
-This is a quick introduction to FreeSWITCH in layman's terms. It is assumed you have FreeSWITCH installed (or will soon to apply this introduction), know what XML is, know what regular expressions are, know how to compile something, or at least follow some directions to do so, and you will need a simple file editor. Beyond that, we'll provide everything else.
+1. 对于电话技术一般原理的介绍，尽管我们会涉及一些VoIP的基础知识。
+2. 对于开发FreeSWITCH的任何内容的教程。这些内容在其他地方有介绍。
+3. 讨论特定的模块（除了一些基础的示例需要的模块）。
+4. 对于使用FreeSWITCH的具体操作的教程。我们的示例是通用而广泛的。
 
-What this tutorial is not:
+同时，需要注意的是，这篇文档并不是要提供逐字逐句和技术层面上准确的内容。如果我们说“这是一只熊”，它可能实际上并不是一只熊，但如果您把它看作是一只熊，那么这将为您提供一个良好的起点。
 
-1. An introduction to Telephony in general, though we will cover some of the basics of VoIP.
-2. A lesson in developing anything for FreeSWITCH. This is covered elsewhere.
-3. A discussion of specific modules (except those needed for the basic examples).
-4. A lesson in doing anything specific with FreeSWITCH. Our examples are generic and broad.
+让我们开始来谈谈FreeSWITCH。当您安装FreeSWITCH时，您将选择安装某些模块。其中一些最常见的模块，例如[mod\_sofia](../Modules/mod_sofia_1048707.mdx#about)，在modules.conf中是不用注释的（它只用于安装，与在实际使用中的modules.conf.xml不同）。实际上，您可以不需要任何模块来运行FreeSWITCH。因为FreeSWITCH本身并不是指mod_sofia，亦不是[mod\_skypiax](../Modules/mod_skypopen_3966336.mdx#-sk-)或[mod\_fifo](../Modules/mod_fifo_3966031.mdx#-add)。它只是附带了这些模块。
 
-It's also important to note that this is not meant to be a literally and technically sound document. If we say something like "This is a bear" it may not actually be a bear, but if you think of it as a bear, you'll get a good basis to start from.
+FreeSWITCH是一个基于软件的交换机。具体而言，它通过各种方式连接数据通道，并对其进行处理。FreeSWITCH与其核心外部的连接方式是通过模块进行的。它通过mod\_sofia连接到SIP客户端，通过mod\_skypiax连接到Skype。这些模块与FreeSWITCH的API进行了集成，为FreeSWITCH提供了它所期望的数据流以及关于如何处理这些数据的一些信息。
 
-Let's start by talking about FreeSWITCH. When you install FreeSWITCH, you will choose certain modules to install with it. The most common ones, such as [mod\_sofia](../Modules/mod_sofia_1048707.mdx#about), are uncommented in modules.conf (which is used in the install, and not the same as the modules.conf.xml used in production). You don't need any modules to run FreeSWITCH. That's because FreeSWITCH is not mod\_sofia, or [mod\_skypiax](../Modules/mod_skypopen_3966336.mdx#-sk-), or [mod\_fifo](../Modules/mod_fifo_3966031.mdx#-add). FreeSWITCH just comes with them.
+也许这与您对FreeSWITCH的期望不太相符，但请考虑以下示例。如果您的房子的每个房间都有麦克风和扬声器，并且有一个模块可以将它们连接起来，您就可以在整个房子内进行通信，并且可以从房子中的一个房间连接到任何其他类型的数据通道，例如电话线或SIP目标。您可以使用FreeSWITCH将音乐流式传输到房子的不同房间。您可以使用FreeSWITCH在一个房间和另一个房间之间进行视频连接。FreeSWITCH的作用就是以最佳方式将不同的通道连接在一起，并在其生命周期内保持对这些通道的大量信息。
 
-FreeSWITCH is a software based switch. Specifically, it connects channels of data in a variety of ways, and will do things with them. The ways FreeSWITCH connects to and from things outside its core is through modules. It connects to SIP clients through mod\_sofia. It connects to Skype through mod\_skypiax. These modules tie into FreeSWITCH's APIs and deliver FreeSWITCH what it expects: streams of data and some information about what to do with that data.
+更具体地说，您可以通过mod\_sofia使SIP客户端连接到FreeSWITCH，并通过其他一些模块将其连接到硬线上，具体取决于该线路的配置。
 
-This probably isn't what you had in mind for FreeSWITCH, but think about this example. If you had a house with microphones and speakers in each room, and had a module that connected those all somehow, you could have communication throughout that house, and then from a room in that house to any other sort of data channel, like a phone line or a SIP destination. You could use FreeSWITCH to stream music to different rooms in the house. You could use FreeSWITCH to do video connections from one room to the other. FreeSWITCH literally just connects different channels to each other in the best way comparable for those channels, and keeps a lot of information about those channels during their lifetime.
+这就是FreeSWITCH与大多数其他PBX平台不同的地方。FreeSWITCH不是一个PBX，而是一个软件交换机。许多人使用它来构建一个在其基础上包含PBX功能（以及其他功能）的系统。您可以通过模块以及一些配置数据（主要是XML文件）来实现这一点。
 
-More specifically, you can have a SIP client connect to FreeSWITCH, via mod\_sofia, and have it run to a hard line via a number of other modules, depending on that line's configuration.
+请注意，并非所有模块都用于创建FreeSWITCH所使用的通道。相反，如果不是大多数的话，其中许多模块用于扩展如何处理那些通道的功能到其他领域。例如，mod\_fifo创建了使用先进先出式排队处理呼叫的能力。你可能会使用[mod\_conference](../Modules/mod_conference_3965534.mdx#list)。令人惊讶的是，它会为您设置会议呼叫，供其他模块使用。
 
-This is what makes FreeSWITCH different from most other PBX platforms. FreeSWITCH is not a PBX. It is a software switch. Many people use it to build a PBX (and then some) on top of it. You do this via modules and some configuration data in the form of mostly XML files.
+在设置FreeSWITCH时，您需要考虑您软交换所需的功能以及您不需要的功能。许多用户使用mod\_sofia进行SIP客户端和服务提供商。您不必这样做。您可以轻松地将FreeSWITCH用于您家庭或办公室中通过某些数字卡连接的模拟电话，并通过连接到另一张卡上的Voice T1连接到电话系统。
 
-Note that not all modules are for creating channels for FreeSWITCH to use. On the contrary, many, if not most, are for extending functionality of what to do with those channels into other areas. For instance, mod\_fifo creates the ability to setup First In First Out style queuing with calls. Maybe you will use [mod\_conference](../Modules/mod_conference_3965534.mdx#list). Amazingly enough, it sets up conference calls for you to use from other modules.
+有了这些基础知识，让我们来了解一些FreeSWITCH逻辑的基础知识。
 
-When setting up FreeSWITCH, you will want to keep in mind what functionality you want in your soft-switch and what functionality you do not. Many users are using mod\_sofia for SIP clients and providers. You don't have to do this. You could easily use FreeSWITCH for analog phones in your home or office connected via some digital card, and have those connect to the telephone system via a Voice T1 attached to another card.
+点击此处展开目录
 
-With that under our belts, let's take a look at some of the basics of FreeSWITCH logic.
+* 1 [变量](#variables)
+* 2 [目录](#directory)
+* 3 [呼叫计划](#dialplan)
 
-Click here to expand Table of Contents
+#### 变量
 
-* 1 [Variables](#variables)
-* 2 [Directory](#directory)
-* 3 [Dialplan](#dialplan)
+在所谓的“示例配置”或有时称为“默认配置”中，为您自动设置了某些变量。当您安装FreeSWITCH时，位于安装目录下（通常是Linux机器上的/usr/local/freeswitch/）的一个名为“freeswitch.xml”的文件是FreeSWITCH开始加载其配置的位置。
 
-#### Variables
+这个 XML 文件是一组 include 条目，你可能已经猜到了。在撰写本文时，它有几个部分。首先，它包含 vars.xml。然后它有配置、拨号计划、目录和短语的部分。在运行 FreeSWITCH 时，你可以发出 [reloadxml](FAQ/index.mdx#q-does-reloadxml-reload-all-xml-files) 命令，它将重新读取此文档的所有 XML，但只能应用部分更改，而不是所有更改。刷新后不会更新的大部分内容位于 vars.xml 和特定模块的配置文件中。例如，sofia profile 数据不会刷新，因为这是在启动时提供给 mod_sofia 的。要刷新 sofia profile，必须向 sofia 本身发出单独的命令。我们稍后会详细介绍。
 
-Certain variables are setup for you automatically in what's called the "example config" or sometimes the "default config." Most of the configuration files you get when you install FreeSWITCH could easily be deleted and you'd be fine. When you installed FreeSWITCH, underneath the directory where you installed it (usually /usr/local/freeswitch/ on Linux machines) there is a file called "freeswitch.xml" that is where FreeSWITCH starts loading its configuration from.
+拨号计划和目录都会根据其中的内容进行刷新。因此，如果你添加了一个用户或新的拨号计划部分，通过 reloadxml 将得到这些内容。但是，正在进行的通话或呼叫目标（如会议、FIFO 和活动通道）不会刷新。请记住这一点，因为它在许多情况下可能引起一些困惑。一个例子是正在进行的会议，如果在配置中进行更改，直到会议结束后才会应用这些更改。这并不像你想象的那样有限制，但它确实防止了在使用活动通道时自射脚自己。
 
-This XML file, as you might guess, is a collection of includes. At the time of this writing, it has a few sections. First, it includes vars.xml. Then it has sections for configuration, dialplan, directory, and phrases. While running FreeSWITCH, you can issue a [reloadxml](FAQ/index.mdx#q-does-reloadxml-reload-all-xml-files) command and it will re-read all the XML for this document, but it can only apply some changes, not all. Most of what isn't refreshed is in vars.xml and module specific configuration files. For example, sofia profile data isn't refreshed, because that's fed to mod\_sofia at startup. To refresh a sofia profile, you have to issue separate commands to sofia itself. We'll get to that later.
+短语部分告诉 FreeSWITCH 如何获取可用的语音短语。你可能现在用不到它，所以目前并不是非常重要。只要记住，如果你进行文本转语音时，它会派上用场。
 
-The Dialplan and the Directory both get refreshed with whatever is in there. So if you added a user or a new dialplan section, you'll get those with a reloadxml. Live calls or call destinations (like conferences, FIFOs, and active channels) don't. Keep that in mind, as it will cause some confusion in many scenarios. An example is an active conference, which if changed in the config, doesn't get applied those changes until the conference is done. That's not as limiting as you might think, but it does keep you from shooting yourself in the foot with active channels.
+`vars.xml`文件中包含与整个交换机相关的设置。当考虑诸如默认使用的编解码器、默认的IP地址和网关信息以及要填充哪些**变量**时，这一点尤为重要。其中一个**重要**的要素是默认密码。这是用户在注册FreeSWITCH时使用的密码，在示例配置中广泛存在。请立即更改它。
 
-The phrases section tells FreeSWITCH what to grab for available speech phrases. You might not use this, so it's not terribly important right now. Just remember it's there for later if you're doing text-to-speech.
+在这个文件中需要注意的几个方面是：
 
-The vars.xml file has settings that relate to the switch as a whole. This is especially important when thinking about things like what codecs you want to use by default, what IP address and gateway information do you want there by default, and what **variables** you want populated with what. An **important** piece in here is the default password. This is the password used for your users to register to FreeSWITCH, and is all over the directory in the example configuration. Change it. **Now** please.
+1. `domain`和`domain_name`用作此FreeSWITCH安装的默认域。如果可能的话，请为它们使用一个完全限定域名(FQDN)。您可以在配置中使用多个域，但在未指定时应定义默认域。
+2. `sound_prefix`是您的声音文件目录所在的基本目录，也是您的提示音的基础目录。
+3. `global_codec_prefs`和`outbound_codec_prefs`就是这样。用于连接到终端和从终端连接的编解码器偏好设置。`outbound`是用于FreeSWITCH打开的通道的编解码器偏好设置，而不是创建的通道**连接**到FreeSWITCH。
 
-A number of things to look at in this file are:
+在这里设置了许多更多的变量，你在更具体的探索FreeSWITCH时会了解到。我们将它们称为变量，是因为它们在配置文件的其他地方使用。这很重要，因为你需要很多模块来知道它们应该查看的IP地址、应该使用哪些编解码器等等。你不想在很多地方进行设置，而是想尽可能少地设置。因此，我们有在拨号计划、目录、sofia配置或其他地方使用的变量。在其他地方使用它们的方式是$${varname}。请注意两个$符号。还有其他一些变量称为[\_\_Channel Variables](../Dialplan/Variables-Archive/x__Channel-Variables_1048892.mdx#--)，它们只有一个$，有时还有一些其他的语法差异。$$变量在FreeSWITCH将配置加载到内存时仅被使用一次，并且仅在reloadxml事件期间重新评估。
 
-1. domain and domain\_name which are used as the default domain this FreeSWITCH install will be running under. If you possibly can, use a FQDN for these. You can have multiple domains in your configs, but you should define what the default will be where you forget to specify it.
-2. sound\_prefix is where your sound files directory is. It's the base directory for all of your prompts.
-3. global\_codec\_prefs and outbound\_codec\_prefs are just that. Codec preferences for connecting to and from endpoints. Outbound is the codec preferences for channels being opened by FreeSWITCH, as opposed to channels being created **to** FreeSWITCH.
-
-There are a lot more variables set in here that you'll get into later in your more specific forays into FreeSWITCH. The reason we call them variables is because they are used elsewhere in the configuration files. This is important, because you'll need a lot of modules to know things like what IP address they should be looking at, what codecs to negotiate using, etc. You don't want to set those in a million places, you want to set them in as few places as possible. So we have variables that you would use in the dialplan or the directory or the sofia configuration or whatever else. You use them like $${varname} in the rest of the places. Note the two $ symbols. There are other variables called [\_\_Channel Variables](../Dialplan/Variables-Archive/x__Channel-Variables_1048892.mdx#--) that have only one $ and some other syntax differences on occasion. $$ variables get used once by FreeSWITCH as its loading the configuration into memory, and it will re-evaluate them only during a reloadxml event.
-
-So if I have a variable I declare in vars.xml like this:
+所以如果我在vars.xml中声明一个变量，像这样：
 
 ```xml
 <X-PRE-PROCESS cmd="set" data="my_var=my_data"/>
 ```
 
-You should notice two things about this. First, the X-PRE-PROCESS says this is not actual configuration data. This is for FreeSWITCH to evaluate while its building the XML config in memory, either at first startup or at reloadxml. So it stores that "my\_data" string in "my\_var" for the duration of the rest of that process. Then, when I want to use that data elsewhere in the config, I can do this:
+你应该注意到关于此的两件事。首先，X-PRE-PROCESS表示这不是实际的配置数据。这是为了让FreeSWITCH在构建内存中的XML配置时进行评估的，无论是在首次启动还是在reloadxml时。因此，它将"my\_data"字符串存储在"my\_var"中，供该进程的剩余时间使用。然后，当我想在配置的其他地方使用这些数据时，可以这样做：
 
 ```xml
 <extension name="$${my_var}">
 ```
 
-Which would set the name of that extension to "my\_data" in the final config running in memory.
+这将在内存中运行的最终配置中将该扩展的名称设置为"my\_data"。
 
-A good way to see what most of the XML looks like after you've run FreeSWITCH and it has processed that information is to look in the log directory (usually /usr/local/freeswitch/log/) and open the freeswitch.xml.fsxml file. That file is everything FreeSWITCH sees in the last load to memory.
+查看大部分XML在运行FreeSWITCH并处理信息后的样子的一个好方法是查看日志目录（通常是/usr/local/freeswitch/log/），并打开freeswitch.xml.fsxml文件。这个文件包含了FreeSWITCH在上次加载到内存中看到的所有内容。
 
-It would now be a good time to look at the configuration files under the freeswitch/conf/autoload\_configs directory. Just get a feel for what's in there, take a look at modules you find interesting, note which ones you'll want to play with later. Most you won't need to change. For security, you'll probably want to look at acl.conf.xml, and for enabling/disabling other modules from startup, you'll want to look at modules.conf.xml which we discussed earlier. Remember, it's **different** from the modules.conf file from your build. They usually correlate heavily, but they are not the same file, nor do they have the same format.
+现在是一个好时机查看freeswitch/conf/autoload\_configs目录下的配置文件。只需了解其中的内容，浏览一下你找到的有趣的模块，记下以后想要尝试的模块。大部分模块你不需要改动。为了安全起见，你可能想查看acl.conf.xml文件，对于启动时启用/禁用其他模块，你可能想查看前面我们讨论过的modules.conf.xml文件。记住，它与你构建时的modules.conf文件是**不同**的。它们通常有很强的相关性，但它们并不是同一个文件，也没有相同的格式。
 
-#### Directory
+#### 目录
 
-Before we get too much further, we should look at users. Most people will need users before they can start playing with the other facets of the more dynamic configuration. Go ahead and jump into the freeswitch/conf/directory folder. You'll notice a default.xml file and a default directory. That's because the default.xml file (go ahead and open it) will include the .xml files in the default directory under its user section.
+在我们进一步之前，我们应该先看看用户。大多数人在开始尝试更多动态配置的其他方面之前都需要用户。请进入freeswitch/conf/directory文件夹。你会注意到有一个default.xml文件和一个default文件夹。这是因为default.xml文件（请打开它）在其用户部分会包含default文件夹中的.xml文件。
 
-Default.xml is well commented, but it uses the term domain again here that you might remember from vars.xml a bit ago. Domain is the grouping under which these users get registered. You should be thinking about a FQDN like in email. [name@domain.com](mailto:name@domain.com) is an email format, and emailing [name@otherdomain.com](mailto:name@otherdomain.com) would usually not go to the same person. The same is true here. Users are grouped under a domain's umbrella, and the domain you specify in vars.xml is the default domain a user is grouped under. You will notice the line:
+Default.xml非常详细地进行了注释,但是它在这里再次使用了“domain”这一术语，你可能还记得它出现在vars.xml中不久之前。Domain是这些用户注册时所属的分组。你可以把它想象成电子邮件中的FQDN。[name@domain.com](mailto:name@domain.com)是电子邮件的格式，而发送到[name@otherdomain.com](mailto:name@otherdomain.com)的邮件通常不会发到同一个人那里，这在这里也是一样的。用户被分组在一个域名的范围内，而你在vars.xml中指定的域名则是用户所属的默认域名。你会注意到这行代码：
 
 ```xml
 <domain name="$${domain}">
 ```
 
-Which uses the 'domain' variable defined in vars.xml to populate this field. You could have separate domains with the same user ids inside them for different companies, different departments, or just users you don't want grouped together for whatever reason. You can think of the id as the "extension" in the traditional sense. If my id is 1003, you'd probably refer to my extension as 1003 when talking to people. It's not, as we'll see, but they could be the same.
+它使用了在vars.xml中定义的‘domain’变量来填充这个字段。你可以为不同的公司、不同的部门或者其他任何原因不想将其分组的用户创建不同的域名。你可以把id想象成传统意义上的“分机号码”。如果我的id是1003，你在与别人交流时可能会称呼我的分机号码为1003。正如后面我们会看到的，它们并不一样，但是它们可以是相同的。
 
-In the default directory, you have a number of .xml files for various users. They're separated for organization sake, they don't have to be. Don't make them that way if you don't want to. It helps when maintaining users by hand to be able to create a new file per user, and just deleting a file or renaming it to something other than .xml when you're denying that user's access.
+在default目录下，有许多为不同用户创建的.xml文件。它们为了组织的目的而被分开，但其实并不一定非得这样。如果你不想这样的话，可以不用这样做。当你需要手动维护用户时，为每个用户创建一个新的文件，然后当你拒绝该用户的访问时，只需删除该文件或将其重命名为不是.xml结尾的名称。
 
-Remember to reloadxml or restart FreeSWITCH when you've made changes to the directory. See the [XML User Directory Guide](../Directory/XML-User-Directory/index.mdx#about) for more in-depth information about the directory and its format.
+在对目录进行更改后，请记得使用reloadxml或重启FreeSWITCH。关于该目录及其格式的更详细信息，请参考[XML用户目录指南](../Directory/XML-User-Directory/index.mdx#about)。 
 
-#### Dialplan
+#### 拨号计划
 
-Now we come to the part everyone talks about, and everyone experiences frustration with most out of all of FreeSWITCH: The Dialplan.
+现在我们来到每个人都谈论的部分，也是FreeSWITCH中大多数人都感到沮丧的部分：拨号计划。
 
-Actually, we lied, sort of. Remember at the beginning where we said you needed to know what a regular expression is? We weren't kidding. You should before you continue, since the dialplan uses it in many of its dialplan features. If you don't already know enough to get in trouble, we recommend trying [this one](http://www.regular-expressions.info/quickstart.html) really quick. Don't worry, we'll wait right here for you.
+事实上，我们撒了一个小谎。还记得在一开始我们说过你需要了解正则表达式吗？我们不是开玩笑的。在继续之前，你应该先了解它，因为拨号计划在许多拨号计划功能中都使用了正则表达式。如果你还不了解，我们建议你快速尝试[这个网站](http://www.regular-expressions.info/quickstart.html)。别担心，我们会等着你。
 
-The dialplan is, simply put, a collection of routing information. Two things to note before we get too far.
+拨号计划简单来说就是一组路由信息。在我们继续之前，有两个要注意的地方。
 
-First, the dialplan is 'executed' all at once. What this means is that if you have some variables you set in one extension, like for a time of day logic, and you use that later in the file, it won't work. Both extensions get processed in the same step, so they can't see each other. For that sort of logic, you have to keep all those variables in the same extension, or you have to send the call through the dialplan again with something like a transfer to another extension. Then it's another step and all the variables set in all extensions from the previous step are available to you.
+首先，拨号计划是一次性“执行”的。这意味着如果你在一个分机中设置了一些变量，例如用于时间逻辑的变量，并且在文件的其他位置使用这些变量，它是不会生效的。两个分机在同一个步骤中被处理，它们无法相互访问。对于这种逻辑，你必须将所有变量放在同一个分机中，或者通过将呼叫再次发送到拨号计划中的另一个分机来处理。这样，它就是另一个步骤了，之前的所有分机中设置的变量都可供你使用。
 
-Second, the dialplan is traversed only when FreeSWITCH doesn't know exactly what to do with a call. So if a destination is unknown, it will traverse the dialplan looking for a route. If you tell it to make a call out via a specific sofia gateway, it won't look at the dialplan. If you tell it to go to 1003, it will traverse the dialplan.
+其次，只有当FreeSWITCH不知道如何处理呼叫时，才会遍历拨号计划。所以如果目标地址不明确，它将遍历拨号计划寻找路由。如果你告诉它通过特定的sofia接口进行外呼，它就不会查看拨号计划。如果你告诉它去1003，它将遍历拨号计划。
 
-This is where that difference between ids in the Directory and extensions is. 1003 is a user. 1003 can also be that user's extension, but it doesn't have to be. You get to decide. You could make it so if someone dials 3, it goes to user 1003\. You could do both 1003 and 3 go to user 1003\. You could do none, and nobody could call user 1003\. Then 1003 can only call out. There are no limitations here.
+这就是目录中ID和分机之间的差异所在。1003是一个用户。1003也可以是该用户的分机，但不一定如此。这取决于你。你可以这样做，如果有人拨打数字3，它会转到用户1003。你可以让1003和3都转到用户1003。你也可以不设置，这样就没有人可以呼叫用户1003。然后1003只能拨打电话，这里没有限制。
 
-Extensions get groups in &lt;extension> tags and then inside there's a set of &lt;condition> tags. Condition tags hold &lt;action> tags. How you organize these is up to you, but remember that this is the ultimate in flexibility. When a call comes in, it looks at each extension. In the extension, it looks at the condition tags in order. If the first one doesn't evaluate to true, it leaves that extension and doesn't look back.
+分机在<extension>标签中获取组，并在内部设置一组<condition>标签。条件标签包含<action>标签。你可以自由组织这些标签，但请记住，这是最灵活的设置方式。当有一个呼叫进来时，它会查看每个分机。在分机中，它按顺序查看条件标签。如果第一个条件不成立，它就会离开该分机，并停止检查之后的条件。
 
-##### Example dialplan extension with comments:
+##### 带有注释的拨号计划分机示例：
 
 ```xml
-<!-- This is the extension name, which is mostly for human identification.
-         You could call it 1485284 and FreeSWITCH wouldn't treat it any 
-         differently. Try to be descriptive. -->
-    <extension name="tone_stream">
-      <!-- This is our first condition.  This is the most common condition. 
-           This just checks that the destination is "9198" exactly via a 
-           regular expression. It will not match anything else. -->
-      <condition field="destination_number" expression="^9198$">
-	<!-- If that's true, we answer the phone. -->
+<!-- 这是扩展名称，主要用于人类识别。
+        你可以称其为1485284，FreeSWITCH不会有任何不同对待。尽量描述性一些。-->
+<extension name="音调流">
+    <!-- 这是我们的第一个条件。这是最常见的条件。
+         它只检查目的地是否完全为"9198"，通过一个正则表达式来匹配。
+         它不会匹配其他任何内容。-->
+    <condition field="destination_number" expression="^9198$">
+	    <!-- 如果条件成立，我们接听电话。 -->
         <action application="answer"/>
-	<!-- Then, continuing on, assuming the caller is still on the line, we
-	     play the tetris.ttml file to them, twice.  We could play a wav
-	     file or somesuch if we wanted, or do anything else, really. -->
+	    <!-- 然后接着，假设呼叫者仍在线，我们将向他们播放tetris.ttml文件，播放两次。
+	         如果需要的话，我们可以播放wav文件或其他文件，或者执行其他任何操作。 -->
         <action application="playback" data="tone_stream://path=${base_dir}/conf/tetris.ttml;loops=2"/>
-
-      <!-- That's all for this condition tag, and we want to add more to this
-           call flow, so we close our tag in order to check a couple other
-	   conditions and do some stuff. -->
-      </condition>
-      <!-- First, we check a channel variable, which would have to have been 
-           set in a previous dialplan evaluation.  Control will ONLY CONTINUE
-           IF THE CONDITION PASSES. -->
-      <condition field="${sales_campaign_on}" expresion="^true$"/>
-      <!-- Then, if that channel variable matches, we can do something based 
-           on whether or not its in-hours or after-hours. -->
-      <condition wday="2-6" hour="7-17">
-        <!-- If this is and all previous conditions evaluate true, we have done
-	     the previous action set under the desintaion_number condition, and
-             now we want to do some more things. First, we set a channel
-	     variable for later in our dialplan. -->
-        <action application="set" data="business_open=true"/>
-	<!-- Next we transfer them to the sales group destination, which we're
-	     going to call "2000" because it's dialable from elsewhere.  If we
-             didn't want it dialable via numbers, we could call it "sales_group"
-	     if we so chose.  We're telling it to go through the XML dialplan
-	     in the default context. -->
-	<action application="transfer" data="2000 XML default"/>
-	<!-- If that was true, call flow just transferred out of this extension
-	     and went to the sales group.  But, if ALL of the previous conditions
-	     were true, but this last condition, the time of day, is NOT true,
-	     we want it to do something anyway.  So we have an anti-action, which
-	     is the same as an action, but executed on its containing condition's
-	     falsehood.  We first set the same channel variable to false instead
-	     of the true we did before -->
-        <anti-action application="set" data="business_open=false"/>
-	<!-- Then we play our sales message instead of transferring them. Note
-	     that the directory to this file is a full directory.  It doesn't
-	     have to be, but you'd use a variable somewhere like $${base_dir} -->
-	<anti-action application="playback" data="/usr/local/freeswitch/sounds/sales/sales_campaign_135.wav"/>
-	<!-- Technically you don't need to explicitly hangup unless you have a 
-	     continue="true" in your extension.  It's just here to show you.
-	<anti-action application="hangup"/>
-     <!-- Done with the action list, so we'll close that condition tag.
-     </condition>
-    <!-- And we close the extension tag as well -->
-    </extension>
 ```
 
-If you have conditions that are true, you eventually run into actions. Actions can be any number of things. You could have a number that checks if you're calling 3485, checks to see if you called from a specific phone number or phone numbers, and then if so, runs a Lua script that makes some toast. After toast is made, the next action tag causes the caller to hear "Toast is ready" and then have yet more condition tags. These condition tags could check if it's morning or afternoon, and either put butter or jam on the toast accordingly. Then it could tell the user "Jam is spread" and then hangs up. It doesn't have to end there either.
+```html
+<!-- 这就是这个条件标签的全部内容了，我们想要在这个呼叫流程中添加更多内容，所以关闭这个标签以便检查其他一些条件并进行一些操作。 -->
+</condition>
+<!-- 首先，我们检查一个通道变量，该变量在之前的拨号计划评估中必须已设置。只有当条件满足时，才会继续进行控制。 -->
+<condition field="${sales_campaign_on}" expresion="^true$"/>
+<!-- 接下来，如果通道变量匹配，我们可以根据是否在工作时间或非工作时间来执行某些操作。 -->
+<condition wday="2-6" hour="7-17">
+  <!-- 如果这个以及所有以前的条件都为真，我们已经完成了前一个在destination_number条件下设置的动作集，并且现在想要做更多的事情。首先，在拨号计划中设置一个通道变量以备后用。 -->
+  <action application="set" data="business_open=true"/>
+  <!-- 接下来，我们将其转移到销售组目标，我们将其称为“2000”，因为它可以从其他地方拨打。如果我们不希望通过数字拨号，我们可以将其命名为“sales_group”（如果我们选择的话）。我们告诉它通过XML拨号计划进入默认上下文。 -->
+  <action application="transfer" data="2000 XML default"/>
+  <!-- 如果条件为真，呼叫流程刚刚从这个分机转移到了销售组。但是，如果所有以前的条件都为真，但是最后一个条件（时间）不为真，则我们仍然希望执行某些操作。所以我们有了一个反操作，它与操作相同，但在其包含的条件为假时执行。首先，我们将同样的通道变量从true更改为false。 -->
+  <anti-action application="set" data="business_open=false"/>
+  <!-- 然后，我们播放我们的销售信息，而不是将其转移。请注意，该文件的目录是完整目录。它不一定要这样，但您可以在某个地方使用变量，例如$${base_dir}。 -->
+  <anti-action application="playback" data="/usr/local/freeswitch/sounds/sales/sales_campaign_135.wav"/>
+  <!-- 从技术上讲，如果您的分机中有continue="true"，您不需要明确进行挂断。这只是为了展示给您看。
+  <anti-action application="hangup"/>
+ <!-- 动作列表结束，所以我们关闭这个条件标签。
+ </condition>
+<!-- 我们也关闭扩展标签 -->
+</extension>
+```
 
-An important part of the extension tag is the "continue" parameter.
+如果您有满足条件的情况，最终会执行相应的操作。操作可以是各种各样的事情。您可以设置一个数字检查，看看您是否拨打了3485这个号码，并且查询您是否从特定的电话号码或电话号码中拨打，如果是的话，将执行一个Lua脚本来制作一些吐司。制作好吐司后，下一个操作标签会让打电话者听到"吐司已经准备好了"，然后继续进行更多的条件判断。这些条件可以检查是早上还是下午，然后相应地在吐司上涂抹黄油或果酱。然后它会告诉用户"果酱已经涂好了"，最后挂断电话。不过，这并不一定要结束。
+
+扩展标签的一个重要部分是"continue"参数。
 
 ```xml
-<extension name="Make_Toast" continue="true">
+<extension name="制作吐司" continue="true">
 ```
 
-In most cases, you don't have the continue parameter. You leave it off. Continue is 'false' by default, so you don't need it unless you are continuing. If it's true, than the extension gets run until it finishes or the channel gets hung up or destroyed. After the extension is complete, it **continues going through the dialplan** which is very important. This gives you a lot of flexibility about how you run your FreeSWITCH. It could play a message, dependent on the time of day, to every caller regardless of destination, and then go through the rest of the dialplan as normal. It could not. It's all up to you.
+在大多数情况下，您不需要continue参数。您可以不设置它。continue默认为'false'，所以除非您有后续操作，否则不需要使用它。如果设置为true，扩展将一直运行，直到完成或通道挂断或销毁。扩展完成后，它**继续按照拨号计划进行下去**，这非常重要。这样可以为您的FreeSWITCH运行方式提供很多灵活性。它可以根据时间为每个呼叫者播放一条消息，而不管目的地是什么，然后按照正常的拨号计划继续执行。但也可以不这样做。一切都取决于您。
 
 ---
 
-(Probably need to discuss the concept of profiles, gateways, contexts. In that order? Maybe earlier? Think about that.)
+(也许需要先讨论配置文件、网关、上下文的概念。是否按照这个顺序？还是应该提早讨论？请考虑一下。)
 
-WORK IN PROGRESS!!! Don't use quite yet. Tod Hansmann is still working on it. Feel free to ask him about it in the #freeswitch channel on Freenode. He's TodPunk.
-
-
+正在进行中！请勿使用。Tod Hansmann还在处理中。欢迎在Freenode上的 #freeswitch 频道中向他咨询。他是TodPunk。

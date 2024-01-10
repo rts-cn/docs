@@ -1,50 +1,45 @@
+# 重新加载
 
-# Reloading 
+单击此处展开目录
 
- 
+* 1 [介绍](#introduction)
+* 2 [讨论](#discussion)
+* 3 [重新加载列表](#reload-list)
+* 4 [参考资料](#reload-list)
 
-Click here to expand Table of Contents
+## 介绍
 
-* 1 [Introduction](#introduction)
-* 2 [Discussion](#discussion)
-* 3 [Reload List](#reload-list)
-* 4 [See Also](#reload-list)
+什么时候使用 **reloadxml** 就足够"重新加载并继续"呢？这可能是个棘手的问题。有时重新加载 XML 是足够的，有时则需要更多的操作。
 
-## Introduction
+## 讨论
 
-When is a **reloadxml** sufficient for "reloading and moving on"? This can be a tricky question. Sometimes reloading XML is sufficient. Sometimes more is needed.
+在更新 FreeSWITCH 时，通常需要 "重新加载" 才能使更改生效。有时您只需要发出 **reloadxml** 命令，比如更新 XML 拨号计划文件。然而，有时您需要除了重新加载 XML 外做其他事情。更加复杂的是，有些命令会代表您执行 reloadxml，这样您就不需要显式地发出两个命令！
 
-## Discussion
+下面是需要各种类型重新加载的项的列表（如果您发现此列表中没有您所需的内容，请随时添加，前提是您知道它）。例如，它提到了 **reloadacl** 命令。reloadacl 命令为您执行 reloadxml，然后更新系统中的 ACL。此外，现在 **reload&lt;module_name>** 命令也为您执行 reloadxml。（此功能于2012年中期添加，并在所有最新版本的 FreeSWITCH 上可用。）
 
-When making updates in FreeSWITCH it is frequently necessary to "reload" in order for the changes to take effect. Sometimes you need to issue just the **reloadxml** command, as with updating XML dialplan files. However, there are times when you need to do something in addition to reloading XML. Further complicating matters, there are some commands that will execute a reloadxml on your behalf so that you don't explicitly have to issue two commands!
+## 重新加载列表
 
-Below is a list of items that require various types of reloading. (If you see something that isn't on this list then by all means add it if you know it.) For example, it mentions the **reloadacl** command. The reloadacl command performs a reloadxml for you and then updates the ACLs in the system. Also, the **reload &lt;module\_name>** command now performs a reloadxml for you as well. (This was added in mid 2012 and it available on all recent versions of FreeSWITCH.)
-
-## Reload List
-
-| Item                            | Reload Command                                                                                                                | Notes                                        |
+| 项目                            | 重新加载命令                                                                                                                  | 备注                                           |
 | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| XML Dialplan                    | reloadxml                                                                                                                     | Run each time you edit XML dial file(s)      |
-| ACLs                            | reloadacl                                                                                                                     | Edit acl.conf.xml first                      |
-| Voicemail                       | reload mod\_voicemail                                                                                                         | Edit voicemail.conf.xml first                |
-| Conference                      | reload mod\_conference                                                                                                        | Edit conference.conf.xml first               |
-| Add Sofia Gateway               | sofia profile &lt;name> rescan                                                                                                   | Less intrusive - no calls dropped            |
-| Remove Sofia Gateway            | sofia profile &lt;name> killgw &lt;gateway\_name>                                                                                   | Less intrusive - no calls dropped            |
-| Restart Sofia Gateway           | sofia profile &lt;name> killgw &lt;gateway\_name>sofia profile &lt;name> rescan                                                        | Less intrusive - no calls dropped            |
-| Add/remove Sofia Gateway        | sofia profile &lt;name> restart                                                                                                  | More intrusive - all profile calls dropped   |
-| Local Stream                    | see [Mod\_local\_stream](../Modules/mod_local_stream_6587466.mdx#local_stream-hup)  | Edit localstream.conf.xml first              |
-| Update a lua file               | nothing necessary                                                                                                             | file is loaded from disk each time it is run |
-| Update LCR SQL table            | nothing necessary                                                                                                             | SQL query is run for each new call           |
-| Update LCR options              | reload mod\_lcr                                                                                                               | Edit lcr.conf.xml first                      |
-| Update CID Lookup Options       | reload mod\_cidlookup                                                                                                         | Edit cidlookup.conf.xml first                |
-| Update JSON CDR Options         | reload mod\_json\_cdr                                                                                                         | Edit json\_cdr.conf.xml first                |
-| Update XML CDR Options          | reload mod\_xml\_cdr                                                                                                          | Edit xml\_cdr.conf.xml first                 |
-| Update XML CURL Server Response | nothing, unless using [cache](../Modules/mod_xml_curl_1049001.mdx#caching) |                                              |
+| XML拨号计划                    | reloadxml                                                                                                                     | 编辑XML拨号文件时运行                          |
+| 访问控制列表 (ACLs)                            | reloadacl                                                                                                                     | 先编辑acl.conf.xml                                |
+| 语音信箱                       | reload mod\_voicemail                                                                                                         | 先编辑voicemail.conf.xml                          |
+| 会议室                      | reload mod\_conference                                                                                                        | 先编辑conference.conf.xml                         |
+| 添加Sofia网关               | sofia profile &lt;name> rescan                                                                                                   | 未影响性 - 未丢失任何电话                      |
+| 移除Sofia网关            | sofia profile &lt;name> killgw &lt;gateway\_name>                                                                                   | 未影响性 - 未丢失任何电话                          |
+| 重启Sofia网关           | sofia profile &lt;name> killgw &lt;gateway\_name>sofia profile &lt;name> rescan                                                        | 未影响性 - 未丢失任何电话                       |
+| 添加/删除Sofia网关        | sofia profile &lt;name> restart                                                                                                  | 影响性较大 - 所有配置电话都将丢失           |
+| 本地流                    | 查看[Mod\_local\_stream](../Modules/mod_local_stream_6587466.mdx#local_stream-hup)  | 先编辑 localstream.conf.xml              |
+| 更新lua文件               | 无需操作                                                                                                             | 文件每次运行时从磁盘加载                        |
+| 更新LCR SQL表            | 无需操作                                                                                                             | 每个新呼叫都会运行SQL查询          |
+| 更新LCR选项              | reload mod\_lcr                                                                                                               | 先编辑lcr.conf.xml                          |
+| 更新CID查询选项       | reload mod\_cidlookup                                                                                                         | 先编辑cidlookup.conf.xml                |
+| 更新JSON CDR选项         | reload mod\_json\_cdr                                                                                                         | 先编辑json\_cdr.conf.xml                |
+| 更新XML CDR选项          | reload mod\_xml\_cdr                                                                                                          | 先编辑xml\_cdr.conf.xml                 |
+| 更新XML CURL服务器响应 | 无需操作，除非使用[cache](../Modules/mod_xml_curl_1049001.mdx#caching) |                                              |
 
-## See Also
+## 请参阅
 
-* [reload](../Modules/mod_commands_1966741.mdx#command-2)
-* [reloadacl](../Modules/mod_commands_1966741.mdx#reloadacl)
-* [reloadxml](../Modules/mod_commands_1966741.mdx#reloadxml)
-
-
+* [重新加载](../Modules/mod_commands_1966741.mdx#command-2)
+* [重新加载ACL](../Modules/mod_commands_1966741.mdx#reloadacl)
+* [重新加载XML](../Modules/mod_commands_1966741.mdx#reloadxml)

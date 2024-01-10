@@ -1,24 +1,21 @@
+# 在核心中使用 PostgreSQL
 
-# PostgreSQL in the core 
+## 关于
 
- 
+自FreeSWITCH 1.2.5版开始添加了对PostgreSQL的本地支持。
 
-## About
+点击此处展开目录
 
-Postgres native support was added in FreeSWITCH 1.2.5.
-
-Click here to expand Table of Contents
-
-* 1 [Dependencies](#dependencies)
+* 1 [依赖项](#dependencies)
 * 2 [CentOS](#centos)
 * 3 [Debian](#debian)
-* 4 [Configure](#configure)
+* 4 [配置](#configure)
 * 5 [conf/autoload\_configs/switch.conf.xml](#confautoload_configsswitchconfxml)
-* 6 [Database Tables](#database-tables)
+* 6 [数据库表](#database-tables)
 
-### Dependencies
+### 依赖项
 
-libpq and the associated dev packages are required
+需要安装libpq及其相关开发包。
 
 ### CentOS
 
@@ -32,9 +29,9 @@ yum install libpq-devel
 sudo apt-get install libpq-dev
 ```
 
-### Configure
+### 配置
 
-If you have installed a later version of PostgreSQL from a source other then your distro's repositories, and its installed to a non-standard location such as /usr/pgsql-9.5 you will need to adjust your PATH and/or PKG\_CONFIG\_PATH environment variables to properly locate either pg\_config or libpq.pc
+如果你从除发行版仓库之外的其他源安装了较新版本的PostgreSQL，并且将其安装到非标准位置（例如/usr/pgsql-9.5），则需要调整你的PATH和/或PKG\_CONFIG\_PATH环境变量，以正确定位pg\_config或libpq.pc。
 
 ```xml
 export PKG_CONFIG_PATH=/usr/pgsql-9.5/lib/pkgconfig
@@ -42,17 +39,18 @@ export PATH=/usr/pgsql-9.3/bin:$PATH
 ./configure --enable-core-pgsql-support
 ```
 
-Adjust your PKG\_CONFIG\_PATH and PATH as required for your platform.
+根据你的平台需求调整PKG\_CONFIG\_PATH和PATH。
 
 ### conf/autoload_configs/switch.conf.xml
 
 ```xml
-<!-- to use a numeric IP address (no DNS names!): -->
+<!-- 使用数值型IP地址（无DNS名称！）： -->
 <param name="core-db-dsn" value="pgsql://hostaddr=127.0.0.1 dbname=freeswitch user=freeswitch password='' options='-c client_min_messages=NOTICE' application_name='freeswitch'" />
+```
 
 <!-- OR to use a resolvable DNS hostname (not a numeric i.p. address): -->
 <param name="core-db-dsn" value="pgsql://host=localhost dbname=freeswitch user=freeswitch password='' options='-c client_min_messages=NOTICE' application_name='freeswitch'" />
- 
+
 <!-- to disable SSL encyption need to add sslmode=disable -->
 <param name="core-db-dsn" value="pgsql://host=localhost dbname=freeswitch user=freeswitch password='' options='-c client_min_messages=NOTICE' application_name='freeswitch' sslmode=disable" />
 ```
@@ -63,13 +61,13 @@ host vs hostaddr
 
 PostgreSQL
 
-For PostgreSQL, FS strips the 'pgsql://' from the DSN and passes the remainder of the string directly to libpq's PQconnectdb() for connection to the database. See the [libpq](http://www.postgresql.org/docs/8.1/static/libpq.html#LIBPQ-CONNECT) docs for further information on creating a proper connections string.
+对于PostgreSQL，FS从DSN中去掉了'pgsql://'，并将剩余的字符串直接传递给libpq的PQconnectdb()函数进行数据库连接。请参阅[libpq](http://www.postgresql.org/docs/8.1/static/libpq.html#LIBPQ-CONNECT)文档，了解有关创建正确连接字符串的更多信息。
 
-### Database Tables
+### 数据库表
 
-Once you have PostgreSQL configured in the core, you can connect to the database and ensure you have tables, like the following.
+在将PostgreSQL配置在核心中之后，您可以连接到数据库并确保拥有以下表。
 
-**PostgreSQL tables**
+**PostgreSQL表**
 
 ```bash
 freeswitch=# \dt
@@ -87,6 +85,3 @@ freeswitch=# \dt
  public | tasks         | table | freeswitch
 (9 rows)
 ```
-  
-  
-

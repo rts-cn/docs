@@ -1,15 +1,12 @@
+# Ruby ESL
 
-# Ruby ESL 
+点击此处展开目录
 
- 
+* 1 [Ruby示例](#ruby-examples)
 
-Click here to expand Table of Contents
+### Ruby示例
 
-* 1 [Ruby Examples](#ruby-examples)
-
-### Ruby Examples
-
-ESL in Inbound mode.
+ESL在入站模式下使用。
 
 ```xml
 require 'ESL'
@@ -19,7 +16,7 @@ esl = con.sendRecv('api sofia status')
 puts esl.getBody
 ```
 
-ESL in Outbound mode in sync operation.
+ESL在出站模式下进行同步操作。
 
 ```xml
 require 'socket'
@@ -36,7 +33,7 @@ loop do
 end
 ```
 
-ESL in Outbound async full mode (&lt;action application="socket" data="localhost:8086 async full"/>). It forks a process of every connection in order to support simultaneous sessions.
+ESL在出站模式下进行异步全模式操作（<action application="socket" data="localhost:8086 async full"/>）。它为每个连接分叉一个进程以支持同时会话。
 
 ```xml
 #!/usr/bin/ruby
@@ -55,7 +52,7 @@ socket = Socket.new(AF_INET, SOCK_STREAM, 0)
 sockaddr = Socket.sockaddr_in(bind_port, bind_address)
 socket.bind(sockaddr)
 socket.listen(5)
-puts "Listening for connections on #{bind_address}:#{bind_port}"
+puts "在 #{bind_address}:#{bind_port} 上监听连接"
 loop do
   client_socket, client_sockaddr = socket.accept #_nonblock
   pid = fork do
@@ -65,39 +62,36 @@ loop do
     @con.sendRecv("myevents")
     @con.sendRecv("divert_events on")
 
-    puts "#{time_now} [#{uuid}] Call to [#{info.getHeader("Caller-Destination-Number")}]"
+    puts "#{time_now} [#{uuid}] 呼叫到 [#{info.getHeader("Caller-Destination-Number")}]"
     @con.execute("log", "1, Wee-wa-wee-wa")
     @con.execute("info", "")
     @con.execute("answer", "")
     @con.execute("playback", "/usr/local/freeswitch/sounds/music/8000/suite-espanola-op-47-leyenda.wav")
 
-    while @con.connected
-      e = @con.recvEvent
+```ruby
+while @con.connected
+  e = @con.recvEvent
 
-      if e
-        name = e.getHeader("Event-Name")
-        puts "EVENT: #{name}"
-        break if name == "SERVER_DISCONNECTED"
-        if name == "DTMF"
-          digit = e.getHeader("DTMF-DIGIT")
-          duration = e.getHeader("DTMF-DURATION")
-          puts "DTMF DIGIT #{digit} (#{duration})"
-          if digit == "5"
-            @con.execute("log", "1, WHA HA HA. User pressed 5")
-          elsif digit == "8"
-           # TODO: close connection without hangup in order to proceed in dialplan. How?
-          elsif digit == "9"
-            @con.execute("transfer", "99355151")
-          end
-        end
-
+  if e
+    name = e.getHeader("Event-Name")
+    puts "事件：#{name}"
+    break if name == "SERVER_DISCONNECTED"
+    if name == "DTMF"
+      digit = e.getHeader("DTMF-DIGIT")
+      duration = e.getHeader("DTMF-DURATION")
+      puts "DTMF按键 #{digit}（持续时间：#{duration}）"
+      if digit == "5"
+        @con.execute("log", "1, 哈哈哈。用户按下了 5")
+      elsif digit == "8"
+        # TODO: 断开连接但不挂断，以便继续执行拨号计划。如何实现？
+      elsif digit == "9"
+        @con.execute("transfer", "99355151")
       end
     end
-    puts "Connection closed"
   end
-
-  Process.detach(pid)
 end
+puts "连接已关闭"
+end
+
+Process.detach(pid)
 ```
-
-

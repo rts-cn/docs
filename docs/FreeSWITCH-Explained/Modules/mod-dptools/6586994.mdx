@@ -1,78 +1,73 @@
+# mod_dptools: ring_ready
 
-# mod_dptools: ring_ready 
+## 关于
 
- 
+这个功能会向发起者发送一个**180 Ringing**（振铃）信号。
 
-## About
+点击此处展开目录
 
-This causes an **180 Ringing** to be sent to the originator.
+* 1 [用法](#-freeswitch--mod_dptools-ring_ready-)
+* 2 [示例](#examples)
+* 3 [参见](#-freeswitch--mod_dptools-ring_ready-)
 
-Click here to expand Table of Contents
-
-* 1 [Usage](#-freeswitch--mod_dptools-ring_ready-)
-* 2 [Examples](#examples)
-* 3 [See Also](#-freeswitch--mod_dptools-ring_ready-)
-
-### Usage
+### 用法
 
 ```xml
 ring_ready
 ```
 
-### Examples
+### 示例
 
 ```xml
 <action application="ring_ready" />
 
-<!-- Request a certain tone/file to be played while you wait for the call to be answered-->
+<!-- 在等待来电接听期间，请求播放特定的音调/文件 -->
 <action application="set" data="ringback=%(2000, 4000, 440.0, 480.0)"/>
 <!--<action application="set" data="ringback=/home/ring.wav"/>-->
 ```
 
-An example which allows incoming calls to be left ringing while an event driven API is used to control the call.
+以下示例允许来电在事件驱动的API控制下继续振铃。
 
-When an incoming call arrives for DDI 012345678 it is acknowledged with a “180 Ringing" and then the call is held ringing while the rule goes to sleep. On sleep expiry the call is cleared. This means any incoming call that is not processed using an API method will be automatically cleared after 3 mins.   
-  
-This makes a nice neat way of holding incoming calls ringing.
+当来电到达 DDI 012345678 时，首先会发送“180 Ringing"的响应，并将通话保持在振铃状态，同时规则进入休眠状态。休眠时间到期后，通话将被清除。这意味着任何不使用API方法处理的来电都会在3分钟后自动被清除。
 
-Many carriers do not like to hold calls unsupervised in a ringing (or unanswered) state for long periods of time. FreeSWITCH might be processing your calls as intended, but the carrier might drop them after a shorter period of time than is allowed by the following example.
+这是一种很好的方式来保持来电持续振铃。
+
+许多运营商不喜欢将来电在振铃（或未接听）状态下长时间无人监控地保持。FreeSWITCH可能按照预期处理通话，但运营商可能会在比下面示例中允许的更短时间后将其丢弃。
 
 ```xml
 <extension name="DP_name">
    <condition field="destination_number" expression="^012345678$">  
     <action application="set" data="domain_name=$${domain}"/>
     <action application="ring_ready" />
-    <!-- Remain in the ringing state for a max of 3 minutes (time in milliseconds) -->
+    <!-- 最多保持振铃状态长达3分钟（时间以毫秒计算） -->
     <action application="sleep" data="180000"/>
              
     <!-- #########################################################
-      Alternative actions can be automatically performed when the sleep duration is exceeded 
-      Simply comment out the unwanted actions; 
-      if no actions are specified then the call hangs up anyway
+      当超过休眠时长时，可以自动执行替代操作
+      只需注释掉不需要的操作即可；
+      如果没有指定操作，则呼叫无论如何都会挂断
       ######################################################### 
       -->
 
-     <!--  EITHER ======> hang up the call if this is required action on no answer 
-      refer to http://wiki.freeswitch.org/wiki/Hangup_causes for the cause code data. -->
+     <!--  选择之一 ======> 如果需要，在无应答时挂断呼叫
+      参考 http://wiki.freeswitch.org/wiki/Hangup_causes 获取 cause code 数据。-->
      <!--<action application="hangup" data="NO_ANSWER"/>-->
         
-     <!-- OR ======> Redirect if this is required action on no answer -->
+     <!-- 或者 ======> 在无应答时进行重定向 -->
      <!--<action application="redirect" data="sip:foo@bar.com "/>-->
    
-     <!-- OR ======> Reject the call if this is required action on no answer (use the correct cause code) -->
+     <!-- 或者 ======> 如果需要，在无应答时拒接呼叫（使用正确的 cause code） -->
      <action application="respond" data="407"/>
              
     </condition>
  </extension>
 ```
 
-The name of the application changed from ringback to '''ring\_ready'''
+应用程序的名称从 ringback 更改为 ring_ready
 
-### See Also
+### 另请参阅
 
-* \[\[Custom\_Ring\_Back\_Tones\]\]
-* [\_\_Channel Variables](../../Dialplan/Variables-Archive/x__Channel-Variables_1048892.mdx#--)
-* [Dialplan](../../Dialplan/index.mdx#0-about)
-* \[\[180 vs. 183 vs. Early Media\]\]
-
-
+* [[自定义回铃音]]
+* [[\_\_通道变量]]
+* [拨号计划]
+* [[180 vs. 183 vs. Early Media]]

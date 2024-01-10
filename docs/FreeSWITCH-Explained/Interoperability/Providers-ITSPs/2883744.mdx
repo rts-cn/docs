@@ -1,18 +1,15 @@
-
-# Provider Level3 (USA) 
-
- 
+# Level3供应商（美国）
 
 ## [Level3.com](http://Level3.com)
 
-Last update: 2 April 2013
+最新更新：2013年4月2日
 
-Incoming and Outgoing works.
+进出工作。
 
-Add the Level3 Gateway IP into the domain section under autoload\_configs/acl.conf.xml
+将Level3网关IP添加到autoload_configs/acl.conf.xml下的域部分中
 
 ```xml
-<configuration name="acl.conf" description="Network Lists">
+<configuration name="acl.conf" description="网络列表">
   <network-lists>
     <list name="domains" default="deny">
       <node type="allow" cidr="4.55.60.x/32"/>
@@ -21,7 +18,7 @@ Add the Level3 Gateway IP into the domain section under autoload\_configs/acl.co
 </configuration> 
 ```
 
-Create Level3 sip profile under sip\_profiles/external/
+在sip_profiles/external/下创建Level3 sip配置文件
 
 ```xml
 <include>
@@ -34,25 +31,24 @@ Create Level3 sip profile under sip\_profiles/external/
            <param name="sip-port" value="5060"/>
            <param name="expire-seconds" value="600"/>
            <param name="register" value="false" />
-           <!--/// Must be set with one of the TN from the Level3 SIP Trunk ///-->
+           <!--/// 必须使用Level3 SIP Trunk中的一个TN来设置 ///-->
            <param name="from-user" value="1234567890"/>
-           <!--/// Must be set with one of the TN from the Level3 SIP Trunk ///-->
+           <!--/// 必须使用Level3 SIP Trunk中的一个TN来设置 ///-->
             <param name="extension" value="1234567890"/>
            <param name="extension-in-contact" value="true"/>
            <param name="sip-trace" value="no"/>
          </gateway>
 </include>
-
 ```
 
-Dialplan Settings - Level3 sends and receives in 10 digit format by default. Inbound dialplan settings (transfer to extension 102):
+拨号计划设置- Level3默认以10位格式发送和接收。入站拨号计划设置（转接到分机102）：
 
 ```xml
 <include>
   <extension name="Level3_inbound">
     <condition field="context" data="public"/>
-    <!-- The following line detects incoming 10 digit calls to number 1234567890 -->
-    <!-- The line after transfers to extension 102 -->
+    <!-- 下面的代码检测到来自公共环境的10位数字电话到号码1234567890 -->
+    <!-- 下一行将呼叫转接到分机102 -->
     <condition field="destination_number" expression="^1234567890$>
       <action application="transfer" data="102 XML default"/>
     </condition>
@@ -60,13 +56,13 @@ Dialplan Settings - Level3 sends and receives in 10 digit format by default. Inb
 </include>
 ```
 
-Outbound dialplan settings (dial 9 then ten digits):
+外呼拨号计划设置（拨打9加上十位数字）：
 
 ```xml
 <include>
  <extension name="Level3_outbound">
-   <!-- The following line detects outbound calls with a 9 as a dropped prefix -->
-   <!-- The line after sends the 10 digit number to the provider -->
+   <!-- 下面的代码检测到带有落下的前缀9的外呼电话 -->
+   <!-- 下一行将把十位数字号码发送给供应商 -->
    <condition field="destination_number" expression="^9(\d{10})$">
        <action application="bridge" data="sofia/gateway/Level3/$1"/>
    </condition>
@@ -74,11 +70,8 @@ Outbound dialplan settings (dial 9 then ten digits):
 </include>
 ```
 
-In order to be able to send and receive fax, the following must be included in the dialplan
+为了能够发送和接收传真，必须在拨号计划中加入以下代码：
 
 ```xml
 <action application="export" data="t38_passthru=true"/> 
 ```
-
-  
-

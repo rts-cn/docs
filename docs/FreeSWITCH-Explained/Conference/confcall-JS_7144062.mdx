@@ -1,55 +1,51 @@
+# confcall JS
 
-# confcall JS 
+## 关于
 
- 
+这是一个早期的JavaScript示例，使用mod_spidermonkey和mod_spidermonkey_odbc与FreeSwitch配合使用。作者是 Ken Rice （SwK @ #freeswitch）。此应用仅仅是展示使用 FreeSwitch 的强大和便捷性的一个例子。这个文件中包含了其他由 anthm @ #freeswitch 和 pist @ #freeswitch 创建的 JavaScript 应用程序的代码。希望这能帮助你开始使用 FreeSwitch 和 JS 与 ODBC。
 
-## About
+mod_spidermonkey 已被 mod_v8 作为 JavaScript API 取代。
 
-Early JavaScript example for FreeSwitch using mod\_spidermonkey with mod\_spidermonkey\_odbc. by [Ken Rice](https://freeswitch.org/confluence/display/~krice) (SwK @ #freeswitch) This application is only meant to be an example of the power and ease of using FreeSWITCH. This file includes work ripped off from other JavaScript apps created by anthm @ #freeswitch and pist @ #freeswitch. I hope this helps you in starting to use FreeSwitch & JS with ODBC.
-
-mod\_spidermonkey has been superseded by mod\_v8 as a JavaScript API.
-
-## Code
+## 代码
 
 ```xml
-/** 
-confroom.js - Simple IVR Menu using a database.
-JavaScript Application for FreeSwitch::mod_spidermonkeyi with mod_spidermonkey_odbc.
-by Ken Rice (SwK @ #freeswitch)
+/**
+confroom.js - 使用数据库的简单IVR菜单。
+用于FreeSwitch::mod_spidermonkeyi与mod_spidermonkey_odbc的JavaScript应用程序。
+作者是 Ken Rice （SwK @ #freeswitch）。
 
-This application is only meant to be an example of the power and ease of using FreeSwitch.
-This file includes work ripped off from other JavaScript apps created by anthm @ #freeswitch
-and pist @ #freeswitch.
-I hope this helps you in starting to use FreeSwitch & JS with ODBC.
+这个应用程序只是展示了使用 FreeSwitch 的强大和便捷性的一个例子。
+这个文件中包含了其他由 anthm @ #freeswitch 和 pist @ #freeswitch 创建的 JavaScript 应用程序的代码。
+希望这能帮助你开始使用 FreeSwitch 和 JS 与 ODBC。
 
-Install:  copy this file to your <freeswitch dir>/scripts/
+安装：将此文件复制到 <freeswitch dir>/scripts/ 目录下。
 
-Add the following section to your freeswitch.xml around the extension 1000 section.
+在你的 freeswitch.xml 文件的 extension 1000 所在部分添加以下内容。
 
-	--------
-      <extension name="1200">
-        <condition field="destination_number" expression="^1200$">
-          <action application="javascript" data="confroom.js"/>
-        </condition>
-      </extension> 
-	--------
+--------
+<extension name="1200">
+    <condition field="destination_number" expression="^1200$">
+        <action application="javascript" data="confroom.js"/>
+    </condition>
+</extension> 
+--------
+ 
+从你的 SIP 电话拨打 1200 就好了！当然你也可以根据传入的 DID/DNIS 进行匹配，并运行这个应用程序。
 
-Dial 1200 from your sip phone and voila!  Ofcourse you can match for inbound DID/DNIS, and run this app.
-		
-Disclaimer: Use at your own risk.  No implied warranties or help if/when stuff blows up.
+免责声明：自行承担风险。不提供任何隐含的保修或者当问题出现时的帮助。
 
-Here's the mySQL table structure 
+下面是 mySQL 数据表的结构：
+```
 
-CREATE TABLE `conferences` (
+创建表`conferences`（
   `cuid` int(11) NOT NULL auto_increment,
   `pin` varchar(6) NOT NULL default '',
   `confname` varchar(30) default NULL,
   PRIMARY KEY  (`cuid`),
   UNIQUE KEY `pin` (`pin`)
-);
+）;
 
-Note: this does not include infor on setting up the DNS on your system for unixODBC or other. should be fairly
-easy using google.
+注意：这并不包括在UnixODBC或其他系统上设置DNS的信息。使用谷歌应该很容易。
 
 **/
 
@@ -85,7 +81,7 @@ function get_route(digits)
 
 	var line = "====================================\n";
 
-	console_log("notice", "Menu Option Entered: " + digits +" \n sql statment [" + sql + "]\n");
+	console_log("notice", "菜单选项输入: " + digits +" \n SQL语句 [" + sql + "]\n");
 	console_log("notice", line);
 
 	db.exec(sql);
@@ -93,63 +89,64 @@ function get_route(digits)
 	while(db.nextRow()) {
    		var row = db.getData();
 		if (row["count"] >= 1) {
-			console_log("notice", "Found Conf Pin=[" + digits + "]\n");
+			console_log("notice", "找到会议PIN=[" + digits + "]\n");
 			return digits;
 		} else { 
-			console_log("notice", "Conf Pin NOT Found!\n");
+			console_log("notice", "未找到会议PIN！\n");
 			return false;
 		 }
 		console_log("notice", line);
 	}
 }
 
-/** Let's answer our call **/
+/** 让我们接听电话 **/
 session.answer();
 
-/** Play our Main Menu prompt sound file.  You could use TTS here as well.  **/
-console_log("notice", "Playing dbivrmenu Main Menu sound file . . .\n");
+/** 播放我们的主菜单提示音。您也可以在这里使用TTS。 **/
+console_log("notice", "播放dbivrmenu主菜单声音文件 . . .\n");
 session.flushDigits();
-session.streamFile("/soundfiles/conf-getconfno.wav", "");	
+session.streamFile("/soundfiles/conf-getconfno.wav", "");
 
+```javascript
 while(session.ready()) {
 	dtmf.digits = "";
-	console_log("notice", "collecting dtmf digits . . .\n");
-    
+	console_log("notice", "正在获取按键输入. . .\n");
+
 	while (dtmf.digits.length < 6 && session.ready()) {
 		session.collectInput(mycb, dtmf, 5000);
-	} 
-	
-	/** when we timeout from above, we check replay value and play appropriate prompts **/
+	}
+
+	/** 当超时后，我们检查重播次数并播放相应的提示音 **/
 	if ((!dtmf.digits) && (replay < 4)) {
-		console_log("notice", "Replay # " + replay + "\n");
+		console_log("notice", "重播 #" + replay + "\n");
 		session.flushDigits();
 		session.streamFile("/soundfiles/conf-invalidpin.wav", "");
 		session.streamFile("/soundfiles/conf-getconfno.wav", "");
-		replay++;  // increment our replay value; we don't want to replay our prompts too many times!
+		replay++;  // 增加重播次数；我们不想重复播放太多次提示音！
 	} else if (replay >= 4) { 
-		/** Caller does not understand the prompts or your DB data is wrong; either way we've had enough, let's push'em off the line **/
+		/** 呼叫者无法理解提示音或您的数据库数据有误；无论哪种情况，我们已经够了，让我们挂断电话 **/
 		session.streamFile("/soundfiles/we-dont-have-tech-support.wav", "");
 		session.hangup();
 	}
-	
-	
+
+
 	if(dtmf.digits) {
-    	console_log("notice", "Got Some Digits . . .\n");
-		
+		console_log("notice", "获取到按键. . .\n");
+
 		route = get_route(dtmf.digits);
 		if (!route) {
-   	 	console_log("notice", "Invalid Option . . .\n");
+			console_log("notice", "无效选项. . .\n");
 			session.streamFile("/soundfiles/conf-invalidpin.wav", "");
 			session.streamFile("/soundfiles/conf-getconfno.wav", "");
 		} else {
-		   	console_log("notice", "Found Valid Option . . .\n");
+			console_log("notice", "找到有效选项. . .\n");
 			session.streamFile("/soundfiles/pls-wait-connect-call.wav", "");
-			
-			/** initiate the transfer application and send to the extension in route; again, you could extend this **/
+
+			/** 触发传输应用程序并发送到 route 中的分机；同样，您可以扩展此功能 **/
 
 			var confroom = route + "@default";
 
-			console_log("notice", "ConfRoom: [" + confroom  +"]\n");
+			console_log("notice", "会议室: [" + confroom  +"]\n");
 			console_log("notice", line);
 
 			session.flushDigits();
@@ -162,7 +159,4 @@ while(session.ready()) {
 		}
 	}
 }
-
 ```
-
-

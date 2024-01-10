@@ -1,108 +1,95 @@
+# mod_avmd
 
-# mod_avmd 
+![](/attachments/1049372/10683543.png)
 
- 
+## 关于
 
-  
-![](/attachments/1049372/10683543.png)  
+Advanced Voice Mail Detection 模块旨在检测音频信号中的单频恒幅音调。通常用于检测语音信箱或答录机问候语的末尾的“滴声”（类似于上述的这个 [beep](/attachments/1049372/10682567.mp3) \[[原始](/attachments/1049372/10682568.raw)\] 中的 1000 Hz 滴声，还请参阅下面的“拨号计划示例”）。这在您希望在收件人的消息系统上留下录音消息，但又不想等待常用的 [wait\_for\_silence](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Fwait%5Ffor%5Fsilence "Misc. Dialplan Tools wait for silence") 的暂停完成时非常有用，并且您正在寻找滴声以开始录音时。Avmd 还可（应该）与拨号器进行出站呼叫同时使用，与答录机检测模块（AMD）同时使用，因为检测到语音邮件很大程度上表明该呼叫是由机器接听的，而 AMD 无法检测声音（尽管在 AMD 的情况下，您通常希望尽快检测到机器，比在语音邮件问候语的末尾更快）。 
 
-## About
+点击展开目录
 
-Advanced Voice Mail Detection module is designed to detect the single-frequency constant-amplitude tone in audio signal. Common usage is to detect "beep" sound at the end of the voicemail or answering machine greetings (similar to this 1000 Hz [beep](/attachments/1049372/10682567.mp3) \[[raw](/attachments/1049372/10682568.raw)\] shown above, see also "Dialplan examples" below). This is useful in cases where you wish to leave a recorded message on the recipient's message system but don't want to wait for a pause to complete that is common when using [wait\_for\_silence](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Fwait%5Ffor%5Fsilence "Misc. Dialplan Tools wait for silence"), and you are looking for a beep sound to start recording. Avmd may (should) also be used on the outbound calls made by dialer, simultaneously with answering machine detection module (AMD), because the detection of voicemail is strong indication of the call being answered by machine and AMD doesn't detect sounds (though in AMD case you often want to be able to detect machine as soon as possible, more quickly than at the end of the voicemail greetings). 
+* 1 [工作原理及其消耗](#how-it-works-and-how-hungry-it-is)  
+   * 1.1 [详细信息](#details)  
+   * 1.2 [CPU使用（所需CPU量）](#cpu-usage-how-much-cpu-it-needs)
+* 2 [用法](#usage)  
+   * 2.1 [API接口](#api-interface)  
+   * 2.2 [启动](#start)  
+   * 2.3 [停止](#stop)  
+   * 2.4 [展示](#show)  
+   * 2.5 [重新加载](#reload)  
+   * 2.6 [设置](#set)  
+   * 2.7 [加载](#load)  
+   * 2.8 [APP接口](#app-interface)  
+      * 2.8.1 [命令](#commands)  
+         * 2.8.2 [拨号计划示例](#dialplan-examples)
+* 3 [AVMD会话的动态配置](#dynamic-configuration-of-avmd-session)  
+   * 3.1 [参数解释](#parameters-explained)
+* 4 [事件](#events)  
+   * 4.1 [事件类型](#event-types)  
+   * 4.2 [事件示例](#event-examples)
+* 5 [通道变量](#channel-variables)  
+   * 5.1 [avmd_detect](#avmd_detect)
+* 6 [脚本](#scripts)  
+   * 6.1 [在通话中启动AVMD并获取事件](#start-avmd-on-the-call-and-get-events)  
+   * 6.2 [在通话中启动AVMD并检查检测结果](#start-avmd-on-the-call-and-check-detection-result)  
+   * 6.3 [对FreeSWITCH进行多次呼叫（用于测试运行AVMD的呼叫的CPU使用情况）](#make-multiple-calls-to-freeswitch-useful-for-testing-cpu-usage-on-calls-running-avmd)
+* 7 [配置](#configuration)
+* 8 [反馈/问题](#feedbackquestions)
 
-  
-Click to expand Table of Contents
+## 工作原理及其消耗
 
-* 1 [How it works and how hungry it is](#how-it-works-and-how-hungry-it-is)  
-   * 1.1 [Details](#details)  
-   * 1.2 [CPU usage (how much CPU it needs)](#cpu-usage-how-much-cpu-it-needs)
-* 2 [Usage](#usage)  
-   * 2.1 [API interface](#api-interface)  
-   * 2.2 [start](#start)  
-   * 2.3 [stop](#stop)  
-   * 2.4 [show](#show)  
-   * 2.5 [reload](#reload)  
-   * 2.6 [set](#set)  
-   * 2.7 [load](#load)  
-   * 2.8 [APP interface](#app-interface)  
-      * 2.8.1 [Commands](#commands)  
-         * 2.8.2 [Dialplan examples](#dialplan-examples)
-* 3 [Dynamic configuration of avmd session](#dynamic-configuration-of-avmd-session)  
-   * 3.1 [Parameters explained](#parameters-explained)
-* 4 [Events](#events)  
-   * 4.1 [Event types](#event-types)  
-   * 4.2 [Event examples](#event-examples)
-* 5 [Channel variables](#channel-variables)  
-   * 5.1 [avmd\_detect](#avmd_detect)
-* 6 [Scripts](#scripts)  
-   * 6.1 [Start AVMD on the call and get events](#start-avmd-on-the-call-and-get-events)  
-   * 6.2 [Start AVMD on the call and check detection result](#start-avmd-on-the-call-and-check-detection-result)  
-   * 6.3 [Make multiple calls to FreeSWITCH (useful for testing CPU usage on calls running AVMD)](#make-multiple-calls-to-freeswitch-useful-for-testing-cpu-usage-on-calls-running-avmd)
-* 7 [Configuration](#configuration)
-* 8 [Feedback/questions](#feedbackquestions)
+AVMD使用DESA-2算法从音频信号的TKEO能量算子中分离瞬时频率和振幅的估计。DESA-2使用三个样本导数估计。该算法速度快，计算简单，但在存在噪声的情况下稍微不准确，尽管对于几乎所有实际用途来说足够好。
 
-## How it works and how hungry it is
+AVMD 提供三种检测模式，可以用于检测三种类型的声音：
 
-AVMD uses DESA-2 algorithm to separate estimations of instantaneous frequency and amplitude from TKEO energy operator of an audio signal. DESA-2 uses three sample derivative estimation. This algorithm is fast, computationally simple and a little inaccurate in presence of noise, though good enough for almost all practical uses.
+* 恒定幅度的检测
+* 恒定频率的检测（可用于检测DTMF音频）
+* 频幅恒定的检测（默认）
 
-AVMD offers three modes of detection, so that it can be used to detect three types of sound:
+调用 AVMD 的 start 方法会启动处理带有不同分辨率和/或偏移的音频帧的检测线程。在 AVMD 会话成功启动后，会触发 avmd::start 事件。然后，FreeSWITCH 核心会对每个传入音频帧调用 AVMD，并且所有检测线程会根据其分辨率、偏移和延迟来处理传入的音频帧。一旦信号被确定为符合指定的标准（恒定幅度、频率或两者兼备），将触发 avmd::beep 事件。应用程序应停止调用 AVMD，这会触发 avmd::stop 事件。
 
-* detection of constant amplitude
-* detection of constant frequency (this may be used to detect dtmf sound)
-* detection of constant amplitude and frequency (default)
+已知还有其他能量分离算法，包括但不限于DESA-1、方差-协方差方法、PRONY等。这些算法在估计差异信号能量或其他调整方面存在差异。一些研究者报道称，这些算法在鲁棒性和准确性方面的结果更好，至少在某些条件下，但它们需要更多的计算资源。因此，将来可能会对 avmd 进行扩展以实现其中一些算法。目前，avmd 使用 DESA-2，这在生产环境中导致单个数字的百分之几的误差。
 
-The call to AVMD's start method results in launching of detection threads processing audio frames with different resolutions and/or offsets. The avmd::start event is fired after successful start of the AVMD session. The FreeSWITCH core then calls AVMD on each incoming audio frame and all detection threads process incoming frame according to their resolution, offset and lag. Once the signal has been qualified as meeting the specified criteria (of constant amplitude, frequency or both) the avmd::beep event is raised. Application should then stop AVMD running on the call which results in avmd::stop event being fired.
+### 详细信息
 
-  
-![](/attachments/1049372/10683540.png)
-
-  
-There are known also other energy separation algorithms including bot not limited to DESA-1, variance-covariance method, PRONY, etc. These algorithms differ in a way energy of differentiated signal is estimated and/or in other adjustments. They are more computationally-expensive methods which have been reported to yield better results in terms of robustness and accuracy, at least at some conditions, by some researchers. Therefore it is possible avmd will be extended in the future to implement some of them. At this moment, avmd uses DESA-2 and this results in a single digit percentage error in a production environments.
-
-### Details
-
-This UML diagram depicts processing of audio frames by each of detection threads running in AVMD session, after thread is signaled to start processing by the AVMD main thread in avmd\_process function.![](/download/temp/plantuml13869310088330138598.png)  
+这个 UML 图表描述了在 AVMD 会话中每个检测线程对音频帧的处理，当 AVMD 主线程在avmd_process函数中发出开始处理的信号后。![](/download/temp/plantuml13869310088330138598.png)
 
 ![](https://wiki.freeswitch.org/images/thumb/b/b3/Info.png/64px-Info.png)
 
-Features added in version 1.6.11
+版本 1.6.11 中新增功能：
 
-* multithreaded detectors and lagged detectors
-* three modes of detection (amplitude only, frequency only, both simultaneously)
-* detection mode setting added to configuration XML
-* number of detection threads and the number of lagged detectors settings added to configuration XML
-* extended event API (more information about detection session and about it's outcome added to the events)
+* 多线程检测器和滞后检测器
+* 三种检测模式（仅幅度、仅频率、同时）
+* 在配置 XML 中添加了检测模式设置
+* 在配置 XML 中添加了检测线程数和滞后检测器数设置
+* 扩展事件 API（在事件中增加有关检测会话和结果的更多信息）
 
-  
 ![](https://wiki.freeswitch.org/images/thumb/4/49/Error.png/64px-Error.png)
 
-Compared to call playing simply playback music on answer, running avmd (in default configuration of 36 detectors) consumes about 10 times more CPU. Also there is a tradeoff between detection quality (which increases with number of detection threads) and CPU usage. Please adjust detectors number in AVMD configuration XML or per session to fit your needs and computing resources.
+与呼叫简单回放音乐相比，运行 avmd（默认配置下有 36 个检测器）会消耗大约 10 倍的CPU资源。同时，检测质量（随着检测线程数增加而增加）与 CPU 使用率之间存在权衡。请根据您的需求和计算资源调整 AVMD 配置 XML 中的检测器数量或每个会话的数量。
 
-  
-### CPU usage (how much CPU it needs)
+### CPU 使用率（所需 CPU 百分比）
 
-Tests made on 8-core Intel's i7-4790K CPU indicate that compared to a call simply playing playback music on answer, running avmd (in default configuration of 36 detectors) makes your CPU about 10 times more busy. In a table below we show % of total CPU power used by FreeSWICTH when multiple calls are dialed to extensions, one of them is just playing back the music, other one is running avmd in addition to that.
+在 8 核 Intel i7-4790K CPU 上进行的测试表明，与呼叫简单回放音乐相比，运行 avmd（默认配置下有 36 个检测器）会使您的 CPU 忙碌程度增加约 10 倍。下表显示了当多个呼叫转接到分机时，FreeSWITCH 使用的总CPU资源的百分比，其中一个呼叫仅回放音乐，另一个呼叫除此之外还运行 avmd。
 
-Results were obtained from output of top command (top -p \`pidof freeswitch\`).
+结果通过 top 命令的输出（top -p \`pidof freeswitch\`）获得。
 
-| extension/# of calls  | 10   | 50    | 100  | 150   | 200              |
-| --------------------- | ---- | ----- | ---- | ----- | ---------------- |
-| playback music        | 1.25 | 3.25  | 6.25 | 7.9   | 9.75             |
-| playback music + avmd | 12.9 | 32.13 | 47.8 | 63.75 | 95 (GUI lagging) |
+| extension/# of calls | 10   | 50    | 100  | 150   | 200              |
+| -------------------- | ---- | ----- | ---- | ----- | ---------------- |
+| 播放音乐              | 1.25 | 3.25  | 6.25 | 7.9   | 9.75             |
+| 播放音乐 + avmd       | 12.9 | 32.13 | 47.8 | 63.75 | 95（GUI卡顿）    |
 
-  
-## Usage
+## 使用方法
 
-It is as simple as could only be.
+使用起来非常简单。
 
-* You "start" the detection on the particular voice channel.
-* The avmd::beep indicating that beep has been detected is delivered to your ESL socket listener, to command prompt and written to logs. Avmd also sets the channel variable (see "Channel variables").
-* You (optionally) "stop" the detection on the particular voice channel.
+* 在特定的语音通道上“启动”检测。
+* avmd::beep指示检测到哔声已被传送到ESL套接字监听器、命令提示符并写入日志。Avmd还设置了通道变量（参见“通道变量”）。
+*（可选）在特定的语音通道上“停止”检测。
 
-  
-Therefore you will see output similar to this in the console:
+因此，您将在控制台上看到类似于以下的输出：
 
-**Console log (running avmd on given example answering\_machine\_sound\_effect\_8000.raw)**
+**控制台日志（在给定的示例answering_machine_sound_effect_8000.raw上运行avmd）**
 
 ```perl
 2016-10-13 15:37:06.765346 [INFO] mod_avmd.c:1113 Avmd dynamic configuration: debug [0], report_status [1], fast_math [0], require_continuous_streak [1], sample_n_continuous_streak [3], sample_n_to_skip [0], require_continuous_streak_amp [1], sample_n_continuous_streak_amp [3], simplified_estimation [1], inbound_channel [1], outbound_channel [0], detection_mode [2], detectors_n [36], detectors_lagged_n [1]
@@ -112,96 +99,85 @@ Therefore you will see output similar to this in the console:
 2016-10-13 15:37:15.265359 [INFO] mod_avmd.c:1467 Avmd on channel [loopback/1706-b] stopped, beep status: [DETECTED], total running time [8500013] [us]
 ```
 
-  
-### API interface
+### API接口
 
-This interface is exposed for calls from mod\_event\_socket.
+此接口用于从mod_event_socket进行调用。
 
-  
-### start
+### 开始
 
-Starts avmd detection on a given channel.
+在给定的通道上启动avmd检测。
 
-  
-Usage: &lt;uuid> start
+用法：`<uuid> start`
 
-&lt;uuid> - channel unique identifier
+`<uuid>` - 通道唯一标识符
 
-Examples:
+示例：
 
 afcbe4db-cdb3-4e1c-98c5-c12fea8474cc start
 
-  
 ![](https://wiki.freeswitch.org/images/thumb/c/cb/Warning.png/64px-Warning.png)
 
-In all of this documentation we omit "api avmd" (used in calls from ESL, telnet client), "avmd" (used in calls from fs\_cli, dialplan). It is however assumed that this prefix is always there. In all of this documentation by &lt;x> we mean parameter that is required for a given command and when command is issued the &lt;x> becomes just x. For example, above uuid is channel unique identifier and &lt;uuid> should be understood as "insert uuid of the channel here" (obligatory parameter) when issuing start/stop commands. Extending this example, given the resulting event shown in "Example event" (see below) the following command must have been executed from ESL:
+在所有文档中，我们省略了"api avmd"（在从ESL、telnet客户端发起的调用中使用），以及"avmd"（在从fs_cli、dialplan发起的调用中使用）。然而，我们假定这个前缀总是存在的。在所有这些文档中，我们用&lt;x>表示对于给定命令所需的参数，在发出命令时&lt;x>将变成x。例如，上面的uuid是通道的唯一标识符，&lt;uuid>应该理解为"在此处插入通道的uuid"（必填参数），当发出start/stop命令时。扩展这个例子，假设从ESL执行了以下命令来产生在"示例事件"中显示的结果：
 
 api avmd afcbe4db-cdb3-4e1c-98c5-c12fea8474cc start
 
-or alternatively this form from fs\_cli:
+或者从fs_cli使用这种形式：
 
- avmd afcbe4db-cdb3-4e1c-98c5-c12fea8474cc start
+avmd afcbe4db-cdb3-4e1c-98c5-c12fea8474cc start
 
 ### stop
 
-Stops avmd detection on a given channel.
+停止给定通道上的avmd检测。
 
-  
-Usage: &lt;uuid> stop
+使用方法: &lt;uuid> stop
 
-&lt;uuid> - channel unique identifier
+&lt;uuid> - 通道的唯一标识符
 
-  
-Examples:
+示例:
 
 afcbe4db-cdb3-4e1c-98c5-c12fea8474cc stop
 
-  
 ![](https://wiki.freeswitch.org/images/thumb/b/b3/Info.png/64px-Info.png)
 
-All below commands are available since 1.6.8 release.
+自1.6.8版本以来，以下所有命令都可用。
 
 ### show
 
-Prints to console current default/global avmd settings.
+打印到控制台当前的默认/全局avmd设置。
 
-  
-Usage: show
+使用方法: show
 
-  
-Examples:
+示例:
 
 show
 
 ### reload
 
-Reloads avmd XML configuration settings to what FS has in RAM.
+重新加载avmd的XML配置设置，以使其与FS中的设置一致。
 
-  
-Usage: reload
+使用方法: reload
 
-  
-Examples:
+示例:
 
 reload
 
-The settings are loaded from FS memory. This means new data will be a copy of what was loaded to FS from $CONFDIR when it was started or when reloadxml command was called last time. If you change XML file and want avmd to load this, it is enough to call FS command reloadxml. But you can also make avmd to load the XML settings file that was cached by FS when reloadxml was called last time. This avmd's reload method will do it, it always restores settings to what FS has in it's RAM, and what FS has in RAM is the version of XML file corresponding to most recent reloadxml command.
+设置是从FS存储加载的。这意味着新数据将是从启动时或上次调用reloadxml命令时从$CONFDIR加载到FS的副本。如果您更改了XML文件并希望avmd加载它，只需调用FS命令reloadxml即可。但是，您也可以使avmd加载FS在上次调用reloadxml时缓存的XML设置文件。avmd的重新加载方法将执行此操作，它总是将设置恢复为FS存储在其RAM中的内容，而FS在RAM中的内容是与最近的reloadxml命令对应的XML文件的版本。
 
 ### set
 
-Sets detection on internal/external channel.
+设置内部/外部通道的检测。
 
   
-Usage: set inbound | outbound | default
+用法：set inbound | outbound | default
 
-inbound - set detection on internal channel
+inbound - 在内部通道上设置检测
 
-outboud - set detection on external channel
+outbound - 在外部通道上设置检测
 
-default - set avmd settings to default factory settings (see "Dynamic configuration of avmd session")
+default - 将avmd设置为默认工厂设置（参见"avmd会话的动态配置"）
 
   
-Examples:
+示例：
 
 set inbound
 
@@ -211,70 +187,66 @@ set default
 
 ### load
 
-Loads avmd XML settings from RAM and sets detection on internal/external channel.
+从RAM加载avmd的XML设置，并设置内部/外部通道的检测。
 
   
-Usage: load inbound | outbound
+用法：load inbound | outbound
 
-inbound - set detection on internal channel
+inbound - 在内部通道上设置检测
 
-outboud - set detection on external channel
+outbound - 在外部通道上设置检测
 
   
-Examples:
+示例：
 
 load inbound
 
 load outbound
 
   
-This command is equivalent to reload + set. load inbound == reload + set inbound, load outbound == reload + set outbound.
+此命令相当于reload + set。load inbound == reload + set inbound，load outbound == reload + set outbound。
 
 ![](https://wiki.freeswitch.org/images/thumb/b/b3/Info.png/64px-Info.png)
 
-Sometimes you may want to start avmd a few seconds after answer. In that case, once you get an answer event, issue this command
+有时您可能希望在应答后几秒钟启动avmd。在这种情况下，在收到应答事件后，发出以下命令：
 
 api sched_api +3 none avmd &lt;uuid> start
 
 ![](https://wiki.freeswitch.org/images/thumb/b/b3/Info.png/64px-Info.png)
 
-For best results in getting accurate detection as well a saving system resources (CPU & memory), you should do the following:
+为了获得准确的检测结果并节省系统资源（CPU和内存），您应执行以下操作：
 
-* Wait until AFTER the call has been answered before starting AVMD. In many cases you may find it best to wait a few seconds after the call is answered before starting AVMD. Starting AVMD before the call is answered will result in waste of CPU resources.
-* Once you have received the AVMD event, you should explicitly stop AVMD, even though it will not return more events.
+* 在接听电话之后再开始 AVMD。在许多情况下，最好在接听电话后等待几秒钟再开始 AVMD。在接听电话之前启动 AVMD 会导致 CPU 资源的浪费。
+* 一旦收到 AVMD 事件，即使不会返回更多的事件，您也应该显式停止 AVMD。
 
-### APP interface
+### 应用程序接口
 
-#### Commands
+#### 命令
 
-This interface is exposed for calls from dialplan and scripts (LUA, js). As from 1.6.8 this version of APP should be used:
+此接口允许来自拨号计划和脚本(LUA、JavaScript)的调用。从 1.6.8 版本开始，应使用以下版本的应用程序：
 
 ![](https://wiki.freeswitch.org/images/thumb/b/b3/Info.png/64px-Info.png)
 
-Available since 1.6.9 release.
+从 1.6.9 版本开始提供。
 
-| APP (command name) | Dynamic parameters? | Usage (from dialplan)                                                                                                                                                                                                                                                                                                       | Description                                                                                                                                 | Notes                            |
-| ------------------ | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| avmd\_start        | no                  | &lt;action application="avmd\_start"/>                                                                                                                                                                                                                                                                                         | starts avmd session with default parameters                                                                                                 |                                  |
-| avmd\_start        | yes                 | &lt;action application="avmd\_start" data=""/>                                                                                                                                                                                                                                                                                 | starts avmd session with default parameters                                                                                                 | data="" is legal, though useless |
-| avmd\_start        | yes                 | &lt;action application="avmd\_start" data= "dynamic parameters: comma separated list of key=value options"/>(e.g. &lt;action application\="avmd\_start" data\="inbound\_channel=0,outbound\_channel=1, sample\_n\_continuous\_streak=19,sample\_n\_to\_skip=18,debug=0,detectors\_n=3,detectors\_lagged\_n=1,report\_status=1"/>) | starts avmd session with parameters set, value of the parameters which have not been specified here is set to default value from XML config |                                  |
-| avmd\_stop         | no                  | &lt;action application="avmd\_stop"/>                                                                                                                                                                                                                                                                                          | stops avmd session                                                                                                                          |                                  |
+| APP (命令名称)   | 是否有动态参数？ | 使用方法（来自呼叫计划）                                                                                                                                                                                                                | 描述                                                                                      | 备注                                  |
+| --------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------ |
+| avmd\_start     | 否             | &lt;action application="avmd\_start"/>                                                                                                                                                                                              | 以默认参数开始 AVMD 会话                                                                            |                                      |
+| avmd\_start     | 是             | &lt;action application="avmd\_start" data=""/>                                                                                                                                                                                      | 以默认参数开始 AVMD 会话                                                                            | data="" 是合法的，尽管没有意义              |
+| avmd\_start     | 是             | &lt;action application="avmd\_start" data= "动态参数：以逗号分隔的键=值选项列表"/>（例如：&lt;action application\="avmd\_start" data\="inbound\_channel=0,outbound\_channel=1, sample\_n\_continuous\_streak=19,sample\_n\_to\_skip=18,debug=0,detectors\_n=3,detectors\_lagged\_n=1,report\_status=1"/>) | 以设置的参数开始 AVMD 会话，未在此指定的参数的值将使用配置文件中的默认值                              |                                      |
+| avmd\_stop      | 否             | &lt;action application="avmd\_stop"/>                                                                                                                                                                                               | 停止 AVMD 会话                                                                                   |                                      |
 
-When dynamic passing of parameters is used avmd module will validate the comma separated list (which may be empty, that is data="") of key=value pairs for name and value correctness and will set found keys to specified values if validation succeeds. If it doesn't succeed avmd session parameters are set to currently stored default (which means it is set specified in last call to avmd set/ avmd load or otherwise, if none such call has been made - taken from XML config or from default factory settings if config load failed \[there is no config or it is invalid\]). 
+使用动态参数传递时，avmd模块将验证以逗号分隔的键值对的正确性（可以为空，即data=""），并在验证成功时将找到的键设置为指定的值。如果验证不成功，avmd会将会话参数设置为当前存储的默认值（这意味着它是在上一次调用avmd set/ avmd load时设置的，或者如果没有这样的调用-则从XML配置或默认的工厂设置中获取，如果配置加载失败\[没有配置或配置无效\]）。
 
-  
-Below APP calls will be deprecated since 1.6.8 version but they will still work until the next release for not to break the backward compatibility. When you call one of these methods the warning "YOU ARE USING DEPRECATED APP INTERFACE" is printed to the logs.
+下面的APP调用将在1.6.8版本后被弃用，但在下一个发布版本之前仍然可用，以保持向后兼容性。当您调用这些方法之一时，警告"YOU ARE USING DEPRECATED APP INTERFACE"将打印到日志中。
 
-| APP (command name) | Description                                          | Usage (from dialplan)                                                             | Dynamic parameters? | Notes                                                                                                     |
+| APP（命令名）| 描述| 用法（从呼叫计划）| 动态参数？| 备注|
 | ------------------ | ---------------------------------------------------- | --------------------------------------------------------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------------- |
-| avmd               | starts/stops avmd session dependant on data argument | &lt;action application="avmd" data="start"/>&lt;action application="avmd" data="stop"/> | no                  | ![](https://wiki.freeswitch.org/images/thumb/4/49/Error.png/64px-Error.png)DEPRECATED since 1.6.8 version |
+| avmd               | 启动/停止与数据参数相关的avmd会话| &lt;action application="avmd" data="start"/>&lt;action application="avmd" data="stop"/> | 否                 | ![](https://wiki.freeswitch.org/images/thumb/4/49/Error.png/64px-Error.png)1.6.8版本后不推荐使用 |
 
-  
-#### Dialplan examples
+#### 呼叫计划示例
 
-  
-**Dialplan example 1 (running avmd on given example answering\_machine\_sound\_effect\_8000.raw)** Expand source 
-
+**拨号计划示例1（在给定示例 answering\_machine\_sound\_effect\_8000.raw 上运行 avmd）** 
 ```xml
 <extension name="1706">
     <condition field="destination_number" expression="^1706$">
@@ -286,17 +258,15 @@ Below APP calls will be deprecated since 1.6.8 version but they will still work 
 </extension>
 ```
 
-  
 ![](https://wiki.freeswitch.org/images/thumb/b/b3/Info.png/64px-Info.png)
 
-Available since 1.6.9 release.
+自1.6.9版本开始可用。
 
-**Dialplan example 2 (running avmd on given example answering\_machine\_sound\_effect\_8000.raw)** Expand source 
-
+**拨号计划示例2（在给定示例 answering\_machine\_sound\_effect\_8000.raw 上运行 avmd）** 
 ```xml
 <extension name="1706">
     <condition field="destination_number" expression="^1706$">
-        <action application="avmd_start" data="simplified_estimation=0,inbound_channel=1,outbound_channel=1,sample_n_continuous_streak=25,sample_n_to_skip=18,debug=0,report_status=0"/> <!-- this configuration sets more samples to skip at the beginning of each audio frame and requires more than default number of continuous good estimations to validate detection */
+        <action application="avmd_start" data="simplified_estimation=0,inbound_channel=1,outbound_channel=1,sample_n_continuous_streak=25,sample_n_to_skip=18,debug=0,report_status=0"/> <!-- 这个配置设置了更多的样本在每个音频帧的开始时被跳过，并且需要超过默认数量的连续好的估计值才能验证检测 -->
         <action application="playback" data="voicemail/8000/answering_machine_sound_effect_8000.raw"/>
         <action application="avmd_stop"/>
         <action application="hangup"/>
@@ -304,12 +274,12 @@ Available since 1.6.9 release.
 </extension>
 ```
 
-**Dialplan example 3 (running avmd on given example answering\_machine\_sound\_effect\_8000.raw)** Expand source 
+**拨号计划示例3（在给定示例 answering\_machine\_sound\_effect\_8000.raw 上运行 avmd）**
 
 ```xml
 <extension name="1706_playback">
     <condition field="destination_number" expression="^1706$">
-        <action application="avmd_start" data="debug=1,sample_n_to_skip=19,inbound_channel=1,outbound_channel=0"/>    <!-- inbound configuration, good if you start calls from script and playback audio from FS -->
+        <action application="avmd_start" data="debug=1,sample_n_to_skip=19,inbound_channel=1,outbound_channel=0"/>    <!-- 入站配置，如果您从脚本开始呼叫并从FS播放音频，则可以使用此配置 -->
         <action application="playback" data="voicemail/8000/answering_machine_sound_effect_8000.raw"/>
         <action application="avmd_stop"/>
         <action application="hangup"/>
@@ -317,12 +287,12 @@ Available since 1.6.9 release.
 </extension>
 ```
 
-**Dialplan example 4 (running avmd on given example answering\_machine\_sound\_effect\_8000.raw in amplitude only mode)** Expand source 
+**拨号计划示例4（在给定的 answering\_machine\_sound\_effect\_8000.raw 上运行 avmd，仅处于振幅模式）** 展开源代码
 
 ```xml
 <extension name="1706_amplitude_only">
     <condition field="destination_number" expression="^1706$">
-        <action application="avmd_start" data="detection_mode=0"/>    <!-- set AVMD to detect sound of constant amplitude (and neglect frequency) -->
+        <action application="avmd_start" data="detection_mode=0"/>    <!-- 将 AVMD 设置为检测振幅恒定的声音（忽略频率） -->
         <action application="playback" data="voicemail/8000/answering_machine_sound_effect_8000.raw"/>
         <action application="avmd_stop"/>
         <action application="hangup"/>
@@ -330,12 +300,12 @@ Available since 1.6.9 release.
 </extension>
 ```
 
-**Dialplan example 5 (running avmd on given example answering\_machine\_sound\_effect\_8000.raw in frequency only mode)** Expand source 
+**拨号计划示例5（在给定的 answering\_machine\_sound\_effect\_8000.raw 上运行 avmd，仅处于频率模式）** 展开源代码
 
 ```xml
 <extension name="1706_frequency_only">
     <condition field="destination_number" expression="^1706$">
-        <action application="avmd_start" data="detection_mode=1"/>    <!-- set AVMD to detect sound of constant frequency (and neglect amplitude) -->
+        <action application="avmd_start" data="detection_mode=1"/>    <!-- 将 AVMD 设置为检测频率恒定的声音（忽略振幅） -->
         <action application="playback" data="voicemail/8000/answering_machine_sound_effect_8000.raw"/>
         <action application="avmd_stop"/>
         <action application="hangup"/>
@@ -343,12 +313,11 @@ Available since 1.6.9 release.
 </extension>
 ```
 
-  
 ![](https://wiki.freeswitch.org/images/thumb/4/49/Error.png/64px-Error.png)
 
-DEPRECATED since 1.6.8 version
+自1.6.8版本起已被弃用
 
-**Dialplan Example 6 (running avmd on given example answering\_machine\_sound\_effect\_8000.raw)** Expand source 
+**拨号计划示例6（对给定示例answering\_machine\_sound\_effect\_8000.raw运行avmd）** 扩展源
 
 ```xml
 <extension name="1706">
@@ -361,114 +330,111 @@ DEPRECATED since 1.6.8 version
 </extension>
 ```
 
-## Dynamic configuration of avmd session
+## 动态配置avmd会话
 
-When avmd session is started it's parameters are configured with values that are currently stored in FreeSWITCH's RAM. These values are taken from avmd XML configuration file avmd\_conf.xml and can be altered by configuration commands (set/load/reload). There is also a possibility to set each parameter of avmd session's individually, per session. It is done by passing comma separated list of parameters and their values with avmd start command from dialplan (as of 1.6.9 version - it is not available from APP interface, e.g. event socket).
+当avmd会话启动时，其参数是根据当前存储在FreeSWITCH的RAM中的值进行配置的。这些值取自avmd XML配置文件avmd\_conf.xml，并可以通过配置命令（set/load/reload）进行更改。还可以通过从拨号计划中传递逗号分隔的参数和它们的值来单独设置avmd会话的每个参数，即使在1.6.9版本中也是如此（从APP接口无法使用，如事件套接字）。
 
-### Parameters explained
+### 参数解释
 
-The meaning of parameters which can be set dynamically is explained in the table below. 
+下表解释了可以动态设置的参数的含义。
 
-| Parameter                          | Scope       | Description                                                                                                                                                                                                                                                                                                                | Data type | Default value | Notes                                                                                                                                                                                                                                                                                    |
-| ---------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| debug                              | GLOBAL      | enables/disables logging of avmd intermediate computations to log                                                                                                                                                                                                                                                          | uint8\_t  | 0             |                                                                                                                                                                                                                                                                                          |
-| report\_status                     | GLOBAL      | enables/disables verbose logging (and reporting to the console)of detection status and other diagnostics like parameters avmdsession has been started with, change of configuration parameters,beep detection status after session ended (stop event is firedindependently of this setting and beep status included there) | uint8\_t  | 1             |                                                                                                                                                                                                                                                                                          |
-| fast\_math                         | GLOBAL      | enables/disables faster computation of arcus cosine - table is created withmapping of floats to integers and returning arc cos values given theseinteger indices into table                                                                                                                                                | uint8\_t  | 0             | not available on Windows(setting is ignored)                                                                                                                                                                                                                                             |
-| require\_continuous\_streak        | PER SESSION | used in frequency estimation:enables/disables check of the required number of consecutive elements(given in sample\_n\_continuous\_streak) in the SMA bufferwithout reset needed to classify beep detection as valid                                                                                                       | uint16\_t | 1             |                                                                                                                                                                                                                                                                                          |
-| sample\_n\_continuous\_streak      | PER SESSION | used in frequency estimation:specifies the required number of consecutive elements in the SMA bufferwithout reset needed to classify beep detection as valid.                                                                                                                                                              | uint16\_t | 3             | This parameter helps to avoid false beeps, bigger this value is - smallerthe probability of getting false detection but also smaller the chance of gettingdetections of true beeps.                                                                                                      |
-| require\_continuous\_streak\_amp   | PER SESSION | used in amplitude estimation:enables/disables check of the required number of consecutive elements(given in sample\_n\_continuous\_streak) in the SMA bufferwithout reset needed to classify beep detection as valid                                                                                                       | uint16\_t | 1             |                                                                                                                                                                                                                                                                                          |
-| sample\_n\_continuous\_streak\_amp | PER SESSION | used in amplitude estimation:specifies the required number of consecutive elements in the SMA bufferwithout reset needed to classify beep detection as valid.                                                                                                                                                              | uint16\_t | 3             | This parameter helps to avoid false beeps, bigger this value is - smallerthe probability of getting false detection but also smaller the chance of gettingdetections of true beeps.                                                                                                      |
-| sample\_n\_to\_skip                | PER SESSION | specifies the number of samples to skip starting from the beginning of the frame and/or after reset has happened.                                                                                                                                                                                                          | uint8\_t  | 0             | This parameter serves the purpose of skipping first few estimations in each frame,as these estimations may be inaccurate. Increasing value of this parameter(up to certain limit of about 60) may help to give more robust detections in some cases.                                     |
-| simplified\_estimation             | PER SESSION | enables/disables simplified estimation of frequency based on approximationof sin(x) with (x) in the range x=\[0,PI/2\]                                                                                                                                                                                                     | uint8\_t  | 1             | Since 1.6.10 release.In releases before this parameter is ignored.This would be used only if DESA original algorithm is usedin which arcus cosine computation is neededper each estimation, but as of 1.6.10 version we use tweaked DESAalgorithm to avoid computation of cosine at all. |
-| inbound\_channel                   | PER SESSION | enables/disables avmd on internal channel                                                                                                                                                                                                                                                                                  | uint8\_t  | 0             |                                                                                                                                                                                                                                                                                          |
-| outbound\_channel                  | PER SESSION | enables/disables avmd on external channel                                                                                                                                                                                                                                                                                  | uint8\_t  | 1             |                                                                                                                                                                                                                                                                                          |
-| detection\_mode                    | PER SESSION | sets the characteristics of the sound AVMD will detect, this is the constantamplitude sound or constant frequency sound or sound characterizedby both constant amplitude and frequency simultaneously(0 = AVMD\_DETECT\_AMP, 1 = AVMD\_DETECT\_FREQ,2 = AVMD\_DETECT\_BOTH)                                                | uint8\_t  | 2             | default value is 2 which means AVMD\_DETECT\_BOTH                                                                                                                                                                                                                                        |
-| detectors\_n                       | PER SESSION | sets the number of detection threads running at different resolution and/oroffset within the avmd session                                                                                                                                                                                                                  | uint8\_t  | 36            | increasing these numbers gives better detection qualitybut can make CPU very busy, it may be needed to decreasedetectors\_n value on slow machines. The default setting allowsto handle about 300 sessions peak on 16GB machine with 8 coresIntel(R) Core(TM) i7-4790K CPU @ 4.00GHz     |
-| detectors\_lagged\_n               | PER SESSION | sets the number of detection threads which process audio skipping fewframes at the beginning of voice stream                                                                                                                                                                                                               | uint8\_t  | 1             |                                                                                                                                                                                                                                                                                          |
+| 参数                               | 作用域       | 描述                                                                                                                                                                                                                                                                                                             | 数据类型    | 默认值       | 备注                                                                                                                                                                                                                                                                                                                                                   |
+|------------------------------------|--------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------|--------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| debug                              | 全局         | 启用/禁用将 avmd 中间计算记录到日志中                                                                                                                                                                                                                                                                              | uint8\_t  | 0             |                                                                                                                                                                                                                                                                                          |
+| report\_status                     | 全局         | 启用/禁用详细日志记录（和控制台报告）检测状态和其他诊断，如 avmdsession 启动时使用的参数，配置参数的更改，会话结束后哔哔检测状态（停止事件独立于此设置触发，并在其中包括蜂鸣器状态）                                                                                                                  | uint8\_t  | 1             |                                                                                                                                                                                                                                                                                          |
+| fast\_math                         | 全局         | 启用/禁用更快计算余弦值 - 创建表时将浮点数映射到整数并返回给定这些整数索引的余弦值                                                                                                                                                | uint8\_t  | 0             | 在 Windows 上不可用（该设置将被忽略）                                                                                                                                                                                                                                                   |
+| require\_continuous\_streak        | 每个会话     | 在频率估计中使用：启用/禁用对 SMA 缓冲区进行连续检查所需的连续元素数（由 sample\_n\_continuous\_streak 给出），无需重置即可将蜂鸣检测分类为有效                                                                                                                                                      | uint16\_t | 1             |                                                                                                                                                                                                                                                                                          |
+| sample\_n\_continuous\_streak      | 每个会话     | 在频率估计中使用：指定 SMA 缓冲区中的连续元素数，无需重置即可将蜂鸣检测分类为有效                                                                                                                                                                                                                          | uint16\_t | 3             | 此参数有助于避免误报哔声，值越大，误检几率越小，但也会减小检测到真正蜂鸣 声的机会                                                                                                                                                                           |
+| require\_continuous\_streak\_amp   | 每个会话     | 在幅度估计中使用：启用/禁用对 SMA 缓冲区进行连续检查所需的连续元素数（由 sample\_n\_continuous\_streak 给出），无需重置即可将蜂鸣检测分类为有效                                                                                                                                                      | uint16\_t | 1             |                                                                                                                                                                                                                                                                                          |
+| sample\_n\_continuous\_streak\_amp | 每个会话     | 在幅度估计中使用：指定 SMA 缓冲区中的连续元素数，无需重置即可将蜂鸣检测分类为有效                                                                                                                                                                                                                          | uint16\_t | 3             | 此参数有助于避免误报哔声，值越大，误检几率越小，但也会减小检测到真正蜂鸣声的机会                                                                                                                                                                           |
+| sample\_n\_to\_skip                | 每个会话     | 指定从帧的开头开始跳过的样本数和/或发生重置后要跳过的样本数                                                                                                                                                                                                                                                         | uint8\_t  | 0             | 该参数用于跳过每帧的前几次估计（因为这些估计可能不准确）。增加此参数的值（最多约60）可以帮助在某些情况下提供更稳健的检测                                                                                                                                                                    |
+| simplified\_estimation             | 每个会话     | 启用/禁用基于以0到PI/2为x的sin(x)的简化频率估计                                                                                                                                                                                                                                                                   | uint8\_t  | 1             | 自1.6.10版本开始，在此版本之前，将忽略此参数。只有在使用 DESA 原始算法的情况下，才会使用此参数，其中每个估计都需要计算一个 cos 的反余弦，但从1.6.10版本开始，我们使用调整后的 DESA 算法来避免计算余弦值。                                                                                                                                          |
+| inbound\_channel                   | 每个会话     | 启用/禁用内部信道上的 avmd                                                                                                                                                                                                                                                                                      | uint8\_t  | 0             |                                                                                                                                                                                                                                                                                          |
+| outbound\_channel                  | 每个会话     | 启用/禁用外部信道上的 avmd                                                                                                                                                                                                                                                                                      | uint8\_t  | 1             |                                                                                                                                                                                                                                                                                          |
+| detection\_mode                    | 每个会话     | 设置 AVMD 将检测的声音特征，即恒定幅度声音或恒定频率声音或同时具有恒定幅度和频率的声音（0 = AVMD\_DETECT\_AMP，1 = AVMD\_DETECT\_FREQ，2 = AVMD\_DETECT\_BOTH）                                                                                              | uint8\_t  | 2             | 默认值为2，表示 AVMD\_DETECT\_BOTH                                                                                                                                                                                                                                                     |
+| detectors\_n                       | 每个会话     | 设置在不同分辨率和/或偏移量下运行的检测线程数                                                                                                                                                                                                                                                                      | uint8\_t  | 36            | 增加这些数字可以提供更好的检测质量，但可能会使 CPU 占用率很高，可能需要在较慢的机器上减小detectors\_n 值。 默认设置能够在带有8个核心的16GB机器上处理高峰值约300个会话，CPU 为 Intel(R) Core(TM) i7-4790K @ 4.00GHz                                                                      |
+| detectors\_lagged\_n               | 每个会话     | 设置处理音频时在语音流开始时跳过几帧的检测线程数                                                                                                                                                                                                                                                                | uint8\_t  | 1             |                                                                                                                                                                                                                                                                                          |
 
-  
-## Events
+## 事件
 
-### Event types
+### 事件类型
 
-There exist following types of avmd events:
+以下是 avmd 事件的类型：
 
-| Event name                  | Description                                 | Custom fields                                                                                                                                        | Usage (how to subscribe)       | Notes                                              |
-| --------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ | -------------------------------------------------- |
-| AVMD\_EVENT\_BEEP           | constant frequency signal has been detected | Unique-IDCall-commandBeep-StatusFrequencyFrequency-varianceAmplitudeAmplitude-varianceDetection-timeDetector-resolutionDetector-offsetDetector-index | event plain CUSTOM avmd::beep  | This event is fired only if beep has been detected |
-| AVMD\_EVENT\_SESSION\_START | avmd session has been started               | Unique-IDCall-commandStart-time                                                                                                                      | event plain CUSTOM avmd::start |                                                    |
-| AVMD\_EVENT\_SESSION\_STOP  | avmd session has been stopped               | Unique-IDCall-commandBeep statusTotal-time                                                                                                           | event plain CUSTOM avmd::stop  |                                                    |
+| 事件名称                     | 描述                              | 自定义字段                                                                                                                                         | 使用方式（如何订阅）                | 备注                                                  |
+| --------------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- | ----------------------------------------------------- |
+| AVMD\_EVENT\_BEEP           | 检测到恒定频率信号               | Unique-IDCall-commandBeep-StatusFrequencyFrequency-varianceAmplitudeAmplitude-varianceDetection-timeDetector-resolutionDetector-offsetDetector-index | 事件 plain CUSTOM avmd::beep       | 仅在检测到蜂鸣声时触发                                 |
+| AVMD\_EVENT\_SESSION\_START | avmd 会话已启动                  | Unique-IDCall-commandStart-time                                                                                                                      | 事件 plain CUSTOM avmd::start      |                                                       |
+| AVMD\_EVENT\_SESSION\_STOP  | avmd 会话已停止                  | Unique-IDCall-commandBeep statusTotal-time                                                                                                           | 事件 plain CUSTOM avmd::stop       |                                                       |
 
-  
-To get all avmd events you can subscribe to all FS events and filter them by custom avmd field, a calling command "Call-command":
+要获取所有 avmd 事件，您可以订阅所有 FS 事件，并按自定义 avmd 字段进行过滤，即"Call-command" 拨号命令。
 
 ```cpp
-event all
-filter Call-command avmd
+事件 all
+筛选器 Call-command avmd
 ```
 
-  
-### Event examples
+### 事件示例
 
-Example avmd session start event (from running above dialplan examples)
+从上面的拨号计划示例中运行的例子avmd会话开始事件
 
-**Example avmd session start event (from running above dialplan examples)** Expand source 
+**从上面的拨号计划示例中运行的例子avmd会话开始事件** 展开源码
 
 ```xml
-Event-Subclass: avmd%3A%3Astart
-Event-Name: CUSTOM
-Core-UUID: 9c7e6daf-cdc6-4f1d-931e-fcb886cffde9
-FreeSWITCH-Hostname: westernst
-FreeSWITCH-Switchname: westernst
+事件子类: avmd%3A%3Astart
+事件名称: CUSTOM
+核心UUID: 9c7e6daf-cdc6-4f1d-931e-fcb886cffde9
+FreeSWITCH主机名: westernst
+FreeSWITCH开关名称: westernst
 FreeSWITCH-IPv4: 192.168.1.60
 FreeSWITCH-IPv6: %3A%3A1
-Event-Date-Local: 2016-10-13%2015%3A37%3A06
-Event-Date-GMT: Thu,%2013%20Oct%202016%2014%3A37%3A06%20GMT
-Event-Date-Timestamp: 1476369426765346
-Event-Calling-File: mod_avmd.c
-Event-Calling-Function: avmd_fire_event
-Event-Calling-Line-Number: 678
-Event-Sequence: 5967
-Unique-ID: ffbeebb0-8480-4422-9337-bd666d15358d
+本地事件日期: 2016-10-13%2015%3A37%3A06
+GMT事件日期: Thu,%2013%20Oct%202016%2014%3A37%3A06%20GMT
+事件时间戳: 1476369426765346
+事件调用文件: mod_avmd.c
+事件调用函数: avmd_fire_event
+事件调用行号: 678
+事件序列: 5967
+唯一标识符: ffbeebb0-8480-4422-9337-bd666d15358d
 Call-command: avmd
-Start-time: 1476369426765346
+开始时间: 1476369426765346
 ```
 
-Example beep event (from running above dialplan examples)
+从上面的拨号计划示例中运行的例子beep事件
 
-**Example avmd beep event (from running above dialplan examples)** Expand source 
+**从上面的拨号计划示例中运行的例子avmd beep事件** 展开源码
 
 ```xml
-Event-Subclass: avmd%3A%3Abeep
-Event-Name: CUSTOM
-Core-UUID: 9c7e6daf-cdc6-4f1d-931e-fcb886cffde9
-FreeSWITCH-Hostname: westernst
-FreeSWITCH-Switchname: westernst
+事件子类: avmd%3A%3Abeep
+事件名称: CUSTOM
+核心UUID: 9c7e6daf-cdc6-4f1d-931e-fcb886cffde9
+FreeSWITCH主机名: westernst
+FreeSWITCH开关名称: westernst
 FreeSWITCH-IPv4: 192.168.1.60
 FreeSWITCH-IPv6: %3A%3A1
-Event-Date-Local: 2016-10-13%2015%3A37%3A13
-Event-Date-GMT: Thu,%2013%20Oct%202016%2014%3A37%3A13%20GMT
-Event-Date-Timestamp: 1476369433885357
-Event-Calling-File: mod_avmd.c
-Event-Calling-Function: avmd_fire_event
-Event-Calling-Line-Number: 678
-Event-Sequence: 5971
-Unique-ID: ffbeebb0-8480-4422-9337-bd666d15358d
+本地事件日期: 2016-10-13%2015%3A37%3A13
+GMT事件日期: Thu,%2013%20Oct%202016%2014%3A37%3A13%20GMT
+事件时间戳: 1476369433885357
+事件调用文件: mod_avmd.c
+事件调用函数: avmd_fire_event
+事件调用行号: 678
+事件序列: 5971
+唯一标识符: ffbeebb0-8480-4422-9337-bd666d15358d
 Call-command: avmd
-Beep-Status: DETECTED
-Frequency: 999.589033
-Frequency-variance: 0.000003
-Amplitude: 11976.009917
-Amplitude-variance: 871.936721
-Detection-time: 7099987
-Detector-resolution: 1
-Detector-offset: 0
-Detector-index: 36
+Beep-状态: DETECTED
+频率: 999.589033
+频率方差: 0.000003
+振幅: 11976.009917
+振幅方差: 871.936721
+检测时间: 7099987
+探测器分辨率: 1
+探测器偏移量: 0
+探测器索引: 36
 ```
 
-Example avmd session stop (from running above dialplan examples)
+示例 avmd 会话停止（从上面的拨号计划示例中运行的）
 
-**Example avmd session stop (from running above dialplan examples)** Expand source 
+**示例 avmd 会话停止（从上面的拨号计划示例中运行的）** 扩展源代码
 
 ```xml
 Event-Subclass: avmd%3A%3Astop
@@ -491,37 +457,36 @@ Beep-Status: DETECTED
 Total-time: 8500013
 ```
 
-  
-## Channel variables
+
+## 通道变量
 
 ### avmd_detect
 
-When avmd session starts on a given channel, it's channel variable "avmd\_detect" is set to FALSE. Avmd sets this variable to TRUE just before AVMD\_EVENT\_BEEP is fired, so detection result can be checked by inspecting the value of this variable on a given channel. This is not however the supported way of getting detection indications. You should instead subscribe to and process avmd::beep event or check value of Beep-status field in avmd::stop event. Please take a look at "Start AVMD on the call and check detection result" below for more details.
+当在给定通道上启动 avmd 会话时，其通道变量 "avmd_detect" 被设置为 FALSE。Avmd 会在触发 AVMD_EVENT_BEEP 前将此变量设置为 TRUE，因此可以通过检查给定通道上此变量的值来检查检测结果。但是，这不是获取检测指示的支持方式。您应该订阅并处理 avmd::beep 事件，或者检查 avmd::stop 事件中的 Beep-status 字段的值。请查看下面的 "在通话上启动 AVMD 并检查检测结果"，了解更多详细信息。
 
   
-## Scripts
+## 脚本
 
-Few useful scripts written in Perl can be found in AVMD source folder (src/mod/applications/mod\_avmd/scripts).
+在 AVMD 源文件夹（src/mod/applications/mod_avmd/scripts）中可以找到一些有用的 Perl 脚本。
 
-  
-### Start AVMD on the call and get events
+### 在通话上启动 AVMD 并获取事件
 
-**mod\_avmd Start AVMD session on the originated call**
+**mod_avmd 在发起的通话上启动 AVMD 会话**
 
 ```perl
 #!/usr/bin/perl -w
 
 
-#brief  Subscribe to avmd events and print them to the console.
+#brief  订阅 avmd 事件并将其打印到控制台。
 #author Piotr Gregor <piotr@dataandsignal.com>
-#date   13 Sept 2016 09:44 PM
+#date   2016年9月13日 下午9:44
+```
 
-
-$|++;   # turn on autoflush
+```perl
+#!/usr/bin/perl -w
 use strict;
 use warnings;
 require ESL;
-
 
 my $host = "127.0.0.1";
 my $port = "8021";
@@ -536,25 +501,25 @@ if ($#ARGV + 1 eq 1) {
 
 my $con  = new ESL::ESLconnection($host, $port, $pass);
 if (!$con) {
-    die "Unable to establish connection to $host:$port\n";
+    die "无法连接到 $host:$port\n";
 }
 if ($con->connected()) {
-    print "OK, Connected.\n";
+    print "连接成功。\n";
 } else {
-    die "Conenction failure.\n";
+    die "连接失败。\n";
 }
 
-print "Subscribing to avmd events...\n";
+print "订阅 avmd 事件...\n";
 $con->events("plain", "CUSTOM avmd::start");
 $con->events("plain", "CUSTOM avmd::stop");
 $con->events("plain", "CUSTOM avmd::beep");
 
-print "Waiting for the events...\n";
+print "等待事件...\n";
 while($con->connected()) {
     my $e = $con->recvEvent();
     my $avmd_event_type = ""; 
     $avmd_event_type = $e->getHeader("Event-Subclass");
-    if ($avmd_event_type eq 'avmd::start') { # mark nicely the start of new session and event streak - most likely there will be other events from this session coming after this one
+    if ($avmd_event_type eq 'avmd::start') {
         print "\n--------------------\n\n";
     }   
     if ($e) {
@@ -564,132 +529,134 @@ while($con->connected()) {
     }   
 }
 
-print "Disconnected.\n\n";
+print "已断开连接。\n\n";
 ```
 
-### Start AVMD on the call and check detection result
+### 在呼叫上启动 AVMD 并检查检测结果
 
-**mod\_avmd Start AVMD session on the originated call and check detection result**
+**mod_avmd 在原始呼叫上启动 AVMD 会话并检查检测结果**
 
-```perl
-#!/usr/bin/perl -w
+#简介
+通过调用avmd测试套件中的语音信箱来测试avmd模块，并将检测结果打印到控制台。
 
+#作者
+Piotr Gregor <piotr@dataandsignal.com>
 
-#brief      Test module avmd by calling voicemails from avmd test suite and print detection results to the console.
-#author     Piotr Gregor <piotr@dataandsignal.com>
-#details    If you are testing serving voicemails from dialplan then avmd must be set to inbound mode, either globally (by avmd set inbound
-#           in fs_cli) or in dialplan settings (<action application="avmd_start" data="inbound_channel=1,outbound_channel=0") or dynamically per call.
-#date       15 Sept 2016 03:00 PM
+#详细信息
+如果你正在测试拨号计划中的语音信箱功能，那么avmd必须被设置为入站模式，可以在全局环境中设置（通过在fs_cli中运行avmd set inbound命令），或者在拨号计划设置中（<action application="avmd_start" data="inbound_channel=1,outbound_channel=0"）进行设置，也可以动态地针对每个呼叫进行设置。
 
-$|++;   # turn on autoflush
+#日期
+2016年9月15日 下午3:00
+
+$|++;   # 打开自动刷新
 use strict;
 use warnings;
 require ESL;
 use POSIX;
 use Time::HiRes;
 
-# Hashtable of <destination number : test result expectation> pairs
+# <destination number : test result expectation> 的哈希表
 my %numbers = (
-    503 => "NOTDETECTED",  # dual frequency (similar to single freq with varying amplitude), mode [0] AVMD_DETECT_AMP
-    504 => "NOTDETECTED",
-    505 => "NOTDETECTED",
-    506 => "NOTDETECTED",
-    507 => "NOTDETECTED",
-    508 => "NOTDETECTED",
-    509 => "NOTDETECTED",
-    510 => "NOTDETECTED",
-    511 => "NOTDETECTED",
-    512 => "NOTDETECTED",
-    513 => "NOTDETECTED",
-    514 => "NOTDETECTED",
-    515 => "NOTDETECTED",
-    516 => "NOTDETECTED",
-    517 => "NOTDETECTED",
-    518 => "NOTDETECTED",
-    519 => "NOTDETECTED",
-    520 => "NOTDETECTED",
-    521 => "NOTDETECTED",
-    522 => "NOTDETECTED",
-    523 => "NOTDETECTED",
-    603 => "DETECTED",  # dual frequency (similar to single freq with varying amplitude), mode [1] AVMD_DETECT_FREQ
-    604 => "DETECTED",
-    605 => "DETECTED",
-    606 => "DETECTED",
-    607 => "DETECTED",
-    608 => "DETECTED",
-    609 => "DETECTED",
-    610 => "DETECTED",
-    611 => "DETECTED",
-    612 => "DETECTED",
-    613 => "DETECTED",
-    614 => "DETECTED",
-    615 => "DETECTED",
-    616 => "DETECTED",
-    617 => "DETECTED",
-    618 => "DETECTED",
-    619 => "DETECTED",
-    620 => "DETECTED",
-    621 => "DETECTED",
-    622 => "DETECTED",
-    623 => "DETECTED",
-    703 => "NOTDETECTED",   # dual frequency (similar to single freq with varying amplitude), mode [2] AVMD_DETECT_BOTH
-    704 => "NOTDETECTED",
-    705 => "NOTDETECTED",
-    706 => "NOTDETECTED",
-    707 => "NOTDETECTED",
-    708 => "NOTDETECTED",
-    709 => "NOTDETECTED",
-    710 => "NOTDETECTED",
-    711 => "NOTDETECTED",
-    712 => "NOTDETECTED",
-    713 => "NOTDETECTED",
-    714 => "NOTDETECTED",
-    715 => "NOTDETECTED",
-    716 => "NOTDETECTED",
-    717 => "NOTDETECTED",
-    718 => "NOTDETECTED",
-    719 => "NOTDETECTED",
-    720 => "NOTDETECTED",
-    721 => "NOTDETECTED",
-    722 => "NOTDETECTED",
-    723 => "NOTDETECTED",
-    840531000 => "DETECTED",    # obscure voicemails, mode AVMD_DETECT_BOTH
-    840531001 => "DETECTED",
-    840531002 => "DETECTED",
-    840531003 => "DETECTED",
-    840531004 => "DETECTED",
-    840531005 => "DETECTED",
-    840531006 => "DETECTED",
-    840531007 => "DETECTED",
-    840531008 => "DETECTED",
-    840531009 => "DETECTED",
-    840531010 => "DETECTED",
-    840531011 => "DETECTED",
-    840531012 => "DETECTED",
-    840531013 => "DETECTED",
-    840531014 => "DETECTED",
-    840531200 => "DETECTED",    # obscure voicemails, mode AVMD_DETECT_FREQ
-    840531201 => "DETECTED",
-    840531202 => "DETECTED",
-    840531203 => "DETECTED",
-    840531204 => "DETECTED",
-    840531205 => "DETECTED",
-    840531206 => "DETECTED",
-    840531207 => "DETECTED",
-    840531208 => "DETECTED",
-    840531209 => "DETECTED",
-    840531210 => "DETECTED",
-    840531211 => "DETECTED",
-    840531212 => "DETECTED",
-    840531213 => "DETECTED",
-    840531214 => "DETECTED",
-    840531400 => "DETECTED",    # obscure voicemails ATT pack
-    840531401 => "DETECTED",
-    840531402 => "DETECTED",
-    840531403 => "DETECTED",
-    840531404 => "DETECTED",
-    840531405 => "DETECTED",
-    840531051 => "NOTDETECTED", # fragment of "Save tonight" by Eagle-Eye Cherry covered by D-Lete-Funk-K
+    503 => "未检测到",  # 双频（类似于变化幅度的单频），模式 [0] AVMD_DETECT_AMP
+    504 => "未检测到",
+    505 => "未检测到",
+    506 => "未检测到",
+    507 => "未检测到",
+    508 => "未检测到",
+    509 => "未检测到",
+    510 => "未检测到",
+    511 => "未检测到",
+    512 => "未检测到",
+    513 => "未检测到",
+    514 => "未检测到",
+    515 => "未检测到",
+    516 => "未检测到",
+    517 => "未检测到",
+    518 => "未检测到",
+    519 => "未检测到",
+    520 => "未检测到",
+    521 => "未检测到",
+    522 => "未检测到",
+    523 => "未检测到",
+    603 => "已检测到",  # 双频（类似于变化幅度的单频），模式 [1] AVMD_DETECT_FREQ
+    604 => "已检测到",
+    605 => "已检测到",
+    606 => "已检测到",
+    607 => "已检测到",
+    608 => "已检测到",
+    609 => "已检测到",
+    610 => "已检测到",
+    611 => "已检测到",
+    612 => "已检测到",
+    613 => "已检测到",
+    614 => "已检测到",
+    615 => "已检测到",
+    616 => "已检测到",
+    617 => "已检测到",
+    618 => "已检测到",
+    619 => "已检测到",
+    620 => "已检测到",
+    621 => "已检测到",
+    622 => "已检测到",
+    623 => "已检测到",
+    703 => "未检测到",  # 双频（类似于变化幅度的单频），模式 [2] AVMD_DETECT_BOTH
+    704 => "未检测到",
+    705 => "未检测到",
+    706 => "未检测到",
+    707 => "未检测到",
+    708 => "未检测到",
+    709 => "未检测到",
+    710 => "未检测到",
+    711 => "未检测到",
+    712 => "未检测到",
+    713 => "未检测到",
+    714 => "未检测到",
+    715 => "未检测到",
+    716 => "未检测到",
+    717 => "未检测到",
+    718 => "未检测到",
+    719 => "未检测到",
+    720 => "未检测到",
+    721 => "未检测到",
+    722 => "未检测到",
+    723 => "未检测到",
+    840531000 => "已检测到",  # 模糊的声音留言，模式 AVMD_DETECT_BOTH
+    840531001 => "已检测到",
+    840531002 => "已检测到",
+    840531003 => "已检测到",
+    840531004 => "已检测到",
+    840531005 => "已检测到",
+    840531006 => "已检测到",
+    840531007 => "已检测到",
+    840531008 => "已检测到",
+    840531009 => "已检测到",
+    840531010 => "已检测到",
+    840531011 => "已检测到",
+    840531012 => "已检测到",
+    840531013 => "已检测到",
+    840531014 => "已检测到",
+    840531200 => "已检测到",  # 模糊的声音留言，模式 AVMD_DETECT_FREQ
+    840531201 => "已检测到",
+    840531202 => "已检测到",
+    840531203 => "已检测到",
+    840531204 => "已检测到",
+    840531205 => "已检测到",
+    840531206 => "已检测到",
+    840531207 => "已检测到",
+    840531208 => "已检测到",
+    840531209 => "已检测到",
+    840531210 => "已检测到",
+    840531211 => "已检测到",
+    840531212 => "已检测到",
+    840531213 => "已检测到",
+    840531214 => "已检测到",
+    840531400 => "已检测到",  # 模糊的声音留言 ATT套餐
+    840531401 => "已检测到",
+    840531402 => "已检测到",
+    840531403 => "已检测到",
+    840531404 => "已检测到",
+    840531405 => "已检测到",
+    840531051 => "未检测到",  # "Save tonight" by Eagle-Eye Cherry 被 D-Lete-Funk-K 演唱的片段
 );
 my $host = "127.0.0.1";
 my $port = "8021";
@@ -704,34 +671,37 @@ my $passed = 0;
 my $failed = 0;
 my $hanguped = 0;
 
+```perl
 if ($#ARGV + 1 eq 1) {
     $callerid = $ARGV[0];
-    print "\nDialing as [" .$callerid ."]\n";
+    print "\n拨号使用的号码为[" .$callerid ."]\n";
 } elsif ($#ARGV + 1 > 1) {
-    die "Please specify single caller id.\n";
+    die "请指定单个呼叫者ID。\n";
 } else {
-    die "Please specify caller id.\n";
+    die "请指定呼叫者ID。\n";
 }
+```
 
-print "Connecting...\t";
+```perl
+print "连接中...\t";
 my $con  = new ESL::ESLconnection($host, $port, $pass);
 if (!$con) {
-    die "Unable to establish connection to $host:$port\n";
+    die "无法建立到 $host:$port 的连接\n";
 }
 if ($con->connected()) {
-    print "OK.\n";
+    print "成功。\n";
 } else {
-    die "Connection failure.\n";
+    die "连接失败。\n";
 }
-print "Subscribing to avmd events...\t";
+print "订阅 avmd 事件中...\t";
 $con->events("plain", "CUSTOM avmd::start");
 $con->events("plain", "CUSTOM avmd::stop");
 $con->events("plain", "CUSTOM avmd::beep");
 $con->events("plain", "CHANNEL_CALLSTATE");
 $con->events("plain", "CHANNEL_HANGUP");
-print "OK.\n\n";
-printf("\nRunning [" .keys(%numbers) ."] tests.\n\n");
-printf("outbound uuid | destination number | timestamp | expectation | test result | freq | f-variance | amplitude | a-variance | resolution | offset | idx\n\n");
+print "成功。\n\n";
+printf("\n运行 [%d] 个测试。\n\n", scalar keys(%numbers));
+printf("发起 uuid | 目标号码 | 时间戳 | 期待结果 | 测试结果 | 频率 | 频率变化 | 幅度 | 幅度变化 | 分辨率 | 偏移量 | 索引\n\n");
 foreach $dest (sort keys %numbers) {
     if (!$con->connected()) {
         last;
@@ -739,16 +709,16 @@ foreach $dest (sort keys %numbers) {
     $expectation = $numbers{$dest};
     test_once($dest, $callerid, $expectation);
 }
-print "Disconnected.\n\n";
+print "断开连接。\n\n";
 if (($failed == 0) && ($hanguped == 0)) {
-    printf("\n\nOK. All PASS [%s]\n\n", $passed);
+    printf("\n\n通过。全部通过 [%s]\n\n", $passed);
 } else {
-    printf("PASS [%s], FAIL [%s], HANGUP [%s]\n\n", $passed, $failed, $hanguped);
+    printf("通过 [%s]，失败 [%s]，挂断 [%s]\n\n", $passed, $failed, $hanguped);
 }
 sub test_once {
     my ($dest, $callerid, $expectation) = @_;
     my $originate_string =
-    'originate ' .
+    '发起 ' .
     '{ignore_early_media=true,' .
     'origination_uuid=%s,' .
     'originate_timeout=60,' .
@@ -797,10 +767,10 @@ sub test_once {
                         }
                         $outcome = $e->getHeader("Beep-Status");
                         if ($outcome eq $expectation) {
-                            $result = "PASS";
+                            $result = "通过";
                             $passed++;
                         } else {
-                            $result = "FAIL";
+                            $result = "失败";
                             $failed++;
                         }
                         last;
@@ -809,8 +779,8 @@ sub test_once {
             } elsif ($event_name eq 'CHANNEL_HANGUP') {
                 $event_uuid = $e->getHeader("variable_origination_uuid");
                 if ((defined $event_uuid) && ($event_uuid eq $uuid_out)) {
-                    $outcome = "HANGUP";
-                    $result = "HANGUP";
+                    $outcome = "挂断";
+                    $result = "挂断";
                     $hanguped++;
                     last;
                 }
@@ -818,22 +788,22 @@ sub test_once {
         }
     }
     printf("\t[%s]\t[%s]\t\t[%s]\t[%s]HZ\t[%s]\t[%s]\t[%s]\t[%s][%s][%s]\n", POSIX::strftime('%Y-%m-%d %H:%M:%S', localtime($time_epoch)), $expectation, $result, $freq, $freq_var, $amp, $amp_var, $resolution, $offset, $idx);
-    Time::HiRes::sleep(0.5);    # avoid switch_core_session.c:2265 Throttle Error! 33, switch_time.c:1227 Over Session Rate of 30!
+    Time::HiRes::sleep(0.5);    # 防止 switch_core_session.c:2265 节流误差！33，switch_time.c:1227 超过会话速率30！
 }
 ```
 
-### Make multiple calls to FreeSWITCH (useful for testing CPU usage on calls running AVMD)
+## 对 FreeSWITCH 进行多次呼叫（用于测试运行 AVMD 的通话的 CPU 负载）
 
-**Make multiple calls to FreeSWITCH** Expand source 
+**对 FreeSWITCH 进行多次呼叫** 展开源代码
 
 ```perl
 #!/usr/bin/perl -w
 
 
-#brief  Make multiple calls. This script can be used to check CPU usage on calls running avmd (see test.txt).
-#author Piotr Gregor <piotr@dataandsignal.com>
-#date   15 Sept 2016 02:44 PM
-#changed 27th Dec 2019
+#简介  进行多次呼叫。该脚本可用于检查运行 avmd 时的通话 CPU 使用情况（详见 test.txt）。
+#作者 Piotr Gregor <piotr@dataandsignal.com>
+#日期  2016年9月15日 下午2:44
+#修改  2019年12月27日
 
 
 use strict;
@@ -849,7 +819,7 @@ my $extension_base = "sofia/internal/1000\@192.168.1.1";
 
 my $playback = 'local_stream://moh';
 my $context = 'default'; 
-#Example:
+#示例：
 #my $endpoint = "originate {originator_codec=PCMA,origination_uuid=%s}sofia/gateway/box_b/840534002  \&park()";
 #my $endpoint = "originate {originator_codec=PCMA,origination_uuid=%s}sofia/gateway/%s/%s  \&park()";
 my $endpoint;
@@ -864,86 +834,85 @@ if ($#ARGV + 1 eq 3) {
     $dest = $ARGV[0];
     $callerid = $ARGV[1];
     $thread_n = $ARGV[2];
-    print "Dialing [" .$thread_n ."] calls simultaneously to[" .$dest ."] as [" .$callerid ."]\n";
+    print "正在同时拨打[" .$thread_n ."]个呼叫至[" .$dest ."]，呼叫者ID为[" .$callerid ."]\n";
 } else {
-    die "Please specify destination number, caller id and number of calls to make\n\nExample:\n./avmd_originate_multiple.pl EXTENSION CALLER NUMBER_OF_CALLS";
+    die "请指定目标号码、主叫号码和要进行的呼叫数量\n\n示例:\n./avmd_originate_multiple.pl 分机号 呼叫者 呼叫数量";
 }
 
 my $con  = new ESL::ESLconnection($host, $port, $pass);
 if (!$con) {
-    die "Unable to establish connection to $host:$port\n";
+    die "无法建立与 $host:$port 的连接\n";
 }
 if ($con->connected()) {
-    print "OK, Connected.\n";
+    print "连接成功。\n";
 } else {
-    die "Connection failure.\n";
+    die "连接失败。\n";
 }
 
 while($con->connected() && ($idx < $thread_n)) {
     call_once($dest, $callerid, $idx);
     $idx++;
-    Time::HiRes::sleep(0.11);    # avoid switch_core_session.c:2265 Throttle Error! 33, switch_time.c:1227 Over Session Rate of 30!
+    Time::HiRes::sleep(0.11);    # 避免 switch_core_session.c:2265 节流错误！33, switch_time.c:1227 超过每秒会话速率 30！
 }
 
-print "Disconnected.\n\n";
+```perl
+print "断开连接。\n\n";
 
 sub call_once {
-    my ($dest, $callerid, $idx) = @_; 
+    my ($dest, $callerid, $idx) = @_;
     my $originate_string =
     'originate ' .
     '{ignore_early_media=true,' .
     'originator_codec=PCMA,' .
-    'origination_uuid=%s,' . 
+    'origination_uuid=%s,' .
     'originate_timeout=60,' .
     'origination_caller_id_number=' . $callerid . ',' .
     'origination_caller_id_name=' . $callerid . '}';
 
-    if(defined($endpoint)) {
-        $originate_string = ''; 
+    if (defined($endpoint)) {
+        $originate_string = '';
         $originate_string .= $endpoint;
     } else {
         $originate_string .= 'loopback/' . $dest . '/' . $context;
-        $originate_string .=  ' ' . '&playback(' . $playback . ')';
-    }   
+        $originate_string .= ' ' . '&playback(' . $playback . ')';
+    }
 
     my $uuid = $con->api('create_uuid')->getBody();
     my ($time_epoch, $time_hires) = Time::HiRes::gettimeofday();
-    printf("[%s]\tCalling with uuid [%s] [%s]... [%s]\n", $idx + 1, $uuid, POSIX::strftime('%Y-%m-%d %H:%M:%S', localtime($time_epoch)), $originate_string);
+    printf("[%s]\t使用uuid [%s] [%s]发起呼叫... [%s]\n", $idx + 1, $uuid, POSIX::strftime('%Y-%m-%d %H:%M:%S', localtime($time_epoch)), $originate_string);
 
     $con->bgapi(sprintf($originate_string, $uuid));
-    $con->api('uuid_setvar ' . $uuid .' execute_on_answer avmd_start');
+    $con->api('uuid_setvar ' . $uuid . ' execute_on_answer avmd_start');
 }
-
-
 ```
-  
-  
-## Configuration
 
-Add avmd module to 'modules.conf':
+## 配置
+
+在 'modules.conf' 中添加 avmd 模块：
 
 applications/mod_avmd
 
-Rebuild and install:
+重新构建并安装：
 
 ```xml
 sudo make sure
 sudo make install
 ```
 
-To have FreeSWITCH load it on startup simply add this to '$FS\_ROOT/conf/autoload\_configs/modules.conf.xml':
+要在启动时使 FreeSWITCH 加载它，只需将以下内容添加到 '$FS\_ROOT/conf/autoload\_configs/modules.conf.xml' 中：
 
 ```xml
 <load module="mod_avmd"/>
 ```
 
-## Feedback/questions
+## 反馈/问题
 
 ![](https://wiki.freeswitch.org/images/thumb/c/cb/Warning.png/64px-Warning.png)
+```
 
-Any voicemail that avmd doesn't detect? Please do let us know by sending an email to FreeSWITCH™ users mailing list - and we will take care of it (please could you prefix the topic with 'mod\_avmd' and address an email to [freeswitch-users@lists.freeswitch.org](mailto:freeswitch-users@lists.freeswitch.org)). However, please do not report bugs to users list - for these please could you use [jira.freeswitch.org](http://jira.freeswitch.org) (see [Reporting Issues to GitHub](../Troubleshooting-Debugging/Reporting-Issues-to-GitHub_5046304.mdx#about)).
+如果有任何未被avmd检测到的语音邮件，请通过发送电子邮件至FreeSWITCH™用户邮件列表告知我们，我们会予以处理（请在主题前加上'mod\_avmd'并将电子邮件发送至[freeswitch-users@lists.freeswitch.org](mailto:freeswitch-users@lists.freeswitch.org)）。不过，请不要在用户列表上报告错误 - 请使用[jira.freeswitch.org](http://jira.freeswitch.org)进行错误报告（参见[向GitHub报告问题](../Troubleshooting-Debugging/Reporting-Issues-to-GitHub_5046304.mdx#about)）。
 
-### Attachments:
+### 附件：
 
 ![](/images/icons/bullet_blue.gif) [Answering machine sound effect.mp3](/attachments/1049372/10682567.mp3) (audio/mp3)  
 ![](/images/icons/bullet_blue.gif) [answering\_machine\_sound\_effect\_8000.raw](/attachments/1049372/10682568.raw) (image/x-panasonic-raw)  
@@ -954,10 +923,45 @@ Any voicemail that avmd doesn't detect? Please do let us know by sending an emai
 ![](/images/icons/bullet_blue.gif) [avmd.png](/attachments/1049372/10683540.png) (image/png)  
 ![](/images/icons/bullet_blue.gif) [avmd\_get\_events.pl](/attachments/1049372/11829291.pl) (application/octet-stream)  
 
-### Comments:
+### 评论：
 
-| Here is console output:\------------------------------freeswitch@ip-172-30-13-241> uuid\_buglist 85f6990e-e3b3-463c-8765-ae645336259c &lt;media-bugs>&lt;/media-bugs> freeswitch@ip-172-30-13-241> avmd 85f6990e-e3b3-463c-8765-ae645336259c start+OK \[85f6990e-e3b3-463c-8765-ae645336259c\] \[sofia/internal/1234@192.168.175.140\] started!  2017-07-12 01:17:02.428332 \[INFO\] mod\_avmd.c:372 Avmd session initialized, \[8000\] samples/s2017-07-12 01:17:02.428332 \[DEBUG\] switch\_core\_media\_bug.c:828 Attaching BUG to sofia/internal/1234@192.168.175.1402017-07-12 01:17:02.428332 \[INFO\] mod\_avmd.c:1520 Avmd on channel \[sofia/internal/1234@192.168.175.140\] started!2017-07-12 01:17:02.468346 \[DEBUG\] switch\_core\_io.c:448 Setting BUG Codec PCMU:0freeswitch@ip-172-30-13-241> uuid\_buglist 85f6990e-e3b3-463c-8765-ae645336259c&lt;media-bugs> &lt;media-bug>  &lt;function>avmd&lt;/function>  &lt;target>N/A&lt;/target>  &lt;thread-locked>0&lt;/thread-locked> &lt;/media-bug>&lt;/media-bugs> freeswitch@ip-172-30-13-241> avmd 85f6990e-e3b3-463c-8765-ae645336259c stop   +OK \[85f6990e-e3b3-463c-8765-ae645336259c\] \[sofia/internal/1234@192.168.175.140\] stopped  2017-07-12 01:17:14.668350 \[DEBUG\] switch\_core\_media\_bug.c:1198 Removing BUG from sofia/internal/1234@192.168.175.1402017-07-12 01:17:14.668350 \[ERR\] mod\_avmd.c:495 Error, avmd session object not found in media bug!2017-07-12 01:17:14.668350 \[INFO\] mod\_avmd.c:1419 Avmd on channel \[sofia/internal/1234@192.168.175.140\] stopped!freeswitch@ip-172-30-13-241> uuid\_buglist 85f6990e-e3b3-463c-8765-ae645336259c&lt;media-bugs>&lt;/media-bugs>\------------------------------ The issue I want to point is that even when media bug is successfully removed, and everything seems to be working ok, we do see an error logged. ![](/images/icons/contenttypes/comment_16.png) Posted by tomasb at Jul 11, 2017 21:19 |
+| 这是控制台输出: \------------------------------freeswitch@ip-172-30-13-241> uuid\_buglist 85f6990e-e3b3-463c-8765-ae645336259c &lt;media-bugs>&lt;/media-bugs> freeswitch@ip-172-30-13-241> avmd 85f6990e-e3b3-463c-8765-ae645336259c start+OK \[85f6990e-e3b3-463c-8765-ae645336259c\] \[sofia/internal/1234@192.168.175.140\] 已启动！  2017-07-12 01:17:02.428332 \[INFO\] mod\_avmd.c:372 Avmd 会话已初始化，\[8000\] 采样/秒2017-07-12 01:17:02.428332 \[DEBUG\] switch\_core\_media\_bug.c:828 将 BUG 附加到 sofia/internal/1234@192.168.175.1402017-07-12 01:17:02.428332 \[INFO\] mod\_avmd.c:1520 Avmd 在通道 \[sofia/internal/1234@192.168.175.140\] 上已启动！2017-07-12 01:17:02.468346 \[DEBUG\] switch\_core\_io.c:448 设置 BUG 编解码器 PCMU:0freeswitch@ip-172-30-13-241> uuid\_buglist 85f6990e-e3b3-463c-8765-ae645336259c&lt;media-bugs> &lt;media-bug>  &lt;function>avmd&lt;/function>  &lt;target>N/A&lt;/target>  &lt;thread-locked>0&lt;/thread-locked> &lt;/media-bug>&lt;/media-bugs> freeswitch@ip-172-30-13-241> avmd 85f6990e-e3b3-463c-8765-ae645336259c stop   +OK \[85f6990e-e3b3-463c-8765-ae645336259c\] \[sofia/internal/1234@192.168.175.140\] 已停止！  2017-07-12 01:17:14.668350 \[DEBUG\] switch\_core\_media\_bug.c:1198 从 sofia/internal/1234@192.168.175.140 上移除 BUG2017-07-12 01:17:14.668350 \[ERR\] mod\_avmd.c:495 错误，媒体 BUG 中找不到 avmd 会话对象！2017-07-12 01:17:14.668350 \[INFO\] mod\_avmd.c:1419 Avmd 在通道 \[sofia/internal/1234@192.168.175.140\] 上已停止！freeswitch@ip-172-30-13-241> uuid\_buglist 85f6990e-e3b3-463c-8765-ae645336259c&lt;media-bugs>&lt;/media-bugs>\------------------------------ 我要指出的问题是，即使媒体 BUG 已成功移除，一切似乎正常运作，但我们仍然看到一条错误日志。![](/images/icons/contenttypes/comment_16.png) 于 2017 年 7 月 11 日 21:19 由 tomasb 发布 |
 | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Thanks Tom. This is fixed. Please upgrade to recent version. ![](/images/icons/contenttypes/comment_16.png) Posted by piotrgregor at Dec 11, 2019 10:46                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 谢谢 Tom。这个问题已经修复，请升级到最新版本。![](/images/icons/contenttypes/comment_16.png) 于 2019 年 12 月 11 日 10:46 由 piotrgregor 发布 |
 
+# 服务条款
 
+## 欢迎来到我们的网站！
+
+感谢您访问我们的网站。请阅读以下条款和条件，了解我们的服务使用规定。请注意，访问和使用我们的网站即表示您同意遵守这些条款和条件。如果您不同意这些条款和条件，请立即停止访问和使用本网站。
+
+## 服务内容
+
+1. 当您使用我们的网站时，请确保您已年满18岁或在您所在的国家或地区达到法定成年年龄。
+2. 在我们的网站上，您将获得有关我们公司和产品的信息。我们会尽力确保这些信息的准确性和完整性，但并不对其准确性或完整性做出任何明示或暗示的保证。
+3. 我们的网站上也可能提供其他公司或第三方的链接和信息。这些链接和信息仅供参考，我们无法控制或保证其内容的准确性、完整性和可靠性。因此，您使用这些链接和信息时需自行承担风险。
+
+## 用户行为
+
+1. 当您在我们的网站上发表评论或提供任何其他形式的内容时，请确保您遵守法律法规并尊重他人的权益。
+2. 您不得提交任何虚假、诽谤、淫秽、威胁、歧视或其他违法或不道德的内容。
+3. 您不得干扰或破坏我们的网站的正常运行，也不得采取任何可能对我们网站或其用户造成损害的行为。
+4. 我们保留拒绝或删除任何违反上述规定的内容的权利，同时可能采取适当的法律行动。
+
+## 免责声明
+
+1. 在适用法律允许的最大范围内，我们对您使用我们的网站所产生的任何直接或间接损失或损害不承担任何责任。
+2. 我们不对我们的网站的可用性做出任何明示或暗示的保证。我们保留随时暂停、限制或终止本网站使用的权利。
+3. 我们不担保我们网站上的信息的准确性、完整性和可靠性。
+
+## 知识产权
+
+1. 我们的网站上的所有内容，包括但不限于文字、图片、标志和商标，均受版权和其他知识产权法律的保护。
+2. 您不得未经我们的事先书面许可复制、修改、传播、展示或以其他方式使用本网站上的任何内容。
+
+## 其他条款
+
+1. 我们保留随时修改或更新这些条款和条件的权利，恕不另行通知。更新后的条款和条件将在我们的网站上公布。
+2. 如果您继续访问和使用我们的网站，则视为您同意遵守更新后的条款和条件。
+
+如果您对这些条款和条件有任何疑问，请联系我们。感谢您的合作！

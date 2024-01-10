@@ -1,145 +1,138 @@
+# 配置 FreeSWITCH 
 
-# Configuring FreeSWITCH 
+## 关于
 
- 
+[多租户](../../Examples/Multi-tenant_13173521.mdx#about) 如何决定使用哪些模块？如何配置 FreeSWITCH™？
 
-## About
+FreeSWITCH™ 采用模块化设计，这使得它可以在不破坏功能或需要大规模重编码的情况下进行扩展。每个模块提供特定的功能，通常相关的命令会被组合到一个模块中。根据功能需求，您需要启用所需的模块。默认情况下，FreeSWITCH™ 预装了一组良好的模块，以实现大多数基本功能。详细了解默认配置，请参阅[默认配置](../Default-Configuration_6587388.mdx#mod_vp8)。在将系统投入生产之前，请参阅[开始之前](../Before-You-Start_7143968.mdx#about)，了解一些需要考虑的重要信息。
 
-  
-[Multi-tenant](../../Examples/Multi-tenant_13173521.mdx#about) How to decide what modules to use? How to configure FreeSWITCH™?
+由于 FreeSWITCH™ 是基于 Debian Linux开发的，开发团队对 Linux 有很高的专业知识，这在本页面得到了体现。
 
-  
-FreeSWITCH™ has a modular design. This design allows it to be extended without breaking functionality or requiring massive recoding efforts. Each module provides specific functionality and often commands that are related are grouped into one module. You will need to enable the modules that you desire, based on their function. By default FreeSWITCH™ comes with a good set of modules loaded, to enable most basic functionality. Read up on the [Default Configuration](../Default-Configuration_6587388.mdx#mod_vp8) for more information on the default configuration itself. See also [Before You Start](../Before-You-Start_7143968.mdx#about) for some good information to consider before putting a system into production.
+点击这里展开目录
 
-Because FreeSWITCH™ is developed on Debian linux the developer team has a great deal of expertise with linux which is expressed in this page.
-
-  
-Click here to expand Table of Contents
-
-* [Fundamentals](#fundamentals)  
-   * [Firewall](#running-freeswitch)  
-   * [Configuration Files](#configuration-files)  
-   * [Managing your personal configuration files](#managing-your-personal-configuration-files)
-* [Defaults](#running-freeswitch)  
+* [基本原理](#fundamentals)  
+   * [防火墙](#running-freeswitch)  
+   * [配置文件](#configuration-files)  
+   * [管理个人配置文件](#managing-your-personal-configuration-files)
+* [默认设置](#running-freeswitch)  
    * [vars.xml](#freeswitchxml)  
-      * [Security advice](#security-advice)  
+      * [安全建议](#security-advice)  
          * [modules.conf.xml](#modulesconfxml)  
-         * [pre\_load\_modules.conf.xml (stub)](#pre_load_modulesconfxml-stub)  
+         * [pre\_load\_modules.conf.xml (存根)](#pre_load_modulesconfxml-stub)  
          * [sofia.conf.xml](#sofiaconfxml)
-* [SIP Profiles](#configuration-files)  
-   * [Internal](#running-freeswitch)  
-   * [External](#freeswitchxml)  
-   * [Context vs Profile (stub)](#context-vs-profile-stub)
-* [Directory](#running-freeswitch)  
-   * [User Directory Configuration](#user-directory-configuration)
-* [Dialplan](#running-freeswitch)  
-   * [Gateway Configuration](#gateway-configuration)  
-      * [Dialing Out Via Gateway](#dialing-out-via-gateway)  
-         * [Receiving An Inbound Call From Gateway](#receiving-an-inbound-call-from-gateway)
-* [Running FreeSWITCH](#running-freeswitch)  
-   * [Starting in Unix-based Systems](#starting-in-unix-based-systems)  
-   * [Starting in Windows-based Systems](#starting-in-windows-based-systems)  
-   * [Command Line Parameters](#command-line-parameters)  
-   * [Shutting Down FreeSWITCH](#shutting-down-freeswitch)
-* [Test Calls](#running-freeswitch)  
-   * [Basic Calling](#basic-calling)  
-   * [Other Tests](#running-freeswitch)  
-   * [Advanced Calling Features](#advanced-calling-features)  
-   * [Group Assignments](#group-assignments-)  
-   * [Conferencing](#conferencing)  
-   * [Interactive Voice Response](#interactive-voice-response)
-* [Advanced](#running-freeswitch)  
-   * [Preprocessor Commands](#preprocessor-commands)  
+* [SIP配置文件](#configuration-files)  
+   * [内部](#running-freeswitch)  
+   * [外部](#freeswitchxml)  
+   * [上下文与配置文件 (存根)](#context-vs-profile-stub)
+* [目录](#running-freeswitch)  
+   * [用户目录配置](#user-directory-configuration)
+* [拨号计划](#running-freeswitch)  
+   * [网关配置](#gateway-configuration)  
+      * [通过网关外拨](#dialing-out-via-gateway)  
+         * [从网关接收呼入呼叫](#receiving-an-inbound-call-from-gateway)
+* [运行 FreeSWITCH](#running-freeswitch)  
+   * [在基于 Unix 的系统中启动](#starting-in-unix-based-systems)  
+   * [在基于 Windows 的系统中启动](#starting-in-windows-based-systems)  
+   * [命令行参数](#command-line-parameters)  
+   * [关闭 FreeSWITCH](#shutting-down-freeswitch)
+* [测试电话](#running-freeswitch)  
+   * [基本呼叫](#basic-calling)  
+   * [其他测试](#running-freeswitch)  
+   * [高级呼叫功能](#advanced-calling-features)  
+   * [分组分配](#group-assignments-)  
+   * [会议](#conferencing)  
+   * [交互式语音应答](#interactive-voice-response)
+* [高级功能](#running-freeswitch)  
+   * [预处理命令](#preprocessor-commands)  
       * [comment](#running-freeswitch)  
          * [exec](#running-freeswitch)  
          * [include](#running-freeswitch)  
          * [set](#running-freeswitch)  
-   * [Commenting Preprocessor](#commenting-preprocessor)  
+   * [预处理命令注释](#commenting-preprocessor)  
    * [freeswitch.xml](#freeswitchxml)  
-      * [How Configuration Files Are Parsed](#how-configuration-files-are-parsed)  
-         * [Example freeswitch.xml](#example-freeswitchxml)  
-   * [Preprocessor Variables](#preprocessor-variables)  
-      * [IP Address](#running-freeswitch)
-* [Multi-Tenant Info / Multiple Company HOWTO](#multi-tenant-info--multiple-company-howto)
-* [SIP Proxy](#running-freeswitch)
-* [Asterisk Migration](#asterisk-migration)
-* [See Also](#running-freeswitch)
+      * [配置文件解析方式](#how-configuration-files-are-parsed)  
+         * [freeswitch.xml 示例](#example-freeswitchxml)  
+   * [预处理变量](#preprocessor-variables)  
+      * [IP 地址](#running-freeswitch)
+* [多租户信息 / 多公司 HOWTO](#multi-tenant-info--multiple-company-howto)
+* [SIP 代理](#running-freeswitch)
+* [Asterisk 迁移](#asterisk-migration)
+* [参见](#running-freeswitch)
 
-## Fundamentals
+## 基础知识
 
-The following sections will show you each step that you will have to take to build a functional system.
+以下章节将展示每个步骤，帮助您构建一个功能性的系统。
 
-### Firewall
+### 防火墙
 
-If you are going to route traffic across your network, you need to ensure that you do not have a firewall blocking traffic on the specified network paths. Commonly firewalls are installed at egress points, where your local network connects to the internet. This is not always the case in some corporate environments. If you are not responsible for your network, you may wish to contact the group or individuals who are responsible for it.
+如果您要在网络中路由流量，必须确保没有防火墙阻塞指定网络路径上的流量。通常，防火墙被安装在传出点，即您的本地网络连接到互联网的地方。在某些企业环境中，并不总是这样。如果您对网络不负责，您可能希望与负责网络的团队或个人联系。
 
-Information they may need to enable traffic would include the port numbers. Various protocols use different ports for different things. Some you need bi-directional connectivity, some you only need outbound. Depending on your call scenario you may only need to allow connections that are initiated by your system. **If you have any problems with protocols not working, it is recommended that you disable your firewall to the FreeSWITCH™ system, place a test call, and see if the problem persists.** A misconfigured firewall is responsible for many common problems.
+启用流量所需的信息可能包括端口号。不同的协议使用不同的端口来进行不同的操作。有些协议需要双向连接，有些只需要出站连接。根据您的通话场景，您可能只需要允许由您的系统发起的连接。**如果您遇到协议无法正常工作的问题，建议您将防火墙禁用到 FreeSWITCH™ 系统，进行一次测试呼叫，查看问题是否仍然存在。**配置错误的防火墙是许多常见问题的根源。
 
-For more information, including the ports which need to be configured, see the [Firewall](../../Networking/Firewall_1048908.mdx#about) page.
+有关更多详细信息，包括需要配置的端口，请参阅 [Firewall](../../Networking/Firewall_1048908.mdx#about) 页面。
 
-### Configuration Files
+### 配置文件
 
-FreeSWITCH™ configuration data is stored in XML format. These files are located in the conf directory under the FreeSWITCH™ install directory. By default on a Unix-like system this will be /usr/local/freeswitch/conf. There are preprocessor markup tags that tell the configuration parser to perform tasks, such as including other files, which are carried out before the XML is parsed. It might be worth looking at [Default\_Configuration\_Overview](../Default-Configuration_6587388.mdx#mod_vp8) which describes some of the initial default settings. It may be useful to adjust some of them. There are a large number of different configuration files used by FreeSWITCH and fully understanding how they all fit together can take some time.
+FreeSWITCH™的配置数据以XML格式存储。这些文件位于FreeSWITCH™安装目录下的conf目录中。在类Unix系统上，默认路径为/usr/local/freeswitch/conf。配置解析器可以在解析XML之前执行一些任务，比如包含其他文件，这些任务使用预处理标记来标识。建议查看[Default\_Configuration\_Overview](../Default-Configuration_6587388.mdx#mod_vp8)，其中描述了一些初始默认设置，可能会对您有用。FreeSWITCH使用大量不同的配置文件，完全理解它们如何相互配合可能需要一些时间。
 
-  
-| Folder            | Description                                                                                                                             |
+| 文件夹             | 描述                                                                                                                                 |
 | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| autoload\_configs | These configuration files are loaded automatically into FreeSWITCH. They contain configuration information for almost all core modules. |
-| dialplan          | This is the place where you setup your dialplan. There are some examples of how to configure your dialplan included.                    |
-| directory         | The directory contains all users that may register and use freeswitch as their PBX.                                                     |
-| jingle\_profiles  | Jingle is the mod that FS uses to handle XMPP. Profiles tell FS how to use the protocol. Each profile has its own ip port.              |
-| lang              | Tells FS how to say currency etc in different languages                                                                                 |
-| mrcp\_profiles    | MRCP is used to allow FreeSWITCH to use speech recognition and TTS                                                                      |
-| sip\_profiles     | Tells FS how to talk sip. Each profile has it's own port.                                                                               |
+| autoload\_configs | 这些配置文件会自动加载到FreeSWITCH中。它们包含了几乎所有核心模块的配置信息。                                                         |
+| dialplan          | 这是设置拨号计划的地方。其中包含了一些配置拨号计划的示例。                                                                              |
+| directory         | 目录包含了所有可以注册并使用FreeSWITCH作为PBX的用户。                                                                                   |
+| jingle\_profiles  | Jingle 是FreeSWITCH中的模块，用于处理XMPP。配置文件告诉FreeSWITCH如何使用该协议。每个配置文件都有自己的IP端口。                                |
+| lang              | 定义了FreeSWITCH在不同语言中如何表达货币等信息。                                                                                         |
+| mrcp\_profiles    | MRCP用于允许FreeSWITCH使用语音识别和文本转语音（TTS）功能。                                                                               |
+| sip\_profiles     | 配置文件告诉FreeSWITCH如何处理SIP协议。每个配置文件都有自己的端口。                                                                      |
 
-### Managing your personal configuration files
+### 管理个人配置文件
 
-You should consider using some version control system for managing the FreeSWITCH™ configuration files. The obvious advantage of this is being able easily to keep track of changes you made to the configuration and being able to easily switch back to some old configuration. Furthermore it would be possible to merge changes from the official git source tree configuration into your own configuration tree.
+你应该考虑使用一些版本控制系统来管理FreeSWITCH™的配置文件。这样做的明显优势是能够轻松追踪你对配置所做的更改，并能够轻松地切换回某个旧的配置。此外，还可以将官方git源树配置中的更改合并到自己的配置树中。
 
-One versioning control system to consider is git. It is used to manage the official FreeSWITCH™ source tree, too. Though this would not oblige you to use it for your configuration files, it is a smart idea to do so, because once you are familiar with git, you have the skills even to manage the FreeSWITCH™ source tree with it.
+一个值得考虑的版本控制系统是git。它也用于管理官方的FreeSWITCH™源树。虽然这并不强制你在配置文件中使用git，但这是一个很聪明的做法，因为一旦你熟悉了git，你就有能力用它来管理FreeSWITCH™源树。
 
-To set up your own personal git repository, use this command sequence:
+要设置自己的个人git存储库，请使用以下命令序列：
 
 cd freeswitch/conf
 git init
 git add .
 git commit -m "Initial commit."
 
-To view the git log just use command:
+要查看git日志，只需使用以下命令：
 
 git log
 
-After you have edited your configuration, to see the changes made use
+在编辑配置文件后，要查看所做的更改，请使用以下命令
 
 git diff
 
-Unfortunately it is not so easy to have git merge the conf subdirectory in the original source tree of FreeSWITCH™ into your running conf directory. There are some approaches for this where the most promising would be to use the git subtree script with a complicated setup.
+不幸的是，让git合并FreeSWITCH™源树中的conf子目录到你运行的conf目录中并不那么容易。有一些方法可以解决这个问题，最有希望的是使用git subtree脚本进行复杂的设置。
 
-A workaround would be to create a complete clone of the FreeSWITCH™ git source tree and use the conf directory of the clone as your personal conf while compiling FreeSWITCH™ in a complete other clone of the git source directory tree. You feel the overhead.
+一个变通的方法是创建FreeSWITCH™ git源树的完整克隆，并将克隆的conf目录用作你的个人conf，同时在git源目录树的另一个完全克隆中编译FreeSWITCH™。你会感到一些额外的负担。
 
-## Defaults
+## 默认配置
 
-This guide aims to explain the default configuration layout and how you configure it to your liking. Read up on the [default config](../Default-Configuration_6587388.mdx#mod_vp8) for more information.
+本指南旨在解释默认配置布局以及如何根据自己的喜好进行配置。请阅读[默认配置](../Default-Configuration_6587388.mdx#mod_vp8)了解更多信息。
 
-This layout is in no way required, you can minimize the configuration to just one file if needed. The main config file is called freeswitch.xml, you don't need to change it in any way, it just loads all other config files.
+此布局并非必需，如果需要，您可以将配置最小化为一个文件。主配置文件名为freeswitch.xml，您无需对其进行任何更改，它只会加载其他所有配置文件。
 
 ### vars.xml
 
-[vars.xml](./vars.xml_7144079.mdx#about) is used to define system-wide variables. See [vars.xml](./vars.xml_7144079.mdx#about) for example.
+[vars.xml](./vars.xml_7144079.mdx#about) 用于定义系统范围的变量。请参阅[vars.xml](./vars.xml_7144079.mdx#about)了解示例。
 
-Commenting out pre-processor directive using X-NO-PRE-PROCESS
+使用X-NO-PRE-PROCESS注释预处理指令
 
-Pre-process directives (such as `X-PRE-PROCESS`) lines **cannot** be commented out; they will still be active afterwards. If you would like to leave them in the file (e.g., as a reminder), but do want them to be inert, use the `X-NO-PRE-PROCESS` directive.
+预处理指令（例如`X-PRE-PROCESS`）行**不能**被注释掉，它们在注释后仍然会生效。如果您想在文件中保留它们（例如作为提醒），但希望它们变为不活动的状态，请使用`X-NO-PRE-PROCESS`指令。
 
 ```xml
-<!--This is a standard XML comment, but the Pre-Process command WILL be processed-->	
+<!--这是一个标准的XML注释，但预处理指令将被处理-->
 <!--<X-PRE-PROCESS cmd="set" data="my_global_var='some value'"/>-->
 
-<!--This pre-process command will NOT run-->
+<!--这个预处理命令将不会运行-->
 <X-NO-PRE-PROCESS cmd="set" data="my_global_var='some value'"/>
 ```
 
-In the default configuration the [vars.xml](./vars.xml_7144079.mdx#about) file is used to define some pre-processor directives. In a first time setup you will most likely want to set the following for use in other portions of the configuration:
+在默认配置中，[vars.xml](./vars.xml_7144079.mdx#about)文件用于定义一些预处理指令。在初始设置中，您很可能想要设置以下内容以在配置的其他部分中使用:
 
 **vars.xml**
 
@@ -149,32 +142,29 @@ In the default configuration the [vars.xml](./vars.xml_7144079.mdx#about) file i
 <X-PRE-PROCESS cmd="set" data="call_debug=false"/>
 ```
 
-The default port of FreeSWITCH is also defined in [vars.xml](./vars.xml_7144079.mdx#about) for instance:
+例如，默认端口的FreeSWITCH也在[vars.xml](./vars.xml_7144079.mdx#about)中定义:
 
 **vars.xml**
 
 ```xml
-  <!-- Internal SIP Profile -->
+  <!-- 内部 SIP 配置 -->
   <X-PRE-PROCESS cmd="set" data="internal_auth_calls=true"/>
   <X-PRE-PROCESS cmd="set" data="internal_sip_port=5060"/>
   <X-PRE-PROCESS cmd="set" data="internal_tls_port=5061"/>
   <X-PRE-PROCESS cmd="set" data="internal_ssl_enable=false"/>
 
-  <!-- External SIP Profile -->
+  <!-- 外部 SIP 配置 -->
   <X-PRE-PROCESS cmd="set" data="external_auth_calls=false"/>
   <X-PRE-PROCESS cmd="set" data="external_sip_port=5080"/>
   <X-PRE-PROCESS cmd="set" data="external_tls_port=5081"/>
   <X-PRE-PROCESS cmd="set" data="external_ssl_enable=false"/>
-
-
 ```
 
-  
-#### Security advice
+#### 安全建议
 
-Be careful with your passwords. A good idea is to use pre-processor directives for all your passwords, and define them all in a user only readable/writable file [conf](../Default-Configuration_6587388.mdx#mod_vp8)`/PASSWORDS.xml` (FreeSWITCH config top level directory). As a benefit you will have a nice reference file for all your passwords.
+密码使用时要谨慎。一个好的建议是为所有密码使用 `pre-processor directives`，并将它们定义在一个用户可读/可写的文件 [conf](../Default-Configuration_6587388.mdx#mod_vp8)`/PASSWORDS.xml`（FreeSWITCH 配置的顶级目录）中。这样，你就会得到一个很好的参考文件，用于存储所有密码。
 
-To have these passwords read, you need to put an `include` line at the bottom of [vars.xml](./vars.xml_7144079.mdx#about):
+要读取这些密码，你需要在 [vars.xml](./vars.xml_7144079.mdx#about) 文件的底部加入一个 `include` 行：
 
 **vars.xml**
 
@@ -184,7 +174,7 @@ To have these passwords read, you need to put an `include` line at the bottom of
 <X-PRE-PROCESS cmd="include" data="PASSWORDS.xml"/>
 ```
 
-Then you define the loads of password like this:
+然后按照以下方式定义一系列密码：
 
 **PASSWORDS.xml**
 
@@ -194,9 +184,9 @@ Then you define the loads of password like this:
 </include>
 ```
 
-In this example, the `default_password` is defined in [vars.xml](./vars.xml_7144079.mdx#about), but redefined at the end where we include the `PASSWORDS.xml` file containing another default\_password. The redefinition is done so that the [vars.xml](./vars.xml_7144079.mdx#about) can even be shared without the password being compromised.
+在这个例子中，`default_password` 在 [vars.xml](./vars.xml_7144079.mdx#about) 中被定义，但在最后被重新定义，包含了另一个 `default_password` 的 `PASSWORDS.xml`文件。重新定义是为了使得 [vars.xml](./vars.xml_7144079.mdx#about) 可以共享，而不会泄露密码。
 
-To check that the override did happen on `fs_cli` :
+要验证在 `fs_cli` 中是否发生了覆写：
 
 **fs\_cli**
 
@@ -205,13 +195,13 @@ freeswitch@host> eval $${default_password}
 669933
 ```
 
-Don't forget to restrict access to your `PASSWORDS.xml`:
+别忘了限制对`PASSWORDS.xml`的访问权限：
 
 ```bash
 chmod 600 PASSWORDS.xml
 ```
 
-You should define all your passwords with a fixed scheme like this:
+你应该使用固定的方案来定义所有的密码，就像这样：
 
 **PASSWORDS.xml**
 
@@ -220,270 +210,229 @@ You should define all your passwords with a fixed scheme like this:
 <X-PRE-PROCESS cmd="set" data="PASSWORD_sipgate_939393=113388"/>
 ```
 
-Notice the default passwords go first, they are the first thing to consider changing / abolishing.
+注意默认密码放在首位，它们是最需要考虑更改/废除的。
 
-You can use your password variables in the dial plan like this (note the double "$"):
+你可以在拨号计划中使用密码变量，像这样（注意双"$"）：
 
 ```xml
 <param name="password" value="$${PASSWORD_default_vm}"/>
 ```
 
-  
 autoload_configs
 
-autoload\_configs is a directory where a lot of the freeswitch configuration resides. This directory is located in conf/autoload\_configs. The default freeswitch.xml preprocesses XML files matched by the glob conf/autoload\_configs/\*.xml
+`autoload_configs` 是一个包含了很多 freeswitch 配置的目录。这个目录位于 `conf/autoload_configs` 下。默认情况下，freeswitch.xml 对与 glob 表达式 `conf/autoload_configs/*.xml` 匹配的 XML 文件进行预处理。
 
 #### modules.conf.xml
 
-modules.conf.xml tells freeswitch which modules to load. There are certain modules required for operation so you should not edit this file unless you know that you wish to add or remove a specific module. See [Modules](../../Modules/index.mdx#about) for an example of modules.conf.xml.
+modules.conf.xml 告诉 freeswitch 要加载哪些模块。有一些模块是运行所必需的，所以除非你知道要添加或删除特定模块，否则不应编辑此文件。请参阅 [模块](../../Modules/index.mdx#about) 了解 modules.conf.xml 的示例。
 
-#### pre_load_modules.conf.xml (stub)
+#### pre_load_modules.conf.xml (空文件)
 
-Needed to configure some core modules that cannot be set up from `modules.conf.xml` since FreeSWITCH 1.10, such as `mod_pgsql` .
+需要配置一些核心模块，但不能从 `modules.conf.xml` 进行设置，因为从 FreeSWITCH 1.10 版本开始，比如 `mod_pgsql`。
 
-Only mentioned in [Debian 9 Stretch (Obsolete)](../../Installation/Linux/Deprecated-Installation-Instructions/15139022.mdx#about) installation manual. The only other info is [from Andrey Volk](https://stackoverflow.com/questions/57634856/trying-to-connect-to-a-postgresql-db-via-pgsql-dsn-returns-err-unable-to-ope):
+仅在 [Debian 9 Stretch (弃用)](../../Installation/Linux/Deprecated-Installation-Instructions/15139022.mdx#about) 安装手册中提到。唯一的其他信息来自 [Andrey Volk](https://stackoverflow.com/questions/57634856/trying-to-connect-to-a-postgresql-db-via-pgsql-dsn-returns-err-unable-to-ope)：
 
-**Andrey Volk**: "_Do not add `modpgsql `to `modules.conf.xml `unless you know what you are doing. Use `preloadmodules.conf.xml`. And if there is any problem with that, create a Jira ticket._"
+**Andrey Volk**: “_如果你不知道你在做什么，就不要将`modpgsql`添加到`modules.conf.xml`中。使用`preloadmodules.conf.xml`。如果有任何问题，请创建一个Jira工单。_”
 
-**toraritte**: "_why would it be an issue to load `modpgsql `in `module.conf.xml`?_"
+**toraritte**: “_为什么在`module.conf.xml`中加载`modpgsql`会有问题呢？_”
 
-**Andrey Volk**: "_The difference is that the Core may want to use that database as well. But it's the Core, it loads BEFORE any module. So we need a special place where database modules (just in case one of them is for the Core) are loaded BEFORE any other module type. On the other hand it does not matter what file to use if that database module is not used by the Core. It should just go first. If it's for LUA, load it before LUA. But we don't recommend/document that._
+**Andrey Volk**: “_区别在于Core可能也想要使用这个数据库。但是Core是在任何模块加载之前加载的。所以我们需要一个特殊的地方，在任何其他模块类型之前加载数据库模块（以防其中有一个是为Core准备的）。另一方面，如果Core不使用该数据库模块，使用哪个文件就无关紧要。它只需放在最前面。如果是为LUA使用的，请在LUA之前加载。但我们并不推荐/记录这样做。
 
-_If `preloadmodules.conf.xml `is not recognized, then it's probably a result of a bad upgrade. Make sure all freeswitch packages were upgraded (including main one)._"
+如果不能识别`preloadmodules.conf.xml`，那可能是升级出了问题。确保所有的freeswitch软件包都已经升级（包括主要软件包）。_”
 
-Added in
+根据以下补充：
 
-* [FS-10801: \[core\]](https://github.com/signalwire/freeswitch/commit/07e0d4f90cb6435e4ffe3c02864b98fe4df78c14) (see comments in [src/switch\_loadable\_module.c](https://github.com/signalwire/freeswitch/commit/07e0d4f90cb6435e4ffe3c02864b98fe4df78c14#diff-f8627dbf25dde79e5f6368651995b7c7 "src/switch_loadable_module.c")) and
-* [FS-11880: \[Core,mod\_pgsql\]](https://github.com/signalwire/freeswitch/commit/07e0d4f90cb6435e4ffe3c02864b98fe4df78c14),
+* [FS-10801: \[core\]](https://github.com/signalwire/freeswitch/commit/07e0d4f90cb6435e4ffe3c02864b98fe4df78c14) （请参阅[src/switch\_loadable\_module.c](https://github.com/signalwire/freeswitch/commit/07e0d4f90cb6435e4ffe3c02864b98fe4df78c14#diff-f8627dbf25dde79e5f6368651995b7c7 "src/switch_loadable_module.c")中的评论）和
+* [FS-11880: \[Core,mod\_pgsql\]](https://github.com/signalwire/freeswitch/commit/07e0d4f90cb6435e4ffe3c02864b98fe4df78c14)，
 
-but found no discussions regarding the rationale of creating `pre_load_modules.conf.xml` aside from the above chat snippet.
+但没有找到关于创建`pre_load_modules.conf.xml`的原理的讨论，除了上面的对话片段。
 
-* What other times should it be used? Only for databases?
-* When should an issue be created?
+* 还有什么其他时候应该使用它？只用于数据库吗？
+* 什么时候应该创建工单？
 
-  
 #### `sofia.conf.xml`
 
-`mod_sofia` is used to create SIP endpoints in FreeSWITCH. If you are familiar with Asterisk, each SIP Profile in `mod_sofia` is similar to `chan_sip` in Asterisk, though much more powerful.
+`mod_sofia` 用于在 FreeSWITCH 中创建 SIP 终端。如果您熟悉 Asterisk，那么 `mod_sofia` 中的每个 SIP 配置文件与 Asterisk 中的 `chan_sip` 类似，但功能更为强大。
 
-The `sofia.conf.xml` file contains a `X-PRE-PROCESS` directive that includes other XML files (within, by default, `conf/sip_profiles/`) that define one or more "SIP Profiles". A SIP Profile is a SIP UA (User Agent or an endpoint), which communicates with other SIP endpoints.
+`sofia.conf.xml` 文件包含一个 `X-PRE-PROCESS` 指令，该指令包括其他 XML 文件（默认在 `conf/sip_profiles/` 目录下），这些文件定义了一个或多个 "SIP 配置文件"。SIP 配置文件是 SIP 用户代理（User Agent 或终端），用于与其他 SIP 终端进行通信。
 
-In practical terms, files that talk to your service provider should go under `conf/sip_profiles/external/`, named perhaps, `provider_name.com.xml`.
+从实际角度来看，与服务提供商通信的文件应放在 `conf/sip_profiles/external/` 目录下，例如 `provider_name.com.xml`。
 
-A "User Agent" ("UA") is an application used for running a certain network protocol. A Sofia User Agent uses the SIP protocol.
+"用户代理"（"UA"）是用于运行特定网络协议的应用程序。Sofia 用户代理使用 SIP 协议。
 
-See [Sofia Configuration Files](../Sofia-SIP-Stack/Sofia-Configuration-Files_7144453.mdx#--) for an example `sofia.conf.xml`.
+请参阅 [Sofia 配置文件](../Sofia-SIP-Stack/Sofia-Configuration-Files_7144453.mdx#--) 以查看 `sofia.conf.xml` 的示例。
 
-See also [SIP Network Elements on wikipedia](http://en.wikipedia.org/wiki/Session%5FInitiation%5FProtocol#SIP%5Fnetwork%5Felements).
+还可以参考维基百科上的 [SIP 网络元素](http://en.wikipedia.org/wiki/Session%5FInitiation%5FProtocol#SIP%5Fnetwork%5Felements)。
 
-## SIP Profiles 
+## SIP 配置文件
 
-The SIP Profiles in FreeSWITCH can lead to confusion. Unlike other softswitches (like Asterisk), FreeSWITCH allows you to handle media (calls, video, etc.) differently based on where the equipment is attached to your network. This assists with security and offers added functionality.
+FreeSWITCH 中的 SIP 配置文件可能会引发困惑。与其他软交换（如 Asterisk）不同，FreeSWITCH 允许您根据设备连接到您的网络的位置来处理媒体（通话、视频等）。这有助于提供安全性并提供额外的功能。
 
-SIP Profiles allow you to define paths to devices or carriers that may live inside or outside your network. A FreeSWITCH profile is defined as a unique combination of IP address and port number. You could have SIP profiles for your internal network, or multiple profiles for each subnet of your internal network, or even completely different protocols like IPv6 as profile definitions. This helps FreeSWITCH identify how to route different types of calls when necessary, and also gives you the flexibility to tailor your dialplans based on the source or destination of a call.
+SIP配置文件允许您定义指向可能位于网络内外的设备或载体的路径。FreeSWITCH配置文件定义为IP地址和端口号的唯一组合。您可以为内部网络创建SIP配置文件，或为内部网络的每个子网创建多个配置文件，甚至可以使用完全不同的协议（如IPv6）作为配置文件定义。这有助于FreeSWITCH在需要时识别如何路由不同类型的呼叫，并且还可以根据呼叫的源或目的地来灵活自定义拨号计划。
 
-In the Vanilla example configuration there are two default categories for where a SIP Profile can reside, named "internal" and "external", each serving a broad, general purpose.
+在Vanilla示例配置中，有两个默认分类用于SIP配置文件的位置，分别命名为"internal"和"external"，每个都具有广泛的通用性。
 
-* External SIP profile is generally used to communicate with your PSTN gateway or "SIP trunk" service provider, such as FlowRoute, CallCentric, or similar company providing telephony service via SIP to you.
-* The Internal SIP profile is used to communicate with devices on your local network that register with FS.
+* 外部SIP配置文件通常用于与您的PSTN网关或"SIP中继"服务提供商（例如FlowRoute、CallCentric或类似的通过SIP为您提供电话服务的公司）进行通信。
+* 内部SIP配置文件用于与在您的本地网络中进行FS注册的设备进行通信。
 
-Profile names
+配置文件名称
 
-The profile names "internal" and "external" are purely arbitrary and only provided as examples. You can name your profiles anything that makes it easier to manage your FreeSWITCH installation. This is particularly useful in multi-tenant and toll switch configurations to identify and control different users groups and carriers. Small test installations might only need a single profile, such as internal.xml in the Vanilla example. Adjust to your needs and experiment. [Multi-tenant](../../Examples/Multi-tenant_13173521.mdx#about)
+配置文件名称"internal"和"external"纯粹是任意的，仅作为示例提供。您可以为配置文件命名为任何有助于管理FreeSWITCH安装的名称。这在多租户和费率切换配置中特别有用，可以标识和控制不同的用户组和载体。小型测试安装可能只需要一个配置文件，例如在Vanilla示例中的internal.xml。根据您的需求进行调整和实验。[多租户](../../Examples/Multi-tenant_13173521.mdx#about)
 
-### Internal
+### 内部
 
-File Location: `conf/sip_profiles/internal.xml`
+文件位置：`conf/sip_profiles/internal.xml`
 
-This profile typically refers to devices that reside on your internal network. Those devices will inherit all configuration options in the internal profile you setup. This is typically your internal phones with extensions. By default, these devices must use SIP authentication.
+此配置文件通常指的是位于您内部网络上的设备。这些设备将继承您设置的内部配置文件的所有配置选项。通常情况下，这些设备必须使用SIP身份验证。
 
-The Internal (formerly called "default") SIP profile is configured to listen on the primary IP address of the machine (unless you set `$${domain}` to something else in `vars.xml`) on port 5060 (the default SIP port). The internal SIP profile authenticates calls and is not suitable for configuring trunks to providers or outside phones, in most cases. Use the External profile for configuring trunks to providers or outside phones.
+内部（以前称为“默认”）SIP配置文件配置为在机器的主IP地址上侦听（除非您在`vars.xml`中将`$${domain}`设置为其他值），端口为5060（默认SIP端口）。内部SIP配置文件用于身份验证呼叫，在大多数情况下不适合配置与供应商或外部电话的中转。请使用外部配置文件来配置与供应商或外部电话的中转。
 
-The Internal profile should be used if you intend to handle registration for SIP clients (i.e., a SIP registrar). You may wish to skip to the section [Getting\_Started\_Guide#directory](https://wiki.freeswitch.org/wiki/Getting%5FStarted%5FGuide#directory) to configure additional SIP clients.
+如果您打算处理SIP客户端的注册（即SIP注册器），则应使用内部配置文件。您可能需要跳转到[入门指南-目录](https://wiki.freeswitch.org/wiki/Getting%5FStarted%5FGuide#directory)，以配置其他SIP客户端。
 
-Authenticated users of this profile are normally set (via the variable `user_context`) to use the dialplan defined in [the default context](https://wiki.freeswitch.org/wiki/Getting%5FStarted%5FGuide#contexts "Getting Started Guide").
+通过此配置文件进行身份验证的用户通常被设置为使用[默认上下文中定义的拨号计划](https://wiki.freeswitch.org/wiki/Getting%5FStarted%5FGuide#contexts "入门指南")（通过变量`user_context`）。
 
-See [c](../Default-Configuration_6587388.mdx#mod_vp8)[onf/sip\_profiles/](../Default-Configuration_6587388.mdx#6-configuration-files) in [Default Configuration](../Default-Configuration_6587388.mdx#mod_vp8).
+请参阅[在默认配置中的c](../Default-Configuration_6587388.mdx#mod_vp8)[onf/sip\_profiles/](../Default-Configuration_6587388.mdx#6-configuration-files)。
 
-### [External](../Sofia-SIP-Stack/External-Profile_13173235.mdx#about)
+### [外部配置](../Sofia-SIP-Stack/External-Profile_13173235.mdx#about)
 
-File Location: `conf/sip_profiles/external.xml`
+文件位置：`conf/sip_profiles/external.xml`
 
-This profile generally refers to devices or gateways that reside outside of your network. Generally this is where you define your external trunks/VoIP carriers/etc. Again, those devices will inherit all configuration options in the external profile you setup.
+这个配置文件通常指的是位于您网络之外的设备或网关。在这里，您通常定义外部的线路/语音传输/等等。同样地，这些设备将继承您设置的外部配置文件中的所有配置选项。
 
-The External (formerly "outbound") profile handles outbound registrations to a SIP provider. The SIP provider sends calls to you, and you send calls to your provider, through the external profile. The external profile allows anonymous calling, which is required as your provider will never authenticate with you to send you a call. 
+外部配置文件（曾被称为“出站”配置文件）用于处理到SIP提供商的出站注册。SIP提供商会把呼叫发送给您，您通过外部配置文件将呼叫发送给您的提供商。外部配置文件允许匿名呼叫，这是必需的，因为您的提供商将永远不会向您进行身份验证以发送呼叫。
 
-In order to secure your FreeSWITCH it is wise to link your outbound profile to a dialplan context other than 'default', which in the default configuration is where authenticated users are placed. See **Public Context for Security** note at [c](../Default-Configuration_6587388.mdx#mod_vp8)[onf/sip\_profiles/](../Default-Configuration_6587388.mdx#6-configuration-files) in [Default Configuration](../Default-Configuration_6587388.mdx#mod_vp8).
+为了保护您的FreeSWITCH，将出站配置文件链接到除了“default”之外的拨号计划上是明智的。在默认配置中，“default”是放置经过身份验证的用户的位置。请参阅**安全的公共上下文**的说明，详见[配置文件](../Default-Configuration_6587388.mdx#mod_vp8)。
 
-The default port for external connections is 5080\. This means that if you are trying to connect a remote phone to your FreeSWITCH box, you must set it to connect on port 5080, or change your ports around. As an example, in X-Lite, if you are connecting to FreeSWITCH from the outside, set your server as [my.server.com](http://my.server.com):5080.
+外部连接的默认端口是5080。这意味着，如果您想要将远程电话连接到您的FreeSWITCH主机，您必须将其设置为连接到5080端口，或者更改您的端口设置。例如，在X-Lite中，如果您从外部连接到FreeSWITCH，将您的服务器设置为[my.server.com](http://my.server.com):5080。
 
-See [c](../Default-Configuration_6587388.mdx#mod_vp8)[onf/sip\_profiles/](../Default-Configuration_6587388.mdx#6-configuration-files) in [Default Configuration](../Default-Configuration_6587388.mdx#mod_vp8).
+请参阅[配置文件](../Default-Configuration_6587388.mdx#mod_vp8)。
 
-###### Other Profile Concepts
+###### 其他配置文件概念
 
-Ideas for other SIP profiles you might end up building:
+您可能需要构建的其他SIP配置文件的想法：
 
-* Routing IPv6
-* Having multiple profiles for different networks or subnets
-* Having multiple profiles for different remote hosts/endpoints (remote offices, etc.)
+* 路由IPv6
+* 在不同网络或子网上有多个配置文件
+* 在不同的远程主机/终点（远程办公室等）上有多个配置文件
 
-  
-### Context vs Profile (stub)
+### 上下文与配置文件（待完成）
 
-Expand notes ...
+扩展注释...
 
-From [\[Freeswitch-users\] Context vs. profile?](https://lists.freeswitch.org/pipermail/freeswitch-users/2009-December/051039.html) mailing list thread:
+来自 [\[Freeswitch-users\] Context vs. profile?](https://lists.freeswitch.org/pipermail/freeswitch-users/2009-December/051039.html) 邮件列表的讨论：
 
 **2009/12/14 05:53:57 PST | Fred-145**
 
-Hello
+你好
 
-I'm a bit confused at the difference between those two concepts. Contexts
-are created in the /dialplan, and are refered to by items in /SIP_profiles
-and extensions in /directory.
+我在这两个概念之间有些困惑。上下文是在/dialplan中创建的，并且被/SIP_profiles中的项和/directory中的扩展引用。
 
-What purpose do contexts and profiles play?
+上下文和配置文件有什么作用呢？
 
-Thank you.
+谢谢。
 
 **2009/12/14 07:29:20 PST | Anthony Minessale**
 
-Profile is a collection of preferences uses by conferences etc.
-In the case of SIP a profile is also the name for the resulting SIP UA
-created by a particular profile.
+配置文件是会议等使用的一组首选项。
+在SIP的情况下，配置文件也是由特定配置文件创建的SIP UA的名称。
 
-Context is a narrowed down view of something, in the case of the dialplan a
-context is a set of extensions.  It's like having a dedicated set of
-extensions per distinct context name like parallel universes.  both the foo
-context and the bar context can have extension 2001.
+上下文是某事物的缩小视图，在拨号计划的情况下，上下文是一组扩展。它就像是为不同的上下文名称拥有专门的扩展集合，就像平行宇宙一样。foo上下文和bar上下文都可以有扩展2001。
 
 **2009/12/14 09:12:48 PST | Fred-145**
 
-Thanks Anthony for the tip.
+谢谢Anthony的提示。
 
-Would you say this is a correct representation of things?
+你会说这是事物的正确表示吗？
 
-"Contexts are a set of extensions in conf/dialplan/ (eg. default, public,
-etc.)
+"上下文是在conf/dialplan/中的一组扩展（例如default、public等）。
 
-Extensions are configured through files in conf/directory/. Each extension
-maps to a context (&lt;variable name="user_context" value="default"/>).
+扩展通过conf/directory/中的文件进行配置。每个扩展映射到一个上下文（<variable name="user_context" value="default"/>）。
 
-Profiles refer to contexts in a dialplan (eg. ).
-Profiles are groups of settings used by different parts of the network, eg.
-Internal (private LAN), External (Internet-accessible, public LAN), etc.
-Each profile has a unique IP + port number. "
+配置文件引用拨号计划中的上下文（例如
+）。配置文件是网络中不同部分使用的设置组，例如内部（私有局域网）、外部（可访问互联网的公共局域网）等。每个配置文件都有一个唯一的IP + 端口号。"
 
 **2009/12/14 09:21:05 PST | Michael Collins**
 
-> Profile is a collection of preferences uses by conferences etc.
-> In the case of SIP a profile is also the name for the resulting SIP UA
-> created by a particular profile.
-> 
-> Context is a narrowed down view of something, in the case of the dialplan a
-> context is a set of extensions.  It's like having a dedicated set of
-> extensions per distinct context name like parallel universes.  both the foo
-> context and the bar context can have extension 2001.
+概要是会议等使用的偏好设置的集合。
+在SIP的情况下，概要也是特定概要创建的SIP UA的名称。
+上下文是对某物的缩小视图，在拨号计划的情况下，上下文是一组分机。
+这就像每个不同的上下文名称都有一个专用的分机集合，就像平行宇宙一样。
+foo上下文和bar上下文都可以有2001分机。
 
-A classic example of this is with the default dialing range of 1000-1019.
-This range appears in all three contexts that are defined in the default
-configuration:
-conf/dialplan/public.xml in "public_extensions"
-conf/dialplan/features.xml in "please_hold"
-conf/dialplan/default.xml in "Local_Extension"
+一个经典的例子是默认拨号范围1000-1019。
+这个范围出现在默认配置中定义的三个上下文中：
+conf/dialplan/public.xml 中的 "public_extensions"
+conf/dialplan/features.xml 中的 "please_hold"
+conf/dialplan/default.xml 中的 "Local_Extension"
 
-If a call comes in on the public context and gets routed to 1000 (or 1001,
-1002,...1019) then it gets handled by "public_extensions" in public.xml.
-That extension transfers the call to 1000 in the features context (defined
-in features.xml) which executes a "please hold while I transfer your call"
-kind of operation and then transfers the call to 1000 in the default context
-(which is defined in default.xml).
+如果一个呼叫进入公共上下文并被路由到1000（或1001、1002、... 1019），那么它将由public.xml中的 "public_extensions" 处理。
+该分机将呼叫转移到特性上下文中的1000（在features.xml中定义），该上下文执行了"请等待，我正在转接您的呼叫"类型的操作，然后将呼叫转移到默认上下文中的1000（在default.xml中定义）。
 
-Check out those three files. You'll see some cool stuff!
+查看这三个文件。您会看到一些很酷的东西！
 -MC
 
-**2009/12/14 09:57:58 PST | Michael Collins**
+2009/12/14 09:57:58 PST | Michael Collins
 
-On Mon, Dec 14, 2009 at 9:12 AM, Fred-145 &lt;[codecomplete at free.fr](http://lists.freeswitch.org/mailman/listinfo/freeswitch-users)> wrote:
-> _Thanks Anthony for the tip._
->> _Would you say this is a correct representation of things?_
->> _"Contexts are a set of extensions in conf/dialplan/ (eg. default, public,_
-> _etc.)_
->> _Extensions are configured through files in conf/directory/. Each extension_
-> _maps to a context (&lt;variable name="usercontext" value="default"/>)._
-It would be more correct to say that "users are configured in
-conf/directory"
+在2009年12月14日星期一上午9:12，Fred-145 &lt;[codecomplete at free.fr](http://lists.freeswitch.org/mailman/listinfo/freeswitch-users)> 写道：
+> _谢谢Anthony的建议。_
+>> _你认为这个表达准确吗？_
+>> _“上下文是在conf/dialplan/中的一组扩展（例如default，public等）_
+> _扩展通过conf/directory/中的文件进行配置。每个扩展_
+> _都映射到一个上下文（<variable name="usercontext" value="default"/>）。_
+更准确地说，“用户是在conf/directory/中进行配置的。”
 
-> _Profiles refer to contexts in a dialplan (eg. )._
-> _Profiles are groups of settings used by different parts of the network, eg._
-A better way to say this would be that a "SIP profile defines a SIP *User
-Agent*." (If you don't know what a SIP user agent is that's okay - just know
-that a profile listens for connections on a particular IP + Port and also
-sends outbound traffic via the same IP/port.)
-A SIP profile routes unauth'd incoming calls to a pre-defined dialplan and
-context. Users who have auth'd to the SIP profile have a little more control
-- the user_context can be defined at the user level in the directory.
-(Normally a user will just use the "default" context but it needn't be that
-way - you could have a context for two different entities, e.g. two
-different businesses running on the same FS server.)
+> _配置文件中的“Profiles”是指拨号计划中的上下文（例如.....）_
+> _Profiles是网络不同部分所使用的一组设置_
+更好地表达可以是，“SIP配置文件定义了SIP用户代理。”（如果你不知道SIP用户代理是什么，没关系-只需知道配置文件会在特定的IP +端口上监听连接，并通过相同的IP/port发送出站流量。）
+SIP配置文件将未经身份验证的呼入呼叫路由到预定义的拨号计划和上下文。已经通过SIP配置文件进行身份验证的用户具有更多的控制权-用户级别的user_context可以在目录中定义。（通常，用户只会使用“默认”上下文，但并非必须如此-你可以为两个不同的实体（例如运行在同一FS服务器上的两个不同业务）设置一个上下文。）
 
-Are you typing up something for posterity's sake? If so let me know. I'll be
-happy to proof-read the finished product and offer suggestions.
+你在为某个特定目的输入内容吗？如果是的话，请让我知道。我很高兴校对最终产品并提供建议。
 -MC
 
 **2009/12/15 03:22:39 PST | Fred-145**
 
-> Are you typing up something for posterity's sake? If so let me know. I'll be
-> happy to proof-read the finished product and offer suggestions.
+> 你在为某个特定目的输入内容吗？如果是的话，请让我知道。我很乐意校对最终产品并提供建议。
 
-Thanks much for the clarification. I'm used to writing short documentation
-when I learn a new tool, so 1) it helps me understand how it works, 2) I can
-perform a new install faster, and 3) it helps newbies get a head-start.
+非常感谢澄清。我在学习新工具时习惯写简短的文档，这样做有以下好处：1) 帮助我理解工作原理，2) 可以更快地进行新安装，3) 帮助新手入门。
 
-So in short:
-- profiles = User Agents ("end points of a phone call", says Wikipedia)
-where each profile listens on a given IP/port so that a single Freeswitch
-server can handle several profiles concurrently, eg. one end-point for
-internal, authenticated users, and another end-point for incoming calls from
-a VoIP provider
-- contexts = tells what a caller can do; a call can go through multiple
-contexts during the length of the call. In a dialplan, contexts = groups of
-extensions
+简而言之：
+- profiles = User Agents（"电话呼叫的终点"，维基百科如此解释），每个配置文件都在给定的IP/端口上监听，以便单个Freeswitch服务器可以同时处理多个配置文件，例如：一个用于内部已认证用户的终点，另一个用于来自VoIP提供商的呼入呼叫。
+- contexts = 告诉呼叫者能做什么；一个呼叫在通话过程中可能经过多个上下文。在拨号计划中，contexts = 一组扩展号码。
 
-Thank you.
+谢谢。
 
-## Directory
+## 目录
 
-See [Config\_directory.xml](../../Directory/index.mdx#about) for a sample configuration.  
-The directory holds authentication credentials for SIP endpoints that will register to FreeSWITCH (most commonly users). The directory configuration default is configured to process the glob conf/directory/default/\*.xml by the configuration included in freeswitch.xml conf/directory/\*.xml.  
-This may seem confusing, but the default will work in most cases. Feel free to look at the examples in: conf/directory/
+请参阅 [Config\_directory.xml](../../Directory/index.mdx#about) 获取示例配置。  
+目录中保存着将要注册到FreeSWITCH的SIP终端（通常是用户）的身份验证凭据。目录的默认配置是通过freeswitch.xml文件中conf/directory/\*xml配置的glob conf/directory/default/\*.xml 进行处理。  
+这可能会感到困惑，但默认情况下，在大多数情况下都能正常工作。请随意查看以下示例：conf/directory/
 
-### User Directory Configuration
+### 用户目录配置
 
-See [Config\_1000.xml](../Default-Configuration_6587388.mdx#6-configuration-files) for a simple (1000.xml) configuration of a user (endpoint) which will register to FreeSWITCH.
+请参阅[Config\_1000.xml](../Default-Configuration_6587388.mdx#6-configuration-files) 获取注册到FreeSWITCH的用户（终端）的简单配置（1000.xml）。
 
-## Dialplan
+## 拨号计划
 
-The FreeSWITCH dialplan is a full-featured, XML-based call-routing mechanism. (There also exists support for Asterisk-like dialplans as well as really fancy real-time and/or back-end database-driven dialplans).
+FreeSWITCH拨号计划是一个完整功能的基于XML的呼叫路由机制。（还支持类似于Asterisk的拨号计划以及非常高级的实时和/或后端数据库驱动的拨号计划）。
 
-The best place to get started in learning about the FreeSWITCH dialplan is the [Dialplan](../../Dialplan/index.mdx#0-about) page here on the wiki. It discusses the basics of the FreeSWITCH dialplan. If you need an XML primer, check out the information on the [Basic\_XML](../../Dialplan/XML-Dialplan/index.mdx#about) page which will get you pointed in the right direction. There are two other important resources for you to learn more about the dialplan:
+学习FreeSWITCH拨号计划的最佳方法是在维基上的[Dialplan](../../Dialplan/index.mdx#0-about)页面。该页面讨论了FreeSWITCH拨号计划的基础知识。如果您需要XML入门指南，请查看[Basi_XML](../../Dialplan/XML-Dialplan/index.mdx#about)页面上的信息，它可以帮助您指定正确的方向。还有两个重要的资源可以帮助您进一步了解拨号计划：
 
-* the small-but-growing [Dialplan\_Recipes](../../Dialplan/Dialplan-Recipes_9634252.mdx#about) page
-* the [default dialplan](../../Dialplan/Default-Dialplan-QRF_9634422.mdx#park) that comes with a standard FreeSWITCH installation.
+* 精简但不断增长的[Dialplan_Recipes](../../Dialplan/Dialplan-Recipes_9634252.mdx#about)页面
+* 标准FreeSWITCH安装附带的[默认拨号计划](../../Dialplan/Default-Dialplan-QRF_9634422.mdx#park)。
 
-It is recommended that you compile FreeSWITCH with the default configuration and make sure it works before you start making customizations. Note that the default config files, including the default.xml dialplan, are often updated.
+建议您使用默认配置编译FreeSWITCH，并确保它正常工作后再开始进行自定义。请注意，默认配置文件（包括default.xml拨号计划）经常会更新。
 
-It makes sense to put your custom dialplan entries into the **extensions** subdirectory under conf/dialplan. You may create one or more XML files in this subdirectory, all of which will be included in the dialplan thanks to an "include" directive in the default.xml file. By keeping your customized extensions separate from default.xml you will be able to update default.xml without having to re-enter your custom extensions.
+将自定义拨号计划条目放入conf/dialplan目录下的**extensions**子目录中是明智的。您可以在此子目录中创建一个或多个XML文件，所有这些文件都将通过default.xml文件中的"include"指令包含在拨号计划中。通过将自定义扩展与default.xml分开，您可以在不重新输入自定义扩展的情况下更新default.xml。
 
-### Gateway Configuration
+### 网关配置
 
-See [SIP Provider Examples](../../Interoperability/Providers-ITSPs/index.mdx#about) for sample gateway configurations for different providers. 
+请参阅[示例SIP服务提供商](../../Interoperability/Providers-ITSPs/index.mdx#about)以获取不同提供商的网关配置示例。
 
-Outbound registrations to providers can also be made in the outbound profile. See [Clarification:gateways](../Sofia-SIP-Stack/Gateways-Configuration_7144069.mdx#about) for a clarification
+也可以在出站配置文件中进行对提供商的注册。有关详细信息，请参阅[澄清：网关](../Sofia-SIP-Stack/Gateways-Configuration_7144069.mdx#about)。 
 
-#### Dialing Out Via Gateway
+#### 通过网关拨出电话
 
-Add the following included dialplan snippet us11cc.xml (in $FS/conf/dialplan/default/us11cc.xml) for 11 digit dialing (typical in the U.S.) via your newly created gateway configuration above. Remember: the default configuration provided by FreeSWITCH does not include a dialplan rule for outbound calls via the gateway you've defined so it does not know how to route calls to your new gateway. You will need to add something similar to the following.
+请将以下包含的拨号计划片段us11cc.xml（位于$FS/conf/dialplan/default/us11cc.xml）添加到您上面创建的网关配置中，以便进行11位数的拨号（在美国很常见）。请记住：FreeSWITCH提供的默认配置不包括通过您定义的网关的外呼拨号规则，因此它不知道如何将呼叫路由到您的新网关。您需要添加类似以下内容的东西。
 
 **us11cc.xml**
 
@@ -491,278 +440,276 @@ Add the following included dialplan snippet us11cc.xml (in $FS/conf/dialplan/def
 <include>
   <extension name="callcentric.com">
     <condition field="destination_number" expression="^9(1\d{10})$">
-      <!-- $1 will contain the matched string contained inside the parenthesis in the conditional expression above 
-           without the 9 outwards dialing code prefix -->
-      <action application="log" data="INFO ***** CallCentric DESTINATION NUMMER = [$1]  ***** "/>
+      <!-- $1将包含上方条件表达式中括号内的匹配字符串，
+           不包括9作为外拨代码前缀 -->
+      <action application="log" data="INFO ***** CallCentric 目标号码 = [$1]  ***** "/>
       
-      <!-- Some providers require you to send the proper CLID information 
-           this is how you set outbound CLID for all calls through this gateway -->
+      <!-- 一些供应商要求您发送正确的CLID信息，
+           这是如何为通过此网关的所有呼叫设置出拨CLID的方法 -->
       <action application="set" data="effective_caller_id_name=White House"/>
       <action application="set" data="effective_caller_id_number=2024561000"/>
       
-      <!-- The "gateway" keyword tells FS to lookup the name "callcentric.com" in an .xml file
-           under sip_profiles and use the credentials and settings contained therein -->
+      <!-- "gateway"关键字告诉FS查找名称为"callcentric.com"的.xml文件，
+           在sip_profiles下使用其中包含的凭据和设置 -->
       <action application="bridge" data="{sip_cid_type=rpid}sofia/gateway/callcentric.com/$1"/>
     </condition>
   </extension>
 </include>
 ```
 
-The above snippet will be appended into $FS/conf/dialplan/default.xml where the statement
+以上片段将被追加到$FS/conf/dialplan/default.xml中的语句
 
 &lt;X-PRE-PROCESS cmd="include" data="default/*.xml"/>
 
-appears. That command will traverse the dialplan directory and the default/ sub-directory and load all properly formatted .xml files that it finds. The `<include>` tags in the snippet make this eligible for inclusion in the parent default.xml dialplan. 
+出现.该命令将遍历dialplan目录和default/子目录，并加载所有格式正确的.xml文件。片段中的`<include>`标签使得它可以被包含在父级default.xml的拨号计划中。
 
-Note that the condition statement tests the destination\_number, which is an internal FS variable, against the template beginning with the digit 9, then the digit 1, then 10 more digits following. But the parenthesis only enclose the 1+10 digits which comprise the dialed digits you will send to the carrier, in this case CallCentric. Leading with digit 9 allows you to have any range of extensions in the 1xxx block without worrying about code collision and is a customary prefix digit for outward dialing in many PBX configurations, so it is familiar. The channel variable $1 will be assigned the contents enclosed by the parenthesis, so that later you can use $1 in the bridge command to form your dial string.  
+请注意，条件语句会测试destination_number（一个内部FS变量）与以数字9开头，然后是数字1，再跟随10位数字的模板进行匹配。但是括号只包含1+10位数字，即你将发送给运营商的拨号数字，在这种情况下为CallCentric。以数字9开头可以让你在1xxx区块内具有任意范围的分机号，而无需担心代码冲突，这是许多PBX配置中外拨号的惯用前缀数字，因此很常见。通道变量$1将被赋予括号中的内容，以便稍后可以在桥接命令中使用$1来组成拨号字符串。
 
-The log application will print whatever text and variables follow and post it at the INFO log level, equivalent to loglevel=6 so that you may see the destination number printed on the fs\_cli or console.  
+log应用程序将打印其后的任何文本和变量，并将其发布到INFO日志级别，相当于loglevel=6，这样你就可以在fs_cli或控制台上看到目标号码的打印输出。
 
-#### Receiving An Inbound Call From Gateway
+#### 从网关接收传入电话
 
-Add the following to public.xml (in $FS/conf/dialplan) to receive inbound calls via your newly created gateway. Make sure to change the White House public phone number to your actual inbound DID from your provider. This will transfer all inbound calls to extension 1000 in the context named "default". Remember, you can have multiple endpoints register to one account ( See [Multiple Registrations](../Sofia-SIP-Stack/index.mdx#multiple-registrations) ). You will need to add something similar to the following for each DID number to transfer to the desired FS extension. Please note that this will only transfer the incoming DID call to the dialplan serving the default context; you will also need to ensure that the extension number specified here exists in the default dialplan to bridge with an endpoint/user if that is your desire (See [Dialplan\_XML#Example\_9](https://wiki.freeswitch.org/wiki/Dialplan%5FXML#Example%5F9 "Dialplan XML") ).
+将以下内容添加到public.xml（在$FS/conf/dialplan中），以通过新创建的网关接收呼入电话。请确保将白宫公共电话号码更改为您实际的呼入DID（提供方提供的号码）。这将把所有呼入电话转移到名为"default"的上下文中的分机1000上。请记住，您可以让多个终端注册到一个帐户（请参阅[Multiple Registrations](../Sofia-SIP-Stack/index.mdx#multiple-registrations)）。您需要为每个DID号码类似于下面的内容添加以下内容，以转移到所需的FS分机。请注意，这只会将呼入的DID呼叫转移到提供默认上下文服务的拨号计划，如果您希望与终端/用户建立桥接，还需确保此处指定的分机号在默认拨号计划中存在（请参阅[Dialplan\_XML#Example\_9](https://wiki.freeswitch.org/wiki/Dialplan%5FXML#Example%5F9 "Dialplan XML")）。
 
 **cc\_inbound.xml**
 
 ```xml
 <include>
   <extension name="callcentric_inbound">
-    <!-- Examine siptrace logs to determine which element contains your DID from the carrier 
-         in this case CallCentric uses the SIP To: field -->
+    <!--通过检查siptrace日志，确定包含运营商的DID的元素，在这种情况下，CallCentric使用SIP To:字段-->
     <condition field="${sip_to_user}" expression="^(12024561000)$">
       <action application="set" data="domain_name=$${domain}"/>
-      <!-- This example maps the inbound DID to ring 1000 in the default context -->
+      <!--此示例将呼入的DID映射到默认上下文中的1000分机-->
       <action application="transfer" data="1000 XML default"/>
     </condition>
   </extension>
 </include>
 ```
 
-If you want users to register with something other than the number that will reach them, then [contact mapping](../../Directory/XML-User-Directory/Contact-Mapping_7143467.mdx#about) is for you.
+如果您希望用户注册使用除了可以联系到他们的号码之外的其他内容，那么[联系人映射](../../Directory/XML-User-Directory/Contact-Mapping_7143467.mdx#about)就适合您。
 
-Each provider or carrier works differently. We have numerous examples of carrier configurations under [Interop](../../Interoperability/index.mdx#about), but many require updating. If you have updated configurations, please post them in the blog comments at the bottom of the Interop -> Providers page for your carrier. Thanks.
+每个供应商或运营商的工作方式都不同。我们在[Interop](../../Interoperability/index.mdx#about)下有许多运营商配置的例子，但很多需要更新。如果您有更新的配置，请在运营商页面底部的博客评论中发布。谢谢。
 
-## Running FreeSWITCH
+## 运行 FreeSWITCH
 
-Starting FreeSWITCH™ is done from the command-line. The location of the executable varies depending on your system. If you are starting FreeSWITCH™ for testing or development, note the many command-line switches.
+启动 FreeSWITCH™ 是通过命令行完成的。可执行文件的位置取决于您的系统。如果您是为了测试或开发而启动 FreeSWITCH™，请注意众多的命令行开关。
 
-### Starting in Unix-based Systems
+### 在基于 Unix 的系统中启动
 
-Now that you have compiled and configured FreeSWITCH™ its time to place a test call to ensure that everything is working so far. To start FreeSWITCH™ change to the bin directory under the FreeSWITCH™ installation directory, and run FreeSWITCH™. Typically this is:
+现在，您已经编译和配置了 FreeSWITCH™，是时候打一个测试电话以确保一切正常工作了。要启动 FreeSWITCH™，请切换到 FreeSWITCH™ 安装目录下的 bin 目录，并运行 FreeSWITCH™。通常情况下是这样的：
 
 cd /usr/local/freeswitch/bin
 ./freeswitch
 
-Fedora/Red Hat/CentOS Startup Scripts:
+Fedora/Red Hat/CentOS 启动脚本：
 
 cp build/freeswitch.init.redhat /etc/init.d/freeswitch
 chmod 755 /etc/init.d/freeswitch
 
-### Starting in Windows-based Systems
+### 在基于 Windows 的系统中启动
 
-The Visual Studio project runs via an executable located under the _debug_ or _release_ folder of your project's directory tree (depending on how your project was built). On a debug build of the Windows system start FreeSWITCH™ as follows:
+Visual Studio 项目通过一个位于项目目录树的 _debug_ 或 _release_ 文件夹下的可执行文件运行（取决于项目的构建方式）。在 Windows 系统的调试构建中，启动 FreeSWITCH™ 如下所示：
 
 cd &lt;PROJECT FOLDER>\debug
 FreeSwitch.exe
 
-The FreeSWITCH™ console will be available after successful loading of the application.
+成功加载应用程序后，FreeSWITCH™ 控制台将可用。
 
-### Command Line Parameters
+### 命令行参数
 
-These are the optional arguments you can pass to freeswitch as displayed by:
+这些是您可以传递给 freeswitch 的可选参数，如下所示：
 
 freeswitch -help
 
-  
 ```xml
-       -waste                 -- allow memory waste
-       -no-auto-stack         -- don't adjust thread stack size
-       -core                  -- dump cores
-       -help                  -- print this message
-       -version               -- print the version and exit
-       -rp                    -- enable high(realtime) priority settings
-       -lp                    -- enable low priority settings
-       -np                    -- enable normal priority settings (system default)
-       -vg                    -- run under valgrind
-       -nosql                 -- disable internal SQL scoreboard
-       -heavy-timer           -- Heavy Timer, possibly more accurate but at a cost
-       -nonat                 -- disable auto NAT detection and UPNP router configuration when FreeSWITCH starts
-       -nonatmap              -- disable auto NAT port mapping
-       -nocal                 -- disable clock calibration
-       -nort                  -- disable clock clock_realtime
-       -stop                  -- stop freeswitch
-       -nc                    -- no console and run in background
-       -ncwait                -- no console and run in background, but wait until the system is ready before exiting (implies -nc)
-       -c                     -- output to a console and stay in the foreground (default behavior)
+       -waste                 -- 允许内存浪费
+       -no-auto-stack         -- 不调整线程堆栈大小
+       -core                  -- 转储核心文件
+       -help                  -- 打印帮助信息
+       -version               -- 打印版本并退出
+       -rp                    -- 启用高（实时）优先级设置
+       -lp                    -- 启用低优先级设置
+       -np                    -- 启用正常优先级设置（系统默认）
+       -vg                    -- 在valgrind下运行
+       -nosql                 -- 禁用内部SQL计分板
+       -heavy-timer           -- 重定时器，可能更准确但代价较大
+       -nonat                 -- 在FreeSWITCH启动时禁用自动NAT检测和UPNP路由器配置
+       -nonatmap              -- 禁用自动NAT端口映射
+       -nocal                 -- 禁用时钟校准
+       -nort                  -- 禁用实时时钟
+       -stop                  -- 停止FreeSWITCH
+       -nc                    -- 不显示控制台并在后台运行
+       -ncwait                -- 不显示控制台并在后台运行，但在系统准备就绪之前等待退出（隐含-nc）
+       -c                     -- 输出到控制台并保持前台运行（默认行为）
 
-       UNIX-like only
-       -nf                    -- no forking
-       -u [user]              -- specify user to switch to
-       -g [group]             -- specify group to switch to
-       -ncwait                -- do not output to a console and background but wait until the system is ready before exiting (implies -nc)
-
-       Windows-only
-       -service [name]        -- start freeswitch as a service, cannot be used if loaded as a console app
-       -install [name]        -- install freeswitch as a service, with optional service name
-       -uninstall             -- remove freeswitch as a service
-       -monotonic-clock       -- use monotonic clock as timer source
-
-       Options to control locations of files:
-       -base [basedir]         -- alternate prefix directory
-       -conf [confdir]         -- alternate directory for FreeSWITCH configuration files
-       -log [logdir]           -- alternate directory for logfiles
-       -run [rundir]           -- alternate directory for runtime files
-       -db [dbdir]             -- alternate directory for the internal database
-       -mod [moddir]           -- alternate directory for modules
-       -htdocs [htdocsdir]     -- alternate directory for htdocs
-       -scripts [scriptsdir]   -- alternate directory for scripts
-       -temp [directory]       -- alternate directory for temporary files
-       -grammar [directory]    -- alternate directory for grammar files
-       -recordings [directory] -- alternate directory for recordings
-       -storage [directory]    -- alternate directory for voicemail storage
-       -sounds [directory]     -- alternate directory for sound file
+       仅适用于类UNIX系统
+       -nf                    -- 不分叉
+       -u [user]              -- 指定要切换到的用户
+       -g [group]             -- 指定要切换到的组
+       -ncwait                -- 不输出到控制台并在后台运行，但在系统准备就绪之前等待退出（隐含-nc）
 ```
 
-### Shutting Down FreeSWITCH
+Windows 特有
+       -service [名称]         -- 作为服务启动 freeswitch，如果作为控制台应用程序加载，则不能使用此选项
+       -install [名称]         -- 安装 freeswitch 为服务，可选择指定服务名称
+       -uninstall             -- 移除 freeswitch 服务
+       -monotonic-clock       -- 使用单调时钟作为计时源
 
-To exit the FreeSWITCH console, simply type 'shutdown' or '...' (three dots). If you do not wish to shutdown FreeSWITCH when logging out, start the process inside of a "screen" session; In Windows, FreeSWITCH™ may be started as a service. It is not recommended that you start FreeSWITCH™ as a service until you are certain your configuration is valid. Also, if started from a remote login session (i.e. ssh) it is not advised to terminate the connection with FreeSWITCH left in the foreground. Use the automated startup method for your operating system.
+       控制文件位置的选项:
+       -base [基础目录]         -- 替代前缀目录
+       -conf [配置目录]         -- 替代 FreeSWITCH 配置文件的目录
+       -log [日志目录]           -- 替代日志文件的目录
+       -run [运行时目录]           -- 替代运行时文件的目录
+       -db [数据库目录]             -- 替代内部数据库的目录
+       -mod [模块目录]           -- 替代模块的目录
+       -htdocs [htdocs 目录]     -- 替代 htdocs 的目录
+       -scripts [脚本目录]   -- 替代脚本的目录
+       -temp [目录]       -- 替代临时文件的目录
+       -grammar [目录]    -- 替代语法文件的目录
+       -recordings [目录] -- 替代录音文件的目录
+       -storage [目录]    -- 替代语音邮件存储的目录
+       -sounds [目录]     -- 替代音频文件的目录
 
-## Test Calls  
+### 关闭 FreeSWITCH
 
-Test your new FreeSWITCH™ installation by configuring a pair of SIP phones and to place test calls and try out features in the default dialplan. If you're already familiar with Asterisk, you could also start out by [Connecting Freeswitch And Asterisk](https://confluence.freeswitch.org/display/FREESWITCH/Asterisk#Asterisk-ConnectingFreeSWITCHandAsteriskUsingSIP)
+要退出FreeSWITCH控制台，只需键入'shutdown'或'...'（三个点）。如果在注销时不想关闭FreeSWITCH，请在“screen”会话中启动进程；在Windows中，可以将FreeSWITCH™作为服务启动。在确保配置有效之前，不建议将FreeSWITCH™作为服务启动。此外，如果从远程登录会话（即ssh）启动，不建议以FreeSWITCH保留在前台的方式终止连接。请使用操作系统的自动启动方法。
 
-Register two phones to FreeSWITCH with two different extension numbers.
+## 测试呼叫
 
-Let's assume for this example that you have your SIP phones registered as extensions 1000 and 1001.
+通过配置一对SIP电话并进行测试呼叫，以及尝试默认拨号计划中的功能，来测试您的新的FreeSWITCH™安装。如果您已经熟悉Asterisk，也可以开始通过[Connecting Freeswitch And Asterisk](https://confluence.freeswitch.org/display/FREESWITCH/Asterisk#Asterisk-ConnectingFreeSWITCHandAsteriskUsingSIP)进行尝试。
 
-The default config provides user directory files for extension numbers 1000 through 1019 with a registration password of 1234; the default voice-mail password is the same number as the extension, e.g. Extension 1000 has its voice-mail password set to 1000
+将两个电话注册到FreeSWITCH，使用两个不同的分机号。
 
-Sample softphone configurations can be seen on the [Softphones](../../Interoperability/Softphones/index.mdx#about) page.
+假设在此示例中，您将SIP电话注册为1000和1001分机。
 
-Once you've done that, you can try out a bunch of features already setup in the test dialplan.
+默认配置为分机号1000至1019提供用户目录文件，注册密码为1234；默认语音邮箱密码与分机号相同，例如，分机1000的语音邮箱密码设置为1000。
 
-### Basic Calling
+可以在[Softphones](../../Interoperability/Softphones/index.mdx#about)页面上查看示例软电话配置。
 
-* Call between 1000 and 1001 by dialing the respective extension.
-* Call 4000 to login to your voicemail box.
-* 870 - Redial last called # from this extension.
-* \*69 - Call back the last person to call this extension.
-* 8+\[ext\] - Place an intercom call to extension \[ext\]. If no answer, it does not go to voicemail but just keeps ringing. Some phones have additional functionality for intercom calls.
+完成上述配置后，您可以尝试一系列已在测试拨号计划中设置好的功能。
 
-### Other Tests
+### 基本呼叫
 
-* 9192 - Info test (prints information to the command line interface).
-* 9193 - Video record test (records video to /tmp/testrecord.fsv)
-* 9194 - Video playback test (plays video from /tmp/testrecord.fsv)
-* 9195 - Echo test (5-second delay before returning echo).
-* 9196 - Echo test (real-time).
-* 9197 - Play milliwatt test tone.
-* 9198 - Tetris, synthesized via tone streaming.
-* 9664 - Test Music On Hold out (if you installed sound files).
+* 拨打1000至1001之间的号码来进行通话，拨打相应的分机号码。
+* 拨打4000来登录您的语音信箱。
+* 870 - 重新拨号上一次从该分机所呼叫的号码。
+* \*69 - 回拨最后一个给该分机打过电话的人。
+* 8+\[ext\] - 对分机号码\[ext\]发起对讲呼叫。如果没有回应，不会进入语音信箱，而是持续响铃。某些电话还具有额外的对讲呼叫功能。
 
-### Advanced Calling Features
+### 其他测试
 
-* 88+\[ext\] - Eavesdrop on extension \[ext\] (ex: 881001). That extension must be on an active call. Once connected, you can listen to the call without being heard, or you can...  
-   * Press 1 to barge into the distant party.  
-   * Press 2 to barge into the local party.  
-   * Press 3 to barge into both parties.
-* 5900 - Park a call in a hold queue (First-in-first-out style).
-* 5901 - Pickup a call parked in queue (that was put there via 5900).
+* 9192 - 信息测试（将信息打印到命令行界面）。
+* 9193 - 视频录制测试（将视频录制到/tmp/testrecord.fsv）。
+* 9194 - 视频播放测试（从/tmp/testrecord.fsv播放视频）。
+* 9195 - 回声测试（延迟5秒后返回回声）。
+* 9196 - 实时回声测试。
+* 9197 - 播放一毫瓦测试音频。
+* 9198 - 通过音频流合成的俄罗斯方块游戏。
+* 9664 - 耳机音乐试听测试（如果您安装了音频文件）。
 
-### Group Assignments 
+### 高级呼叫功能
 
-The below functions involve the idea of keeping a database/table of which extensions belong to one of 100 groups (numbered 00-99).
+* 88+\[ext\] - 偷听分机号码\[ext\]的通话（例如：881001）。该分机必须正在通话中。一旦连接，您可以听到通话内容，不会被对方听到，或者您可以...
+   * 按1插入对方讲话。
+   * 按2插入本地通话。
+   * 按3同时插入双方通话。
+* 5900 - 将通话放置在等待队列中（先进先出方式）。
+* 5901 - 接听等待队列中的通话（通过5900放入队列）。
 
-* 81+\[group\] - Add this extension to the calling group #\[group\] (can be two digits 00-99). A beep tone confirms that the function worked.
-* 80+\[group\] - Delete this extension from the calling group #\[group\] (can be two digits 00-99). A beep tone confirms that the function worked.
-* 82+\[group\] - Simultaneously ring all extensions in group #\[group\]. The first person to answer will be connected to you automatically.
+### 分组分配
 
-### Conferencing
+下面的操作涉及将100个分机号码归属于100个组之一（编号为00-99）的数据库/表。
 
-* 30+\[conf\] - Join conference #\[conf\] - 8kHz quality.
-* 31+\[conf\] - Join conference #\[conf\] - 16kHz quality.
-* 32+\[conf\] - Join conference #\[conf\] - 32kHz quality.
-* 9888 - Join the conference hosted by the FreeSWITCH team via a SIP Internet connection (8kHz).
-* 91616 - Join the conference hosted by the FreeSWITCH team via a SIP Internet connection (16kHz).
+* 81+\[group\] - 将该分机添加到呼叫组\[group\]中（\[group\]可以是两位数字00-99）。嘀嗒声确认该功能已生效。
+* 80+\[group\] - 从呼叫组\[group\]中删除该分机（\[group\]可以是两位数字00-99）。嘀嗒声确认该功能已生效。
+* 82+\[group\] - 同时呼叫\[group\]中的所有分机。先接听电话的人将会自动连接到您。
 
-Conference rooms are unique for the bit-level you choose, i.e. 3000 for conference room 00 will not join with participants in 3100 which is also conference room 00\. They are different conferences.
+### 会议
 
-### Interactive Voice Response
+* 30+\[conf\] - 加入会议#\[conf\] - 音质为8kHz。
+* 31+\[conf\] - 加入会议#\[conf\] - 音质为16kHz。
+* 32+\[conf\] - 加入会议#\[conf\] - 音质为32kHz。
+* 9888 - 通过SIP网络连接加入由FreeSWITCH团队主持的会议（8kHz音质）。
+* 91616 - 通过SIP网络连接加入由FreeSWITCH团队主持的会议（16kHz音质）。
 
-* 5000 - IVR demo (if you installed sound files).
-  
-## Advanced
+会议室是根据所选择的位级别唯一的，例如，会议室00的号码为3000，与会议室00内的参与者3100是不同的会议。
 
-### Preprocessor Commands
+### 交互式语音应答
 
-The FreeSWITCH™ configuration supports pre–processor commands reminiscent of (but not matching) apache server-side includes:
+* 5000 - IVR演示（需安装声音文件）。
+
+## 进阶
+
+### 预处理器指令
+
+FreeSWITCH™配置支持类似于（但不完全匹配）Apache服务器端包含的预处理器指令：
 
 #### comment
 
-Add a simple comment
+添加简单注释
 
-&lt;X-PRE-PROCESS cmd="comment" data="This is just a comment"/>
+\<X-PRE-PROCESS cmd="comment" data="这只是一个注释"/>
 
 #### exec
 
-Execute a shell command and parse its output [\[1\]](http://lists.freeswitch.org/pipermail/freeswitch-users/2011-July/074683.html)
+执行Shell命令并解析其输出[参考1](http://lists.freeswitch.org/pipermail/freeswitch-users/2011-July/074683.html)
 
-&lt;X-PRE-PROCESS cmd="exec" data="echo XML config loaded at `date` >> /var/log/fs_config.log"/>
+\<X-PRE-PROCESS cmd="exec" data="echo XML配置已于`date`加载 >> /var/log/fs_config.log"/>
 
 #### include
 
-Include another file
+包含另一个文件
 
-&lt;X-PRE-PROCESS cmd="include" data="vars.xml"/>
+\<X-PRE-PROCESS cmd="include" data="vars.xml"/>
 
 #### set
 
-Set a global variable
+设置全局变量
 
-&lt;X-PRE-PROCESS cmd="set" data="my_global_var='some value'"/>
+\<X-PRE-PROCESS cmd="set" data="my_global_var='某个值'"/>
 
-In addition to the pre-processor PIs, which may appear anywhere, the freeswitch.xml file has a root element of "document", and all its children are "section" elements, with "name" attribute values being one of:
+除了可以出现在任何地方的预处理器 PI，freeswitch.xml 文件具有一个名为 "document" 的根元素，其所有子元素均为 "section" 元素，并且具有名为 "name" 的属性值之一：
 
-Preprocessor commands are included in XML style comment brackets. Even though they appear commented to an XML parser, they are still processed. The comment characters are required or they will not be processed. An example would be:
+预处理器命令以 XML 注释标记的形式包含在其中。尽管它们在 XML 解析器中被注释掉了，但仍然会被处理。注释字符是必需的，否则它们不会被处理。例如：
 
-  &lt;!--#include "switch.conf.xml"-->
+  &lt;!--#include "switch.conf.xml"--&gt;
 
-### Commenting Preprocessor
+### 注释预处理器
 
-DO NOT COMMENT THEM OUT with &lt;!-- --> it's wrong and won't take any affect.
+请勿使用 &lt;!-- --> 注释它们，这样做是错误的，并且不会产生任何效果。
 
-A cool way of comment those directive would be:
+注释这些指令的一种简单方法是：
 
 ```xml
 <Z-PRE-PROCESS cmd="set" data="my_global_var='some value'"/>
 ```
 
-Replacing X-PRE-PROCESS with Z-PRE-PROCESS
+将 X-PRE-PROCESS 替换为 Z-PRE-PROCESS
 
 ### freeswitch.xml
 
-This is the main configuration file, and the only one that has a fixed name. When you start FreeSWITCH™ it will locate this file and process it. The default freeswitch.xml file includes other files to allow for easier maintenance of configuration data. The default configuration of most of these files is suitable for first time users, until you become more familiar with FreeSWITCH™ it is advised that you leave them to their default settings.
+这是主要的配置文件，也是唯一一个固定名称的文件。在启动 FreeSWITCH™ 时，它将定位并处理该文件。默认的 freeswitch.xml 文件包含其他文件，以便更轻松地维护配置数据。大多数文件的默认配置适合初次使用者，直到您对 FreeSWITCH™ 更加熟悉之前，建议您不要修改它们的设置。
 
-freeswitch.xml is divided into multiple sections, and each section is used by a different component in FreeSWITCH™. The sections are as follows:
+freeswitch.xml 被分为多个部分，每个部分被 FreeSWITCH™ 中的不同组件使用。各节如下：
 
-* The "configuration" section has children for [switch.conf](../XML-Switch-Configuration_13173223.mdx#--) and [modules.conf](../../Modules/XML-Modules-Configuration_13173211.mdx#xml-modules-configuration) which are used by the core, as well as a child for each module in use.
-* The [dialplan](../../Dialplan/index.mdx#0-about) section defines which action to invoke when a call arrvies to the switch.
-* The [directory](../../Directory/XML-User-Directory/index.mdx#about) defines the users that can connect to the switch (user agents).
-* The phrases section defines where freeswitch can find the sound files, and if it can use any TTS engines.
+* 在“配置”部分中，有用于核心的[switch.conf](../XML-Switch-Configuration_13173223.mdx#--)和[modules.conf](../../Modules/XML-Modules-Configuration_13173211.mdx#xml-modules-configuration)两个子项，以及每个正在使用的模块的子项。
+* [拨号计划](../../Dialplan/index.mdx#0-about)部分定义了呼叫到达交换机时要调用的操作。
+* [目录](../../Directory/XML-User-Directory/index.mdx#about)定义了可以连接到交换机的用户（用户代理）。
+* 短语部分定义了freeswitch应在何处查找声音文件，以及是否可以使用任何TTS引擎。
 
-The structure below "document" and "section" varies according to the parent. There is currently no dtd/relaxng/xmlschema available to validate the file, though since it does not use xml mechanisms for inclusion that would be an obstacle to true validation (and the limited xml parser used by FreeSWITCH doesn't implement any of the XML standard mechanisms such as external entities or XInclude). XML namespaces are not currently used. There is no application-level versioning within the file.
+“文档”和“部分”之下的结构会根据上级而变化。目前没有可用的DTD/RelaxNG/XML Schema来验证文件，但由于它不使用XML机制进行包含，这将成为真正验证的障碍（且FreeSWITCH使用的有限的XML解析器不实现任何XML标准机制，如外部实体或XInclude）。目前尚未使用XML命名空间。文件中没有应用级别的版本管理。
 
-#### How Configuration Files Are Parsed
+#### 如何解析配置文件
 
-FreeSWITCH begins with its single, master configuration file (conf/freeswitch.xml). This master config file then loads (via ["globs"](http://en.wikipedia.org/wiki/Glob%5F%28programming%29) e.g. "\*.xml") additional config files. FreeSWITCH 1.0.4 installs with dozens of config files. You may stray daringly far from the stock install and arrange the files (and the loading thereof) however you wish: it's up to you if you want a single, huge config file or a series of config files. Each config file can include none or many other config files. Whatever method you choose, at runtime FreeSWITCH parses all the (one or many) files into a single, huge, resultant "running config" file (located at log/[freeswitch.xml.fsxml](https://wiki.freeswitch.org/wiki/Freeswitch.xml.fsxml "Freeswitch.xml.fsxml")) which mustn't be edited while FreeSWITCH is running as portions are memory-mapped into FreeSWITCH.
+FreeSWITCH的配置始于单个主配置文件(conf/freeswitch.xml)。然后通过["globs"](http://en.wikipedia.org/wiki/Glob%5F%28programming%29)（例如"\*.xml"）加载额外的配置文件。FreeSWITCH 1.0.4安装了几十个配置文件。您可以大胆地远离标准安装，并按照您的意愿安排文件（及其加载方式）：无论是使用单个庞大的配置文件还是一系列配置文件，完全由您决定。每个配置文件可以包含零个或多个其他配置文件。无论您选择哪种方法，在运行时，FreeSWITCH将解析所有的（一个或多个）文件成一个单个的庞大的结果配置文件（位于log/[freeswitch.xml.fsxml](https://wiki.freeswitch.org/wiki/Freeswitch.xml.fsxml)），在FreeSWITCH运行时不得编辑该文件，因为其中的部分内容被映射到了FreeSWITCH的内存中。
 
-Line Numbers
+行号
 
-When the FreeSWITCH console reports a configuration error, the line number it gives is the line number in the "running config" file `log/freeswitch.xml.fsxml`, not the line number in any individual included file.
+当FreeSWITCH控制台报告配置错误时，给出的行号是"running config"文件`log/freeswitch.xml.fsxml`中的行号，而不是任何单独包含的文件中的行号。
 
-#### Example freeswitch.xml
+#### 示例freeswitch.xml
 
-Below is a snippet [freeswitch.xml](/attachments/3375391/17694857.xml) file. Of course, the bulk of the configuration is found in the included files.
+下面是一个[freeswitch.xml](/attachments/3375391/17694857.xml)文件的片段。当然，大部分配置内容都是在包含的文件中找到的。
 
 **freeswitch.xml**
 
@@ -778,66 +725,65 @@ Below is a snippet [freeswitch.xml](/attachments/3375391/17694857.xml) file. Of 
   <section name="dialplan" description="Regex/XML Dialplan">
     <X-PRE-PROCESS cmd="include" data="dialplan/*.xml"/>
   </section>
+```
 
-  <!-- mod_dingaling is reliant on the vcard data in the "directory" section. -->
-  <!-- mod_sofia is reliant on the user data for authorization -->
-  <section name="directory" description="User Directory">
-    <X-PRE-PROCESS cmd="include" data="directory/*.xml"/>
-  </section>
+```xml
+<!-- mod_dingaling依赖于“目录”部分中的vcard数据。 -->
+<!-- mod_sofia依赖于用户数据进行授权 -->
+<section name="directory" description="用户目录">
+  <X-PRE-PROCESS cmd="include" data="directory/*.xml"/>
+</section>
 
-  <!-- phrases section (under development still) -->
-  <section name="phrases" description="Speech Phrase Management">
-    <macros>
-      <X-PRE-PROCESS cmd="include" data="lang/*/*.xml"/>
-    </macros>
-  </section>
+<!-- 短语部分（仍在开发中） -->
+<section name="phrases" description="语音短语管理">
+  <macros>
+    <X-PRE-PROCESS cmd="include" data="lang/*/*.xml"/>
+  </macros>
+</section>
 </document>
 ```
 
 ---
 
-### Preprocessor Variables
+### 预处理变量
 
-For now, do not worry about all of the configuration properties, the defaults get you close to a working FreeSWITCH™ installation. This guide will show you the minimum required to get a running FreeSWITCH™ system. After you get it working you may then modify the system to your needs.
+暂时不用担心所有的配置属性，默认设置让您接近一个可运行的FreeSWITCH™安装。本指南将向您展示最低要求，以运行一个FreeSWITCH™系统。在使其运行后，您可以根据自己的需求修改系统。
 
-The first thing you should do is review conf/vars.xml and conf/freeswitch.xml noting the preprocessor variables.
+首先，您应该查看conf/vars.xml和conf/freeswitch.xml文件，注意预处理变量。
 
 ```xml
 <X-PRE-PROCESS cmd="set" data="bind_server_ip=auto"/>
 <X-PRE-PROCESS cmd="set" data="global_codec_prefs=G722,PCMU@20i,PCMA@20i"/>
 ```
 
-  
-* "bind\_server\_ip" Can be an ip address, a dns name, or "auto".
-* "global\_codec\_prefs" has a default of G.711 u-law. You can probably leave this alone, unless you need to change it to another [codec](../../Codecs-and-Media/index.mdx#about), but most VoIP equipment will support this [codec](../../Codecs-and-Media/index.mdx#about).
+* "bind\_server\_ip" 可以是ip地址、dns名称或“auto”。
+* "global\_codec\_prefs" 默认值为G.711 u-law。除非您需要将其更改为其他[编解码器](../../Codecs-and-Media/index.mdx#about)，否则您可能无需更改，大多数VoIP设备将支持此[编解码器](../../Codecs-and-Media/index.mdx#about)。
 
-If you need to troubleshoot your configuration, the `log/freeswitch.xml.fsxml` file contains the entire pre-processed freeswitch.xml file. (For testing and troubleshooting you could replace the freeswitch.xml file with this copy.) Line numbers in error messages refer to this concatenated file.
+如果您需要排除故障，`log/freeswitch.xml.fsxml`文件包含整个预处理的freeswitch.xml文件。（为了测试和故障排除，您可以用这个副本替换freeswitch.xml文件。）错误消息中的行号是指这个串联文件。
 
-#### IP Address
+#### IP地址
 
-If you have a \[[multihomed NIC](http://en.wikipedia.org/wiki/Multihoming)\] (Single Link, Multiple IP address) then remember that you may have to set a pre-process variable in the `vars.xml` file so that FreeSWITCH™ knows what address to listen on.
+如果您有一个多宿主 NIC（单链路，多个IP地址），请记住，您可能需要在 `vars.xml` 文件中设置一个预处理变量，以便 FreeSWITCH™ 知道要监听哪个地址。
 
 ```xml
-<X-PRE-PROCESS cmd="set" data="local_ip_v4=<your ip address>"/> 
+<X-PRE-PROCESS cmd="set" data="local_ip_v4=<您的IP地址>"/> 
 ```
 
-## Multi-Tenant Info / Multiple Company HOWTO
+## 多租户信息 / 多个公司 HOWTO
 
-The [Multi-tenant](../../Examples/Multi-tenant_13173521.mdx#about) page gives details regarding running FreeSWITCH to support multiple separate companies. [Multiple Companies](../../Auxiliary-Knowledge-and-Utilities/Multi-home-tutorial/Multiple-Companies_13173524.mdx#about) is a HOWTO that describes setting up two independent companies on FreeSWITCH, where the files go, what they must contain, etc.
+[多租户](../../Examples/Multi-tenant_13173521.mdx#about) 页面提供了关于运行支持多个独立公司的 FreeSWITCH 的详细信息。[多个公司](../../Auxiliary-Knowledge-and-Utilities/Multi-home-tutorial/Multiple-Companies_13173524.mdx#about) 是一个 HOWTO，描述了在 FreeSWITCH 上设置两个独立公司的方法，文件放在哪里，它们必须包含什么等等。
 
-## SIP Proxy  
+## SIP 代理
 
-FreeSWITCH is a B2BUA (back-to-back user agent). This means that it actually parses each of the SIP messages that it receives. FreeSWITCH can not act as a proxy, for instance by forwarding SIP registrations to a registrar server. Of course, you could cluster multiple FreeSWITCH servers and share registrations using a shared database.
+FreeSWITCH 是一个 B2BUA（back-to-back user agent）。这意味着它实际上会解析接收到的每个 SIP 消息。FreeSWITCH 不能充当代理，例如将 SIP 注册转发到注册服务器。当然，您可以通过使用共享数据库来将多个 FreeSWITCH 服务器进行集群化，并共享注册信息。
 
-## Asterisk Migration
+## Asterisk 迁移
 
-[Rosetta stone](../../Interoperability/Software-Interfaces/Asterisk/Rosetta-Stone_1966991.mdx#dialplan) is a page of common Asterisk -> FreeSWITCH translations.
+[Rosetta stone](../../Interoperability/Software-Interfaces/Asterisk/Rosetta-Stone_1966991.mdx#dialplan) 是一个常见的 Asterisk -> FreeSWITCH 翻译页面。
 
-## See Also
+## 参见
 
-* [Dialplan](../../Dialplan/index.mdx#0-about)
-* [Dialplan XML](../../Dialplan/XML-Dialplan/index.mdx#about)
-* [Dialplan Recipes](../../Dialplan/Dialplan-Recipes_9634252.mdx#about)
-* [Dialplan Basics](https://wiki.freeswitch.org/wiki/Dialplan%5FBasics)
-
-
+* [拨号计划](../../Dialplan/index.mdx#0-about)
+* [拨号计划 XML](../../Dialplan/XML-Dialplan/index.mdx#about)
+* [拨号计划示例](../../Dialplan/Dialplan-Recipes_9634252.mdx#about)
+* [拨号计划基础知识](https://wiki.freeswitch.org/wiki/Dialplan%5FBasics)
