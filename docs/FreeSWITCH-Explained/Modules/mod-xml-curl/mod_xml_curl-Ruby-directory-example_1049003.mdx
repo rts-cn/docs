@@ -1,21 +1,19 @@
+# mod_xml_curl Ruby目录示例
 
-# mod_xml_curl Ruby directory example 
 
- 
+## 关于
 
-## About
+此示例展示了如何在Ruby中构建一个目录应用程序。
 
-This example show how to build a directory application in Ruby.
-
-This example is old, but included to provide guidance.
+这个示例很旧，但包含在内是为了提供指导。
 
 ```ruby
 #!/usr/bin/env ruby
 #
-#  2007-10-16 -- jontow@zenbsd.net
+# 2007-10-16 -- jontow@zenbsd.net
 #
 #############################################################################
-#  Example psql session follows:
+# 以下是示例的psql会话：
 #############################################################################
 #
 #freeswitch=> \dt
@@ -38,7 +36,7 @@ This example is old, but included to provide guidance.
 #freeswitch=> select * from auth;
 # id | username | password |   domain    |    fullname
 #----+----------+----------+-------------+----------------
-#  1 | user     | passwd   | example.com | Joe Random
+#  1 | user     | password | example.com | Joe Random
 #(1 row)
 #
 #############################################################################
@@ -57,6 +55,7 @@ pgpass = 'password'
 cgi = CGI.new
 params = cgi.params
 
+```ruby
 def printheader
     puts "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>"
     puts "<document type=\"freeswitch/xml\">"
@@ -103,4 +102,49 @@ end
 exit
 ```
 
+```ruby
+def printheader
+    puts "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>"
+    puts "<document type=\"freeswitch/xml\">"
+    puts "<section name=\"directory\" description=\"User Directory\">"
+end
 
+def printfooter
+    puts "</section>"
+    puts "</document>"
+end
+
+puts "Content-type: text/plain\r\n\r\n"
+
+domain = params['domain'].to_s
+username = params['user'].to_s
+
+if (domain == "") or (username == "")
+    exit
+end
+
+pgdb = PGconn.connect(pghost, pgport, pgoptions, pgtty, dbname, pguser, pgpass)
+pgres = pgdb.exec("
+    SELECT password
+    FROM auth
+    WHERE domain = '#{domain}'
+    AND username = '#{username}'
+    LIMIT 1")
+
+if pgres.num_tuples != 0
+    pgres.result.each do |row|
+        password = row[0]
+        printheader
+        puts "<domain name=\"#{domain}\">"
+        puts "  <user id=\"#{username}\">"
+        puts "    <params>"
+        puts "      <param name=\"password\" value=\"#{password}\" />"
+        puts "    </params>"
+        puts "  </user>"
+        puts "</domain>"
+        printfooter
+    end
+end
+
+exit
+```

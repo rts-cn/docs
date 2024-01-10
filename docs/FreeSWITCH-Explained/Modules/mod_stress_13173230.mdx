@@ -1,89 +1,84 @@
+# mod_stress
 
-# mod_stress 
+## 关于
 
- 
+mod_stress试图通过人声来检测压力，并基于该数据生成FreeSWITCH事件。
 
-## About
-
-mod\_stress attempts to detect stress in a person's voice and generates FreeSWITCH events based on that data.
-
-Click here to expand Table of Contents
+点击此处展开目录
 
 * 1 [](#stress)
-* 2 [How does this work?](#how-does-this-work)
-* 3 [Dialplan app](#dialplan-app)  
+* 2 [这是如何工作的？](#how-does-this-work)
+* 3 [拨号计划应用](#dialplan-app)  
    * 3.1 [stress](#stress)
 * 4 [CLI / ESL](#stress)  
-   * 4.1 [DETECTED\_SPEECH](#detected_speech)
-* 5 [Testing](#testing)
+   * 4.1 [DETECTED_SPEECH](#detected_speech)
+* 5 [测试](#testing)
 
 ###   
 
-### How does this work?
+### 这是如何工作的？
 
-The module uses [FFT](http://en.wikipedia.org/wiki/Fast%5FFourier%5Ftransform) to calculate the power spectrum of the call. It then attempts to recognise patterns that _may_ imply stress. For example a strong tremor or volume.
+该模块使用FFT计算通话的功率谱。然后它试图识别_可能_暗示压力的模式，例如强烈的颤动或音量。
 
-**Please note** that this will be highly unreliable, generating many false positives/negatives.
+**请注意**，这将非常不可靠，会产生许多错误的正面/负面结果。
 
-### Dialplan app
+### 拨号计划应用
 
 #### stress
 
-The stress app attaches hooks to the channel to listen to the media in one direction.
+stress应用程序将钩子附加到通道上，以侦听单方面的媒体。
 
 ```xml
   stress [ read | write | stop ]
 ```
 
-The **read** parameter (default) listens for stress on the caller's direction, **write** for stress on the callee's direction and **stop** removes any previously attached hooks.
+**read**参数（默认）会在主叫方向上侦听压力，**write**会在被叫方向上侦听压力，**stop**会删除先前附加的任何钩子。
 
 ### CLI / ESL
 
-The dialplan app can also be invoked on a channel from the console or via ESL (eg fs\_cli):
+也可以从控制台或通过ESL（例如fs_cli）在通道上调用拨号计划应用：
 
 ```xml
  uuid_broadcast <uuid> stress::read
  uuid_broadcast <uuid> stress::stop
 ```
 
-Events
+事件
 
 #### DETECTED_SPEECH
 
-When stress is detected this event is fired. Note both Event-Name and Speech-Type, other modules will raise DETECTED\_SPEECH but with a different Speech-Type. Example:
+当检测到压力时，将触发此事件。请注意，Event-Name和Speech-Type都是这个，但其他模块将引发DETECTED_SPEECH，但Speech-Type不同。示例：
 
 ```xml
-Event-Name: DETECTED_SPEECH
- Core-UUID: 82054370-3b7c-452d-aade-e77d2eead7fe
- FreeSWITCH-Hostname: fs01.telefaks.biz
- FreeSWITCH-Switchname: fs01.telefaks.biz
- FreeSWITCH-IPv4: 192.168.178.221
- FreeSWITCH-IPv6: %3A%3A1
- Event-Date-Local: 2013-01-22%2023%3A29%3A11
- Event-Date-GMT: Tue,%2022%20Jan%202013%2022%3A29%3A11%20GMT
- Event-Date-Timestamp: 1358893751566924
- Event-Calling-File: mod_stress.cpp
- Event-Calling-Function: stress_callback
- Event-Calling-Line-Number: 175
- Event-Sequence: 117716
- Speech-Type: stress-level
- Stress-Level: 20000.00
- Unique-ID: 178a661c-e135-4e50-8275-9285908287d7
+事件名称: DETECTED_SPEECH
+核心UUID: 82054370-3b7c-452d-aade-e77d2eead7fe
+FreeSWITCH主机名: fs01.telefaks.biz
+FreeSWITCH交换机名称: fs01.telefaks.biz
+FreeSWITCH IPv4地址: 192.168.178.221
+FreeSWITCH IPv6地址: ::1
+本地事件日期: 2013-01-22 23:29:11
+GMT事件日期: 星期二，2013年1月22日 22:29:11 GMT
+事件时间戳: 1358893751566924
+调用文件: mod_stress.cpp
+调用函数: stress_callback
+调用行号: 175
+事件序列号: 117716
+语音类型: 压力级别
+压力级别: 20000.00
+唯一标识符: 178a661c-e135-4e50-8275-9285908287d7
 ```
 
-### Testing
+### 测试
 
-If you whistle into your phone you should see the following messages (example):
+如果你在电话中吹口哨，你应该能看到以下信息（示例）：
 
 ```xml
- 2013-01-22 15:51:50.546923 [DEBUG] mod_stress.cpp:173 Stress 20000.00
- 2013-01-22 15:51:51.566922 [DEBUG] mod_stress.cpp:173 Stress 20000.00
- 2013-01-22 15:51:53.606924 [DEBUG] mod_stress.cpp:173 Stress 20000.00
- 2013-01-22 15:51:54.626923 [DEBUG] mod_stress.cpp:173 Stress 20000.00
- 2013-01-22 15:51:55.666926 [DEBUG] mod_stress.cpp:173 Stress 392.78
- 2013-01-22 15:51:56.686923 [DEBUG] mod_stress.cpp:173 Stress 0.17
+2013-01-22 15:51:50.546923 [DEBUG] mod_stress.cpp:173 压力 20000.00
+2013-01-22 15:51:51.566922 [DEBUG] mod_stress.cpp:173 压力 20000.00
+2013-01-22 15:51:53.606924 [DEBUG] mod_stress.cpp:173 压力 20000.00
+2013-01-22 15:51:54.626923 [DEBUG] mod_stress.cpp:173 压力 20000.00
+2013-01-22 15:51:55.666926 [DEBUG] mod_stress.cpp:173 压力 392.78
+2013-01-22 15:51:56.686923 [DEBUG] mod_stress.cpp:173 压力 0.17
 ```
 
-This will confirm the module is listening to speech on the line.
-
-
+这将确认模块正在监听线路上的语音。

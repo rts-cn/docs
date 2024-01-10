@@ -1,27 +1,24 @@
+# mod_translate
 
-# mod_translate 
+## 关于
 
- 
+此模块旨在根据在translate.conf.xml中列出的一组正则表达式，将数字格式化为指定格式（最好是E.164格式），用于执行[ENUM](mod_enum_6587333.mdx#enum) 或 [LCR](mod_lcr_6587457.mdx#lrn) 查询。当作为拨号计划模块使用时，在到达XML拨号计划之前，它可以重写呼叫的主叫号码和目的地号码，从而大大简化拨号计划和 [xml_curl](mod_xml_curl_1049001.mdx) 配置，并转换CDR中使用的值。
 
-## About
+单击此处展开目录
 
-This module was created to format numbers into a specified format (preferably e.164) for doing [ENUM](mod_enum_6587333.mdx#enum) or [LCR](mod_lcr_6587457.mdx#lrn) lookups, based on a set of regular expressions listed in translate.conf.xml. When used as a dialplan module, it can rewrite both the caller id number and destination number of the call before it reaches the XML dialplan, considerably simplifying dialplan and [xml\_curl](mod_xml_curl_1049001.mdx) configuration which in turn translates the values used in the CDR.
-
-Click here to expand Table of Contents
-
-* 1 [Configuration](#-configuration-)
+* 1 [配置](#-配置-)
 * 2 [API](#api)
-* 3 [APP](#-app-)
-* 4 [Dialplan](#dialplan)
-* 5 [Profile Resolution](#profile-resolution)
+* 3 [APP](#-应用-)
+* 4 [拨号计划](#拨号计划)
+* 5 [配置文件解析](#配置文件解析)
 
-###  Configuration 
+### 配置
 
-The configuration file allows for a number of profiles, each listing a number of regex rules which are processed in order. It appears that the first match is used. Here is an example configuration for translating numbers in the United Kingdom to E.164 format.
+配置文件允许多个配置文件，每个配置文件列出一组按顺序处理的正则表达式规则。似乎使用第一个匹配项。以下是将英国号码转换为E.164格式的示例配置。
 
 ```xml
 <include>
-  <configuration name="translate.conf" description="Number Translation Rules">
+  <configuration name="translate.conf" description="数码转换规则">
     <profiles>
       <profile name="GB">
         <rule regex="^\+(\d+)$" replace="$1"/>
@@ -36,53 +33,48 @@ The configuration file allows for a number of profiles, each listing a number of
 
 ### API
 
-from the cli:
+在cli中执行：
 
 ```xml
 translate <number> [<profile>]
 ```
 
-  
-If profile is not specified, it defaults to US
+如果未指定配置文件，则默认为US
 
-###  APP 
+### APP
 
-The following will translate the destination number using the US profile defined in the translate.conf.xml
+以下内容将使用translate.conf.xml中定义的US配置文件来翻译目的地号码。
 
 ```xml
 <action application="translate" data="${destination_number} US"/>
 ```
 
-  
-The result is stored in a new channel variable called translated which you can then use to transfer the call back to the dialplan
+结果存储在一个名为"translated"的新通道变量中，您可以将其用于将呼叫传回到拨号计划
 
 ```xml
 <action application="transfer" data="${translated}" />
 ```
 
-  
-It can also be used as part of a variable
+它还可以作为变量的一部分使用
 
 ```xml
 <action application="set" data="effective_caller_id_number=${translate(${destination_number})}" />
 ```
 
-### Dialplan
+### 拨号计划
 
-The following example will translate the destination\_number and caller\_id\_number from a call coming in on a sofia profile before it goes to the XML dialplan
+以下示例将在呼叫进入XML拨号计划之前，从Sofia配置中翻译目标号码和呼叫者ID号码
 
 ```xml
 <param name="dialplan" value="translate,XML"/>
 ```
 
-### Profile Resolution
+### 配置解析
 
-The order the profiles are resolved in is as follows:
+配置解析的顺序如下：
 
-1. Checks the following channel variables in this order:  
-   1. translate\_profile  
+1. 按照以下顺序检查以下通道变量：  
+   1. translate_profile  
    2. country  
-   3. default\_country
-2. Fall back to US
-
-
+   3. default_country
+2. 如果没有找到匹配的配置，将回落到美国配置

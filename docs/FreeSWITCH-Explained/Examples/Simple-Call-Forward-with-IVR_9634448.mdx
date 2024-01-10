@@ -1,136 +1,135 @@
+# 使用IVR进行简单的呼叫转移
 
-# Simple Call Forward with IVR 
+## 关于
 
- 
+使用拨号计划设置呼叫转移，而不是使用电话上的按钮。
 
-## About
+单击此处展开目录
 
-Set up Call Forwarding using the dialplan instead of a button on your phone. 
-
-Click here to expand Table of Contents
-
-* 1 [](#-freeswitch--simple-call-forward-with-ivr-)
-* 2 [Introduction](#introduction)
-* 3 [Description](#description)
-* 4 [Configuration](#configuration)  
-   * 4.1 [Changes to default.xml](#changes-to-defaultxml)  
-   * 4.2 [Utility Extensions](#-utility-extensions-)  
-   * 4.3 [Using \*72 and \*73](#using-72-and-73-)  
-   * 4.4 [Phrase Macros](#phrase-macros)  
-   * 4.5 [Don't Forget to "reloadxml"](#-dont-forget-to-reloadxml-)
-* 5 [Usage](#-freeswitch--simple-call-forward-with-ivr-)
-* 6 [See Also](#-freeswitch--simple-call-forward-with-ivr-)
+* 1 [](#-freeswitch-简单呼叫转移-)
+* 2 [介绍](#介绍)
+* 3 [描述](#描述)
+* 4 [配置](#配置)
+   * 4.1 [对default.xml的更改](#对defaultxml的更改)
+   * 4.2 [实用扩展](#-实用扩展-)
+   * 4.3 [使用 \*72 和 \*73](#使用-72-和-73-)
+   * 4.4 [短语宏](#短语宏)
+   * 4.5 [不要忘记 "reloadxml"](#-不要忘记-reloadxml-)
+* 5 [用法](#-freeswitch-简单呼叫转移-)
+* 6 [参考](#-freeswitch-简单呼叫转移-)
 
 ##   
 
-## Introduction
+## 介绍
 
-I started this as a proof of concept and it worked well enough that I decided to add it as an example of using [hash](../Modules/mod_hash_6586975.mdx#api), [play\_and\_get\_digits](../Interoperability/Phones/index.mdx#feature-grid), and [Phrase Macros](https://wiki.freeswitch.org/wiki/Speech%5FPhrase%5FManagement "Speech Phrase Management"). The idea is that you can set call forwarding for a telephone by using the dialplan instead of the CF button on the phone itself.
+我开始将其作为一个概念验证，它运行得相当不错，因此我决定将其作为一个使用[hash](../Modules/mod_hash_6586975.mdx#api)、[play_and_get_digits](../Interoperability/Phones/index.mdx#feature-grid)和[短语宏](https://wiki.freeswitch.org/wiki/Speech%5FPhrase%5FManagement "短语管理")的示例。这个想法是，您可以使用拨号计划来为电话设置呼叫转移，而不是使用电话本身的CF按钮。
 
-NOTE: Hash information is cleared on a FreeSWITCH restart. For persistent storage, use [mod\_db](../Modules/mod_db_6586567.mdx#api) instead.
+注意：在FreeSWITCH重新启动时，hash信息会被清除。要进行持久存储，请使用[mod_db](../Modules/mod_db_6586567.mdx#api)。
 
-## Description
+## 描述
 
-There are four CF "utility" extensions presented here:
+这里介绍了四个CF "utility" 扩展：
 
-* **9090** \- Set CF for my phone (from my phone)
-* **9091** \- Set CF for any extension (from any phone)
-* **9092** \- Cancel CF for my phone (from my phone)
-* **9093** \- Cancel CF for any extension (from any phone)
+* **9090** - 设置我的电话的CF（使用我的电话）
+* **9091** - 为任意分机设置CF（使用任意电话）
+* **9092** - 取消我的电话的CF（使用我的电话）
+* **9093** - 取消任意分机的CF（使用任意电话）
 
-With these four extensions a user can set, modify, or cancel call forwarding for his particular extension, whether he's at his own telephone or at a different phone. Since this is a PoC, there is neither security nor error checking. These are left as an exercise for the reader.
+有了这四个扩展，用户可以在他自己的电话或其他电话上设置、修改或取消呼叫转移。由于这是一个概念验证，因此没有提供安全性和错误检查。这些留给读者自己去尝试。
 
-Note: I do like DJBinter's idea of using **\*72** and **\*73** with beeps and bong tones. Feel free to look at his example. (Check out the See Also items below.)
+注意：我喜欢DJBinter使用提示音和音调的**\*72**和**\*73**的想法。可以查看他的示例。（请参阅下面的"另请参阅"项。）
 
-## Configuration
+## 配置
 
-There are several items that need to be changed or added to the configuration.
+需要对配置进行一些更改或添加。
 
-### Changes to default.xml
+### 修改 default.xml
 
-The following extension needs to be added to the top of conf/dialplan/default.xml: 
+需要在 conf/dialplan/default.xml 的顶部添加以下扩展：
 
-**default.xml** Expand source 
+**default.xml** 展开源代码
 
 ```xml
-<extension name="Check IVR-based CF" continue="true">
+<extension name="检查基于IVR的CF" continue="true">
      <condition field="destination_number" expression="^(\d+)$">
        <action application="set" data="dialed_number=$1" inline="true"/>
        <action application="set" data="cf_target=${hash(select/${domain_name}-CF/$1" inline="true"/>
      </condition>
      <condition field="${cf_target}" expression="^\d+$">
-       <action application="log" data="INFO Found CF info for ${dialed_number}, x-fering to ${cf_target}..."/>
+       <action application="log" data="INFO 找到${dialed_number}的CF信息，转接到${cf_target}..."/>
        <action application="set_user" data="${dialed_number}@${domain_name}"/>
        <action application="transfer" data="${cf_target} XML ${user_domain}"/>
      </condition>
    </extension>
 ```
 
-###  Utility Extensions 
+### 实用扩展
 
-The following extensions can be added as a separate file in conf/dialplan/default/01\_IVR-CF.xml:
+可以将以下扩展作为独立文件添加到 conf/dialplan/default/01_IVR-CF.xml：
 
-**Utility Extensions** Expand source 
+**实用扩展** 展开源代码
 
 ```xml
- <extension name="CF from my station">
-   <condition field="destination_number" expression="^(9090)$">
-     <action application="answer"/>
-     <action application="log" data="INFO Set CF from ${caller_id_number}"/>
-     <action application="play_and_get_digits" 
-         data="4 4 3 3000 # phrase:enter_dest_number ivr/ivr-that_was_an_invalid_entry.wav target_number \d+"/>
-     <action application="hash" data="insert/${domain_name}-CF/${caller_id_number}/${target_number}"/>
-     <action application="sleep" data="1000"/>
-     <action application="playback" data="phrase:call_forward_set:${caller_id_number}:${target_number}"/>
-   </condition>
- </extension>
+<extension name="从我的分机转移">
+  <condition field="destination_number" expression="^(9090)$">
+    <action application="answer"/>
+    <action application="log" data="INFO 设定${caller_id_number}的呼叫转移号码"/>
+    <action application="play_and_get_digits" 
+        data="4 4 3 3000 # phrase:enter_dest_number ivr/ivr-that_was_an_invalid_entry.wav target_number \d+"/>
+    <action application="hash" data="insert/${domain_name}-CF/${caller_id_number}/${target_number}"/>
+    <action application="sleep" data="1000"/>
+    <action application="playback" data="phrase:call_forward_set:${caller_id_number}:${target_number}"/>
+  </condition>
+</extension>
 
- <extension name="CF from any station">
-   <condition field="destination_number" expression="^(9091)$">
-     <action application="answer"/>
-     <action application="log" data="INFO set CF from any station (caller=${caller_id_number})"/>
-     <action application="play_and_get_digits" 
-         data="4 4 3 3000 # phrase:enter_src_number ivr/ivr-that_was_an_invalid_entry.wav source_number \d+"/>
-     <action application="sleep" data="1000"/>
-     <action application="flush_dtmf"/>
-     <action application="play_and_get_digits" 
-         data="4 4 3 3000 # phrase:enter_dest_number ivr/ivr-that_was_an_invalid_entry.wav target_number \d+"/>
-     <action application="hash" data="insert/${domain_name}-CF/${source_number}/${target_number}"/>
-     <action application="sleep" data="1000"/>
-     <action application="playback" data="phrase:call_forward_set:${source_number}:${target_number}"/>
-   </condition>
- </extension>
-
- <extension name="CF cancel from my station">
-   <condition field="destination_number" expression="^(9092)$">
-     <action application="answer"/>
-     <action application="log" data="INFO cancel CF from my station (caller=${caller_id_number})"/>
-     <action application="hash" data="delete/${domain_name}-CF/${caller_id_number}"/>
-     <action application="playback" data="phrase:call_forward_cancel:${caller_id_number}"/>
-   </condition>
- </extension>
-
- <extension name="CF cancel from any station">
-   <condition field="destination_number" expression="^(9093)$">
-     <action application="answer"/>
-     <action application="log" data="INFO cancel CF from any station (caller=${caller_id_number})"/>
-     <action application="play_and_get_digits" 
-         data="4 4 3 3000 # phrase:enter_src_number ivr/ivr-that_was_an_invalid_entry.wav source_number \d+"/>
-     <action application="sleep" data="1000"/>
-     <action application="hash" data="delete/${domain_name}-CF/${source_number}"/>
-     <action application="playback" data="phrase:call_forward_cancel:${source_number}"/>
-   </condition>
- </extension>
+<extension name="从任意分机转移">
+  <condition field="destination_number" expression="^(9091)$">
+    <action application="answer"/>
+    <action application="log" data="INFO 设定任意分机的呼叫转移号码 (呼叫者=${caller_id_number})"/>
+    <action application="play_and_get_digits" 
+        data="4 4 3 3000 # phrase:enter_src_number ivr/ivr-that_was_an_invalid_entry.wav source_number \d+"/>
+    <action application="sleep" data="1000"/>
+    <action application="flush_dtmf"/>
+    <action application="play_and_get_digits" 
+        data="4 4 3 3000 # phrase:enter_dest_number ivr/ivr-that_was_an_invalid_entry.wav target_number \d+"/>
+    <action application="hash" data="insert/${domain_name}-CF/${source_number}/${target_number}"/>
+    <action application="sleep" data="1000"/>
+    <action application="playback" data="phrase:call_forward_set:${source_number}:${target_number}"/>
+  </condition>
+</extension>
 ```
 
-### Using \*72 and \*73 
+```xml
+<extension name="从我的站点取消呼叫转移">
+  <condition field="destination_number" expression="^(9092)$">
+    <action application="answer"/>
+    <action application="log" data="INFO 从我的站点取消呼叫转移 (呼叫方=${caller_id_number})"/>
+    <action application="hash" data="delete/${domain_name}-CF/${caller_id_number}"/>
+    <action application="playback" data="phrase:call_forward_cancel:${caller_id_number}"/>
+  </condition>
+</extension>
 
-Some may prefer the simplicity of \*72 set and \*73 cancel. Piece of cake! Just add these extensions to conf/dialplan/default/01\_IVR-CF.xml:
+<extension name="从任意站点取消呼叫转移">
+  <condition field="destination_number" expression="^(9093)$">
+    <action application="answer"/>
+    <action application="log" data="INFO 从任意站点取消呼叫转移 (呼叫方=${caller_id_number})"/>
+    <action application="play_and_get_digits" 
+      data="4 4 3 3000 # phrase:enter_src_number ivr/ivr-that_was_an_invalid_entry.wav source_number \d+"/>
+    <action application="sleep" data="1000"/>
+    <action application="hash" data="delete/${domain_name}-CF/${source_number}"/>
+    <action application="playback" data="phrase:call_forward_cancel:${source_number}"/>
+  </condition>
+</extension>
+```
 
-**Using \*72 and \*73** Expand source 
+### 使用 \*72 和 \*73
+
+有些人可能更喜欢使用 \*72 进行设置和 \*73 进行取消。简单易行！只需将以下扩展添加到 conf/dialplan/default/01_IVR-CF.xml 文件中：
+
+**使用 \*72 和 \*73** 展开源代码
 
 ```xml
-<extension name="call_forwarding_activativation">
+<extension name="call_forwarding_activation">
    <condition field="destination_number" expression="^\*72$">
      <action application="play_and_get_digits" data="3 12 1 14000 # tone_stream://%(10000,0,350,440) silence_stream://250 target_number \d+"/>	    
      <action application="hash" data="insert/${domain_name}-CF/${caller_id_number}/${target_number}"/>
@@ -146,12 +145,11 @@ Some may prefer the simplicity of \*72 set and \*73 cancel. Piece of cake! Just 
      <action application="hangup"/>
    </condition>
  </extension>
- 
 ```
 
-### Phrase Macros
+### 短语宏
 
-**Phrase Macros** Expand source 
+**短语宏** 展开源码
 
 ```xml
 <macro name="enter_dest_number">
@@ -173,8 +171,10 @@ Some may prefer the simplicity of \*72 set and \*73 cancel. Piece of cake! Just 
        </match>
      </input>
    </macro>
+```
 
-   <macro name="call_forward_set">
+```xml
+<macro name="call_forward_set">
      <input pattern="^(\d+):(\d+)$">
        <match>
          <action function="sleep" data="1000"/>
@@ -208,27 +208,27 @@ Some may prefer the simplicity of \*72 set and \*73 cancel. Piece of cake! Just 
    </macro> 
 ```
 
-###  Don't Forget to "reloadxml" 
+### 不要忘记 **reloadxml**
 
-Be sure to _reloadxml_ or press _F6_ at the **fs\_cli** before you try these out!
+在尝试之前，确保在 **fs_cli** 中执行 _reloadxml_ 或按下 _F6_ 重新加载 XML 文件！
 
-##  Usage 
+##  用法
 
-Go to a phone that you would like to call forward. Dial 9090 and then enter in a destination number. For a simple test, send the call to '9192' so that it does an **info** dump and then exits. If you call your source extension number it will "forward" to 9192, which does the info dump and hangs up.
+前往您想转接电话的手机。拨打9090，然后输入目标号码。为了进行简单测试，将呼叫发往“9192”，以便进行信息转储，然后结束呼叫。如果您拨打源分机号码，它将“转接”到9192，进行信息转储并挂断。
 
-To see what's actually happening, consider an example where I used extension 1007\. After setting the call forward to 9192, go to the _fs\_cli_ and type this command:
+为了查看实际发生的情况，考虑以下示例，我使用分机1007。在将呼叫转接到9192后，打开_fs_cli，并键入以下命令：
 
 ```xml
 expand hash_dump all ${domain}-CF
 ```
 
-You should see something like this:
+您应该会看到类似于以下内容：
 
 ```xml
 D/10.15.128.192-CF_1001/9192
 ```
 
-f you have multiple extensions forwarded they should all appear. For example, if I forward 1001 to 3000 then my output looks like this:
+如果您有多个转接的分机，它们都应该显示出来。例如，如果我将1001转接到3000，那么我的输出如下所示：
 
 ```xml
 freeswitch@internal> expand hash_dump all ${domain}-CF
@@ -236,17 +236,15 @@ D/10.15.128.192-CF_1001/9192
 D/10.15.128.192-CF_1007/3000
 ```
 
-To cancel call forwarding for your phone you have two choices:
+要取消电话的呼叫转接，您有两个选择：
 
-* From the forwarded phone, dial 9092
-* From any phone, dial 9093 and input the source extension number
+* 从转接的手机拨打9092
+* 从任何手机拨打9093并输入源分机号码
 
-One other feature: you can set call forwarding from any phone by dialing 9091\. Try it out - I think you'll find that it is so easy that even an end user could figure it out.
+还有一个功能：您可以通过拨打9091从任何手机设置呼叫转接。试试吧-我认为您会发现它非常简单，甚至一个终端用户也可以弄明白。
 
-##  See Also 
+##  另请参阅 
 
 * [play\_and\_get\_digits](../Interoperability/Phones/index.mdx#feature-grid)
-* [mod\_hash](../Modules/mod_hash_6586975.mdx#api), which supplies the **hash** dialplan app
-* [DJBInter's call forward example](../Codecs-and-Media/Bypass-Media-Overview/Call-Forward-Example_6587445.mdx#about), which I did not notice until after I was done with this. ;)
-
-
+* [mod\_hash](../Modules/mod_hash_6586975.mdx#api)，提供**hash**拨号计划应用
+* [DJBInter的呼叫转接示例](../Codecs-and-Media/Bypass-Media-Overview/Call-Forward-Example_6587445.mdx#about)，我在完成本文之后才注意到的。 ;)

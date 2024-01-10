@@ -1,25 +1,22 @@
+# 供应商 MyNetFone（澳大利亚）
 
-# Provider MyNetFone (Australia) 
-
- 
-
-Last update: 21 April 2014
+最后更新日期：2014年4月21日
 
 * 1 [MyNetFone.com.au](#mynetfonecomauhttpmynetfonecomau)
-* 2 [Gateway config](#-freeswitch--provider-mynetfone-australia-)
-* 3 [Dialplan Examples](#dialplan-examples)  
-   * 3.1 [Local/State numbers (Missing area/country codes)](#localstate-numbers-missing-areacountry-codes)
-* 4 [National numbers (Area codes supplied)](#national-numbers-area-codes-supplied)
-* 5 [References](#-freeswitch--provider-mynetfone-australia-)
+* 2 [网关配置](#-freeswitch--provider-mynetfone-australia-)
+* 3 [拨号计划范例](#dialplan-examples)
+   * 3.1 [本地/州号码（缺少区号/国家代码）](#localstate-numbers-missing-areacountry-codes)
+* 4 [国内号码（提供区号）](#national-numbers-area-codes-supplied)
+* 5 [参考资料](#-freeswitch--provider-mynetfone-australia-)
 
 ### [MyNetFone.com.au](http://mynetfone.com.au)
 
-### Gateway config
+### 网关配置
 
-Incoming and outgoing calls work. In conf/sip\_profiles/outbound/ create a mynetfone.xml file with the following contents:
+进出呼叫正常工作。在 `conf/sip_profiles/outbound/` 下创建一个名为 `mynetfone.xml` 的文件，并将以下内容添加进去：
 
 ```xml
-  <include>
+<include>
   <gateway name="MyNetFone">
     <param name="username" value="xxxxxxxx"/>
     <param name="password" value="xxxxxxxx"/>
@@ -30,25 +27,25 @@ Incoming and outgoing calls work. In conf/sip\_profiles/outbound/ create a mynet
 </include>
 ```
 
-Quick note that it looks likely you will need to define the 'Outbound Caller ID Number' in the extension making the outbound call.
+需要注意的是，对于发出的呼叫，可能需要在分机中定义 'Outbound Caller ID Number'。
 
-Accounts > Extensions > \[Users Extension\] > Edit. Locate 'Outbound Caller ID Number' and enter the MNF number. (Its possible you can use your DID too. I cant test this - if it works, can you update this entry to confirm!)
+账户 > 分机 > \[用户分机\] > 编辑。找到 'Outbound Caller ID Number' 并输入 MNF 号码（也可能使用您的 DID。我无法进行测试，如果能够正常工作，请更新此条目以确认！）
 
-(**NOTE**: Im sure there is a more effective method, the above solution works, but is probably generally unsuitable for some implementations.)
+(**注意**: 我相信还有更有效的方法，上述解决方案可行，但可能不适用于某些情况。)
 
-Update: Found this reference to FusionPBX and setting the Outbound Caller ID [FreeSWITCH User mailimg list posting](http://lists.freeswitch.org/pipermail/freeswitch-users/2011-April/071551.html)
+更新：在 FusionPBX 中找到了关于设置出站主叫 ID 的参考信息 [FreeSWITCH User mailimg list posting](http://lists.freeswitch.org/pipermail/freeswitch-users/2011-April/071551.html)
 
-### Dialplan Examples
+### 拨号计划范例
 
-To get started, the following dial plans will suffice for capturing local and national calls. Please note that these XML snippets were taken from a FusionPBX system and some of the actions may not apply. Important bits are the 'condition field' expression and the bridge action. Refer: [Wikipedia - Telephone Numbers in Australia](http://en.wikipedia.org/wiki/Telephone%5Fnumbers%5Fin%5FAustralia)
+要开始，以下拨号方案足以捕获本地和全国电话。请注意，这些XML片段来自FusionPBX系统，并且某些操作可能不适用。重要的部分是'条件字段'表达式和桥梁操作。参考：[维基百科 - 澳大利亚电话号码](http://en.wikipedia.org/wiki/Telephone%5Fnumbers%5Fin%5FAustralia)
 
-GTW: _Please note that I built these from virtually no experience with Regular Expressions. I would appreciate feedback/suggestions for improvements to these!_
+GTW：_请注意，我几乎没有使用正则表达式的经验就构建了这些。我希望能得到反馈/改进建议！_
 
-#### Local/State numbers (Missing area/country codes)
+#### 本地/州号码（缺少地区/国家代码）
 
-NOTE: The bridge will have the Country Code and (in this example) the NSW Area Code appended.
+注意：桥将包含国家代码和（在此示例中）新南威尔士州区号。
 
-NOTE2: ${outbound\_caller\_id\_number} should be set to your 09xxxxxx number, exactly the same as your SIP username (not DID or MNF web login) that you put in the sip\_profiles MNF gateway config. [\[1\]](https://wiki.freeswitch.org/wiki/Provider%5FConfiguration:%5FMyNetFone#cite%5Fnote-mnfid-1)
+注意2：${outbound\_caller\_id\_number}应设置为您的09xxxxxx号码，与您的SIP用户名完全相同（不是DID或MNF Web登录），放在sip\_profiles MNF网关配置中。[【1】](https://wiki.freeswitch.org/wiki/Provider%5FConfiguration:%5FMyNetFone#cite%5Fnote-mnfid-1)
 
 ```xml
  <extension name="MyNetFone-local_fixed_line" >
@@ -63,9 +60,9 @@ NOTE2: ${outbound\_caller\_id\_number} should be set to your 09xxxxxx number, ex
 </extension>
 ```
 
-### National numbers (Area codes supplied)
+### 全国号码（提供区号）
 
-NOTE: Will the bridge will have the Country Code appended.
+注意：桥将附加国家代码。
 
 ```xml
 <extension name="MyNetFone-national_fixed_line" >
@@ -80,7 +77,7 @@ NOTE: Will the bridge will have the Country Code appended.
 </extension> 
 ```
 
-### References
+### 参考资料
 
 [FreeSWITCH Wiki - Home PBX Example](http://wiki.freeswitch.org/wiki/Home%5FPBX%5FExample)
 
@@ -92,6 +89,4 @@ NOTE: Will the bridge will have the Country Code appended.
 
 [FreeSWITCH Wiki - Anatomy of the XML Dialplan](http://wiki.freeswitch.org/wiki/Dialplan%5FXML#Anatomy%5Fof%5Fthe%5FXML%5FDialplan)
 
-1. [↑](https://wiki.freeswitch.org/wiki/Provider%5FConfiguration:%5FMyNetFone#cite%5Fref-mnfid%5F1-0) [MNF now requires "from" in the SIP/SDP header must match exactly the Remote-Party-ID](http://forums.whirlpool.net.au/forum-replies.cfm?t=1635784&p=2#r30)
-
-
+1. [↑](https://wiki.freeswitch.org/wiki/Provider%5FConfiguration:%5FMyNetFone#cite%5Fref-mnfid%5F1-0) [MNF现在要求SIP/SDP头中的“from”必须与Remote-Party-ID完全匹配](http://forums.whirlpool.net.au/forum-replies.cfm?t=1635784&p=2#r30)

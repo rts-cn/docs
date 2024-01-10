@@ -1,78 +1,50 @@
-
-# Provider Gradwell (UK) 
-
- 
+# Provider Gradwell (UK)
 
 ## [Gradwell.com](http://Gradwell.com)
 
-Last update: 17 November 2010
+最后更新日期：2010年11月17日
 
-_Note_ \- this may not be the best or the right configuration - I offer it purely on a it-works-for-me basis! Feel free to improve!
+注意：这可能不是最好或正确的配置 - 我纯粹是基于它对我有效的原则！请随意改进！
 
-The important thing with Gradwell is that they don't do SIP registration. Incoming calls are directed to an IP address and port that you set up with them. Outgoing calls are authenticated using a combination of IP address and caller ID number. Usernames and passwords are not needed but the Username is used as the default outgoing CID (See Question at end), and you don't need to have a gateway setup - you can just bridge outgoing calls to Gradwell and receive calls on the phone numbers you've set with them.
+Gradwell的重要之处在于他们不做SIP注册。呼入电话将被定向到您与他们设置的IP地址和端口。呼出电话需要使用IP地址和呼叫者ID号码进行验证。用户名和密码是不需要的，但用户名将作为默认的呼出CID使用（请参阅末尾的问题），您也不需要设置网关 - 您可以直接将呼出电话桥接到Gradwell，并在您与他们设置的电话号码上接听呼入电话。
 
-I do use a gateway, though, because I have several others and like to keep them together and treat them the same way. In the following, \[my gradwell phone number\] is, for example, 01122334455:
+尽管如此，我还是会使用一个网关，因为我有几个其他的网关，并希望将它们组合在一起并以相同的方式处理。在以下示例中，\[我的Gradwell电话号码\] 为例如01122334455：
 
 ```xml
 <include>
   <gateway name="gradwell">
-  <!--/// by default username is not ignored but is used as the presented outgoing Caller ID - see Question ///-->
-  <param name="username" value="[my Gradwell phone number]"/>
-  <!--/// account password required by freeswitch but ignored ///-->
+  <!--/// 默认情况下，不会忽略用户名，而是用作呼出来电的主叫号码 - 请参阅问题 ///-->
+  <param name="username" value="[我的Gradwell电话号码]"/>
+  <!--/// FreeSWITCH需要账号密码，但会忽略该项 ///-->
   <param name="password" value="pass"/> 
 
-  <!--/// proxy host: *optional* same as realm, if blank ///-->
+  <!--/// 代理主机：*可选*，如果为空，则与领域相同 ///-->
   <param name="proxy" value="sip.trunk.gradwell.com"/>
   <param name="register" value="false"/>
 
-  <!--send an options ping every x seconds, failure will unregister and/or mark it down-->
+  <!--每隔x秒发送一个选项Ping，如果失败将注销和/或标记为不可用-->
   <param name="ping" value="25"/>
   </gateway>
-</include> 
+</include> 
 ```
 
-Inbound routing in _dialplan/public/10\_gradwell.xml_ is then:
+在拨号计划中的_dialplan/public/10_gradwell.xml_中的呼入路由如下：
 
 ```xml
 <include>
-  <extension name="inbound_gradwell">
-    <condition field="destination_number" expression="^([my Gradwell phone number])$">
-      <action application="set" data="domain_name=$${domain}"/>
-      <!-- Our main incoming greeting extension is called 'frontdoor' -->
-      <action application="transfer" data="frontdoor XML default"/>
-    </condition>
-  </extension>
+  <gateway name="gradwell" username="{my Gradwell phone number}" password="{my password}" user-agent="freeswitch">
+    <param name="client-realm" value="{my realm}"/>
+    <param name="caller-id-in-from" value="true"/>
+  </gateway>
 </include>
-
-
 ```
 
-For outgoing calls, I use something like the following:
-
-```xml
-<include>
-  <extension name="outgoing">      
-    <condition field="destination_number" expression="^9([0-9]+)$">
-     <!-- effective_caller_id must be set to a number Gradwell recognise as belonging to your account otherwise call will be rejected --> 
-     <action application="set" data="effective_caller_id_number=[my Gradwell phone number]" />
-      <action application="bridge" data="sofia/gateway/gradwell/$1" />
-    </condition>
-  </extension>
-</include> 
-```
-
-Q:I'd like to set the effective caller id as part of the gateway declaration, but I don't think I can do that?
-
-A: Gradwell OpenSIPS server take the number ahead of the @ sign in the SIP FROM: entry of the outgoing packets as the Outgoing CID and it cannot be overwritten by any setting within default FreeSWITCH configuration. This value is taken from the USERNAME field of the gateway configuration and if this is not a valid number then they take the first DID number listed under your account and present that.
-
-This behavior can be changed by setting the caller-id-in-from element within the gateway xml file to true; With this set, FreeSWITCH will alter the FROM: entry by honoring the EFFECTIVE\_CALLER\_ID\_NUMBER setting as long as it is within the range of numbers that Gradwell recognise as valid DID.
-
-My working gradwell.xml gateway file is:
+Keep in mind that you need to replace `{my Gradwell phone number}`, `{my password}`, and `{my realm}` with your own credentials.
 
 ```xml
   <include>
     <gateway name="gradwell">
-      <param name="username" value="[default CID number required to be presented]"/>
+      <param name="username" value="[需要呈现的默认CID号码]"/>
       <param name="password" value="nopassword"/>
       <param name="proxy" value="sip.trunk.gradwell.com"/>
       <param name="expire-seconds" value="2400"/>
@@ -84,5 +56,3 @@ My working gradwell.xml gateway file is:
     </gateway>
   </include> 
 ```
-
-

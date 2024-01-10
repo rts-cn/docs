@@ -1,279 +1,276 @@
+# 编解码器协商
 
-# Codec Negotiation 
+## 关于
 
- 
+编解码器协商可能是一个令人困惑的主题。如果你对[SDP](http://en.wikipedia.org/wiki/Session%5FDescription%5FProtocol)（会话描述协议）不太熟悉，那么这就增加了一层神秘感。如果你刚开始接触这个主题（或者你对你所读到和经历到的一切感到困惑），那么请考虑阅读这个简短的介绍，希望能让事情变得更清楚一些。
 
-## About
+首先，当我们说"编解码器协商"时，我们指的是在通话的每个环节上选择使用哪种编解码器的_过程_。FreeSWITCH支持很多种编解码器。大多数SIP终端点也支持多种编解码器。每个环节只能有一种编解码器，因此编解码器协商过程会筛选出选择并确定要使用的单一编解码器。正是这个"筛选过程"可能导致困惑。这个过程是如何工作的？它可以如何修改？本页面的目的是帮助你解答这些问题。
 
-Codec negotiation can be a confusing subject. If you are not familiar with [SDP](http://en.wikipedia.org/wiki/Session%5FDescription%5FProtocol) (Session Description Protocol) then this adds an extra layer of mystery. If you are new to the subject (or are just confused by what you've read and experienced) then consider this brief introduction and hopefully things will be a bit clearer.
+点击展开目录
 
-First of all, what do we mean when we say "codec negotiation"? We are talking about the _process_ of choosing which codec will be used on each leg of a call. FreeSWITCH supports a lot of codecs. Most SIP endpoints will also support multiple codecs. Each leg can have only one codec, so the codec negotiation process sifts through the choices and settles on a single codec to use. It's this "sifting process" that can cause confusion. How does this process work? How can it be modified? This page is written to help you answer those questions.
+* 1 [FreeSWITCH中的编解码器协商](#codec-negotiation-in-freeswitch)
+   * 1.1 [早期协商](#early-negotiation)
+      * 1.1.1 [一般原则](#general-principle)
+         * 1.1.2 [早期协商参数](#early-negotiation-parameters)
+   * 1.2 [延迟协商（需要参数）](#late-negotiation-requires-param)
+   * 1.3 [代理媒体](#codec-negotiation-when-proxy-media-enabled)
+   * 1.4 [不兼容的目标](#incompatible-destination)
+   * 1.5 [在不同路线上混合媒体/编解码器（转码）](#mixing-mediacodecs-on-different-legs-transcoding)
+* 2 [警告](#codec-negotiation-in-freeswitch)
+* 3 [示例](#codec-negotiation-in-freeswitch)
+   * 3.1 [在使用代理媒体模式时修改编解码器](#modifying-the-codec-when-using-proxy-media-mode)
+   * 3.2 [重写SDP](#codec-negotiation-in-freeswitch)
+   * 3.3 [禁用G.729b出站](#disable-g729b-on-outbound)
+   * 3.4 [在启用代理媒体时的编解码器协商](#codec-negotiation-when-proxy-media-enabled)
+      * 3.4.1 [正确的方式](#not-correct)
+         * 3.4.2 [不正确的方式](#codec-negotiation-in-freeswitch)
+* 4 [参见](#codec-negotiation-in-freeswitch)
 
-Click to expand Table of Contents
+## FreeSWITCH中的编解码器协商
 
-* 1 [Codec Negotiation in FreeSWITCH](#codec-negotiation-in-freeswitch)  
-   * 1.1 [Early Negotiation](#early-negotiation)  
-      * 1.1.1 [General principle](#general-principle)  
-         * 1.1.2 [Early Negotiation parameters](#early-negotiation-parameters)  
-   * 1.2 [Late Negotiation (requires param)](#late-negotiation-requires-param)  
-   * 1.3 [Proxy Media](#codec-negotiation-when-proxy-media-enabled)  
-   * 1.4 [Incompatible Destination](#incompatible-destination)  
-   * 1.5 [Mixing Media/Codecs on different legs (transcoding)](#mixing-mediacodecs-on-different-legs-transcoding)
-* 2 [Warnings](#codec-negotiation-in-freeswitch)
-* 3 [Examples](#codec-negotiation-in-freeswitch)  
-   * 3.1 [Modifying the codec when using proxy media mode](#modifying-the-codec-when-using-proxy-media-mode)  
-   * 3.2 [Rewriting SDP](#codec-negotiation-in-freeswitch)  
-   * 3.3 [Disable G.729b on outbound](#disable-g729b-on-outbound)  
-   * 3.4 [Codec Negotiation when proxy media enabled](#codec-negotiation-when-proxy-media-enabled)  
-      * 3.4.1 [Correct](#not-correct)  
-         * 3.4.2 [Not correct](#codec-negotiation-in-freeswitch)
-* 4 [See Also](#codec-negotiation-in-freeswitch)
+FreeSWITCH支持两种基本的编解码器协商模式：早期和延迟。_早期_协商意味着在FreeSWITCH需要发送媒体（如振铃）或接听呼叫之前，FreeSWITCH会尽快与终端进行编解码器协商。这发生在来电进入拨号计划之前。而_延迟_协商意味着推迟选择编解码器的时间，直到呼叫进入拨号计划并且获得更多信息为止。这些额外信息可以用于影响协商过程。让我们说明早期协商和延迟协商之间的区别。
 
-## Codec Negotiation in FreeSWITCH
+考虑以下设置：
 
-FreeSWITCH supports two basic modes of codec negotiation: early and late. _Early_ negotiation means that the codec is negotiated between FreeSWITCH and the endpoint as soon as possible, even before FreeSWITCH needs to send media (such as ringing) or answer the the call. This occurs before an incoming call even hits the dialplan. _Late_ negotiation means to delay the choosing of the codec until after the call hits the dialplan and more information can be gathered. This additional information can be used to influence the negotiation process. Let's illustrate the differences between early- and late-negotiation.
+* Alice使用支持G722和PCMU编解码器的电话机
+* Bob使用支持PCMU和PCMA编解码器的电话机
+* FreeSWITCH具有出站“codec prefs”列表，包括G722，G722.1，PCMU，PCMA，G729
 
-Consider this setup:
+（这是FS将向所有出站呼叫提供的编解码器列表）
 
-* Alice has a phone with codecs G722 and PCMU
-* Bob has a phone with PCMU and PCMA
-* FreeSWITCH has an outbound "codec prefs" list of G722,G722.1,PCMU,PCMA,G729
+看看下面的两个呼叫流程。看看你能否察觉出A端的编解码器协商时机的差异：
 
-(This is the list of codecs that FS will offer to all outbound calls)
+* 早期协商
 
-Look at these two call flows. See if you can spot the difference in exactly when the codec on the A leg is negotiated:
+Alice（A）拨打Bob（B）
+A呼叫FS并提供两种编解码器：G722和PCMU
+FS看到这两种编解码器并立即选择G722作为A端的编解码器
+FS呼叫B并提供G722，G722.1，PCMU，PCMA，G729
+B看到这个编解码器列表并选择PCMU
+FS将A和B连接起来
+FS转码G722为PCMU
 
-* Early Negotiation
+* 具有“inherit codec”设置的延迟协商
 
-Alice (A) dials Bob (B)
-A calls FS and offers two codecs: G722 and PCMU
-FS sees these two codecs and chooses G722 immediately for the A leg
-FS calls B and offers G722,G722.1,PCMU,PCMA,G729
-B sees this codecs list and chooses PCMU 
-FS bridges A to B
-FS is transcoding G722 to PCMU
+Alice（A）拨打Bob（B）
+A呼叫FS并提供两种编解码器：G722和PCMU
+FS看到这两种编解码器，但暂时不选择其中任何一个
+FS呼叫B并提供G722和PCMU
+B看到这两种编解码器并选择PCMU
+FS现在在A端选择PCMU
+FS将A和B连接起来
+A和B之间的连接采用PCMU到PCMU（无额外的转码）
 
-* Late Negotiation with "inherit codec" set
+注意A腿编解码器的协商时间差异。在早期协商中，FreeSWITCH立即选择一个编解码器（G722）。它不会等待呼叫的出站腿（即B腿）发生什么。因此A腿正在使用G722。在确定A腿的编解码器后，FreeSWITCH将该呼叫通过拨号计划传递，最终调用Bob的电话的桥接应用程序。为了启动桥接，FreeSWITCH呼叫B腿并提供一个很大的编解码器列表。这些是FreeSWITCH的“出站编解码器首选项”（此列表可以自定义，稍后会详细介绍）。Bob的电话看到所有这些编解码器，并选择与之匹配的第一个编解码器，此处为PCMU。此时，我们已经协商了两个呼叫腿：
 
-Alice (A) dials Bob (B)
-A calls FS and offers two codecs: G722 and PCMU
-FS sees these two codecs but does *NOT* choose one just yet
-FS calls B and offers G722 and PCMU
-B sees these two codecs and chooses PCMU
-FS now chooses PCMU on the A leg
-FS bridges A to B
-A and B are connected with PCMU to PCMU (no extra transcoding)
+* A腿使用G722
+* B腿使用PCMU
 
-Note the difference in the timing of the negotiation of the A leg codec. With early negotiation, FreeSWITCH chooses a codec (G722) immediately. It does not wait to see what happens on the outbound leg (that is, the B leg) of the call. So the A leg is using G722\. After deciding on the codec for the A leg, FreeSWITCH passes this call through the dialplan, which eventually comes to a bridge application to call Bob's phone. To initiate the bridge, FreeSWITCH calls the B leg and offers a pretty big list of codecs. These are the "outbound codec prefs" for FreeSWITCH. (This list is customizable, but more on that later.) Bob's phone sees all those codecs and chooses the first one that matches, in this case PCMU. At this point we have both call legs negotiated:
+当Bob的电话发送回振铃信号时，两个腿将被桥接在一起。由于协商了两种不同的编解码器，FreeSWITCH必须将从Alice的编解码器（G722）转码为Bob的编解码器（PCMU）。通常情况下，这样做没问题，但假设您更希望两个电话使用相同的编解码器，以减少CPU使用率。这就是晚期协商发挥作用的地方。
 
-* A leg has G722
-* B leg has PCMU
+正如您所看到的，当FreeSWITCH在不知道B腿上设置了什么编解码器的情况下为A腿选择编解码器时，很容易出现“编解码器不匹配”。编解码器的“不匹配”并不总是一件坏事，但很多时候，关注的是两个呼叫腿共享相同的编解码器。使用晚期协商和一种称为“继承编解码器”的技术，我们可以强制A腿使用在B腿上协商的任何编解码器（稍后将详细介绍此过程，目前我们只考虑基本概念）。
 
-As soon as Bob's phone sends back a ringing signal, the two legs are bridged together. FreeSWITCH has to transcode from Alice's codec (G722) to Bob's codec (PCMU) because two different codecs were negotiated. Usually this is okay, but let's say you'd prefer that both phones have the same codec so that there's less CPU usage. This is where late-negotiation comes into play.
+在我们的第二个例子中，基本的呼叫流程是FreeSWITCH接收到A leg，但**不立即**协商编解码器。相反，FreeSWITCH在A leg通过拨号计划之后才开始协商A leg的编解码器。在这种情况下，拨号计划最终与Bob的手机建立了一个桥接。在桥接过程中，FreeSWITCH与Bob的手机协商了一个编解码器 - 在这种情况下是PCMU。一旦B leg上选择了该编解码器，FreeSWITCH回到Alice的手机并告诉它我们将在A leg上使用PCMU。现在两个呼叫链路都在使用相同的编解码器，这正是我们想要的。
 
-As you can see, when FreeSWITCH picks a codec for the A leg without knowing what codec is set on the B leg then there can easily be a "codec mismatch." A codec "mismatch" isn't always a bad thing, but many times it is nice to have both call legs share the same codec. Using late-negotiation and a technique called "inherit codec" we can force the A leg to use which ever codec is negotiated on the B leg. (This process is described in specific detail later on - for now we are only considering the basic concepts.)
+这就是早期协商和晚期协商之间的区别。记住：仅仅启用晚期协商并不会自动使A leg继承B leg的编解码器。它只是允许“继承编解码器”作为一种协商编解码器的方式之一。晚期协商允许其他编解码器协商的技巧。继续阅读FreeSWITCH中关于编解码器协商的更详细描述。
 
-The basic call flow in our second example has FreeSWITCH getting the A leg but \*not\* negotiating a codec right away. Instead, FreeSWITCH holds off on negotiating a codec for the A leg until after the A leg has passed through the dialplan. In this case, the dialplan ended up with a bridge to Bob's phone. During the bridge process, FreeSWITCH negotiated a codec with Bob's phone - in this case PCMU. Once that codec was chosen on the B leg, FreeSWITCH went back to Alice's phone and told it that we would be using PCMU on the A leg. Now both call legs are using the same codec, which is what we wanted.
+### 早期协商
 
-That's really all there is to the difference between early- and late-negotiation. Just keep this in mind: simply enabling late-negotiation does not automatically force the A leg to inherit the B leg's codec. It simply allows for "inherit codec" as one way of negotiating codecs. Late-negotiation allows for other codec negotiation tricks. Read on for a more specific description of codec negotiation in FreeSWITCH.
+这是FreeSWITCH的默认行为，尽管大多数示例配置在其配置文件中启用了晚期协商。
 
-### Early Negotiation
+#### 常规原则
 
-This is the default behavior of FreeSWITCH, although most of the example configs turn on late negotiation in their profiles.  
+- 当A leg呼叫FreeSWITCH时，所提供的编解码器将与相关SIP配置文件中的inbound-codec-prefs内容进行比较。一旦A leg提供的编解码器与FS允许的编解码器匹配，它将被选为A leg的编解码器。如果提供的编解码器都不匹配允许的编解码器，则呼叫失败。
 
-#### General principle
+注意：由于这个算法，入站SDP中的编解码器顺序比入站编解码器首选项中的编解码器顺序优先级更高。
 
-* When leg A calls FreeSWITCH, the offered codecs will be compared against the content of inbound-codec-prefs in the relevant SIP profile. As soon as a codec offered by A matches a codec allowed by FS, it is selected as the codec for leg A. If none of the offered codecs matches the allowed codecs, the call fails.
+当FS呼叫B支路时，SIP配置文件的outbound-codec-prefs中的编解码器列表会重新组织，将在A支路上协商的编解码器放在顶部。如果B支路不接受任何编解码器，呼叫会失败，显然。
 
-Remark: Because of this algorithm, the codecs order in the inbound SDP has priority on the codecs order in inbound-codec-prefs.
+举个例子：
 
-* When FS calls leg B, the list of codecs in outbound-codec-prefs for the SIP profile is reorganized by pushing the codec negotiated above for leg A at the top. If B does not accept any of the codecs, the calls fails, obviously.
+A -------- GSM/PCMA/G729 --------> FS（允许G729/PCMA/PCMU）-------- PCMA/G729/PCMU --------> B
 
-So for instance:
+发生了什么：
 
-A -------- GSM/PCMA/G729 --------> FS (allowing G729/PCMA/PCMU) -------- PCMA/G729/PCMU --------> B
+* A向FS提议了GSM/PCMA/G729作为编解码器。
+* FS按照优先级的顺序（SDP中列出的顺序）检查所提议的编解码器与其允许的编解码器（在inbound-codec-prefs中配置）是否匹配，并选择PCMA作为第一个授权的编解码器，因此编解码器列表变为：PCMA/G729/PCMU。
+* FS向B提议了这个编解码器列表。
 
-What is happening:
-
-* A proposes GSM/PCMA/G729 to FS.
-* FS checks the proposed codecs in order of priority (as listed in the SDP) against its list of allowed codecs (as configured in inbound-codec-prefs), and selects PCMA as the first authorized codec, so the codecs list becomes: PCMA/G729/PCMU.
-* FS proposes this codec list to B.
-
-#### Early Negotiation parameters
+#### 早期协商参数
 
 ##### disable-transcoding
 
-This is a parameter you may set in the outbound SIP profile.  
-This will force the codec proposed to leg B (outbound leg) to be the same as the codec negotiated on leg A (inbound leg).  
-To set this, add the following line to the required SIP profile:  
+这是你可以在出站SIP配置文件中设置的一个参数。  
+这将强制将向B支路（出站支路）提议的编解码器与在A支路（入站支路）上协商的编解码器保持一致。  
+要设置这个参数，请将以下行添加到必需的SIP配置文件中：  
 
     <param name="disable-transcoding" value="true"/>
- 
-> _Note_: it is commonly misunderstood that this parameter disables the transcoding capability in FS. That is wrong.
 
-This parameter just changes the outbound codec to match the one negotiated on the inbound leg so that no transcoding will be required.
+> _注意_: 这个参数经常被误解为在FS中禁用了语音编码功能。这是错误的。
 
-The same result could be achieved by setting absolute\_codec\_string to the value of the inbound codec.
+该参数只是将出站编解码器更改为与入站支路上协商的编解码器相匹配，以便不需要进行语音编码转换。
 
-This parameter (only applicable when late-negotiation is off) will take the negotiated codec from leg A and offer it as the only option in leg B (ignoring any other codec settings) if the B leg cannot use that same codec the call will fail
+可以通过将absolute_codec_string设置为入站编解码器的值来实现相同的结果。
+
+这个参数（仅适用于关闭了late-negotiation时）将采用来自A支路的协商编解码器，并将其作为B支路的唯一选项提供（忽略任何其他编解码器设置），如果B支路不能使用相同的编解码器，则呼叫将失败。
 
 ##### absolute_codec_string
 
-This is a channel variable you may set in the dialplan, typically just before bridging.  
-This will force the codecs list proposed to leg B, without taking into account anything else.  
-Here is an example:
+这是一个通道变量，在拨号计划中你可以设置，通常是在桥接之前设置。这将强制将编解码器列表提供给B端，而不考虑其他因素。下面是一个示例：
 
     <action application="export" data="nolocal:absolute_codec_string=PCMA,PCMU"/>  
     <action application="bridge" data="sofia/gateway/mygateway/mynumber"/>
     
-or
+或者
   
     <action application="bridge" data="{absolute_codec_string='PCMA,PCMU'}sofia/gateway/mygateway/mynumber"/>
  
-Make sure you have single quotes ( 'PCMA,PCMU' ) around comma ( ',' ) separated list of codecs to protect it from parsing list of variables inside of {var1=val1,var2=val2,absolute\_codec\_string='GSM,PCMU'}
- 
-> _Note_: This parameter prevails on disable-transcoding. So if you disable transcoding in the outbound SIP profile and you use absolute\_codec\_string in the dialplan to set the outbound codec to be different from the inbound codec, transcoding will occur anyway.
+确保在逗号分隔的编解码器列表周围使用单引号 ('PCMA,PCMU')，以保护它免受解析变量列表的影响 {var1=val1,var2=val2,absolute\_codec\_string='GSM,PCMU'}
+
+> _注意_: 这个参数优先于禁用转码。所以，如果你在出站SIP配置文件中禁用了转码，并且你在拨号计划中使用absolute_codec_string来设置出站编解码器与入站编解码器不同，转码仍然会发生。
 
 ##### codec_string
 
- This is a channel variable you may set in the dialplan, typically just before bridging.  
- The defined codec list will override the one set in the outbound-codec-prefs parameter of the outbound profile.  
- Here is an example:
- 
+这是一个通道变量，在拨号计划中你可以设置，通常是在桥接之前设置。定义的编解码器列表将覆盖出站配置文件中设置的出站编解码首选参数。下面是一个示例：
+
     <action application="export" data="nolocal:codec_string=PCMA,PCMU"/>  
     <action application="bridge" data="sofia/gateway/mygateway/mynumber"/>
     
- or
+或者
     
     <action application="bridge" data="{codec_string='PCMA,PCMU'}sofia/gateway/mygateway/mynumber"/>
 
-Early Negotiation + Disable Transcoding:
+早期协商 + 禁用转码：
 
     <param name="disable-transcoding" value="true"/>
 
-If this sofia profile param is set, all B legs that you invite will contain \*only\* the codec negotiated by the A leg.
+如果设置了这个sofia配置文件参数，邀请的所有B端将只包含A端协商的编解码器。
 
-Also in either case the variable "codec\_string" on the A leg controls what codecs will be offered to the B leg.
+无论哪种情况，A 侧的变量 "codec_string" 控制着将向 B 侧提供的编解码器。
 
-The variable "absolute\_codec\_string" is similar except it implies the implicit list of codecs and will disable the addition of the A leg codec to the list as described in the default behavior.
+变量 "absolute_codec_string" 也类似，但它包含了隐式编解码器列表，并禁止将 A 侧的编解码器添加到列表中，默认情况下会执行此操作。
 
-### Late Negotiation (requires param)
+### 迟交涉（需要参数）
 
     <param name="inbound-late-negotiation" value="true"/>
 
-* The call will hit the dialplan without looking at the codecs at all.
-* The negotiation will take place when leg A is answered.
-* This allows you to route the call to a script and examine the sdp and rewrite the acceptable codecs with the "codec\_string" channel variable.
+* 通话将在不考虑编解码器的情况下进入拨号计划。
+* 涉及交涉将在 A 侧接通后进行。
+* 这允许您将通话路由到脚本，并检查 sdp 并使用 "codec_string" 通道变量重写可接受的编解码器。
 
 ##### [inherit_codec](https://wiki.freeswitch.org/wiki/Variable%5Finherit%5Fcodec "Variable inherit codec")
 
     <action application="set" data="inherit_codec=true"/>
  
-> inherit\_codec=true (only applicable when late-negotiation is enabled) will take the codec negotiated when the B leg answers and pass it to the A leg so it also uses the same codec (if the A leg supports it); otherwise, it will use whatever it can from its own list
+> inherit\_codec=true（仅在启用迟交涉时适用）将传递在 B 侧应答时协商的编解码器给到 A 侧，以便它也使用相同的编解码器（如果 A 侧支持）；否则，它将从自己的列表中使用所能找到的编解码器。
 
 ##### [ep_codec_string](https://wiki.freeswitch.org/wiki/Variable%5Fep%5Fcodec%5Fstring "Variable ep codec string")
 
-This variable is only available if late negotiation is enabled on the profile. It's a readable string containing all the codecs proposed by the calling endpoint. This can be easily parsed in the dialplan.
- 
+如果在配置文件中启用了迟交涉，该变量才可用。这是一个可读字符串，包含呼叫端点提出的所有编解码器。这可以在拨号计划中轻松解析。
+
     <action application="export" data="codec_string='${ep_codec_string}'"/>
 
-### Proxy Media
+### 代理媒体
 
-Codec Negotiation can not be made if proxy media is enabled and answer application not executed.
+如果启用了代理媒体并且未执行应答应用程序，则无法进行编解码器协商。
 
-### Incompatible Destination
+### 不兼容的目的地
 
-See below, Mixing Media/Codecs on different legs, particularly _media\_mix\_inbound\_outbound\_codecs_ new variable.
+参见下文，混合媒体/编解码器的不同 legs 上，特别是 _media\_mix\_inbound\_outbound\_codecs_ 新变量。
 
-### Mixing Media/Codecs on different legs (transcoding)
+### 混合媒体/编解码器的差异（转码）
 
-If you want FreeSWITCH to be able to match two legs with different codecs (where it transcodes) there are several variables you will need to set to make it possible. First you must set **_media\_mix\_inbound\_outbound\_codecs=true_** either globally (ie vars.xml) or on the b leg explicitly on the bridge (ie _&lt;action application="bridge" data="{media\_mix\_inbound\_outbound\_codecs=true}sofia/gateway/....">_ ).
+如果您希望FreeSWITCH能够匹配不同编解码器的两个通话路进（进行转码），则需要设置几个变量以使其成为可能。首先，您必须设置 **_media\_mix\_inbound\_outbound\_codecs=true_**，可以全局设置（例如在vars.xml中），也可以在桥接时在B路进上显式设置（即 _&lt;action application="bridge" data="{media\_mix\_inbound\_outbound\_codecs=true}sofia/gateway/....">_ ）。
 
-This new variable is required with 1.6 and later due to webrtc support and the ever growing SDP when SIP over UDP is involved.SDPs have now reached the point where it is becoming harder and harder to translate from WebRTC -> SIP and keep the original SDP due to the shear size of the SDP. With SIP over UDP, when packet fragmentation happens, it destroys the SIP packet as UDP does not auto-reassemble the fragments… this happens once your sip packets exceed MTU… the only fix is small packets. That means compact headers, eliminating extra headers, or just don’t use such a big SDP by eliminating CODECs you don’t need.The affect with FS is if you don’t have media\_mix\_inbound\_outbound\_codecs set to true, only codecs offered to FS on the A leg are passed to the B leg, this reduces the size of the SDP and has the side effect of greatly reducing the amount of transcoding.
+由于webrtc的支持和涉及SIP over UDP时SDP不断增长，这个新的变量在1.6版本及以后的版本中是必需的。SDP现在已经达到了一个难以将WebRTC -> SIP进行转换并保持原始SDP的程度，原因是SDP的大小愈发庞大。在使用SIP over UDP时，当发生分组拆分时，由于UDP不会自动重新装配碎片，会破坏SIP数据包。这会在sip数据包超过MTU时发生，唯一的解决办法是使用小包。这意味着使用紧凑头、消除额外头或者不使用那么大的SDP，以消减SDP的大小。对于FS来说，如果没有将media\_mix\_inbound\_outbound\_codecs设置为true，那么只有A路进上向FS提供的编解码器会传递到B路进上，这会减小SDP的大小，并且会大大减少转码的数量。
 
-Second you will want to turn off _inbound-late-negotiation_ and _inbound-zrtp-passthru_ (the second forces the first to true), or you will want to pre-answer the A leg prior to the bridge.
+其次，您将需要关闭_inbound-late-negotiation和inbound-zrtp-passthru（后者会强制将前者设置为true），或者您将需要在桥接之前预答复A路进。
 
-Finally you should make sure you have variables like _disable-transcoding,inherit\_codec,bypass\_media,proxy\_media_ all set to false (as these are all tangential to what we want to accomplish).
+最后，请确保您的变量，例如_disable-transcoding，inherit\_codec，bypass\_media，proxy\_media_，是否都设置为false（因为这些都与我们想要实现的目标有关）。
 
-## Warnings 
+## 警告
 
-If your sdp contains codecs with different ptime preferences and ptime is specified in sdp, sofia will not send a ptime attr.
+如果您的sdp包含具有不同ptime偏好的编解码器，并且在sdp中指定了ptime，sofia将不会发送ptime属性。
 
- 2010-10-18 11:47:52.234322 [WARNING] sofia_glue.c:213 Codec G723 payload 4 added to sdp wanting ptime 30 but it's already 20 (G729:18:20), disabling ptime.
+2010-10-18 11:47:52.234322 [WARNING] sofia_glue.c:213 Codec G723 payload 4 added to sdp wanting ptime 30 but it's already 20 (G729:18:20)，禁用ptime。
 
-## Examples
+## 示例
 
-### Modifying the codec when using proxy media mode
+### 在使用代理媒体模式时修改编解码器
 
-Here is a dialplan example that will allow you to change the codec preference order and still enjoy the low cpu usage of proxy\_media mode. It is similar to subst() in openser/opensips/kamailio textops module.
+这是一个拨号计划的示例，它允许您更改编解码器的优先顺序，同时享受代理媒体模式的低CPU使用率。类似于openser/opensips/kamailio textops模块中的subst()功能。
 
-    <context>  
-      <extension name="sdp_mangler">  
-        <!-- Set some defaults for this call -->  
-        <condition field="destination_number" expression="^(\d+)\$" break="on-false">  
-          <action application="set" data="transfer_to=\${destination_number} XML fail"/>    
-        </condition>  
-        <!-- Here we check for G729 if found we are going make sure we have it first in preference order -->  
-        <condition field="${switch_r_sdp}" expression="/(.*)(m=audio \d+ RTP\/AVP)(?=[ \d]+18|18[ \d]+)([ \d]*)(.*)/s" break="never">
-          <action application="set" data="codec_mangle= 18"/>
-          <action application="set" data="transfer_to=${destination_number} XML public_proxy"/>
-        </condition>
-        <!-- Here we check for PCMU to add it back into the SDP if we want -->
-        <condition field="${switch_r_sdp}" expression="/(.*)(m=audio \d+ RTP\/AVP)(?=[ \d]+0|0[ \d]+)([ \d]*)(.*)/s" break="never">
-          <action application="set" data="codec_mangle=${codec_mangle} 0"/>
-        </condition>
-        <!-- Here we rebuild our SDP Moving G729 up front-->
-        <condition field="${switch_r_sdp}" expression="/(.*)(m=audio \d+ RTP\/AVP)([ \d]+)(.*)/s" break="never">
-          <action application="set" data="switch_r_sdp=$1$2${codec_mangle} 101$4"/>
-        </condition>
-        <condition>
-          <action application="transfer" data="${transfer_to}"/>
-        </condition>
-      </extension>
-    </context>
+```xml
+<context>  
+  <extension name="sdp_mangler">  
+    <!-- 设置该呼叫的一些默认值 -->  
+    <condition field="destination_number" expression="^(\d+)\$" break="on-false">  
+      <action application="set" data="transfer_to=\${destination_number} XML fail"/>    
+    </condition>  
+    <!-- 检查是否使用G729编解码器，如果是，则将其置于首选顺序 -->  
+    <condition field="${switch_r_sdp}" expression="/(.*)(m=audio \d+ RTP\/AVP)(?=[ \d]+18|18[ \d]+)([ \d]*)(.*)/s" break="never">
+      <action application="set" data="codec_mangle= 18"/>
+      <action application="set" data="transfer_to=${destination_number} XML public_proxy"/>
+    </condition>
+    <!-- 检查是否包含PCMU编解码器，如果是，则将其添加回SDP中 -->
+    <condition field="${switch_r_sdp}" expression="/(.*)(m=audio \d+ RTP\/AVP)(?=[ \d]+0|0[ \d]+)([ \d]*)(.*)/s" break="never">
+      <action application="set" data="codec_mangle=${codec_mangle} 0"/>
+    </condition>
+    <!-- 重建SDP，将G729放在最前面 -->
+    <condition field="${switch_r_sdp}" expression="/(.*)(m=audio \d+ RTP\/AVP)([ \d]+)(.*)/s" break="never">
+      <action application="set" data="switch_r_sdp=$1$2${codec_mangle} 101$4"/>
+    </condition>
+    <condition>
+      <action application="transfer" data="${transfer_to}"/>
+    </condition>
+  </extension>
+</context>
+```
 
-### Rewriting SDP
+### 重写 SDP
 
 switch\_r\_sdp:
 
-    <action application="set">
-      <![CDATA[switch_r_sdp=(sdp here)]]>
-    </action>
+```xml
+<action application="set">
+  <![CDATA[switch_r_sdp=(此处是SDP)]]>
+</action>
+```
 
-### Disable G.729b on outbound
+### 禁用出局的 G.729b 编解码器
 
-    <extension name="disable-annexB" continue="true">
-      <condition field="${switch_r_sdp}" expression="/(.*)(m=audio \d+ RTP\/AVP)(.*)( 18 )(.*)/s">
-        <action application="export" data="rtp_append_audio_sdp=a=fmtp:18 annexb=no"/>
-      </condition>
-    </extension>
+```xml
+<extension name="disable-annexB" continue="true">
+  <condition field="${switch_r_sdp}" expression="/(.*)(m=audio \d+ RTP\/AVP)(.*)( 18 )(.*)/s">
+    <action application="export" data="rtp_append_audio_sdp=a=fmtp:18 annexb=no"/>
+  </condition>
+</extension>
 
-### Codec Negotiation when proxy media enabled
+### 当代理媒体启用时的编解码器协商
 
-#### Correct
+#### 正确
 
-    <extension name="test_proxy_media">
-      <condition field="source" expression="mod_sofia">
-        <action application="answer"/>
-        <action application="playback" data="ivr/ivr-welcome_to_freeswitch.wav"/>
-      </condition>
-    </extension>
+<extension name="test_proxy_media">
+  <condition field="source" expression="mod_sofia">
+    <action application="answer"/>
+    <action application="playback" data="ivr/ivr-welcome_to_freeswitch.wav"/>
+  </condition>
+</extension>
 
-#### Not correct
+#### 不正确
 
-    <extension name="test_proxy_media">
-      <condition field="source" expression="mod_sofia">
-        <action application="playback" data="ivr/ivr-welcome_to_freeswitch.wav"/>
-      </condition>
-    </extension>
+<extension name="test_proxy_media">
+  <condition field="source" expression="mod_sofia">
+    <action application="playback" data="ivr/ivr-welcome_to_freeswitch.wav"/>
+  </condition>
+</extension>
 
-## See Also
+## 参见
 
-* [Codecs and Media](./index.mdx#about)
-* [Audio Codecs](./Audio-Codecs_1048675.mdx#--)
-* [Proxy Media](../Configuration/Proxy-Media_13173588.mdx#faqs)
-* [Trans Coding Issues](../Configuration/Sofia-SIP-Stack/index.mdx#transcoding-issues)
-* [SDP Manipulation](../Dialplan/Variables-Archive/x__Channel-Variables_1048892.mdx#channel-variable-manipulation)
-* [Codec Related in Channel Variables](../Dialplan/Variables-Archive/x__Channel-Variables_1048892.mdx#channel-variable-scope-w-example)
-
-
+* [编解码器和媒体](./index.mdx#about)
+* [音频编解码器](./Audio-Codecs_1048675.mdx#--)
+* [代理媒体](../Configuration/Proxy-Media_13173588.mdx#faqs)
+* [转码问题](../Configuration/Sofia-SIP-Stack/index.mdx#transcoding-issues)
+* [SDP操作](../Dialplan/Variables-Archive/x__Channel-Variables_1048892.mdx#channel-variable-manipulation)
+* [通道变量中与编解码器相关的内容](../Dialplan/Variables-Archive/x__Channel-Variables_1048892.mdx#channel-variable-scope-w-example)
+```

@@ -1,19 +1,18 @@
+# fail_on_single_reject
 
-# fail_on_single_reject 
-
- Created by  Ryan Harris, last modified on 2018.02.07
+ 由Ryan Harris创建，最近一次修改于2018年2月7日
 
 ## fail_on_single_reject
 
-string This is useful when using the **`,`** AND operator in the `data` field of a bridge. The AND operator notifies a list of destinations, bridging to the first destination that accepts the call. Typically if a destination in the list rejects the call, the bridge will continue to be attempted until either another destination accepts the call, or a timeout occurs. See below for an example of using `fail_on_single_reject` with the **`|`** OR operator.
+当在桥接的`data`字段中使用**`,`**和操作符时，这一设置非常有用。与操作符通知一个目标列表，桥接到第一个接受呼叫的目标。通常情况下，如果列表中的一个目标拒绝呼叫，桥接将继续尝试，直到另一个目标接受呼叫，或者超时发生。以下是使用`fail_on_single_reject`与**`|`**或操作符的示例。
 
-This variable allows one to terminate the bridging attempt on a single rejection of the call. This means the bridge attempt would fail, and if [continue\_on\_fail](../FreeSWITCH-Explained/Dialplan/Variables-Master-List_16352570.mdx#continue_on_fail) has not been set, the call is terminated. This variable would be set within a condition before a bridge application. When used in conjunction with the `continue_on_fail` variable, one can perform operations such as rolling over a rejected caller to an answering machine application.
+这个变量允许在呼叫被拒绝时终止桥接尝试。这意味着桥接尝试将失败，如果[continue\_on\_fail](../FreeSWITCH-Explained/Dialplan/Variables-Master-List_16352570.mdx#continue_on_fail)没有被设置，呼叫将被终止。在应用桥接之前，可以设置这个变量在条件语句中使用。当与`continue_on_fail`变量一起使用时，可以执行一些操作，例如将被拒绝的来电转接到一个答录机应用程序。
 
-The default setting is `false`, meaning a single rejection will not terminate the bridging attempt.
+默认设置为`false`，意味着单次拒绝不会终止桥接尝试。
 
-It can also be set to a list of [failure causes](../FreeSWITCH-Explained/Troubleshooting-Debugging/Hangup-Cause-Code-Table_3964945.mdx#about) to stop on, and can be negated to a list of causes not to stop on (i.e. stop on all other failure causes).
+它还可以设置为一个停止的[失败原因](../FreeSWITCH-Explained/Troubleshooting-Debugging/Hangup-Cause-Code-Table_3964945.mdx#about)列表，并且可以否定为一个不要停止的原因列表（即停止所有其他失败原因）。
 
-**Usage**
+**使用方法**
 
 ```xml
 <action application="set" data="fail_on_single_reject=true"/>
@@ -29,19 +28,19 @@ It can also be set to a list of [failure causes](../FreeSWITCH-Explained/Trouble
 <action application="set" data="fail_on_single_reject=!NORMAL_CIRCUIT_CONGESTION"/>
 ```
 
-To use a list:
+使用列表时：
 
 ```xml
 <action application="set" data="fail_on_single_reject=^^:CALL_REJECTED:NORMAL_CLEARING:USER_BUSY"/>
 ```
 
-For negated list:
+用于否定列表的情况：
 
 ```xml
 <action application="set" data="fail_on_single_reject=!^^:ALLOTTED_TIMEOUT:NETWORK_OUT_OF_ORDER"/>
 ```
 
-For use with the OR operator, consider the following example. Here the dialplan sends a call to multiple gateways simultaneously. In the case of `GATEWAY_DOWN` or `INVALID_GATEWAY` the bridge should not fail (i.e. negated `fail_on_single_reject`) and the dialplan should continue (i.e. `continue_on_fail`):
+如果要使用OR运算符，请考虑以下示例。在这种情况下，拨号计划同时将呼叫发送到多个网关。在`GATEWAY_DOWN`或`INVALID_GATEWAY`的情况下，桥接操作不应失败（即否定的`fail_on_single_reject`），拨号计划应继续执行（即`continue_on_fail`）：
 
 ```xml
 <action application="set" data="continue_on_fail=GATEWAY_DOWN,INVALID_GATEWAY"/>
@@ -49,5 +48,3 @@ For use with the OR operator, consider the following example. Here the dialplan 
 <action application="set" data="hangup_after_bridge=true"/>
 <action application="bridge" data="sofia/gateway/gw1/$1|sofia/gateway/gw2/$1|sofia/gateway/gw3/$1"/>
 ```
-
-

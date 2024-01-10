@@ -1,122 +1,117 @@
+# 安全
 
-# Security 
+## 关于
 
- 
+安全是关于减轻风险，同时提供易用性、问题检测和修复，同时保护系统最重要的特性。本节将提供一些需要考虑的要点。
 
-## About
+点击展开目录
 
-Security is about mitigating risks while providing ease of use, problem detection, and remediation while protecting the most important characteristics of the system. This section will provide a number of points to consider.
-
-Click to expand Table of Contents
-
-* 1 [Considerations](#considerations)
-* 2 [General Recommendations](#general-recommendations)  
-   * 2.1 [Sources to consider:](#sources-to-consider)
-* 3 [Freeswitch Configuration](#freeswitch-configuration)  
-   * 3.1 [Passwords and Other Confidential Information](#passwords-and-other-confidential-information--)  
-   * 3.2 [Local Registrations](#local-registrations)
-* 4 [Firewall configuration](#firewall-configuration)  
-   * 4.1 [Rate-Limit Examples](#rate-limit-examples)  
-   * 4.2 [DoS REGISTER Attack Prevention](#dos-register-attack-prevention)
+* 1 [要考虑的事项](#considerations)
+* 2 [通用建议](#general-recommendations)
+   * 2.1 [需要考虑的来源:](#sources-to-consider)
+* 3 [FreeSWITCH 配置](#freeswitch-configuration)
+   * 3.1 [密码和其他机密信息](#passwords-and-other-confidential-information--)
+   * 3.2 [本地注册](#local-registrations)
+* 4 [防火墙配置](#firewall-configuration)
+   * 4.1 [速率限制示例](#rate-limit-examples)
+   * 4.2 [DoS REGISTER 攻击防范](#dos-register-attack-prevention)
 * 5 [](#--)
 
-## Considerations
+## 考虑事项
 
-* What are your security best practices?
-* What techniques do you use?
-* How do you balance security vs. ease of use?
+* 你的安全最佳实践是什么？
+* 你使用什么技术？
+* 你如何平衡安全性和易用性？
 
-## General Recommendations
+## 通用建议
 
-If you are not using a VPN nor on a local intranet with the FS server make sure to use [SIP\_TLS](https://wiki.freeswitch.org/wiki/SIP%5FTLS "SIP TLS") as all sip traffic and authentication is in the clear otherwise.
+如果你没有使用 VPN，也不在本地内部网络上使用 FS 服务器，请确保使用[SIP\_TLS](https://wiki.freeswitch.org/wiki/SIP%5FTLS "SIP TLS")，因为所有的 SIP 流量和身份验证都是明文的。
 
-The most basic things for any system include:
+任何系统的最基本要素包括：
 
-* Have a router with SPI firewall between your system and the Internet; do not put your system in the router DMZ (where all default incoming traffic will be sent)
-* Change all system passwords and set them to strong ones.
-* Install the latest patches for your OS
-* Setup an IDS like Snort or AIDE
-* Use [fail2ban](Fail2Ban_1049236.mdx#centos)[](https://wiki.freeswitch.org/wiki/Fail2ban "Fail2ban") to limit SIP password / id guessing (linux only)
-* Setup a firewall - configuration to be described later in the page
-* Install an Anti-Virus (Windows); remember that AVG seems to interfere with compilation
-* Use [ipset](http://ipset.netfilter.org/) to manage your own i.p. addresses, ports, MAC addresses, etc at much lower performance penalty
-* bkw's example script [f-off friendly scanner.pl](https://freeswitch.org/stash/projects/FS/repos/freeswitch/browse/scripts/perl/f-off-friendly-scanner.pl)
+* 在您的系统和互联网之间配备具有SPI防火墙的路由器；不要将您的系统放在路由器的DMZ(默认入站流量将被发送到该位置)中
+* 更改所有系统密码，并将它们设置为强密码。
+* 安装您操作系统的最新补丁
+* 配置一个像Snort或AIDE这样的入侵检测系统
+* 使用[fail2ban](Fail2Ban_1049236.mdx#centos)[](https://wiki.freeswitch.org/wiki/Fail2ban "Fail2ban")来限制SIP密码/ID的猜测（仅适用于Linux）
+* 配置防火墙 - 具体配置请参见本页面后续内容
+* 安装反病毒软件（仅适用于Windows）；请注意，AVG似乎会干扰编译工作
+* 使用[ipset](http://ipset.netfilter.org/)以更低性能损耗管理自己的IP地址、端口、MAC地址等
+* bkw的示例脚本[f-off friendly scanner.pl](https://freeswitch.org/stash/projects/FS/repos/freeswitch/browse/scripts/perl/f-off-friendly-scanner.pl)
 
-### Sources to consider:
+### 参考来源:
 
 * SNORT [\[1\]](http://www.snort.org/)
-* Linux only: AIDE [\[2\]](http://packages.ubuntu.com/dapper/aide)
-* Windows only: Threats and Countermeasures Guide: Security Settings in Windows Server 2008 and Windows Vista [\[3\]](http://technet.microsoft.com/en-us/library/dd349791%28WS.10%29.aspx)
+* 仅适用于Linux: AIDE [\[2\]](http://packages.ubuntu.com/dapper/aide)
+* 仅适用于Windows: Threats and Countermeasures Guide: Security Settings in Windows Server 2008 and Windows Vista [\[3\]](http://technet.microsoft.com/en-us/library/dd349791%28WS.10%29.aspx)
 
-## Freeswitch Configuration
+## Freeswitch 配置
 
-### Passwords and Other Confidential Information  
+### 密码和其他敏感信息  
 
-Your FreeSWITCH™ configuration will have a number of areas where confidential information is stored. Here is a list to start with:
+您的FreeSWITCH™配置将涉及许多存储敏感信息的部分。以下是一些初始清单：
 
-* User names and passwords
-* Proxy or Gateway names and passwords
-* Other module configuration... please add ...
+* 用户名和密码
+* 代理或网关的名称和密码
+* 其他模块的配置...请继续添加...
 
-Please change the following elements of the default configuration:
+请更改默认配置的以下元素：
 
-* users 1000 to 1019 and their passwords (good ideas to remove them completely)
-* change the default voicemail password
+* 用户1000到1019及其密码（最好彻底删除它们）
+* 更改默认的语音邮箱密码
 
-### Local Registrations
+### 本地注册
 
-* Companies that accept only static IP address should use registeracl and add their customer's IP to the ACL for registration protection.
-* Limit the number of connections per second or per minute, depending on your setup, on your firewall. This way if there are more attempts than there should be, your firewall should block them before they even get to FS. Your firewall rules may follow this general scheme:  
-   * (1) Accept signaling or media traffic from trusted IPs and apply connections-per-second rules based on their traffic pattern;  
-   * (2) Accept signaling or media traffic from any IP but with the condition that if a single IP exceeds a certain connections-per-second number then block that IP temporarily or permanently (depending on the situation). pfSense blocks that IP for one hour automatically if the rule has this setting enabled. Using iptables it is also easy to create such a rule (see [Using iptables to rate-limit incoming connections](http://www.debian-administration.org/articles/187)).
+* 只接受静态IP地址的公司应该使用registeracl，并将其客户的IP添加到ACL以进行注册保护。
+* 根据您的设置，在防火墙上限制每秒或每分钟的连接数。这样，如果尝试次数超过应有的限制，您的防火墙应该在它们到达FS之前就将其阻塞。您的防火墙规则可以按照以下一般方案进行设置：
+   * (1) 接受来自受信任IP的信令或媒体流量，并根据其流量模式应用每秒连接数的规则；
+   * (2) 接受来自任何IP的信令或媒体流量，但有一个条件是，如果一个单独的IP超过一定的每秒连接数，则临时或永久地阻止该IP（根据情况而定）。如果规则启用了该设置，pfSense会自动将该IP阻止一个小时。使用iptables也很容易创建这样的规则（请参阅[使用iptables对传入连接进行速率限制](http://www.debian-administration.org/articles/187)）。
 
-## Firewall configuration
+## 防火墙配置
 
-An example configuration for iptables can be found at [Iptables on debian](../Networking/Firewall_1048908.mdx#about).
+可在[Iptables on debian](../Networking/Firewall_1048908.mdx#about)中找到iptables的示例配置。
 
-### Rate-Limit Examples
+### 速率限制示例
 
-by [Bret McDanel](https://freeswitch.org/confluence/display/~trixter)
+作者：[Bret McDanel](https://freeswitch.org/confluence/display/~trixter)
 
-It may be interesting to add rate-limiting of incoming SIP traffic. Below is an example of how this can be done. If you use the default internal and external sip profiles then you should block on both ports 5060 and 5080.
+添加对传入的SIP流量进行速率限制可能很有意义。下面是一个示例，说明如何实现这一点。如果您正在使用默认的内部和外部SIP配置文件，则应同时在5060和5080端口上进行阻塞。
 
-**DoS Rate-Limiter**
+**DoS速率限制器**
 
 ```xml
-# Trixter's SIP rate limiter (This helps protect you from DoS attacks)
+# Trixter的SIP速率限制器（有助于保护您免受DoS攻击）
 iptables -A INPUT -p udp --dport 5060 -m limit --limit 5/s --limit-burst 5 -i eth0 -j REJECT
 iptables -A INPUT -p udp --dport 5080 -m limit --limit 5/s --limit-burst 5 -i eth0 -j REJECT
 ```
 
-BEWARE 5 per second TOTAL may be too low for your usage. This ended up rejecting all my many 5 UAs from registering.
+警告：每秒5次的总计量也许对您的使用不够。这将导致无法注册所有我的5个UA。
 
-### DoS REGISTER Attack Prevention
+### DoS注册攻击预防
 
-**DoS Register Attack 1**
+**DoS注册攻击1**
 
 ```xml
 iptables -A INPUT -m string --string "REGISTER sip:" --algo bm --to 65 -m hashlimit \
-    --hashlimit 4/minute --hashlimit-burst 1 --hashlimit-mode  srcip,dstport \
+    --hashlimit 4/分钟 --hashlimit-burst 1 --hashlimit-mode  srcip,dstport \
     --hashlimit-name sip_r_limit -j ACCEPT
 
 iptables -I INPUT -j DROP -p udp --dport 5060 -m string --string "friendly-scanner" --algo bm
 ```
 
-###### \-Or-
+###### \-或-
 
-**DoS Register Attack 2**
+**DoS注册攻击2**
 
 ```xml
 iptables -A INPUT -d YOUR_FS_IP -p udp -m udp --dport YOUR_FS_PORT -m string \
     --string "REGISTER" --algo kmp --from 20 --to 60 -j dos-filter-register-external 
 
-iptables -A dos-filter-register-external -m hashlimit --hashlimit 5/sec \
+iptables -A dos-filter-register-external -m hashlimit --hashlimit 5/秒 \
     --hashlimit-burst 8 --hashlimit-mode srcip --hashlimit-name REGISTER \
     --hashlimit-htable-size 24593 --hashlimit-htable-expire 90000 -j RETURN 
 
 iptables -A dos-filter-register-external -j REJECT --reject-with icmp-admin-prohibited
 ```
 
-##   
-
-
+##

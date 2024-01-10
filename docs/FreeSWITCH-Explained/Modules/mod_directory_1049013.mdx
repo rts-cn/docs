@@ -1,44 +1,41 @@
+# mod_directory
 
-# mod_directory 
+## 关于
 
- 
-
-## About
-
-mod\_directory is a dial by name directory application.
+mod_directory是一个通过名称拨号的目录应用程序。
 
 ```xml
 directory <profile_name> <domain name> <transfer context>
 ```
 
-Caller can search for a member of a domain using their telephone keypad. They can search by first or last name. Single or multiple results can be returned and easily navigated. The directory application will play, if available, the recorded name associated with the extension, letter spell the name or can be setup to use cepstral tts. The letter spelling vs tts setup is accomplished by changing conf/lang/en/en.xml.
+呼叫方可以使用电话拨号键查找域中的成员。他们可以按名字的首字母或姓氏进行搜索。可以返回单个或多个结果，并且可以轻松导航。如果可用，目录应用程序将播放与分机相关联的录音名称，拼写姓名的字母或设置为使用cepstral tts。通过更改conf/lang/en/en.xml文件可以实现字母拼写与tts设置的切换。
 
-Directory uses phrase macros, delivered into "conf/lang/en/us/dir".
+目录使用短语宏，传递到“conf/lang/en/us/dir”。
 
-Click here to expand ToC
+点击这里展开内容目录
 
-* [Configuration](#configuration)  
-   * [Params](#params)  
-      * [search-order](#-search-order-)  
-         * [use-number-alias](#-use-number-alias-)
-* [Dialplan Usage](#dialplan-usage)
-* [Name source](#name-source)  
-   * [Variables](#-directory-visible-)  
-      * [directory\_full\_name](#-directory_full_name-)  
-         * [effective\_caller\_id\_name](#-effective_caller_id_name-)  
-   * [Parameters](#-parameters-)  
-      * [directory-visible](#-directory-visible-)  
-         * [directory-exten-visible](#-directory-exten-visible-)  
-   * [Example Directory Entry](#-example-directory-entry)  
-   * [Interaction with xml\_curl](#interaction-with-xml_curl)
-* [Sounds Files](#-directory-visible-)
-* [Speaking the name](#speaking-the-name)
+* [配置](#配置)
+   * [参数](#参数)
+      * [搜索顺序](#搜索顺序)
+         * [使用号码别名](#使用号码别名)
+* [Dialplan用法](#拨号计划用法)
+* [姓名来源](#姓名来源)
+   * [变量](#目录可见)
+      * [directory_full_name](#directory_full_name)
+         * [effective_caller_id_name](#effective_caller_id_name)
+   * [参数](#参数)
+      * [目录可见](#目录可见)
+         * [directory_exten_visible](#directory_exten_visible)
+   * [示例目录条目](#示例目录条目)
+   * [与xml_curl的交互](#与xml_curl的交互)
+* [声音文件](#目录可见)
+* [播放姓名](#播放姓名)
 
-## Configuration
+## 配置
 
-The directory application has a configuration file (directory.conf.xml) which is loaded on FreeSWITCH startup from **conf/autoload\_configs**.
+目录应用程序有一个配置文件（directory.conf.xml），它在FreeSWITCH启动时从**conf/autoload_configs**加载。
 
-Demo directory.conf.xml file:
+演示directory.conf.xml文件：
 
 ```xml
 <configuration name="directory.conf" description="Directory">
@@ -65,15 +62,15 @@ Demo directory.conf.xml file:
 
 ### Params
 
-The directory application will react differently depending on some params set in the configuration file.
+在配置文件中设置的一些参数可以使目录应用程序以不同的方式作出反应。
 
 ####  search-order 
 
-Some customers will say that people only know them by first name, and when you are dealing with a small entity, it doesn't really hurt. So you can set this param to "first\_name" instead of the profile default value of "last\_name", then it will search the directory using first names.
+有些客户会说人们只知道他们的名字，当你在处理一个小实体时，这并不会真正有影响。所以你可以将这个参数设置为"first\_name"，而不是默认值"last\_name"，然后它将使用名字来搜索目录。
 
-You can also set search-order to "first\_and\_last\_name" which will allow search the directory for matches of either first or last name.
+你也可以将search-order设置为"first\_and\_last\_name"，这将允许在目录中搜索匹配的名字或姓氏。
 
-If you have the "search-order" param set to last\_name and would like to use first\_name on some calls, you can set the "directory\_search\_order" channel variable to "first\_name" and it will search by first name for the current call.
+如果你将"search-order"参数设置为last\_name，并想在某些呼叫中使用first\_name，你可以将"directory\_search\_order"通道变量设置为"first\_name"，它将在当前呼叫中按名字搜索。
 
 ```xml
 <action application="set" data="directory_search_order=first_name"/>
@@ -81,11 +78,11 @@ If you have the "search-order" param set to last\_name and would like to use fir
 
 ####  use-number-alias 
 
-Setting this parameter to true will have directory search by the "number-alias" instead of "id" in user directory.
+将该参数设置为true将使目录通过"number-alias"而不是"user directory"中的"id"进行搜索。
 
-## Dialplan Usage
+## 拨号计划用法
 
-To use directory from the dialplan:
+要从拨号计划中使用目录：
 
 ```xml
 <extension name="directory" continue="true">
@@ -95,37 +92,37 @@ To use directory from the dialplan:
 </extension>
 ```
 
-## Name source
+## 名称来源
 
-Directory uses the Freeswitch User Directory as its source of information.
+目录使用FreeSwitch用户目录作为其信息来源。
 
-###  Variables 
+### 变量
 
-Multiple variables set on a user will change how the directory finds/returns information. Specify these in the &lt;variables> section of the user.
+在用户上设置的多个变量将改变目录查找/返回信息的方式。在用户的&lt;variables>部分指定这些变量。
 
-####  directory_full_name 
+#### directory_full_name
 
-This field needs to contain the full name of the person in this format "FirstName LastName". This is primarily used to override the effective\_caller\_id\_name that is used by default. Useful if the display of the name on the caller id has been shortened or reversed, it can also be useful if your have characters that aren't present on a telephone keypad.
+此字段需要以"名字 姓氏"的格式包含人员的全名。这主要用于覆盖默认使用的effective_caller_id_name。如果来电显示的名称被缩短或颠倒，这将很有用，如果您在电话键盘上没有一些字符也可能会很有用。
 
-####  effective_caller_id_name 
+#### effective_caller_id_name
 
-This field will be used if directory\_full\_name isn't set. Check directory\_full\_name for more information.
+如果未设置directory_full_name，则将使用此字段。有关更多信息，请查看directory_full_name。
 
-###  Parameters 
+### 参数
 
-Specify these in the &lt;params> section of the user.
+在用户的&lt;params>部分指定这些参数。
 
-####  directory-visible 
+#### directory-visible
 
-True:False/ This allow to hide a user from the directory. Useful for dummy extension(Door phone, Intercom...) or private entry (CEO). (Defaults to True)
+True:False/ 这允许从目录中隐藏用户。对于虚拟分机（门口电话，内部电话...）或私人入口（CEO）很有用。 （默认为True）
 
-####  directory-exten-visible 
+#### directory-exten-visible
 
-True/False: This define if we playback the extension of the person after it name or not. Can be useful so caller doesn't need to access the directory on every call. You might not want to give your extension for privacy and security (Defaults to True)
+True/False: 这定义了在姓名后是否播放人员的分机号码。这样可以避免每次呼叫都需要访问目录。出于隐私和安全原因，您可能不想提供您的分机号码。（默认为True）
 
-###  Example Directory Entry
+### 示例目录条目
 
-Example: freeswitch/conf/directory/default/1001.xml
+示例：freeswitch/conf/directory/default/1001.xml
 
 ```xml
   <include>
@@ -147,25 +144,25 @@ Example: freeswitch/conf/directory/default/1001.xml
   </include>
 ```
 
-### Interaction with xml_curl
+### 与xml_curl的交互
 
-Whenever this application is called, it parses the user directory and creates a mapping between each user's name, and the digits that would be dialed to spell their name. If you are using xml\_curl to generate your user directory on the fly, it is important that you include some logic in your script that will return enough information when this lookup is performed.
+每当调用该应用程序时，它会解析用户目录并创建每个用户名称和要拨打的数字之间的映射。如果您使用xml\_curl动态生成用户目录，那么在您的脚本中包含一些逻辑以在执行此查找时返回足够的信息非常重要。
 
-The request will look something like this:
+请求将类似于以下内容：
 
-**Note:** some elements have been removed, such as FreeSWITCH-Hostname, etc...
+**注意：**某些元素已被移除，例如FreeSWITCH-Hostname等...
 
 ```xml
  section->directory
  tag_name->domain
  key_name->name
- key_value-><domain passed to the directory application>
+ key_value-><传递给目录应用程序的域名>
  Event-Name->REQUEST_PARAMS
  Calling-File->mod_directory.c
  Event-Calling-Function->populate_database
 ```
 
-Your script must return each user that is a member of the specified domain, so the directory application can build it's lookup table.
+您的脚本必须返回指定域名的每个用户，以便目录应用程序可以建立其查找表。
 
 ```xml
 <?xml version="1.0"?>
@@ -180,7 +177,7 @@ Your script must return each user that is a member of the specified domain, so t
             <user id="5240">
               <params/>
               <variables>
-                <variable name="effective_caller_id_name" value="Lab 1"/>
+                <variable name="effective_caller_id_name" value="实验室1"/>
               </variables>
             </user>
             <user id="5241">
@@ -188,13 +185,13 @@ Your script must return each user that is a member of the specified domain, so t
               <param name="directory_full_name" value="John Doe"/>
               <params/>
               <variables>
-                <variable name="effective_caller_id_name" value="Lab 2"/>
+                <variable name="effective_caller_id_name" value="实验室2"/>
                </variables>
             </user>
             <user id="5242">
               <params/>
               <variables>
-                <variable name="effective_caller_id_name" value="Lab 3"/>
+                <variable name="effective_caller_id_name" value="实验室3"/>
               </variables>
             </user>
           </users>
@@ -205,46 +202,42 @@ Your script must return each user that is a member of the specified domain, so t
 </document>
 ```
 
-In the above example, only the effective\_caller\_id\_name and directory\_full\_name values are returned. While there is no harm in returning other fields like sip passwords, dial strings, etc. there is no reason to. The less data FreeSWITCH has to parse, the better.
+在上述示例中，仅返回effective\_caller\_id\_name和directory\_full\_name的值。虽然返回其他字段如sip密码、拨号字符串等不会造成任何损害，但没有理由这样做。FreeSWITCH需要解析的数据越少，越好。
 
-The users returned MUST be a member of a group, otherwise mod\_directory will not parse them. You can enclose all the returned users in the default group to satisfy this requirement.
+返回的用户必须是一个组的成员，否则mod\_directory将无法解析它们。您可以将所有返回的用户放在default组中以满足此要求。
 
-##  Sounds Files 
+**提示：**默认的en/us/callie音频包含目录所需的音频文件。
 
-The default en/us/callie sounds contain the sounds needed for the directory.
-
-If you would like to use your TTS engine for everything instead of using prerecorded sounds, edit the \[freeswitch\_root\]/conf/lang/\[language\]/\[language\].xml and replace the line that looks like:
+如果您希望对所有内容使用TTS引擎而不是使用预录制的音频文件，请编辑\[freeswitch\_root\]/conf/lang/\[language\]/\[language\].xml并替换下列行：
 
 ```xml
 <X-PRE-PROCESS cmd="include" data="dir/sounds.xml"/>
 ```
 
-with:
+变为:
 
 ```xml
 <X-PRE-PROCESS cmd="include" data="dir/tts.xml"/>
 ```
 
-## Speaking the name
+## 朗读名字
 
-If the user has recorded their name, then that recording will be used when listing the matches. If they have not, the name will be read one letter at a time by default. If you would like the system to read their name as if it were being spoken, the following two files will have to be edited:
+如果用户已经录制了他们的名字，那么在列出匹配项时会使用该录音。如果没有录制，则默认情况下每个字母都会被朗读出来。如果您希望系统像朗读一样读出他们的名字，需要编辑以下两个文件：
 
-\[freeswitch\_root\]/conf/lang/\[language\]/dir/sounds.xml - Replace the action tag under "directory\_result\_say\_name" with:
+\[freeswitch\_root\]/conf/lang/\[language\]/dir/sounds.xml - 将"directory\_result\_say\_name"标签下的action标签替换为：
 
 ```xml
 <action function="speak-text" data="$1"/>
 ```
 
-\[freeswitch\_root\]/conf/lang/\[language\]/\[language\].xml - Make sure that your tts engine and voice are correct in the line:
+\[freeswitch\_root\]/conf/lang/\[language\]/\[language\].xml - 确保在以下行中正确设置tts引擎和语音：
 
 ```xml
 <language name="[language]" say-module="[language]" sound-prefix="$${sounds_dir}/en/us/callie" tts-engine="flite" tts-voice="slt">
 ```
 
-If you are using flite, you can find information about it here: [mod\_flite](./mod_flite_3965160.mdx#about)
+如果使用的是flite，请在此处查找相关信息：[mod\_flite](./mod_flite_3965160.mdx#about)
 
-_language_ is the two character language abbreviation
+_language_是两个字符的语言缩写
 
-_freeswitch\_root_ is the root of your Freeswitch installation
-
-
+_freeswitch\_root_是您的Freeswitch安装的根目录

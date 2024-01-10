@@ -1,63 +1,60 @@
+# Python ESL
 
-# Python ESL 
+## 介绍
 
- 
+Python [ESL](../Event-Socket-Library/index.mdx#-new-) 模块允许与 FreeSWITCH 通过事件套接字接口进行本机交互。  
+它允许发送命令、接收输出以及从 FreeSWITCH 服务器发送和接收事件和 IVR 交互。  
+Python ESL 模块是一个自动生成的带有二进制组件的 swig python 模块。  
+你**不能**只是复制 PM 文件并使用它，你必须正确编译模块并生成\_ESL.so 文件（该文件必须保存在与 ESL.py 相同的目录中）。
 
-## About
+**注意**：每当 libesl 发生变化时，您都需要重新制作和安装 python ESL 模块，否则可能会发生故障或出现意外的工作。
 
-The Python [ESL](../Event-Socket-Library/index.mdx#-new-) module allows for native interaction with FreeSWITCH over the event socket interface.   
-It allows for sending commands, receiving output and sending and receiving events and IVR interaction from the FreeSWITCH server.   
-The Python ESL module is an auto-generated swig python module with a binary component to it.   
-You **CANNOT** just copy the PM file and use that, you must properly compile the module and get the \_ESL.so file generated also (which must be kept in the same directory as the ESL.py).   
-  
-**NOTE**: any time a change to libesl occurs you will need to re-make and install the python ESL module or else things may break or work un-expectedly.
+## 推荐安装
 
-## Recommended Installation
-
-In the FreeSWITCH source directory change to libs/esl and run:
+在 FreeSWITCH 源目录下切换到 `libs/esl` 目录并运行：
 
 ```xml
 make pymod
 make pymod-install
 ```
 
-This should install the ESL module into your python site-packages folder. If for some reason you want to manually install it or keep it locally you still must run the make pymod command to compile it but then can copy the libs/esl/\_ESL.so and libs/esl/ESL.py to a folder of your choosing.
+这将把 ESL 模块安装到您的 python site-packages 文件夹中。如果由于某种原因您想手动安装它或将其保留在本地，您仍然必须运行 `make pymod` 命令来编译它，然后可以将 libs/esl/\_ESL.so 和 libs/esl/ESL.py 复制到您选择的文件夹中。
 
-See the "Pre-requisites" section at [the ESL page](../Event-Socket-Library/index.mdx#-new-) for the libraries needed.
+请参阅 [ESL 页面](../Event-Socket-Library/index.mdx#-new-) 中的 "Pre-requisites" 部分获取所需的库。
 
-## Install from PyPi
+## 从 PyPi 安装
 
-You can alternatively install a specific well tested version of this module from the [Python Package Index](https://pypi.python.org/pypi/python-ESL/1.4.18).  
-The `libesl` code is directly from FreeSWITCH 1.4.18 and is packaged using [setuptools](https://setuptools.readthedocs.io) native SWIG support.  
-It can be downloaded using `pip:`
+您还可以从 [Python Package Index](https://pypi.python.org/pypi/python-ESL/1.4.18) 安装此模块的特定经过良好测试的版本。  
+`libesl` 代码直接来自于 FreeSWITCH 1.4.18，并使用 [setuptools](https://setuptools.readthedocs.io) 的本地 SWIG 支持进行打包。  
+可以使用 `pip` 下载：
 
 ```xml
 pip install python-ESL
 ```
 
-## Usage
+## 使用方法
 
-The python module provides two classes: ESLconnection and ESLevent. They are documented generally (non-python specific) at the [ESL page](../Event-Socket-Library/index.mdx#-new-), in the "ESL Object" section.
+Python模块提供了两个类：ESLconnection和ESLevent。它们的文档通常（非特定于Python）在[ESL页面](../Event-Socket-Library/index.mdx#-new-)的"ESL对象"部分中描述。
 
-You will want to first include the module:
+首先，您需要包含该模块：
 
 ```py
 import ESL
 ```
 
-You can then establish a connection using:
+然后，您可以使用以下代码建立连接：
 
 ```py
 con = ESL.ESLconnection("127.0.0.1", "8021", "ClueCon")
 ```
 
-## Examples
+## 示例
 
 ```py
 #!/usr/bin/env python
 
 '''
-events.py - subscribe to all events and print them to stdout
+events.py - 订阅所有事件并将其打印到stdout
 '''
 import ESL
 
@@ -108,34 +105,35 @@ server.serve_forever()
 #!/usr/bin/env python
 
 '''
-single_command.py - execute a single command over ESL
+single_command.py - 在ESL上执行单个命令
 '''
 from optparse import OptionParser
 import sys
 
 import ESL
+```
 
-
+```python
 def main(argv):
     parser = OptionParser()
     parser.add_option('-a', '--auth', dest='auth', default='ClueCon',
-                      help='ESL password')
+                      help='ESL密码')
     parser.add_option('-s', '--server', dest='server', default='127.0.0.1',
-                      help='FreeSWITCH server IP address')
+                      help='FreeSWITCH服务器IP地址')
     parser.add_option('-p', '--port', dest='port', default='8021',
-                      help='FreeSWITCH server event socket port')
+                      help='FreeSWITCH服务器事件套接字端口')
     parser.add_option('-c', '--command', dest='command', default='status',
-                      help='command to run, surround multi-word commands in ""s')
+                      help='要运行的命令，请用双引号括起来')
 
     (options, args) = parser.parse_args()
 
     con = ESL.ESLconnection(options.server, options.port, options.auth)
 
     if not con.connected():
-        print 'Not Connected'
+        print '未连接'
         sys.exit(2)
 
-    # Run command
+    # 运行命令
     e = con.api(options.command)
     if e:
         print e.getBody()
@@ -143,5 +141,3 @@ def main(argv):
 if __name__ == '__main__':
     main(sys.argv[1:])
 ```
-
-

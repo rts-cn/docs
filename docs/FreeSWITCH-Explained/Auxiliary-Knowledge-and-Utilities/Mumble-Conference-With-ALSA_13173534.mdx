@@ -1,55 +1,52 @@
+# 通过ALSA搭建Mumble会议
 
-# Mumble Conference With ALSA 
+## 关于
 
- 
+作者：[Daniel O'Neill](https://freeswitch.org/confluence/display/~ver)
 
-## About
+如何使用ALSA设置Mumble会议。
 
-by [Daniel O'Neill](https://freeswitch.org/confluence/display/~ver)
+单击此处展开目录
 
-How to set up a Mumble conference with ALSA.
+* 1 [前提条件](#prerequisites)
+* 2 [会议设置](#conference-setup)
+* 3 [拨号计划设置](#conference-setup)
+* 4 [PortAudio终端](#portaudio-endpoint)
+* 5 [ALSA asoundrc或asound.conf](#alsa-asoundrc-or-asoundconf)
+* 6 [准备FreeSWITCH](#preparing-freeswitch)
+* 7 [Mumble配置](#mumble-configuration)  
+   * 7.1 [Mumble手动设备配置](#mumble-manual-device-configuration)
+* 8 [连接](#connecting-it-together)
+* 9 [测试](#conference-setup)
+* 10 [部署](#conference-setup)
+* 11 [待办事项列表](#conference-setup)
+* 12 [致谢](#conference-setup)
 
-Click here to expand Table of Contents
+## 前提条件
 
-* 1 [Prerequisites](#prerequisites)
-* 2 [Conference Setup](#conference-setup)
-* 3 [Dialplan Setup](#conference-setup)
-* 4 [PortAudio Endpoint](#portaudio-endpoint)
-* 5 [ALSA asoundrc or asound.conf](#alsa-asoundrc-or-asoundconf)
-* 6 [Preparing FreeSWITCH](#preparing-freeswitch)
-* 7 [Mumble Configuration](#mumble-configuration)  
-   * 7.1 [Mumble manual device configuration](#mumble-manual-device-configuration)
-* 8 [Connecting it together](#connecting-it-together)
-* 9 [Testing](#conference-setup)
-* 10 [Deploying](#conference-setup)
-* 11 [TODO List](#conference-setup)
-* 12 [Credits](#conference-setup)
-
-## Prerequisites
-
-You'll need to verify you have a few things installed before you can get started:
+在开始之前，您需要确认已安装以下几项：
 
 ```xml
 * Linux 2.6+
-* ALSA Loopback Module (snd-aloop or snd_aloop)
-* Xorg, Xvfb, or Xvnc
-* Mumble (1.2.2 used here)
+* ALSA Loopback 模块 (snd-aloop 或 snd_aloop)
+* Xorg, Xvfb 或 Xvnc
+* Mumble (本示例中使用 1.2.2 版本)
 ```
 
-For the FreeSWITCH, you'll need [mod\_portaudio](../Modules/mod_portaudio_9634724.mdx#about) and [mod\_conference](../Conference/index.mdx#about).
+对于FreeSWITCH，您需要安装[mod_portaudio](../Modules/mod_portaudio_9634724.mdx#about) 和 [mod_conference](../Conference/index.mdx#about)模块。
 
-Verify that you have these modules by looking in mod/ for their filenames (mod\_portaudio.so and mod\_conference.so)
+通过查看 mod/ 目录中的文件名（mod_portaudio.so 和 mod_conference.so），确认是否已安装这些模块。
 
-Also, make sure they're enabled in autoload\_configs/modules.conf.xml.
+此外，请确保在 autoload_configs/modules.conf.xml 中启用这些模块。
 
-## Conference Setup
+## 会议设置
 
-Initially all you'll need to do is setup a conference, which is configured in autoload\_configs/conference.conf.xml:
+最初，您只需要设置一个会议，会议的配置文件位于 autoload_configs/conference.conf.xml：
 
-Mine looks like this:
+我的配置如下：
 
 ```xml
-<configuration name="conference.conf" description="Audio Conference">
+<configuration name="conference.conf" description="音频会议">
   <advertise>
     <room name="\*94@$${domain}" status="FreeSWITCH"/>
   </advertise>
@@ -96,13 +93,13 @@ Mine looks like this:
 </configuration>
 ```
 
-There's probably 'problems' with this, but it works perfectly for me, so pundits please update this example if you spot any errors.
+这个可能存在一些'问题'，但对我来说却完美运作，所以如果你发现任何错误，请评论者更新一下这个示例。
 
-As you can see, it's a basic conference, but with some key differences: the RATE is quite high (48khz), but this is because Mumble (on my system) uses this samplerate. Using the same samplerate not only avoids resampling, but also improves stability (no jitters, or crackles). Take note of this setting though for later.
+正如你所见，这是一个基本的会议，但有一些关键的差异：速率非常高（48khz），这是因为Mumble（在我的系统上）使用这个采样率。使用相同的采样率不仅避免了重新采样，而且提高了稳定性（没有抖动或爆裂声）。不过稍后请注意这个设置。
 
-## Dialplan Setup
+## 设置拨号计划
 
-Assign an extension to this conference, and test it out. My dialplan entry looks like this:
+给这个会议分配一个分机，并进行测试。我的拨号计划条目如下：
 
 ```xml
 <extension name="mumbleconference">
@@ -112,11 +109,11 @@ Assign an extension to this conference, and test it out. My dialplan entry looks
 </extension>
 ```
 
-In our case, the conference is configured as 'default', and there is no conference named 'hydway', so .. it works. But I think if you have more than one conference, you should point your dialplan at it properly.
+在我们的情况下，该会议被配置为'default'，并且没有名为'hydway'的会议，所以...可以正常工作。但我认为，如果你有多个会议，你应该正确地将你的拨号计划指向它。
 
-## PortAudio Endpoint
+## PortAudio终端
 
-The Portaudio plugin must also be setup, and the configuration is located at autoload\_configs/[portaudio.conf.xml](https://wiki.freeswitch.org/wiki/Portaudio.conf.xml "Portaudio.conf.xml"). Mine looks like this:
+还必须设置Portaudio插件，其配置位于autoload\_configs/[portaudio.conf.xml](https://wiki.freeswitch.org/wiki/Portaudio.conf.xml "Portaudio.conf.xml")。我的配置如下：
 
 ```xml
 <configuration name="portaudio.conf" description="Soundcard Endpoint">
@@ -133,43 +130,43 @@ The Portaudio plugin must also be setup, and the configuration is located at aut
 </configuration>
 ```
 
-Again, take note of the 'sample-rate' parameter, we want it to match both our conference and our mumble client.
+再次注意 'sample-rate' 参数，我们希望它与我们的会议和 Mumble 客户端匹配。
 
-## ALSA asoundrc or asound.conf
+## ALSA asoundrc 或 asound.conf
 
-Notice the 'indev' and 'outdev' values as 'cloop' and 'ploop' in the portaudio setup. These devices will be created using the snd-aloop ALSA module by adding (or creating) the following to /etc/asound.conf:
+在 portaudio 设置中，注意 'indev' 和 'outdev' 值，将它们设置为 'cloop' 和 'ploop'。通过在 /etc/asound.conf 中添加（或创建）以下内容来使用 snd-aloop ALSA 模块创建这些设备：
 
 ```xml
- pcm.amix {
-   type dmix
-   ipc_key 219345
-   slave.pcm "hw:Loopback,0,0"
- }
- pcm.asnoop {
-   type dsnoop
-   ipc_key 219346
-   slave.pcm "hw:Loopback,0,1"
- }
- # ------------------------------------------------------
- pcm.ploop {
-   type dmix
-   ipc_key 219356
-   slave.pcm "hw:Loopback,1,1"
- }
- pcm.cloop {
-   type dsnoop
-   ipc_key 219348
-   slave.pcm "hw:Loopback,1,0"
- }
+pcm.amix {
+  type dmix
+  ipc_key 219345
+  slave.pcm "hw:Loopback,0,0"
+}
+pcm.asnoop {
+  type dsnoop
+  ipc_key 219346
+  slave.pcm "hw:Loopback,0,1"
+}
+# ------------------------------------------------------
+pcm.ploop {
+  type dmix
+  ipc_key 219356
+  slave.pcm "hw:Loopback,1,1"
+}
+pcm.cloop {
+  type dsnoop
+  ipc_key 219348
+  slave.pcm "hw:Loopback,1,0"
+}
 ```
 
-Effectively, this will connect 'asnoop' with 'ploop', and 'amix' with 'cloop'. When audio is piped into asnoop, it'll come out of ploop. The same goes for the other two. (You can name these whatever you want; mumbleAplayback/mumbleAcapture and mumbleBplayback/mumbleBcapture for example may make more sense.)
+这样，'asnoop' 将与 'ploop' 连接，'amix' 将与 'cloop' 连接。当音频通过 asnoop 输入时，它将从 ploop 输出。另外两个也是如此。（您可以根据需要将它们命名为任何名称；例如，mumbleAplayback/mumbleAcapture 和 mumbleBplayback/mumbleBcapture 可能更合适。）
 
-In this configuration, everything runs through dmix and dsnoop. This isn't required if your samplerates match. To freeball it, change the 'type' field to 'plug', and remove the ipc\_key lines.
+在此配置中，所有内容都通过 dmix 和 dsnoop 运行。如果采样率匹配，则不需要这样设置。要更改 'type' 字段为 'plug' ，并删除 ipc\_key 行即可。
 
-## Preparing FreeSWITCH
+## 准备 FreeSWITCH
 
-In case your freeswitch is currently running, connect using fs\_cli and issue:
+如果您的 FreeSWITCH 当前正在运行，请使用 fs\_cli 连接并执行以下命令：
 
 ```xml
 reloadxml
@@ -177,74 +174,76 @@ reload mod_portaudio
 reload mod_conference
 ```
 
-Now, while still in fs\_cli, list your portaudio devices to verify it is using our new loopback devices:
+现在，在 fs\_cli 中，列出您的 portaudio 设备以验证它是否正在使用我们的新回路设备：
 
 ```xml
 pa devlist
 ```
 
-If configured correctly, it should look something like this:
+如果配置正确，它应该类似于以下内容：
 
 ```xml
 freeswitch@internal> pa devlist
 0;VIA 8237: VIA 8237 (hw:0,0)(ALSA);2;2;
 1;VIA 8237: VIA 8237 (hw:0,1)(ALSA);2;6;
-2;Dummy: Dummy PCM (hw:1,0)(ALSA);2;2;
-3;Dummy: Dummy PCM (hw:1,1)(ALSA);2;2;
-4;Dummy: Dummy PCM (hw:1,2)(ALSA);2;2;
-5;Dummy: Dummy PCM (hw:1,3)(ALSA);2;2;
-6;Loopback: Loopback PCM (hw:2,0)(ALSA);32;32;
-7;Loopback: Loopback PCM (hw:2,1)(ALSA);2;32;
-8;front(ALSA);0;2;
-9;surround40(ALSA);0;4;
-10;surround41(ALSA);0;128;
-11;surround50(ALSA);0;128;
-12;surround51(ALSA);0;128;
+2;虚拟: 虚拟 PCM (hw:1,0)(ALSA);2;2;
+3;虚拟: 虚拟 PCM (hw:1,1)(ALSA);2;2;
+4;虚拟: 虚拟 PCM (hw:1,2)(ALSA);2;2;
+5;虚拟: 虚拟 PCM (hw:1,3)(ALSA);2;2;
+6;回路: 回路 PCM (hw:2,0)(ALSA);32;32;
+7;回路: 回路 PCM (hw:2,1)(ALSA);2;32;
+8;前置(ALSA);0;2;
+9;环绕40(ALSA);0;4;
+10;环绕41(ALSA);0;128;
+11;环绕50(ALSA);0;128;
+12;环绕51(ALSA);0;128;
 13;iec958(ALSA);0;2;
 14;spdif(ALSA);0;2;
 15;ploop(ALSA);0;2;r,o
 16;cloop(ALSA);2;0;i
-17;default(ALSA);128;128;
+17;默认(ALSA);128;128;
 18;dmix(ALSA);0;2;
 ```
 
-The entries to note are 'ploop' and 'cloop', entries 15 and 16\. At the end of each line you'll see 'r,o' which means 'ringer, output', meaning this device is where your portaudio endpoint will both ring on and send output to. The next line has an 'i' at the end, meaning the endpoint will use this device as input.
+需要注意的条目是 'ploop' 和 'cloop'，分别是 15 和 16 行。在每行的末尾你会看到 'r, o'，表示 'ringer, output'，意味着这个设备既可以作为你的 portaudio 端点来响铃，也可以发送输出。下一行的末尾有个 'i'，意味着这个端点将使用这个设备作为输入。
 
-The 'Loopback' entries (6 and 7) are possibly unusable. I haven't found any way to directly address the subdevices ('2,0,0', '2,0,1', etc.) Luckily, it picks up our handrolled PCMs, which is good enough.
+'Loopback' 的条目（6 和 7）可能无法使用。我没有找到任何直接访问子设备（'2, 0, 0'，'2, 0, 1' 等）的方法。幸运的是，它可以识别我们手动创建的 PCM，这已经足够好了。
 
-## Mumble Configuration
+## Mumble 配置
 
-If you've made it this far, it gets much easier. Get/build/install Mumble. I'm not going to explain how, their website should help you out.
+如果你已经到了这一步，那么接下来会更容易些。获取/构建/安装 Mumble。我不打算解释如何做，他们的网站应该会帮助你。
 
-Once you have Mumble built and running on your server (using Xorg or Xvnc), open the settings via Configure->Settings, and check the Advanced box in the bottom left.
+一旦你在服务器上运行了 Mumble（使用 Xorg 或 Xvnc），通过 Configure->Settings 打开设置，然后勾选左下角的 Advanced。
 
-Select Audio Input on the left-side menu.
+在左侧菜单上选择 Audio Input。
 
-Your devices (amix/asnoop) probably won't appear in the dropdown. If they do, select them. If they don't, don't worry, we'll fix that in a minute.
+你的设备（amix / asnoop）可能不会显示在下拉列表中。如果它们显示了，请选择它们。如果它们没有显示，请不要担心，我们一会会修复这个问题。
 
-Under Transmission, set Transmit to Voice Activity. Adjust your Compression settings (I always suggest using Speex codec for compatibility with all Mumble clients, which may be achieved by selecting a Quality level below 45.5kbit. If it stays on CELT, your Mumble client probably wasn't compiled with Speex. I -highly- suggest recompiling with support for both, unless you have control over -every- Mumble client which this configuration will communicate with; otherwise you may not 'hear' what they say). Tune your Audio per packet as you like as well. I've found that when speaking to a murmur server running on my LAN, this can be set to the minimum (10ms) without any issues. It also improves responsiveness to do this, but higher settings may be required if you're connecting to a server off-site.
+### Mumble手动设备配置
 
-Switch to Audio Output on the left-side menu.
+在传输设置下，将传输方式设置为语音活动。调整您的压缩设置（我建议始终使用Speex编解码器，以确保兼容所有的Mumble客户端。可以通过选择低于45.5kbit的质量级别来实现此目标。如果仍然使用CELT编解码器，可能是因为您的Mumble客户端没有以Speex编译。除非您能够控制与此配置进行通信的每一个Mumble客户端，否则我强烈建议重新编译同时支持两种编解码器，否则您可能无法"听到"他们说什么）。您也可以根据需要调整每个音频包的设置。我发现，当与我所在局域网上运行的 murmur 服务器进行通信时，此设置可设置为最低值（10毫秒），而不会出现任何问题。这样做还可以提高响应能力。但是如果您连接到远程服务器，则可能需要使用较高的设置。
 
-Default Jitter Buffer may be set quite low, I use 10ms. Output Delay also. Again, for longer range Mumble links, higher levels may be required on these two fields.
+切换到左侧菜单中的音频输出。
 
-Switch to Messages on the left-side menu.
+默认的抖动缓冲可以设置得很低，我使用10毫秒。输出延迟也是如此。同样，对于较长距离的Mumble链接，这两个字段可能需要使用更高的级别。
 
-These are at your own discretion. Basically every message which has an audio-generating alert associated with it will be broadcast over the conference. This bothered me, so I disabled all message notifications. (Text-to-speech is sorta cool, but believe me, it gets old really fast on a conference!)
+切换到左侧菜单中的消息。
 
-You may want to finish tuning your setup, but for great victory, click OK to save, and close Mumble.
+这些由您自行决定。基本上，每个带有音频警报的消息都会在会议中广播。这让我很困扰，所以我禁用了所有的消息通知。（文本转语音功能有点酷，但相信我，参加会议上它会迅速变得非常烦人！）
 
-### Mumble manual device configuration
+您可能希望完成调整您的设置，但是为了取得巨大的胜利，请单击"确定"进行保存，并关闭Mumble。
 
-If your 'amix' and 'asnoop' PCM devices didn't appear in your Audio Input and Audio Output device selection fields in Mumble, some configuration hacking is required. Open \~/.config/Mumble/Mumble.conf in your favourite text editor, and locate a section which looks like this:
+### Mumble手动设备配置向导
+
+如果您在Mumble的音频输入和音频输出设备选择字段中没有看到'amix'和'asnoop'音频PCM设备，需要进行一些配置调整。在您喜欢的文本编辑器中打开\~/.config/Mumble/Mumble.conf文件，并找到类似下面的一节内容：
 
 ```xml
 [alsa]
-output="front:CARD=Headset,DEV=0"
-input="front:CARD=Headset,DEV=0"
+output="front:CARD=耳机,DEV=0"
+input="front:CARD=耳机,DEV=0"
 ```
 
-... now, change it to look like this:
+...现在，将它修改为以下内容：
 
 ```xml
 [alsa]
@@ -252,57 +251,54 @@ input=asnoop
 output=amix
 ```
 
- Save, close, restart Mumble. Easy, right? Sure, but the next time you open Configure->Settings and click Apply or OK, you'll have to do this all over again. In my case, the section itself was removed from the config file entirely, I just re-added it. Other than this inconvenience, it works perfectly. And once running, you should have little or no reason to reopen your configuration anyway, right? :)
+保存，关闭，重新启动Mumble。容易吧？当然，但是下次打开配置-设置，点击应用或确定时，您需要再次进行这些操作。在我的情况下，配置文件中的这个部分被完全移除了，我只是重新添加了它。除了这个不便之外，它完美地运行着。一旦运行，您应该很少或根本没有理由重新打开配置，对吧？ :)
 
-## Connecting it together
+## 将其连接在一起
 
-If you've managed all of this, connect to any server you like in Mumble. If anybody speaks to you on there, you won't be able to hear it (if you have speakers or a headset connected to your FreeSWITCH server at all, you weirdos) because Mumble is routing directly into our Loopback device, which is tied, on the opposing end, to our mod\_portaudio instance.
+如果您成功完成了所有这些操作，请在Mumble中连接到任何您喜欢的服务器。如果有人在那里对您说话，您将无法听到（如果您已将扬声器或耳机连接到您的FreeSWITCH服务器，那么）因为Mumble直接路由到我们的Loopback设备，该设备与我们的mod\_portaudio实例相连。
 
-Go back to fs\_cli and issue the following command:
+返回到fs\_cli并执行以下命令：
 
 ```xml
 pa call *94
 ```
 
-...with your conference extension in place of '\*94'. If all is well, you should see the 'lips' of your FreeSWITCH-controlled-Mumble-client turn red with fabulous activity-- briefly.
+...将'\*94'替换为您的会议分机号码。如果一切正常，您应该看到您的FreeSWITCH控制的Mumble客户端的“嘴唇”变成红色，表示有活动-暂时。
 
-In the terminal where you executed Mumble, note the sample rates it is using for both input and output. Configure your conference and/or portaudio to match, unless you're satisfied by dsnoop and dmix's resampling.
+在执行Mumble的终端中，注意它用于输入和输出的采样率。根据需要配置您的会议和/或portaudio，除非您满意dsnoop和dmix的重新采样。
 
-## Testing
+## 测试
 
-Now to test both ends:
+现在来测试两端：
 
-Connect to the same mumble server from another computer, as usual. Pick up your SIP phone (or whatever you have connecting to FreeSWITCH, softphone, iax phone, whatever,) and dial into your conference. Talk into each, and listen with the respective other. If you have latency, adjust buffering accordingly.
+像往常一样，从另一台计算机连接到相同的Mumble服务器。用您的SIP电话（或任何连接到FreeSWITCH的设备，软电话，iax电话等）拨打进您的会议。在各方进行对话并通过相应的设备进行听。如果有延迟，请相应地调整缓冲区。
 
-## Deploying
+## 部署
 
-At this point, you may wish to set snd-aloop to automatically load on system startup by adding it to your /etc/modules file.
+在这一点上，您可能希望通过将snd-aloop添加到/etc/modules文件中，使其在系统启动时自动加载。
 
-## TODO List
+## 待办事项列表
 
-I'd also like to request input on methods to do the following:
+我还想请求关于以下方法的建议：
 
 ```xml
-* Have mod_portaudio automatically connect to the conference instead of doing so manually with fs_cli.
-  + This is possible by calling something similar to:
+* 让mod_portaudio自动连接到会议，而不是使用fs_cli手动连接。
+  + 可以通过调用类似以下内容实现：
     /usr/local/freeswitch/bin/fs_cli -x "pa call *94"
-    ... near the end of a FreeSWITCH initscript, with your conference extension in place of '*94'
+	...在FreeSWITCH初始化脚本的末尾处，将您的会议扩展号替换为'*94'
 ```
 
 ```xml
-* Have Mumble automatically connect to a configured Murmur server on startup.
-  + This is possible with Mumble 1.2.2 and this fantastic patch:
+* 使Mumble在启动时自动连接到配置的Murmur服务器。
+  + 在Mumble 1.2.2中可以通过这个很棒的补丁实现：
     https://sourceforge.net/tracker/?func=detail&aid=3044142&group_id=147372&atid=768007
-  + According to slicer at the Mumble project, the current (Aug 13th, 2010) GIT trunk of
-    Mumble is capable of connecting to the 'last server' automatically, which could also
-    work.  This is probably the best method, since the feature will be actively maintained.
+  + 根据Mumble项目中的slicer所说，在当前（2010年8月13日）的GIT主干版本中，
+    Mumble可以自动连接到'上次使用的服务器'，这也是可行的。 这可能是最好的方法，
+    因为该功能将得到积极维护。
 ```
 
-  
-If there are better solutions, please comment. Otherwise, once/if the Autoconnect patch is accepted on Mumble upstream, instructions will be adjusted accordingly.
+如果有更好的解决方案，请留言。 否则，一旦Mumble上游接受了Autoconnect补丁，将相应调整说明。
 
-## Credits
+## 鸣谢
 
-I stole the snd-aloop and asoundrc idea from this: <http://alsa.opensrc.org/Jack%5Fand%5FLoopback%5Fdevice%5Fas%5FAlsa-to-Jack%5Fbridge>
-
-
+我从此处偷走了snd-aloop和asoundrc的思路：<http://alsa.opensrc.org/Jack%5Fand%5FLoopback%5Fdevice%5Fas%5FAlsa-to-Jack%5Fbridge>

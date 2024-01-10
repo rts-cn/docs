@@ -1,36 +1,31 @@
+# 在RAM驱动器中运行的FreeSWITCH数据库
 
-# FreeSWITCH DB in RAMdrive 
+## 关于
 
- 
+将临时数据库移动到RAM磁盘中将极大地提高性能，如果您使用SSD，则将它们移动到RAM磁盘中至关重要。有关在SSD上运行FreeSWITCH的更多信息，请参阅[此处](../Configuration/SSD-Tuning-for-Linux_1966304.mdx#about)。
 
-## About
+单击此处展开目录
 
-Moving the ephemeral databases to a RAM disk will greatly improve performance, and it is CRITICAL to move them to a RAM disk if you use SSDs. More info on running FreeSWITCH on SSDs is [here](../Configuration/SSD-Tuning-for-Linux_1966304.mdx#about)[.](https://wiki.freeswitch.org/wiki/SSD%5FTuning%5Ffor%5FLinux "SSD Tuning for Linux")
+* 1 [讨论](#discussion)
+   * 1.1 [示例](#example)
 
-Click here to expand Table of Contents
+## 讨论
 
-* 1 [Discussion](#discussion)  
-   * 1.1 [Example](#example)
+某些Linux发行版存在问题，导致SQLite在扩展时表现不佳。在其他情况下，磁盘I/O成为限制FreeSWITCH性能的瓶颈。将FreeSWITCH的core.db文件放在RAM磁盘上可以提高性能。
 
-## Discussion
+### 示例
 
-Some Linux distros have quirks that cause SQLite to behave poorly when scaling up. In other cases, disk I/O becomes a bottleneck to FreeSWITCH performance. Putting the FreeSWITCH core.db file onto a RAM disk can increase performance.
-
-### Example
-
-1. In /etc/fstab, add a mountpoint and save.  
-   1. ```xml  
-   tmpfs    /usr/local/freeswitch/ramdisk     tmpfs   defaults        0 0  
+1. 在/etc/fstab中添加一个挂载点并保存。
+   1. ```xml
+   tmpfs    /usr/local/freeswitch/ramdisk     tmpfs   defaults        0 0
    ```
-2. Make sure you also create the directory.  
-   1. ```xml  
-   mkdir /usr/local/freeswitch/ramdisk  
-   mount -a  
+2. 确保还创建了目录。
+   1. ```xml
+   mkdir /usr/local/freeswitch/ramdisk
+   mount -a
    ```
-3. Then, in freeswitch/conf/autoload\_configs/switch.conf.xml uncomment core-db-name and set it to the path you created in fstab.  
-   1. ```xml  
-   <param name="core-db-name" value="/usr/local/freeswitch/ramdisk/core.db" />  
+3. 然后在freeswitch/conf/autoload\_configs/switch.conf.xml中取消注释core-db-name并将其设置为您在fstab中创建的路径。
+   1. ```xml
+   <param name="core-db-name" value="/usr/local/freeswitch/ramdisk/core.db" />
    ```
-4. Restart FreeSWITCH
-
-
+4. 重新启动FreeSWITCH

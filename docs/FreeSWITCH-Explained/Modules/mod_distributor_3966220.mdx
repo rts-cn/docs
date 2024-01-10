@@ -1,132 +1,135 @@
+# mod_distributor
 
-# mod_distributor 
+## 关于
 
- 
+mod_distributor以加权轮询的方式将呼叫分发给网关。它通过XML文件进行配置，并可以使用多个网关列表。
 
-## About
+单击此处展开目录
 
-mod\_distributor distributes calls to gateways in a weighted round-robin fashion. It is configured via XML file and can use multiple lists of gateways.
+* 1 [安装](#installing)
+* 2 [使用](#usage)
+* 3 [配置](#configuration)
+   * 3.1 [在XML拨号计划中循环](#loop-in-xml-dialplan)
+   * 3.2 [失效的网关](#dead-gateways)
+   * 3.3 [API命令](#api-command)
+* 4 [参考](#see-also)
 
-Click here to expand Table of Contents
+## 安装
 
-* 1 [Installing](#installing)
-* 2 [Usage](#usage)
-* 3 [Configuration](#configuration)  
-   * 3.1 [Loop in XML Dialplan](#loop-in-xml-dialplan)  
-   * 3.2 [Dead Gateways](#dead-gateways)  
-   * 3.3 [API Command](#api-command)
-* 4 [See Also](#see-also)
-
-## Installing
-
-Edit `modules.conf` and add the following line:
+编辑 `modules.conf` 并添加以下行：
 
 applications/mod_distributor
 
-Then,
+然后，
 
 make mod_distributor
 
 make mod_distributor-install
 
-Tell FreeSWITCH to load the module at run time by adding the line below to $${conf\_dir}`/autoload_configs/modules.conf.xml`
+通过将以下行添加到 `$${conf_dir}`/autoload_configs/modules.conf.xml 使得FreeSWITCH在运行时加载该模块：
 
 &lt;load module="mod_distributor"/>
 
-## Usage
+## 使用
 
-There are several ways to use the distributor, however it frequently will be used with the bridge app. For example, if you have two gateways defined you can have the distributor fill in the dialstring like this:
+有几种使用distributor的方法，但通常与bridge应用程序一起使用。例如，如果定义了两个网关，您可以使用distributor填充拨号字符串，如下所示：
 
 &lt;action application="bridge" data="sofia/gateway/${distributor(distributor_list)}/${destination_number}"/>
 
-\-- or--
+\-- 或者 --
 
 &lt;action application="bridge" data="sofia/external/${destination_number}@${distributor(distributor_list)}"/>
 
-To reload distributor.conf.xml at the CLI:
+要在CLI中重新加载distributor.conf.xml：
 
 reloadxml
 distributor_ctl reload
 
-## Configuration
+## 配置
 
-mod\_distributor works by returning node values from the configuration file. Here's a sample:
+mod_distributor通过返回配置文件中的节点值来工作。以下是一个示例：
 
-&lt;configuration name="distributor.conf" description="Distributor Configuration">
+```xml
+&lt;configuration name="distributor.conf" description="分发器配置">
   &lt;lists>
-    &lt;!-- every 10 calls to test you will get foo1 once and foo2 9 times...yes NINE TIMES! -->
-    &lt;!-- this is not the same as 100 with 10 and 90 that would do foo1 10 times in a row then foo2 90 times in a row -->
+    &lt;!-- 每当调用测试 10 次时，你将获得 foo1 1 次和 foo2 9 次...是的，9 次！ -->
+    &lt;!-- 这与 100、10 和 90 不同，它会让 foo1 连续调用 10 次，然后让 foo2 连续调用 90 次 -->
     &lt;list name="test" total-weight="10">
       &lt;node name="foo1" weight="1"/>
       &lt;node name="foo2" weight="9"/>
     &lt;/list>
   &lt;/lists>
 &lt;/configuration>
+```
 
-In the list named "test" the total weight is 10, and the individual nodes each have their weights add up to 10\. When the distributor is called for **test**, it will return **foo1** the first time, then it will return **foo2** the next nine times. The next call will return **foo1** again, and then the next nine will be **foo2**, and so on.
+在名为“test”的列表中，总权重为10，并且每个节点的权重加起来等于10。当调用**test**时，首次返回**foo1**，接下来返回**foo2**九次。下一次调用又会返回**foo1**，然后接下来的九次是**foo2**，以此类推。
 
-To do an alternating list use something like this:
+要创建一个交替列表，可以使用以下示例：
 
-  &lt;list name="alternating" total-weight="2">
-    &lt;node name="alt_one" weight="1"/>
-    &lt;node name="alt_two" weight="1"/>
-  &lt;/list>
+```xml
+&lt;list name="alternating" total-weight="2">
+  &lt;node name="alt_one" weight="1"/>
+  &lt;node name="alt_two" weight="1"/>
+&lt;/list>
+```
 
-In the above example, each call to **distributor(alternating)** will alternate between returning **alt\_one** and **alt\_two.**
+在上面的示例中，每次调用**distributor(alternating)**时，将交替返回**alt_one**和**alt_two**。
 
-You can use this to send calls out multiple gateways for simple load sharing. Let's say you have three different gateways defined as gateway1, gateway2, and gateway3\. To send every third call out each gateway you would need to put this in your distributor.conf.xml file:
+你可以将调用分发到多个网关以实现简单的负载均衡。假设你定义了三个不同的网关，分别是 gateway1、gateway2 和 gateway3。要使每三个调用分别通过不同的网关，你需要在 distributor.conf.xml 文件中添加以下配置：
 
-  &lt;list name="3gw" total-weight="3">
-    &lt;node name="gateway1" weight="1"/>
-    &lt;node name="gateway2" weight="1"/>
-    &lt;node name="gateway3" weight="1"/>
-  &lt;/list>
+```xml
+&lt;list name="3gw" total-weight="3">
+  &lt;node name="gateway1" weight="1"/>
+  &lt;node name="gateway2" weight="1"/>
+  &lt;node name="gateway3" weight="1"/>
+&lt;/list>
+```
 
-Then define a dialplan extension similar to this:
+然后，定义一个类似下面的拨号计划扩展：
 
-  &lt;extension name="3-way gateway distro">
-    &lt;condition field="destination_number" expression="^(.*)$">
-      &lt;action application="bridge" data="sofia/gateway/${distributor(3gw)}/$1"/>
-    &lt;/condition>
-  &lt;/extension>
+```xml
+<extension name="三方网关分发">
+  <condition field="destination_number" expression="^(.*)$">
+    <action application="bridge" data="sofia/gateway/${distributor(3gw)}/$1"/>
+  </condition>
+</extension>
 
-The distributor will supply the name of the gateway to use. Each call that comes through diaplan will trigger the distributor which will in turn supply the appropriate response.
+分发器将提供要使用的网关名称。通过Dialplan传递的每个呼叫都会触发分发器，并由其提供适当的响应。
 
-### Loop in XML Dialplan
+### XML Dialplan中的循环
 
-When you want the dialplan to continue and get executed if the previous bridge failed, you can do the following:
+如果你希望Dialplan在之前的桥接失败后继续执行，可以进行以下操作：
 
-  &lt;extension name="3-way gateway distributor">
-    &lt;condition field="destination_number" expression="^(.*)$">
-      &lt;action application="set" data="continue_on_fail=true"/>
-      &lt;action application="set" data="hangup_after_bridge=true"/>
-      &lt;action application="bridge" data="sofia/gateway/${distributor(3gw)}/$1" loop="3"/>
-    &lt;/condition>
-  &lt;/extension>
+<extension name="三方网关分发">
+  <condition field="destination_number" expression="^(.*)$">
+    <action application="set" data="continue_on_fail=true"/>
+    <action application="set" data="hangup_after_bridge=true"/>
+    <action application="bridge" data="sofia/gateway/${distributor(3gw)}/$1" loop="3"/>
+  </condition>
+</extension>
 
-### Dead Gateways
+### 失效网关
 
-To exclude dead gateways in your dialplan:
+在Dialplan中排除失效的网关：
 
-&lt;action application="bridge" data="sofia/gateway/${distributor(&lt;listname> ${sofia(profile &lt;profilename> gwlist down)})}/$1"/>
+<action application="bridge" data="sofia/gateway/${distributor(<网关列表> ${sofia(profile <配置文件名称> gwlist down)})}/$1"/>
 
-\--or--   
-Note: parentheses are optional on functions as vars: ${foo(bar)} is the same as ${foo bar}
+--或--
+注意：函数后面的括号对于变量来说是可选的：${foo(bar)}和${foo bar}是一样的
 
-&lt;action application="bridge" data="sofia/gateway/${distributor &lt;listname> ${sofia profile &lt;profilename> gwlist down}}/$1"/>
+<action application="bridge" data="sofia/gateway/${distributor <网关列表> ${sofia profile <配置文件名称> gwlist down}}/$1"/>
 
-\--or--
+--或--
 
-&lt;action application="bridge" data="sofia/gateway/${expand(distributor &lt;listname> \${sofia(profile &lt;profilename> gwlist down)})}/$1"/>
+<action application="bridge" data="sofia/gateway/${expand(distributor <网关列表> \${sofia(profile <配置文件名称> gwlist down)})}/$1"/>
 
-### API Command
+### API命令
 
-To run it from API command:
+通过API命令运行它：
 
-expand distributor &lt;listname> ${sofia profile &lt;profilename> gwlist down}
+expand distributor <网关列表> ${sofia profile <配置文件名称> gwlist down}
 
-## See Also
+## 参见
 
 * [limit](./mod-dptools/3375201.mdx#db)
-
-
+```

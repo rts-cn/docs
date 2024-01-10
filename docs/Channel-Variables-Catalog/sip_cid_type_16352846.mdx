@@ -1,46 +1,43 @@
+# sip_cid_type
 
-# sip_cid_type 
-
- Created by  Ryan Harris, last modified on 2018.02.07
+由Ryan Harris创建，上次修改于2018年02月07日
 
 ## sip_cid_type
 
-string Modify how the Caller ID will show up in SIP header of the outbound leg. [privacy](../FreeSWITCH-Explained/Modules/mod-dptools/6587011.mdx#about) on the inbound leg controls the remaining contents of RPID and Privacy headers.
+string 修改呼叫者ID在出站呼叫SIP头中的显示方式。入站呼叫的[隐私设置](../FreeSWITCH-Explained/Modules/mod-dptools/6587011.mdx#about)控制RPID和Privacy头部的其余内容。
 
-**Usage**
+**用法**
 
-Send no extra caller id info (Caller ID will be in the SIP `From`):
+不发送额外的呼叫者ID信息（呼叫者ID将在SIP的`From`中显示）:
 
-![(warning)](/images/icons/emoticons/warning.svg) this will not work for gateways. You must set `caller-id-in-from=true` in the gateway settings.
+![(warning)](/images/icons/emoticons/warning.svg) 对于网关而言，这种方法不起作用。您必须在网关设置中将`caller-id-in-from=true`。
 
 ```xml
 {sip_cid_type=none}sofia/default/user@example.com
 ```
 
-Send `Remote-Party-ID` (default):
+发送`Remote-Party-ID`（默认）:
 
 ```xml
 {sip_cid_type=rpid}sofia/default/user@example.com
 ```
 
-Send `P-Asserted-Identity`:
+发送`P-Asserted-Identity`:
 
-![(warning)](/images/icons/emoticons/warning.svg) you must set privacy flag, otherwise `P-Preferred-Identity` will be inserted instead of `P-Asserted-Identity`.
+![(warning)](/images/icons/emoticons/warning.svg) 您必须设置隐私标志，否则将插入`P-Preferred-Identity`而不是`P-Asserted-Identity`。
 
 ```xml
 {sip_cid_type=pid}sofia/default/user@example.com
 ```
 
-Send RPID with chosen content and privacy flags (`+` delimited, `none` to clear all flags):
+发送含有所选内容和隐私标志的RPID（以`+`分隔，使用`none`以清除所有标志）:
 
 ```xml
 {sip_cid_type=rpid,origination_caller_id_name=test,origination_caller_id_number=1234,origination_privacy=screen+hide_name+hide_number}sofia/default/user@example.com
 ```
 
-Send `Remote-Party-ID` with chosen content:
+发送具有所选内容的`Remote-Party-ID`:
 
 ```xml
 {sip_cid_type=rpid,origination_caller_id_name=test,origination_caller_id_number=1234}sofia/default/user@example.com
 ```
-
-

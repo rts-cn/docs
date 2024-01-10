@@ -1,119 +1,115 @@
+# mod_db
 
-# mod_db 
+## 关于
 
- 
+mod_db实现了与数据库后端的API和拨号计划接口。数据库可以是sqlite或ODBC。它还提供了组拨号和数据库支持的限制接口。
 
-## About
+点击此处展开目录
 
-mod\_db implements an API and dialplan interface to a database backend. The database can either be in sqlite or ODBC. It also provides support for group dialing and provides database backed limit interface.
+* 1 [需求](#requirements)
+* 2 [安装](#installing)
+* 3 [概念](#concepts)
+* 4 [拨号应用](#dialplan-application)
+   * 4.1 [数据库](#database)
+   * 4.2 [组](#group)
+* 5 [API](#api)
+   * 5.1 [数据库](#database)
+* 6 [限制](#limit)
 
-Click here to expand Table of Contents
+### 需求
 
-* 1 [Requirements](#requirements)
-* 2 [Installing](#installing)
-* 3 [Concepts](#concepts)
-* 4 [Dialplan Application](#dialplan-application)  
-   * 4.1 [Database](#database)  
-   * 4.2 [Group](#group)
-* 5 [API](#api)  
-   * 5.1 [Database](#database)
-* 6 [Limit](#limit)
+必须配置ODBC以使用ODBC资源（使用--enable-core-odbc-support进行配置）。
 
-### Requirements
+### 安装
 
-ODBC must be configured to use ODBC resources (configure with --enable-core-odbc-support).
+mod_db默认已编译和加载。通过修改db.conf启用ODBC。
 
-### Installing
+### 概念
 
-mod\_db is compiled and loaded by default. Modify db.conf to enable ODBC.
+Realm和key是任意字符串。将realm视为键的容器。
 
-### Concepts
+### 拨号应用
 
-Realm and key are arbitrary strings. Consider realm as a container for keys.
+#### 数据库
 
-### Dialplan Application
-
-#### Database
-
-Insert a value into the database:
+向数据库插入一个值：
 
 ```xml
 <action application="db" data="insert/realm/key/value"/>
 ```
 
-mod\_db manages 'realm/key' as a UNIQUE tuple (2-tuple). So if you 'insert' two, or more, times the same 'realm/key' tuple, then only one row, of 'realm/key/value', will be in the persistent database. The one-only stored row is the row resulting from the last successful 'insert/realm/key/value' method (last-in). Method 'select/realm/key' returns this last-in, one-only resulting row.
+mod_db将'realm/key'作为唯一的二元组进行管理。因此，如果多次插入相同的'realm/key'元组，那么只会在持久性数据库中有一行'realm/key/value'。唯一保存行是运行最后一个成功的'insert/realm/key/value'方法得到的行（最后插入）。
+方法'select/realm/key'返回这个最后插入的唯一结果行。
 
-As of 2013-05-08, newly created schemas enforce this uniqueness with an index. Previous versions only maintain it internally with a SQL delete + insert.
+截至2013-05-08，新创建的模式会通过索引来强制保证这种唯一性。之前版本只是在内部使用SQL delete + insert来维护。
 
-Delete an entry from the database:
+从数据库中删除一个条目：
 
 ```xml
 <action application="db" data="delete/realm/key"/>
 ```
 
-Retrieve a value from the database:
+从数据库中检索一个值：
 
 ```xml
 <action application="set" data="var=${db(select/realm/key)}"/>
 ```
 
-Use as a condition:
+作为条件使用：
 
 ```xml
-<condition field="${db(select/realm/key)}" expression="^value$"/>
+<condition field="${db (select / realm / key)}" expression="^ value $"/>
 ```
 
-Use as a condition checking if item exists:
+作为一个条件检查是否存在物品：
 
 ```xml
-<condition field="${db(exists/realm/key)}" expression="^true$"/>
+<condition field="${db (存在 / 域 / 键)}" expression="^ 真 $"/>
 ```
 
-#### Group
+组
 
-Group allows one to define multiple endpoints for a given destination (group).
+Group 允许为给定的目标（组）定义多个终端点。
 
-Insert a group entry:
+插入组条目：
 
 ```xml
-<action application="group" data="insert:groupname:sipurl"/> 
+<action application="group" data="insert：groupname：sipurl"/> 
 ```
 
-Delete a group entry:
+删除组条目：
 
 ```xml
- <action application="group" data="delete:groupname:sipurl"/>
+<action application="group" data="delete：groupname：sipurl"/>
 ```
 
-Select a group entry:
+选择组条目：
 
 ```xml
- <action application="set" data="api_result=${group(call:groupname)}"/>
+<action application="set" data="api_result = $ {group（call：groupname）}"/>
 ```
 
-### API
+API
 
-#### Database
+数据库
 
 ```xml
-db insert/realm/key/value
-db delete/realm/key
-db select/realm/key
-db exists/realm/key
+db insert / realm / key / value
+db delete / realm / key
+db select / realm / key
+db exists / realm / key
 ```
 
-Group
+组
 
 ```xml
-group insert:groupname:sipurl
-group delete:groupname:sipurl
-group call:groupname[:order]
+group insert: groupname: sipurl
+group delete: groupname: sipurl
+group call: groupname[: order]
 ```
 
-### Limit
+限制
 
-The db backend for limit provides a persistent datastore for limit data. If using ODBC, this backend can also be shared across a cluster of FreeSWITCH™ instances.
+限制的数据库后端提供了一个持久存储器，用于限制数据。 如果使用ODBC，此后端还可以在FreeSWITCH™实例的集群之间共享。
 
-This backend does NOT support rate based limits.
-
-
+此后端 不支持基于速率的限制。

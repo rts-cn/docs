@@ -1,140 +1,129 @@
+# mod_voicemail_ivr
 
-# mod_voicemail_ivr 
+## 关于
 
- 
+mod_voicemail_ivr为后端语音信箱系统提供了一个音频导航系统。
 
-## About
+点击此处展开目录
 
-mod\_voicemail\_ivr provide a audio navigation system to a backend voicemail system.
+**错误**：无法渲染宏'toc'
 
-Click here to expand Table of Contents
+注意：根据讨论的进展（2011年12月24日），这里的一些规范可能会在接下来的几个月中发生变化。
 
-**Error rendering macro 'toc'**
+voicemail_ivr <check> profile domain [id]
 
-null
+对于预授权：设置voicemail_authorized=true
 
-WARNING: Some specs here might change in the next months following discussions (2011-12-24)  
-  
-voicemail_ivr &lt;check> profile domain [id]
+### 描述
 
-For pre-auth: set voicemail_authorized=true  
-  
-### Description
+VoiceMail IVR应用程序是一个新的原型语音信箱ivr引擎，它允许未来改进的很大灵活性。目标是让它的配置灵活并且在不同的接口中能够实现的功能不受限制。
 
-  
-The VoiceMail IVR application is a new prototype voicemail ivr engine that allow great flexibility for future improvement. The goal was to make it configuration flexible and yet not be restricted in term of feature we can implement in the different interfaces.
+它目前使用与mod_voicemail完全相同的参数。目前仅实现了check方法。
 
-It currently used the exact argument as mod\_voicemail. Only the check method is implemented at this time.
+### 配置
 
-###   
-Configuration
+为了让您开始使用，您必须安装默认示例文件中的voicemail_ivr.conf.xml和voicemail_ivr.xml。编译并加载模块。您可以像调用voicemail一样调用它。您必须加载mod_voicemail模块，因为它是默认的后端。
 
-  
-To get you started, you must have the voicemail\_ivr.conf.xml and the voicemail\_ivr.xml from the default sample file installed. Compile and load the module. You can call it like you call voicemail. You must have mod\_voicemail loaded since it used as the default backend.
+### 示例
 
-###   
-Example
+您可以在这里查看示例配置文件[<http://fisheye.freeswitch.org/browse/freeswitch.git/conf/autoload_configs/voicemail_ivr.conf.xml?hb=true>]
 
-  
-You can check the sample configuration file \[<http://fisheye.freeswitch.org/browse/freeswitch.git/conf/autoload%5Fconfigs/voicemail%5Fivr.conf.xml?hb=true> here\].
+配置支持多个配置文件。在这些配置文件中，您可以配置要使用的API和菜单。
 
-Configuration support multiple profiles. Inside those profile, you can configure apis to be used, and menus.
+#### API
 
-#### apis
+这是一个示例API入口，用于从邮箱中获取消息列表。msg\_list和其他来自示例配置文件的内容是实际代码查找正确的API使用的依据。根据你所需的功能，你可以在这里添加新的API，并在代码中使用你定义的名称来查找它。
 
-  
-This is a sample API entry to get the list of message from a mailbox. The msg\_list and other from the sample configuration file are what the actual code lookup to find the correct API to use. Depending of the features you need, you could add new api here and find it inside the code using the name you defined it.  
-&lt;pre>&lt;api name="msg\_list" value="vm\_fsdb\_msg\_list" />&lt;/pre>  
-This is basicly the only way this module do get it informations.
+&lt;pre>&lt;api name="msg\_list" value="vm\_fsdb\_msg\_list" />&lt;/pre>
 
-#### menus
+基本上，这是模块获取信息的唯一方法。
 
-This define an actual menu key map and phrases name to be used inside your IVR. Now that the menu name is a direct reference to the in code menu. so in this example, std\_navigator actually reference an C function. You cannot just create new menu inside the XML file, you must code the actual scenario inside the module itself. But this method allow for creation of new menu without affecting everyone current implementation. This way, we can add new feature and menu, but if you don't want it, you just never use it.
+#### 菜单
 
-  
-&lt;menu name="std_navigator">  
- &lt;phrases>  
- &lt;phrase name="msg_count" value="message_count@voicemail_ivr" />  
- &lt;phrase name="say_date" value="say_date_event@voicemail_ivr" />  
- &lt;phrase name="say_msg_number" value="say_message_number@voicemail_ivr" />  
- &lt;phrase name="menu_options" value="listen_file_check@voicemail_ivr" />  
- &lt;phrase name="ack" value="ack@voicemail_ivr" />  
- &lt;phrase name="play_message" value="play_message@voicemail_ivr" />  
- &lt;/phrases>  
- &lt;keys>  
- &lt;key dtmf="1" action="skip_intro" variable="VM-Key-Main-Listen-File" />  
- &lt;key dtmf="6" action="next_msg" variable="VM-Key-Main-Next-Msg" />  
- &lt;key dtmf="4" action="prev_msg" />  
- &lt;key dtmf="7" action="delete_msg" variable="VM-Key-Main-Delete-File" /> &lt;!-- Same key for undelete if it already deleted -->  
- &lt;key dtmf="8" action="menu:std_forward" variable="VM-Key-Main-Forward" />  
- &lt;key dtmf="3" action="save_msg" variable="VM-Key-Main-Save-File" />  
- &lt;key dtmf="2" action="callback" variable="VM-Key-Main-Callback" />  
- &lt;key dtmf="5" action="menu:std_preference" />  
- &lt;key dtmf="#" action="return" /> &lt;!-- TODO Might Conflict with future fast-forward -->  
- &lt;/keys>  
-&lt;/menu>  
-  
-##### phrases
+这定义了一个实际的菜单键映射和短语名称，用于在您的IVR中使用。现在菜单名称直接引用代码中的菜单。所以在这个例子中，std\_navigator实际上是一个C函数的引用。你不能仅在XML文件中创建新的菜单，你必须在模块本身中编写实际的场景。但这种方法可以创建新的菜单而不影响当前实现的所有人。这样，我们可以添加新的功能和菜单，但如果你不想使用它，你就永远不会用到它。
 
-The phrase are defined like apis above. msg_count in this example is what hardcoded inside the code, but the value is used instead for the actuel playback. This allow to add more phrases inside the default config file to provide different feature, or to have a private feature set, but at the same time not breaking everyone else setup.  
-   
- &lt;phrase name="msg_count" value="message_count@voicemail_ivr" />  
-  
-##### keys
+```
+<menu name="std_navigator">
+  <phrases>
+    <phrase name="msg_count" value="voicemail_ivr的消息数量" />
+    <phrase name="say_date" value="voicemail_ivr的日期事件" />
+    <phrase name="say_msg_number" value="voicemail_ivr的消息编号" />
+    <phrase name="menu_options" value="voicemail_ivr的菜单选项" />
+    <phrase name="ack" value="voicemail_ivr的确认" />
+    <phrase name="play_message" value="voicemail_ivr的播放消息" />
+  </phrases>
+  <keys>
+    <key dtmf="1" action="skip_intro" variable="VM-Key-Main-Listen-File" />
+    <key dtmf="6" action="next_msg" variable="VM-Key-Main-Next-Msg" />
+    <key dtmf="4" action="prev_msg" />
+    <key dtmf="7" action="delete_msg" variable="VM-Key-Main-Delete-File" /> <!-- 如果已删除，则key相同 -->
+    <key dtmf="8" action="menu:std_forward" variable="VM-Key-Main-Forward" />
+    <key dtmf="3" action="save_msg" variable="VM-Key-Main-Save-File" />
+    <key dtmf="2" action="callback" variable="VM-Key-Main-Callback" />
+    <key dtmf="5" action="menu:std_preference" />
+    <key dtmf="#" action="return" /> <!-- TODO 可能与将来的快进功能冲突 -->
+  </keys>
+</menu>
 
-The keys are what define the different action to be taken while the playback of an IVR.  
-** dtmf - Define the key that an action are associated with.  
-** action - Action to execute when a matching dtmf is pressed. This name is actually check in condition inside the module itself. Using name like this allow to create new functionality at will without breaking other people implementation. So all the action are specific to that particular menu except for the standard actions below.  
-*** Standard actions:  
-**** menu:&lt;menu name> - Used to go inside a new menu  
-**** return - Return to the previous menu  
-** variable - The name you use here will be available inside the phrases and will be populated with the DTMF key.  
-   
- &lt;key dtmf="8" action="menu:std_forward" variable="VM-Key-Main-Forward" />  
+##### 说明
+
+这些短语类似于上面定义的api。在这个示例中，msg_count是在代码中硬编码的内容，但实际播放时会用到其值。这样可以在默认配置文件中添加更多的短语，以提供不同的功能，或者拥有私有的功能集，但同时不会破坏其他人的设置。
+
+<phrase name="msg_count" value="voicemail_ivr的消息数量" />
+
+##### 键位定义
+```
+
+密钥是定义在IVR播放过程中要采取的不同操作的要素。
+**dtmf** - 定义与操作关联的密钥。
+**action** - 当按下匹配的dtmf时要执行的操作。此名称实际上在模块内的条件检查中使用。使用这样的名称可以随意创建新功能，而不会破坏其他人的实现。因此，除了下面的标准操作之外，所有操作都特定于特定的菜单。
+***标准操作：
+**** menu:&lt;menu name> - 用于进入新菜单
+**** return - 返回到上一个菜单
+**variable** - 在这里使用的名称将在短语中提供，并将填充DTMF密钥。
  
-## Developer Information
+&lt;key dtmf="8" action="menu:std_forward" variable="VM-Key-Main-Forward" />
 
-### VoiceMail Backend
+## 开发者信息
 
-mod\_voicemail\_ivr doesn't have any direct access to any type of backend system. All it does is execute API command inside freeswitch to retrieve voicemail information for a user.
+### 语音邮件后端
+
+mod_voicemail_ivr没有直接访问任何类型的后端系统。它只是在freeswitch内执行API命令，以检索用户的语音邮件信息。
 
 #### mod_voicemail vm_fsdb API 
 
   
-This is the standard backend used for development of the module. It allow direct access to standard voice mail store by mod\_voicemail. This method allow simultaneous usage of mod\_voicemail and mod\_voicemail\_ivr.  
-\[<http://wiki.freeswitch.org/wiki/Mod%5Fvoicemail#Advanced%5FAPI> mod\_voicemail vm\_fsdb API reference\]
+此为该模块的开发所使用的标准后端。它允许直接访问由mod_voicemail存储的标准语音邮件。此方法允许同时使用mod_voicemail和mod_voicemail_ivr。
+\[mod_voicemail vm_fsdb API参考](http://wiki.freeswitch.org/wiki/Mod%5Fvoicemail#Advanced%5FAPI)
 
 #### IMAP
 
-No imap connector exist at this time, but creating one would be rather trivial. All that is required is to reply to those basic API request.
+目前没有IMAP连接器，但是创建一个相对简单。只需回复这些基本的API请求。
 
-#### VoiceMail IVR Engine
+#### 语音邮件IVR引擎
 
-mod\_voicemail\_ivr use custom built ivr interface. This might change in the future depending of technology become available, but for the moment, it what allow the best voicemail experience possible. The reason this interface was written was following the inconstancy of the experience with mod\_voicemail.
+mod\_voicemail\_ivr 使用自定义的ivr界面。这可能会在未来根据技术的可用性而改变，但是目前它可以提供最佳的语音邮件体验。编写该界面的原因是由于mod\_voicemail的体验不一致。
 
-The C code across all the different menu are pretty similar and done in the following order  
-\# Initialize the IVR system  
-\# Run initial code that will be static during the whole IVR process  
-\# Begin IVR loop allowing retry support  
-\## Prepare an Event with the content required for playback and and parsing during this loop  
-\## Check if some prompt action need to be executed following an action (This allow playback skipping without discarding the received dtmf key)  
-\## Playback the different phrases  
-\## Check for status of IVR after playback and perform different action  
-\### TIMEOUT : Maximum wait time reached for a DTMF to be entered after the playback of all the phrases  
-\### INVALID : The DTMF isn't part of the list that in the menu configuration  
-\### FOUND : DTMF key match  
-\#### We now lookup the action associated to that DTMF and execute what related to it...
+所有不同菜单的C代码非常相似，并按照以下顺序完成：
+\# 初始化IVR系统
+\# 运行在整个IVR过程中都是静态的初始代码
+\# 开始IVR循环，允许重试支持
+\## 准备一份包含在此循环期间所需的内容的事件，将其用于播放和解析
+\## 检查是否需要执行某些提示操作以响应操作（这样可以在不丢弃接收到的DTMF键的情况下进行播放跳过）
+\## 播放不同的短语
+\## 在播放后检查IVR的状态并执行不同的动作
+\### 超时：等待所有短语播放后输入DTMF的最长时间已达到
+\### 无效：DTMF不在菜单配置中
+\### 找到：DTMF键匹配
+\#### 现在我们查找与该DTMF相关联的动作并执行相关操作...
 
-This allow for great flexibility but keep full feature set of FS API.  
-Playback can always be interrupted using a DTMF key and the right option will be executed. For comparison with mod\_voicemail, you can delete lot of message without having to wait for the full prompt of message deleted to playback.
+这样可以实现很大的灵活性同时保留FS API的完整功能集。
+通过使用DTMF键可以随时中断播放，并执行正确的选项。与mod\_voicemail进行比较，您可以在等待消息已删除的完整提示播放之前删除许多消息。
 
 ##   
-Missing features
+缺失的功能
 
-  
-\* Seek support  
-\* IVR for leaving voicemail to a user
+\* Seek支持
+\* 给用户留语音邮件的IVR
 
 \[\[Category:Modules\]\]
-
-

@@ -1,70 +1,63 @@
+# Cisco UC520 使用指南
 
-# Cisco UC520 HowTo 
-
- 
-
-**NOTE** The Cisco UC520 is obsolete hardware, went EOL March 2011 and end of sale date September 2011
+**注意** Cisco UC520 是过时的硬件，已于2011年3月停产，销售至2011年9月结束。
 
 xxx
 
-**NOTE** All the text below was last edited in 2009, it is therefore likely out-of-date, inaccurate and in dire need of a refresh
+**注意** 下文中的所有文字均截至2009年最后编辑，因此很可能已过时、不准确，并且急需更新。
 
 xxx
 
-* 1 [Introduction](#introduction)
-* 2 [Basic Configuration](#basic-configuration)
-* 3 [Calls from FS to UC520](#calls-from-fs-to-uc520)
-* 4 [Calls from UC520 to FS](#calls-from-uc520-to-fs)
+* 1 [简介](#introduction)
+* 2 [基本配置](#basic-configuration)
+* 3 [从FS呼叫UC520](#calls-from-fs-to-uc520)
+* 4 [从UC520呼叫FS](#calls-from-uc520-to-fs)
 
-## Introduction
+## 简介
 
-The UC520 is a small-business integrated access device. This includes PBX, Key System, router, firewall and security functionality. It is [Cisco's](http://www.cisco.com/) solution as an all-in-one device to support small to medium businesses and SOHO deployments. It uses Cisco Configuration Assistant for easy configuration of IP phone and trunking paramters, including operation with FreeSWITCH. Other Cisco and Linksys products can interoperate with the UC520 solution, including Voice over IP capable switches and wireless access points.
+UC520是一种中小型企业综合接入设备。它包括PBX、关键系统、路由器、防火墙和安全功能。它是思科（Cisco）为支持中小型企业和SOHO部署而提供的多合一解决方案。它使用思科配置助手进行简便的IP电话和干线参数配置，包括与FreeSWITCH配合使用。其他思科和Linksys产品可以与UC520方案互操作，包括支持VoIP的交换机和无线接入点。
 
-## Basic Configuration
+## 基本配置
 
-The UC520 uses common IOS concepts, and in fact runs IOS primarily. It also has some other  
-components bolted on top that provide the VoIP applications (voicemail, IVR, etc). Those other  
-components are in the "Unity Express" family, and more information can be found at [cisco.com](http://www.cisco.com/).  
-They run almost as a virtual machine on top of IOS, and have their own separate networking, SIP stack, etc.  
-  
-They use concepts such as:
+UC520使用常见的IOS概念，实际上主要运行IOS。它还有一些其它部件附加在其上，提供VoIP应用程序（语音信箱、IVR等）。这些其他部件属于"Unity Express"系列，更多信息可以在[cisco.com](http://www.cisco.com/)上找到。它们几乎像虚拟机一样运行在IOS之上，并有自己独立的网络、SIP栈等。
 
-* sip-ua: SIP peer (in our case, FreeSWITCH)
-* dial-peer: pattern-matching call routing logic
-* translation-rule: regexp-like search and replace call manipulation (ie. strip leading 9)
-* translation-profile: used to apply translation rules to calls
+它们使用以下概念：
 
-## Calls from FS to UC520
+* sip-ua: SIP对等体（在我们的情况下为FreeSWITCH）
+* dial-peer: 模式匹配的呼叫路由逻辑
+* translation-rule: 类似于正则表达式的搜索和替换呼叫操作（例如去除前导9）
+* translation-profile: 用于将翻译规则应用于呼叫
 
-* Pre-CCA 1.9, you can just blindly dial any of the predefined 3 digit user extensions; you need to mess with translation rules to make the VM/IVR pilot numbers work.
-* After CCA 1.9, an ACL was added that you need to add your FS machine's IP to, or calls will not pass.. ACL is remarked as 'CCA\_SIP\_SOURCE\_GROUP\_ACL', and is commonly numbered 1 or 2.
+## 从FS呼叫UC520
 
-## Calls from UC520 to FS
+在CCA 1.9之前，你可以随意拨打任何预定义的3位用户分机号码；但是你需要调整转换规则才能使语音信箱/互动语音应答的引导号码起作用。
 
-First, setup a SIP UA entry (assumes your FS box is 10.50.0.50):
+在CCA 1.9之后，增加了一个ACL，你需要将FS机器的IP添加到ACL中，否则呼叫将无法通过。ACL被标记为'CCA_SIP_SOURCE_GROUP_ACL'，通常编号为1或2。
+
+## UC520拨打FS的呼叫
+
+首先，设置一个SIP UA条目（假设你的FS盒子的IP为10.50.0.50）：
 
 ```xml
-sip-ua
- authentication username uc500 password 7 encryptedgoo
- retry invite 2
- retry register 10
- timers connect 100
- registrar ipv4:10.50.0.50 expires 3600
- sip-server ipv4:10.50.0.50
-!
+    sip-ua
+     authentication username uc500 password 7 encryptedgoo
+     retry invite 2
+     retry register 10
+     timers connect 100
+     registrar ipv4:10.50.0.50 expires 3600
+     sip-server ipv4:10.50.0.50
+    !
 ```
 
-Then you have to setup a dialplan ("dial-peer") entry, this one requires you dial '9' before your outbound number:
+然后，你需要设置一个拨号规划（"dial-peer"）条目，这个条目要求你在拨出号码之前先拨打'9'：
 
 ```xml
-dial-peer voice 1900 voip
- description FS SIP 7dig outbound
- destination-pattern 9[2-9]......
- session protocol sipv2
- session target ipv4:10.50.0.50
- codec g711ulaw
- no vad
-!
+    dial-peer voice 1900 voip
+     description FS SIP 7位拨出
+     destination-pattern 9[2-9]......
+     session protocol sipv2
+     session target ipv4:10.50.0.50
+     codec g711ulaw
+     no vad
+    !
 ```
-
-

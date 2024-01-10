@@ -1,21 +1,18 @@
+# 使事件套接字的行为类似于控制台
 
-# Making Event Socket behave like the console 
+## 关于
 
- 
+一个巧妙的技巧，可以让mod_event_socket命令像从FreeSWITCH控制台中运行一样处理。
 
-## About
+单击此处展开目录
 
-A handy trick to allow mod\_event\_socket commands to be treated like they are being run from the FreeSWITCH console.
+* 1 [问题](#-freeswitch--使事件套接字的行为类似于控制台-)
+* 2 [解决方案](#-freeswitch--使事件套接字的行为类似于控制台-)
+* 3 [注意事项](#-freeswitch--使事件套接字的行为类似于控制台-)
 
-Click here to expand Table of Contents
+## 问题
 
-* 1 [Problem](#-freeswitch--making-event-socket-behave-like-the-console-)
-* 2 [Solution](#-freeswitch--making-event-socket-behave-like-the-console-)
-* 3 [Caveats](#-freeswitch--making-event-socket-behave-like-the-console-)
-
-## Problem
-
-The console includes some features that are not active when a command is sent over the Event Socket. A good example is the syntax for sending multiple commands in sequence:
+当通过事件套接字发送命令时，控制台中包含一些不活动的功能。一个很好的例子是发送多个连续命令的语法：
 
 ```text
 freeswitch@localhost> version;;status
@@ -30,7 +27,7 @@ min idle cpu 0.00/91.37
 Current Stack Size/Max 240K/8192K
 ```
 
-However, this same command syntax will not work when sent via the Event Socket:
+然而，当通过事件套接字发送时，同样的命令语法将不起作用：
 
 ```text
 api version;;status
@@ -41,9 +38,9 @@ Content-Length: 40
 -ERR version;;status Command not found!
 ```
 
-## Solution
+## 解决方案
 
-To force the command to be run as it would in the console, enable console\_execute functionality as part of the command sent over the socket, like so:
+为了强制命令按照控制台的方式运行，请在通过套接字发送的命令中启用console_execute功能，如下所示：
 
 ```text
 api version;;status
@@ -51,24 +48,22 @@ console_execute: true
 
 Content-Type: api/response
 Content-Length: 464
-
-FreeSWITCH Version 1.7.0+git~20160321T203641Z~9e6593aa73~64bit (git 9e6593a 2016-03-21 20:36:41Z 64bit)
-UP 0 years, 0 days, 0 hours, 5 minutes, 39 seconds, 345 milliseconds, 627 microseconds
-FreeSWITCH (Version 1.7.0 git 9e6593a 2016-03-21 20:36:41Z 64bit) is ready
-0 session(s) since startup
-0 session(s) - peak 0, last 5min 0 
-0 session(s) per Sec out of max 30, peak 0, last 5min 0 
-1000 session(s) max
-min idle cpu 0.00/93.13
-Current Stack Size/Max 240K/8192K
 ```
 
-In fact, this is exactly what the fs\_cli executable does behind the scenes when it sends commands to FreeSWITCH!
+# `FreeSWITCH` 版本 1.7.0+git~20160321T203641Z~9e6593aa73~64 位（`git 9e6593a` 于 2016 年 3 月 21 日 20:36:41Z 生成）  
+已运行 0 年，0 天，0 小时，5 分钟，39 秒，345 毫秒，627 微秒  
+`FreeSWITCH`（版本 1.7.0 git 9e6593a 2016-03-21 20:36:41Z 64 位）已准备就绪  
+自启动以来的会话数为 0  
+会话数 - 峰值 0，最近 5 分钟 0  
+每秒最多处理 30 个会话，峰值 0，最近 5 分钟 0  
+最多可处理 1000 个会话  
+最小空闲 CPU 使用率 0.00/93.13  
+当前堆栈大小/最大堆栈大小 240K/8192K
 
-## Caveats
+实际上，这正是 `fs_cli` 可执行文件在向 `FreeSWITCH` 发送命令时所做的操作！
 
-* It must be enabled per command sent to the socket
-* It incurs extra overhead to run. This is probably not a problem unless you're sending a high volume of commands using this strategy, and, it's not advised to use it unless you actually need it.
-* And a brief note on the particular approach of sending multiple commands in one execution: they will run synchronously, and in the order provided, and subsequent commands will run even if previous commands failed (unlike, for example 'test -f blah && rm blah' in a Bash shell, which would not run the second command if the first returned a non-zero exit status).
+## 注意事项
 
-
+- 每条发送到套接字的命令都必须启用此功能
+- 运行时会产生额外的开销。除非您使用此策略发送大量命令，否则这可能不是一个问题，并且不建议在不需要时使用它。
+- 关于发送多个命令的特定方法，需要注意的是：它们将按照提供的顺序同步执行，即使前面的命令失败，后续命令也会执行（与 Bash shell 中的“test -f blah && rm blah”不同，如果第一个命令返回非零退出状态，则不会执行第二个命令）。

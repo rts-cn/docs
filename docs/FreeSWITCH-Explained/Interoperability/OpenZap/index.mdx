@@ -1,133 +1,130 @@
+# OpenZap
 
-# OpenZap 
+**请注意，OpenZAP已被[FreeTDM](../../Client-and-Developer-Interfaces/FreeTDM/index.mdx#--)取代。** OpenZAP的开发已停止，不会开发新功能。请改用FreeTDM。此页面仅供历史参考。如果您正在使用OpenZAP，请更新到FreeTDM。如果您尚未开始使用TDM卡，则直接使用FreeTDM。
 
- 
+OpenZAP是FreeSWITCH用于与Sangoma、DAHDI和PIKA板卡进行接口的库。OpenZap实现了TDM的统一抽象，包括信令（PRI、BRI、SS7、MFC-R2等）和板卡I/O API（Sangoma TDM API、DAHDI、PIKA等）。根据您的硬件要求，仍然需要正确的驱动程序。如果您有Sangoma板卡，必须首先安装wanpipe驱动程序，然后OpenZAP将使用这些驱动程序与Sangoma板卡进行通信。对于其他板卡API（如Zaptel/DAHDI），也是一样的。
 
-**Note that OpenZAP has been superseded by [FreeTDM](../../Client-and-Developer-Interfaces/FreeTDM/index.mdx#--).** OpenZAP development is stalled and no new features will be developed. Use FreeTDM instead.This page is kept only for historical purposes. If you are using OpenZAP then please update to FreeTDM. If you have not yet started using a TDM card yet then go straight to FreeTDM.
+OpenZAP还为其用户应用程序（大多数情况下是FreeSWITCH）提供DTMF检测等服务。
 
-OpenZAP is a library used by FreeSWITCH's to interface to Sangoma, DAHDI and PIKA boards. OpenZap implements a TDM unified abstraction for both signaling (PRI, BRI, SS7, MFC-R2 etc) and board I/O APIs (Sangoma TDM API, DAHDI, PIKA etc). Depending on your hardware requirements, the proper drivers are still needed. If you have Sangoma boards you must install the wanpipe drivers first, OpenZAP then will use the drivers to communicate to Sangoma boards. The same apply for other board APIs like Zaptel/DAHDI.
+单击此处展开目录
 
-OpenZAP also offers services like DTMF detection to its user applications (in most cases FreeSWITCH).
-
-Click here to expand Table of Contents
-
-* 1 [Overview](#overview)  
-   * 1.1 [Status](#status)  
-   * 1.2 [License](#license)  
-   * 1.3 [History](#history)  
-   * 1.4 [Design](#design)
-* 2 [Hardware/Driver compatibility](#hardwaredriver-compatibility)
-* 3 [FXO/FXS Terminology](#fxofxs-terminology)
-* 4 [Setup hardware drivers](#setup-hardware-drivers)  
-   * 4.1 [Non-Debian Instructions](#non-debian-instructions)  
-   * 4.2 [Debian Instructions](#non-debian-instructions)  
-   * 4.3 [Use outside North America](#use-outside-north-america)
+* 1 [概述](#overview)  
+   * 1.1 [状态](#status)  
+   * 1.2 [许可证](#license)  
+   * 1.3 [历史](#history)  
+   * 1.4 [设计](#design)
+* 2 [硬件/驱动兼容性](#hardwaredriver-compatibility)
+* 3 [FXO/FXS 术语](#fxofxs-terminology)
+* 4 [设置硬件驱动](#setup-hardware-drivers)  
+   * 4.1 [非 Debian 指南](#non-debian-instructions)  
+   * 4.2 [Debian 指南](#non-debian-instructions)  
+   * 4.3 [在北美以外地区使用](#use-outside-north-america)
 * 5 [OpenZap](#openzap-download)  
-   * 5.1 [OpenZAP Download](#openzap-download)  
-   * 5.2 [OpenZAP Compilation](#openzap-compilation)  
-   * 5.3 [Zaptel mode](#zaptel-mode)  
-   * 5.4 [Wanpipe mode](#wanpipe-mode)  
-   * 5.5 [Examples](#examples)
-* 6 [Start Up FreeSWITCH](#start-up-freeswitch)  
-   * 6.1 [OpenZAP CLI Commands](#openzap-cli-commands)
-* 7 [Dialplan Configuration](#dialplan-configuration)  
-   * 7.1 [Channel Variables](#channel-variables)  
-   * 7.2 [Usage](#usage)  
-   * 7.3 [Examples](#examples)
-* 8 [Debugging your OpenZAP set up](#openzap-download)  
-   * 8.1 [Symptom: "Why bother changing state on 1:1 from UP to UP" or "Cannot get a RING\_START event on a non-fxo channel"](#symptom-why-bother-changing-state-on-11-from-up-to-up-or-cannot-get-a-ring_start-event-on-a-non-fxo-channel)  
-   * 8.2 [Symptom: \[ERR\] ozmod\_wanpipe.c:440 wp\_open\_range() failure configuring device s\*c\*\* using a Sangoma card with FreeSWITCH running as a normal user](#q-openzap-vs-mod_wanpipe)  
-   * 8.3 [Symptom: Signalling works but buzzing audio is heard using Wanpipe on a 64 bit system with > 4 GB RAM](#symptom-signalling-works-but-buzzing-audio-is-heard-using-wanpipe-on-a-64-bit-system-with--4-gb-ram)
-* 9 [FAQ](#faq)  
-   * 9.1 [Q: OpenZAP vs. mod\_wanpipe](#q-openzap-vs-mod_wanpipe)  
-   * 9.2 [Q: OpenZAP vs. libpri](#q-openzap-vs-libpri)  
-   * 9.3 [Q: Does OpenZAP support libss7?](#q-does-openzap-support-libss7)  
-   * 9.4 [Q: How do I configure spanmaps?](#q-how-do-i-configure-spanmaps)  
-   * 9.5 [Q: Do you need a special tor2.c for using Tormenta2?](#q-do-you-need-a-special-tor2c-for-using-tormenta2)  
-   * 9.6 [Q: For analog cards (XP100), will I need zaptel kernel drivers?](#q-for-analog-cards-xp100-will-i-need-zaptel-kernel-drivers)  
-   * 9.7 [Q: How do I send a hook flash?](#q-how-do-i-send-a-hook-flash)  
-   * 9.8 [Q: If I want Sangoma with OpenZAP, do I need wanpipe installed?](#openzap-download)  
-   * 9.9 [Q: Does OpenZAP support ccs, hdb3 with Digium te420?](#q-does-openzap-support-ccs-hdb3-with-digium-te420)  
-   * 9.10 [Q: Does OpenZAP support EuroISDN?](#q-does-openzap-support-euroisdn)  
-   * 9.11 [Q: I hear some line noise on analog card](#q-i-hear-some-line-noise-on-analog-card)  
-   * 9.12 [Q: Does OpenZAP support OSLEC?](#q-does-openzap-support-oslec)
+   * 5.1 [OpenZAP 下载](#openzap-download)  
+   * 5.2 [OpenZAP 编译](#openzap-compilation)  
+   * 5.3 [Zaptel 模式](#zaptel-mode)  
+   * 5.4 [Wanpipe 模式](#wanpipe-mode)  
+   * 5.5 [示例](#examples)
+* 6 [启动 FreeSWITCH](#start-up-freeswitch)  
+   * 6.1 [OpenZAP CLI 命令](#openzap-cli-commands)
+* 7 [拨号计划配置](#dialplan-configuration)  
+   * 7.1 [通道变量](#channel-variables)  
+   * 7.2 [用法](#usage)  
+   * 7.3 [示例](#examples)
+* 8 [调试 OpenZAP 设置](#openzap-download)  
+   * 8.1 [症状：“为什么要将 1:1 的状态从 UP 改为 UP”或“在非 FXO 通道上无法获取 RING_START 事件”](#symptom-why-bother-changing-state-on-11-from-up-to-up-or-cannot-get-a-ring_start-event-on-a-non-fxo-channel)  
+   * 8.2 [症状：\[ERR\] ozmod_wanpipe.c:440 wp_open_range() 配置设备 s\*c\*\* 失败，使用 Sangoma 作为普通用户运行 FreeSWITCH](#q-openzap-vs-mod_wanpipe)  
+   * 8.3 [症状：信令工作正常，但在具有>4GB RAM 的 64 位系统上使用 Wanpipe 时听到杂音](#symptom-signalling-works-but-buzzing-audio-is-heard-using-wanpipe-on-a-64-bit-system-with--4-gb-ram)
+* 9 [常见问题](#faq)  
+   * 9.1 [问：OpenZAP 和 mod_wanpipe 有什么区别？](#q-openzap-vs-mod_wanpipe)  
+   * 9.2 [问：OpenZAP 和 libpri 有什么区别？](#q-openzap-vs-libpri)  
+   * 9.3 [问：OpenZAP 是否支持 libss7？](#q-does-openzap-support-libss7)  
+   * 9.4 [问：如何配置 spanmaps？](#q-how-do-i-configure-spanmaps)  
+   * 9.5 [问：使用 Tormenta2 需要特殊的 tor2.c 吗？](#q-do-you-need-a-special-tor2c-for-using-tormenta2)  
+   * 9.6 [问：对于模拟卡（XP100），我需要 zaptel 内核驱动吗？](#q-for-analog-cards-xp100-will-i-need-zaptel-kernel-drivers)  
+   * 9.7 [问：如何发送挂机闪光？](#q-how-do-i-send-a-hook-flash)  
+   * 9.8 [问：如果我想使用 OpenZAP 的 Sangoma，是否需要安装 wanpipe？](#openzap-download)  
+   * 9.9 [问：OpenZAP 是否支持具有 Digium te420 的 ccs，hdb3？](#q-does-openzap-support-ccs-hdb3-with-digium-te420)  
+   * 9.10 [问：OpenZAP 是否支持 EuroISDN？](#q-does-openzap-support-euroisdn)  
+   * 9.11 [问：我在模拟卡上听到一些线路噪音](#q-i-hear-some-line-noise-on-analog-card)  
+   * 9.12 [问：OpenZAP 是否支持 OSLEC？](#q-does-openzap-support-oslec)
 * 10 [API](#api)
-* 11 [See Also](#see-also)
+* 11 [参见](#see-also)
 
-## Overview
+## 概述
 
-### Status
+### 状态
 
-* Development is finished and testers are currently wanted.
-* So far we have analog (only tested in US so far but we are working on UK too) and Q.931 PRI signaling but we should be able to add more things like RBS as time progresses.
-* The PRI stack is incomplete.
-* [MFC/R2 support](../../Client-and-Developer-Interfaces/FreeTDM/FreeTDM-OpenR2_13173077.mdx#freetdm-openr2-commands) has been added using the OpenR2 signaling library but still needs stress testing.
+* 开发已完成，目前正在寻找测试人员。
+* 到目前为止，我们已经有模拟（目前仅在美国进行了测试，但我们正在努力拓展到英国）和Q.931 PRI信令，但随着时间推移，我们应该能够添加更多的功能，如RBS。
+* PRI堆栈不完整。
+* 使用OpenR2信令库添加了[MFC/R2支持](../../Client-and-Developer-Interfaces/FreeTDM/FreeTDM-OpenR2_13173077.mdx#freetdm-openr2-commands)，但仍需要进行压力测试。
 
-### License
+### 许可证
 
 BSD
 
-### History
+### 历史
 
-Zaptel is actually a decendant of the original public domain tormenta driver made by Jim Dixon in 2000.
+Zaptel实际上是Jim Dixon在2000年制作的原始公共域tormenta驱动程序的后续版本。
 
 <http://www.zapatatelephony.org/zap.c>
 
 <http://www.zapatatelephony.org/zap.h>
 
-Our goal here is to pick up where this left off and keep the important functionality in the driver and the rest in user space. Eventually we hope to make our own platform-agnostic driver interface.
+我们的目标是在这里继续原有工作，并将重要功能保留在驱动程序中，其余部分放在用户空间。最终，我们希望能够开发自己的平台无关的驱动程序接口。
 
-### Design
+### 设计
 
-We only use zaptel as a device via the socket opened on the operating system to access the low level features such as open close read write and the rest of the functionality is implemented in our own user space layer.
+我们仅将Zaptel作为设备通过操作系统上打开的套接字来访问低级功能，如打开、关闭、读取、写入，其余功能则在我们自己的用户空间层实现。
 
-For clarification -- we simply speak to the zaptel kernel interface. In fact, we don't even use their header files to build. So if you have a card that requires modified drivers, then you would need to use those, but they should work as long as they maintain the same zaptel interface.
+需要澄清的是，我们只是与Zaptel内核接口通信。实际上，我们甚至不使用他们的头文件来构建。因此，如果您有需要修改的驱动程序，则需要使用这些修改后的驱动程序，不过只要它们保持与Zaptel接口的一致，它们应该能正常工作。
 
 [![Openzap-design.png](https://wiki.freeswitch.org/images/5/50/Openzap-design.png)](https://wiki.freeswitch.org/wiki/File:Openzap-design.png)
 
-## Hardware/Driver compatibility
+## 硬件/驱动兼容性
 
-OpenZAP should work with the latest Sangoma TDM API as well as any Zaptel dating back to when there was only Tormenta 2.
+OpenZAP应该与最新的Sangoma TDM API以及任何追溯到仅有Tormenta 2时期的Zaptel兼容。
 
-The hardware support thus far includes Zaptel and native Sangoma TDM API. The existing codebase includes mod\_openzap for FreeSWITCH that is currently functional with analog and Euro or DMS100 PRI.
+迄今为止，硬件支持包括Zaptel和本机Sangoma TDM API。现有的代码库包括用于FreeSWITCH的mod\_openzap，目前支持模拟和欧洲或DMS100 PRI。
 
-Rhino Cards: Rhino cards use Zaptel, however there are some caveats. Please see the [Rhino](./OpenZap-Rhino_13173053.mdx#issues) page for details.
+Rhino卡：Rhino卡使用Zaptel，但是有一些注意事项。更多详情请参见[Rhino](./OpenZap-Rhino_13173053.mdx#issues)页面。
 
-R2 Support: Moises Silva has added preliminary support for R2\. Please see the [FreeTDM OpenR2](../../Client-and-Developer-Interfaces/FreeTDM/FreeTDM-OpenR2_13173077.mdx#freetdm-openr2-commands) page for details.
+R2支持：Moises Silva已经添加了对R2的初步支持。更多详情请参见[FreeTDM OpenR2](../../Client-and-Developer-Interfaces/FreeTDM/FreeTDM-OpenR2_13173077.mdx#freetdm-openr2-commands)页面。
 
-## FXO/FXS Terminology
+## FXO/FXS术语
 
-A port that connects to a telephone line is an FXO port. If you use zaptel, you configure the port as an FXO port in zaptel.cfg. The port uses FXS signalling, so you configure OpenZAP in openzap.conf to use FXS signalling for the same port.
+连接到电话线的端口称为FXO端口。如果您使用zaptel，可以在zaptel.cfg中将端口配置为FXO端口。端口使用FXS信令，因此您需要在openzap.conf中将OpenZAP配置为使用FXS信令。
 
-A port that connects to a telephone extension is an FXS port. If you use zaptel, you configure the port as an FXS port in zaptel.cfg. The port uses FXO signalling, so you configure OpenZAP in openzap.conf to use FXS signalling for the same port.
+连接到电话分机的端口称为FXS端口。如果您使用zaptel，可以在zaptel.cfg中将端口配置为FXS端口。端口使用FXO信令，因此您需要在openzap.conf中将OpenZAP配置为使用FXO信令。
 
-To summarize:
+总结如下：
 
-| usage               | type / zaptel.cfg | signalling / openzap.cfg |
+| 用途              | 类型 / zaptel.cfg | 信令 / openzap.conf |
 | ------------------- | ----------------- | ------------------------ |
-| telephone line      | FXO               | FXS                      |
-| telephone extension | FXS               | FXO                      |
+| 电话线               | FXO               | FXS                      |
+| 电话分机 | FXS               | FXO                      |
 
-## Setup hardware drivers
+## 设置硬件驱动
 
-OpenZAP can be used in two modes. See the diagram (above). The first mode uses Zaptel and will let you use any card Zaptel supports. The other mode is wanpipe, which will let you interact directly with Sangoma cards without going through Zaptel. The hardware drivers only need to be configured if you are using the first mode. If you are using wanpipe, then skip this step.
+OpenZAP有两种模式可供使用。请参考上方的图表。第一种模式使用Zaptel，可让您使用任何Zaptel支持的卡。另一种模式是wanpipe，可让您直接与Sangoma卡交互，无需经过Zaptel。只有在使用第一种模式时才需要配置硬件驱动程序。如果使用wanpipe，则跳过此步骤。
 
-A set of step-by-step instructions is available on the [Zaptel Tutorial page](./Zapata-zaptel/Zaptel-Tutorial_13173122.mdx#--).
+在[Zaptel教程页面](./Zapata-zaptel/Zaptel-Tutorial_13173122.mdx#--)上提供了一套逐步说明书。
 
-You must have the Zaptel API up and running in order to use the OpenZap module.
+在使用OpenZap模块之前，您必须先安装并运行Zaptel API。
 
-The hardware you intend to use, e.g., an FXO/FXS card or a PRI card, should be installed first so you can verify the zaptel installation after it's been completed. (Make sure the system has internet connectivity as it downloads some utilities)
+您打算使用的硬件（如FXO/FXS卡或PRI卡）应首先安装，以便在完成后可以验证zaptel安装。（确保系统具有互联网连接功能，因为它会下载一些工具）
 
-At this point we can follow two different paths: general instruction and Debian instructions.
+此时我们可以按照两种不同的路径进行操作：常规说明和Debian说明。
 
-### Non-Debian Instructions
+### 非Debian说明
 
-Note in this example, channel 1 is connected to the telephone line (FXO), and channel 4 is connected to a telephone extension (FXS).
+请注意，在此示例中，通道1连接到电话线（FXO），通道4连接到电话分机（FXS）。
 
- 1\. Download the zaptel-1.4.2.tar.gz from reliable sources. Untar the source tarball, compile and install it.
+ 1\. 从可靠的来源下载zaptel-1.4.2.tar.gz。解压源代码包，编译并安装它。
 
 ```xml
-# I had to rely on this older zaptel version that works for me, as the newer ones were troubling me.
+# 由于新版本给我带来了一些问题，我不得不依赖于这个较旧的zaptel版本。
 $ tar -zxvf zaptel-1.4.2.tar.gz
 $ cd zaptel-1.4.2
 $ ./configure
@@ -136,9 +133,9 @@ $ make install
 $ make config
 ```
 
- 2\. Make sure you have the proper zaptel.conf in your /etc directory
+ 2\. 确保您在/etc目录中有正确的zaptel.conf文件
 
- 3\. Be cautious while configuring country zone in zaptel.conf at /etc. For India, e.g.,
+ 3\. 在/etc的zaptel.conf中配置国家地区时要小心。例如，对于印度，
 
 ```xml
  ----- @/etc/zaptel.conf -----
@@ -148,14 +145,14 @@ fxsks=4
 fxoks=1
 ```
 
- 4\. Add the wctdm and zaptel modules now.
+ 4\. 现在添加wctdm和zaptel模块。
 
 ```xml
 $ modprobe wctdm
 $ modprobe zaptel
 ```
 
- 5\. Now verify the installation with the ztcfg command
+ 5\. 使用ztcfg命令验证安装
 
 ```xml
 $ ztcfg -vv
@@ -170,85 +167,85 @@ Channel 04: FXS Kewlstart (Default) (Slaves: 04)
 ```
 
 ###   
-Debian Instructions
+Debian说明
 
-Debian makes this entire process rather easy.
+在Debian中，这整个过程都相当简单。
 
- 1\. Install the zaptel and zaptel-source package by using your favorite package management tool, e.g., apt-get or aptitude.
+安装zaptel和zaptel-source软件包，使用您喜欢的软件包管理工具，例如apt-get或aptitude。
 
- 2\. Build the zaptel-source package and create a deb which contains the Zaptel kernel modules:
+构建zaptel-source软件包并创建一个包含Zaptel内核模块的deb文件：
 
 ```xml
 $ module-assistant prepare
 $ module-assistant build zaptel-source
 ```
 
-You may wish to example the Debian-specific README files provided by the zaptel (not the zaptel-source) package.
+您可能希望查看zaptel（而不是zaptel-source）软件包提供的特定于Debian的README文件。
 
- 3\. Install the deb created in the previous step, which is likely found at /usr/src.
+安装在上一步骤中创建的deb文件，通常可以在/usr/src目录下找到。
 
- 4\. Create the /etc/zaptel.conf file. The easiest way to do this is with genzaptelconf:
+创建/etc/zaptel.conf文件。最简单的方法是使用genzaptelconf命令：
 
 ```xml
 genzaptelconf -vsdM
 ```
 
-(Note: If genzaptelconf cannot "find" the hardware, you may have to use modprobe to load the wctdm or zaptel kernel modules, or perhaps both.)
+（注意：如果genzaptelconf无法“找到”硬件，您可能需要使用modprobe命令加载wctdm或zaptel内核模块，或者可能两者都需要。）
 
-genzaptelconf may complain about some obscure program named "asterisk" not being present on your system. Regardless, /etc/zaptel.conf will be created.
+genzaptelconf可能会抱怨找不到名为“asterisk”的某个晦涩程序。但是，/etc/zaptel.conf文件将被创建。
 
- 5\. Configure the board:
+配置板卡：
 
 ```xml
 zapcfg
 ```
 
- 6\. check to see the board's status:
+检查板卡的状态：
 
 ```xml
 ztscan
 ```
 
-Your installation is up and running. At next boot, if you use udev, your hardware will be detected automatically and the system will load the Zaptel modules and configure the hardware from the /etc/zaptel.conf file.
+您的安装已经完成。在下一次启动时，如果您使用udev，系统将自动检测到您的硬件，并从/etc/zaptel.conf文件中加载Zaptel模块并配置硬件。
 
-### Use outside North America
+### 在北美以外地区的使用
 
-If you are using zaptel cards outside North America (e.g. Australia) you may have to specify the operating country when the module loads. Just specifying the zone in zaptel.cfg is not sufficient. In Debian Lenny I configure mine to use the Australian standards mode by putting the following line in /etc/modprobe.d/zaptel.
+如果您在北美以外地区（例如澳大利亚）使用zaptel卡，您可能需要在模块加载时指定操作国家。仅在zaptel.cfg中指定区域是不够的。在Debian Lenny中，我通过在/etc/modprobe.d/zaptel文件中添加以下行来配置我的卡使用澳大利亚的标准模式。
 
 ```xml
 options wctdm opermode=AUSTRALIA
 ```
 
-At boot I see messages like:
+启动时，我会看到类似以下的消息：
 
 ```xml
-Boosting ringer on slot 1 (89V peak)
-Module 0: Installed -- AUTO FXS/DPO
-Boosting ringer on slot 2 (89V peak)
-Module 1: Installed -- AUTO FXS/DPO
-Module 2: Installed -- AUTO FXO (AUSTRALIA mode)
-Module 3: Installed -- AUTO FXO (AUSTRALIA mode)
-Found a Wildcard TDM: Wildcard TDM400P REV I (4 modules)
+在slot 1上提升铃声（峰值89V）
+模块 0：已安装 - 自动FXS/DPO
+在slot 2上提升铃声（峰值89V）
+模块 1：已安装 - 自动FXS/DPO
+模块 2：已安装 - 自动FXO（澳大利亚模式）
+模块 3：已安装 - 自动FXO（澳大利亚模式）
+发现一个Wildcard TDM：Wildcard TDM400P REV I (4个模块)
 ```
 
 ##   
 OpenZap
 
-### OpenZAP Download
+### OpenZAP下载
 
-mod\_openzap is now included with Git clone of FreeSWITCH under libs/open\_zap. Therefore, you do not have to download the svn.
+mod_openzap现已包含在FreeSWITCH的Git克隆文件中，位于libs/open_zap目录下。因此，您无需下载svn。
 
-However, if you have not checked out FreeSWITCH and would like to look at the OpenZAP code, you can [browse the OpenZAP source code here](http://fisheye.freeswitch.org/browse/OpenZAP) or
+但是，如果您尚未检出FreeSWITCH并且希望查看OpenZAP代码，您可以[在此处浏览OpenZAP源代码](http://fisheye.freeswitch.org/browse/OpenZAP)或者
 
-Download via subversion:
+通过subversion下载：
 
 ```xml
 svn co http://svn.openzap.org/svn/openzap/trunk openzap_trunk
 ```
 
-OpenZAP has its own PRI stack that might do everything you require. However, it is still in development. If you would like to use libpri as the PRI stack within OpenZAP, install libpri and compile OpenZAP to use it.
+OpenZAP拥有自己的PRI堆栈，或许可以满足您的全部需求。然而，它仍处于开发阶段。如果您希望在OpenZAP内使用libpri作为PRI堆栈，请安装libpri并编译OpenZAP以使用它。
 
-Download and install libpri:
+下载并安装libpri：
 
 ```xml
 cd /usr/src
@@ -258,123 +255,124 @@ cd libpri-1.4.X
 make && make install
 ```
 
-Note: replace 'X' with the correct release number. As of this writing, libpri-1.4.10 is the latest version.
+注意：将'X'替换为正确的版本号。截至本文撰写时，libpri-1.4.10是最新版本。
 
-When you **load mod\_openzap**, if you're getting an error stating that **libpri.so.1.4 is missing** (or whatever version you've compiled), it may be because the LD\_LIBRARY\_PATH isn't set up correctly. Be sure **/usr/lib** is included in the **LD\_LIBRARY\_PATH** environment variable when you start FS. Consider adding it to **/etc/init.d/freeswitch** if it's not already there.
+当您**加载mod_openzap**时，如果出现“libpri.so.1.4丢失”（或您已编译版本的其他版本）的错误，可能是因为LD_LIBRARY_PATH没有正确设置。请确保在启动FS时将/usr/lib包含在LD_LIBRARY_PATH环境变量中。如果它还不存在，请考虑将其添加到/etc/init.d/freeswitch中。
 
-### OpenZAP Compilation
+### OpenZAP编译
 
- 1\. Make sure while compiling FreeSWITCH source, you have included ../../libs/openzap/mod\_openzap in modules.conf (just need to uncomment it)
+1. 在编译 FreeSWITCH 源代码时，请确保在 modules.conf 中包含了 ../../libs/openzap/mod_openzap 的配置（只需取消注释即可）。
 
- 2\. Tones should be configured in OpenZAP and not in zaptel. FreeSWITCH uses its libteletone for tones generation and detection, and does not rely on zaptel tones configuration. Therefore it does not matter which country zone is configured in zaptel. Make sure that you have loaded your country-specific tones at /etc/openzap/tones.conf. Check for your country-specific dial-tone/ring-tone/busy-tone etc in tones.conf because you can't make outbound calls on FXO unless you have proper tones configured.For eg, the tones.conf(India) will look like this [tones.conf Example](../../Client-and-Developer-Interfaces/FreeTDM/Tones.conf-Examples_9634287.mdx#about)
+2. 铃音应当在 OpenZAP 中进行配置，而不是在 zaptel 中。FreeSWITCH 使用自己的 libteletone 来生成和检测铃音，不依赖于 zaptel 的铃音配置。因此，zaptel 中配置的国家区域并不重要。请确保你在 /etc/openzap/tones.conf 中加载了适合你国家的特定铃音配置。在 tones.conf 中查找适用于你国家的拨号音/响铃音/忙音等配置，因为如果没有正确配置铃音，你将无法通过 FXO 发起呼叫。例如，印度的 tones.conf 配置如下：[tones.conf 示例](../../Client-and-Developer-Interfaces/FreeTDM/Tones.conf-Examples_9634287.mdx#about)
 
-NOTE: By default, tones.conf for USA is available at ${freeswitch\_src}/libs/openzap/conf/ , For the new versions, it's installed under ${prefix}/conf/tones.conf
+注意：对于美国，${freeswitch_src}/libs/openzap/conf/ 目录下默认提供了 tones.conf。对于新版本，它被安装在 ${prefix}/conf/tones.conf 下。
 
- 3\. If you are using libpri (as per previous step), re-configure OpenZAP to use libpri:
+3. 如果你正在使用 libpri（按照前面的步骤），请重新配置 OpenZAP 来使用 libpri：
 
 ```xml
 ./configure --with-libpri
-makemake mod_openzap-install
+make
+make mod_openzap-install
 ```
 
-Depending upon your specific hardware there are several configuration files. The two primary files are openzap.conf (located in the conf directory) and openzap.conf.xml (located in conf/autoload\_configs directory).
+根据你的具体硬件设置，可能有多个配置文件。其中两个主要文件是 openzap.conf（位于 conf 目录下）和 openzap.conf.xml（位于 conf/autoload_configs 目录下）。
 
-In a typical zaptel-based installation, the openzap.conf file will mirror the contents of the zaptel.conf file. The openzap.conf file has several configuration options:
+在典型的 zaptel-based 安装中，openzap.conf 文件会镜像 zaptel.conf 文件的内容。openzap.conf 文件包含了一些配置选项：
 
-* name - default caller ID name for this span
-* number - default caller ID number for this span
-* trunk\_type - trunk type, i.e. t1, e1, etc.
-* b-channel - specify one or more b-channels (ISDN)
-* d-channel - specify one or more d-channels (ISDN)
-* fxo-channel - specify one or more FXO channels (analog, RBS)
-* fxs-channel - specify one or more FXS channels (analog, RBS)
+* name - 此通道的默认呼叫者 ID 名称
+* number - 此通道的默认呼叫者 ID 号码
+* trunk\_type - 干线类型，例如 t1, e1 等
+* b-channel - 指定一个或多个 b 通道 (ISDN)
+* d-channel - 指定一个或多个 d 通道 (ISDN)
+* fxo-channel - 指定一个或多个 FXO 通道 (模拟, RBS)
+* fxs-channel - 指定一个或多个 FXS 通道 (模拟, RBS)
 
-Note for the fxo/fxs settings you specify what signalling is used. This is typically the opposite of the type of port which you specified (if applicable) in zaptel.cfg.
+注：对于 fxo/fxs 设置，您需要指定所使用的信令类型。通常情况下，这与您在 zaptel.cfg 中指定的端口类型相反。
 
-See the [openzap.conf\_Examples](./Openzap.conf-Examples_13173056.mdx#t1) page for some typical setup examples.
+请参考 [openzap.conf\_Examples](./Openzap.conf-Examples_13173056.mdx#t1) 页面以获取一些典型的设置示例。
 
-The openzap.conf.xml contains the higher layer configuration information for the span(s) that are described in openzap.conf. The openzap.conf.xml file defines a span as analog or PRI. For PRI spans, the dialect type is also specified here.
+openzap.conf.xml 包含了 openzap.conf 中描述的通道的更高层次配置信息。openzap.conf.xml 文件定义了一个通道是模拟还是 PRI。对于 PRI 通道，此处还会指定方言类型。
 
-See the [openzap.conf.xml\_Examples](./Openzap.conf.xml-Examples_13173057.mdx#--) page for some typical setup examples.
+请参考 [openzap.conf.xml\_Examples(./Openzap.conf.xml-Examples_13173057.mdx#--) 页面以获取一些典型的设置示例。
 
-NOTE: The new OpenZAP install process will now put the appropriate conf files in ${prefix}/conf/openzap.conf and will put openzap.conf.xml in ${prefix}/conf/autoload-configs/ This is different from the old process. openzap.conf is now located at ${prefix}/conf/openzap.conf and is no longer needed in /etc/openzap.
+注意：新的 OpenZAP 安装过程现在会将相应的配置文件放置在 ${prefix}/conf/openzap.conf，并将 openzap.conf.xml 放置在 ${prefix}/conf/autoload-configs/ 中。这与旧的过程不同。openzap.conf 现在位于 ${prefix}/conf/openzap.conf，不再需要放置在 /etc/openzap 中。
 
-### Zaptel mode
+### Zaptel 模式
 
-to be written
+待补充
 
-### Wanpipe mode
+### Wanpipe 模式
 
-In this mode you do not need to have Zaptel installed. You will a recent version of Wanpipe (3.5.10 works) and compile it in TDM Voice API mode. For an E1 span the openzap.conf file will look like this, where the SPAN is put in Wanpipe mode by specifying _span wanpipe_
+在此模式下，您无需安装 Zaptel。您需要一个较新版本的 Wanpipe（3.5.10 适用），并以 TDM Voice API 模式进行编译。对于 E1 通道，openzap.conf 文件将如下所示，其中通过指定 _span wanpipe_ 将该通道置于 Wanpipe 模式下。
 
-The [examples](Openzap.conf.xml-Examples_13173057.mdx#using-with-pri-libpri-compatibility-stack) page shows how to configure PRI spans to use libpri.
+[例子](Openzap.conf.xml-Examples_13173057.mdx#using-with-pri-libpri-compatibility-stack)页面展示了如何配置PRI跨度以使用libpri。
 
 ```xml
-[span wanpipe PRI_1]
-number => 1
-trunk_type => e1
-b-channel => 1:1-15
-d-channel => 1:16
-b-channel => 1:17-31
+[跨度 wanpipe PRI_1]
+号码 => 1
+线路类型 => e1
+b通道 => 1:1-15
+d通道 => 1:16
+b通道 => 1:17-31
 ```
 
-A T1 span would look more like this:
+一个T1跨度看起来更像这样：
 
 ```xml
-[span wanpipe PRI_1]
-number => 1
-trunk_type => t1
-b-channel => 1:1-23
-d-channel => 1:24
+[跨度 wanpipe PRI_1]
+号码 => 1
+线路类型 => t1
+b通道 => 1:1-23
+d通道 => 1:24
 ```
 
-/etc/wanpipe/wanpipe1.conf will look like this:
+/etc/wanpipe/wanpipe1.conf将会像这样：
 
 ```xml
-[devices]
-wanpipe1 = WAN_AFT_TE1, Comment
+[设备]
+wanpipe1 = WAN_AFT_TE1, 注释
 
-[interfaces]
-w1g1 = wanpipe1, , TDM_VOICE_API, Comment
+[接口]
+w1g1 = wanpipe1, , TDM_VOICE_API, 注释
 
 [wanpipe1]
-CARD_TYPE       = AFT
+卡类型       = AFT
 S514CPU         = A
-CommPort        = PRI
-AUTO_PCISLOT    = NO
+交流端口        = PRI
+自动_PCISLOT    = NO
 PCISLOT         = 4
 PCIBUS          = 13
-FE_MEDIA        = E1
-FE_LCODE        = HDB3
-FE_FRAME        = CRC4
-FE_LINE         = 1
-TE_CLOCK        = NORMAL
-TE_REF_CLOCK    = 0
-TE_SIG_MODE     = CCS
-TE_HIGHIMPEDANCE        = NO
+前端媒体        = E1
+前端编码        = HDB3
+帧结构        = CRC4
+线路         = 1
+时钟        = NORMAL
+参考时钟    = 0
+信号模式     = CCS
+高阻抗        = NO
 LBO             = 120OH
-FE_TXTRISTATE   = NO
+发送三态   = NO
 MTU             = 1500
 UDPPORT         = 9000
 TTL             = 255
-IGNORE_FRONT_END = NO
+忽略前端 = NO
 TDMV_SPAN       = 1
 TDMV_DCHAN      = 16
 TDMV_HW_DTMF    = YES
 
 [w1g1]
-ACTIVE_CH       = ALL
+活跃通道       = ALL
 TDMV_ECHO_OFF   = NO
 TDMV_HWEC       = YES
 MTU             = 80
 ```
 
-Only spans configured as _TDM\_VOICE\_API_ in _wanpipe\*.conf_ can be used together with a SPAN configured as _wanpipe_ in _openzap.conf_
+只有在_wanpipe\*.conf_中配置为_TDM\_VOICE\_API_的跨度才能与在_openzap.conf_中配置为_wanpipe_的跨度一起使用。
 
-The autoload\_configs/openzap.conf.xml will then look like this:
+autoload\_configs/openzap.conf.xml将会是这样的：
 
 ```xml
-<configuration name="openzap.conf" description="OpenZAP Configuration">
+<configuration name="openzap.conf" description="OpenZAP配置">
   <settings>
     <param name="debug" value="0"/>
     <!--<param name="hold-music" value="$${moh_uri}"/>-->
@@ -383,7 +381,7 @@ The autoload\_configs/openzap.conf.xml will then look like this:
   </settings>
    <pri_spans>
      <span name="PRI_1">
-       <!-- Log Levels: none, alert, crit, err, warning, notice, info, debug -->
+       <!-- 日志级别: 无, 警告, 严重, 错误, 警告, 注意, 信息, 调试 -->
        <param name="q921loglevel" value="alert"/>
        <param name="q931loglevel" value="alert"/>
        <param name="mode" value="user"/>
@@ -395,134 +393,134 @@ The autoload\_configs/openzap.conf.xml will then look like this:
 </configuration>
 ```
 
-If Wanrouter has been brought up by doing /etc/init.d/wanrouter start and you now start FreeSWITCH the span should come up and you can now hopefully dial out using
+如果通过执行`/etc/init.d/wanrouter start`来启动Wanrouter，并且你现在启动了FreeSWITCH，那么Span应该会启动起来，然后你现在可以使用下面的方式拨出电话了：
 
 ```xml
- <extension name="outgoing-pri">
+<extension name="outgoing-pri">
   <condition field="destination_number" expression="^.+$">
     <action application="bridge" data="openzap/1/a/${destination_number}"/>
   </condition>
 </extension>
 ```
 
-Make sure you give access rights to /dev/wptdm\* for FreeSWITCH user in case you are running as non-root user. You can make it with putting:
+请确保以非root用户运行时，为FreeSWITCH用户提供对`/dev/wptdm*`的访问权限。可以通过以下操作实现：
 
 ```xml
 SUBSYSTEM=="wptdm", OWNER="freeswitch", GROUP="freeswitch", MODE="0660"
 ```
 
-into /etc/udev/rules.d/wanpipe.rules and restarting the udev service.
+将上述内容放入`/etc/udev/rules.d/wanpipe.rules`文件中，并重新启动udev服务。
 
-You may also need to add the following to /etc/udev/rules.d/wanpipe.rules:
+你还可能需要向`/etc/udev/rules.d/wanpipe.rules`添加以下内容：
 
 ```xml
 SUBSYSTEM=="wanpipe", OWNER="freeswitch", GROUP="freeswitch", MODE="0660"
 ```
 
-The Boost PRI stack groups together all channels from all spans into a single logical span. You may still dial a specific span by using the group nomenclature. &lt;STUB, more to come when I get a sec to track it all down...>
+Boost PRI堆栈将所有跨度的所有通道组合成一个单独的逻辑跨度。您仍然可以使用群组命名法拨打特定跨度。&lt;STUB，等待适当时间梳理清楚后，还有更多信息...>
 
-### Examples
+### 示例
 
-As an example, let's see configuration for OpenZap module with Digium TDM400P 2FXS/2FXO card. [Configuration OpenZAP- DigiumTDM400P Example](../Gateways/Configuration-OpenZAP---DigiumTDM400P-Example/index.mdx#about)
+例如，让我们看一个使用Digium TDM400P 2FXS/2FXO卡的OpenZap模块的配置。[OpenZAP-DigiumTDM400P示例配置](../Gateways/Configuration-OpenZAP---DigiumTDM400P-Example/index.mdx#about)
 
-Tormenta2: [Openzap.conf Examples](./Openzap.conf-Examples_13173056.mdx#t1) and [Openzap.conf.xml Examples](./Openzap.conf.xml-Examples_13173057.mdx#--). You will also need a zaptel.conf, since it is tied in with ztcfg into the kernel module configs.
+Tormenta2：[Openzap.conf示例](./Openzap.conf-Examples_13173056.mdx#t1) 和 [Openzap.conf.xml示例](./Openzap.conf.xml-Examples_13173057.mdx#--)。您还需要一个zaptel.conf文件，因为它与ztcfg绑定到内核模块配置中。
 
-Here's a [step-by-step](https://wiki.freeswitch.org/wiki/Openzap.sangoma.libpri "Openzap.sangoma.libpri") for installing and configuring a **Sangoma A101DE** card with **libpri** configured for **T1/NI2**.
+这是一个[逐步指南](https://wiki.freeswitch.org/wiki/Openzap.sangoma.libpri "Openzap.sangoma.libpri")，用于安装和配置**Sangoma A101DE**带有已配置为**T1/NI2**的**libpri**的卡。
 
-## Start Up FreeSWITCH
+## 启动FreeSWITCH
 
- 1\. Once you are done with installing zaptel drivers and fixed the FXS/FXO card on your machine, the green LEDs(Digium TDM400 card in my case) on your card will start glowing. (that's good omen for you :-) )
+ 1\. 当您安装完zaptel驱动程序并将FXS/FXO卡固定在机器上后，您卡上的绿色LED灯（在我这里是Digium TDM400卡）将开始发光。（这对您来说是好兆头 :-) ）
 
- 2\. At the time of running FreeSWITCH from /usr/local/freeswitch/bin/, make sure again that &lt;load module ="mod\_openzap"/> is included in /usr/local/freeswitch/conf/autoload\_configs/modules.conf.xml
+ 2\. 在从/usr/local/freeswitch/bin/运行FreeSWITCH时，确保再次在/usr/local/freeswitch/conf/autoload_configs/modules.conf.xml中包含&lt;load module ="mod\_openzap"/>。
 
- 3\. Make sure you see the OpenZAP FXS and FXO configuration messages on your console when you run FreeSWITCH. For example,
-
-```xml
-2008-05-01 18:10:32 [INFO] zap_zt.c:170 zt_open_range() configuring device /dev/zap/channel channel 1 as OpenZAP  device 1:1 fd:33
-2008-05-01 18:10:32 [INFO] zap_zt.c:170 zt_open_range() configuring device /dev/zap/channel channel 4 as OpenZAP device 2:1 fd:34
-2008-05-01 18:10:32 [INFO] zap_io.c:1978 load_config() Configured 2 channel(s)
-2008-05-01 18:10:32 [CONSOLE] switch_loadable_module.c:749 switch_loadable_module_load_file() Successfully Loaded [mod_openzap]
-2008-05-01 18:10:32 [NOTICE] switch_loadable_module.c:139 switch_loadable_module_process() Adding Endpoint 'openzap'
-2008-05-01 18:10:32 [NOTICE] switch_loadable_module.c:245 switch_loadable_module_process() Adding API Function 'oz'
-```
-
-For digital channels like PRI's the messages will be similar:
+ 3\. 确保您在运行FreeSWITCH时在控制台上看到OpenZAP FXS和FXO配置消息。例如，
 
 ```xml
-2008-09-26 10:55:26 [INFO] zap_io.c:2213 zap_load_module() Loading IO from /usr/local/freeswitch/mod/ozmod_zt.so
-2008-09-26 10:55:26 [INFO] zap_io.c:2006 load_config() auto-loaded 'zt'
-2008-09-26 10:55:26 [INFO] ozmod_zt.c:170 zt_open_range() configuring device /dev/zap/channel channel 1 as OpenZAP device 1:1 fd:50
-2008-09-26 10:55:26 [INFO] ozmod_zt.c:170 zt_open_range() configuring device /dev/zap/channel channel 2 as OpenZAP device 1:2 fd:51
-2008-09-26 10:55:26 [INFO] ozmod_zt.c:170 zt_open_range() configuring device /dev/zap/channel channel 3 as OpenZAP device 1:3 fd:52
-.
-.
-.
-2008-09-26 10:55:26 [INFO] ozmod_zt.c:170 zt_open_range() configuring device /dev/zap/channel channel 96 as OpenZAP device 4:24 fd:144
-2008-09-26 10:55:26 [INFO] zap_io.c:2137 load_config() Configured 96 channel(s)
-2008-09-26 10:55:27 [INFO] zap_io.c:2230 zap_load_module() Loading SIG from /usr/local/freeswitch/mod/ozmod_isdn.so
-2008-09-26 10:55:27 [INFO] zap_io.c:2346 zap_configure_span() auto-loaded 'isdn'
-2008-09-26 10:55:27 [CONSOLE] switch_loadable_module.c:789 switch_loadable_module_load_file() Successfully Loaded [mod_openzap]
+2008-05-01 18:10:32 [INFO] zap_zt.c:170 zt_open_range() 正在配置设备 /dev/zap/channel 通道 1 作为 OpenZAP 设备 1:1 fd:33
+2008-05-01 18:10:32 [INFO] zap_zt.c:170 zt_open_range() 正在配置设备 /dev/zap/channel 通道 4 作为 OpenZAP 设备 2:1 fd:34
+2008-05-01 18:10:32 [INFO] zap_io.c:1978 load_config() 配置了 2 个通道
+2008-05-01 18:10:32 [CONSOLE] switch_loadable_module.c:749 switch_loadable_module_load_file() 成功加载 [mod_openzap]
+2008-05-01 18:10:32 [NOTICE] switch_loadable_module.c:139 switch_loadable_module_process() 添加终端 'openzap'
+2008-05-01 18:10:32 [NOTICE] switch_loadable_module.c:245 switch_loadable_module_process() 添加 API 函数 'oz'
 ```
 
- 4\. Now you can take a ride on your Ozzzzzzz... zip zap zoom ;)
+对于数字通道，例如 PRI，消息内容将是类似的。
 
-### OpenZAP CLI Commands
+```xml
+2008-09-26 10:55:26 [INFO] zap_io.c:2213 zap_load_module() 正在从/usr/local/freeswitch/mod/ozmod_zt.so加载IO
+2008-09-26 10:55:26 [INFO] zap_io.c:2006 load_config() 自动加载了'zt'
+2008-09-26 10:55:26 [INFO] ozmod_zt.c:170 zt_open_range() 配置设备/dev/zap/channel通道1为OpenZAP设备1:1 fd:50
+2008-09-26 10:55:26 [INFO] ozmod_zt.c:170 zt_open_range() 配置设备/dev/zap/channel通道2为OpenZAP设备1:2 fd:51
+2008-09-26 10:55:26 [INFO] ozmod_zt.c:170 zt_open_range() 配置设备/dev/zap/channel通道3为OpenZAP设备1:3 fd:52
+.
+.
+.
+2008-09-26 10:55:26 [INFO] ozmod_zt.c:170 zt_open_range() 配置设备/dev/zap/channel通道96为OpenZAP设备4:24 fd:144
+2008-09-26 10:55:26 [INFO] zap_io.c:2137 load_config() 配置了96个通道
+2008-09-26 10:55:27 [INFO] zap_io.c:2230 zap_load_module() 正在从/usr/local/freeswitch/mod/ozmod_isdn.so加载SIG
+2008-09-26 10:55:27 [INFO] zap_io.c:2346 zap_configure_span() 自动加载了'isdn'
+2008-09-26 10:55:27 [CONSOLE] switch_loadable_module.c:789 switch_loadable_module_load_file() 成功加载了[mod_openzap]
+```
 
-To see a list of your configured spans, at the CLI type
+ 4\. 现在您可以坐上您的 Ozzzzzzz... zip zap zoom 的旅程了 ;)
+
+### OpenZAP CLI 命令
+
+要查看配置的 span 列表，请在 CLI 中键入
 
 ```xml
 oz list
 ```
 
-To see detailed information about a specific span type
+要查看特定 span 的详细信息，请键入
 
 ```xml
 oz dump <span_id> [<chan_id>]
 ```
 
-To save Q.931 packets in a \*.pcap file for decoding in wireshark
+要将 Q.931 数据包保存到 \*.pcap 文件中以便在 wireshark 中解码，请键入
 
 ```xml
 oz q931_pcap <span_id> on|off [pcapfilename without suffix]
 ```
 
-Note: Only if you have libpcap and libpcap-devel installed on your system! Also note that you can't use libpri if you want to be able to capture the q931 traffic, it only works with ozmod\_isdn.
+注意：只有在系统上安装了 libpcap 和 libpcap-devel 才能使用！还请注意，如果要捕获 q931 流量，就不能同时使用 libpri，它只与 ozmod\_isdn 兼容。
 
-To see debug messaging if you are using libpri
+要查看使用 libpri 时的调试信息，请键入
 
 ```xml
 oz libpri debug <span_id> all
 ```
 
-To turn off the debug messaging if you are using libpri
+如果您使用libpri，可以使用此命令打开调试消息
 
 ```xml
 oz libpri debug <span_id> off
 ```
 
-Sangoma's _wanpipemon_ utility is handy for generating [pcap](https://wiki.freeswitch.org/wiki/Packet%5FCapture "Packet Capture") files on the d-channel of a PRI circuit. Check out Sangoma's [wiki entry](http://wiki.sangoma.com/wanpipe-wireshark-pcap-pri-bri-wan-t1-e1-tracing) for more information.
+Sangoma的_wanpipemon_实用程序非常方便，在PRI电路的D通道上生成[pcap](https://wiki.freeswitch.org/wiki/Packet%5FCapture "Packet Capture")文件。请查看Sangoma的[wiki条目](http://wiki.sangoma.com/wanpipe-wireshark-pcap-pri-bri-wan-t1-e1-tracing)获取更多信息。
 
-## Dialplan Configuration
+## 拨号计划配置
 
-### Channel Variables
+### 通道变量
 
 * openzap\_span\_number
 
- OpenZAP span number
+ OpenZAP通道号
 
 * openzap\_chan\_number
 
- OpenZAP channel number
+ OpenZAP信道号
 
-### Usage
+### 用法
 
-The syntax of the bridge application data's option is openzap/span/port/phone-number.  
-To automatically discover of a free port number instead of a number you can use "a" or "A". For example, "openzap/1/a/123456789" will pick up the first available port in span 1 to dial the number 123456789.  
-Using "A" for the port will find the highest-numbered port available.
+桥接应用程序数据选项的语法是openzap/span/port/phone-number。  
+为了自动发现一个空闲的端口号，而不是一个固定的号码，您可以使用"a"或"A"。例如，"openzap/1/a/123456789"将选择第一个可用的端口在第1个信道上拨打号码123456789。  
+使用"A"表示找到最高编号的可用端口。
 
-### Examples
+### 示例
 
- 1\. To bridge an inbound call to your FXS that is configured on channel 1, for an UA registered as [507@proxy.com](mailto:507@proxy.com) configure as below
+ 1\. 如果要将呼入的呼叫桥接到配置在信道1上的FXS设备，且UA注册为[507@proxy.com](mailto:507@proxy.com)，请按照以下配置
 
 ```xml
  <extension name="incoming-fxs">
@@ -532,7 +530,7 @@ Using "A" for the port will find the highest-numbered port available.
  </extension>
 ```
 
- 2\. To bridge an outbound call onto your FXO card that is configured on channel 4, for any 10-digit destination configure as below
+ 2\. 如果要将呼出呼叫桥接到配置在信道4上的FXO卡，且目标号码为10位数字，请按照以下配置
 
 ```xml
  <extension name="outgoing-fxo">
@@ -542,43 +540,44 @@ Using "A" for the port will find the highest-numbered port available.
  </extension>
 ```
 
- 3\. To bridge an outbound call to the first available port from a dual-span PRI card, regardless of the span number (will try the 1st span first, then the 2nd span if the 1st one is not available):
+3. 要将呼出通话桥接到双通道PRI卡的第一个可用端口，无论通道号是多少（首先尝试第一个通道，然后如果第一个通道不可用，则尝试第二个通道）：
 
 ```xml
- <extension name="outgoing-pri">
-   <condition field="destination_number" expression="^(\d{10})$">
-     <action application="bridge" data="openzap/1/a/$1|openzap/2/a/$1"/>
-   </condition>
- </extension>
+<extension name="outgoing-pri">
+  <condition field="destination_number" expression="^(\d{10})$">
+    <action application="bridge" data="openzap/1/a/$1|openzap/2/a/$1"/>
+  </condition>
+</extension>
 ```
 
- 4\. To bridge about outbound call to the last available channel on a PRI span:
+4. 要将呼出通话桥接到PRI通道上的最后一个可用信道：
 
 ```xml
- <extension name="outgoing-pri">
-   <condition field="destination_number" expression="^(\d{10})$">
-     <action application="bridge" data="openzap/1/A/$1"/>
-   </condition>
- </extension>
+<extension name="outgoing-pri">
+  <condition field="destination_number" expression="^(\d{10})$">
+    <action application="bridge" data="openzap/1/A/$1"/>
+  </condition>
+</extension>
 ```
+
 
 ##   
-Debugging your OpenZAP set up
+调试您的OpenZAP设置
 
-### Symptom: "Why bother changing state on 1:1 from UP to UP" or "Cannot get a RING_START event on a non-fxo channel"
+### 症状：“为什么要将1:1的状态从UP更改为UP”或“在非FXO信道上无法获得RING_START事件”
 
-Resolution: The problem here is that you have your channel that connects to the telco defined as an fxs channel, instead of an fxo channel. Note that the other guys ask you to specify what kind of signalling the channel is expecting at the other end, while FreeSWITCH wants you to specify what type of signalling the FreeSWITCH end is.
+解决方案：问题在于您将连接到电信公司的通道定义为FXS信道，而不是FXO信道。请注意，其他人要求您指定通道在另一端所期望的信令类型，而FreeSWITCH希望您指定FreeSWITCH端点的信令类型。
 
-To fix this, change your openzap.conf to something similar to.
+要解决此问题，请将openzap.conf更改为类似以下的内容。
 
 ```xml
- [span zt]
- name => OpenZAP
- number => 1
- fxo-channel => 1
+[span zt]
+name => OpenZAP
+number => 1
+fxo-channel => 1
 ```
 
-Your zaptel.conf still requires you to specify what sort of signalling you are expecting to see on the other end so it will look like.
+您的zaptel.conf仍然需要您指定在另一端您希望看到什么类型的信令，因此它看起来像这样。
 
 ```xml
 fxsks=1
@@ -587,89 +586,87 @@ defaultzone=us
 ```
 
 ###   
-Symptom: \[ERR\] ozmod\_wanpipe.c:440 wp\_open\_range() failure configuring device s\*c\*\* using a Sangoma card with FreeSWITCH running as a normal user
+症状：\[ERR\] ozmod\_wanpipe.c:440 wp\_open\_range()失败，使用Sangoma卡在FreeSWITCH上以普通用户身份运行配置设备s\*c\*\*
 
-Use UDEV to set the right permissions. Create an file called /etc/udev/rules.d/wanpipe.rules with the following line (replace freeswitch with your actual user):
+解决方案：在这里问题是您将在FreeSWITCH上以普通用户身份运行时，连接Sangoma卡的通道配置为FXO信道。
 
+使用UDEV设置正确的权限。创建一个名为/etc/udev/rules.d/wanpipe.rules的文件，并在其中添加以下行（将freeswitch替换为您实际的用户）：
 ```xml
- SUBSYSTEM=="wptdm", OWNER="freeswitch", GROUP="freeswitch", MODE="0660"
+SUBSYSTEM=="wptdm", OWNER="freeswitch", GROUP="freeswitch", MODE="0660"
 ```
+然后执行/etc/init.d/udev reload命令重新加载udev，或者重新启动系统并重新加载wanpipe。权限现在应该正确了。CentOS中使用start\_udev命令。
 
-Then reload your udev by doing **/etc/init.d/udev reload** or restarting your system and reload your wanpipe, The permissions should now be correct. CentOs I use **start\_udev**
+### 症状：在64位系统上使用Wanpipe时，信令正常，但会出现杂音音频，而系统内存大于4 GB
 
-### Symptom: Signalling works but buzzing audio is heard using Wanpipe on a 64 bit system with > 4 GB RAM
+使用`./Setup install --64bit\_4GB`重新编译wanpipe。
 
-Recompile wanpipe with ./Setup install --64bit\_4GB
+## 常见问题解答
 
-## FAQ
+### 问：OpenZAP与mod_wanpipe有什么区别？
 
-### Q: OpenZAP vs. mod_wanpipe
+OpenZAP取代了mod\_wanpipe。
 
-OpenZAP replaces mod\_wanpipe
+### 问：OpenZAP与libpri有什么区别？
 
-### Q: OpenZAP vs. libpri
+OpenZAP可以取代libpri，也可以与libpri一起使用。因为OpenZAP基于BSD许可证，与GPL许可的libpri实际上是兼容的。请参阅[OpenZAP#Adding\_libpri\_Support](https://wiki.freeswitch.org/wiki/OpenZAP#Adding%5Flibpri%5FSupport)获取设置说明。
 
-OpenZAP can replace libpri or can be used with libpri. Because OpenZAP is licensed under the BSD it is actually compatible with the GPL-licensed libpri. See [OpenZAP#Adding\_libpri\_Support](https://wiki.freeswitch.org/wiki/OpenZAP#Adding%5Flibpri%5FSupport "OpenZAP") for setup instructions.
+### 问：OpenZAP支持libss7吗？
 
-### Q: Does OpenZAP support libss7?
+目前我们没有任何开源的SS7解决方案，但商业选项是可用的。
 
-Currently we do not have any open source SS7 solutions but commercial options are available.
+### 问：如何配置spanmaps？
 
-### Q: How do I configure spanmaps?
+可以在autoload\_configs/openzap.conf.xml文件中进行配置。
 
-This can be done in the autoload\_configs/openzap.conf.xml file.
+### 问：使用Tormenta2是否需要特殊的tor2.c文件？
 
-### Q: Do you need a special tor2.c for using Tormenta2?
+通常不需要特殊的文件，只需加载带有任何tor2插件的zaptel即可。因为zaptel相当通用，所以驱动程序的任何变体都应该可以工作。据报道，来自[pbxhardware.com](http://pbxhardware.com/)的Tormenta2克隆工作正常。
 
-You should not need anything special, just zaptel loaded with any plugin tor2, whatever. Any variation of the driver should be fine since zaptel is fairly generic. Tormenta2 clones from [pbxhardware.com](http://pbxhardware.com/) are reported to work well.
+### 问：对于模拟卡（XP100），我是否需要zaptel内核驱动程序？
 
-### Q: For analog cards (XP100), will I need zaptel kernel drivers?
+是的，对于模拟卡，OpenZAP通过套接字与zaptel内核驱动程序进行通信，而后者与硬件卡进行通信。
 
-Yes, for analog cards, OpenZAP communicates w/ the zaptel kernel drivers via sockets, which in turn communicates with the hardware card.
+### 问：如何发送挂机信号（hook flash）？
 
-### Q: How do I send a hook flash?
-
-Use the **send\_dtmf** app to send **F** like this:
+使用**send\_dtmf**应用程序发送**F**，可以像这样操作：
 
 ```xml
 <action application="send_dtmf" data="F"/>
 ```
 
 ###   
-Q: If I want Sangoma with OpenZAP, do I need wanpipe installed?
+问：如果我想要使用OpenZAP的Sangoma卡，我需要安装wanpipe吗？
 
-Yes
+答：是的。
 
-Sangoma cards can be used in two ways with OpenZAP depending on the driver set in _FS\_ROOT\_DIR/conf/openzap.conf_
+Sangoma卡可以通过两种方式与OpenZAP一起使用，具体取决于在_WAN\_ROOT\_DIR/conf/openzap.conf_中设置的驱动程序：
 
-* Using the _wanpipe_ driver if the span is configured as TDM\_VOICE\_API in the Wanrouter setup script.
-* Using the _zaptel_ or _DAHDI_ driver if the span is configured as TDM\_VOICE in Wanrouter setup script.
+* 如果在Wanrouter设置脚本中将span配置为TDM\_VOICE\_API，则使用_wanpipe_驱动程序。
+* 如果在Wanrouter设置脚本中将span配置为TDM\_VOICE，则使用_zaptel_或_DAHDI_驱动程序。
 
-_wanpipe_ is preferred, but if you need to use things like OSLEC operating in the zaptel/DAHDI driver you will need to use the second option.
+_wanpipe_是首选，但如果需要使用像zaptel/DAHDI驱动程序中的OSLEC之类的功能，您需要使用第二个选项。
 
-### Q: Does OpenZAP support ccs, hdb3 with Digium te420?
+### 问：OpenZAP是否支持使用Digium te420的ccs、hdb3？
 
-Yes, also CAS is supported in MFC-R2 or DTMF-R2 lines.
+答：是的，MFC-R2或DTMF-R2线路也支持CAS。
 
-### Q: Does OpenZAP support EuroISDN?
+### 问：OpenZAP是否支持EuroISDN？
 
-Yes, via libpri, sangoma prid, and to some extent via the openzap pri stack. FreeTDM should have full support when we re-enable our native isdn stack, but you can use via the other stacks already.
+答：是的，通过libpri、sangoma prid以及通过openzap pri stack在一定程度上支持。当我们重新启用原生isdn stack时，FreeTDM应该具有完全支持，但是您已经可以使用其他栈。
 
-### Q: I hear some line noise on analog card
+### 问：在模拟卡上我听到一些噪音
 
-FreeSWITCH/OpenZAP (in opposition to Asterisk/ZAPATA) doesn't implement it's own echo canceller in software. If you are hearing strange noise on analog card without hardware echo cancellation, try to apply separate echo canceller - e.g. [OSLEC](http://www.rowetel.com/ucasterisk/oslec.html).
+FreeSWITCH/OpenZAP（与Asterisk/ZAPATA相对）没有在软件中实现自己的回声抵消器。如果您在没有硬件回声消除的模拟卡上听到奇怪的噪音，请尝试应用单独的回声抵消器 - 例如[OSLEC](http://www.rowetel.com/ucasterisk/oslec.html)。
 
-### Q: Does OpenZAP support OSLEC?
+### 问：OpenZAP是否支持OSLEC？
 
-Yes. OSLEC operates at the Zaptel driver level so no special OpenZAP configuration is needed. Just load OSLEC and go!
+答：是的。OSLEC在Zaptel驱动程序级别运行，因此不需要特殊的OpenZAP配置。只需加载OSLEC即可！
 
 ## API
 
-See [Zapata\_zaptel\_interface](./Zapata-zaptel/Zapata-zaptel-interface_13173132.mdx#--).
+请参阅[Zapata\_zaptel\_interface](./Zapata-zaptel/Zapata-zaptel-interface_13173132.mdx#--)。
 
-## See Also
+## 参考资料
 
-* World Tone Database: [\[1\]](http://www.3amsystems.com/wireline/tone-search.htm?start=0&kTone=9)
-* ITU World Tone List: [\[2\]](http://www.itu.int/oth/?lang=en&parent=T0206000004)
-
-
+* 世界音调数据库：[\[1\]](http://www.3amsystems.com/wireline/tone-search.htm?start=0&kTone=9)
+* ITU世界音调列表：[\[2\]](http://www.itu.int/oth/?lang=en&parent=T0206000004)

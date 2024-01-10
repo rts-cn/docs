@@ -1,88 +1,84 @@
+# VAD和CNG
 
-# VAD and CNG 
+## 关于
 
- 
+关于语音活动检测和舒适噪声生成。
 
-## About
+单击此处展开目录
 
-About Voice Activity Detection and Comfort Noise Generation.
+* 1 [概述](#vad-overview)  
+   * 1.1 [VAD概述](#vad-overview)  
+   * 1.2 [CNG概述](#vad-overview)  
+   * 1.3 [FreeSWITCH中的VAD](#vad-in-freeswitch)  
+   * 1.4 [FreeSWITCH中的CNG](#vad-in-freeswitch)
+* 2 [适用设置](#applicable-settings)  
+   * 2.1 [通道变量](#channel-variables-)  
+   * 2.2 [配置参数](#profile-parameters)  
+   * 2.3 [静默文件类型](#-silence-file-type-)
 
-Click here to expand Table of Contents
+## 概述
 
-* 1 [Overview](#vad-overview)  
-   * 1.1 [VAD Overview](#vad-overview)  
-   * 1.2 [CNG Overview](#vad-overview)  
-   * 1.3 [VAD in FreeSWITCH](#vad-in-freeswitch)  
-   * 1.4 [CNG in FreeSWITCH](#vad-in-freeswitch)
-* 2 [Applicable Settings](#applicable-settings)  
-   * 2.1 [Channel Variables](#channel-variables-)  
-   * 2.2 [Profile Parameters](#profile-parameters)  
-   * 2.3 [Silence File Type](#-silence-file-type-)
+### VAD概述
 
-## Overview
+VAD代表语音活动检测。其作用是区分语音和其他声音，包括静音。在VoIP应用程序中，它可以用作最小化传输的音频数据包数量的工具。如果没有人说话，可以停止音频数据包的流动，或者至少切换到较低速率的舒适噪声数据包。在一次典型电话对话中，有短暂的双方对话时间，但大部分时间只有一方在说话。使用VAD，每个方向的传输可以大大减少，甚至在近50%的通话时间内停止。VAD通常是VoIP路径中端点的功能之一。
 
-### VAD Overview
+这里有两个需要注意的事情，经常会让人混淆。VAD（语音活动检测）不同于静音检测。高音乐确实不是静音，但也不是声音，一个优秀的VAD会宣布"没有声音"。其次，使用VAD来减少数据包流量通常被描述为减少带宽的措施。这只适用于承载大量并发呼叫的网络链路，这种情况下每个人同时讲话的可能性较低。对于大多数客户端应用程序来说，网络所需的带宽将在所有对话都被声明为声音且数据包按照其语音编解码器的正常速率进行传输时达到最高峰。在这些情况下，VAD所允许的是平均数据速率的降低，为非实时数据释放了大量容量，因此可以进行排队。
 
-VAD stands for Voice Activity Detection. Its role is to distinguish between a voice and anything else, including silence. In VoIP applications it may be used as a tool to minimize the number of audio packets transmitted. If nobody is speaking it is possible either to stop the flow of audio packets, or at least change to a much lower rate of comfort noise packets. In a typical phone conversation there are short periods when both parties are talking, but most of the time only one party is talking. With VAD, transmission in each direction can be greatly reduced, or even halted, for nearly 50% of the call. VAD is usually a function within the endpoints of a VoIP path.
+### CNG概述
 
-There are two things to note here, which often confuse people. VAD is not the same as silence detection. Loud music is certainly not silence, but it is also not voice, and a good VAD will declare "no voice present". Secondly, the use of VAD to minimize packet flow is often described as a bandwidth reduction measure. This is only the case for network links carrying large numbers of concurrent calls, when the likelihood of everyone talking at once is low. For most customer premises applications the bandwidth required of the network will be the peak when all conversations are declared to be voice, and packets are being transmitted at the normal rate of their voice codecs. What VAD allows in these cases is a reduction in the **average** data rate, freeing up lots of capacity for data which is not real-time data and therefore can be queued..
+CN代表舒适噪声。这是在VoIP路径的接收端合成的模拟背景噪声。这个功能叫做舒适噪声生成（CNG）。在简单形式中，它可能是普通房间"嗡嗡"声的简单模拟（例如具有Hoth频谱加权的高斯噪声）。在更复杂的形式中，从发件人那里接收到的噪声参数可能包含噪声建模参数。这些参数可用于生成与当前发件人环境中拾取到的噪声的幅度和频谱特性非常相似的噪声。
 
-### CNG Overview
+CN也指[RFC 3389](https://tools.ietf.org/html/rfc3389)中指定的CN RTP数据包。当VAD函数声明不存在语音时，会发送CN数据包。CN数据包可以传递上述描述的噪音建模参数，但通常情况下，这些信息是缺失的。理想情况下，应在发送方环境中的噪音发生变化时发送CN数据包，以便接收方的CNG函数可以有效更新噪音，并避免在语音信号恢复时噪音突变。更常见的情况是，当语音数据包的流动停止时，只发送一个CN数据包。
 
-CN stands for Comfort Noise. This is simulated background noise, synthesized at the receiving end of a VoIP path. This function is called comfort noise generation (CNG). In a crude form it may be simple simulation of general room "mush" (e.g. Gaussian noise with a Hoth spectral weighting). In a more sophisticated form, noise parameters received from the sender may contain noise modelling parameters. These may be used to produce noise which closely matches the amplitude and spectral qualities of the noise currently being picked up in the sender's environment.
+### FreeSWITCH中的VAD
 
-CN also refers to the CN RTP packets specified by [RFC 3389](https://tools.ietf.org/html/rfc3389). CN packets are sent when the VAD function declares there is no voice present. A CN packet can convey the noise modelling parameters described above, but frequently this information is missing. Ideally CN packets should be sent as the noise in the sender's environment changes, so the CNG function at the receiver can update the noise effectively, and avoid abrupt changes in the noise when the voice signal resumes. More typically, just a single CN packet is sent as the flow of voice packets ceases.
+VAD可以在终端配置文件中设置并具有4个值：
 
-### VAD in FreeSWITCH
+* in - 为传入媒体打开VAD，
+* out - 为传出媒体打开VAD，
+* both - 为传入和传出媒体均打开VAD，
+* none - VAD完全关闭。
 
-VAD can be set in endpoint profiles and can have 4 values:
-
-* in - turn on VAD for incoming media,
-* out - turn on VAD for outgoing media,
-* both - turn on VAD for both incoming and outgoing media,
-* none - VAD is completely turned off.
-
-When FreeSWITCH does not detect speech, it stops transmitting RTP. FreeSWITCH also supports per call VAD handling with the following channel variables:
+当FreeSWITCH未检测到语音时，停止传送RTP。FreeSWITCH还支持使用以下通道变量进行每个呼叫的VAD处理：
 
 * [rtp\_enable\_vad\_in](../Introduction/Variables/index.mdx#2-show-variables)
 * [rtp\_enable\_vad\_out](../Introduction/Variables/index.mdx#0-about)
 * [rtp\_disable\_vad\_in](../Introduction/Variables/index.mdx#2-show-variables)
 * [rtp\_disable\_vad\_out](../Introduction/Variables/index.mdx#0-about)
 
-### CNG in FreeSWITCH
+### FreeSWITCH中的CNG
 
-In FreeSWITCH the CNG options select whether or not FreeSWITCH will generate CN RTP packets. The [suppress-cng](../Configuration/Sofia-SIP-Stack/Sofia-Configuration-Files_7144453.mdx#-default-configuration-file-) sofia profile option and [suppress\_cng](../../Channel-Variables-Catalog/suppress_cng_16352988.mdx#suppress_cng) channel variable control this setting. When both sides support [RFC 3389](https://tools.ietf.org/html/rfc3389) (they agree in SDP message exchange, rtpmap:13), FreeSWITCH will send CN packets.
+在FreeSWITCH中，CNG选项用于选择是否生成CN RTP数据包。通过[suppress-cng](../Configuration/Sofia-SIP-Stack/Sofia-Configuration-Files_7144453.mdx#-default-configuration-file-) sofia配置文件选项和[suppress\_cng](../../Channel-Variables-Catalog/suppress_cng_16352988.mdx#suppress_cng)通道变量来控制此设置。当两侧都支持[RFC 3389](https://tools.ietf.org/html/rfc3389)（在SDP消息交换中达成一致，rtpmap:13），FreeSWITCH将发送CN数据包。
 
-Allowing CNG in FreeSWITCH does not mean it will generate any comfort noise into the media channel.
+在FreeSWITCH中允许CNG并不意味着它会将任何舒适噪音插入媒体通道。
 
-  
- In case one of the call legs does not handle VAD and asynchronous RTP media, it's possible that the listening caller might think that hearing perfect silence means the connection has been dropped. For handling these endpoints, there is a channel variable: [bridge\_generate\_comfort\_noise](../../Channel-Variables-Catalog/bridge_generate_comfort_noise_16353601.mdx#bridge_generate_comfort_noise) which will generate fake audio.
+如果呼叫的任一受限方不能处理VAD和异步RTP媒体，那么听到完全的寂静可能会让接听方误以为连接已中断。为了处理这些端点，有一个通道变量：[bridge\_generate\_comfort\_noise](../../Channel-Variables-Catalog/bridge_generate_comfort_noise_16353601.mdx#bridge_generate_comfort_noise)，它将生成虚假音频。
 
-## Applicable Settings
+## 相关设置
 
-### Channel Variables 
+### 通道变量
 
-* [bridge\_generate\_comfort\_noise](../../Channel-Variables-Catalog/bridge_generate_comfort_noise_16353601.mdx#bridge_generate_comfort_noise) — Generates comfort noise when bridged session is receiving discontinuous audio frames (silence suppression).
+* [bridge\_generate\_comfort\_noise](../../Channel-Variables-Catalog/bridge_generate_comfort_noise_16353601.mdx#bridge_generate_comfort_noise) — 当桥接会话接收到不连续的音频帧（静音压制）时生成舒适噪声。
 * [rtp\_enable\_vad\_in](../Introduction/Variables/index.mdx#2-show-variables)
 * [rtp\_enable\_vad\_out](../Introduction/Variables/index.mdx#0-about)
 * [rtp\_disable\_vad\_in](../Introduction/Variables/index.mdx#2-show-variables)
 * [rtp\_disable\_vad\_out](../Introduction/Variables/index.mdx#0-about)
-* [send\_silence\_when\_idle —](../../Channel-Variables-Catalog/send_silence_when_idle_16353910.mdx#send_silence_when_idle) When set greater than 0, this variable tells FreeSWITCH to transmit comfort noise when idle.
-* [suppress\_cng](../../Channel-Variables-Catalog/suppress_cng_16352988.mdx#suppress_cng) — This can be used to stop a remote party, typically a handset, from using silence suppression. Poorly implemented silence suppression can result in lost speech, and this is a way to fix that, at the cost of greater bandwidth consumption.
+* [send\_silence\_when\_idle —](../../Channel-Variables-Catalog/send_silence_when_idle_16353910.mdx#send_silence_when_idle) 当设置大于0时，此变量告诉FreeSWITCH在空闲时传输舒适噪声。
+* [suppress\_cng](../../Channel-Variables-Catalog/suppress_cng_16352988.mdx#suppress_cng) — 这可以用来阻止远程方（通常是一部手机）使用静音压制。实现不良的静音压制可能会导致丢失语音，这是一种解决方法，但代价是更大的带宽消耗。
 
 ### Profile Parameters
 
-[suppress-cng](../Configuration/Sofia-SIP-Stack/Sofia-Configuration-Files_7144453.mdx#--) — Suppress Comfort Noise Generator (CNG) on this profile or per call with the 'suppress\_cng' variable.
+[suppress-cng](../Configuration/Sofia-SIP-Stack/Sofia-Configuration-Files_7144453.mdx#--) — 在此配置文件或使用 'suppress\_cng' 变量的每个呼叫中禁用舒适噪声发生器（CNG）。
 
-###  Silence File Type 
+###  静音文件类型 
 
-To assign silence as a source of music on hold or ringback use this syntax:
+使用以下语法将静音指定为音乐等候或回铃的源：
 
  silence[:&lt;level>]
 
-The higher the level, the lower the volume. Default value is approximately 400\. Set the value in the appropriate channel variable:
+级别越高，音量越低。默认值约为400。将该值设置到相应的通道变量中：
 
-**Playing silence as a file type**
+**将静音作为文件类型播放**
 
 ```xml
  <action application="set" data="hold_music=silence"/>
@@ -90,8 +86,6 @@ The higher the level, the lower the volume. Default value is approximately 400\.
  <action application="set" data="transfer_ringback=silence"/>
 ```
 
- ---
+---
 
-**silence** can be used anywhere a filename would normally be used.
-
-
+**silence**可以在任何原本需要文件名的地方使用。

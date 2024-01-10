@@ -1,139 +1,135 @@
+# mod_lua
 
-# mod_lua 
+## 关于
 
- 
+Lua是基于FreeSWITCH的自定义应用程序的首选脚本语言。
 
-## About
+Lua API文档可以在这里找到 [Lua API参考](../Client-and-Developer-Interfaces/Lua-API-Reference/index.mdx#--)
 
-Lua is the preferred scripting language for custom applications based on FreeSWITCH.
+自FreeSWITCH 1.4起，您需要使用Lua5.2 (<http://www.lua.org/manual/5.2/>)。
 
-The Lua API documentation is provided here [Lua API Reference](../Client-and-Developer-Interfaces/Lua-API-Reference/index.mdx#--)
-
-Since FreeSWITCH 1.4, you need to use Lua5.2 (<http://www.lua.org/manual/5.2/>).
-
-For those willing to keep using Lua5.1 for backwards compatibility reasons, there is a mod\_lua available in **legacy** directory \`freeswitch/src/mod/legacy/languages/mod\_lua/\`
+对于那些出于向后兼容原因仍然希望使用Lua5.1的人，可以在 **legacy** 目录下找到一个mod\_lua，路径为\`freeswitch/src/mod/legacy/languages/mod\_lua/\`。
   
-  
-Click here to expand ToC
+单击此处展开目录
 
-* 1 [Installation](#installation)
-* 2 [Features](#features)  
-   * 2.1 [Write IVR scripts in Lua](#-write-ivr-scripts-in-lua-)  
-   * 2.2 [Add event hooks in Lua](#-add-event-hooks-in-lua-)  
-   * 2.3 [Serve configs](#serve-configs)  
-   * 2.4 [Make API calls directly from Lua code](#make-api-calls-directly-from-lua-code-)  
-   * 2.5 [Lightweight](#lightweight-)  
-   * 2.6 [Highly Embeddable](#highly-embeddable-)  
-   * 2.7 [Learning Lua](#learning-lua)  
-   * 2.8 [CLI Usage: lua and luarun](#cli-usage-lua-and-luarun-)  
-      * 2.8.1 [Passing Arguments](#passing-arguments-)
-* 3 [Configuring](#configuring)  
-   * 3.1 [Event Hooks](#event-hooks-)  
-      * 3.1.1 [Event Hook Script](#event-hook-script)  
-   * 3.2 [For IVR use](#for-ivr-use)  
-   * 3.3 [For making API calls](#for-making-api-calls)  
-   * 3.4 [To call another Lua script](#to-call-another-lua-script)  
-   * 3.5 [For serving configuration](#for-serving-configuration)  
-   * 3.6 [Lua scripts at startup](#lua-scripts-at-startup-)
-* 4 [Sample Dialplan](#sample-dialplan)  
-   * 4.1 [In-line expansion](#in-line-expansion)
-* 5 [Sample IVR's](#sample-ivrs)
-* 6 [Pattern matching (regular expressions)](#pattern-matching-regular-expressions)  
-   * 6.1 [Regex API Example](#-regex-api-example-)  
-   * 6.2 [Native Lua Pattern Matching](#-native-lua-pattern-matching-)
-* 7 [Misc. Samples](#misc-samples)  
-   * 7.1 [Run a shell command](#-run-a-shell-command-)
-* 8 [FAQ](#-faq)  
-   * 8.1 [Why is mod\_lua not unloadable?](#why-is-mod_lua-not-unloadable)  
-   * 8.2 [Where is my debug information?](#about)  
-   * 8.3 [How can I make it use the "system lua"](#-how-can-i-make-it-use-the-system-lua-)  
-   * 8.4 [How can I get Lua to see my own libraries using "require"](#how-can-i-get-lua-to-see-my-own-libraries-using-require)  
-   * 8.5 [How can I find useful undocumented Functions?](#-how-can-i-find-useful-undocumented-functions-)
-* 9 [Jester Lua Toolkit](#jester-lua-toolkit)
-* 10 [See Also](#see-also-)
+* 1 [安装](#安装)
+* 2 [特性](#特性)  
+   * 2.1 [使用Lua编写IVR脚本](#-使用lua编写ivr脚本-)  
+   * 2.2 [在Lua中添加事件钩子](#-在lua中添加事件钩子-)  
+   * 2.3 [提供配置服务](#提供配置服务)  
+   * 2.4 [直接从Lua代码中进行API调用](#直接从lua代码中进行api调用-)  
+   * 2.5 [轻量级](#轻量级-)  
+   * 2.6 [高度可嵌入](#高度可嵌入-)  
+   * 2.7 [学习Lua](#学习lua)  
+   * 2.8 [命令行使用: lua和luarun](#命令行使用-lua和luarun-)  
+      * 2.8.1 [传递参数](#传递参数-)
+* 3 [配置](#配置)  
+   * 3.1 [事件钩子](#事件钩子-)  
+      * 3.1.1 [事件钩子脚本](#事件钩子脚本)  
+   * 3.2 [用于IVR](#用于ivr)  
+   * 3.3 [用于进行API调用](#用于进行api调用)  
+   * 3.4 [调用另一个Lua脚本](#调用另一个lua脚本)  
+   * 3.5 [用于提供配置](#用于提供配置)  
+   * 3.6 [启动时的Lua脚本](#启动时的lua脚本-)
+* 4 [示例拨号计划](#示例拨号计划)  
+   * 4.1 [内联扩展](#内联扩展)
+* 5 [示例IVR](#示例ivr)
+* 6 [模式匹配（正则表达式）](#模式匹配-正则表达式)  
+   * 6.1 [正则表达式API示例](#-正则表达式api示例-)  
+   * 6.2 [Lua本机模式匹配](#-lua本机模式匹配-)
+* 7 [其他样例](#其他样例)  
+   * 7.1 [运行shell命令](#-运行shell命令-)
+* 8 [常见问题解答](#-常见问题解答)  
+   * 8.1 [为什么无法卸载mod_lua？](#为什么无法卸载mod_lua)  
+   * 8.2 [我的调试信息在哪里？](#关于)  
+   * 8.3 [如何使用“system lua”？](#-如何使用系统lua-)  
+   * 8.4 [如何让Lua使用我自己的库使用“require”？](#如何让lua使用我自己的库使用require)  
+   * 8.5 [如何找到有用的未文档化函数？](#-如何找到有用的未文档化函数-)
+* 9 [Jester Lua工具包](#jester-lua工具包)
+* 10 [参阅](#参阅-)
 
-## Installation
+## 安装
 
-On Centos 6.x:
+在Centos 6.x上：
 
 ```xml
 yum install lua-devel
 ```
 
   
-## Features
+## 特点
 
-###  Write IVR scripts in Lua 
+### 使用Lua编写IVR脚本
 
-It has a very easy to use syntax, see the [Hello Lua](https://wiki.freeswitch.org/wiki/Mod%5Flua#Hello%5FLua) script.
+它具有非常易于使用的语法，可以参考[Hello Lua](https://wiki.freeswitch.org/wiki/Mod%5Flua#Hello%5FLua)脚本。
 
-###  Add event hooks in Lua 
+### 在Lua中添加事件钩子
 
-You can define a Lua script to be executed each time a specific event is fired. See: [Mod\_lua#Event\_Hooks](https://wiki.freeswitch.org/wiki/Mod%5Flua#Event%5FHooks "Mod lua")
+您可以定义一个Lua脚本，每次触发特定事件时都会执行该脚本。请参阅：[Mod\_lua#Event\_Hooks](https://wiki.freeswitch.org/wiki/Mod%5Flua#Event%5FHooks "Mod lua")
 
-### Serve configs
+### 提供配置服务
 
-Lua can serve configurations for xml\_curl, without requiring a web server, this works in a similar way to mod\_xml\_curl.
+Lua可以为xml\_curl提供配置，而无需使用web服务器，这类似于mod\_xml\_curl的工作方式。
 
-See: [Serving Configuration with Lua](./mod-lua/Serving-Configuration-with-Lua_3965134.mdx#xml)
+请参阅：[使用Lua提供配置](./mod-lua/Serving-Configuration-with-Lua_3965134.mdx#xml)
 
-### Make API calls directly from Lua code 
+### 直接从Lua代码中进行API调用
 
-[Examples](https://wiki.freeswitch.org/wiki/Make%5FAPI%5Fcalls%5Fdirectly%5Ffrom%5FLua%5Fcode "Make API calls directly from Lua code")
+[示例](https://wiki.freeswitch.org/wiki/Make%5FAPI%5Fcalls%5Fdirectly%5Ffrom%5FLua%5Fcode "Make API calls directly from Lua code")
 
-### Lightweight 
+### 轻量级
 
-Stripped mod\_lua.so is 272k
+精简的mod\_lua.so文件大小为272k
 
-### Highly Embeddable 
+### 可嵌入性高
 
-As far as embeddability goes - Python ranks a 2, Perl ranks a 4, JavaScript is a 5, and Lua is a 10!
+在可嵌入性方面，Python排名为2，Perl排名为4，JavaScript排名为5，而Lua排名则是10！
 
-### Learning Lua
+### 学习Lua
 
-Here's a comparison on some salient points to Javascript: [\[1\]](http://phrogz.net/lua/LearningLua%5FFromJS.html)
+以下是与Javascript的一些关键点进行对比的比较：[\[1\]](http://phrogz.net/lua/LearningLua%5FFromJS.html)
 
-### CLI Usage: lua and luarun 
+### CLI使用：lua和luarun
 
-You can issue a "luarun /path/to/script.lua" and launch a thread which your lua script will run in. The "lua" command is for inline lua like from the dialplan i.e. ${lua(codehere)}. "luarun" will spawn a thread while "lua" will block until the code is complete. A "\~" in front of the argument will run a single line lua command. Note that lua scripts executed with luarun cannot write to the console through [stream:write](http://streamwrite) API as there is no stream.
+您可以使用"luarun /path/to/script.lua"命令启动一个线程，其中您的Lua脚本将运行。"lua"命令是用于内联Lua，例如从拨号计划中的${lua(codehere)}。"luarun"将生成一个线程，而"lua"命令将会阻塞，直到代码执行完成。在参数前面的"\~"将运行一行Lua命令。请注意，使用luarun执行的Lua脚本无法通过[stream:write](http://streamwrite) API向控制台输出，因为没有流。
 
-#### Passing Arguments 
+#### 传递参数
 
-Arguments are passed as space-separated values:
+参数以空格分隔的值方式传递：
 
 ```xml
 luarun arg1 arg2 arg3
 ```
 
-Arguments are accessed with "argv" like this:
+参数可以通过 "argv" 进行访问，如下所示:
 
 ```xml
 my_first_var = argv[1];
 my_next_var = argv[2];
 ```
 
-And so on...
+等等...
 
 ```xml
 freeswitch@DVORAK> lua ~print(string.find("1234#5678", "(%d+)#(%d+)"))
 1       9       1234    5678
 freeswitch@DVORAK> luarun ~print(string.find("1234#5678", "(%d+)#(%d+)"))
 +OK
-1       9       1234    5678
+1       9      1234     5678
 freeswitch@DVORAK> luarun ~stream:write("1234#5678")
 +OK
-2011-06-20 13:35:35.274782 [ERR] mod_lua.cpp:191 [string "line"]:1: attempt to index global 'stream' (a nil value)
-stack traceback:
-       [string "line"]:1: in main chunk
+2011-06-20 13:35:35.274782 [ERR] mod_lua.cpp:191 [string "line"]:1: 尝试对全局变量 'stream' 进行索引（一个空值）
+堆栈轨迹:
+       [string "line"]:1: 在主块中
 freeswitch@DVORAK> lua ~stream:write("1234#5678")
 1234#5678
 ```
 
-## Configuring
+## 配置
 
-### Event Hooks 
+### 事件挂钩 
 
-The following configuration shows how to have the tone\_event.lua script executed each time the DETECTED\_TONE event is fired.
+下面的配置演示了如何在每次触发 "DETECTED_TONE" 事件时执行 tone\_event.lua 脚本。
 
 ```xml
 <configuration name="lua.conf" description="LUA Configuration">
@@ -145,9 +141,9 @@ The following configuration shows how to have the tone\_event.lua script execute
 </configuration>
 ```
 
-#### Event Hook Script
+#### 事件挂钩脚本
 
-This is an example event hook script. getHeader() can be called on the event to get information about the event.
+这是一个事件挂钩脚本示例。可以在事件上调用 getHeader() 以获取有关事件的信息。
 
 ```xml
 local uuid = event:getHeader("Unique-ID")
@@ -155,48 +151,46 @@ local tone = event:getHeader("Detected-Tone")
 freeswitch.consoleLog("info", uuid .. " detected tone: " .. tone .. "\n")
 ```
 
-### For IVR use
+### 用于IVR使用
 
-Nothing should be needed here.
+这里不需要任何内容。
 
-### For making API calls
+### 用于进行API调用
 
 ```xml
 api = freeswitch.API();
 
 digits = api:execute("regex", "testing1234|/(\\d+)/|$1");
--- The returned output of the API call is stored in the variable if you need it.
+-- 如果需要，可以将API调用的返回输出存储在变量中。
 freeswitch.consoleLog("info", "Extracted digits: " .. digits .. "\n")
 ```
 
-**Note:** Please take care to **escape** the arguments that you pass, as has been done to the regex string above.
+**注意：**请小心 **转义** 所传递的参数，就像上面正则表达式字符串中所做的那样。
 
-### To call another Lua script
+### 调用另一个Lua脚本
 
 ```xml
 api = freeswitch.API();
 reply = api:executeString("luarun another.lua");
 ```
 
-### For serving configuration
+### 用于提供配置
 
-**mod\_lua** allows you to replace request for configuration data from a lookup in the static XML to your script.
+**mod\_lua** 允许您用脚本替换从静态XML中查找的配置数据。
 
-See [Mod\_lua/Serving\_Configuration](./mod-lua/Serving-Configuration-with-Lua_3965134.mdx#xml) for more information.
+有关更多信息，请参见 [Mod\_lua/Serving\_Configuration](./mod-lua/Serving-Configuration-with-Lua_3965134.mdx#xml)。
 
-### Lua scripts at startup 
+### 启动时的Lua脚本
 
-Here is a minimum configuration file:
+以下是最小的配置文件：
 
 ```xml
 <configuration name="lua.conf" description="LUA Configuration">
 
   <settings>
     <!--
-	The following options identifies a lua script that is launched
-	at startup and may live forever in the background.
-	You can define multiple lines, one for each script you 
-	need to run.
+	以下选项标识着一个启动时启动的lua脚本，它可以在后台持久运行。
+	您可以定义多行，每行对应一个需要运行的脚本。
     -->
     <!--<param name="startup-script" value="startup_script_1.lua"/>-->
     <!--<param name="startup-script" value="startup_script_2.lua"/>-->
@@ -204,76 +198,74 @@ Here is a minimum configuration file:
 </configuration>
 ```
 
-The start-up script values represent lua scripts (located inside the scripts/ directory) that are launched when FreeSWITCH is started. The scripts live in their own thread. You can use them to run simple tasks (and then let them finish) or looping forever, watching (for example) for events, generating calls or whatever you like.
+启动脚本的值代表了在 FreeSWITCH 启动时启动的lua脚本（位于 scripts/ 目录中）。这些脚本在自己的线程中运行。您可以使用它们来运行简单的任务（然后让它们完成）或者持续运行，例如观察事件，生成呼叫或其他您想要的操作。
 
-## Sample Dialplan
+## 示例拨号计划
 
-  
 ```xml
 <action application="lua" data="helloworld.lua arg1 arg2"/>
 ```
 
-**NOTE:** arguments can be accessed by using argv\[1\] argv\[2\] in your script
+**注意：**您可以在脚本中使用 argv\[1\] 和 argv\[2\] 访问参数。
 
-**NOTE:** for looking up the location of the helloworld.lua file, it looks in prefix/scripts by default
+**注意：**要查找 helloworld.lua 文件的位置，默认情况下会查找 prefix/scripts 目录。
 
-### In-line expansion
+### 内联扩展
 
-  
 ```xml
-e.g.1: <action application="set" data="MY_VAR=${lua(helloworld.lua arv1 arg2)}" />
-e.g.2: <action application="set" data="MY_VAR=${lua(helloworld.lua $1)}" />
-e.g.3: <action application="set" data="MY_VAR=${lua(helloworld.lua $1 ${caller_id_number})}" />
-e.g.4: <action application="set" data="MY_VAR=${lua(helloworld.lua ${caller_id_number})}" inline="true" />
- 
-e.g.5: <condition field="${lua(helloworld.lua arv1 arg2)}" expression="^Hello World$" >
+例如1：<action application="set" data="MY_VAR=${lua(helloworld.lua arv1 arg2)}" />
+例如2：<action application="set" data="MY_VAR=${lua(helloworld.lua $1)}" />
+例如3：<action application="set" data="MY_VAR=${lua(helloworld.lua $1 ${caller_id_number})}" />
+例如4：<action application="set" data="MY_VAR=${lua(helloworld.lua ${caller_id_number})}" inline="true" />
+
+例如5：<condition field="${lua(helloworld.lua arv1 arg2)}" expression="^Hello World$" >
 ```
 
-## Sample IVR's
+## 语音应答系统示例
 
-This is a basic IVR example, in which we answer the call, wait 1 second and play an wav audio file.
+这是一个基本的语音应答系统示例，当我们接听电话后，等待1秒钟并播放一个音频文件。
 
 ```xml
--- answer the call
+-- 接听电话
 session:answer();
 
--- sleep a second
+-- 等待一秒钟
 session:sleep(1000);
 
--- play a file
+-- 播放文件
 session:streamFile("/path/to/blah.wav");
 
--- hangup
+-- 挂机
 session:hangup();
 ```
 
-## Pattern matching (regular expressions)
+## 模式匹配（正则表达式）
 
-###  Regex API Example 
+### 正则表达式 API 示例
 
-Using this method, you can execute regex conditions from inside your lua scripts.
+通过这种方法，您可以在 Lua 脚本中执行正则表达式条件。
 
 ```xml
 session:execute("set", "some_chan_variable=${regex(" .. destination .. "|^([0-9]{10})$)}")
 ```
 
-If destination is a lua variable with your destination number in it, and your regex was ^(\[0-9\]{10})$
+如果 destination 是一个包含目标号码的 Lua 变量，并且您的正则表达式为 ^([0-9]{10})$
 
-the result will be put in "some\_chan\_variable" that you can get thorough a [session:getVariable](http://sessiongetVariable)
+结果将放置在 "some_chan_variable" 中，您可以通过 [session:getVariable](http://sessiongetVariable) 获取该变量。
 
-You can also do:
+您还可以执行以下操作：
 
 ```xml
 session:execute("set", "some_chan_variable=${regex(" .. destination .. "|^(0\\|61)([2,3,7,8][0-9]{8})$|$2)}")
 ```
 
-To match and return parts of your regex.
+来匹配并返回正则表达式的部分。
 
-###  Native Lua Pattern Matching 
+### Lua 原生模式匹配
 
-Lua supports a simple but powerful pattern matching syntax. It is less powerful than [PCRE](http://www.pcre.org/) but it handles the majority of pattern matching cases will ever need in a simple script.
+Lua 支持简单但强大的模式匹配语法。虽然它比 [PCRE](http://www.pcre.org/) 弱，但它处理了大多数在简单脚本中需要的模式匹配情况。
 
-The following is a simple script that can be run with "luarun" from fs\_cli and demonstrates the capturing of two values from a data string:
+以下是一个简单的脚本，可以使用fs\_cli中的"luarun"运行，并演示从数据字符串中捕获两个值的方法：
 
 ```xml
 -- pattern.lua
@@ -281,7 +273,7 @@ data = "1234#5678";
 _,_,var1,var2 = string.find(data,"(%d+)#(%d+)");
 freeswitch.consoleLog("INFO","\ndata: " .. data .. "\nvar1: " .. var1 .. "\nvar2: " .. var2 .. "\n");
 
-Output:
+输出：
 freeswitch@internal> luarun pattern.lua
 +OK
 
@@ -291,13 +283,13 @@ var1: 1234
 var2: 5678
 ```
 
-## Misc. Samples
+## 其他示例
 
-###  Run a shell command 
+### 运行Shell命令
 
-When using [session:execute()](http://sessionexecute%28%29) and [api:execute()](http://apiexecute%28%29) to execute a shell command (ie: bash script) it will only return the error code integer.
+当使用[session:execute()](http://sessionexecute%28%29)和[api:execute()](http://apiexecute%28%29)执行Shell命令（如：bash脚本）时，它只返回错误代码整数。
 
-To return the output of a shell command use io.popen(). The following example Lua function is from <http://lua-users.org/wiki/ShellAccess>.
+要返回Shell命令的输出，请使用io.popen()。以下示例Lua函数来自<http://lua-users.org/wiki/ShellAccess>。
 
 ```xml
  function shell(c)
@@ -309,9 +301,9 @@ To return the output of a shell command use io.popen(). The following example Lu
  end
 ```
 
-##  FAQ
+## 常见问题
 
-### Why is mod_lua not unloadable?
+### 为什么无法卸载mod_lua模块？
 
 ```xml
 freeswitch@baremetal> reload mod_lua
@@ -322,33 +314,33 @@ freeswitch@baremetal> reload mod_lua
 2018-03-14 17:53:22.492225 [WARNING] switch_loadable_module.c:1592 Module mod_lua Already Loaded!
 ```
 
-Some threads explaining why the decision was made <http://freeswitch-users.2379917.n2.nabble.com/Reload-mod-lua-td7586568.html>
+一些解释为什么做出这个决定的线程链接：<http://freeswitch-users.2379917.n2.nabble.com/Reload-mod-lua-td7586568.html>
 
-mod_lua was reloadable  but when I found that long-running scripts cannot be  easily stopped the developers changed it to un-reloadable.
-There's also a blog page in Chinese explaining this: http://www.freeswitch.org.cn/2010/03/15/zai-freeswitchzhong-zhi-xing-chang-qi-yun-xing-de-qian-ru-shi-jiao-ben-luayu-yan-li-zi.html
- 
-(...truncated thread...)
- 
-The reason being if the module unloads while scripts are still running you're going to be almost guaranteed a segmentation fault - a well meaning admin running a simple command could crash the entire server dropping all calls.
+mod_lua可以被重新加载，但当我发现长时间运行的脚本不容易停止时，开发人员将其更改为不可重新加载的状态。
+另外，还有一篇中文博客解释这一点：http://www.freeswitch.org.cn/2010/03/15/zai-freeswitchzhong-zhi-xing-chang-qi-yun-xing-de-qian-ru-shi-jiao-ben-luayu-yan-li-zi.html
+
+（省略的线程）
+
+原因是如果模块在脚本仍在运行时卸载，几乎肯定会发生段错误 - 一个好心的管理员运行一个简单命令就可能导致整个服务器崩溃，造成所有呼叫中断。
 
 ###   
-Where is my debug information? 
+我的调试信息在哪里？
 
-Q: When I use static XML or xml\_curl, I see the commands executed in the fs\_cli and in the "application log" section of the xml\_cdr file. However, when I run commands via my lua script, I don't see that information anywhere?
+问：当我使用静态XML或xml\_curl时，我可以在fs\_cli和xml\_cdr文件的"application log"部分中看到执行的命令。但是，当我通过lua脚本运行命令时，我在任何地方都看不到这些信息？
 
-A: When you have an actual call session, you can use session:execute("$application","$data") just like in the static XML - it will then show up in the fs\_cli and the xml\_cdr application log. If you don't have a call session - e.g. if you are running lua as a background application or from the CLI, then you have to use other commands which may not be as easily logged.
+答：当您有一个实际的呼叫会话时，您可以使用session:execute("$application","$data")，就像在静态XML中一样 - 然后在fs\_cli和xml\_cdr应用程序日志中会显示出来。如果您没有呼叫会话 - 例如，如果您将lua作为后台应用程序或从CLI运行，那么您必须使用其他可能不太容易记录的命令。
 
-###  How can I make it use the "system lua" 
+###  如何使用"系统lua"？
 
-Q: I have Lua installed, but mod\_lua seems to ignore the Lua binary.
+问：我已经安装了Lua，但mod\_lua似乎忽略了Lua二进制文件。
 
-A: Lua is so small that the whole ball of wax is statically linked into the module!
+答：Lua非常小，整个程序包都被静态链接到模块中！
 
-### How can I get Lua to see my own libraries using "require"
+### 如何让Lua使用我的自定义库，使用"require"？
 
-Q: Can I use the require mechanism for including libraries with the Lua in FreeSWITCH?
+问：我可以在FreeSWITCH中使用"require"机制来包含Lua库吗？
 
-A: You may need to alter the LUA\_PATH variable to instruct the embedded Lua inside FreeSWITCH to find your libraries. A simple startup script to do this is:
+答：您可能需要修改LUA\_PATH变量，以指示FreeSWITCH内嵌的Lua找到您的库。一个简单的启动脚本来完成这个任务是：
 
 ```xml
 #!/bin/bash
@@ -357,48 +349,47 @@ ulimit -s 240
 screen /usr/local/freeswitch/bin/freeswitch
 ```
 
-The default path is something like /usr/local/share/lua/5.1/
+默认路径为`/usr/local/share/lua/5.1/`
 
-Another option for common code similar to the "include" directive in many languages is to use **dofile**
+另一个常见代码类似于许多语言中的 "include" 指令的选项是使用 **dofile**
 
-eg. dofile("/home/fred/scripts/fredLuaFunctions.lua")
+例如：dofile("/home/fred/scripts/fredLuaFunctions.lua")
 
-Note that this will just execute the code contained in the file as if it were inline - this is not the same as creating a lua module
+请注意，这将仅执行文件中包含的代码，就好像它是内联的代码-这与创建lua模块不同。
 
-###  How can I find useful undocumented Functions? 
+### 如何找到有用的未记录功能？
 
-There may be times when a function gets added, but not documented. This simple Lua script may help.
+有时会添加一个函数，但不会记录下来。此简单的Lua脚本可能会有所帮助。
 
 ```xml
--- This function simply tells us what function are available in Session
---   It just prints a list of all functions.  We may be able to find functions
---   that have not yet been documented but are useful.  I did :)
+--此函数仅告诉我们会话中有哪些可用函数
+--它只打印所有函数的列表。我们可以找到一些没有记录但实用的函数。我找到了 :)
 function printSessionFunctions( session )
    metatbl = getmetatable(session)
    if not metatbl then return nil end
-   local f=metatbl['.fn'] -- gets the functions table
+   local f=metatbl['.fn'] --获取函数表
    if not f then return nil end
    for k,v in pairs(f) do stream:write(k.."\n") end
    stream:write("\nEND\n")
 end
-new_session = freeswitch.Session() -- create a blank session
-stream:write("\n***Session Functions***\n")
+new_session = freeswitch.Session() --创建一个空白会话
+stream:write("\n***会话函数***\n")
 printSessionFunctions(new_session)
-new_event = freeswitch.Event("message_waiting");
-stream:write("\n***Event Functions***\n")
+new_event = freeswitch.Event("message_waiting");
+stream:write("\n***事件函数***\n")
 printSessionFunctions(new_event)
-new_api = freeswitch.API();
-stream:write("\n***API Functions***\n")
+new_api = freeswitch.API();
+stream:write("\n***API函数***\n")
 printSessionFunctions(new_api)
 ```
 
-At freeswitch version FreeSWITCH Version 1.6.17-34-0fc0946\~64bit (-34-0fc0946 64bit) this is the output of the script:
+在FreeSWITCH版本1.6.17-34-0fc0946\~64bit（-34-0fc0946 64bit）中，此脚本的输出是：
 
-Click here to expand the output of the script
+单击此处查看脚本的输出内容
 
 ```xml
-***Session Functions***
-playAndGetDigits   
+***会话功能***
+playAndGetDigits
 speak
 setDTMFCallback
 answer
@@ -452,7 +443,7 @@ check_hangup_hook
 setPrivate
 setVariable
 END
-***Event Functions***
+***事件功能***
 setPriority
 chat_send
 serialize
@@ -466,7 +457,7 @@ addBody
 chat_execute
 addHeader
 END
-***API Functions***
+***API功能***
 getTime
 execute
 __disown
@@ -476,25 +467,49 @@ END
 
 ## Jester Lua Toolkit
 
-Jester is a scripting lua toolkit for FreeSWITCH :[Wiki Jester](../Client-and-Developer-Interfaces/Lua-API-Reference/Lua-Toolkit-Jester_3965246.mdx#help)
+Jester 是一个用于 FreeSWITCH 的脚本 Lua 工具包：[Wiki Jester](../Client-and-Developer-Interfaces/Lua-API-Reference/Lua-Toolkit-Jester_3965246.mdx#help)
 
-## See Also 
+## 参见
 
-* FreeSWITCH [Lua API Reference](../Client-and-Developer-Interfaces/Lua-API-Reference/index.mdx#--)
-* [Lua.org Web site](http://www.lua.org)
-* [Lua Install dependencies](../Client-and-Developer-Interfaces/Lua-API-Reference/Lua-Install-dependencies/index.mdx#about)
-* [Script Language Choice](../Client-and-Developer-Interfaces/Script-Language-Choice_1048942.mdx#about)
-* [FreeSWITCH book](http://www.packtpub.com/freeswitch-1-2/book) pages 149-151
-* <http://www.lua.org/pil/20.2.html> and <http://www.lua.org/pil/20.3.html>
+* FreeSWITCH [Lua API 参考](../Client-and-Developer-Interfaces/Lua-API-Reference/index.mdx#--)
+* [Lua.org 网站](http://www.lua.org)
+* [安装 Lua 依赖](../Client-and-Developer-Interfaces/Lua-API-Reference/Lua-Install-dependencies/index.mdx#about)
+* [脚本语言选择](../Client-and-Developer-Interfaces/Script-Language-Choice_1048942.mdx#about)
+* [FreeSWITCH 书籍](http://www.packtpub.com/freeswitch-1-2/book) 页面 149-151
+* <http://www.lua.org/pil/20.2.html> 和 <http://www.lua.org/pil/20.3.html>
 * <http://www.lua.org/manual/5.1/manual.html#5.4.1>
 
-### Comments:
+### 注释：
 
-| Freeswitch on Debian currently depends on libodbc and unixodbc. We have found both of these versions very unstable in high call volume environments. Upgrading to MySQL ODBC driver 5.3.4 with unixODBC 2.3.1 has really improved our stability and we have not seen any crashes since the full rebuild of the environment. ![](/images/icons/contenttypes/comment_16.png) Posted by russell at Oct 02, 2014 21:39 |
+| 目前，在Debian上，Freeswitch依赖于libodbc和unixodbc。我们发现这两个版本在高通话量环境下都非常不稳定。升级到MySQL ODBC驱动程序5.3.4和unixODBC 2.3.1后，我们的稳定性得到了显著改善，自从环境完全重建以来，我们没有遇到任何崩溃问题。 ![](/images/icons/contenttypes/comment_16.png) 由russell于2014年10月2日21:39发布 |
 | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| From what I'm reading about LUA, arguments passed from the dialplan into the LUA script will be available as arg\[1\], arg\[2\], etc, not argv\[n\] as stated above. ![](/images/icons/contenttypes/comment_16.png) Posted by tom@tomlynn.com at Dec 18, 2014 13:28                                                                                                                                                |
-| Tom, have you tested each form of argument reference in Lua using the current versions of everything since the recent upgrades? I have seen numerous Lua script examples and all use what is documented here. I can't believe that all of them are wrong and nobody has pointed it out yet. ![](/images/icons/contenttypes/comment_16.png) Posted by boteman at Jan 06, 2015 20:21                                 |
-| John, as it turns out, I'd been having trouble getting arguments to work at all. Today I see that argv does in fact work. I'd been looking at LUA documentation that seemed to contradict this, though. Thanks. ![](/images/icons/contenttypes/comment_16.png) Posted by tom@tomlynn.com at Jan 25, 2015 16:11                                                                                                     |
-| I am using FreeSWITCH 1.10 and Lua 5.3\. But it seems like mod\_lua still use Lua 5.2\. How do I get mod\_lua for Lua 5.3? ![](/images/icons/contenttypes/comment_16.png) Posted by umanda at Feb 11, 2020 02:56                                                                                                                                                                                                   |
+| 从我对LUA的了解来看，从拨号计划传递到LUA脚本的参数将作为arg\[1\]、arg\[2\]等可用，并非如上所述的argv\[n\]。 ![](/images/icons/contenttypes/comment_16.png) 由tom@tomlynn.com于2014年12月18日13:28发布                                                                                                                                                |
+| Tom，你是否在最近的升级中使用了每种形式的LUA参数参考进行测试？我已经看到了很多Lua脚本示例，它们都使用了此处记录的方式。我无法相信所有这些示例都是错的，而且还没有人指出这一点。 ![](/images/icons/contenttypes/comment_16.png) 由boteman于2015年1月6日20:21发布                                 |
+| John，事实证明，我一直无法正确使用参数。今天我发现argv确实起作用。不过，我之前看的LUA文档似乎与此相矛盾。谢谢。 ![](/images/icons/contenttypes/comment_16.png) 由tom@tomlynn.com于2015年1月25日16:11发布                                                                                                     |
+| 我正在使用FreeSWITCH 1.10和Lua 5.3。但似乎mod\_lua仍在使用Lua 5.2。如何获取适用于Lua 5.3的mod\_lua？ ![](/images/icons/contenttypes/comment_16.png) 由umanda于2020年2月11日02:56发布                                                                                                                                                                                                   |
 
+# Title: 如何提高专业技能
 
+## 摘要
+
+在竞争激烈的现代社会中，提高专业技能是保持竞争力和职业发展的关键。本文将探讨几种提高专业技能的方法，包括学习新技术、持续教育、参加培训课程等。通过积极投资并不断提升自己的专业技能，我们能够在职场中脱颖而出，实现自己的职业目标。
+
+## 引言
+
+在快速发展的市场中，技术更新换代的速度越来越快。只有不断提高自己的专业技能，我们才能适应这个变化的世界，并保持在竞争中的优势。本文将为大家分享一些方法，帮助我们提高专业技能，不断进步。
+
+## 学习新技术
+
+学习新技术是提高专业技能的一种重要方式。我们可以关注行业新技术的发展趋势，学习相关知识并将其运用到实际工作中。了解新技术的进展不仅可以提高我们的工作效率，还能为我们带来更多机会和挑战。通过不断学习和实践，我们能够保持与行业发展的步伐同步，提高自己的竞争力。
+
+## 持续教育
+
+除了学习新技术，我们还应该进行持续教育。在不同的领域和行业中，知识和技术都在不断演进。通过参加专业培训课程、研讨会和学术会议，我们可以了解最新的行业动态和发展趋势，学习先进的理论和实践，不断更新自己的知识结构。持续教育不仅能提高我们的专业技能，还可以扩展我们的专业网络和人际关系。
+
+## 参加培训课程
+
+参加培训课程是提高专业技能的另一种有效途径。培训课程可以帮助我们系统地学习和掌握某个专业领域的知识和技能。通过培训课程，我们可以深入了解行业的最佳实践和方法，学习从实际案例中获取经验和启示。同时，培训课程还提供了良好的学习环境和交流平台，我们可以与其他行业从业者分享经验，扩展自己的见识和视野。
+
+## 结论
+
+提高专业技能是实现个人职业发展的必要条件。通过学习新技术、持续教育和参加培训课程，我们能够不断提升自己的专业能力，保持竞争优势，并实现自己的职业目标。无论是在现有工作岗位上还是未来的职业道路上，不断学习和努力进步将一直是我们的追求。

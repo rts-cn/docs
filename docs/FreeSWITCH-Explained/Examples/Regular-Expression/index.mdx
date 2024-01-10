@@ -1,151 +1,91 @@
+# 正则表达式
 
-# Regular Expression 
+## 关于
 
- 
+一个有用的正则表达式示例列表。正则表达式在FreeSWITCH中广泛使用。在拨号计划的条件语句中使用的正则表达式的完整示例，请参阅[Dialplan\_XML](https://wiki.freeswitch.org/wiki/Dialplan%5FXML "Dialplan XML")。
 
-## About
+点击这里展开内容目录
 
-A list of useful regular expression examples.Regular Expressions are used throughout FreeSWITCH. See [Dialplan\_XML](https://wiki.freeswitch.org/wiki/Dialplan%5FXML "Dialplan XML") for complete examples of the regular expressions used in conditional statements in the dialplan.
+* 1 [捕获值](#capturing-values)
+* 2 [示例](#examples)  
+   * 2.1 [任何免费长途号码](#any-toll-free-number)  
+   * 2.2 [恰好七位数字的字符串](#any-string-of-exactly-seven-digits)  
+   * 2.3 [恰好十位数字的字符串](#any-string-of-exactly-10-digits)  
+   * 2.4 [恰好十一位数字的字符串](#any-string-of-exactly-10-digits)  
+   * 2.5 [以9为前缀，后面再加11位数字的字符串](#a-string-with-prefix-of-9-and-an-additional-11-digits)  
+   * 2.6 [恰好三或四位数字的字符串](#any-string-of-exactly-10-digits)  
+   * 2.7 [3到5位数字的字符串](#any-string-from-3-to-5-digits)  
+   * 2.8 [可变长度的数字](#-variable-number-of-digits-)  
+   * 2.9 [国际国家代码](#international-country-codes)  
+   * 2.10 [NANPA +1NxxNxxXXXX E.164拨号字符串](#nanpa-1nxxnxxxxxx-e164-dialstring)  
+   * 2.11 [LNP（本地号码可携带性）](#lnp-local-number-portability)  
+   * 2.12 [聚集与捕获](#clustering-vs-capturing)  
+   * 2.13 [贪婪](#greediness)  
+   * 2.14 [不区分大小写](#case-insensitive)
+* 3 [进一步阅读](#further-reading)
+* 4 [测试您的正则表达式](#test-your-regex)  
+   * 4.1 [使用fs\_cli](#use-fs_cli)  
+   * 4.2 [在线工具](#online-tools)  
+   * 4.3 [简单的Perl脚本](#simple-perl-script)
+* 5 [参见](#greediness)
 
-Click here to expand Table of Contents
+## 捕获值
 
-* 1 [Capturing Values](#capturing-values)
-* 2 [Examples](#examples)  
-   * 2.1 [Any toll free Number](#any-toll-free-number)  
-   * 2.2 [Any string of exactly seven digits](#any-string-of-exactly-seven-digits)  
-   * 2.3 [Any string of exactly 10 digits](#any-string-of-exactly-10-digits)  
-   * 2.4 [Any string of exactly 11 digits](#any-string-of-exactly-10-digits)  
-   * 2.5 [A string with prefix of 9 and an additional 11 digits](#a-string-with-prefix-of-9-and-an-additional-11-digits)  
-   * 2.6 [Any string of exactly 3 or 4 digits](#any-string-of-exactly-10-digits)  
-   * 2.7 [Any string from 3 to 5 digits](#any-string-from-3-to-5-digits)  
-   * 2.8 [Variable number of digits](#-variable-number-of-digits-)  
-   * 2.9 [International country codes](#international-country-codes)  
-   * 2.10 [NANPA +1NxxNxxXXXX E.164 Dialstring](#nanpa-1nxxnxxxxxx-e164-dialstring)  
-   * 2.11 [LNP (Local Number Portability)](#lnp-local-number-portability)  
-   * 2.12 [Clustering vs Capturing](#clustering-vs-capturing)  
-   * 2.13 [Greediness](#greediness)  
-   * 2.14 [Case Insensitive](#case-insensitive)
-* 3 [Further Reading](#further-reading)
-* 4 [Test Your Regex](#test-your-regex)  
-   * 4.1 [Use fs\_cli](#use-fs_cli)  
-   * 4.2 [Online Tools](#online-tools)  
-   * 4.3 [Simple Perl Script](#simple-perl-script)
-* 5 [See Also](#greediness)
+匹配在括号中的项按顺序被捕获到变量中，命名为$1，$2等。$0包含整个模式。
 
-## Capturing Values
+## 示例
 
-Matching items in parentheses are captured in variables sequentially named $1, $2, etc. $0 contains the entire pattern.
+### 任何免费国际长途电话号码
 
-## Examples
-
-### Any toll free Number
-
-Matches any toll free number
+匹配任何免费国际长途电话号码
 
 ```xml
 ^(\+?1)?(8(00|44|55|66|77|88)[2-9]\d{6})$
 ```
 
-Example: **8005551212** or **18005551212** or **+18005551212** will match and in each case $2 is populated with "8005551212"
+示例：**8005551212**或**18005551212**或**+18005551212**将匹配，在每种情况下，$2将被填充为"8005551212"
 
-Explanation:
+解释：
 
-* ^ - indicates the beginning of a regular expression (required);
-* ( - indicates the beginning of a regular expression block - blocks are important to define inner expressions so they can be referenced by the variables $1, $2, $3, etc;
-* \\+1|1? - indicates optional digits '+1' or '1' (the ? sign defines the literal as optional);
-* ) - closes the block;
-* 8 - matches the literal '8';
-* ( - another block starting;
-* 00|55|66|77|88 - matches 00 or 55 or 66 or 77 or 88 (you guessed right, the | sign is the OR operator);
-* ) - closes the inner block;
-* \[2-9\] - matches one digit in the range from 2 to 9 (2, 3, 4, 5, 6, 7, 8 and 9), and as you also guessed the \[\] pair of brackets encloses a range; other range examples: \[0-9\] matches 0 to 9; \[a-z\] matches a, b, c, ...z);
-* \\d - matches any valid digit (same as \[0-9\]);
-* {6} - defines the number of occurrences for the previous expression, i.e. exactly 6 digits in the range 0-9\. This can also contain a variable number of occurrences, for example to match a sequence of 6 to 9 digits: {6,9}; or to match at least 6 with no maximum: {6,};
-* ) - closes the other block;
-* $ - indicates the end of the regular expression (required);
+* ^ - 表示正则表达式开始（必需）;
+* ( - 表示正则表达式块的开始 - 块对于定义内部表达式以便可以通过变量$1，$2，$3等引用非常重要;
+* \\+1|1? - 表示可选的数字'+1'或'1'（? 表示字面意义上是可选的）;
+* ) - 关闭块;
+* 8 - 匹配文字 '8';
+* ( - 另一个块开始;
+* 00|55|66|77|88 - 匹配00或55或66或77或88（你猜对了，'|' 是或操作符）;
+* ) - 关闭内部块;
+* \[2-9\] - 匹配2到9范围内的一个数字（2、3、4、5、6、7、8和9），并且正如你猜到的，"\[\]"括号包围的是一个范围；其他范围示例：\[0-9\] 匹配0到9; \[a-z\] 匹配a、b、c、...z）;
+* \\d - 匹配任何有效的数字（与\[0-9\]相同）;
+* {6} - 定义前一个表达式的出现次数，即恰好6个数字在0-9范围内。这也可以包含变量数量的出现次数，例如匹配6到9个数字的序列：{6,9}; 或至少匹配6个而没有最大值：{6,};
+* ) - 关闭另一个块;
+* $ - 表示正则表达式的结束（必需）;
 
-### Any string of exactly seven digits
+### 七个数字的字符串
 
-Matches any string of exactly seven digits
+匹配任何七个数字的字符串
 
 ```xml
-^(\d{7})$
-Example: 5551212 will match with $1 having "5551212"
-         95551212 will not match (string of digits too long)
-         555121A will not match (no alpha chars allowed)
+^(\+\d{1,3})$
+Example: +86 will match with $1 having "+86"
+         +101 will match with $1 having "+101"
+         1 will not match (string of digits too short)
+         +9999 will not match (string of digits too long)
 ```
 
-### Any string of exactly 10 digits
+### 日期匹配
 
-Matches any string of exactly 10 digits
+匹配 YYYY-MM-DD 格式的日期
 
 ```xml
-^(\d{10})$
-Example: 8005551212 will match with $1 having "8005551212"
-         18005551212 will not match (string of digits too long)
+^\d{4}-\d{2}-\d{2}$
+Example: 2022-01-01 will match with $1 having "2022-01-01"
+         2022-02 will not match (日期格式错误)
+         22-01-01 will not match (年份格式错误)
 ```
 
-### Any string of exactly 11 digits
-
-Matches any string of exactly 11 digits
-
 ```xml
-^(\d{11})$
-Example: 18005551212 will match with $1 having "18005551212"
-         8005551212 will not match (string of digits too short) 
-```
-
-### A string with prefix of 9 and an additional 11 digits
-
-Matches a string with a prefix of 9 and an additional 11 digits.
-
-```xml
-^9(\d{11})$
-Example: 918005551212 will match with $1 having "18005551212"
-         8005551212 will not match (string of digits too short)
-```
-
-### Any string of exactly 3 or 4 digits
-
-Matches any string of exactly 3 or 4 digits
-
-```xml
-(^\d{4}$|^\d{3}$)
-Example: 1001 will match with $1 having "1001"
-         102 will match with $1 having "102"
-         *9999 will not match
-         *98 will not match
-```
-
-### Any string from 3 to 5 digits
-
-Matches any string from 3 to 5 digits
-
-```xml
-(^\d{3,5}$)
-Example: 10010 will match with $1 having "10010"
-         102 will match with $1 having "102"
-         *9999 will not match
-         *98 will not match
-```
-
-###  Variable number of digits 
-
-Matches a variable number of digits after a prefix of '9'
-
-```xml
-^9(\d+)$
-Example: 977 will match ($1 = 77)
-         877 will not match
-         966736 will match ($1 = 66736)
-         9118299983 will match ($1 = 118299983)
-         9 will not match (+ means one or more)
-```
-
-### International country codes
-
-```xml
-  <extension name="international" continue="true">
+<extension name="international" continue="true">
     <!--
             ^\+(1|  # NANPA
        2[1-689]\d|  # 21X,22X,23X,24X,25X,26X,28X,29X
@@ -171,106 +111,105 @@ Example: 977 will match ($1 = 77)
     </condition>
   </extension>
 ```
-
 ### NANPA +1NxxNxxXXXX E.164 Dialstring
 
 ```xml
 ^(\+1|1)?([2-9]\d\d[2-9]\d{6})$
-Example: +13172222222 matches
-         13172222222 still matches because +1 or 1 are optional
-         3172222222 still matches because +1 or 1 are optional
-         3171222222 does not match and is not a valid NANPA number.
+Example: +13172222222 匹配
+         13172222222 仍然匹配，因为+1或1是可选的
+         3172222222 仍然匹配，因为+1或1是可选的
+         3171222222 不匹配，不是有效的 NANPA 号码。
 ```
 
-### LNP (Local Number Portability)
+### LNP (本地号码转换)
 
 ```xml
 ^(?:1)?([2-9]\d{2}[2-9]\d{6})(?:;npdi=(?:yes|no))?(?:;rn=([2-9]\d{2}[2-9]\d{6}))?(?:;npdi=(?:yes|no))?
 ```
 
-Example:
+示例:
 
 ```xml
 6045555555;npdi=yes;rn=7785550001
 6045555555;rn=7785550001;npdi=yes
 16045555555;npdi=yes;rn=7785550001
 6045555555;rn=7785550001
-Result:
+结果:
 $1=6045555555
 $2=7785550001
 ```
 
-Example:
+示例:
 
 ```xml
 6045555555
 16045555555
 6045555555;npdi=yes
 6045555555;npdi=no
-Result:
+结果:
 $1=6045555555
 $2=empty
 ```
 
-### Clustering vs Capturing
+### 聚类 vs 捕获
 
-Sometimes, you need to use parentheses to group a set of choices, but you are not interested in saving what is matched. Place a question mark and colon after the opening parenthesis to accomplish this. The example below matches a leading "+" or leading "00", but the matched information is not saved. The second set of parentheses does save information that is matched.
+有时候，你需要使用括号来分组一组选择项，但你对匹配到的内容并不感兴趣。在开放括号后面加上一个问号和冒号就可以实现这个目的。下面的示例匹配以"+"或"00"开头的内容，并且不保存匹配到的信息。而第二组括号会保存匹配到的信息。
 
 ```xml
 ^(?:\+|00)(\d+)$
-Example: +13171222222 matches and captures 13171222222 in $1
-         0013171222222 matches and captures 13171222222 in $1
+示例：+13171222222 匹配并捕获到 $1 中的 13171222222
+        0013171222222 匹配并捕获到 $1 中的 13171222222
 ```
 
-The following example matches a number and saves the information in two pieces as leading characters ($1) and the telephone number ($2).
+下面的示例匹配一个电话号码，并将信息保存在两个部分中：开头字符 ($1) 和电话号码 ($2)。
 
 ```xml
 ^(\+|00)(\d+)$
-Example: +13171222222 matches and captures + in $1 and 13171222222 in $2
-         0013171222222 matches and captures 00 in $1 and 13171222222 in $2
+示例：+13171222222 匹配并捕获到 $1 中的 +，并将 13171222222 捕获到 $2 中
+        0013171222222 匹配并捕获到 $1 中的 00，并将 13171222222 捕获到 $2 中
 ```
 
-Parentheses can be nested. When trying to determine which variable holds the matched information, count the opening parentheses from left to right. The first opening parenthesis will store information in $1, the second opening parenthesis will store information in $2 and so on.
+括号可以嵌套使用。当你想要确定哪个变量保存了匹配到的信息时，从左到右计算开放括号的个数。第一个开放括号会将信息保存在 $1 中，第二个开放括号会将信息保存在 $2 中，以此类推。
 
 ```xml
 ^((\+|00)(\d+))$
-Example: +13171222222 matches and captures +13171222222 in $1, + in $2 and 13171222222 in $3
-         0013171222222 matches and captures 0013171222222 in $1, 00 in $2 and 13171222222 in $3
+示例：+13171222222 匹配并捕获到 $1 中的 +13171222222，+保存在 $2 中，13171222222 保存在 $3 中
+        0013171222222 匹配并捕获到 $1 中的 0013171222222，00 保存在 $2 中，13171222222 保存在 $3 中
 ```
 
-In the following example, the first set of parentheses does not store any information.
+在下面的示例中，第一组括号不保存任何信息。
 
 ```xml
 ^(?:(\+|00)(\d+))$
-Example: +13171222222 matches and captures + in $1 and 13171222222 in $2
-         0013171222222 matches and captures 00 in $1 and 13171222222 in $2
+示例：+13171222222 匹配并捕获到 + 保存在 $1 中，13171222222 保存在 $2 中
+        0013171222222 匹配并捕获到 00 保存在 $1 中，13171222222 保存在 $2 中
 ```
 
-### Greediness
+### 贪婪性
 
 ```xml
 ^rn=(.*);
-Example: rn=1234567890;npdi; matches and captures 1234567890;npdi in $1
+示例：rn=1234567890;npdi; 匹配并捕获到 1234567890;npdi 保存在 $1 中
 ```
 
-If you do .\*? it will be un-greedy (or use \\d to only match the numbers if you know it will be a number)
+如果使用 .\*?，那将使用非贪婪模式匹配（或者使用 \\d 只匹配数字，如果你知道它将是一个数字的话）
 
 ```xml
 ^rn=(.*?);
-Example: rn=1234567890;npdi; matches and captures 1234567890 in $1
+示例：rn=1234567890;npdi; 在 $1 中匹配并捕获 1234567890
 ```
 
-### Case Insensitive
+### 大小写不敏感
 
-To make a match case insensitive, prepend (?i) to your match string.
+要使匹配不区分大小写，在匹配字符串之前加上 (?i)。
 
 ```xml
-Example: (?i)restricted matches both Restricted and restricted
+示例：(?i)restricted 同时匹配 Restricted 和 restricted
 ```
 
-## Further Reading
+## 进一步阅读
 
-Regular Expressions are serious business. They are quite useful in computing in general. Here are some other resources for learning more:  
+正则表达式是严肃的事情。它们在计算机领域非常有用。以下是其他一些学习资源：  
 <http://regexlib.com/Default.aspx>   
 <http://www.regular-expressions.info/>   
 <http://www.weitz.de/regex-coach/>   
@@ -279,21 +218,21 @@ Regular Expressions are serious business. They are quite useful in computing in 
 <http://oreilly.com/catalog/9781565922570/>   
 <http://perldoc.perl.org/perlreref.html>
 
-## Test Your Regex
+## 测试你的正则表达式
 
-### Use fs_cli
+### 使用 fs_cli
 
-See: [mod\_commands#regex](../../Modules/mod_commands_1966741.mdx#command-2)
+参见：[mod\_commands#regex](../../Modules/mod_commands_1966741.mdx#command-2)
 
-### Online Tools
+### 在线工具
 
 * <http://erik.eae.net/playground/regexp/regexp.html>
 * <http://rubular.com>
 * <http://scriptular.com/>
 
-### Simple Perl Script
+### 简单 Perl 脚本
 
-You can also use the following perl script to test your regular expression, or make some adjustment of regex based on what you need.
+你也可以使用以下 Perl 脚本来测试你的正则表达式，或根据需要对正则表达式进行调整。
 
 ```xml
 #!/usr/bin/perl
@@ -306,7 +245,7 @@ if($x=~/^(\+1|1)?([2-9]\d\d[2-9]\d{6})$/)
 }
 ```
 
-  Result:
+  结果：
 
 ```xml
 # perl x.pl 12135551212
@@ -329,10 +268,8 @@ $1 Output:
 $2 Output: 2135551212
 ```
 
-## See Also
+## 另请参阅
 
-[regex](https://confluence.freeswitch.org/display/FREESWITCH/mod%5Fcommands#mod%5Fcommands-regex) API command performs pattern matching on the fs\_cli
+[regex](https://confluence.freeswitch.org/display/FREESWITCH/mod%5Fcommands#mod%5Fcommands-regex) API命令用于在fs\_cli上执行模式匹配操作。
 
-Regular Expression Cheat Sheet: [http://overapi.com/regex/](http://overapi.com/regex)
-
-
+正则表达式速查表：[http://overapi.com/regex/](http://overapi.com/regex)

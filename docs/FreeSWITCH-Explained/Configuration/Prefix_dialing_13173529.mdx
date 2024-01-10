@@ -1,58 +1,55 @@
+# 前缀拨号
 
-# Prefix_dialing 
+## 关于
 
- 
+有时候，您可能会遇到多个客户从相同的IP地址发送未经身份验证的情况。一个可能发生这种情况的环境是像Arbinet这样的批发交易系统。
 
-## About
+客户将从相同的IP地址到达（因此不能通过CIDR进行身份验证），并且将是未经身份验证的（因此不能通过用户名和密码进行身份验证）。
 
-Sometimes you may have multiple customers sending unauthenticated from a common IP. An example of an environment where this can occur is a wholesale trading floor system such as Arbinet.
+如果他们使用不同的前缀发送，则可以进行区分。为了避免欺诈，将需要一个ACL来防止其他人使用相同的前缀发送。
 
-Customers will arrive from the same IP(s) (so cannot be authenticated by CIDR) and will be unauthenticated (so cannot be authenticated by username & password).
+单击此处展开目录
 
-They can be differentiated if they send using different prefixes. An ACL will be required to prevent anyone else sending using the same prefix to avoid fraud.
-
-Click here to expand Table of Contents
-
-* 1 [Sofia configuration](#sofia-configuration)
-* 2 [Dialplan](#dialplan)
+* 1 [Sofia配置](#sofia-configuration)
+* 2 [拨号计划](#dialplan)
 * 3 [mod\_xml\_curl](#mod_xml_curl)
 
-### Sofia configuration
+### Sofia配置
 
-You should should then configure a Sofia profile that does not use an ACL and does not require calls to be authenticated.
+然后，您应该配置一个不使用ACL且不需要进行身份验证的Sofia配置文件。
 
-Configure dialplan routing:
+配置拨号计划路由：
 
 ```xml
 <param name="dialplan" value="XML"/>
 <param name="context" value="default"/>
 ```
 
-No ACLs (comment this out, prefix x- or remove):
+没有ACL（注释掉，添加前缀 x- 或者删除）：
 
 ```xml
 <x-param name="apply-inbound-acl" value="domains"/>
 <x-param name="apply-register-acl" value="domains"/>
 ```
 
-Disable authentication:
+禁用身份验证：
 
 ```xml
 <param name="auth-calls" value="false"/>
 <param name="auth-all-packets" value="false"/>
 ```
 
-Since you can create multiple profiles, it would be possible to create a profile for handling prefix dialling, alongside others which authenticate purely on IP/username. If so you should separate the calls by setting a dialplan context other than default, for instance:
+由于您可以创建多个配置文件，因此有可能创建一个用于处理前缀拨号的配置文件，以及其他仅基于IP地址/用户名进行身份验证的配置文件。如果是这样，您应该通过设置一个除了默认之外的拨号计划上下文来区分呼叫，例如：
 
 ```xml
 <param name="context" value="prefix_dialling"/>
 ```
 
-### Dialplan
+### 拨号计划
 
-You should create an ACL for each customer and add the IPs each can send from. The ACL is checked from within the dialplan.
+您应该为每个客户创建一个ACL，并添加每个客户可以发送的IP地址。在拨号计划中会检查ACL。
 
-The following dialplan can then be used. The customer\_known context separates the call logic from the. It would also be possible to have a different context for each customer, to handle each one differently.
+以下拨号计划可以使用。customer_known 上下文将呼叫逻辑与之分离。也可以为每个客户创建不同的上下文，以便对每个客户进行个别处理。
 
 ```xml
 <context name="default">
@@ -85,7 +82,9 @@ The following dialplan can then be used. The customer\_known context separates t
     </condition>
   </extension>
 </context>
+```
 
+```xml
 <context name="customer_known">
   <extension name="e164">
     <condition field="destination_number" expression="^(\d+)$">
@@ -95,14 +94,12 @@ The following dialplan can then be used. The customer\_known context separates t
 </context>
 ```
 
-Note: a side-effect of this method is that if the call hangs up very quickly, it may hangup before executing the dialplan. This will mean the CDRs for these call will show no account. 
+注意：这种方法的一个副作用是，如果呼叫很快就挂断，可能会在执行呼叫计划之前就挂断。这意味着这些呼叫的CDR将不会显示账户信息。
 
-This won't cause any billing issues, but may mean your customer cannot see some of their calls. This is very rare, since it means the hangup must arrive as soon as the INVITE is received.
+这不会引起任何计费问题，但可能意味着您的客户无法查看部分呼叫。这种情况非常罕见，因为它意味着挂机必须在收到INVITE请求后立即到达。
 
 ### mod_xml_curl
 
-Alternatively if using mod\_xml\_curl, you can perform the prefix+IP matching within the HTTP application since both destination\_number and network\_addr values are provided.
+或者，如果使用mod_xml_curl，您可以在HTTP应用程序中执行前缀+IP匹配，因为destination_number和network_addr的值都已提供。
 
-A side-effect of this method is that if the call hangs up very quickly, it may hangup before executing the dialplan. This will mean the CDRs for these call will show no account. This won't cause any billing issues, but may mean your customer cannot see some of their calls. This is _very_ rare, since it means the hangup must arrive as soon as the INVITE is received.
-
-
+这种方法的一个副作用是，如果呼叫很快就挂断，可能会在执行呼叫计划之前就挂断。这意味着这些呼叫的CDR将不会显示账户信息。这不会引起任何计费问题，但可能意味着您的客户无法查看部分呼叫。这种情况非常罕见，因为它意味着挂机必须在收到INVITE请求后立即到达。

@@ -1,111 +1,108 @@
+# SPA2102 如何使用
 
-# SPA2102 HowTo 
+点击展开目录
 
- 
-
-Click to expand Table of Contents
-
-* 1 [Firmware](#firmware)
-* 2 [Configure SPA2102](#configure-spa2102)
-* 3 [Configure Fax Machine](#configure-fax-machine)  
+* 1 [固件](#firmware)
+* 2 [配置SPA2102](#configure-spa2102)
+* 3 [配置传真机](#configure-fax-machine)  
    * 3.1 [SPA2102 SYSLOG](#spa2102-syslog)
-* 4 [FS Dialplan](#fs-dialplan)  
-   * 4.1 [Providers](#providers)  
-   * 4.2 [Just Bridge](#just-bridge)  
-   * 4.3 [t38\_gateway mode](#t38_gateway-mode)
+* 4 [FS拨号计划](#fs-dialplan)  
+   * 4.1 [供应商](#providers)  
+   * 4.2 [仅桥接](#just-bridge)  
+   * 4.3 [t38_gateway模式](#t38_gateway-mode)
 
-## Firmware
+## 固件
 
-Latest release apparently buggy (5.2.12). Get version 5.2.10 instead. Read that as T38 DOES NOT WORK on 5.2.12\. Comment: I am using latest 5.2.13(004) which has no problem at all. Read the release note of 5.2.12 which fixed a few bugs 5.2.10\. One of them I consider major.
+最新发布的版本似乎有问题（5.2.12）。请使用版本5.2.10。请注意5.2.12上T38不起作用。附注：我正在使用最新的5.2.13（004），一点问题也没有。请阅读修复了几个5.2.10中的问题的5.2.12的更新说明。其中一个我认为很重要。
 
 * <http://www.cisco.com/en/US/products/ps10026/index.html>
 
-## Configure SPA2102
+## 配置SPA2102
 
-Provider and registration as per usual. watch the 0.030 bug on the RTP Packet size (login advanced)
+根据通常的提供商和注册方式进行。注意在RTP数据包大小（登录高级模式）上的0.030错误。
 
-* Voice -> SIP  
-   * RTP Packet Size: 0.020
-* Voice -> Line 1 \[or 2\]
+* 语音 -> SIP
+   * RTP数据包大小：0.020
+* 语音 -> Line 1 \[或 2\]
 
-| Preferred Codec              | G711u | Second Preferred Codec | G711u            |
-| ---------------------------- | ----- | ---------------------- | ---------------- |
-| Third Preferred Codec        | G711u | Use Pref Codec Only    | yes              |
-| Silence Supp Enable          | no    | Silence Threshold      | medium           |
-| G729a Enable                 | yes   | Echo Canc Enable       | no               |
-| G723 Enable                  | yes   | Echo Canc Adapt Enable | no               |
-| G726-16 Enable               | yes   | Echo Supp Enable       | no               |
-| G726-24 Enable               | yes   | FAX CED Detect Enable  | yes              |
-| G726-32 Enable               | yes   | FAX CNG Detect Enable  | yes              |
-| G726-40 Enable               | yes   | FAX Passthru Codec     | G711u            |
-| DTMF Process INFO            | yes   | FAX Codec Symmetric    | yes              |
-| DTMF Process AVT             | Yes   | FAX Passthru Method    | ReINVITE         |
-| DTMF Tx Method               | Auto  | DTMF Tx Mode           | Strict           |
-| DTMF Tx Strict Hold Off Time | 90    | FAX Process NSE        | yes              |
-| Hook Flash Tx Method         | None  | FAX Disable ECAN       | yes              |
-| Release Unused Codec         | yes   | FAX Enable T38         | yes              |
-| FAX T38 Redundancy           | 1     | FAX Tone Detect Mode   | caller or callee |
+| Preferred Codec              | G711u | 第二偏好的编解码器  | G711u            |
+| ---------------------------- | ----- | ---------------------- | ----------------- |
+| 第三偏好的编解码器        |G711u   | 仅使用首选编解码器  | 是              |
+| 启用静音抑制          | 否    | 静音阈值      | 中等           |
+| 启用G729a编解码器                 | 是   | 启用回声消除       | 否               |
+| 启用G723编解码器                  | 是   | 启用回声消除自适应 | 否               |
+| 启用G726-16编解码器               | 是   | 启用回声抑制       | 否               |
+| 启用G726-24编解码器               | 是   | 启用FAX CED检测    | 是              |
+| 启用G726-32编解码器               | 是   | 启用FAX CNG检测    | 是              |
+| 启用G726-40编解码器               | 是   | FAX透传编解码器     | G711u            |
+| DTMF处理INFO            | 是   | FAX编解码器对称    | 是              |
+| DTMF处理AVT             | 是   | FAX透传方法    | ReINVITE         |
+| DTMF传输方法               | 自动   | DTMF传输模式           | 严格           |
+| DTMF传输严格取消保持时间 | 90    | FAX处理NSE        | 是              |
+| Hook Flash传输方法         | 无  | 禁用FAX ECAN       | 是              |
+| 释放未使用的编解码器         | 是   | 启用FAX T38         | 是              |
+| FAX T38冗余           | 1     | FAX音调检测模式   | 呼叫方或被叫方 |
 
   
-In addition to above, you will want to use the following settings:
+另外，您还需要使用以下设置：
 
-* Source: [cisco manual](http://www.cisco.com/en/US/docs/voice%5Fip%5Fcomm/csbpvga/ata/administration/guide/ATA%5FAG%5Fv3%5FNC-WEB.pdf)
+* 来源：[思科手册](http://www.cisco.com/en/US/docs/voice%5Fip%5Fcomm/csbpvga/ata/administration/guide/ATA%5FAG%5Fv3%5FNC-WEB.pdf)
 
-On the Same Line Tab:
+在同一行选项卡中：
 
-* Network Jitter Buffer: very high
-* Jitter buffer adjustment: disable
-* Call Waiting: no
-* 3 Way Calling: no
-* Echo Canceller: no
-* Silence Suppression: no
-* Preferred Codec: G.711
-* Use Pref. codec Only: Yes
+* 网络抖动缓冲区：非常高
+* 抖动缓冲区调整：禁用
+* 呼叫等待：否
+* 三方通话：否
+* 回声消除器：否
+* 静音抑制：否
+* 首选编解码器：G.711
+* 仅使用首选编解码器：是
 
-Without the above settings, outbound fax would work (in proxy media mode) some of the time, but T38 negotioation would fail sometimes and never go through. One example was HP's faxback service: [1-888-hpfaxme (1-888-473-2963)](http://h10025.www1.hp.com/ewfrf/wc/document?docname=c00259105&lc=en&dlc=en&cc=us).
+如果没有上述设置，在代理媒体模式下，传出传真可能会有时候成功，但T38协商有时候会失败，永远无法完成。一个例子就是惠普的传真服务：[1-888-hpfaxme (1-888-473-2963)](http://h10025.www1.hp.com/ewfrf/wc/document?docname=c00259105&lc=en&dlc=en&cc=us)。
 
-## Configure Fax Machine
+## 配置传真机
 
-You'll also need to set your Fax machine to a max speed of 14.4k and a min speed of 7200.
+您还需要将传真机的最大传输速度设置为14.4k，最低传输速度设置为7200。
 
-* Source: [cisco manual](http://www.cisco.com/en/US/docs/voice%5Fip%5Fcomm/csbpvga/ata/administration/guide/ATA%5FAG%5Fv3%5FNC-WEB.pdf)
+* 来源：[思科手册](http://www.cisco.com/en/US/docs/voice%5Fip%5Fcomm/csbpvga/ata/administration/guide/ATA%5FAG%5Fv3%5FNC-WEB.pdf)
 
 ### SPA2102 SYSLOG
 
-This was to a fax extension received by spandsp. It's what we should see on the device when it does t38 (assuming you configured the syslog server)
+这是用于spandsp接收的一个传真分机。当设备执行T38时，我们应该在设备上看到这个信息（假设您已配置了syslog服务器）。
 
 ```xml
 Jan 18 10:37:19 sipuraspa [0]FM 00000020 Tx      T38: i.no_signal
-Jan 18 10:37:19 T38 Decode UDPTL error
-Jan 18 10:37:19 sipuraspa T38: duplicate packet(s) received seq=0
+Jan 18 10:37:19 T38 解码 UDPTL 错误
+Jan 18 10:37:19 sipuraspa T38: 接收到重复包 seq=0
 Jan 18 10:37:19 sipuraspa [0]FM 00000060 Rx      T38: i.no_signal
-Jan 18 10:37:19 sipuraspa T38: duplicate packet(s) received seq=1
+Jan 18 10:37:19 sipuraspa T38: 接收到重复包 seq=1
 Jan 18 10:37:19 sipuraspa [0]FM 00000280 Rx      T38: i.ced
-Jan 18 10:37:22 sipuraspa T38: duplicate packet(s) received seq=2
+Jan 18 10:37:22 sipuraspa T38: 接收到重复包 seq=2
 Jan 18 10:37:22 sipuraspa [0]FM 00003300 Rx      T38: i.no_signal
-Jan 18 10:37:22 sipuraspa T38: duplicate packet(s) received seq=3
+Jan 18 10:37:22 sipuraspa T38: 接收到重复包 seq=3
 Jan 18 10:37:22 sipuraspa [0]FM 00003370 Rx      T38: i.v21_preamble
 Jan 18 10:37:23 sipuraspa [0]FM 00004380 Rx      T38: d.v21 . . .
 Jan 18 10:37:24 sipuraspa [0]FM 00005000 Rx      T38: d.hdlc_fcs_OK
 Jan 18 10:37:24 sipuraspa [0]FM 00005020 Mod CSI Frame [25]:  ff 03 40 2d 20 43                                                                                                                                4c 4c 20 6f 6c 61 48 20 73 75 72 61 74 6c 6f 43 20 ac f4
 Jan 18 10:37:24 sipuraspa [0]FM 00005120 Rx      T38: d.v21 . . .
-Jan 18 10:37:24 sipuraspa T38: duplicate packet(s) received seq=41
+Jan 18 10:37:24 sipuraspa T38: 接收到重复包 seq=41
 ```
 
- ## FS Dialplan
+ ## FS 拨号计划（Dialplan）
 
-### Providers
+### 服务提供商
 
-It seems to make a difference here, and I'm not sure why.
+这里似乎存在一些差异，我不太确定原因。
 
-* UnivoIP: Likes the T38 Gateway Peer.
-* Flowroute: Likes the Just Bridge Method. Never got a fax complete with either T38\_Gateway method.  
-   * **UPDATE** Faxes still would not go out very reliably. Using Proxy Media method seems to have fixed it.
-* GrnVoIP: Doesn't seem to like anything. Also notable, currently (2012/01/18) they do not allow toll free t38 faxing.
+* UnivoIP：喜欢 T38 网关对等方（Gateway Peer）。
+* Flowroute：偏好 Just Bridge Method（仅桥接方法）。使用 T38_Gateway 方法时无法完成传真。
+  * **更新**：传真仍然无法稳定发送。使用 Proxy Media 方法似乎解决了问题。
+* GrnVoIP：似乎不喜欢任何方式。还值得注意的是，目前（2012/01/18）他们不允许免费的 T38 传真。
 
-#### Proxy Media
+#### 代理媒体（Proxy Media）
 
-This has worked the best so far for me. Everything else does not seem to work so well.
+迄今为止，这种方式对我来说效果最好。其他方式似乎效果不佳。
 
 ```xml
 <extension name="00-Fax-7d" >
@@ -122,9 +119,9 @@ This has worked the best so far for me. Everything else does not seem to work so
 </extension> 
 ```
 
-### Just Bridge
+### 只进行桥接
 
-Tried effectively no dialplan, just bridge. This works, but T38 only ends up on the b-leg.
+尝试无需拨号方案，只进行桥接。这种方式虽然可行，但是T38只能运用到b-leg上。
 
 ```xml
 <extension name="00_Fax" >
@@ -140,16 +137,16 @@ Tried effectively no dialplan, just bridge. This works, but T38 only ends up on 
 </extension>
 ```
 
-### t38_gateway mode
+### t38_gateway 模式
 
-#### Self
+#### 个人
 
-Outbound faxes just fail. T38 does get hit on the spa2102 and the provider, but they rarely go through.
+外呼传真常常失败。T38会在spa2102和供应商上触发，但很少能成功进行。
 
 ```xml
-<extension name="00_Fax1" >
+<extension name="00_Fax1">
    <condition field="${user_name}" expression="^103[0-9]" />
-   <condition field="destination_number" expression="^(\d{10})$" >
+   <condition field="destination_number" expression="^(\d{10})$">
        <action application="set" data="sip_h_X-accountcode=${accountcode}" />
        <action application="set" data="call_direction=outbound" />
        <action application="set" data="hangup_after_bridge=true" />
@@ -168,7 +165,7 @@ Outbound faxes just fail. T38 does get hit on the spa2102 and the provider, but 
 
 #### Peer
 
-Outbound faxes. This with above SPA2102 config seems to be the magic ticket.
+外呼传真。这与上面的SPA2102配置似乎是魔法票。
 
 ```xml
 <extension name="00_Fax1" >
@@ -190,72 +187,72 @@ Outbound faxes. This with above SPA2102 config seems to be the magic ticket.
 </extension>
 ```
 
-##### Relevant SPA2102 Log
+##### 相关SPA2102日志
 
 ```xml
  20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 91 96
-Jan 18 12:56:43 sipuraspa [0]FM 00001500 Tx      T38: d.hdlc_fcs_OK
-Jan 18 12:56:43 sipuraspa [0]FM 00001660 Tx      T38: d.v21 . . .
-Jan 18 12:56:43 sipuraspa [0]FM 00001840     DCS: 0.5.0.2.0.0.0.1  v17_14400
-Jan 18 12:56:43 sipuraspa [0]FM 00001840 Dem DCS Frame [11]:  ff 13 83 00 a2 98 80 80 00 76 85
-Jan 18 12:56:43 sipuraspa [0]FM 00001860 Tx      T38: d.hdlc_fcs_OK_sig_end
-Jan 18 12:56:43 sipuraspa [0]FM 00001880 Tx      T38: i.no_signal
-Jan 18 12:56:43 sipuraspa [0]FM 00001890 Dem     Modulation v17_14400_long_training
-Jan 18 12:56:43 sipuraspa [0]FM 00001900 Tx      T38: i.v17_14400_long_training
-Jan 18 12:56:45 sipuraspa [0]FM 00003540 Tx      T38: d.v17_14400 . . .
-Jan 18 12:56:46 sipuraspa [0]FM 00004920         Z:2420
-Jan 18 12:56:46 sipuraspa [0]FM 00005070 Dem     Tf=  -2882, Cf=   -226, Ag=   1155, Qc=  0, Di=  0, Do=  0
-Jan 18 12:56:46 sipuraspa [0]FM 00005080 Tx      T38: d.t4_non_ecm_sig_end
-Jan 18 12:56:46 sipuraspa [0]FM 00005100 Tx      T38: i.no_signal
-Jan 18 12:56:47 sipuraspa T38: duplicate packet(s) received seq=1
-Jan 18 12:56:47 sipuraspa [0]FM 00005840 Rx      T38: i.v21_preamble
-Jan 18 12:56:48 sipuraspa [0]FM 00006800 Rx      T38: d.v21 . . .
-Jan 18 12:56:48 sipuraspa [0]FM 00006880 Rx      T38: d.hdlc_fcs_OK
-Jan 18 12:56:48 sipuraspa T38: duplicate packet(s) received seq=6
-Jan 18 12:56:48 sipuraspa T38: duplicate packet(s) received seq=7
-Jan 18 12:56:48 sipuraspa [0]FM 00006900 Rx      T38: d.hdlc_sig_end
-Jan 18 12:56:48 sipuraspa [0]FM 00006900 Rx      T38: i.no_signal
-Jan 18 12:56:48 sipuraspa [0]FM 00006930 Mod CFR Frame [ 5]:  ff 13 84 ea 7d
-Jan 18 12:56:48 sipuraspa [0]FM 00007300 Dem     Modulation v17_14400_short_training
-Jan 18 12:56:49 sipuraspa [0]RegOK. NextReg in 3570 (1)
-Jan 18 12:56:49 sipuraspa [0]FM 00008320 Tx      T38: i.v17_14400_short_training
-Jan 18 12:56:49 sipuraspa [0]FM 00008340 Tx      T38: d.v17_14400 . . .
-Jan 18 12:57:07 sipuraspa [0]FM 00025550 Dem     Tf=  -4115, Cf=   -227, Ag=   1071, Qc=  0, Di=  0, Do=  0
-Jan 18 12:57:07 sipuraspa [0]FM 00025580 Tx      T38: d.t4_non_ecm_sig_end
-Jan 18 12:57:07 sipuraspa [0]FM 00025600 Tx      T38: i.no_signal
-Jan 18 12:57:07 sipuraspa [0]FM 00025780 Tx      T38: i.v21_preamble
-Jan 18 12:57:08 sipuraspa [0]FM 00026720 Tx      T38: d.v21 . . .
-Jan 18 12:57:08 sipuraspa [0]FM 00026740 Dem EOP Frame [ 5]:  ff 13 2f 33 66
-Jan 18 12:57:08 sipuraspa [0]FM 00026760 Tx      T38: d.hdlc_fcs_OK_sig_end
-Jan 18 12:57:08 sipuraspa [0]FM 00026780 Tx      T38: i.no_signal
-Jan 18 12:57:09 sipuraspa T38: duplicate packet(s) received seq=8
-Jan 18 12:57:09 sipuraspa [0]FM 00027600 Rx      T38: i.v21_preamble
-Jan 18 12:57:10 sipuraspa [0]FM 00028580 Rx      T38: d.v21 . . .
-Jan 18 12:57:10 sipuraspa T38: duplicate packet(s) received seq=13
-Jan 18 12:57:10 sipuraspa T38: duplicate packet(s) received seq=14
-Jan 18 12:57:10 sipuraspa [0]FM 00028660 Rx      T38: d.hdlc_fcs_OK
-Jan 18 12:57:10 sipuraspa [0]FM 00028660 Rx      T38: d.hdlc_sig_end
-Jan 18 12:57:10 sipuraspa [0]FM 00028670 Rx      T38: i.no_signal
-Jan 18 12:57:10 sipuraspa [0]FM 00028690 Mod MCF Frame [ 5]:  ff 13 8c a2 f1
-Jan 18 12:57:10 sipuraspa [0]FM 00029260 Tx      T38: i.v21_preamble
-Jan 18 12:57:11 sipuraspa [0]FM 00030300 Tx      T38: d.v21 . . .
-Jan 18 12:57:11 sipuraspa [0]FM 00030320 Dem DCN Frame [ 5]:  ff 13 fb 9a f6
-Jan 18 12:57:11 sipuraspa [0]FM 00030340 Tx      T38: d.hdlc_fcs_OK_sig_end
-Jan 18 12:57:11 sipuraspa [0]FM 00030360 Tx      T38: i.no_signal
-Jan 18 12:57:13 FM Stop RxTx Forced
-Jan 18 12:57:13 sipuraspa [0]On Hook
-Jan 18 12:57:13 sipuraspa T38: StopRx
-Jan 18 12:57:13 sipuraspa T38: StopTx
-Jan 18 12:57:13 sipuraspa [0]FM Alert Stop RxTx (c=00245e90;a=1)
-Jan 18 12:57:13 sipuraspa [0: 0]AUD Rel Call
-Jan 18 12:57:13 DLG Terminated 29b53c
-Jan 18 12:57:13 Sess Terminated
+一月 18号 12:56:43 sipuraspa [0]FM 00001500 发送 T38: d.hdlc_fcs_OK
+一月 18号 12:56:43 sipuraspa [0]FM 00001660 发送 T38: d.v21 . . .
+一月 18号 12:56:43 sipuraspa [0]FM 00001840     DCS: 0.5.0.2.0.0.0.1  v17_14400
+一月 18号 12:56:43 sipuraspa [0]FM 00001840 接收 DCS 帧 [11]:  ff 13 83 00 a2 98 80 80 00 76 85
+一月 18号 12:56:43 sipuraspa [0]FM 00001860 发送 T38: d.hdlc_fcs_OK_sig_end
+一月 18号 12:56:43 sipuraspa [0]FM 00001880 发送 T38: i.no_signal
+一月 18号 12:56:43 sipuraspa [0]FM 00001890 接收 调制 v17_14400_long_training
+一月 18号 12:56:43 sipuraspa [0]FM 00001900 发送 T38: i.v17_14400_long_training
+一月 18号 12:56:45 sipuraspa [0]FM 00003540 发送 T38: d.v17_14400 . . .
+一月 18号 12:56:46 sipuraspa [0]FM 00004920         Z:2420
+一月 18号 12:56:46 sipuraspa [0]FM 00005070 接收 Tf=  -2882, Cf=   -226, Ag=   1155, Qc=  0, Di=  0, Do=  0
+一月 18号 12:56:46 sipuraspa [0]FM 00005080 发送 T38: d.t4_non_ecm_sig_end
+一月 18号 12:56:46 sipuraspa [0]FM 00005100 发送 T38: i.no_signal
+一月 18号 12:56:47 sipuraspa T38: 收到重复的数据包 seq=1
+一月 18号 12:56:47 sipuraspa [0]FM 00005840 接收 T38: i.v21_preamble
+一月 18号 12:56:48 sipuraspa [0]FM 00006800 接收 T38: d.v21 . . .
+一月 18号 12:56:48 sipuraspa [0]FM 00006880 接收 T38: d.hdlc_fcs_OK
+一月 18号 12:56:48 sipuraspa T38: 收到重复的数据包 seq=6
+一月 18号 12:56:48 sipuraspa T38: 收到重复的数据包 seq=7
+一月 18号 12:56:48 sipuraspa [0]FM 00006900 接收 T38: d.hdlc_sig_end
+一月 18号 12:56:48 sipuraspa [0]FM 00006900 接收 T38: i.no_signal
+一月 18号 12:56:48 sipuraspa [0]FM 00006930 Mod CFR 帧 [ 5]:  ff 13 84 ea 7d
+一月 18号 12:56:48 sipuraspa [0]FM 00007300 接收 调制 v17_14400_short_training
+一月 18号 12:56:49 sipuraspa [0]RegOK. 下一次的注册在 3570 (1)
+一月 18号 12:56:49 sipuraspa [0]FM 00008320 发送 T38: i.v17_14400_short_training
+一月 18号 12:56:49 sipuraspa [0]FM 00008340 发送 T38: d.v17_14400 . . .
+一月 18号 12:57:07 sipuraspa [0]FM 00025550 接收 Tf=  -4115, Cf=   -227, Ag=   1071, Qc=  0, Di=  0, Do=  0
+一月 18号 12:57:07 sipuraspa [0]FM 00025580 发送 T38: d.t4_non_ecm_sig_end
+一月 18号 12:57:07 sipuraspa [0]FM 00025600 发送 T38: i.no_signal
+一月 18号 12:57:07 sipuraspa [0]FM 00025780 发送 T38: i.v21_preamble
+一月 18号 12:57:08 sipuraspa [0]FM 00026720 发送 T38: d.v21 . . .
+一月 18号 12:57:08 sipuraspa [0]FM 00026740 接收 EOP 帧 [ 5]:  ff 13 2f 33 66
+一月 18号 12:57:08 sipuraspa [0]FM 00026760 发送 T38: d.hdlc_fcs_OK_sig_end
+一月 18号 12:57:08 sipuraspa [0]FM 00026780 发送 T38: i.no_signal
+一月 18号 12:57:09 sipuraspa T38: 收到重复的数据包 seq=8
+一月 18号 12:57:09 sipuraspa [0]FM 00027600 接收 T38: i.v21_preamble
+一月 18号 12:57:10 sipuraspa [0]FM 00028580 接收 T38: d.v21 . . .
+一月 18号 12:57:10 sipuraspa T38: 收到重复的数据包 seq=13
+一月 18号 12:57:10 sipuraspa T38: 收到重复的数据包 seq=14
+一月 18号 12:57:10 sipuraspa [0]FM 00028660 接收 T38: d.hdlc_fcs_OK
+一月 18号 12:57:10 sipuraspa [0]FM 00028660 接收 T38: d.hdlc_sig_end
+一月 18号 12:57:10 sipuraspa [0]FM 00028670 接收 T38: i.no_signal
+一月 18号 12:57:10 sipuraspa [0]FM 00028690 Mod MCF 帧 [ 5]:  ff 13 8c a2 f1
+一月 18号 12:57:10 sipuraspa [0]FM 00029260 发送 T38: i.v21_preamble
+一月 18号 12:57:11 sipuraspa [0]FM 00030300 发送 T38: d.v21 . . .
+一月 18号 12:57:11 sipuraspa [0]FM 00030320 接收 DCN 帧 [ 5]:  ff 13 fb 9a f6
+一月 18号 12:57:11 sipuraspa [0]FM 00030340 发送 T38: d.hdlc_fcs_OK_sig_end
+一月 18号 12:57:11 sipuraspa [0]FM 00030360 发送 T38: i.no_signal
+一月 18号 12:57:13 FM 强制停止 RxTx
+一月 18号 12:57:13 sipuraspa [0]挂机
+一月 18号 12:57:13 sipuraspa T38: 停止接收
+一月 18号 12:57:13 sipuraspa T38: 停止发送
+一月 18号 12:57:13 sipuraspa [0]FM 提示 停止 RxTx (c=00245e90;a=1)
+一月 18号 12:57:13 sipuraspa [0: 0]释放通话
+一月 18号 12:57:13 通话 29b53c 终止
+一月 18号 12:57:13 会话 终止
 ```
 
-##### FreeSWITCH Snippet
+##### FreeSWITCH片段
 
 ```xml
-recv 1077 bytes from udp/[192.168.11.244]:5060 at 18:58:45.758720:
+18:58:45.758720时接收到来自udp/[192.168.11.244]:5060的1077字节：
    ------------------------------------------------------------------------
    INVITE sip:8888771655@192.168.11.54:5060;transport=udp SIP/2.0
    Via: SIP/2.0/UDP 192.168.11.244:5060;branch=z9hG4bK-24fbcbe;rport
@@ -271,67 +268,87 @@ recv 1077 bytes from udp/[192.168.11.244]:5060 at 18:58:45.758720:
    User-Agent: Linksys/SPA2102-5.2.10
    Content-Length: 269
    Content-Type: application/sdp
+```
 
-   v=0
-   o=- 727641 727641 IN IP4 192.168.11.244
-   s=-
-   c=IN IP4 192.168.11.244
-   t=0 0
-   m=image 16388 udptl t38
-   a=T38FaxVersion:0
-   a=T38MaxBitRate:14400
-   a=T38FaxRateManagement:transferredTCF
-   a=T38FaxMaxBuffer:200
-   a=T38FaxMaxDatagram:200
-   a=T38FaxUdpEC:t38UDPRedundancy
-   ------------------------------------------------------------------------
-send 376 bytes to udp/[192.168.11.244]:5060 at 18:58:45.760791:
-   ------------------------------------------------------------------------
-   SIP/2.0 100 Trying
-   Via: SIP/2.0/UDP 192.168.11.244:5060;branch=z9hG4bK-24fbcbe;rport=5060
-   From: FAX <sip:1030@voip.example.com>;tag=e05db621ddfca31co0
-   To: <sip:8888771655@voip.example.com>;tag=vme0D1r4j4yHj
-   Call-ID: 367a1245-4d4d5548@192.168.11.244
-   CSeq: 103 INVITE
-   User-Agent: FreeSWITCH-mod_sofia/1.0.head-git-9403064 2011-08-30 09-15-27 -0500
-   Content-Length: 0
+```
+v = 0
+o = - 727641 727641 IN IP4 192.168.11.244
+s = -
+c = IN IP4 192.168.11.244
+t = 0 0
+m = image 16388 udptl t38
+a = T38FaxVersion: 0
+a = T38MaxBitRate: 14400
+a = T38FaxRateManagement: transferredTCF
+a = T38FaxMaxBuffer: 200
+a = T38FaxMaxDatagram: 200
+a = T38FaxUdpEC: t38UDPRedundancy
+-------------------------------------------------- ----------------------
+以18:58:45.760791发送376字节到udp/[192.168.11.244]:5060：
+-------------------------------------------------- ----------------------
+   SIP/2.0 100 正在尝试
+   经过：SIP/2.0/UDP 192.168.11.244:5060;branch=z9hG4bK-24fbcbe;rport=5060
+   来自：FAX <sip:1030@voip.example.com>;tag=e05db621ddfca31co0
+   至：<sip:8888771655@voip.example.com>;tag=vme0D1r4j4yHj
+   呼叫ID：367a1245-4d4d5548@192.168.11.244
+   CSeq：103 INVITE
+   用户代理：FreeSWITCH-mod_sofia/1.0.head-git-9403064 2011-08-30 09-15-27 -0500
+   内容长度：0
 
-   ------------------------------------------------------------------------
-2012-01-18 12:58:45.761828 [DEBUG] switch_core_session.c:859 Send signal sofia/internal/1030@voip.example.com [BREAK]
-2012-01-18 12:58:45.761828 [DEBUG] switch_core_session.c:859 Send signal sofia/internal/1030@voip.example.com [BREAK]
-2012-01-18 12:58:45.771412 [DEBUG] sofia.c:5147 Channel sofia/internal/1030@voip.example.com entering state [received][100]
-2012-01-18 12:58:45.771412 [DEBUG] sofia.c:5158 Remote SDP:
-v=0
-o=- 727641 727641 IN IP4 192.168.11.244
-s=-
-c=IN IP4 192.168.11.244
-t=0 0
-m=image 16388 udptl t38
-a=T38FaxVersion:0
-a=T38MaxBitRate:14400
-a=T38FaxRateManagement:transferredTCF
-a=T38FaxMaxBuffer:200
-a=T38FaxMaxDatagram:200
-a=T38FaxUdpEC:t38UDPRedundancy
+-------------------------------------------------- ----------------------
+2012-01-18 12:58:45.761828 [DEBUG] switch_core_session.c:859 发送信号 sofia/internal/1030@voip.example.com [BREAK]
+2012-01-18 12:58:45.761828 [DEBUG] switch_core_session.c:859 发送信号 sofia/internal/1030@voip.example.com [BREAK]
+2012-01-18 12:58:45.771412 [DEBUG] sofia.c:5147 通道 sofia/internal/1030@voip.example.com 进入状态 [received][100]
+2012-01-18 12:58:45.771412 [DEBUG] sofia.c:5158 远程SDP：
+v = 0
+o = - 727641 727641 IN IP4 192.168.11.244
+s = -
+c = IN IP4 192.168.11.244
+t = 0 0
+m = image 16388 udptl t38
+a = T38FaxVersion: 0
+a = T38MaxBitRate: 14400
+a = T38FaxRateManagement: transferredTCF
+a = T38FaxMaxBuffer: 200
+a = T38FaxMaxDatagram: 200
+a = T38FaxUdpEC: t38UDPRedundancy
+```
 
-recv 1036 bytes from udp/[64.26.150.140]:5060 at 18:58:48.927104:
-   ------------------------------------------------------------------------
-   INVITE sip:gw+voip.example.com-univoip.ca@192.168.11.54:5080;transport=udp;gw=voip.example.com-univoip.ca SIP/2.0
-   Record-Route: <sip:64.26.150.140;lr;ftag=as66afbc98>
-   Via: SIP/2.0/UDP 64.26.150.140;branch=z9hG4bK9391.9f5670a2.0
-   Via: SIP/2.0/UDP 64.26.150.151:5060;received=64.26.150.151;branch=z9hG4bK5b345720;rport=5060
-   Max-Forwards: 69
-   From: <sip:18888771655@64.26.150.140>;tag=as66afbc98
-   To: "example " <sip:example1@64.26.150.140;transport=udp>;tag=Zt796H6BBX93e
-   Contact: <sip:18888771655@64.26.150.151>
-   Call-ID: 46e7065c-bca9-122f-cb8c-7a91d6bec14f
-   CSeq: 102 INVITE
-   User-Agent: GW-2
-   Allow: INVITE, ACK, CANCEL, OPTIONS, BYE, REFER, SUBSCRIBE, NOTIFY, INFO
-   Supported: replaces, timer
-   Content-Type: application/sdp
-   Content-Length: 273
+接收自udp/[64.26.150.140]:5060的1036字节，时间为18:58:48.927104:
 
+------------------------------------------------------------------------
+
+INVITE sip:gw+voip.example.com-univoip.ca@192.168.11.54:5080;transport=udp;gw=voip.example.com-univoip.ca SIP/2.0
+
+Record-Route: <sip:64.26.150.140;lr;ftag=as66afbc98>
+
+Via: SIP/2.0/UDP 64.26.150.140;branch=z9hG4bK9391.9f5670a2.0
+
+Via: SIP/2.0/UDP 64.26.150.151:5060;received=64.26.150.151;branch=z9hG4bK5b345720;rport=5060
+
+Max-Forwards: 69
+
+From: <sip:18888771655@64.26.150.140>;tag=as66afbc98
+
+To: "example " <sip:example1@64.26.150.140;transport=udp>;tag=Zt796H6BBX93e
+
+Contact: <sip:18888771655@64.26.150.151>
+
+Call-ID: 46e7065c-bca9-122f-cb8c-7a91d6bec14f
+
+CSeq: 102 INVITE
+
+User-Agent: GW-2
+
+Allow: INVITE, ACK, CANCEL, OPTIONS, BYE, REFER, SUBSCRIBE, NOTIFY, INFO
+
+Supported: replaces, timer
+
+Content-Type: application/sdp
+
+Content-Length: 273
+
+```markdown
    v=0
    o=root 2039306861 2039306863 IN IP4 38.57.184.101
    s=Asterisk PBX 1.6.2.9
@@ -344,7 +361,7 @@ recv 1036 bytes from udp/[64.26.150.140]:5060 at 18:58:48.927104:
    a=T38FaxMaxDatagram:339
    a=T38FaxUdpEC:t38UDPRedundancy
    ------------------------------------------------------------------------
-send 534 bytes to udp/[64.26.150.140]:5060 at 18:58:48.934964:
+在18:58:48.934964发送534字节到udp/[64.26.150.140]:5060:
    ------------------------------------------------------------------------
    SIP/2.0 100 Trying
    Via: SIP/2.0/UDP 64.26.150.140;branch=z9hG4bK9391.9f5670a2.0
@@ -358,10 +375,10 @@ send 534 bytes to udp/[64.26.150.140]:5060 at 18:58:48.934964:
    Content-Length: 0
 
    ------------------------------------------------------------------------
-2012-01-18 12:58:48.931194 [DEBUG] switch_core_session.c:859 Send signal sofia/external/18888771655 [BREAK]
-2012-01-18 12:58:48.931194 [DEBUG] switch_core_session.c:859 Send signal sofia/external/18888771655 [BREAK]
-2012-01-18 12:58:48.951836 [DEBUG] sofia.c:5147 Channel sofia/external/18888771655 entering state [received][100]
-2012-01-18 12:58:48.951836 [DEBUG] sofia.c:5158 Remote SDP:
+2012-01-18 12:58:48.931194 [DEBUG] switch_core_session.c:859 发送信号sofia/external/18888771655 [BREAK]
+2012-01-18 12:58:48.931194 [DEBUG] switch_core_session.c:859 发送信号sofia/external/18888771655 [BREAK]
+2012-01-18 12:58:48.951836 [DEBUG] sofia.c:5147 通道sofia/external/18888771655进入状态[received][100]
+2012-01-18 12:58:48.951836 [DEBUG] sofia.c:5158 远程SDP:
 v=0
 o=root 2039306861 2039306863 IN IP4 38.57.184.101
 s=Asterisk PBX 1.6.2.9
@@ -375,12 +392,11 @@ a=T38FaxMaxDatagram:339
 a=T38FaxUdpEC:t38UDPRedundancy
 ```
 
-  
 ##### **snip**
 
 ```xml
-2012-01-18 12:59:01.821215 [WARNING] mod_spandsp_fax.c:898 sofia/internal/1030@voip.example.com already has T.38 data
-2012-01-18 12:59:01.821215 [DEBUG] switch_core_session.c:713 Send signal sofia/internal/1030@voip.example.com [BREAK]
+2012-01-18 12:59:01.821215 [WARNING] mod_spandsp_fax.c:898 sofia/internal/1030@voip.example.com已经存在T.38数据
+2012-01-18 12:59:01.821215 [DEBUG] switch_core_session.c:713 发送信号至sofia/internal/1030@voip.example.com [BREAK]
 2012-01-18 12:59:01.821215 [DEBUG] mod_spandsp_fax.c:810 T38FaxVersion = 0
 2012-01-18 12:59:01.821215 [DEBUG] mod_spandsp_fax.c:811 T38MaxBitRate = 14400
 2012-01-18 12:59:01.821215 [DEBUG] mod_spandsp_fax.c:812 T38FaxFillBitRemoval = 0
@@ -393,8 +409,8 @@ a=T38FaxUdpEC:t38UDPRedundancy
 2012-01-18 12:59:01.821215 [DEBUG] mod_spandsp_fax.c:819 T38VendorInfo = ''
 2012-01-18 12:59:01.821215 [DEBUG] mod_spandsp_fax.c:820 ip = '192.168.11.244'
 2012-01-18 12:59:01.821215 [DEBUG] mod_spandsp_fax.c:822 port = 16388
-2012-01-18 12:59:01.821215 [DEBUG] mod_sofia.c:1331 Remote address:port [192.168.11.244:16388] has not changed.
-2012-01-18 12:59:01.821215 [DEBUG] sofia_glue.c:182 sofia/internal/1030@voip.example.com image media sdp:
+2012-01-18 12:59:01.821215 [DEBUG] mod_sofia.c:1331 远程地址:端口 [192.168.11.244:16388] 未发生变化。
+2012-01-18 12:59:01.821215 [DEBUG] sofia_glue.c:182 sofia/internal/1030@voip.example.com 图像媒体SDP:
 v=0
 o=FreeSWITCH 1326896467 1326896470 IN IP4 192.168.11.54
 s=FreeSWITCH
@@ -408,24 +424,26 @@ a=T38FaxRateManagement:transferredTCF
 a=T38FaxMaxBuffer:2000
 a=T38FaxMaxDatagram:400
 a=T38FaxUdpEC:t38UDPRedundancy
+```
 
-send 996 bytes to udp/[192.168.11.244]:5060 at 18:59:01.824912:
+发送996字节到udp/[192.168.11.244]:5060于18:59:01.824912：
    ------------------------------------------------------------------------
    SIP/2.0 200 OK
-   Via: SIP/2.0/UDP 192.168.11.244:5060;branch=z9hG4bK-24fbcbe;rport=5060
-   From: FAX <sip:1030@voip.example.com>;tag=e05db621ddfca31co0
-   To: <sip:8888771655@voip.example.com>;tag=vme0D1r4j4yHj
-   Call-ID: 367a1245-4d4d5548@192.168.11.244
+   经由：SIP/2.0/UDP 192.168.11.244:5060;branch=z9hG4bK-24fbcbe;rport=5060
+   发送方：FAX <sip:1030@voip.example.com>;tag=e05db621ddfca31co0
+   接收方： <sip:8888771655@voip.example.com>;tag=vme0D1r4j4yHj
+   呼叫ID：367a1245-4d4d5548@192.168.11.244
    CSeq: 103 INVITE
-   Contact: <sip:8888771655@192.168.11.54:5060;transport=udp>
-   User-Agent: FreeSWITCH-mod_sofia/1.0.head-git-9403064 2011-08-30 09-15-27 -0500
-   Accept: application/sdp
-   Allow: INVITE, ACK, BYE, CANCEL, OPTIONS, MESSAGE, UPDATE, INFO, REGISTER, REFER, NOTIFY, PUBLISH, SUBSCRIBE
-   Supported: timer, precondition, path, replaces
-   Content-Type: application/sdp
-   Content-Disposition: session
-   Content-Length: 318
+   联系方式：<sip:8888771655@192.168.11.54:5060;transport=udp>
+   用户代理：FreeSWITCH-mod_sofia/1.0.head-git-9403064 2011-08-30 09-15-27 -0500
+   接受类型：application/sdp
+   允许：INVITE, ACK, BYE, CANCEL, OPTIONS, MESSAGE, UPDATE, INFO, REGISTER, REFER, NOTIFY, PUBLISH, SUBSCRIBE
+   支持：timer, precondition, path, replaces
+   内容类型：application/sdp
+   内容设置：会话
+   内容长度：318
 
+```markdown
    v=0
    o=FreeSWITCH 1326896467 1326896469 IN IP4 192.168.11.54
    s=FreeSWITCH
@@ -440,11 +458,11 @@ send 996 bytes to udp/[192.168.11.244]:5060 at 18:59:01.824912:
    a=T38FaxMaxDatagram:400
    a=T38FaxUdpEC:t38UDPRedundancy
    ------------------------------------------------------------------------
-2012-01-18 12:59:01.821215 [DEBUG] switch_core_session.c:859 Send signal sofia/internal/1030@voip.example.com [BREAK]
-2012-01-18 12:59:01.821215 [DEBUG] sofia.c:5147 Channel sofia/internal/1030@voip.example.com entering state [completed][200]
-2012-01-18 12:59:01.821215 [DEBUG] mod_sofia.c:1331 Remote address:port [192.168.11.244:16388] has not changed.
-2012-01-18 12:59:01.821215 [DEBUG] mod_sofia.c:1331 Remote address:port [192.168.11.244:16388] has not changed.
-2012-01-18 12:59:01.821215 [DEBUG] sofia_glue.c:182 sofia/internal/1030@voip.example.com image media sdp:
+2012-01-18 12:59:01.821215 [DEBUG] switch_core_session.c:859 发送信号 sofia/internal/1030@voip.example.com [BREAK]
+2012-01-18 12:59:01.821215 [DEBUG] sofia.c:5147 通道 sofia/internal/1030@voip.example.com 进入状态 [completed][200]
+2012-01-18 12:59:01.821215 [DEBUG] mod_sofia.c:1331 远程地址:端口 [192.168.11.244:16388] 未发生改变。
+2012-01-18 12:59:01.821215 [DEBUG] mod_sofia.c:1331 远程地址:端口 [192.168.11.244:16388] 未发生改变。
+2012-01-18 12:59:01.821215 [DEBUG] sofia_glue.c:182 sofia/internal/1030@voip.example.com 图像媒体 sdp:
 v=0
 o=FreeSWITCH 1326896467 1326896471 IN IP4 192.168.11.54
 s=FreeSWITCH
@@ -458,23 +476,39 @@ a=T38FaxRateManagement:transferredTCF
 a=T38FaxMaxBuffer:2000
 a=T38FaxMaxDatagram:400
 a=T38FaxUdpEC:t38UDPRedundancy
-
-2012-01-18 12:59:01.821215 [DEBUG] switch_core_session.c:859 Send signal sofia/internal/1030@voip.example.com [BREAK]
-2012-01-18 12:59:01.831282 [DEBUG] switch_ivr_bridge.c:586 BRIDGE THREAD DONE [sofia/external/18888771655]
-2012-01-18 12:59:01.831282 [DEBUG] switch_ivr_bridge.c:606 Send signal sofia/internal/1030@voip.example.com [BREAK]
-2012-01-18 12:59:01.831282 [DEBUG] switch_core_state_machine.c:388 (sofia/external/18888771655) State EXCHANGE_MEDIA going to sleep
-2012-01-18 12:59:01.831282 [DEBUG] switch_core_state_machine.c:330 (sofia/external/18888771655) Running State Change CS_RESET
-2012-01-18 12:59:01.831282 [DEBUG] switch_core_state_machine.c:381 (sofia/external/18888771655) State RESET
-2012-01-18 12:59:01.831282 [DEBUG] mod_sofia.c:166 sofia/external/18888771655 SOFIA RESET
-2012-01-18 12:59:01.831282 [DEBUG] mod_spandsp_fax.c:1783 (sofia/external/18888771655) State Change CS_RESET -> CS_CONSUME_MEDIA
-2012-01-18 12:59:01.831282 [DEBUG] switch_core_session.c:1164 Send signal sofia/external/18888771655 [BREAK]
-2012-01-18 12:59:01.831282 [DEBUG] switch_core_state_machine.c:381 (sofia/external/18888771655) State RESET going to sleep
-2012-01-18 12:59:01.831282 [DEBUG] switch_core_state_machine.c:330 (sofia/external/18888771655) Running State Change CS_CONSUME_MEDIA
-2012-01-18 12:59:01.831282 [DEBUG] switch_core_state_machine.c:397 (sofia/external/18888771655) State CONSUME_MEDIA
-2012-01-18 12:59:01.831282 [DEBUG] switch_core_session.c:713 Send signal sofia/external/18888771655 [BREAK]
-2012-01-18 12:59:01.831282 [DEBUG] mod_spandsp_fax.c:1630 Raw read codec activation Success L16 20000
-2012-01-18 12:59:01.831282 [DEBUG] switch_core_codec.c:116 sofia/external/18888771655 Push codec L16:70
-2012-01-18 12:59:01.831282 [DEBUG] mod_spandsp_fax.c:1646 Raw write codec activation Success L16
 ```
 
+2012-01-18 12:59:01.821215 [调试] switch_core_session.c:859 发送信号 sofia/internal/1030@voip.example.com [BREAK]
+2012-01-18 12:59:01.831282 [调试] switch_ivr_bridge.c:586 桥接线程完成 [sofia/external/18888771655]
+2012-01-18 12:59:01.831282 [调试] switch_ivr_bridge.c:606 发送信号 sofia/internal/1030@voip.example.com [BREAK]
+2012-01-18 12:59:01.831282 [调试] switch_core_state_machine.c:388 (sofia/external/18888771655) 状态 EXCHANGE_MEDIA 进入休眠
+2012-01-18 12:59:01.831282 [调试] switch_core_state_machine.c:330 (sofia/external/18888771655) 运行状态更改 CS_RESET
+2012-01-18 12:59:01.831282 [调试] switch_core_state_machine.c:381 (sofia/external/18888771655) 状态 RESET
+2012-01-18 12:59:01.831282 [调试] mod_sofia.c:166 sofia/external/18888771655 SOFIA RESET
+2012-01-18 12:59:01.831282 [调试] mod_spandsp_fax.c:1783 (sofia/external/18888771655) 状态更改 CS_RESET -> CS_CONSUME_MEDIA
+2012-01-18 12:59:01.831282 [调试] switch_core_session.c:1164 发送信号 sofia/external/18888771655 [BREAK]
+2012-01-18 12:59:01.831282 [调试] switch_core_state_machine.c:381 (sofia/external/18888771655) 状态 RESET 进入休眠
+2012-01-18 12:59:01.831282 [调试] switch_core_state_machine.c:330 (sofia/external/18888771655) 运行状态更改 CS_CONSUME_MEDIA
+2012-01-18 12:59:01.831282 [调试] switch_core_state_machine.c:397 (sofia/external/18888771655) 状态 CONSUME_MEDIA
+2012-01-18 12:59:01.831282 [调试] switch_core_session.c:713 发送信号 sofia/external/18888771655 [BREAK]
+2012-01-18 12:59:01.831282 [调试] mod_spandsp_fax.c:1630 原始读取编解码器激活成功 L16 20000
+2012-01-18 12:59:01.831282 [调试] switch_core_codec.c:116 sofia/external/18888771655 推送编解码器 L16:70
+2012-01-18 12:59:01.831282 [调试] mod_spandsp_fax.c:1646 原始写入编解码器激活成功 L16
 
+```
+# 欢迎使用翻译服务
+
+欢迎使用我们提供的翻译服务！我们是一家专业的翻译引擎，可为您提供准确、流畅和专业的翻译内容。
+
+## 需要翻译的文本
+
+请告诉我们您需要翻译的内容，我们将为您提供优质的翻译服务。
+
+## 翻译结果
+
+感谢您使用我们的翻译服务，以下是根据您提供的文本生成的翻译结果：
+
+[to_be_replaced_1]
+
+如果您对翻译结果有任何疑问或需要进一步协助，请随时与我们联系。我们将竭诚为您服务！
+```

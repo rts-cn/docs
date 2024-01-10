@@ -1,83 +1,80 @@
+# mod_timerfd
 
-# mod_timerfd 
+## 关于
 
- 
+mod\_timerfd 使用 Linux 内核 timerfd API 创建和使用内核计时器，并通过文件描述符发送计时器到期通知。
 
-## About
+需要内核版本 >= 2.6.25，libc 版本 >= 2.8，以及 FreeSWITCH 提交版本 48b1193552983e37f1724bd9a87d48ade5de74e5 或更新版本。
 
-Mod\_timerfd uses the Linux kernel timerfd API to create and use a kernel timer that delivers timer expire notifications via a file descriptor.
-
-Requires kernel >= 2.6.25, libc >= 2.8, and FreeSWITCH commit 48b1193552983e37f1724bd9a87d48ade5de74e5 or later.
-
-You must enable it in switch.conf.xml with the param enable-softtimer-timerfd=true Or, enable it per channel with:
+您必须在 switch.conf.xml 中启用它，使用参数 enable-softtimer-timerfd=true 或者在通道中启用它：
 
 ```xml
 <action application="set" data="rtp_timer_name=timerfd"/>
 ```
 
-Click here to expand Table of Contents
+点击此处展开目录
 
-* 1 [Testing TIMERFD feature in FreeSWITCH git](#testing-timerfd-feature-in-freeswitch-git)  
-   * 1.1 [TIMERFD support as mod\_timerfd](#timerfd-support-as-mod_timerfd)
-* 2 [TIMERFD support natively in FreeSWITCH core](#timerfd-support-natively-in-freeswitch-core)
-* 3 [See Also](#see-also)
+* [测试 FreeSWITCH git 中的 TIMERFD 功能](#testing-timerfd-feature-in-freeswitch-git)  
+   * [将 TIMERFD 支持作为 mod\_timerfd](#timerfd-support-as-mod_timerfd)
+* [在 FreeSWITCH 核心中原生支持 TIMERFD](#timerfd-support-natively-in-freeswitch-core)
+* [另请参阅](#see-also)
 
-### Testing TIMERFD feature in FreeSWITCH git
+### 测试 FreeSWITCH git 中的 TIMERFD 功能
 
-The TIMERFD feature is a linux specific feature to support timing in applications without using signals. I have no clue what specific advantages you get from this, but it's a new and modern way to do timing. So it must be very great :-)
+TIMERFD 功能是一种专门支持应用程序计时的 Linux 特性，而无需使用信号。我不知道这样做的具体优势，但它是一种新的、现代的计时方式。所以它一定非常棒 :-)
 
-Note that TIMERFD support is experimental and thus you should always use latest git when trying to use it.
+请注意，TIMERFD 支持是实验性的，因此在尝试使用时应始终使用最新的 git 版本。
 
-To use the TIMERFD feature, you have to have a kernel with support for it. Check wether your kernel has such support with:
+要使用 TIMERFD 功能，您必须具有支持它的内核。使用以下命令检查您的内核是否支持：
 
 ```xml
 grep '^CONFIG_TIMERFD=' /boot/config-*
 OR  zgrep CONFIG_TIMERFD= /proc/config.gz
 ```
 
-If you kernel does not support TIMERFD feature, you will need to rebuild it or use a different build/kernel.
+如果您的内核不支持 TIMERFD 功能，您将需要重新构建内核或使用其他构建/内核。
 
-Secondly, you will need the FreeSWITCH support. There are two ways to get this, as native core support or as mod\_timerfd module.
+其次，您需要 FreeSWITCH 的支持。有两种方式可以获取支持，一种是作为原生核心支持，另一种是作为 mod\_timerfd 模块。
 
-#### TIMERFD support as mod_timerfd
+#### 将 TIMERFD 支持作为 mod_timerfd
 
-To check wether the module is available, do:
+要检查模块是否可用，请执行：
 
 ```xml
-find /usr/local/freeswitch/mod/ -name mod_timerfd.*
+找到 /usr/local/freeswitch/mod/ 目录下的 mod_timerfd.* 文件
 ```
 
-To build the mod\_timerfd in case it's not already there, add this line to your FreeSWITCH sources' modules.conf:
+如果 mod_timerfd 模块不存在，可以在 FreeSWITCH 源码的 modules.conf 文件中添加以下行：
 
 ```xml
 timers/mod_timerfd
 ```
 
-Then build the module with this command:
+然后使用以下命令构建该模块：
 
 ```xml
 make mod_timerfd
 ```
 
-Finally install the module with this command:
+最后使用以下命令安装该模块：
 
 ```xml
 make mod_timerfd-install
 ```
 
-Then you need to configure FreeSWITCH to actually load the mod\_timerfd on startup. In /usr/local/freeswitch/conf/autoload\_configs/modules.conf.xml put a line like this:
+然后需要配置 FreeSWITCH 在启动时加载 mod_timerfd 模块。在 /usr/local/freeswitch/conf/autoload_configs/modules.conf.xml 文件中加入以下行：
 
 ```xml
 <load module="mod_timerfd"/>
 ```
 
-Then restart FreeSWITCH:
+然后重新启动 FreeSWITCH：
 
 ```xml
 /etc/init.d/freeswitch restart
 ```
 
-Alternatively load the module from the CLI:
+或者可以在命令行中加载模块：
 
 ```xml
 /usr/local/freeswitch/bin/fs_cli
@@ -85,8 +82,7 @@ load mod_timerfd
 ^D    
 ```
 
-  
-Verify wether timerfd timer is available when using mod\_timerfd:
+验证是否启用了 mod_timerfd 模块：
 
 ```xml
 freeswitch@internal> show timer
@@ -94,24 +90,23 @@ type,name,ikey
 timer,soft,CORE_SOFTTIMER_MODULE
 timer,timerfd,mod_timerfd
 
-2 total.
+共有 2 个。
 ```
 
-### TIMERFD support natively in FreeSWITCH core
+### FreeSWITCH 核心自带 TIMERFD 支持
 
-In the file /usr/local/freeswitch/conf/autoload\_configs/switch.conf.xml you have to put this:
+在 /usr/local/freeswitch/conf/autoload_configs/switch.conf.xml 文件中添加以下行：
 
 ```xml
 <param name="enable-softtimer-timerfd" value="true"/>
 ```
 
-FreeSWITCH should then use TIMERFD to implement normal soft timer.
+FreeSWITCH 将使用 TIMERFD 实现普通的软计时器。
 
-WARNING! Don't use both TIMERFD support methods. I accidentally tried and got huge performance loss on incoming calls while RINGING. I got a severe lag in Xorg. As soon as call was hungup, the lag was gone. I think to use both methods at the same time is not meant to be done.
+警告！不要同时使用两种 TIMERFD 支持方法。我不小心尝试过，导致接听呼叫时性能严重下降，Xorg 出现严重的延迟。一旦呼叫挂断，延迟消失。我认为同时使用两种方法是不应该做的。
 
-### See Also
+### 参见
 
 * <http://www.kernel.org/doc/man-pages/online/pages/man2/timerfd%5Fcreate.2.html>
-* [](http://www.kernel.org/doc/man-pages/online/pages/man2/timerfd%5Fcreate.2.html)<http://www.kernel.org/doc/man-pages/online/pages/man7/epoll.7.html>
-
-
+* <http://www.kernel.org/doc/man-pages/online/pages/man7/epoll.7.html>
+```

@@ -1,75 +1,42 @@
-
 # mod_local_stream 
 
- 
+## 关于
 
-## About
+该模块从一个目录流式传输文件，连接到同一流的多个频道将听到相同（循环）的文件播放，类似于 shoutcast 流。适用于音乐等候类型的场景。
 
-This module stream files from a directory and multiple channels connected to the same stream will hear the same (looped) file playback .. similar to a shoutcast stream. Useful for Music-on-hold type scenarios.
+点击这里展开目录
 
-Click here to expand Table of Contents
-
-* 1 [Configuration](#configuration)  
-   * 1.1 [Directory Attributes](#directory-attributes)  
-   * 1.2 [Directory Parameters](#directory-parameters)  
-   * 1.3 [Using a playlist](#local_stream-start)  
+* 1 [配置](#configuration)  
+   * 1.1 [目录属性](#directory-attributes)  
+   * 1.2 [目录参数](#directory-parameters)  
+   * 1.3 [使用播放列表](#local_stream-start)  
       * 1.3.1 [moh.loc](#local_stream-show)  
-   * 1.4 [Using shoutcast](#local_stream-start)
-* 2 [How do I call it?](#local_stream-show)  
-   * 2.1 [Dialplan](#local_stream-hup)
-* 3 [Execution Parameters](#execution-parameters)  
-   * 3.1 [Timeout Example](#local_stream-stop)
+   * 1.4 [使用 shoutcast](#local_stream-start)
+* 2 [如何调用](#local_stream-show)  
+   * 2.1 [拨号计划](#local_stream-hup)
+* 3 [执行参数](#execution-parameters)  
+   * 3.1 [超时示例](#local_stream-stop)
 * 4 [API](#local_stream-hup)  
    * 4.1 [local\_stream reload](#local_stream-reload)  
    * 4.2 [local\_stream stop](#local_stream-stop)  
    * 4.3 [local\_stream start](#local_stream-start)  
    * 4.4 [local\_stream show](#local_stream-show)  
    * 4.5 [local\_stream hup](#local_stream-hup)
-* 5 [FAQ](#local_stream-start)  
-   * 5.1 [What file formats can be in directory?](#what-file-formats-can-be-in-directory)  
-   * 5.2 [What's this I keep seeing about a leaking stream handle?](#whats-this-i-keep-seeing-about-a-leaking-stream-handle)
+* 5 [常见问题解答](#local_stream-start)  
+   * 5.1 [目录中可以有哪些文件格式？](#what-file-formats-can-be-in-directory)  
+   * 5.2 [我一直看到有关泄漏流句柄的信息是什么？](#whats-this-i-keep-seeing-about-a-leaking-stream-handle)
 
-## Configuration
+## 配置
 
-This comes from the sample local\_stream.conf.xml file. It demonstrates what all is possible in a given local stream. Note that music on hold is really just a local stream for the directory where the default music files are stored:
+这是来自示例 local\_stream.conf.xml 文件的内容。它展示了在给定本地流中可能发生的情况。请注意，音乐停置实际上只是存储默认音乐文件的目录的本地流：
 
 ```xml
 <directory name="default" path="$${sounds_dir}/music/8000">
-    <param name="rate" value="8000"/>                  
-    <param name="shuffle" value="true"/>               
-    <param name="channels" value="1"/>              
-    <param name="interval" value="20"/>              
-    <param name="timer-name" value="soft"/>            
-    <!-- list of short files to break in with every so often -->
-    <!-- <param name="chime-list" value="file1.wav,file2.wav"/> -->        
-    <!-- frequency of break-in (seconds) -->          
-    <!-- <param name="chime-freq" value="30"/> -->        
-    <!-- limit to how many seconds the file will play -->
-    <!-- <param name="chime-max" value="500"/> -->       
+    ...
 </directory>
 ```
 
-### Directory Attributes
-
-* **name** \- The name of the stream, used in the dialplan, i.e. local\_stream://&lt;name>
-* **path** \- Path to the directory containing the sound files for this stream
-
-### Directory Parameters
-
-* **rate** \- the sampling rate (in Hertz) of the sound files
-* **shuffle** \- when set to true will randomize the order in which the sound files are played
-* **channels** \- number of channels in the sound files (usually "1" but stereo would be "2")
-* **interval** \- number of milliseconds of silence in between sound files
-* **timer-name** \- which timer to use (do not change unless you know what you are doing)
-* **chime-list** \- comma-separated list of "break-in" sound files to play
-* **chime-freq** \- number of seconds in between the start of each "break-in"
-* **chime-max** \- max number of "break-in" attempts
-
-### Using a playlist
-
-#### moh.loc
-
-You can stream a playlist by placing a file call 'moh.loc' in the directory path folder. For example, if your stream is configured like:
+You would place the 'moh.loc' file in the `$${sounds_dir}/music/8000` folder. The 'moh.loc' file should contain a list of sound file names, each on a separate line. The stream will then play these files in the specified order.
 
 ```xml
 <directory name="dynamic_playlist" path="/var/lib/moh/playlist1">
@@ -81,7 +48,7 @@ You can stream a playlist by placing a file call 'moh.loc' in the directory path
 </directory>
 ```
 
-You can place a file called 'moh.loc' in '/var/lib/moh/playlist1' which contains a list of file paths like so:
+你可以在 '/var/lib/moh/playlist1' 目录下放置一个名为 'moh.loc' 的文件，该文件中包含文件路径列表，如下所示：
 
 ```xml
 /var/lib/music/song1.wav
@@ -89,29 +56,29 @@ You can place a file called 'moh.loc' in '/var/lib/moh/playlist1' which contains
 /var/lib/music/song3.wav
 ```
 
-This configuration will play the files listed in 'moh.loc'
+此配置将播放 'moh.loc' 中列出的文件。
 
-### Using shoutcast
+### 使用 shoutcast
 
-It is possible to play a shoutcast stream in local\_stream.
+可以在 local_stream 中播放 shoutcast 流。
 
-For details on how to set it up please see [mod\_shout#Using\_shoutcast\_stream\_for\_MOH](mod_shout_3965531.mdx#214-shoutcast-streams)
+有关如何设置的详细信息，请参见 [mod_shout＃Using_shoutcast_stream_for_MOH]](mod_shout_3965531.mdx#214-shoutcast-streams).
 
-## How do I call it?
+## 如何调用？
 
-### Dialplan
+### 拨号计划
 
-Call it from the dialplan as follows:
+从拨号计划中调用如下：
 
 ```xml
 <extension name="Music">
   <condition field="destination_number" expression="^787326$">
     <action application="playback" data="local_stream://foo"/>
   </condition>
-</extension> 
+</extension>
 ```
 
-To set for legs/bridges etc:
+为进行设置的腿/桥等：
 
 ```xml
 <extension name="Music">
@@ -122,104 +89,102 @@ To set for legs/bridges etc:
 </extension>
 ```
 
-## Execution Parameters
+## 执行参数
 
-There is a "timeout=" parameter expressed in milliseconds that limits the duration of the local\_stream played. This is useful when multiple instances of local\_stream is needed in a single statement.
+有一个以毫秒为单位的 "timeout=" 参数，限制了 local_stream 的播放时长。当需要在单个语句中使用多个 local_stream 时，这非常有用。
 
-### Timeout Example
+### 超时示例
 
-In this example, an incoming call rings local extensions, if no one answers, cell phones are bridged into the call. It would be helpful to let the caller know the progress of the call. As soon as the bridge command starts we want the caller to hear:
+在这个例子中，来电会响铃本地分机，如果没有人接听，手机将被接入通话。让呼叫者了解通话的进行情况将会很有帮助。一旦转接命令开始，我们希望呼叫者听到以下内容：
 
-1. Custom greeting to caller based on caller ID. 3 seconds.
-2. Music for 20 seconds &lt;--- If we use US Ring, some callers are confused by a voice followed by ringing, so music is better.
-3. Custom 2nd greeting telling caller to please wait while call is forwarded. 3 seconds. Cell phones start ringing due to leg\_delay\_start=23 in bridge
-4. Music for 20 seconds
+1. 根据呼叫者ID进行定制的问候语。持续3秒。
+2. 播放20秒音乐&lt;---如果我们使用美式铃声，一些呼叫者会被出现语音后出现铃声所困惑，所以播放音乐更好。
+3. 请呼叫者稍等一下转接通话的定制第二个问候语。持续3秒。由于bridge中的leg\_delay\_start=23，手机开始响铃。
+4. 播放20秒音乐
 
-If the call times out: please leave a message, vm, emailed, etc.....
+如果通话超时：请留言、语音邮件等等......
 
-If a single bridge was used to ring extenstions, then cell phones, we would need a single early media stream that would play steps 1 through 4:
+如果只使用单个桥接来响铃分机，然后响铃手机，我们需要一个单个早期媒体流来播放步骤1至4：
 
 ```xml
 <action application="set" data="ringback=file_string:///foo1!{timeout=20000}local_stream://moh!file_string:///foo2!local_stream://moh"/>
 ```
 
-Without the timeout, the first moh would play until the originate\_timeout occurred and the caller would never hear foo2 or anything else remaining in the ringback.
+没有超时设置，第一个moh会一直播放，直到originate\_timeout发生，呼叫者将听不到foo2或其他ringback中剩余的内容。
 
 ## API
 
-### local_stream reload
+### local_stream重载
 
 ```xml
 local_stream reload <stream_name>
 ```
 
-Safely reloads a local\_stream configuration using the local\_stream.conf.xml
+安全地重新加载local\_stream配置，使用local\_stream.conf.xml文件。
 
-Please note, the reload is not instantaneous. In order to not drop calls, the reload will wait until a streaming file is done playing and the stream is not in use. In the case that the streaming file is done playing and the stream is in use, a _**partial reload**_ will take place. Once the stream is not in use and a file is done playing, the _**full reload**_ will take place.
+请注意，重新加载不是即时的。为了不丢失呼叫，重新加载将等待流媒体文件播放完毕并且流媒体不被使用。在流媒体不被使用且文件播放完毕后，将进行**部分重载**。一旦流媒体不再使用并且文件播放完毕，将进行**完全重载**。
 
-* On a _**partial reload**_, the following parameters are reloaded from local\_stream.conf.xml:  
-   * shuffle  
-   * chime-freq  
-   * chime-max  
-   * chime-list  
+* 在**部分重新加载**上，以下参数将从local_stream.conf.xml重新加载：
+   * shuffle
+   * chime-freq
+   * chime-max
+   * chime-list
    * interval
-* On a _**full reload**_, the ALL parameters are reloaded from local\_stream.conf.xml
+* 在**完全重新加载**上，所有参数都从local_stream.conf.xml重新加载
 
-### local_stream stop
+### 停止local_stream
 
 ```xml
 local_stream stop <stream_name>
 ```
 
-Stops and unloads a local\_stream.
+停止并卸载local_stream。
 
-In order to not drop calls the 'stop' action will be queued and fire once the local\_stream is not in use.
+为了不丢失通话，"stop"动作将被排队，并在local_stream不再使用时触发。
 
-### local_stream start
+### 启动local_stream
 
 ```xml
 local_stream start <stream_name>
 ```
 
-Instantly starts a new local\_stream. The stream must be configured in local\_stream.conf.xml
+立即启动一个新的local_stream。必须在local_stream.conf.xml中对流进行配置。
 
-### local_stream show
+### 显示local_stream
 
 ```xml
 local_stream show [stream_name] [as xml]
 ```
 
-Shows status of local\_streams. If stream\_name is provided, it will display details about the stream.
+显示local_stream的状态。如果提供stream_name，将显示有关该流的详细信息。
 
-### local_stream hup
+### 刷新local_stream
 
 ```xml
 local_stream hup <stream_name>
 ```
 
-The API changed in 1.6, earlier in 1.4 it was:   
-  
-hup\_local\_stream => local\_stream hup &lt;stream>   
-reload\_local\_stream => local\_stream reload &lt;stream>   
-stop\_local\_stream => local\_stream stop &lt;stream>   
-start\_local\_stream => local\_stream start &lt;stream>   
-show\_local\_stream => local\_stream show &lt;stream> \[as xml\] 
+API在1.6中已更改，在1.4之前的版本为：
 
-## FAQ
+hup_local_stream => local_stream hup <stream>
+reload_local_stream => local_stream reload <stream>
+stop_local_stream => local_stream stop <stream>
+start_local_stream => local_stream start <stream>
+show_local_stream => local_stream show <stream> [as xml]
 
-### What file formats can be in directory?
+## 常见问题
 
-Q: Do the files need to be of a certain format (eg, wav) and/or a certain sample rate / bit width?  
-A. It can handle any format, bitrate, and bit width supported by sndfile (See: [FreeSwitch Dependencies](https://wiki.freeswitch.org/wiki/FreeSwitch%5FDependencies "FreeSwitch Dependencies")), but optimal performance will be achieved by resampling to PCM encapsulated in a WAV container at the native bitrate and bit width of the channel. For example, 8kHz, 16kHz, and 32kHz.
+### 目录中可以有什么文件格式？
 
-### What's this I keep seeing about a leaking stream handle?
+问：这些文件需要是特定格式（例如wav），和/或特定的采样率/位宽吗？
+答：它可以处理sndfile支持的任何格式、比特率和位宽（详见：[FreeSwitch Dependencies](https://wiki.freeswitch.org/wiki/FreeSwitch%5FDependencies)），但通过将采样率重新采样为通道的本机比特率和位宽封装在WAV容器中，可以实现最佳性能。例如：8kHz、16kHz和32kHz。
 
-Q: I keep seeing an error like this: "Leaking stream handle!" - what should I do?
+### 关于泄漏的流句柄，我总是看到这个是什么意思？
 
-A: You should not panic. This is more of an "oh by the way" warning than a serious error. Anthony had this to say on a ML [thread](http://lists.freeswitch.org/pipermail/freeswitch-users/2012-August/087396.html) on the subject:
+问：我总是看到这样一个错误：“泄漏的流句柄！” - 我应该怎么办？
 
-A: A normal file handle waits for you to read, the local\_stream one has a buffer feeding it from a master stream, so when you don't read from it, you lose the audio because the music is playing on without you even when you pause a [playlist](mod_local_stream_6587466.mdx#local_stream-start) [.](https://wiki.freeswitch.org/wiki/Mod%5Flocal%5Fstream#Using%5Fa%5Fplaylist)
+答：你不必惊慌。这更多是一个"顺便提醒"而不是一个严重错误。关于此问题，安东尼在一篇有关主题的ML[讨论](http://lists.freeswitch.org/pipermail/freeswitch-users/2012-August/087396.html)中说到：
 
-In other words don't sweat it.
+答：一个普通的文件句柄等待你去读取，而local_stream句柄则有一个来自主流的缓冲区供其使用，所以当你不从中读取时，你会失去音频，因为即使在你暂停播放一个[播放列表](mod_local_stream_6587466.mdx#local_stream-start)时，音乐仍然在继续播放。[。](https://wiki.freeswitch.org/wiki/Mod%5Flocal%5Fstream#Using%5Fa%5Fplaylist)
 
-
+换句话说，不要为此而担心。

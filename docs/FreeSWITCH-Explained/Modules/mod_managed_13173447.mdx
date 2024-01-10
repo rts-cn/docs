@@ -1,50 +1,45 @@
+# mod_managed
 
-# mod_managed 
+## 关于
 
- 
+mod_managed允许在FreeSWITCH中执行通用语言基础设施代码。它在Windows上支持Microsoft CLR（".NET"），以及Windows和其他平台上的Mono。实际上，这允许使用任何.NET语言，如F#，VB.NET，C#，IronRuby，IronPython，JScript.NET等，来创建FreeSWITCH模块，应用程序和API函数。（mod_managed替代了mod_mono。）
 
-## About
+截至2010年7月27日，mod_managed拥有一个新的插件架构。这会破坏向后兼容性 -- 插件不再子类化ApiFunction或AppFunction，而是实现具体接口。通过这个，添加了重新加载（多个AppDomains）和脚本支持。
+点击这里展开目录
 
-mod\_managed allows execution of Common Language Infrastructure code inside FreeSWITCH. It supports the Microsoft CLR (".NET") on Windows, as well as Mono on Windows and other platforms. Effectively, this allows use of any .NET language, such as F#, VB.NET, C#, IronRuby, IronPython, JScript.NET, and many others, to create FreeSWITCH modules, applications, and API functions. (mod\_managed replaces mod\_mono.)
+- 1 [安装](#installation)
+   - 1.1 [Microsoft CLR Build](#microsoft-clr-build)
+   - 1.2 [Mono Build](#mono-build)
+   - 1.3 [Linux Build](#linux-build)
+   - 1.4 [Linux Mono 2.8及更高版本构建](#linux-mono-28-and-greater-build)
+- 2 [加载模块](#loading-modules)
+   - 2.1 [动态加载](#dynamic-loading)
+- 3 [脚本化](#scripting)
+- 4 [本地互操作](#native-interop)
+- 5 [例子](#examples)
+   - 5.1 [DRK演示](#drk-presentation)
+   - 5.2 [Demo.cs](#democs)
+   - 5.3 [停车场示例](#parking-lot-sample)
+- 6 [呼叫计划和示例](#dialplan-and-example)
+- 7 [在挂机时中断](#abortonhangup)
+- 8 [Linux上的ODBC](#odbc-on-linux)
+- 9 [另请参阅](#see-also)
 
-As of July 27, 2010, mod\_managed has a new plugin architecture. This breaks backwards compatibility -- plugins no longer subclass ApiFunction or AppFunction, but instead implement specific interfaces. With this, reloading (multiple AppDomains) and scripting support has been added.
+## 安装
 
-  
-Click here to expand Table of Contents
+mod_managed只支持.NET Framework 3.5或（截至2011年11月）Mono 2.8+。不再支持较旧版本的Mono。
 
-* 1 [Installation](#installation)  
-   * 1.1 [Microsoft CLR Build](#microsoft-clr-build)  
-   * 1.2 [Mono Build](#mono-build)  
-   * 1.3 [Linux Build](#linux-build)  
-   * 1.4 [Linux Mono 2.8 and greater Build](#linux-mono-28-and-greater-build)
-* 2 [Loading Modules](#loading-modules)  
-   * 2.1 [Dynamic Loading](#dynamic-loading)
-* 3 [Scripting](#scripting)
-* 4 [Native Interop](#native-interop)
-* 5 [Examples](#examples)  
-   * 5.1 [DRK Presentation](#drk-presentation)  
-   * 5.2 [Demo.cs](#democs)  
-   * 5.3 [Parking Lot Sample](#parking-lot-sample)
-* 6 [Dialplan and Example](#dialplan-and-example)
-* 7 [AbortOnHangup](#abortonhangup)
-* 8 [ODBC on Linux](#odbc-on-linux)
-* 9 [See Also](#see-also)
+要在Windows上构建mod_managed，您需要Visual Studio 2008（使用C++和C#来构建整个项目，尽管已提供了C#二进制文件）。
 
-## Installation
+预编译的 Windows 二进制文件不包含 mod_managed 的托管部分。目前（2010年3月3日），您需要从源代码构建完整的 SLN 来获取 mod\_managed。
 
-mod\_managed only supports the .NET Framework 3.5 or (as of November, 2011) Mono 2.8+. Support for older versions of Mono has been discontinued.
+### Microsoft CLR 构建
 
-To get mod\_managed to build on Windows, you’ll need Visual Studio 2008 (C++ and C# to build the entire thing, although C# binaries are provided).
+安装 .NET Framework 3.5 和 Visual Studio 2008 后，mod\_managed 应该可以正常工作。在 Visual Studio 中的构建配置管理器中，mod\_managed 拥有针对 Debug/Release CLR 和 Mono 的配置。只需选择 Debug\_CLR 并构建即可。
 
-The precompiled Windows binaries do not include the managed part of mod\_managed. At the moment (3-Mar-2010) you need to build the complete SLN from source to get mod\_managed.
+### Mono 构建
 
-### Microsoft CLR Build
-
-mod\_managed should "just work" with the .NET Framework 3.5 and Visual Studio 2008 installed. In the build configuration manager inside Visual Studio, mod\_managed has configurations for both Debug/Release CLR and Mono. Simply select Debug\_CLR and build.
-
-### Mono Build
-
-For the Mono version, the Windows build requires that Mono install be accessible at "C:\\Program Files\\Mono". If you installed somewhere else, symlink it:
+对于 Mono 版本，Windows 构建要求 Mono 安装路径在 "C:\\Program Files\\Mono" 下可访问。如果您安装在其他位置，请创建符号链接：
 
 Windows 6+:
 
@@ -52,150 +47,150 @@ Windows 6+:
  mklink /d "C:\Program Files\Mono" "C:\Program Files\Mono-2.4"
 ```
 
-Earlier versions:
+早期版本:
 
 ```bash
  Get Junction: http://technet.microsoft.com/en-us/sysinternals/bb896768.aspx
  junction -d "C:\Program Files\Mono" "C:\Program Files\Mono-2.4"
 ```
 
-You’ll have to generate mono.lib for your compiler. Details here: <http://www.mono-project.com/Embedding%5FMono> (Search for mono.def). A batch file is provided: monolibx86.cmd:
+您需要为编译器生成 mono.lib。详情请参阅： <http://www.mono-project.com/Embedding%5FMono>（搜索 mono.def）。提供了一个批处理文件：monolibx86.cmd:
 
 ```powershell
  C:\freeswitch\src\mod\languages\mod_managed>monolibx86
  C:\freeswitch\src\mod\languages\mod_managed>lib /nologo /def:mono.def /out:mono.lib /machine:x86
-  Creating library mono.lib and object mono.exp
+  创建库 mono.lib 和对象 mono.exp
 ```
 
-Make sure your PATH has the Mono bin folder in it (such as "C:\\Program files\\Mono\\bin") or the mod will not load.
+确保您的 PATH 环境变量中包含 Mono 的 bin 文件夹（如 "C:\\Program files\\Mono\\bin"），否则模块将无法加载。
 
-From there, simply compile the mod\_managed project in the languages folder. This will build the unmanaged side and the managed loader and put them in your mod directory. If you get errors, the SWIG generated interface might be out of date. From the mod\_managed directory, you can run "runswig.cmd" to regenerate the SWIG files. This batch file assumes SWIG is accessible at "\\dev\\swig".
+从那里，只需在languages文件夹中编译mod_managed项目。这将构建不受管制的一面和受管制的加载器，并将它们放在您的mod目录中。如果出现错误，可能是由于SWIG生成的接口已过时。您可以在mod_managed目录下运行"runswig.cmd"以重新生成SWIG文件。这个批处理文件假设SWIG在“\\dev\\swig”处可访问。
 
-### Linux Build
+### Linux构建
 
-To build on Linux, first [install Mono](http://mono-project.com/Compiling%5FMono%5FFrom%5FTarball) and make sure "languages\\mod\_managed" is uncommented in modules.conf. In the src/mod/mod\_managed dir, you should be able to:
+要在Linux上进行构建，首先[安装Mono](http://mono-project.com/Compiling%5FMono%5FFrom%5FTarball)，并确保在modules.conf中取消注释"languages\\mod\_managed"。在src/mod/mod\_managed目录中，您应该能够：
 
 ```xml
  make && make install
 ```
 
-If this complains about pkgconfig, try:
+如果这个命令报错pkgconfig，则尝试执行以下命令：
 
 ```xml
  export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 ```
 
-When running on Linux, you might get a DllNotFoundException for libc. Try making sure [libc.so](http://libc.so) is in one of the ldconfig paths. For example, on a clean CentOS 5.3 x64 system, I had to do this:
+在Linux上运行时，您可能会遇到一个找不到libc的DllNotFoundException。请确保[libc.so](http://libc.so)位于ldconfig路径中的一个位置。例如，在一个干净的CentOS 5.3 x64系统上，我需要执行以下命令：
 
 ```xml
  ln -s /lib64/libc-2.5.so /lib64/libc.so
 ```
 
-Followed by ld config. Almost all DllNotFoundExceptions are because of incorrect ld paths.
+之后再执行ld config。几乎所有的DllNotFoundException都是由于错误的ld路径导致的。
 
-As of November 2011, the error with finding [libc.so](http://libc.so) has been resolved. You do not need to create a symlink anymore.
+截至2011年11月，找不到[libc.so](http://libc.so)的错误已经得到解决。您不再需要创建符号链接了。
 
-If you are experiencing NullReferenceExceptions with any plugin run through the dialplan, make sure you have included the appropriate entry in your [dllmap](http://mono-project.com/Config%5FDllMap) configuration:
+如果您在通过拨号计划运行任何插件时遇到NullReferenceExceptions，请确保已在dllmap配置中包含了适当的条目：
 
-### Linux Mono 2.8 and greater Build
+### Linux Mono 2.8及更高版本构建
 
-Mono 2.8+ support is now enabled by default, and older Mono versions are unsupported.
+Mono 2.8+支持现在已默认启用，并不再支持旧版Mono。
 
-## Loading Modules
+## 加载模块
 
-To load mod\_managed at FreeSWITCH start up you will need to add "&lt;load module="mod\_managed" />" to the modules.conf.xml. The best place for this line is in the languages sections.
+要在 FreeSWITCH 启动时加载 mod_managed，您需要在 modules.conf.xml 中添加 "<load module="mod_managed" />"。这行代码最好放在 languages 部分。
 
-Modules.conf.xml is located in &lt;FS install dir>\\conf\\autoload\_configs\\
+modules.conf.xml 位于 <FS 安装目录>\\conf\\autoload_configs\\。
 
-mod\_managed automatically scans the &lt;FreeSWITCH mod dir>\\managed for managed modules. (For example, this may be "C:\\freeswitch\\debug\\mod\\managed".) mod\_managed will not load if the "managed" subdirectory under the modules directory does not exist.
+mod_managed 会自动扫描 <FreeSWITCH mod 目录>\\managed 目录中的受管模块。（例如，可能是 "C:\\freeswitch\\debug\\mod\\managed"。）如果模块目录下的 "managed" 子目录不存在，mod_managed 将不会加载。
 
-There are two main plugin interfaces: IApiPlugin, and IAppPlugin. Any assembly or script in the managed directory containing types implementing those interfaces will automatically get loaded and registered. The name registered is the full name (Namespace.TypeName), as well as just the TypeName. If there are conflicts, the last loaded type will overwrite previous ones.
+有两个主要的插件接口：IApiPlugin 和 IAppPlugin。在 managed 目录中包含实现这些接口的类型的任何程序集或脚本将自动被加载和注册。注册的名称是完整名称 （命名空间.类型名称），以及类型名称。如果发生冲突，最后加载的类型将覆盖之前的类型。
 
-IAppPlugins are only called on sessions, say,fromthedialplan. IApiPlugins can be called anywhere from FreeSWITCH. IApiPlugins can be run normally ("managed"/Execute), as well as in the background on their own thread ("managedrun"/ExecuteBackground).
+IAppPlugin 只在会话中调用，比如说来自拨号计划。IApiPlugin 可以在 FreeSWITCH 的任何地方调用。IApiPlugin 可以以正常方式运行（"managed"/Execute），也可以在自己的线程上后台运行（"managedrun"/ExecuteBackground）。
 
-A third plugin interface, ILoadNotificationPlugin, is for controlling loading of scripts or assemblies. If any ILoadNotificationPlugin returns false from Load, the file will not be loaded. This is also a way to get notified when your code is being loaded and perform initialization tasks.
+第三个插件接口是 ILoadNotificationPlugin，用于控制脚本或程序集的加载。如果任何 ILoadNotificationPlugin 的 Load 方法返回 false，则文件将不会被加载。这也是一种在加载代码并执行初始化任务时得到通知的方式。
 
-### Dynamic Loading
+### 动态加载
 
-mod\_managed will watch the managed directory for changes to loaded files and their config files. Any changes will trigger a reload of that file. First, the file will be re-read and loaded. Then the previous version will be unloaded. The only notification provided is via the AppDomain.CurrentDomain.DomainUnload event.
+mod_managed 会监视 managed 目录中已加载文件及其配置文件的更改。任何更改都会引发对该文件的重新加载。首先，文件将被重新读取和加载。然后，之前的版本将被卸载。唯一提供的通知是通过 AppDomain.CurrentDomain.DomainUnload 事件。
 
-To force a reload,usethemanagedreloadcommand: "managedreloadmy.dll".
+要强制重新加载，请使用`managedreloadmy.dll` 命令。
 
-## Scripting
+## 脚本编写
 
-mod\_managed now supports scripting via any managed language. Simply drop a script file in the managed directory, and mod\_managed will compile it and load it into memory (and reload it when changed).
+`mod_managed` 现在支持使用任何托管语言来编写脚本。只需将脚本文件放入托管目录中，`mod_managed` 将会编译并加载到内存中（并在脚本发生变化时重新加载）。
 
-Scripts must produce a valid entry point. Entry points must be public for use on Mono. Anentrypointmayreturnavalue,andmaytakeasinglestringarrayparameter, however, the return value is not checked, and the string array parameter will always be empty.
+脚本必须具有有效的入口点。入口点必须是 public 以供 Mono 使用。入口点可能会返回一个值，并且可能会接受一个字符串数组参数，但是，返回值不会被检查，字符串数组参数始终为空。
 
-Inside the script, check the static variable FreeSWITCH.Script.ContextType to see how the script is being invoked: App,Apior, ApiBackground. Based on that, obtain the context via Script.GetAppContext(), Script.GetApiContext() or Script.GetApiBackgroundContext(). At that point, it is exactly like having a precompiled plugin.
+在脚本中，可以通过检查静态变量 `FreeSWITCH.Script.ContextType` 来确定脚本是如何被调用的：`App`、`Api` 或 `ApiBackground`。根据这个信息，可以通过 `Script.GetAppContext()` 、 `Script.GetApiContext()` 或 `Script.GetApiBackgroundContext()` 来获取相应的上下文。在这个阶段，它就像是一个预编译的插件。
 
-In contrast to other scripting environments, mod\_managed loads your script into memory and initializes it once. Thisprovidesahugeperformanceincreaseoverloadingiteachtime. Staticvariablesaresharedacrossinvocationsofascript,sothatcachingandotherscenariosareenabled. Do be aware of multithreading issues, as multiple threads will be in your script at the same time.
+与其他脚本环境相比，`mod_managed` 只会将脚本加载到内存并初始化一次。这使得每次加载的性能大幅提升。静态变量在脚本的每次调用中都是共享的，因此可以启用缓存和其他场景。但请注意多线程问题，因为多个线程可能同时进入脚本。
 
-Scripts can define types that implement the plugin interfaces. These will be loaded and registered like normal.
+脚本可以定义实现插件接口的类型。这些类型将像普通插件一样被加载和注册。
 
-The built-in supported languages are [F# (.fsx)](http://research.microsoft.com/en-us/um/cambridge/projects/fsharp/), VB (.vbx), C# (.csx) and JScript.NET (.jsx). Note the different extensions -- mod_managed will ignore .cs, .vb, and .js files. Mono does not seem to support JScript.NET. Other language support is being looked at.
+内置支持的语言有 [F# (.fsx)](http://research.microsoft.com/en-us/um/cambridge/projects/fsharp/)、VB (.vbx)、C# (.csx) 和 JScript.NET (.jsx)。请注意不同的文件扩展名 - `mod_managed` 将忽略 `.cs`、`.vb` 和 `.js` 文件。似乎 Mono 不支持 JScript.NET 。其他语言的支持正在研究中。
 
-Scripts can be precompiled as .exes. Simply drop a .exe into the managed directory, and mod\_managed will pick it up like any other script file. This allows deployment without source, as well as deploying scripts that mod\_managed cannot dynamically compile.
+脚本可以预编译为 .exes（可执行文件）。只需将 .exe 文件放入托管目录中，mod_managed 将像处理其他脚本文件一样进行处理。这样可以在不提供源代码的情况下进行部署，并部署 mod_managed 无法动态编译的脚本。
 
-## Native Interop
+## 本地互操作
 
-mod\_managed exposes nearly the entire FreeSWITCH C API (courtesy of SWIG). This allows creation of not just API functions and call apps, but any type of module that FreeSWITCH supports (codecs, endpoints, etc.). The types are in the FreeSWITCH.Native namespace. FreeSWITCH.Native. The FreeSWITCH.Native.freeswitch type contains static members to access all the functions.
+mod_managed 几乎完全公开了 FreeSWITCH C API（感谢 SWIG）。这允许创建不仅仅是 API 函数和调用应用，还包括任何 FreeSWITCH 支持的模块类型（编解码器、终端等）。这些类型位于 FreeSWITCH.Native 命名空间中。FreeSWITCH.Native.freeswitch 类型包含访问所有函数的静态成员。
 
-## Examples
+## 示例
 
-### DRK Presentation
+### DRK 演示
 
-DaveKompel(DRK) gave a presentation about mod\_managed on the May 12, 2010 weekly FreeSWITCH conf call:
+DaveKompel(DRK)在2010年5月12日的 FreeSWITCH 周会上针对 mod_managed 进行了演示：
 
-* Listen to the presentation [here](http://www.voicenetwork.ca/mod%5Fmanaged/)
-* Download the sample files [here](http://git.drkngs.com/public)
+* 在此处收听演示（链接：http://www.voicenetwork.ca/mod%5Fmanaged/）
+* 在此处下载示例文件（链接：http://git.drkngs.com/public）
 
 ### Demo.cs
 
-See Demo.cs in mod\_managed\\managed. To specify a function, use the name of the type (such as AppDemo or ApiDemo). You can also fully qualify with the namespace and type name, ex: FreeSWITCH.Demo.AppDemo.
+请参考 mod_managed\\managed 目录中的 Demo.cs 文件。要指定一个函数，请使用类型名称（例如 AppDemo 或 ApiDemo）。您还可以使用命名空间和类型名称进行完全限定，例如：FreeSWITCH.Demo.AppDemo。
 
 ```xml
-2008-10-08 17:41:05 [INFO] mod_managed.cpp:310 mod_managed_load() Loading mod_managed (Common Language Infrastructure), Microsoft CLR Version
- 2008-10-08 17:41:05 [DEBUG] mod_managed.cpp:299 findLoader() Found all FreeSWITCH.Loader functions.
- 2008-10-08 17:41:05 [DEBUG] switch_cpp.cpp:1059 console_log() mod_managed_lib loader is starting with directory 'C:\freeswitch\Debug\mod\managed'.
- 2008-10-08 17:41:05 [NOTICE] switch_cpp.cpp:1059 console_log() loadAssemblies: C:\freeswitch\Debug\mod\managed
- 2008-10-08 17:41:05 [DEBUG] switch_cpp.cpp:1059 console_log() Loading 'C:\freeswitch\Debug\mod\managed\fsfsdemos.dll'.
- 2008-10-08 17:41:05 [DEBUG] switch_cpp.cpp:1059 console_log() Loading 'C:\freeswitch\Debug\mod\managed\pizzacs.dll'.
- 2008-10-08 17:41:05 [INFO] switch_cpp.cpp:1059 console_log() Inside AppDemo::Load.
- 2008-10-08 17:41:05 [NOTICE] switch_cpp.cpp:1059 console_log() Function FreeSWITCH.Demo.AppDemo loaded.
- 2008-10-08 17:41:05 [DEBUG] switch_cpp.cpp:1059 console_log() Inside ApiDemo::Load.
- 2008-10-08 17:41:05 [NOTICE] switch_cpp.cpp:1059 console_log() Function FreeSWITCH.Demo.ApiDemo loaded.
- 2008-10-08 17:41:05 [DEBUG] switch_cpp.cpp:1059 console_log() Trying to resolve assembly 'mod_managed_lib, Version=1.0.2.0, Culture=neutral, PublicKeyToken=null'.
- 2008-10-08 17:41:05 [NOTICE] switch_cpp.cpp:1059 console_log() Function rss.RssReader loaded.
- 2008-10-08 17:41:05 [DEBUG] switch_cpp.cpp:1059 console_log() Trying to resolve assembly 'mod_managed_lib, Version=1.0.2.0, Culture=neutral, PublicKeyToken=null'.
- 2008-10-08 17:41:05 [NOTICE] switch_cpp.cpp:1059 console_log() Function pizzacs.PizzaApp loaded.
- 2008-10-08 17:41:05 [DEBUG] mod_managed.cpp:328 mod_managed_load() Load completed successfully.
- 2008-10-08 17:41:05 [DEBUG] mod_managed.cpp:354 mod_managed_load() Load completed successfully.
- 
- > help
- ...
- managed,<module> [<args>],Run a module as an API function (Execute)
- managedreload,<filename>,ReLoad assembly
- managedrun,<module> [<args>],Run a module (ExecuteBackground)
- 
- >managed apidemo a1 123
- API CALL [managed(apidemo a1 123)] output:
- ApiDemo executed with args 'a1 123' and event type API.
- 
- >freeswitch@ODIN> managedrun apidemo a1 123
- API CALL [managedrun(apidemo a1 123)] output:
- +OK
- 2008-10-08 17:44:25 [DEBUG] switch_cpp.cpp:1059 console_log() ApiDemo on a background thread #(3), with args 'a1 123'.
- 2008-10-08 17:44:25 [DEBUG] switch_cpp.cpp:1059 console_log() ExecuteBackground in apidemo completed.
+2008-10-08 17:41:05 [INFO] mod_managed.cpp:310 mod_managed_load() 正在加载 mod_managed (Common Language Infrastructure)，Microsoft CLR 版本
+2008-10-08 17:41:05 [DEBUG] mod_managed.cpp:299 findLoader() 找到所有 FreeSWITCH.Loader 功能。
+2008-10-08 17:41:05 [DEBUG] switch_cpp.cpp:1059 console_log() mod_managed_lib 加载程序正在启动，目录为 'C:\freeswitch\Debug\mod\managed'。
+2008-10-08 17:41:05 [NOTICE] switch_cpp.cpp:1059 console_log() loadAssemblies: C:\freeswitch\Debug\mod\managed
+2008-10-08 17:41:05 [DEBUG] switch_cpp.cpp:1059 console_log() 正在加载 'C:\freeswitch\Debug\mod\managed\fsfsdemos.dll'。
+2008-10-08 17:41:05 [DEBUG] switch_cpp.cpp:1059 console_log() 正在加载 'C:\freeswitch\Debug\mod\managed\pizzacs.dll'。
+2008-10-08 17:41:05 [INFO] switch_cpp.cpp:1059 console_log() 在 AppDemo::Load 内部。
+2008-10-08 17:41:05 [NOTICE] switch_cpp.cpp:1059 console_log() 加载了函数 FreeSWITCH.Demo.AppDemo。
+2008-10-08 17:41:05 [DEBUG] switch_cpp.cpp:1059 console_log() 在 ApiDemo::Load 内部。
+2008-10-08 17:41:05 [NOTICE] switch_cpp.cpp:1059 console_log() 加载了函数 FreeSWITCH.Demo.ApiDemo。
+2008-10-08 17:41:05 [DEBUG] switch_cpp.cpp:1059 console_log() 正在尝试解析程序集 'mod_managed_lib, Version=1.0.2.0, Culture=neutral, PublicKeyToken=null'。
+2008-10-08 17:41:05 [NOTICE] switch_cpp.cpp:1059 console_log() 加载了函数 rss.RssReader。
+2008-10-08 17:41:05 [DEBUG] switch_cpp.cpp:1059 console_log() 正在尝试解析程序集 'mod_managed_lib, Version=1.0.2.0, Culture=neutral, PublicKeyToken=null'。
+2008-10-08 17:41:05 [NOTICE] switch_cpp.cpp:1059 console_log() 加载了函数 pizzacs.PizzaApp。
+2008-10-08 17:41:05 [DEBUG] mod_managed.cpp:328 mod_managed_load() 加载完成，无错误。
+2008-10-08 17:41:05 [DEBUG] mod_managed.cpp:354 mod_managed_load() 加载完成，无错误。
+
+> 帮助
+...
+managed,<模块> [<参数>],以 API 函数运行模块 (Execute)
+managedreload,<文件名>,重新加载程序集
+managedrun,<模块> [<参数>],运行模块 (ExecuteBackground)
+
+> managed apidemo a1 123
+API 调用 [managed(apidemo a1 123)] 输出:
+使用参数 'a1 123' 在事件类型为 API 的情况下执行了 ApiDemo。
+
+>freeswitch@ODIN> managedrun apidemo a1 123
+API 调用 [managedrun(apidemo a1 123)] 输出:
++OK
+2008-10-08 17:44:25 [DEBUG] switch_cpp.cpp:1059 console_log() 使用参数 'a1 123' 在后台线程 #(3) 上执行了 ApiDemo。
+2008-10-08 17:44:25 [DEBUG] switch_cpp.cpp:1059 console_log() 在 apidemo 中的 ExecuteBackground 完成。
 ```
 
-### Parking Lot Sample
+### 停车场示例
 
-An implementation of a [FreePBX-like parking lot module](http://github.com/joshrivers/FreeSWITCH%5FManaged%5FParkingLot) demonstrates using API and APPpluginswithceptstral text to speech.
+一个实现了类似[FreePBX停车场模块](http://github.com/joshrivers/FreeSWITCH%5FManaged%5FParkingLot)的应用程序演示了如何使用API和APP插件以及ceptstral文本转语音。
 
-## Dialplan and Example
+## 拨号计划和示例
 
-You may point to your managed application by entering the routing into the dialplan as demonstrated below.
+您可以通过以下示例向拨号计划添加路由来指向您的托管应用程序。
 
 ```xml
 <extension name="testapp">
@@ -207,21 +202,18 @@ You may point to your managed application by entering the routing into the dialp
 
 ## AbortOnHangup
 
-With mod\_managed 1.0.4, this is no longer used. Emailthefreeswitchdeveloperlist if you need this functionality.
+从mod_managed 1.0.4开始，不再使用此功能。如果您需要此功能，请发送电子邮件给FreeSWITCH开发者列表。
 
-## ODBC on Linux
+## Linux上的ODBC
 
-For some reason, mod\_managed doesn't pickupMono's [dllmap](http://mono-project.com/Config%5FDllMap) entries for odbc32.dll to [unixodbc.so](http://unixodbc.so). So, to get ODBC support working, you'll need to create an odbc32.dll link, for example:
+由于某种原因，mod_managed无法识别Mono的[dllmap](http://mono-project.com/Config%5FDllMap)将odbc32.dll映射到[unixodbc.so](http://unixodbc.so)的条目。因此，为了使ODBC支持正常工作，您需要创建一个odbc32.dll链接，例如：
 
 ```xml
 ln -s /lib64/libodbc.so /lib64/odbc32.dll
 ```
 
-[ More information on Mono and ODBC](http://www.mono-project.com/ODBC)
+[了解更多关于Mono和ODBC的信息](http://www.mono-project.com/ODBC)
 
-## See Also
+## 参见
 
 * [Mod event socket dotnet](mod_event_socket_dotnet_6587414.mdx#about)
-  
-  
-

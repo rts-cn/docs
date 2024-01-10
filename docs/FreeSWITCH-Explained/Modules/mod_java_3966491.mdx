@@ -1,82 +1,79 @@
+# mod_java
 
-# mod_java 
+## 关于
 
- 
+mod_java基于用于[mod_python](./mod_python_1048940.mdx#eol)的swig封装器，如果有任何问题，请参考那里的文档。
 
-## About
+它已经通过使用Sun的Java 1.6运行下面的示例脚本进行了测试，并且可以正常工作。
 
-mod\_java is based on the swig wrapper used for [mod\_python](./mod_python_1048940.mdx#eol) so look there for any issues.
+注意：Sun JDK 1.6.0.05存在一个bug，会导致freeswitch（以及其他Java程序）立即崩溃。为了避免问题，可以使用早期版本的1.6或任何1.5 JDK系列的版本。  
+注意：在加载mod_java时向FreeSWITCH发送-HUP信号会使FreeSWITCH退出，因为JVM在收到HUP信号后调用了exit()函数。
 
-It's been tested with 1 call with Sun's Java 1.6 running the example script below and found to work.
+单击此处展开目录
 
-NOTE: Sun JDK 1.6.0.05 has a bug which causes freeswitch (among other Java programs) to crash immediately. To avoid problems, use an earlier release of 1.6 or any of the 1.5 JDK series.  
-NOTE: Also sending the -HUP signal to FreeSWITCH while mod\_java is loaded will make FreeSWITCH exit due to the fact the JVM calls exit(); when it receives a HUP.
+- 1 [编译mod_java](#编译mod_java)
+- 2 [启用mod_java](#启用mod_java)
+- 3 [配置mod_java](#配置mod_java)
+- 4 [构建Java脚本](#构建Java脚本)
+- 5 [调用mod_java应用程序](#调用mod_java应用程序)
+- 6 [调试](#调试)
+- 7 [示例代码](#示例代码)
+- 8 [注意事项](#注意事项)
+- 9 [常见问题解答](#常见问题解答)  
+   - 9.1 [问：mod_java是在单个JVM中运行还是在每个通话中生成一个JVM？](#问：mod_java是在单个JVM中运行还是在每个通话中生成一个JVM)
 
-Click here to expand Table of Contents
+## 编译mod_java
 
-* 1 [Building mod\_java](#building-mod_java)
-* 2 [Enabling mod\_java](#enabling-mod_java)
-* 3 [Configuring mod\_java](#configuring-mod_java)
-* 4 [Building Java scripts](#building-java-scripts)
-* 5 [Invoking mod\_java applications](#invoking-mod_java-applications)
-* 6 [Debugging](#debugging)
-* 7 [Example code](#example-code)
-* 8 [Notes](#notes)
-* 9 [FAQ](#faq)  
-   * 9.1 [Q: Does mod\_java run in a single JVM or does it spawn a JVM per call?](#q-does-mod_java-run-in-a-single-jvm-or-does-it-spawn-a-jvm-per-call)
-
-## Building mod_java
-
-Dependencies (gcj and classpath development tools)
+依赖项（gcj和classpath开发工具）
 
 ```xml
 apt-get install gcj-jdk
 ```
 
-You need a Java JDK, version 1.5 or greater, to build mod\_java (and a JRE of the same version to use it). If _./configure_ doesn't detect Java, you'll have to pass the _\--with-java=/path/to/jni.h/directory_ flag. Something like the following:
+您需要一个Java JDK，版本为1.5或更高版本，来构建mod_java（以及相同版本的JRE来使用它）。如果配置脚本_./configure_没有检测到Java，您将需要传入_\--with-java=/path/to/jni.h/directory_标志。类似以下命令：
 
 ```xml
 ./configure --with-java=/usr/java/jdk1.6.0_16/include/
 ```
 
-Edit _modules.conf.xml_ and uncomment _languages/mod\_java_ _javac_ and _jar_ have to be on your PATH during compilation. _make installall_
+编辑 _modules.conf.xml_ 并取消注释 _languages/mod\_java_ _javac_ 和 _jar_ 在编译期间必须在您的路径中。_make installall_
 
-## Enabling mod_java
+## 启用mod_java
 
-Edit _modules.conf.xml_ and uncomment:
+编辑 _modules.conf.xml_ 并取消注释：
 
 ```xml
  <load module="mod_java"/>
 ```
 
-## Configuring mod_java
+## 配置 mod_java
 
-Edit _java.conf.xml_ and fill in the path to your favourite Java 1.5 or greater virtual machine library.
+编辑 _java.conf.xml_ 文件，并填写您喜欢的 Java 1.5 或更高版本虚拟机库的路径。
 
-The _java.class.path_ parameter must contain _freeswitch.jar_ and other paths are only necessary when you are not using JAR files, read on. You can create the _freeswitch.jar_ file yourself by using jar command or any of your favorite tool. All the source files are there in _&lt;extracted-freeswitch-directory>/src/mod/languages/mod\_java/src_ to build the required _jar_.
+_java.class.path_ 参数必须包含 _freeswitch.jar_，只有在不使用 JAR 文件时才需要其他路径，请继续阅读。您可以使用 jar 命令或任何您喜欢的工具自己创建 _freeswitch.jar_ 文件。所有的源文件都在 _<extracted-freeswitch-directory>/src/mod/languages/mod_java/src_ 中，用于构建所需的 _jar_。
 
-You can add any other options you like; for convenience remote debugging is enabled by default.
+您可以添加任何其他选项；为了方便起见，默认情况下启用了远程调试功能。
 
-## Building Java scripts
+## 构建 Java 脚本
 
-You need to have _freeswitch.jar_ on your CLASSPATH when using _javac_.
+在使用 _javac_ 时，您需要在 CLASSPATH 中加入 _freeswitch.jar_。
 
-## Invoking mod_java applications
+## 调用 mod_java 应用程序
 
-Use one of these in your dialplan:
+在您的拨号计划中使用下列之一：
 
 ```xml
 <action application="java" data="fully.qualified.class.name arg1 arg2 arg3"/>
 <action application="java" data="/path/to/file.jar fully.qualified.class.name arg1 arg2 arg3"/>
 ```
 
-The first will look for the given class on your CLASSPATH (set in _java.conf.xml_), the second will look in the given JAR file.
+第一个选项将在您的 CLASSPATH 中查找给定的类（在 _java.conf.xml_ 中设置），第二个选项将在给定的 JAR 文件中查找。
 
-## Debugging
+## 调试
 
-By default the remote debugger listens on port 8000 and IP 127.0.0.1\. The _org.freeswitch.Launcher_ class in _freeswitch.jar_ is used to launch scripts, so you can put breakpoints on it and from there trace into your code.
+默认情况下，远程调试器侦听端口8000，IP地址为127.0.0.1。在 _freeswitch.jar_ 中使用 _org.freeswitch.Launcher_ 类来启动脚本，因此您可以在该类上设置断点并从那里跟踪入您的代码。
 
-## Example code
+## 示例代码
 
 ```java
 import org.freeswitch.*;
@@ -87,63 +84,59 @@ public class PhoneTest implements FreeswitchScript, DTMFCallback, HangupHook
     public PhoneTest()
     {
     }
+```
 
-    public String onDTMF(Object object, int i, String arg)
-    {
-        if (object instanceof String)
-            freeswitch.console_log("notice", "DTMF: " + (String)object + " ARG: " + arg + "\n");
-        else
-            freeswitch.console_log("notice", "WOW GOT AN EVENT: " + object.toString());
-        return "true";
+```java
+public String onDTMF(Object object, int i, String arg) {
+    // 如果 object 是一个字符串类型
+    if (object instanceof String) {
+        freeswitch.console_log("notice", "DTMF: " + (String)object + " ARG: " + arg + "\n");
+    } else {
+        freeswitch.console_log("notice", "WOW GOT AN EVENT: " + object.toString());
     }
+    return "true";
+}
 
-    public void onHangup()
-    {
-        freeswitch.console_log("notice", "HANGUP!\n");
-    }
+public void onHangup() {
+    freeswitch.console_log("notice", "HANGUP!\n");
+}
 
-    public void run(String sessionUuid, String args)
-    {
-        freeswitch.console_log("notice", "UUID: " + sessionUuid + " ARGS: " + args + "\n");
-        JavaSession session = null;
-        try
-            {
-                session = new JavaSession(sessionUuid);
-                session.setDTMFCallback(this, "TEST");
-                session.setHangupHook(this);
+public void run(String sessionUuid, String args) {
+    freeswitch.console_log("notice", "UUID: " + sessionUuid + " ARGS: " + args + "\n");
+    JavaSession session = null;
+    try {
+        session = new JavaSession(sessionUuid);
+        session.setDTMFCallback(this, "TEST");
+        session.setHangupHook(this);
 
-                session.answer();
-                session.streamFile(args, 0);
-                session.hangup("");
-            }
-        finally
-            {
-                if (session != null)
-                    session.delete();
-            }
+        session.answer();
+        session.streamFile(args, 0);
+        session.hangup("");
+    } finally {
+        if (session != null) {
+            session.delete();
+        }
     }
 }
 ```
 
-## Notes
+## 注意事项
 
-If you want to be aware of channel hang up then your java class should implement interface _org.freeswitch.HangupHook_. Method _org.freeswitch.HangupHook.onHangup()_ is called not only when channel is being hanged up but also when it's being transferred. In this method you should shutdown you java-application
+如果你想要在频道挂断时收到通知，你的 Java 类应该实现 _org.freeswitch.HangupHook_ 接口。当频道被挂断或转移时，方法 _org.freeswitch.HangupHook.onHangup()_ 将被调用。你应该在这个方法中关闭应用程序：
 
 ```xml
 javaSession.destroy()
 ```
 
-to release the given channel else general call processing will be blocked with your app.
+以释放给定的频道，否则你的应用程序会阻塞一般的呼叫处理流程。
 
-## FAQ
+## 常见问题解答
 
-### Q: Does mod_java run in a single JVM or does it spawn a JVM per call?
+### Q: mod_java 是在单个 JVM 中运行还是为每个呼叫生成一个 JVM？
 
-A: There is a single in-process JVM, and each FreeSWITCH thread is attached to it before calling into Java (using the invocation API) and detached afterwards.
+A: mod_java 在一个进程内的 JVM 中运行，每个 FreeSWITCH 线程在调用 Java 代码之前会附着到该 JVM 上（使用调用 API），并在调用结束后分离。
 
-### Comments:
+### 评论：
 
-| Before anybody wastes 3 hours like I did, be aware that when setting the startup and shutdown scripts in the config file, you need to use path notation instead of standard java notation, when identifying the class.So com.anything.ClassName becomes com/anything/ClassName.Could somebody add this to the documentation? I can also update this modules documentation, if I can get access, as we are currently beginning to use it. ![](/images/icons/contenttypes/comment_16.png) Posted by jleren at Mar 03, 2019 07:23 |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-
-
+| 在别人像我一样浪费3个小时之前，请注意，在配置文件中设置启动和关闭脚本时，需要使用路径标记而不是标准的Java标记来标识类。所以com.anything.ClassName应该变成com/anything/ClassName。能否将此内容添加到文档中？如果我能获得权限，我也可以更新这个模块的文档，因为我们目前正在开始使用它。 ![](/images/icons/contenttypes/comment_16.png) jleren于2019年3月3日07:23发布。|
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

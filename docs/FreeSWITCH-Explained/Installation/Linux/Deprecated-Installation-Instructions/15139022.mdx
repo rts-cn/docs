@@ -1,64 +1,62 @@
+# Debian 9 Stretch（已弃用）
 
-# Debian 9 Stretch (Obsolete) 
+## 关于
 
- 
+FreeSWITCH 项目已经迁移到 GitHub： <https://github.com/signalwire/freeswitch>
+请在此处提交新问题： <https://github.com/signalwire/freeswitch/issues>
 
-## About
+Debian 10 "Buster" 现已正式支持 FreeSWITCH™。
 
-FreeSWITCH project has been moved to GitHub: <https://github.com/signalwire/freeswitch>  
-Please open new issues in: <https://github.com/signalwire/freeswitch/issues>
+通过 "apt-get build-dep freeswitch" 命令，可以从 FreeSWITCH 软件库获取所需的依赖项。
 
-Debian 10 “Buster" is now officially supported by FreeSWITCH™ .
+自版本 1.10 起，Debian 10 "Buster" 成为 FreeSWITCH™ 的参考平台，并且由于其稳定性和对 FreeSWITCH 所需系统库的广泛支持，强烈推荐用于所有应用。
 
-Dependencies are available from FreeSWITCH repository via the "apt-get build-dep freeswitch" command.
+## FreeSWITCH 1.10 中的重大变更
 
-Debian 10 "Buster" is the reference platform for FreeSWITCH™ as of version 1.10 and is STRONGLY recommended for all applications due to its stability and broad support for the system libraries needed by FreeSWITCH. 
+从 FreeSWITCH 1.10 开始，`pgsql` 不再是核心模块（[mod_commands](../../../Modules/mod_commands_1966741.mdx#--) ?） ，而是变为 [mod_pgsql](/confluence/pages/createpage.action?spaceKey=FREESWITCH&title=mod_pgsql&linkCreation=true&fromPageId=15139022)。
 
-## Breaking change in FreeSWITCH 1.10
+您 **不应** 在 `modules.conf.xml` 中加载 [mod_pgsql](/confluence/pages/createpage.action?spaceKey=FREESWITCH&title=mod_pgsql&linkCreation=true&fromPageId=15139022)，而应在 [pre_load_modules.conf.xml](../../../Configuration/Configuring-FreeSWITCH/index.mdx#modulesconfxml) 中加载，该文件位于 `conf/autoload_configs/` 目录中。
 
-From FreeSWITCH 1.10, `pgsql` is not in core ([mod\_commands](../../../Modules/mod_commands_1966741.mdx#--) ?), but in [mod\_pgsql](/confluence/pages/createpage.action?spaceKey=FREESWITCH&title=mod_pgsql&linkCreation=true&fromPageId=15139022). 
-
-You MUST NOT load [mod\_pgsql](/confluence/pages/createpage.action?spaceKey=FREESWITCH&title=mod_pgsql&linkCreation=true&fromPageId=15139022) in `modules.conf.xml` , but in [pre\_load\_modules.conf.xml](../../../Configuration/Configuring-FreeSWITCH/index.mdx#modulesconfxml) , an additional XML file also in `conf/autoload_configs/` directory.
-
-**pre\_load\_modules.conf.xml**
+**pre_load_modules.conf.xml**
 
 ```xml
 <configuration name="pre_load_modules.conf" description="Modules">
   <modules>
-    <!-- Databases -->
+    <!-- 数据库 -->
     <!-- <load module="mod_mariadb"/> -->
     <load module="mod_pgsql"/>
   </modules>
 </configuration>
 ```
 
-  
-## Commit Log
+## 提交日志
 
-See all FreeSWITCH commits here: <https://github.com/signalwire/freeswitch/commits/master>
+在此处查看所有 FreeSWITCH 提交记录： <https://github.com/signalwire/freeswitch/commits/master>
 
-  
-**Easy Way**
+**简便方法：**
 
-## Installing From Debian Packages
+## 通过 Debian 软件包进行安装
 
-### Latest Release Branch:
+### 最新发行分支：
 
-**Release package**
+**发行软件包**
 
 ```bash
+# 更新apt-get软件源并安装gnupg2和wget
 apt-get update && apt-get install -y gnupg2 wget
+
+# 从FreeSWITCH官方仓库获取密钥
 wget -O - https://files.freeswitch.org/repo/deb/debian-release/fsstretch-archive-keyring.asc | apt-key add -
 
+# 配置FreeSWITCH仓库源
 echo "deb http://files.freeswitch.org/repo/deb/debian-release/ stretch main" > /etc/apt/sources.list.d/freeswitch.list
 echo "deb-src http://files.freeswitch.org/repo/deb/debian-release/ stretch main" >> /etc/apt/sources.list.d/freeswitch.list
 
-# you may want to populate /etc/freeswitch at this point.
-# if /etc/freeswitch does not exist, the standard vanilla configuration is deployed
+# 更新apt-get软件源并安装FreeSWITCH
 apt-get update && apt-get install -y freeswitch-meta-all
 ```
 
-FreeSWITCH™ is now installed and can be accessed with
+FreeSWITCH™已安装完成，可通过以下方式访问：
 
 **FreeSwitch CLI**
 
@@ -66,30 +64,31 @@ FreeSWITCH™ is now installed and can be accessed with
 fs_cli -rRS
 ```
 
-### Master Branch ("git"):
+### 主分支("git")：
 
-WARNING not suitable for production
+警告：此版本不适用于生产环境
 
-**Master Test Package**
+**主分支测试版本**
 
 ```bash
+# 从FreeSWITCH官方测试仓库获取密钥
 wget -O - https://files.freeswitch.org/repo/deb/debian-unstable/freeswitch_archive_g0.pub | apt-key add -
 
+# 配置FreeSWITCH测试版本仓库源
 echo "deb http://files.freeswitch.org/repo/deb/debian-unstable/ stretch main" > /etc/apt/sources.list.d/freeswitch.list
 echo "deb-src http://files.freeswitch.org/repo/deb/debian-unstable/ stretch main" >> /etc/apt/sources.list.d/freeswitch.list
 
-# you may want to populate /etc/freeswitch at this point.
-# if /etc/freeswitch does not exist, the standard vanilla configuration is deployed
+# 更新apt-get软件源并安装测试版本FreeSWITCH
 apt-get update && apt-get install -y freeswitch-meta-all
 ```
 
-### Building Debian Packages From Master Branch
+### 从主分支构建Debian软件包
 
-WARNING not suitable for production
+警告：此版本不适用于生产环境
 
-The master branch depends on different libraries which are not available as packages in Debian distribution, but are available from FreeSWITCH repository. Thus, you will need internet access to the FreeSWITCH DEB repository.
+主分支依赖于Debian发行版中尚未作为软件包提供的不同库，但这些库可以从FreeSWITCH仓库中获取。因此，您需要连接互联网访问FreeSWITCH DEB仓库。
 
-**Build your own .deb Master package**
+**构建自己的.deb主分支软件包**
 
 ```bash
 wget -O - https://files.freeswitch.org/repo/deb/debian-unstable/freeswitch_archive_g0.pub | apt-key add -
@@ -99,68 +98,67 @@ echo "deb-src http://files.freeswitch.org/repo/deb/debian-unstable/ stretch main
 
 apt-get update && apt-get install -y xz-utils devscripts cowbuilder git screen
 
-# nonstandard packages from freeswitch repo are not trusted by pbuilder !!
+# 非标准的软件包，pbuilder 不信任 !!
 echo "ALLOWUNTRUSTED=yes" >> /etc/pbuilderrc
 
-# get the latest master. Use the -b flag to get a specific branch
+# 获取最新的 master 分支。使用 -b 标志指定特定分支
 mkdir /usr/src/freeswitch-debs
 git clone https://github.com/signalwire/freeswitch.git /usr/src/freeswitch-debs/freeswitch
 
 cd /usr/src/freeswitch-debs
-# here it's good to run screen with logging, so that you can detach from the shell prompt
+# 这里最好用带日志记录功能的 screen，这样你就可以从 shell 提示符中分离出来
 screen -L
 cd freeswitch
 ./debian/util.sh build-all -aamd64 -cstretch
 
-# here you can detach by Ctrl-a Ctrl-d and see the log files in /usr/src/freeswitch-debs/log/ folder.
-# The build may last about an hour, depending on your CPU speed.
-# If the build is successful, you will have a bunch of .deb files in /usr/src/freeswitch-debs
+# 在这里你可以使用 Ctrl-a Ctrl-d 分离，然后在 /usr/src/freeswitch-debs/log/ 文件夹中查看日志文件。
+# 构建时间可能约为一小时，取决于你的 CPU 速度。
+# 如果构建成功，你将在 /usr/src/freeswitch-debs 中看到一堆 .deb 文件
 
 
 ```
   
   
-**Compiling from source code**
+**从源代码编译**
 
-## Building From Source
+## 从源代码构建
 
-### Compiling Release Branch (production)
+### 编译发布分支（生产环境）
 
-**Release source build**
+**发布源码构建**
 
 ```bash
 wget -O - https://files.freeswitch.org/repo/deb/debian-release/fsstretch-archive-keyring.asc | apt-key add -
 
 echo "deb http://files.freeswitch.org/repo/deb/debian-release/ stretch main" > /etc/apt/sources.list.d/freeswitch.list
 echo "deb-src http://files.freeswitch.org/repo/deb/debian-release/ stretch main" >> /etc/apt/sources.list.d/freeswitch.list
+```
 
 apt-get update
- 
-# Install dependencies required for the build
+
+# 安装构建所需的依赖
 apt-get build-dep freeswitch
- 
-# then let's get the source. Use the -b flag to get a specific branch
+
+# 然后我们获取源代码。使用 -b 标志来获取特定的分支
 cd /usr/src/
 git clone https://github.com/signalwire/freeswitch.git -bv1.10 freeswitch
 cd freeswitch
- 
-# Because we're in a branch that will go through many rebases, it's
-# better to set this one, or you'll get CONFLICTS when pulling (update).
+
+# 因为我们在一个将经历许多变基的分支中，最好设置这个，否则在拉取（更新）时会产生冲突。
 git config pull.rebase true
- 
-# ... and do the build
+
+# ...并进行构建
 ./bootstrap.sh -j
 ./configure
 make
 make install
 ```
 
-  
-### Compiling Latest Master (for testing)
+### 编译最新的主分支（用于测试）
 
-WARNING not suitable for production
+警告：不适用于生产环境
 
-**Master source build**
+**主分支源码构建**
 
 ```bash
 wget -O - https://files.freeswitch.org/repo/deb/debian-unstable/freeswitch_archive_g0.pub | apt-key add -
@@ -170,99 +168,121 @@ echo "deb-src http://files.freeswitch.org/repo/deb/debian-unstable/ stretch main
 
 apt-get update
 
-# Install dependencies required for the build
+# 安装构建所需的依赖
 apt-get build-dep freeswitch
 
-# Then let's get the source. Use the -b flag to get a specific branch
+# 然后我们获取源代码。使用 -b 标志来获取特定的分支
 cd /usr/src/
 git clone https://github.com/signalwire/freeswitch.git freeswitch
 cd freeswitch
 
-# Because we're in a branch that will go through many rebases, it's
-# better to set this one, or you'll get CONFLICTS when pulling (update).
+# 因为我们在一个将经历许多变基的分支中，最好设置这个，否则在拉取（更新）时会产生冲突。
 git config pull.rebase true
 
-# ... and do the build
+# ...并进行构建
 
-# The -j argument spawns multiple threads to speed the build process, but causes trouble on some systems
+# -j 参数使用多线程加速构建过程，但在某些系统上可能会出现问题
 ./bootstrap.sh -j
 
-# if you want to add or remove modules from the build, edit modules.conf
+# 如果要向构建中添加或删除模块，请编辑 modules.conf
 vi modules.conf
 
-# add a module by removing '#' comment character at the beginning of the line
-# remove a module by adding the '#' comment character at the beginning of the line 
-# containing the name of the module to be skipped in the build process
+# 通过删除行首的 '#' 注释字符来添加一个模块
+# 通过在行首添加 '#' 注释字符来删除一个模块
+# 注释掉在构建过程中跳过的模块的名称所在的行
 
 ./configure
 make
 make install
 
-# Install audio files:
+# 安装音频文件：
 make cd-sounds-install cd-moh-install
 
-# To update an installed build:
+# 更新已安装构建：
 cd /usr/src/freeswitch
 make current
 ```
 
-### Before Starting FreeSWITCH
+### 在开始使用 FreeSWITCH 之前
 
-If you built FreeSWITCH™ from source code you should set file permissions and ownership before starting FreeSWITCH. Follow the [post-installation instructions](./Debian-Post-Install-Tasks_13172868.mdx#about).
-  
-  
-**Compiling from source code**
+如果您是从源代码构建 FreeSWITCH™，请在开始运行 FreeSWITCH 之前设置文件权限和所有权。请按照[安装后说明](./Debian-Post-Install-Tasks_13172868.mdx#about)进行操作。
 
-### Verto Communicator quick start guide for Debian 9
+**从源代码编译**
+
+### Debian 9 上的 Verto Communicator 快速入门指南
 
 ```xml
-# get nodejs from source, needed for npm
+# 获取 nodejs 源代码，需要用于 npm
 apt-get update
 apt-get -y install apache2 curl
 curl -sL https://deb.nodesource.com/setup_11.x | bash -
 apt-get update
 apt-get -y install nodejs
 
-# get FreeSWITCH source code
+# 获取 FreeSWITCH 源代码
 git clone https://github.com/signalwire/freeswitch.git /usr/src/freeswitch
 
-# build Verto Communicator
+# 构建 Verto Communicator
 cd /usr/src/freeswitch/html5/verto/verto_communicator
 npm install -g grunt grunt-cli bower
 npm install
 bower --allow-root install
 grunt build
 
-# copy contents of dist folder to a web directory
+# 将 dist 文件夹的内容复制到一个 Web 目录
 mkdir -p /var/www/html/vc
 cp -r /usr/src/freeswitch/html5/verto/verto_communicator/dist/* /var/www/html/vc/
 
-# update password to match what in vars.xml
+# 更新密码以与 vars.xml 中的密码匹配
 sed -i 's/1234/12345/' /var/www/html/vc/config.json
 
-# enable secure web browsing
+# 启用安全的 Web 浏览
 a2enmod ssl
 a2ensite default-ssl.conf
 systemctl restart apache2
 
 
-# if using self-signed cert
-# navigate to port https://[IP]:8082 accept cert first
-# then navigate to site https://[IP]/vc
+# 如果使用自签名证书
+# 导航到 https://[IP]:8082 端口，首先接受证书
+# 然后导航到站点 https://[IP]/vc
 ```
 
-  
-### Comments:
+### 注释：
 
-| This will allow you to install on Debian 9 Stretch.Example below is if you have amd64.wget <http://http.us.debian.org/debian/pool/main/o/openssl/libssl1.0.0%5F1.0.1t-1+deb8u6%5Famd64.deb>apt install ./libssl1.0.0\_1.0.1t-1+deb8u6\_amd64.deb ![](/images/icons/contenttypes/comment_16.png) Posted by Len at Aug 04, 2017 16:50                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Hi wget -O - https://files.[freeswitch.org](http://freeswitch.org)/repo/deb/debian/freeswitch\_archive\_g0.pub \| apt-key add -root@[atsts2:/usr/src/freeswitch#](http://atsts2/usr/src/freeswitch) cat /etc/apt/sources.list.d/freeswitch.list deb <http://files.freeswitch.org/repo/deb/freeswitch-1.8/> stretch main root@[atsts2:/usr/src/freeswitch#](http://atsts2/usr/src/freeswitch) apt-get updateIgn:1 <http://ftp.us.debian.org/debian> stretch InReleaseHit:2 <http://ftp.us.debian.org/debian> stretch ReleaseHit:3 <http://security.debian.org/debian-security> stretch/updates InReleaseGet:4 <http://files.freeswitch.org/repo/deb/freeswitch-1.8> stretch InRelease \[3,196 B\]Ign:4 <http://files.freeswitch.org/repo/deb/freeswitch-1.8> stretch InReleaseGet:6 <http://files.freeswitch.org/repo/deb/freeswitch-1.8> stretch/main amd64 Packages \[2,605 B\]Fetched 5,801 B in 0s (8,115 B/s) Reading package lists... DoneW: GPG error: <http://files.freeswitch.org/repo/deb/freeswitch-1.8> stretch InRelease: The following signatures couldn't be verified because the public key is not available: NO\_PUBKEY BD3189F5A2B57698W: The repository '<http://files.freeswitch.org/repo/deb/freeswitch-1.8> stretch InRelease' is not signed.N: Data from such a repository can't be authenticated and is therefore potentially dangerous to use.N: See apt-secure(8) manpage for repository creation and user configuration details. ![](/images/icons/contenttypes/comment_16.png) Posted by aztrock at Sep 27, 2017 14:55 |
-| Hi, Guys.If you have problems with installation from Debian repo like this:root@debian9:\~# apt-get updateIgn:1 <http://mirror.neolabs.kz/debian> stretch InReleaseHit:2 <http://mirror.neolabs.kz/debian> stretch-updates InReleaseHit:3 <http://mirror.neolabs.kz/debian> stretch ReleaseHit:5 <http://security.debian.org/debian-security> stretch/updates InReleaseGet:6 <http://files.freeswitch.org/repo/deb/freeswitch-1.8> stretch InRelease \[3196 B\]Ign:6 <http://files.freeswitch.org/repo/deb/freeswitch-1.8> stretch InReleaseFetched 3196 B in 1s (2674 B/s)Reading package lists... DoneW: GPG error: <http://files.freeswitch.org/repo/deb/freeswitch-1.8> stretch InRelease: The following signatures were invalid: 5E098B3D18406E8E19543709BD3189F5A2B57698W: The repository '<http://files.freeswitch.org/repo/deb/freeswitch-1.8> stretch InRelease' is not signed.N: Data from such a repository can't be authenticated and is therefore potentially dangerous to use.N: See apt-secure(8) manpage for repository creation and user configuration details.It's all because of turned off SHA-1 signature algo in Debian 9 stretch.FreeSwitch support team needs to resign repo files.Here is an explanation:<https://unix.stackexchange.com/questions/387053/debian-9-apt-and-gpg-error-inrelease-the-following-signatures-were-inva> ![](/images/icons/contenttypes/comment_16.png) Posted by kvishnivetsky at Nov 23, 2017 12:10                                                                                          |
-| <https://freeswitch.org/jira/browse/FS-10863>For now, you can compile from source code or build your own packages locally. You will have to determine the dependencies yourself until they develop them for release. ![](/images/icons/contenttypes/comment_16.png) Posted by boteman at Feb 01, 2018 01:48                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| After updating the target file to the current release of "libssl1.0.0\_1.0.1t-1+deb8u7\_amd64.deb" on a fresh Debian 9 system, apt complainsThe following packages have unmet dependencies: libssl1.0.0:amd64 : Depends: libc6:amd64 (>= 2.14) but it is not installableE: Unable to correct problems, you have held broken packages.I figured it wouldn't work, but gave it a try to work around this for now. ![](/images/icons/contenttypes/comment_16.png) Posted by boteman at Feb 03, 2018 21:55                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| How to install 1.8 on debian 9: wget -qO - http://files.freeswitch.org/repo/deb/freeswitch-1.8/fsstretch-archive-keyring.gpg \| apt-key add - echo "deb http://files.freeswitch.org/repo/deb/freeswitch-1.8/ stretch main" > /etc/apt/sources.list.d/freeswitch.list apt update apt install freeswitch-meta-all freeswitch@freeswitch> version FreeSWITCH Version 1.8.1-2-4f54cff36a\~64bit (-2-4f54cff36a 64bit) ![](/images/icons/contenttypes/comment_16.png) Posted by alexey\_khabulyak at Sep 07, 2018 04:50                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| I have a question which is related to g729.Do I need to pay for using mod\_g729 in FS?Because I see G.729 have expired , please ref to: <https://www.mgraves.org/2017/03/its-official-the-patents-on-g-729-have-expired/> ![](/images/icons/contenttypes/comment_16.png) Posted by hpsony94 at Sep 27, 2018 02:05                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| no, mod\_g729 does not require payment... however it's only a passthrough codec... you can only pass G729 calls through your FreeSWITCH, you cannot transcode, or other use G729 as a codec on your endpoints... if you need or want G729 enabled as a codec for your endpoints, you need to purchase the commercial module "mod\_com\_g729" to do that... you can purchase it here.... <https://freeswitch.com/index.php/modules-more/> ![](/images/icons/contenttypes/comment_16.png) Posted by joshebosh at Oct 12, 2018 11:58                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| I'm having core dumps in my call handling scenarios since i moved to debian 9 + FS Version 1.8.2 -3-a98a958ac3 64bit.I need to put the debug symbols on so that the coredump can be interpreted.However :Installing the stable release with debian package procedure doesn't put the debug symbols on.Installing the stable release with sources + compilation procedure (witch i beleive from the [Debugger](../../../Troubleshooting-Debugging/Debugger_1048961.mdx#about--) guidelines should put the debug symbols on) ends up in FS Version 1.8.2 git a98a958 being installed.Is there a simple way to have latest stable release installed with the debug symbols on ? ![](/images/icons/contenttypes/comment_16.png) Posted by julienT at Oct 31, 2018 06:52                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| 这将允许你在Debian 9 Stretch上进行安装。如果你有amd64架构，则如下所示：wget <http://http.us.debian.org/debian/pool/main/o/openssl/libssl1.0.0%5F1.0.1t-1+deb8u6%5Famd64.deb>apt install ./libssl1.0.0\_1.0.1t-1+deb8u6\_amd64.deb ![](/images/icons/contenttypes/comment_16.png) Len 于 Aug 04, 2017 16:50 发布                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Hi wget -O - https://files.[freeswitch.org](http://freeswitch.org)/repo/deb/debian/freeswitch\_archive\_g0.pub \| apt-key add -root@[atsts2:/usr/src/freeswitch#](http://atsts2/usr/src/freeswitch) cat /etc/apt/sources.list.d/freeswitch.list deb <http://files.freeswitch.org/repo/deb/freeswitch-1.8/> stretch main root@[atsts2:/usr/src/freeswitch#](http://atsts2/usr/src/freeswitch) apt-get updateIgn:1 <http://ftp.us.debian.org/debian> stretch InReleaseHit:2 <http://ftp.us.debian.org/debian> stretch ReleaseHit:3 <http://security.debian.org/debian-security> stretch/updates InReleaseGet:4 <http://files.freeswitch.org/repo/deb/freeswitch-1.8> stretch InRelease \[3,196 B\]Ign:4 <http://files.freeswitch.org/repo/deb/freeswitch-1.8> stretch InReleaseGet:6 <http://files.freeswitch.org/repo/deb/freeswitch-1.8> stretch/main amd64 Packages \[2,605 B\]Fetched 5,801 B in 0s (8,115 B/s) Reading package lists... DoneW: GPG error: <http://files.freeswitch.org/repo/deb/freeswitch-1.8> stretch InRelease: 由于公钥不可用，无法验证以下签名：NO\_PUBKEY BD3189F5A2B57698W: 仓库'<http://files.freeswitch.org/repo/deb/freeswitch-1.8> stretch InRelease'未签名.N: 来自这样的仓库的数据不能被验证，因此有潜在的安全风险.N: 请参阅 apt-secure(8) 手册了解仓库的创建和用户配置详情。 ![](/images/icons/contenttypes/comment_16.png) aztrock 于 Sep 27, 2017 14:55 发布 |
+| 嗨，伙计们。如果你在Debian仓库中安装遇到问题, 像这样：root@debian9:\~# apt-get updateIgn:1 <http://mirror.neolabs.kz/debian> stretch InReleaseHit:2 <http://mirror.neolabs.kz/debian> stretch-updates InReleaseHit:3 <http://mirror.neolabs.kz/debian> stretch ReleaseHit:5 <http://security.debian.org/debian-security> stretch/updates InReleaseGet:6 <http://files.freeswitch.org/repo/deb/freeswitch-1.8> stretch InRelease \[3196 B\]Ign:6 <http://files.freeswitch.org/repo/deb/freeswitch-1.8> stretch InReleaseFetched 3196 B in 1s (2674 B/s)Reading package lists... DoneW: GPG error: <http://files.freeswitch.org/repo/deb/freeswitch-1.8> stretch InRelease: 由于公钥不可用，无法验证以下签名：5E098B3D18406E8E19543709BD3189F5A2B57698W: 仓库'<http://files.freeswitch.org/repo/deb/freeswitch-1.8> stretch InRelease'未签名.N: 来自这样的仓库的数据不能被验证，因此有潜在的安全风险.N: 请参阅 apt-secure(8) 手册了解仓库的创建和用户配置详情。 ![](/images/icons/contenttypes/comment_16.png) kvishnivetsky 于 Nov 23, 2017 12:10 发布                                                                                                 |
+| <https://freeswitch.org/jira/browse/FS-10863>暂时，你可以从源代码编译或者自行构建软件包。在释放版本出现之前，你需要自行确定依赖项。 ![](/images/icons/contenttypes/comment_16.png) boteman 于 Feb 01, 2018 01:48 发布                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 在将目标文件更新为当前版本的"libssl1.0.0\_1.0.1t-1+deb8u7\_amd64.deb"后，安装一个全新的Debian 9系统时，apt会报错提示以下软件包存在未满足的依赖关系：libssl1.0.0:amd64 : 依赖于 libc6:amd64 (>= 2.14)，但无法安装.E: 无法纠正问题，你有已损坏的软件包。我确实知道不会工作，但此举是为了暂时解决此问题。 ![](/images/icons/contenttypes/comment_16.png) boteman 于 Feb 03, 2018 21:55 发布                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| 如何在Debian 9上安装1.8版本：wget -qO - http://files.freeswitch.org/repo/deb/freeswitch-1.8/fsstretch-archive-keyring.gpg \| apt-key add - echo "deb http://files.freeswitch.org/repo/deb/freeswitch-1.8/ stretch main" > /etc/apt/sources.list.d/freeswitch.list apt update apt install freeswitch-meta-all freeswitch@freeswitch> version FreeSWITCH Version 1.8.1-2-4f54cff36a\~64bit (-2-4f54cff36a 64bit) ![](/images/icons/contenttypes/comment_16.png) alexey\_khabulyak 于 Sep 07, 2018 04:50 发布                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 我有一个关于g729的问题。在FS中使用mod\_g729是否需要付费？因为我看到G.729已过期，请参考：<https://www.mgraves.org/2017/03/its-official-the-patents-on-g-729-have-expired/> ![](/images/icons/contenttypes/comment_16.png) hpsony94 于 Sep 27, 2018 02:05 发布                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| 不需要付费，mod\_g729不需要付费... 但它只是一个透传编解码器... 你只能通过FreeSWITCH进行G729呼叫的透传，不能在你的终端上进行转码或者使用G729作为编解码器... 如果你需要或想要G729作为终端的编解码器，请购买商业模块"mod\_com\_g729"来实现... 你可以在这里购买... <https://freeswitch.com/index.php/modules-more/> ![](/images/icons/contenttypes/comment_16.png) joshebosh 于 Oct 12, 2018 11:58 发布                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 自从我切换到debian 9 + FS Version 1.8.2 -3-a98a958ac3 64bit后，我在通话处理场景中遇到核心转储问题。我需要启用调试符号，以便能够解释核心转储文件。然而：按照Debian包的稳定版安装程序进行安装并不会加载调试符号。按照源代码和编译的稳定版安装程序进行安装（我相信根据[调试器](../../../Troubleshooting-Debugging/Debugger_1048961.mdx#about--)指南，此操作应该会加载调试符号），结果是安装了FS Version 1.8.2 git a98a958。是否有简便的方法可以安装最新的稳定版本并启用调试符号？ ![](/images/icons/contenttypes/comment_16.png) julienT 于 Oct 31, 2018 06:52 发布                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 
+## Title: 使用机器翻译服务的机会
 
+|日期 |撰写人 |
+|----|------|
+|[to_be_replaced1]|Peter Smith|
+|[to_be_replaced2]|2023年3月15日|
+
+大家好！我想今天与你们讨论一下使用机器翻译服务的机会。随着全球化和技术进步的推动，越来越多的企业和个人需要处理不同语言的内容。在过去，翻译工作通常需要聘请人工翻译人员，这既费时又昂贵。然而，现在我们有了机器翻译技术，可以帮助我们更高效地处理语言障碍，节省成本和时间。
+
+机器翻译服务指的是通过使用计算机程序将一种语言的文本自动翻译为另一种语言。这种服务可以应用于各种场景，包括商务文件的翻译、在线内容的本地化和多语种客户支持等。使用机器翻译服务的好处是显而易见的。
+
+首先，机器翻译可以大大提高工作效率。由于翻译工作由计算机程序自动完成，它可以在短时间内处理大量的文本。这对于需要快速进行翻译的企业和个人来说非常有价值。
+
+其次，机器翻译可以降低成本。与聘请人工翻译人员相比，使用机器翻译服务的费用更低。这对于预算有限的企业和个人来说是一个重要的考虑因素。
+
+此外，机器翻译还可以提供一种快速而准确的翻译解决方案。虽然机器翻译可能无法达到人类翻译的完美程度，但它仍然可以提供一个良好的起点或基础。随后，人工翻译人员可以对机器翻译结果进行修改和润色，以确保最终的翻译质量。
+
+当然，机器翻译也有一些局限性。例如，它可能无法正确地理解一些特定的语言和文化背景。此外，机器翻译可能对某些领域的专业术语和特定的语言用法无法准确翻译。因此，在一些特殊情况下，仍然需要人工翻译人员的介入。
+
+总的来说，使用机器翻译服务可以为企业和个人带来许多机会。它可以提高工作效率，降低成本，并提供快速而准确的翻译解决方案。尽管它还存在一些局限性，但随着技术的进步，机器翻译的质量和准确性将不断提高。我们应该抓住这个机会，利用机器翻译服务来迎接全球化时代的挑战。
+
+谢谢大家！
+
+Peter Smith
+
+2023年3月15日

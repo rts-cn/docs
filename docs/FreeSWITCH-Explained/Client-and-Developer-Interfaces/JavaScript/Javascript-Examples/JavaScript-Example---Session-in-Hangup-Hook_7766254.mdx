@@ -1,46 +1,41 @@
+# JavaScript示例 - Hangup Hook中的会话
 
-# JavaScript Example - Session in Hangup Hook 
+## 关于
 
- 
+一个简单的示例，用于在从XML [呼叫计划](../../../Dialplan/index.mdx#0-about)调用JS时，在挂断后访问会话对象。更具体地说，我们捕获呼叫的时长，并将其保存在一个使用[ODBC](../../../Databases/ODBC-DSN/Using-ODBC-in-the-core_6586653.mdx)连接的MySQL数据库中。
 
-## About
+## 呼叫计划
 
-A simple example for accessing the session object after hangup when invoking the JS from the XML [dialplan](../../../Dialplan/index.mdx#0-about). More specifically, we're capturing the duration of the call and are saving it in a mySQL database with [ODBC](../../../Databases/ODBC-DSN/Using-ODBC-in-the-core_6586653.mdx).
+为了在挂断后仍然可以使用会话，必须设置[session\_in\_hangup\_hook](../../../Dialplan/Variables-Archive/x__Variables_6587314.mdx)。请参阅下面的内容，了解如何在XML呼叫计划中使用[api\_hangup\_hook](../../../Dialplan/Variables-Archive/x__Channel-Variables_1048892.mdx#--)在挂断后调用脚本。
 
-## Dialplan
-
-For the session to still be available after hangup, [session\_in\_hangup\_hook](../../../Dialplan/Variables-Archive/x__Variables_6587314.mdx) must be set. See below on how to invoke a script from the XML dialplan after hangup with [api\_hangup\_hook](../../../Dialplan/Variables-Archive/x__Channel-Variables_1048892.mdx#--).
-
-**Dialplan session\_in\_hangup\_hook / api\_hangup\_hook**
+**呼叫计划 session\_in\_hangup\_hook / api\_hangup\_hook**
 
 ```xml
 <action application="set" data="session_in_hangup_hook=true"/>
 <action application="bridge" data="{api_hangup_hook=jsapi::callDuration.js}sofia/internal/123"/>
 ```
 
-## Javascript
+## JavaScript
 
-This is the JavaScript file, which goes into the /scripts folder.
+这是JavaScript文件，放在/scripts文件夹中。
 
 **callDuration.js**
 
 ```js
-// Database access, requires ODBC, see https://freeswitch.org/confluence/display/FREESWITCH/Using+ODBC+in+the+core
+// 数据库访问，需要ODBC，请参考https://freeswitch.org/confluence/display/FREESWITCH/Using+ODBC+in+the+core
 use("ODBC");
- 
-// Connect to mySQL
+
+// 连接到MySQL
 var db = new ODBC("MySQL", "databaseUser", "databasePassword");
 db.connect();
 
-// Get and log all available session variables.
+// 获取并记录所有可用的会话变量。
 var env = request.dumpENV("text");
 console_log(env);
- 
-// Fetch call duration from request object.
-var duration = request.getHeader("billsec"); // This will work for any variable contained in the list logged above
 
-// Insert into DB.
-db.query("INSERT INTO myCallLog (duration) VALUES ('"+duration+"')";"); // Make sure you properly escape more complex values!
+// 从请求对象中提取呼叫时长。
+var duration = request.getHeader("billsec"); // 这适用于日志中记录的任何变量
+
+// 插入到数据库中。
+db.query("INSERT INTO myCallLog (duration) VALUES ('"+duration+"')";"); // 确保正确转义复杂的值！
 ```
-
-

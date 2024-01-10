@@ -1,52 +1,49 @@
-
-# mod_cdr_csv 
-
- 
+# mod_cdr_csv
 
 ---
 
-Table of Contents (click to expand)
+目录（点击展开）
 
-* 1 [0\. About](#0-about)
-* 2 [1\. Default configuration](#1-default-configuration)
-* 3 [2\. API commands](#2-api-commands)
+* 1 [0\. 关于](#0-关于)
+* 2 [1\. 默认配置](#1-默认配置)
+* 3 [2\. API 命令](#2-api-命令)
 * 4 [2\. XML](#2-xml)  
-   * 4.1 [2.1 Settings (&lt;settings>)](#21-settings-settings)
-* 5 [3\. FreeSWITCH variables in a template (&lt;template>)](#3-freeswitch-variables-in-a-template-template)  
-   * 5.1 [3.1 Some notable FreeSWITCH variables](#31-some-notable-freeswitch-variables)
-* 6 [4\. Generating SQL from template](#4-generating-sql-from-template-)
-* 7 [5\. Examples](#5-examples)  
-   * 7.1 [5.1 SQL Script to create MySQL CDR table for default "example" CDRs](#51-sql-script-to-create-mysql-cdr-table-for-default-example-cdrs-)  
-   * 7.2 [5.2 Perl Script for CDR into MySQL](#52-perl-script-for-cdr-into-mysql-)
+   * 4.1 [2.1 设置（&lt;settings>）](#21-设置-settings)
+* 5 [3\. FreeSWITCH 模板中的变量（&lt;template>）](#3-freeswitch-模板中的变量-template)  
+   * 5.1 [3.1 一些值得关注的 FreeSWITCH 变量](#31-一些值得关注的-freeswitch-变量)
+* 6 [4\. 从模板生成 SQL](#4-从模板生成-sql-)
+* 7 [5\. 示例](#5-示例)  
+   * 7.1 [5.1 用于默认 "example" CDR 的创建 MySQL CDR 表的 SQL 脚本](#51-用于默认-example-cdr-的创建-mysql-cdr-表的-sql-脚本)  
+   * 7.2 [5.2 将 CDR 导入 MySQL 的 Perl 脚本](#52-将-cdr-导入-mysql-的-perl-脚本)
 
 ---
 
-## 0\. About
+## 0\. 关于
 
-This module allows you to log call detail records (CDRs) to a text file using text generation templates. These templates along with the default configuration are stored in the file `<conf_dir>/autoload_configs/cdr_csv.conf.xml`.
+该模块允许您使用文本生成模板将通话详单记录（CDR）记录到文本文件中。这些模板以及默认配置存储在文件 `<conf_dir>/autoload_configs/cdr_csv.conf.xml` 中。
 
-Which template is used for the default is defined by the line below (which uses "example" in the default installation).
+要使用哪个模板作为默认模板，可以通过以下行进行定义（在默认安装中使用了 "example"）。
 
 ```xml
 <param name="default-template" value="example"/>
 ```
 
- Further down in the `cdr_csv.conf.xml` file, the "example" template is defined within the `<templates>`, `</templates>` opening and closing tags. Therefore to change what is being logged you may edit the example template or create a new template and update the `default-template` param to that template name.
+在 `cdr_csv.conf.xml` 文件的后面，"example" 模板在 `<templates>`、`</templates>` 开始和结束标签之间进行了定义。因此，要更改记录的内容，可以编辑示例模板或创建一个新的模板，并将 `default-template` 参数更新为该模板的名称。
 
-## 1\. Default configuration
+## 1\. 默认配置
 
 **&lt;conf\_dir>/autoload\_configs/cdr\_csv.conf.xml**
 
 ```xml
-<configuration name="cdr_csv.conf" description="CDR CSV Format">
+<configuration name="cdr_csv.conf" description="CDR CSV格式">
 <settings>
-  <!-- 'cdr-csv' will always be appended to log-base -->
+  <!-- 日志基础路径，'cdr-csv'将始终附加到log-base属性 -->
   <!--<param name="log-base" value="/var/log"/>-->
   <param name="default-template" value="example"/>
-  <!-- This is like the info app but after the call is hung up -->
+  <!-- 这与通话结束后的info应用程序相似 -->
   <!--<param name="debug" value="true"/>-->
   <param name="rotate-on-hup" value="true"/>
-  <!-- may be a b or ab -->
+  <!-- 可能是 'a' 或 'ab' -->
   <param name="legs" value="a"/>
 </settings>
 <templates>
@@ -59,27 +56,27 @@ Which template is used for the default is defined by the line below (which uses 
 </configuration>
 ```
 
-Useful things to know: 
+有用的注意事项：
 
-* You can change the `legs` value `a` for a-leg, `b` for b-leg and `ab` for both legs.
-* The template can be changed to include useful information such as `${remote_media_ip}` and `${network_addr}`
-* The template can be changed to include any custom variables you have set in the dialplan of the corresponding leg, with something like `{customer_name=whitehouse}sofia/gateway/foo/$1`. Then `${customer_name}` can be used in the CDR template.
-* If you log CDR for only one leg and you would like to include some data of the other leg, then u need to prefix `aleg_` or `bleg_` before the variable in the template
-* If you log b-leg then variables can be used directly for that leg such as `${caller_id_name}` and the a-leg variables need to be prefixed with `aleg_` and `bleg_` if you log a-leg calls
+* 您可以更改`legs`值，使用`a`表示a-leg，使用`b`表示b-leg，使用`ab`表示两个legs。
+* 模板可以更改以包括有用的信息，比如`${remote_media_ip}`和`${network_addr}`。
+* 模板可以更改以包括您在相应leg的拨号计划中设置的自定义变量，比如`{customer_name=whitehouse}sofia/gateway/foo/$1`。然后`${customer_name}`可以在CDR模板中使用。
+* 如果您仅记录一个leg的CDR，并且希望包括另一个leg的一些数据，则在模板中的变量前面加上`aleg_`或`bleg_`。
+* 如果您记录b-leg，则可以直接使用b-leg的变量，比如`${caller_id_name}`，如果记录a-leg呼叫，则需要在变量前加上`aleg_`和`bleg_`。
 
-## 2\. API commands
+## 2\. API 命令
 
-To rotate CDRs without HUPing (i.e., shutting down) the entire FreeSWITCH instance (if `rotate-on-hup` is set, that is, see below).
+要在不停止整个FreeSWITCH实例（如果设置了`rotate-on-hup`）的情况下轮转CDR。
 
-**In fs\_cli**
+**在fs\_cli中**
 
 ```xml
 cdr_csv rotate
 ```
 
-Or, from the system terminal:
+或者，在系统终端中：
 
-**On the system terminal**
+**在系统终端中**
 
 ```xml
 fs_cli -x 'cdr_csv rotate'
@@ -87,75 +84,75 @@ fs_cli -x 'cdr_csv rotate'
 
 ## 2\. XML
 
-### 2.1 Settings (`<settings>`)
+### 2.1 设置 (`<settings>`)
 
-The following parameters (self-closing `<param>` tags in `<settings>`) can be set under the `<settings>` tag in your `<conf_dir>/autoload_configs/cdr_csv.conf.xml` file.
+以下参数（在`<settings>`标签下的自关闭`<param>`标记中）可以在您的`<conf_dir>/autoload_configs/cdr_csv.conf.xml`文件的`<settings>`标记下进行设置。
 
 ```xml
 <settings>
-  <param name="PARAM-NAME-HERE" value="VALUE"/>
-  <!-- PARAM-NAME-HERE = debug, default-template, legs, etc. -->
+  <param name="参数名称" value="值"/>
+  <!-- 参数名称 = debug, default-template, legs, 等等 -->
 
-  <!-- param 2 -->
+  <!-- 参数2 -->
   <!-- ...     -->
-  <!-- param N -->
+  <!-- 参数N -->
 </settings>
 ```
 
 #### `debug`
 
-When set to true, this prints out all channel data in your log when creating a new CDR record is generated.
+当设置为true时，在创建新的CDR记录时会将所有通道数据打印到日志中。
 
-* Possible values: `true`, `false`
-* Default value: `false`
+* 可能的值：`true`，`false`
+* 默认值：`false`
 
 #### `default-template`
 
-The name of a template as defined in the `<templates>` section of your `<conf_dir>/autoload_configs/cdr_csv.conf.xml`.
+在`<conf_dir>/autoload_configs/cdr_csv.conf.xml`文件的`<templates>`部分定义的模板的名称。
 
-* Default value: `default`
+* 默认值: `default`
 
 #### `legs`
 
-Choose whether the module will save CDRs for the a or b leg, or both of them.
+选择模块是否保存a或b的CDR，或者两者都保存。
 
-* Possible values: `a`, `b`, `ab`
-* Default value: `a`
+* 可能的值: `a`, `b`, `ab`
+* 默认值: `a`
 
 #### `log-base`
 
-The directory where the CSV files will be written to.
+CSV文件将被写入的目录。
 
-* Default value: &lt;`root-of-your-freeswitch-installation>/log/cdr-csv` (or `/var/log/freeswitch/`)
-* The value can be overridden by `cdr_csv_base` channel variable.
+* 默认值: &lt;`freeswitch安装目录>/log/cdr-csv` (或者 `/var/log/freeswitch/`)
+* `cdr_csv_base`通道变量可以重写该值。
 
 #### `master-file-only`
 
-When enabled, all CDRs will be written to a single file instead of to multiple files split up per `accountcode`.
+启用后，所有的CDR将被写入单个文件，而不是按`accountcode`分割为多个文件。
 
-* Possible values: `true`, `false`
-* Default value: `false`
+* 可能的值: `true`, `false`
+* 默认值: `false`
 
 #### `rotate-on-hup`
 
-When enabled, after sending a HUP signal to FreeSWITCH (i.e., when the FreeSWITCH server is stopped), the logfile will be rotated to a format like this:
+启用后，发送HUP信号给FreeSWITCH后（即FreeSWITCH服务器停止时），日志文件将被旋转为以下格式：
 
 `Master.csv.YYYY-mm-dd-HH-MM-SS`
 
-* Possible values: `true`, `false`
-* Default value: TODO What is the default?
+* 可能的值: `true`, `false`
+* 默认值: TODO 默认是什么？
 
-## 3\. FreeSWITCH variables in a template (`<template>`)
+## 3\. 模板中的FreeSWITCH变量(`<template>`)
 
-FreeSWITCH variables are given in the form `${varname}`. For an overview of variables, check [Channel Variables](http://wiki.freeswitch.org/wiki/Channel%5FVariables "Channel Variables"). You can specify any channel variable.
+FreeSWITCH变量以`${varname}`的形式给出。有关变量的详细信息，请查看[Channel Variables](http://wiki.freeswitch.org/wiki/Channel%5FVariables "Channel Variables")。您可以指定任何通道变量。
 
-API calls can also be specified in variables, such as:
+还可以在变量中指定API调用，例如：
 
 ```xml
 <template name="custom_timestamp">"${expr(${end_epoch}-${my_timestamp})}"</template>
 ```
 
-For example, the first line below shows the definition of the default `example` template, and the second one is the output after a successful call:
+例如，下面的第一行显示了默认`example`模板的定义，第二行是成功调用后的输出：
 
 ```xml
 <template name="example">
@@ -175,95 +172,93 @@ For example, the first line below shows the definition of the default `example` 
 
 ```
 
-### 3.1 Some notable FreeSWITCH variables
+### 3.1 一些值得注意的FreeSWITCH变量
 
-Read about [Variables](../Introduction/Variables/index.mdx#0-about), and see the full list in [Channel Variables](../Dialplan/Channel-Variables_16352493.mdx#about).
+阅读关于[变量](../Introduction/Variables/index.mdx#0-about)的内容，并在[通道变量](../Dialplan/Channel-Variables_16352493.mdx#about)中查看完整列表。
 
 #### `accountcode`
 
-An arbitrary value given at whim. Useful for billing and segregating calls by account. This is the `accountcode` of the aleg.
+任意值，根据需要给出的值。用于计费和按账号分隔呼叫。这是呼叫的主要`accountcode`。
 
-If the value of the [accountcode variable](../Introduction/Variables/index.mdx#0-about) matches the name of a template then that template will be used. This is valuable for having a specific template be used on a per-call basis.
+如果[accountcode变量](../Introduction/Variables/index.mdx#0-about)的值与模板的名称匹配，则将使用该模板。这对于每个呼叫使用特定模板非常有价值。
 
 #### `amaflags`
 
-Automatic Message Accounting, an archaic system that "flags" CDR for post-processing. Commonly used flags are `billing`, `default`, `documentation`, `omit`.
+自动消息计费（AMA），一个过时的系统，用于对呼叫数据记录进行"标记"以供后处理。常用的标记包括`billing`, `default`, `documentation`, `omit`。
 
 #### `answer_epoch`
 
-UNIX [epoch](http://en.wikipedia.org/wiki/Unix%5Fepoch) value when the call was answered, eg. 1294060468 for Mon, 03 Jan 2011 13:14:28 GMT.
+呼叫被接听时的UNIX [epoch](http://en.wikipedia.org/wiki/Unix%5Fepoch)值，例如：1294060468 对应于 GMT 时间 2011-01-03 13:14:28。
 
 #### `answer_stamp`
 
-Timestamp when the call was answered (eg, SIP 200 OK is received), in ISO 8601 format (YYYY-MM-DD hh:mm:ss), in the local timezone (not UTC). If the call is not answered, this will be an empty string.
-
 #### `billsec`
 
-The answered or billing span of the calls in seconds, i.e. "end\_stamp - answer\_stamp". Should only be > 0 in calls where HANGUP\_CAUSE == NORMAL\_CLEARING (16).
+被接听或计费时长，以秒为单位，即“end_stamp - answer_stamp”。只有在HANGUP_CAUSE == NORMAL_CLEARING（16）的呼叫中才需要大于0。
 
 #### `bleg_uuid`
 
-The [UUID](http://wiki.freeswitch.org/wiki/Mod%5Fcdr%5Fcsv#uuid) of the bleg, i.e. the called party or terminating end.
+被呼叫方或终止方的UUID。
 
 #### `bleg_uuidaccountcode`
 
-The `accountcode` of the `bleg_uuid` in the call.
+呼叫中的`bleg_uuid`的`accountcode`。
 
 #### `bridge_channel`
 
-The channel name of the bleg that the aleg was bridged to. e.g. `sofia/out/+919814440333@222.199.89.27`
+aleg被桥接到的bleg的通道名称。例如：`sofia/out/+919814440333@222.199.89.27`
 
 #### `channel_name`
 
-This is the `channel_name` of the A-leg originating end. In this case its `sofia/in/2185738219@89.212.283.238:5060`
+这是A-leg发起端的`channel_name`。在本例中为`sofia/in/2185738219@89.212.283.238:5060`
 
 #### `context`
 
-The context where the call first entered the dialplan, in this case `default.`
+此呼叫首次进入的拨号计划上下文， 在此情况下为`default`。
 
 #### `destination_number`
 
-This is the number (rather, extension) specified by the A-leg. The dialplan can perform any mutation on this number before its actually dialed out (in the case above a + is added).
+这是A-leg指定的号码（或扩展名）。拨号计划可以在实际拨出之前对该号码进行任何修改（如上述情况添加了`+`）。
 
 #### `duration`
 
-The entire duration of the call, end to end in seconds, i.e. "start\_stamp - end\_stamp". Duration should always be >= billsec.
+呼叫的整个持续时间，从开始到结束，以秒为单位，即“start\_stamp - end\_stamp”。持续时间应始终 >= billsec。
 
 #### `end_epoch`
 
-UNIX [epoch](http://en.wikipedia.org/wiki/Unix%5Fepoch) value when the call ended, eg. 1294060468 for Mon, 03 Jan 2011 13:14:28 GMT.
+呼叫结束时的UNIX纪元时间值，例如，对于GMT时间的Mon, 03 Jan 2011 13:14:28，其值为1294060468。
 
 #### `end_stamp`
 
-Timestamp when the call was hung up, in ISO 8601 format (YYYY-MM-DD hh:mm:ss), in the local timezone (not UTC).
+呼叫挂断时的时间戳，以ISO 8601格式（YYYY-MM-DD hh:mm:ss）表示，根据本地时区而非UTC表示。
 
 #### `hangup_cause`
 
-See [Hangup Causes](http://wiki.freeswitch.org/wiki/Hangup%5FCauses "Hangup Causes")
+参见[挂断原因](http://wiki.freeswitch.org/wiki/Hangup%5FCauses "挂断原因")
 
 #### `last_app`
 
-The last application run by the call; for example, `bridge` .
+呼叫执行的最后一个应用程序，例如`bridge`。
 
 #### `last_arg`
 
-The arguments passed to the last\_app, i.e. _sofia/out/+919814440203@222.199.89.27_
+最后一个应用程序传递的参数，即_sofia/out/+919814440203@222.199.89.27_
 
 #### `sip_gateway_name`
 
-See [How does FreeSWITCH CDR determine which gateway was used in failover?](http://lists.freeswitch.org/pipermail/freeswitch-users/2010-April/057411.html)
+请参阅[FreeSWITCH CDR如何确定故障转移中使用的网关？](http://lists.freeswitch.org/pipermail/freeswitch-users/2010-April/057411.html)
 
 #### `start_epoch`
 
-UNIX [epoch](http://en.wikipedia.org/wiki/Unix%5Fepoch) value when the call was started, eg. 1294060468 for Mon, 03 Jan 2011 13:14:28 GMT.
+通话开始时的UNIX [纪元](http://en.wikipedia.org/wiki/Unix%5Fepoch)值，例如 1294060468 对应于 2011年1月3日 13:14:28 GMT。
 
 #### `start_stamp`
 
-Timestamp when the call was started, in ISO 8601 format (YYYY-MM-DD hh:mm:ss), in the local timezone (not UTC).
+通话开始的时间戳，以ISO 8601格式（YYYY-MM-DD hh:mm:ss）表示，使用本地时区（非UTC）。
 
 #### `userfield`
 
-A field to set your own custom values. For example:
+用于设置自定义值的字段。例如：
 
 ```xml
 <action application="set" data="userfield=${network_addr}"/>
@@ -271,86 +266,86 @@ A field to set your own custom values. For example:
 
 #### `uuid`
 
-A unique identifier for the call. A UUID is a block of 16 bytes [ref](http://docs.freeswitch.org/structswitch%5F%5Fuuid%5F%5Ft.html). This is the UUID of the aleg of the call, i.e. the calling party or origination end. According to [ref](http://docs.freeswitch.org/group%5F%5Fswitch%5F%5F%5Fu%5Fu%5Fi%5Fd.html#ga3) UUIDs are formatted as: `00112233-4455-6677-8899-AABBCCDDEEFF`
+通话的唯一标识符。UUID是一个由16个字节组成的块[参考](http://docs.freeswitch.org/structswitch%5F%5Fuuid%5F%5Ft.html)。这是通话的发起方或源端的UUID。根据[参考](http://docs.freeswitch.org/group%5F%5Fswitch%5F%5F%5Fu%5Fu%5Fi%5Fd.html#ga3)，UUID的格式如下：`00112233-4455-6677-8899-AABBCCDDEEFF`
 
-## 4\. Generating SQL from template 
+## 4\. 从模板生成SQL
 
-Some strings may contain characters that need escaping to generate a valid SQL statement. These include characters such as ', " and many non-printable characters. The API call `sql_escape` can be used to escape these variables to generate valid SQL.
+有些字符串可能包含需要转义才能生成有效SQL语句的字符。这些字符包括例如 '、" 和许多不可打印字符。API调用`sql_escape`可用于转义这些变量以生成有效SQL。
 
-For example:
+例如：
 
 ```xml
 <template name="sql">INSERT INTO cdr (caller_id, ...) VALUES ('${sql_escape(${caller_id_name})}', ...);</template>
 ```
 
-## 5\. Examples
+## 5\. 示例
 
-### 5.1 SQL Script to create MySQL CDR table for default "example" CDRs 
+### 5.1 创建MySQL CDR表的SQL脚本，用于默认的 "example" CDRs
 
-To confirm that the `mod_cdr_csv` is set for the "sql" template, check the file `<conf_dir>/autoload_configs/cdr_csv.conf.xml`.
+要确认"sql"模板是否设置为`mod_cdr_csv`，请检查文件`<conf_dir>/autoload_configs/cdr_csv.conf.xml`。
 
-The default is the example template. If that is indeed the case, the script below is just what you will need to create a the cdr table.
+默认是示例模板。如果确实是这种情况，下面的脚本就是您需要创建CDR表的内容。
 
-**MySQL schema**
-
-```xml
- CREATE TABLE cdr (
-   caller_id_name varchar(30) DEFAULT NULL,
-   caller_id_number varchar(30) DEFAULT NULL,
-   destination_number varchar(30) DEFAULT NULL,
-   context varchar(20) DEFAULT NULL,
-   start_stamp datetime DEFAULT NULL,
-   answer_stamp datetime DEFAULT NULL,
-   end_stamp datetime DEFAULT NULL,
-   duration int(11) DEFAULT NULL,
-   billsec int(11) DEFAULT NULL,
-   hangup_cause varchar(50) DEFAULT NULL,
-   uuid varchar(100) DEFAULT NULL,
-   bleg_uuid varchar(100) DEFAULT NULL,
-   accountcode varchar(10) DEFAULT NULL,
-   domain_name varchar(100) DEFAULT NULL
- ); 
-```
-
-For PostgreSQL
-
-**PostgreSQL schema**
+**MySQL架构**
 
 ```xml
- CREATE TABLE cdr (
-   caller_id_name character varying(30),
-   caller_id_number character varying(30),
-   destination_number character varying(30),
-   context character varying(20),
-   start_stamp timestamp without time zone,
-   answer_stamp timestamp without time zone,
-   end_stamp timestamp without time zone,
-   duration integer,
-   billsec integer,
-   hangup_cause character varying(50),
-   uuid uuid,
-   bleg_uuid uuid,
-   accountcode character varying(10),
-   read_codec character varying(20),
-   write_codec character varying(20)
- ); 
+CREATE TABLE cdr (
+  caller_id_name varchar(30) DEFAULT NULL,
+  caller_id_number varchar(30) DEFAULT NULL,
+  destination_number varchar(30) DEFAULT NULL,
+  context varchar(20) DEFAULT NULL,
+  start_stamp datetime DEFAULT NULL,
+  answer_stamp datetime DEFAULT NULL,
+  end_stamp datetime DEFAULT NULL,
+  duration int(11) DEFAULT NULL,
+  billsec int(11) DEFAULT NULL,
+  hangup_cause varchar(50) DEFAULT NULL,
+  uuid varchar(100) DEFAULT NULL,
+  bleg_uuid varchar(100) DEFAULT NULL,
+  accountcode varchar(10) DEFAULT NULL,
+  domain_name varchar(100) DEFAULT NULL
+); 
 ```
 
-### 5.2 Perl Script for CDR into MySQL 
+对于PostgreSQL
 
-TODO Someone with a little knowledge of Perl could probably fix up all the `system()` and other hacks and lack of error checking...
+**PostgreSQL架构**
 
-Ensure the following line is uncommented in [cdr\_csv.conf.xml](../Configuration/CDR/index.mdx#about)
+```xml
+CREATE TABLE cdr (
+  caller_id_name character varying(30),
+  caller_id_number character varying(30),
+  destination_number character varying(30),
+  context character varying(20),
+  start_stamp timestamp without time zone,
+  answer_stamp timestamp without time zone,
+  end_stamp timestamp without time zone,
+  duration integer,
+  billsec integer,
+  hangup_cause character varying(50),
+  uuid uuid,
+  bleg_uuid uuid,
+  accountcode character varying(10),
+  read_codec character varying(20),
+  write_codec character varying(20)
+); 
+```
+
+### 5.2 用于将CDR导入MySQL的Perl脚本
+
+TODO 稍懂Perl的人可能可以修正所有的`system()`等，以及缺乏错误检查...
+
+确保在[cdr\_csv.conf.xml](../Configuration/CDR/index.mdx#about)中取消注释以下行：
 
 ```xml
 <param name="rotate-on-hup" value="true"/>
 ```
 
-What this does is to allow the `Master.csv` and other CDR files to be rotated via the same method as used by the [mod\_logfile](./mod_logfile_1048990.mdx#about) method. The script below uses one of these methods to rotate the log file and load the file into a database. (The naming format for the rotated files is from e.g. `Master.csv` to `Master.csv.yyyy-mm-dd-hh-mm-ss`)
+这个脚本的作用是允许通过与[mod_logfile](./mod_logfile_1048990.mdx#about)方法相同的方式来旋转`Master.csv`和其他CDR文件。下面的脚本使用其中一种方法来旋转日志文件并将文件加载到数据库中。（旋转后的文件命名格式是从`Master.csv`变成了`Master.csv.yyyy-mm-dd-hh-mm-ss`）
 
-Create the script using the code below, and run through cron every minute if you like.
+使用下面的代码创建脚本，如果需要，可以通过cron每分钟运行一次。
 
-**Example Perl script**
+**Perl脚本示例**
 
 ```perl
 #!/usr/bin/perl -w
@@ -366,13 +361,13 @@ use strict;
 use DBI();
 use File::Copy;
 
-# this command sends -SIGHUP to fs, she creates new cdr.csv files, so we can load the old ones up
+# 使用此命令给FS发送-SIGHUP信号，她会创建新的cdr.csv文件，这样我们就可以加载旧的文件
 my @cc  = ("killall", "-HUP", "freeswitch");
 system(@cc) == 0 or die "$0: system @cc failed: $?";
 
 my $dbh = DBI->connect("DBI:mysql:database=freeswitch;host=localhost","fsdbuser","fsdbpass") or die "$0: Couldn't connect to database: " . DBI->errstr;
 
-# this is the standard location of the cdr-csv
+# 这是cdr-csv的标准位置
 my @LS  = `ls -1t /usr/local/freeswitch/log/cdr-csv/Master.csv.*`;
 foreach my $line (@LS) {
     chop($line);
@@ -380,27 +375,18 @@ foreach my $line (@LS) {
     my $ul      = $dbh->prepare($stm) or die "$0: Couldn't prepare statement $stm: " . $dbh->errstr;;
     $ul->execute();
     $ul->finish;
-    system("cat $line >> /usr/local/freeswitch/log/cdr-csv/FULL_Master.csv"); # we do this to maintain a single FULL file if needed
+    system("cat $line >> /usr/local/freeswitch/log/cdr-csv/FULL_Master.csv"); # 我们这样做是为了保持一个单一的完整文件（如果需要）
     unlink $line;
 }
 
-# one silly thing is that each accountcode has its own cdr.csv as well, either handle those here, by loading them into their own tables, or rm them
-my @BS  = ("xtec","megaphone","mafcom","xeivacom");
-foreach my $code (@BS) {
-   @LS = `ls -1t /usr/local/freeswitch/log/cdr-csv/$code.csv.*`;
-   foreach my $line (@LS) {
-       chop($line);
-       #unlink($line);  #to delete
-       move($line, "/usr/local/freeswitch/log/cdr-csv/trash/$code/"); # or move into a separate dir for later procession
-   }
-}
-exit 0;
- 
-```
+一个愚蠢的事情是，每个`accountcode`都有自己的`cdr.csv`文件，可以在这里处理它们，将它们加载到各自的表中，或者将它们删除。
 
-## Comments:
+我的`@BS`数组包含了一些值（"xtec","megaphone","mafcom","xeivacom"）。
+对于`@BS`数组中的每个元素，在`/usr/local/freeswitch/log/cdr-csv/$code.csv.*`路径下列出文件，保存在`@LS`数组中。
+对于`@LS`数组中的每个元素，处理文件路径，可以选择删除或者移动到`/usr/local/freeswitch/log/cdr-csv/trash/$code/`目录中进行后续处理。
 
-| /usr/local/freeswitch/conf/autoload\_configs/cdr\_csv.conf.xmlWhen I had modifed this config file, the only way to reload this file,just "**reload mod\_cdr\_csv**", what reload the mod\_cdr\_csv module, can work well. Has other command can reload the cdr\_csv.conf.xml ?Thanks ![](/images/icons/contenttypes/comment_16.png) Posted by livem at Feb 24, 2017 04:22 |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+最后退出脚本。
 
+## 注释：
 
+当我修改了`/usr/local/freeswitch/conf/autoload_configs/cdr_csv.conf.xml`这个配置文件时，唯一重新加载的方法就是使用`reload mod_cdr_csv`命令，这可以重新加载`mod_cdr_csv`模块，使其起作用。有其他命令可以重新加载`cdr_csv.conf.xml`吗？谢谢！

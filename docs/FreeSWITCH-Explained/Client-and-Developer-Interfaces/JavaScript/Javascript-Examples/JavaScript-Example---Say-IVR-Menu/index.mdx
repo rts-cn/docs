@@ -1,188 +1,319 @@
+# JavaScript示例 - 说IVR菜单
 
-# JavaScript Example - Say IVR Menu 
+## 关于
 
- 
+使用“sayphrase”来说IVR菜单并收集一个DTMF数字。
 
-## About
+点击此处展开目录
 
-Uses "sayphrase" to speak IVR menu and collect a single DTMF digit. 
+* 1 [需求](#requirements)
+* 2 [IVR菜单代码](#ivr-menu-code)
+* 3 [菜单文本](#menu-text)
 
-Click here to expand Table of Contents
+## 需求
 
-* 1 [Requirements](#requirements)
-* 2 [IVR Menu Code](#ivr-menu-code)
-* 3 [Menu Text](#menu-text)
-
-## Requirements
-
-To use the "say" TTS feature of FreeSWITCH™ you must load the Speech Phrase Management module for the appropriate language. By default, the English module is uncommented in conf/autoload\_configs/modules.conf.xml
+要使用FreeSWITCH™的“say” TTS功能，您必须加载适合语言的语音短语管理模块。默认情况下，英文模块在conf/autoload_configs/modules.conf.xml中是未注释的。
 
 &lt;load module="mod_say_en"/>
 
-## IVR Menu Code
+## IVR菜单代码
 
-**IVR menu code example**
+**IVR菜单代码示例**
 
 ```js
 /** 
-   ivrmenu.js - Simple IVR Menu 
-   JavaScript Application for FreeSwitch::mod_spidermonkey.
-   by Michael Murdock 
-   
-   This file includes work ripped off from other JavaScript apps created by pist and anthm @ #freeswitch.
-           
-   Install:  copy this file to your <freeswitch dir>/scripts/
-           Add the following section to your default_dialplan.conf.xml around the extension 1000 section.
-           --------
-           <extension name="1200">
-           <condition field="destination_number" expression="^1200$">
-             <action application="javascript" data="ivrmenu.js"/>
-           </condition>
-         </extension> 
-           --------
-           Dial 1200 from your sip phone and voila!  Ofcourse you can match for inbound DID/DNIS, and run this app.
-           
-   Disclaimer: Use at your own risk.  No implied warranties or help if/when stuff blows up.
-   **/
-   
-   var dtmf_digits = "";
-   
-   function on_dtmf(session, type, digits, arg)
-   {
-       console_log("digit: " + digits.digit + "\n");
-       dtmf_digits += digits.digit;
-   
-       return(false);
-   }
-   
-   /* Speaks a menu and waits for a single digit press. If the user does not enter a selection */
-   /* then the menu is repeated up to 3 times. */
-   function sayivrmenu(ivrsession, menuname, validdigits, timeout) {
-       var repeat = 0;
-   
-       console_log("sayivrmenu: menu=[" + menuname + "] validdigits=[" + validdigits + "]\n");
-   
-       session.flushDigits();
-       dtmf_digits = "";
-   
-       while (ivrsession.ready() && dtmf_digits == "" && repeat < 3) {
-           /* play phrase - if digit keyed while playing callback will catch them*/
-           ivrsession.sayPhrase(menuname, validdigits, "en", on_dtmf, "");
-   
-           /* if caller still here and has not entered any selection yet - wait for a selection*/
-           if (ivrsession.ready() && dtmf_digits == "") {
-               dtmf_digits = ivrsession.getDigits(1, "", timeout);
-               /* if still no selection repeat menu */
-               if (dtmf_digits == "") {
-                   repeat++;
-               }
-           }
-       }
-       return(dtmf_digits);
-   }
-   
-   
-   var menuselection = "";
-   
-   /** Let's answer our call **/
-   session.answer();
-   
-   /** Play our Main Menu prompt (options 0, 1, 2, 3 and #) **/
-   menuselection = sayivrmenu(session, "mainmenu", "0123#", 6000);
-   
-   if (session.ready()) {
-       session.execute("phrase", "saydigits," + menuselection);
-   }
+    ivrmenu.js - 简单的IVR菜单
+    适用于FreeSwitch::mod_spidermonkey的JavaScript应用程序。
+    作者：Michael Murdock 
+    
+    该文件包含了从 other JavaScript apps 代码中偷取而来的内容，这些代码是由 #freeswitch 社区的 pist 和 anthm 创建的。
+ 
+    安装：将该文件复制到您的<freeswitch dir>/scripts/目录下
+        在default_dialplan.conf.xml文件中在编号为1000的拨号方案段落周围添加以下部分：
+        --------
+        <extension name="1200">
+        <condition field="destination_number" expression="^1200$">
+            <action application="javascript" data="ivrmenu.js"/>
+        </condition>
+        </extension> 
+        ---------
+        从您的SIP电话拨打1200，完成！当然，您也可以匹配入站DID/DNIS并运行该应用。
+        
+    声明：使用需自行承担风险。一旦出现问题，概不提供默示的担保或帮助。
+
+    **/
+
+    var dtmf_digits = "";
+
+    function on_dtmf(session, type, digits, arg)
+    {
+        console_log("按键：" + digits.digit + "\n");
+        dtmf_digits += digits.digit;
+
+        return(false);
+    }
+
+    /* 播放菜单并等待单个数字按键。如果用户未输入选择，则最多重复播放菜单3次。 */
+    function sayivrmenu(ivrsession, menuname, validdigits, timeout) {
+        var repeat = 0;
+
+        console_log("sayivrmenu：menu=[" + menuname + "] validdigits=[" + validdigits + "]\n");
+
+        session.flushDigits();
+        dtmf_digits = "";
+
+        while (ivrsession.ready() && dtmf_digits == "" && repeat < 3) {
+            /* 播放提示音 - 如果在播放过程中按键，则回调函数将捕捉到按键 */
+            ivrsession.sayPhrase(menuname, validdigits, "en", on_dtmf, "");
+
+            /* 如果呼叫者仍在此处且尚未输入任何选择 - 等待选择 */
+            if (ivrsession.ready() && dtmf_digits == "") {
+                dtmf_digits = ivrsession.getDigits(1, "", timeout);
+                /* 如果仍未选择菜单，则重复播放菜单 */
+                if (dtmf_digits == "") {
+                    repeat++;
+                }
+            }
+        }
+        return(dtmf_digits);
+    }
+
+
+    var menuselection = "";
+
+    /** 开始接听电话 **/
+    session.answer();
+
+    /** 播放我们的主菜单提示音（选项有0、1、2、3和#） **/
+    menuselection = sayivrmenu(session, "mainmenu", "0123#", 6000);
+
+    if (session.ready()) {
+        session.execute("phrase", "saydigits," + menuselection);
+    }
 ```
 
-## Menu Text
+## 菜单文字
 
-The above script will play the Phrase [Macro](../../../../Modules/mod-dptools/6586692.mdx#0-about) "mainmenu" below. Depending upon the digits passed to sayivrmenu (0123# in the example) only the specified options will be played.
+上述脚本将播放下面的[Macro](../../../../Modules/mod-dptools/6586692.mdx#0-about)短语"mainmenu"。根据传递给sayivrmenu的数字（在示例中为0123#），只播放指定的选项。
 
-**mainmenu phrases**
+**mainmenu短语**
 
 ```xml
-   <macro name="mainmenu">
-       <input pattern="0">
-           <match>
-               <action function="speak-text" data="Press 0 for the Operator."/>
-           </match>
-       </input>
-   
-       <input pattern="1">
-           <match>
-               <action function="speak-text" data="Press 1 for Accounting."/>
-           </match>
-       </input>
-   
-       <input pattern="2">
-           <match>
-               <action function="speak-text" data="Press 2 for Sales."/>
-           </match>
-       </input>
-   
-       <input pattern="3">
-           <match>
-               <action function="speak-text" data="Press 3 for Support."/>
-           </match>
-       </input>
-   
-       <input pattern="4">
-           <match>
-               <action function="speak-text" data="Press 4 for The Janitor."/>
-           </match>
-       </input>
-   
-       <input pattern="5">
-           <match>
-               <action function="speak-text" data="Press 5 for The Smoking Lounge."/>
-           </match>
-       </input>
-   
-       <input pattern="6">
-           <match>
-               <action function="speak-text" data="Press 6 for the men's bathroom."/>
-           </match>
-       </input>
-   
-       <input pattern="7">
-           <match>
-               <action function="speak-text" data="Press 7 for the women's powder room."/>
-           </match>
-       </input>
-   
-       <input pattern="8">
-           <match>
-               <action function="speak-text" data="Press 8 for no special reason."/>
-           </match>
-       </input>
-   
-       <input pattern="9">
-           <match>
-               <action function="speak-text" data="Press 9 for a good time."/>
-           </match>
-       </input>
-   
-       <input pattern="\*">
-           <match>
-               <action function="speak-text" data="Press star for good luck."/>
-           </match>
-       </input>
-   
-       <input pattern="\#">
-           <match>
-               <action function="speak-text" data="Press pound for psychological counseling."/>
-           </match>
-       </input>
-   </macro>
-   
-   <macro name="saydigits">
-       <input pattern="(.*)">
-           <match>
-               <action function="speak-text" data="You pressed $1"/>
-           </match>
-       </input>
-   </macro>
+<macro name="mainmenu">
+   <input pattern="0">
+       <match>
+           <action function="speak-text" data="按0联系操作员。"/>
+       </match>
+   </input>
+
+   <input pattern="1">
+       <match>
+           <action function="speak-text" data="按1联系会计部门。"/>
+       </match>
+   </input>
+
+   <input pattern="2">
+       <match>
+           <action function="speak-text" data="按2联系销售部门。"/>
+       </match>
+   </input>
+
+   <input pattern="3">
+       <match>
+           <action function="speak-text" data="按3联系技术支持。"/>
+       </match>
+   </input>
+
+   <input pattern="4">
+       <match>
+           <action function="speak-text" data="按4联系清洁工。"/>
+       </match>
+   </input>
+
+   <input pattern="5">
+       <match>
+           <action function="speak-text" data="按5联系吸烟休息区。"/>
+       </match>
+   </input>
+
+   <input pattern="6">
+       <match>
+           <action function="speak-text" data="按6进入男洗手间。"/>
+       </match>
+   </input>
+
+   <input pattern="7">
+       <match>
+           <action function="speak-text" data="按7进入女洗手间。"/>
+       </match>
+   </input>
+
+   <input pattern="8">
+       <match>
+           <action function="speak-text" data="按8，无特别原因。"/>
+       </match>
+   </input>
+
+   <input pattern="9">
+       <match>
+           <action function="speak-text" data="按9，愉快时光。"/>
+       </match>
+   </input>
+
+   <input pattern="*">
+       <match>
+           <action function="speak-text" data="按星号，带来好运。"/>
+       </match>
+   </input>
+
+   <input pattern="#">
+       <match>
+           <action function="speak-text" data="按井号，获取心理咨询。"/>
+       </match>
+   </input>
+</macro>
+
+<macro name="saydigits">
+   <input pattern="(.*)">
+       <match>
+           <action function="speak-text" data="您按下了$1"/>
+       </match>
+   </input>
+</macro>
 ```
 
+# Title: 使用机器学习进行文本分类
 
+***
+
+
+
+## 概述
+
+在这个项目中，我们将使用机器学习来进行文本分类任务。文本分类是将文本数据分组到预定义类别中的任务。
+
+我们将通过使用Python中的`scikit-learn`库和一个经典数据集来执行文本分类。`scikit-learn`是一个功能强大且易于使用的Python机器学习库，包含了各种机器学习算法和工具。
+
+为了进行文本分类，我们需要进行以下步骤：
+
+- 加载数据集
+- 数据预处理
+- 特征提取
+- 模型训练
+- 模型评估
+
+让我们开始吧！
+
+## 步骤 1：加载数据集
+
+首先，我们需要加载我们的数据集。在这个项目中，我们将使用一个名为**20 Newsgroups**的经典数据集。该数据集包含大约20,000个帖子，分为20个不同的类别。每个帖子都属于一个特定的类别，如体育、科学、政治等。
+
+为了方便起见，`scikit-learn`库提供了一个简单的函数，可以直接从互联网下载和加载这个数据集。我们将使用这个函数来加载数据集。
+
+```python
+from sklearn.datasets import fetch_20newsgroups
+
+# 加载数据集
+data = fetch_20newsgroups(subset='all', shuffle=True, random_state=42)
+```
+
+这将下载和加载整个数据集，并将其存储在一个Python变量中。
+
+## 步骤 2：数据预处理
+
+在进行文本分类之前，我们需要对数据进行一些预处理。这些预处理步骤有助于提高模型的性能和准确性。
+
+### 清理数据
+
+首先，我们需要清理数据，删除不需要的字符或标点符号，并将所有的字母转换为小写。
+
+```python
+import re
+
+def clean_text(text):
+    # 删除标点符号
+    processed_text = re.sub(r'[^\w\s]', '', text)
+    
+    # 将字母转换为小写
+    processed_text = processed_text.lower()
+    
+    return processed_text
+```
+
+我们将使用`clean_text`函数来对数据进行清理。
+
+### 分割数据
+
+接下来，我们将数据集分割为训练集和测试集。训练集用于训练我们的模型，而测试集用于评估模型的性能。
+
+```python
+from sklearn.model_selection import train_test_split
+
+# 分割数据集
+train_data, test_data, train_labels, test_labels = train_test_split(data.data, data.target, test_size=0.2, random_state=42)
+```
+
+这将根据给定的比例将数据集分割成训练集和测试集。
+
+## 步骤 3：特征提取
+
+在进行文本分类之前，我们需要将文本数据转换为机器学习算法可以理解的数值特征。我们将使用向量化技术来将文本数据转换为特征矩阵。
+
+`scikit-learn`提供了多种向量化技术，如词袋模型和TF-IDF（词频-逆文档频率）。在本项目中，我们将使用TF-IDF向量化技术。
+
+```python
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+# 创建TF-IDF向量化器
+vectorizer = TfidfVectorizer()
+
+# 在训练集上拟合向量化器并转换文本数据为特征矩阵
+train_features = vectorizer.fit_transform(train_data)
+
+# 在测试集上仅进行转换，不拟合向量化器
+test_features = vectorizer.transform(test_data)
+```
+
+这将创建一个TF-IDF向量化器，并使用训练集数据将其拟合，然后转换训练集和测试集的文本数据为特征矩阵。
+
+## 步骤 4：模型训练
+
+在进行文本分类之前，我们需要选择一个机器学习算法并在训练集上训练模型。
+
+```python
+from sklearn.naive_bayes import MultinomialNB
+
+# 创建MultinomialNB分类器
+classifier = MultinomialNB()
+
+# 在训练集上训练分类器
+classifier.fit(train_features, train_labels)
+```
+
+在这个项目中，我们将使用**MultinomialNB**算法，它是一种常用于文本分类任务的朴素贝叶斯算法。
+
+这将创建一个MultinomialNB分类器，并在训练集数据上训练模型。
+
+## 步骤 5：模型评估
+
+在训练完模型后，我们需要评估模型在测试集上的性能。
+
+```python
+from sklearn.metrics import accuracy_score
+
+# 在测试集上进行预测
+predictions = classifier.predict(test_features)
+
+# 计算模型的准确性
+accuracy = accuracy_score(test_labels, predictions)
+
+print('准确率：', accuracy)
+```
+
+这将使用测试集进行预测，并计算模型在测试集上的准确性。
+
+## 结论
+
+通过使用机器学习算法进行文本分类，我们能够自动将文本数据分组到预定义类别中。在本项目中，我们使用了一个经典的数据集和Python中的`scikit-learn`库来执行文本分类任务。
+
+这只是一个简单的示例，实际的文本分类任务可能更加复杂。但是，通过掌握这些基本步骤和工具，您将能够应用机器学习来解决各种文本分类问题。

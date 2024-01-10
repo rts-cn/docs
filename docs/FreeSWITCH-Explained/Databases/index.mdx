@@ -1,54 +1,51 @@
+# 数据库
 
-# Databases 
+## 关于
 
- 
+FreeSWITCH核心提供了模块连接数据库的API。
 
-## About
+单击此处展开目录
 
-The FreeSWITCH core provides the API for modules to make connections to databases.
-
-Click here to expand Table of Contents
-
-* 1 [DSN](#dsn)  
-   * 1.1 [Format](#format-)  
-   * 1.2 [Types](#types)  
-      * 1.2.1 [SQLite](#sqlite)  
-         * 1.2.2 [PostgreSQL](#postgresql)  
-   * 1.3 [DSN with username and password](#dsn-with-username-and-password)  
-   * 1.4 [DSN only](#dsn-only)  
-   * 1.5 [No DSN](#no-dsn)
-* 2 [See Also](#see-also)
+- 1 [DSN](#dsn)
+   - 1.1 [格式](#格式)
+   - 1.2 [类型](#类型)
+      - 1.2.1 [SQLite](#sqlite)
+         - 1.2.2 [PostgreSQL](#postgresql)
+   - 1.3 [带有用户名和密码的DSN](#带有用户名和密码的dsn)
+   - 1.4 [仅DSN](#仅dsn)
+   - 1.5 [无DSN](#无dsn)
+- 2 [参见](#参见)
 
 ## DSN
 
-Data Source Names. Database connections are defined with DSN in XML configuration parameters like "core-db-dsn" and "odbc-dsn".
+数据源名称。数据库连接在XML配置参数中使用DSN定义，如"core-db-dsn"和"odbc-dsn"。
 
-### Format 
+### 格式
 
-The generic DSN format is &lt;type>://&lt;connection string>
+通用DSN格式为<type>：//<connection string>
 
-### Types
+### 类型
 
-FreeSWITCH currently supports the following DSN types:
+FreeSWITCH目前支持以下DSN类型：
 
-* [PostgreSQL in the core](./PostgreSQL-in-the-core_6586757.mdx#dt)
-* [ODBC in the core](./ODBC-DSN/Using-ODBC-in-the-core_6586653.mdx)
-* SQLite
+- [核心中的PostgreSQL](./PostgreSQL-in-the-core_6586757.mdx#dt)
+- [核心中的ODBC](./ODBC-DSN/Using-ODBC-in-the-core_6586653.mdx)
+- SQLite
 
 #### SQLite
 
-**DSN for SQLite**
+**SQLite的DSN**
 
 ```xml
 sqlite://filename
 sqlite:///usr/local/freeswitch/db/mega.db
 ```
 
-Note the 3rd / (slash) in the second example to indicate a local absolute path.
+请注意，第二个示例中的第三个斜杠(/)表示本地绝对路径。
 
 #### PostgreSQL
 
-**DSN for PostgreSQL**
+**PostgreSQL的DSN**
 
 ```xml
 pgsql://hostaddr=127.0.0.1 dbname=freeswitch user=freeswitch password= options='-c client_min_messages=NOTICE' application_name='freeswitch'"
@@ -56,64 +53,62 @@ pgsql://hostaddr=127.0.0.1 dbname=freeswitch user=freeswitch password= options='
 
 ODBC
 
-Upon the addition of multiple core database options (PostgreSQL, ODBC, SQLite), the format for the DSN changed so that FreeSWITCH knows which database type to use.
+随着多个核心数据库选项（PostgreSQL，ODBC，SQLite）的添加，DSN的格式也发生了变化，以便FreeSWITCH知道使用哪种数据库类型。
 
-The following DSN (data source name) formats are valid for [ODBC](./ODBC_13173465.mdx#odbc) databases:
+对于[ODBC](./ODBC_13173465.mdx#odbc)数据库，以下DSN（数据源名称）格式是有效的：
 
-### DSN with username and password
+### 带有用户名和密码的DSN
 
-**DSN for ODBC including password**
+**包括密码的ODBC的DSN**
 
 ```xml
 <param name="core-db-dsn" value="database:username:password"/>
 
-or
+或
 <param name="core-db-dsn" value="odbc://database:username:password"/>
 ```
 
-DSN with username
+带有用户名的DSN
 
-Note the colon at the end.
+请注意末尾的冒号。
 
-**DSN for ODBC with username only**
+**只需用户名的ODBC DSN**
 
 ```xml
 <param name="core-db-dsn" value="database:username:"/>
 
-or
+或者
 <param name="core-db-dsn" value="odbc://database:username"/>
 ```
 
-### DSN only
+### 仅有DSN
 
-Note the two colons at the end.
+请注意末尾的两个冒号。
 
-**DSN for ODBC without username**
+**不带用户名的ODBC DSN**
 
 ```xml
- <param name="core-db-dsn" value="database::"/>
+<param name="core-db-dsn" value="database::"/>
 
-or
+或者
 <param name="core-db-dsn" value="odbc://database"/> 
 ```
 
-### No DSN
+### 无DSN
 
-DSN-less connections are also possible. Such connections don't require configuration in odbc.ini.
+也可以使用无DSN连接。这种连接不需要在odbc.ini中进行配置。
 
-Essentially the syntax is the same options you would have in odbc.ini name-value pairs, separated by **;** (semicolon)
+基本上，语法与odbc.ini中的名称-值对选项相同，用**;**（分号）分隔。
 
-MyODBC example (OPTION=67108864 enables batched statements):
+MyODBC示例（OPTION=67108864启用批处理语句）：
 
 &lt;param name="core-db-dsn" value="odbc://DRIVER=mysql;SERVER=a.b.c.d;UID=username;PWD=secretpassword;DATABASE=freeswitch;OPTION=67108864">
 
-## See Also
+## 参见
 
-Tag [Databases](https://freeswitch.org/confluence/label/FREESWITCH/databases)
+标签 [Databases](https://freeswitch.org/confluence/label/FREESWITCH/databases)
 
-### Comments:
+### 评论：
 
-| We need to specify on this page that to use mod\_mariadb with MariaDB / MySQL, the database schema cannot be UTF8, otherwise an error will occur when creating table indexes with the message:**'Specified key was too long'**The solution is to use another character set (eg: latin1\_general\_ci) to avoid this. ![](/images/icons/contenttypes/comment_16.png) Posted by fernandojdk at Aug 13, 2019 18:26 |
+| 我们需要在本页面指明，如果要在MariaDB/MySQL中使用mod_mariadb，数据库模式不能为UTF8，否则在创建带有“Specified key was too long”的消息的表索引时会出现错误。解决办法是使用另一种字符集（例如：latin1_general_ci）来避免这个问题。 ![](/images/icons/contenttypes/comment_16.png) 用户 fernandojdk 发布于 2019年8月13日18:26 |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-
-

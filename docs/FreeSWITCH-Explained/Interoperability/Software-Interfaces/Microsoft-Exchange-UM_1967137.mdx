@@ -1,108 +1,117 @@
-
 # Microsoft Exchange UM 
 
  
 
 * 1 [Exchange 2007 UM](#exchange-2007-um)
-* 2 [Interconnectivity architecture](#interconnectivity-architecture)  
-   * 2.1 [Applicable interconnectivity settings](#applicable-interconnectivity-settings)
-* 3 [Example implementation](#example-implementation)  
-   * 3.1 [Outline](#outline)  
-   * 3.2 [Exchange 2007 setup](#exchange-2007-setup)  
-   * 3.3 [FreeSwitch setup](#freeswitch-setup)  
-   * 3.4 [Usage](#usage)
-* 4 [Limitations](#limitations)
-* 5 [Known issues](#known-issues)
-* 6 [References](#references)
+* 2 [互连架构](#interconnectivity-architecture)  
+   * 2.1 [适用的互连设置](#applicable-interconnectivity-settings)
+* 3 [示例实现](#example-implementation)  
+   * 3.1 [概述](#outline)  
+   * 3.2 [Exchange 2007设置](#exchange-2007-setup)  
+   * 3.3 [FreeSwitch设置](#freeswitch-setup)  
+   * 3.4 [用法](#usage)
+* 4 [限制](#limitations)
+* 5 [已知问题](#known-issues)
+* 6 [参考文献](#references)
 
 ## Exchange 2007 UM
 
-Exchange 2007 offer a new role called Unified Messaging allowing TTS, ASR and DTMF navigation enabled telephony and voice services such as:
+Exchange 2007 提供了一个名为统一消息的新角色，允许进行TTS、ASR和DTMF导航的电话和语音服务，包括：
 
-Voicemail 2 emailFax 2 emailOutlook Voice AccessListen to new and saved e-mail and voice mail messages.Forward, reply, save, and delete e-mail and voice mail messages.Interact with their calendar.Locate a person in the global address list or personal contacts.Send a voice message to a personChange PIN, name, or greetings.Play on PhoneAuto attendantOutbound call
+语音邮件转发至电子邮件传真转发至电子邮件Outlook语音访问收听新的和已保存的电子邮件和语音邮件消息。转发、回复、保存和删除电子邮件和语音邮件消息。与日历互动。在全局通讯录或个人联系人中查找人员。向某人发送语音消息更改PIN、姓名或问候语。在电话上播放自动接待员呼出电话
 
-## Interconnectivity architecture
+## 互连架构
 
-To interconnect Microsoft Exchange 2007 UM server with FreeSWITCH a trusted SIP trunking should be established between the two. To properly work, The UM server will have to have it’s URI type as a telephone extension. On the FreeSwitch side, the UM needs to be set up as a SIP gateway in the Sofia configuration. Although username and password are required for the FreeSwitch XML parser, they server no real purpose in this interconnectivity as the UM doesn’t check it therefore it’s recommended to use ACL. For Fax UM, either the FS or the UM can be set up to do Fax tone-detection. As default it is assumed that FS is detecting the fax tone and sends the T.38 data over.
+要将Microsoft Exchange 2007 UM服务器与FreeSWITCH互连，两者之间必须建立一个可信的SIP中继。为了正常工作，UM服务器的URI类型必须设置为电话分机。在FreeSwitch方面，UM需要在Sofia配置中设置为SIP网关。尽管FreeSwitch XML解析器需要用户名和密码，但它们在这种互连中实际上没有任何目的，因为UM不会检查它们，因此建议使用ACL。对于传真UM，可以将FS或UM设置为执行传真音调检测。默认情况下，假定FS正在检测传真音调并发送T.38数据。
 
-* As a base rule, the UM places all calls in the Exchange TUI (Telephony User Interface) portal, regardless to what DNIS was used, where users are asked to identify with extension and PIN numbers to be allowed to use that portal.
-* There are three exceptions for that base rule:  
-   1. **Identified caller** \- If the UM identify the caller-ID as an existing extension in the system, it will place the call in the TUI but will ask only for PIN code.  
-   2. **Leaving a message** – The UM assumes that a user will leave a message for an existing mailbox when the call has been diverted from an unreachable extension. This diversion needs to be emulated in the FS to work.  
-   3. **Auto Attendant** – To access the Exchange VUI (Voice User Interface) configurable Auto Attendant, the UM assumes the call was diverted from an unreachable auto-attendant extension.
-* To allow the UM to identify the caller (to shorten the authentication process), the FS needs to be configured to pass the originator’s Caller-ID.
+* 作为基本规则，UM将所有呼叫放置在Exchange TUI（电话用户界面）门户中，无论使用何种DNIS，用户都需要通过分机号码和PIN码进行身份识别才能使用该门户。
+* 对于该基本规则，有三个例外情况：
+   1. **已确认的呼叫者**- 如果UM将呼叫者的呼叫者ID识别为系统中的现有分机号码，它将将呼叫放置在TUI中，但只要求输入PIN码。
+   2. **留言** - 当呼叫从无法连接的分机转接时，UM会假定用户要给现有邮箱留言。这种转接需要在FS中进行仿真才能正常工作。
+   3. **自动回复** - 为了访问Exchange VUI（语音用户界面）可配置的自动回复，UM会假设呼叫是从无法连接的自动回复分机转接而来的。
+* 为了使UM能够识别呼叫者（以缩短身份验证过程），需要配置FS以传递发起者的来电号码。
 
-### Applicable interconnectivity settings
+### 适用的互联设置
 
-* **Signaling:** SIP/TCP or SIP/TLS
-* **Codecs:** G.711a/μ and G723.1 (pass-through) although G.722 was mentioned to be tested with poor results.
-* **DTMF:** RFC2833 in-band format only.
+* **信令：** SIP/TCP或SIP/TLS
+* **编解码器：** G.711a/μ和G723.1（仅支持透传），尽管曾经测试过G.722但效果不佳。
+* **DTMF：** 仅支持RFC2833的嵌入式格式。
 
-## Example implementation
+## 实施示例
 
-### Outline
+### 概述
 
-This implementation example is based on the existing out-of-the-box FreeSwitch XML configuration with few minor additions / modifications. In this example, the_italic_ settings should be customized to your deployment:
+此实现示例基于现有的开箱即用的FreeSwitch XML配置，只需进行少量的添加/修改即可。在此示例中，_斜体_的设置应根据您的部署进行自定义：
 
-* Freeswitch machine: _192.168.0.100_
-* Freeswitch domain name: _sip.cluecon.com_
-* Exchange machine: _192.168.0.200_
-* Exchange domain name: _exch.cluecon.com_
-* Domain (active directory) name: _CLUECON_
-* Extension _1000_ – UM enabled extension for username _ext1000_, PIN _1234_
-* Extension _9877_ – Auto Attendant
-* Extension _9876_ – Generic TUI portal
-* Extension _9664_ – operator extension (currently MoH)
+* Freeswitch 机器：_192.168.0.100_
+* Freeswitch 域名：_sip.cluecon.com_
+* Exchange 机器：_192.168.0.200_
+* Exchange 域名：_exch.cluecon.com_
+* 域名（Active Directory）：_CLUECON_
+* 分机 _1000_ – 启用 UM 的用户名为 _ext1000_，PIN 为 _1234_
+* 分机 _9877_ – 自动办事员
+* 分机 _9876_ – 通用 TUI 门户
+* 分机 _9664_ – 接线员分机（当前为 MoH）
 
-### Exchange 2007 setup
+### Exchange 2007 设置
 
-Set a dial plan with URI type of ''telephone extension'' (using the Exchange Management Shell CLI):
+使用 Exchange Management Shell CLI 设置一个 URI 类型为“电话分机”的拨号计划：
 
 ```xml
 new-UMDialPlan -Name:'4DigitDialPlan' -NumberOfDigitsInExtension:'4' -URIType 'TelExtn' -VoIPSecurity 'Unsecured'
 ```
 
-Set the dial plan policy to allow 4 digit PIN with unlimited life time:
+将拨号计划策略设置为允许 4 位 PIN 码并具有无限期限:
 
 ```xml
 Set-UMMailboxPolicy -Identity '4DigitDialPlan Default Policy' -AllowCommonPatterns $true -AllowDialPlanSubscribers $true -AllowExtensions $true -AllowMissedCallNotifications $true -MinPINLength 4 -PINLifetime Unlimited
 ```
 
-Set the FS as a gateway to the Exchange server:
+将 FS 设置为 Exchange 服务器的网关:
 
 ```xml
 new-UMIPGateway -Name:'freeSwitch' -Address:'sip.cluecon.com' -UMDialPlan:'4DigitDialPlan'
 ```
 
-Set an auto attendant on extension _9877_:
+在分机 _9877_ 上设置一个自动办事员:
 
 ```xml
 new-UMAutoAttendant -Name:'FSAutoAttendant' -UMDialPlan:'4DigitDialPlan' -PilotIdentifierList:'9877' -Status:'Enabled' -SpeechEnabled:$true
 ```
 
-Configure the Auto attendant to have the operator extension be _9664_:
+将自动办事员配置为操作员分机为 _9664_:
 
 ```xml
 Set-UMAutoAttendant -Identity AutoAttendant -AfterHoursTransferToOperatorEnabled $true -AllowExtensions $true -BusinessHoursTransferToOperatorEnabled $true -CallSomeoneEnabled $true -NameLookupEnabled $true -SendVoiceMsgEnabled $true -OperatorExtension '9664' -ContactScope GlobalAddressList
 ```
 
-Enable the Exchange 2007 server with UM role:
+启用具有 UM 角色的 Exchange 2007 服务器:
 
 ```xml
+<extension name="local_extension">
+    <condition field="destination_number" expression="^\d+$">
+      <action application="transfer" data="user/${destination_number}@exch.cluecon.com"/>
+    </condition>
+</extension>
+```
+
+To enable the Unified Messaging server role on the Exchange server, run the following command:
+
+```powershell
 Set-UMServer -Identity:'exch.cluecon.com' -DialPlans 4DigitDialPlan
 ```
 
-Enable user _Ext1000_ with UM capabilities:
+To enable the UM capabilities for a specific user (_Ext1000_), use the following command:
 
-```xml
+```powershell
 Enable-UMMailbox -Identity:'CLUECON\EXT1000' -Pin '1234' -PinExpired $false -UMMailboxPolicy:'4DigitDialPlan Default Policy' -Extensions '1000'
 ```
 
-Optional: Enabling Fax detection on the Exchange - Change the EnableInbandFaxDetection setting to True in the \\Program Files\\Microsoft\\Exchange\\bin\\globcfg.xml file of the Exchange 2007 computer that has the Unified Messaging server role installed.
+Optional: To enable fax detection on the Exchange server, modify the `EnableInbandFaxDetection` setting to True in the `\\Program Files\\Microsoft\\Exchange\\bin\\globcfg.xml` file of the Exchange 2007 computer with the Unified Messaging server role installed.
 
-### FreeSwitch setup
+### FreeSwitch设置
 
-Set up the Exchange as a gateway (i.e. /conf/sip\_profiles/default/exch.xml):
+将Exchange设置为网关（即/conf/sip\_profiles/default/exch.xml）：
 
 ```xml
   <include>
@@ -117,10 +126,32 @@ Set up the Exchange as a gateway (i.e. /conf/sip\_profiles/default/exch.xml):
   </include>
 ```
 
-Set up the dial plan Local Extension handling (i.e. /conf/dialplan/default.xml):
+设置本地分机号拨号计划（即/conf/dialplan/default.xml）：
 
 ```xml
-  <extension name="Local_Extension">
+<extension name="local_extension">
+    <condition field="destination_number" expression="^\d+$">
+      <action application="transfer" data="user/${destination_number}@exch.cluecon.com"/>
+    </condition>
+</extension>
+```
+
+要在Exchange服务器上启用统一消息服务器角色，请运行以下命令：
+
+```powershell
+Set-UMServer -Identity:'exch.cluecon.com' -DialPlans 4DigitDialPlan
+```
+
+要为特定用户（_Ext1000_）启用UM功能，请使用以下命令：
+
+```powershell
+Enable-UMMailbox -Identity:'CLUECON\EXT1000' -Pin '1234' -PinExpired $false -UMMailboxPolicy:'4DigitDialPlan Default Policy' -Extensions '1000'
+```
+
+可选：要在Exchange服务器上启用传真检测，请在具有统一消息服务器角色的Exchange 2007计算机的`\\Program Files\\Microsoft\\Exchange\\bin\\globcfg.xml`文件中将`EnableInbandFaxDetection`设置为True。
+
+```xml
+  <extension name="本地分机">
     <condition field="destination_number" expression="^(10[01][0-9])$">
       <action application="set" data="dialed_ext=$1"/>
       <action application="export" data="dialed_ext=$1"/>
@@ -149,7 +180,7 @@ Set up the dial plan Local Extension handling (i.e. /conf/dialplan/default.xml):
   </extension>
 ```
 
-Set up the dial plan Generic TUI portal handling (i.e. /conf/dialplan/default.xml):
+设置通用TUI门户的拨号计划处理（即/conf/dialplan/default.xml）：
 
 ```xml
   <extension name="TUI">
@@ -159,7 +190,7 @@ Set up the dial plan Generic TUI portal handling (i.e. /conf/dialplan/default.xm
   </extension>
 ```
 
-Set up the dial plan Auto Attendant handling (i.e. /conf/dialplan/default.xml):
+设置自动接待处理的拨号计划（即/conf/dialplan/default.xml）：
 
 ```xml
   <extension name="AutoAttendant">
@@ -170,40 +201,38 @@ Set up the dial plan Auto Attendant handling (i.e. /conf/dialplan/default.xml):
   </extension>
 ```
 
-### Usage
+### 使用方法
 
-* Dialing from extension 1001 to 1000 (no answer) – Leave UM voicemail
-* Dialing from extension 1000 to 1000 – Access voice mail TUI (semi authorized)
-* Dialing from extension 1000 to 9876 – Access TUI (semi authorized)
-* Dialing from extension 1001 to 9876 – Access generic TUI (unauthorized)
-* Dialing from extension 1001 to 9877 – Access Auto Attendant menu
-* Dialing from extension 1001 to 9877 and asking for operator – Get transferred to extension 9664 (MoH)
+* 从分机1001拨打1000（无人接听）- 留言至UM语音信箱
+* 从分机1000拨打1000 - 访问语音信箱TUI（半授权）
+* 从分机1000拨打9876 - 访问TUI（半授权）
+* 从分机1001拨打9876 - 访问通用TUI（未经授权）
+* 从分机1001拨打9877 - 访问自动接待菜单
+* 从分机1001拨打9877并要求转接至操作员 - 转接至分机9664（MoH）
 
-## Limitations
+## 限制
 
-Testing was done on:
+测试环境如下：
 
-* FreeSwitch version 1.0.0 build
-* Exchange 2007 SP1 version 08.01.0278.002.
+* FreeSwitch版本1.0.0 build
+* Exchange 2007 SP1版本08.01.0278.002。
 
-Wasn't tested:
+未进行测试：
 
-* TLS and SRTP
-* T.38 faxing
-* G.723.1 codec
+* TLS和SRTP
+* T.38传真
+* G.723.1编解码器
 
-## Known issues
+## 已知问题
 
-* **DTMF issue** \- After setting up and enabling UM on the Exchange server, it might not comply with RFC4733 and DTMF may only work in pass-through mode. This can be fixed with a cold-restart of the Exchange server.
+* **DTMF问题** \- 在设置并启用Exchange服务器上的UM之后，它可能不符合RFC4733，并且DTMF只能在传递模式下工作。这可以通过冷重启Exchange服务器来解决。
 
-Note: this issue cannot be fixed reliably with Exchange 2007 UM , the real solution is to upgrade Exchange 2007 UM to Exchange 2010 UM, which I believe Microsoft finally got it right with the DTMF
+注意：Exchange 2007 UM无法可靠地解决此问题，真正的解决方法是将Exchange 2007 UM升级到Exchange 2010 UM，我相信微软已经在DTMF方面做得很好了。
 
-* **Different URI types** – If you insist using a non-extension URI types (such as SIP or E.164) be advised that the Diversion format needs to be different (&lt;[sip:1000@192.168.0.100](http://sip:1000@192.168.0.100)\>, +1000) but then the Exchange will not be able to match the FROM field with the Diversion for shorter authentication scenario.
+**不同的URI类型** - 如果您坚持使用非分机URI类型（如SIP或E.164），请注意Diversion格式需要不同（<[sip:1000@192.168.0.100](http://sip:1000@192.168.0.100)\>，+1000），但是Exchange将无法将FROM字段与Diversion匹配，因此无法在较短的身份验证场景中进行身份验证。
 
-## References
+## 参考资料
 
-1. [Exchange 2007 Unified Messaging Cmdlets](http://technet.microsoft.com/en-us/library/aa997665%28EXCHG.80%29.aspx)
-2. [Ryan Newington's Exchange 2007 Unified Messaging Setup Guide](http://blog.lithiumblue.com/2007/04/accessing-exchange-2007-unified%5F29.html)
-3. [Mitch Roberson's Blog on Exchange UM connected to a PBX](http://ucspot.com/blogs/ocs/archive/2008/03/11/exchange-um-connected-to-a-pbx.aspx)
-
-
+1. [Exchange 2007统一通信Cmdlets](http://technet.microsoft.com/en-us/library/aa997665%28EXCHG.80%29.aspx)
+2. [Ryan Newington的Exchange 2007统一通信设置指南](http://blog.lithiumblue.com/2007/04/accessing-exchange-2007-unified%5F29.html)
+3. [Mitch Roberson关于连接到PBX的Exchange UM博客](http://ucspot.com/blogs/ocs/archive/2008/03/11/exchange-um-connected-to-a-pbx.aspx)

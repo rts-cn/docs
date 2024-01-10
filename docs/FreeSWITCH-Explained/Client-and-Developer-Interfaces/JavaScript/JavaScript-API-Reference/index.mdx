@@ -1,35 +1,34 @@
-
-# JavaScript API Reference 
+# JavaScript API 参考文档 
 
  
 
-## About
+## 关于
 
-This page provides the documentation of the Javascript FreeSWITCH API.
+本页面提供了 JavaScript FreeSWITCH API 的文档。
 
-Docs Help Needed
+文档需要帮助
 
-Most API aren't documented, so please feel free to improve the documentation and complete the API examples.
+大部分 API 都没有文档，所以请随时完善文档并补充 API 示例。
 
-This page is in process, having been copied from Lua (for consistent formatting).
+本页面还在进行中，从 Lua (为了统一格式)复制过来。
 
-The JavaScript engine has changed from Spidermonkey to V8\. Verification of the APIs (as seen in the old wiki) is needed.
+JavaScript 引擎已从 Spidermonkey 更改为 V8\. 需要验证 API（如旧维基中所见）。
 
-Click here to expand Table of Contents
+点击这里展开目录
 
-* 1 [FreeSWITCH DB Access From JavaScript](#freeswitch-db-access-from-javascript)
+* 1 [从JavaScript访问FreeSWITCH数据库](#freeswitch-db-access-from-javascript)
 * 2 [apiExecute](#apiexecute)  
-   * 2.1 [apiExecute Notes](#apiexecute-notes)
+   * 2.1 [apiExecute 注意事项](#apiexecute-notes)
 * 3 [bridge](#-freeswitch--javascript-api-reference-)
 * 4 [callback](#callback)  
-   * 4.1 [Returns:](#returns)  
+   * 4.1 [返回值:](#returns)  
       * 4.1.1 [Recording](#recording)  
-         * 4.1.2 [Playing Back](#playing-back)  
-         * 4.1.3 [Bridge](#-freeswitch--javascript-api-reference-)  
-         * 4.1.4 [Other](#-freeswitch--javascript-api-reference-)  
-   * 4.2 [Callback Examples](#callback-examples)
+         * 4.1.2 [播放](#playing-back)  
+         * 4.1.3 [桥接](#-freeswitch--javascript-api-reference-)  
+         * 4.1.4 [其他](#-freeswitch--javascript-api-reference-)  
+   * 4.2 [回调函数示例](#callback-examples)
 * 5 [console\_log](#console_log)
-* 6 [Database Access](#database-access)  
+* 6 [数据库访问](#database-access)  
    * 6.1 [DB.close](#dbclose)  
    * 6.2 [DB.exec](#-freeswitch--javascript-api-reference-)  
    * 6.3 [DB.fetch](#dbfetch)  
@@ -37,11 +36,11 @@ Click here to expand Table of Contents
    * 6.5 [DB.path](#-freeswitch--javascript-api-reference-)  
    * 6.6 [DB.prepare](#dbprepare)
 * 7 [email](#-freeswitch--javascript-api-reference-)
-* 8 [Url Access](#url-access)  
+* 8 [Url访问](#url-access)  
    * 8.1 [FetchUrl](#fetchurl)  
    * 8.2 [FetchUrlFile](#fetchurlfile)  
    * 8.3 [FetchUrlHash](#fetchurlhash)
-* 9 [File](#-freeswitch--javascript-api-reference-)  
+* 9 [文件](#-freeswitch--javascript-api-reference-)  
    * 9.1 [File.canAppend](#filecanappend)  
    * 9.2 [File.canRead](#filecanread)  
    * 9.3 [File.canReplace](#filecanreplace)  
@@ -85,21 +84,21 @@ Click here to expand Table of Contents
    * 9.41 [File.writeln](#filewriteln)
 * 10 [fileDelete](#filedelete)
 * 11 [FileIO](#-freeswitch--javascript-api-reference-)  
-   * 11.1 [Description](#description)  
+   * 11.1 [描述](#description)  
    * 11.2 [FileIO.data](#fileiodata)  
    * 11.3 [FileIO.path](#fileiopath)  
    * 11.4 [FileIO.read](#fileioread)  
    * 11.5 [FileIO.write](#fileiowrite)
 * 12 [getGlobalVariable](#getglobalvariable)  
-   * 12.1 [See Also](#see-also)
+   * 12.1 [参见](#see-also)
 * 13 [include](#-freeswitch--javascript-api-reference-)
 * 14 [Session](#-freeswitch--javascript-api-reference-)  
-   * 14.1 [Constructor](#constructor)  
+   * 14.1 [构造函数](#constructor)  
    * 14.2 [Session.sayPhrase](#sessionsayphrase)  
    * 14.3 [Session.speak](#sessionspeak)
 * 15 [setGlobalVariable](#setglobalvariable)  
-   * 15.1 [Notes](#apiexecute-notes)  
-   * 15.2 [See Also](#see-also)
+   * 15.1 [注意事项](#apiexecute-notes)  
+   * 15.2 [参见](#see-also)
 * 16 [system](#-freeswitch--javascript-api-reference-)
 * 17 [TeleTone](#teletone)  
    * 17.1 [TeleTone.addTone](#teletoneaddtone)  
@@ -107,12 +106,11 @@ Click here to expand Table of Contents
    * 17.3 [TeleTone.name](#teletonename)  
    * 17.4 [TeleTone.onDTMF](#teletoneondtmf)
 
-  
-## FreeSWITCH DB Access From JavaScript
+## 从JavaScript访问FreeSWITCH数据库
 
-FreeSWITCH uses SQLite for a variety of internal operations. There is a mechanism where you can also use SQLite in your JavaScript applications. The methods and properties available are listed below in alphabetical order.
+FreeSWITCH在各种内部操作中使用SQLite。您还可以在JavaScript应用程序中使用SQLite。下面按字母顺序列出了可用的方法和属性。
 
-SQLite is provided to demonstrate the capabilities of FreeSWITCH. For production systems processing high volumes of calls a database system that can handle that volume must be used, for example Postgres.
+SQLite是为了演示FreeSWITCH的功能而提供的。对于处理大量呼叫的生产系统，应该使用可以处理该容量的数据库系统，例如Postgres。
 
 * [DB.close](index.mdx#dbclose)
 * [DB.exec](index.mdx#-freeswitch--javascript-api-reference-)
@@ -120,129 +118,127 @@ SQLite is provided to demonstrate the capabilities of FreeSWITCH. For production
 * [DB.next](index.mdx#-freeswitch--javascript-api-reference-)
 * [DB.prepare](index.mdx#dbprepare)
 
-  
 ## apiExecute
 
 SPIDERMONKEY V8 UNVERIFIED
 
-Executes an API (FreeSWITCH console) command.  
-(To execute a dialplan application, use [session.execute](./Session-Execute_13173606.mdx).)
+执行API（FreeSWITCH控制台）命令。
+（要执行拨号计划应用，使用[session.execute](./Session-Execute_13173606.mdx)。）
 
-For a list of commands that can be executed with apiExecute, see the [Command reference](../../../Modules/mod_commands_1966741.mdx#--).
+有关可以使用apiExecute执行的命令列表，请参见[命令参考](../../../Modules/mod_commands_1966741.mdx#--)。
 
-Usage:
+用法：
 
 apiExecute(apiCommand, args);
 
-* `apiCommand` (`String`) - the command name to execute
-* `args` (`String`) - arguments for the command (all joined together into a single string) (**not** the internal `arguments` variable)
+* `apiCommand`（`String`）- 要执行的命令名称
+* `args`（`String`）- 命令的参数（全部连接成一个字符串）（**不是**内部的 `arguments` 变量）
 
-Returns: `undefined` ?
+返回值：`undefined` ?
 
-**apiExecute examples**
+**apiExecute示例**
 
 ```js
 // ???
 apiExecute("show", "channels");
 
-//Plays a sound file for everyone currently residing in conference room 1.
+//为所有当前参与会议室1的人播放声音文件。
 apiExecute("conference", "1 play /usr/local/freeswitch/sounds/myfile.wav");
 
-//Using text to speech engine speaks to everyone in conference room 1.
+//使用文本转语音引擎对会议室1中的所有人说话。
 apiExecute("conference", "1 say Hello there");
 ```
 
-### apiExecute Notes
+### apiExecute注意事项
 
-apiExecute() does not have the same object hierarchy as other methods exposed via mod\_spidermonkey (it is not an extension of session).
+apiExecute()与通过mod_spidermonkey公开的其他方法具有不同的对象层次结构（它不是session的扩展）。
 
-  
-api (console cli) commands can be executed via a workaround. The following will set myvar with the output of apicommand()   
+API（控制台CLI）命令可以通过一种解决方法来执行。以下内容将使用apicommand()的输出设置myvar。
 `execute("set","myvar=${apicommand()}")`
-  
-  
+
+
 ## bridge
 
-SPIDERMONKEY V8 UNVERIFIED
+SPIDERMONKEY V8 未经验证
 
-Bridges 2 channels together.
+将两个通道互连。
 
-**bridge usage**
+**bridge用法**
 
 ```js
 bridge(session1, session2[, callback[, callbackArgs])
 ```
 
-* `session1` ([Session](#-freeswitch--javascript-api-reference-)) - one session to bridge
-* `session2` ([Session](#-freeswitch--javascript-api-reference-)) - the other session to bridge
-* `callback` ([Function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global%5FObjects/Function)) - function to call every time DTMF is generated on either of the channels
-* `callbackArgs` ([String](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global%5FObjects/String)) - data that you wish to access in the `callback`
+* `session1`（[Session](#-freeswitch--javascript-api-reference-)） - 要连接的一个会话
+* `session2`（[Session](#-freeswitch--javascript-api-reference-)） - 要连接的另一个会话
+* `callback`（[Function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global%5FObjects/Function)） - 当任一通道上产生DTMF时调用的函数
+* `callbackArgs`（[String](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global%5FObjects/String)） - 您希望在`callback`中访问的数据
 
-Returns: `undefined` ?
+返回：`undefined`？
 
 ## callback
 
-The `callback` function argument is invoked every time DTMF is generated on either one of the session channels.
+`callback`函数参数在会话通道中的任一通道上产生DTMF时被调用。
 
-**callback example**
+**callback示例**
 
 ```js
-function <callbackName> ( session, type, dtmf, userData  ) {
-   //.. do something ..
+function <callbackName> (session, type, dtmf, userData) {
+   //.. 做些什么 ..
    return <value>; 
 }
 ```
 
-Arguments:
+参数：
 
-* session (string) - the session UUID that generated the event.
-* type (object) - the type of event object (list/link possible values here)
-* dtmf (object)  
-   * dtmf.digit (string) - digit pressed  
-   * dtmf.duration (Number?) - duration the digit was pressed.
-* userData (Mixed) - the callbackArgs passed to the callback from the bridge function
+* session（字符串） - 生成事件的会话UUID。
+* type（对象） - 事件对象的类型（在此处列出可能的值）
+* dtmf（对象）  
+   * dtmf.digit（字符串） - 按下的按键
+   * dtmf.duration（数字？） - 按键按下的持续时间。
+* userData（混合） - 从`bridge`函数传递给`callback`的`callbackArgs`
 
-### Returns:
+### 返回：
 
-The meaning of the return value varies depending on the current telephony operation.
+返回值的含义根据当前的电话操作而异。
 
-#### Recording
+#### 录音
 
-* true - keep recording
-* false - stop
+* true - 继续录音
+* false - 停止录音
 * "pause"
 * "restart"
 
-#### Playing Back
+#### 回放音频
 
-* true - keep going, do not interrupt the current operation
-* false - stop, and exit the current operation
-* "seek:\[+/-\]\[value\]" in milliseconds
-* "speed:\[+/-\]\[value\]" in some unknown unit  
-Relative:  
-   * return("speed:+");  
-   * return("speed:-");  
-   * return("speed:+5");  
-   * return("speed:-5");  
-   Absolute:  
-   * return("speed:0");  
+* true - 继续，不中断当前操作
+* false - 停止，并退出当前操作
+* "seek:\[+/-\]\[value\]" 毫秒为单位
+* "speed:\[+/-\]\[value\]" 以某个未知的单位
+相对速度：
+   * return("speed:+");
+   * return("speed:-");
+   * return("speed:+5");
+   * return("speed:-5");
+绝对速度：
+   * return("speed:0");
    * return("speed:5");
-* "pause" (toggle; sending a second pause will resume playback)
+* "pause"（切换；再次发送 pause 将恢复播放）
 * "restart"
 
 #### Bridge
 
-* `false` \- stop and exit the current bridge.
-* `true` \- keep going, do not interrupt the current bridge.
+* `false` - 停止并退出当前桥接。
+* `true` - 继续，不中断当前桥接。
 
-#### Other
+#### 其他
 
-* true - keep going, do not interrupt the current operation
-* false - stop, and exit the current operation
+* true - 继续，不中断当前操作
+* false - 停止，并退出当前操作
 
-### Callback Examples
+### 回调函数示例
 
-**Simple bridge example**
+**简单桥接示例**
 
 ```js
 var anotherSession = new Session(session, "sofia/sip/1234@10.10.2.55");
@@ -251,59 +247,59 @@ anotherSession.hangup();
 ```
 
   
-This example will print "Given userData.param of under the rock" in the FS console and will recall mycall@mydomain.com every time someone presses a key on either of the call legs
+这个示例将在 FS 控制台打印 "Given userData.param of under the rock"，并在每次用户按下任意按键时重新呼叫 mycall@mydomain.com
 
-**bridge example 2**
+**桥接示例2**
 
 ```js
-function logAndStopBridge ( session, type, dtmf, userData) {
+function logAndStopBridge (session, type, dtmf, userData) {
  console_log("WARNING","Given userData.param of "+(userData && userData.param));
  return false;
 }
 session.answer();
-while ( session.ready() ) {
+while (session.ready()) {
   var mySession = new Session("sofia/sip/mycall@mydomain.com");
   bridge(session, mySession, logAndStopBridge, {param:"under the rock"});
-} 
+} 
 ```
 
 ## console_log
 
 SPIDERMONKEY V8 UNVERIFIED
 
-Logs a message to the console logger.
+向控制台日志记录一条消息。
 
-**bridge usage**
+**桥接用法**
 
 ```js
 console_log([level,] message)
 ```
 
-* `level` ([String](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global%5FObjects/String)) - severity of the message ("DEBUG", "INFO", "NOTICE", "WARNING", "ERR", "CRIT", "ALERT"), defaults to "DEBUG" when unspecified
-* `message` ([String](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global%5FObjects/String)) - message to appear in the FS console, usually ends with a newline (`\n`)
+* `level` ([String](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global%5FObjects/String)) - 消息的严重程度（"DEBUG"，"INFO"，"NOTICE"，"WARNING"，"ERR"，"CRIT"，"ALERT"），默认为未指定时的"DEBUG"
+* `message` ([String](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global%5FObjects/String)) - 出现在FS控制台中的消息，通常以换行符(`\n`)结尾
 
-Returns: `undefined` ?
+返回：`undefined`？
 
-**console\_log example**
+**console\_log示例**
 
 ```js
-console_log("Hello there\n"); // DEBUG level in FS console
-console_log("WARNING", "Ho!\n"); 
+console_log("你好\n"); // 在FS控制台中是DEBUG级别
+console_log("WARNING", "嗨！\n"); 
 ```
 
   
-## Database Access
+## 数据库访问
 
 ### DB.close
 
-This method closes your database connection. Please note that as soon as a script finishes executing the engine will automatically close any CoreDB resources. This close method was designed to help you free up those resources for longer running scripts.
+此方法用于关闭数据库连接。请注意，一旦脚本执行完毕，引擎会自动关闭所有CoreDB资源。此关闭方法设计用于释放那些运行时间较长的脚本所占用的资源。
 
-Usage:
+用法：
 
 DB.close()
 
   
-**DB.close example**
+**DB.close示例**
 
 ```js
 use("CoreDB");
@@ -316,20 +312,20 @@ while(DB.next()) {
    console_log("name = " + hash["name"] + " number " + hash["did"] + "\n");
 }
 DB.close();
-//Do Some other stuff here. 
+//在这里做一些其他的事情。 
 ```
 
   
 ### DB.exec
 
-Executes an SQL statement. If you are doing a select you may want to look at [DB.prepare](https://wiki.freeswitch.org/wiki/Javascript%5FDB%5FPrepare "Javascript DB Prepare") instead.
+执行一个SQL语句。如果你在进行select操作，可能需要参考[DB.prepare](https://wiki.freeswitch.org/wiki/Javascript%5FDB%5FPrepare "Javascript DB Prepare")。
 
-Usage:
+用法：
 
-exec(sql statement)
+exec(sql语句)
 
   
-**DB.close example**
+**DB.close示例**
 
 ```js
 use("CoreDB");
@@ -342,103 +338,105 @@ db.exec(sql);
   
 ### DB.fetch
 
-Gets the next row from a select operation.
+从select操作中获取下一行数据。
 
-Usage:
+用法：
 
 fetch()
 
   
-**DB.fetch example**
+**DB.fetch示例**
 
 ```js
 use("CoreDB");
+```
 
+```javascript
 var db = new CoreDB("js");
-var sql="select * from users;";
+var sql = "select * from users;";
 db.prepare(sql);
-while(db.next()) {
+while (db.next()) {
   hash = db.fetch();
-  console_log("name = " + hash["name"] + " number " + hash["did"] + "\n");
+  console.log("name = " + hash["name"] + " number " + hash["did"] + "\n");
 }
 ```
 
   
 ### DB.next
 
-This goes to the next row, presumably after you have DB.fetch()ed it.
+这个函数在你DB.fetch()之后会跳到下一行。
 
-Usage:
+使用方法：
 
 next()
 
-**DB.next example**
+**DB.next示例**
 
-```js
+```javascript
 use("CoreDB");
 
 var db = new CoreDB("js");
-var sql="select * from users;";
+var sql = "select * from users;";
 db.prepare(sql);
-while(db.next()) {
-   hash = db.fetch();
-   console_log("name = " + hash["name"] + " number " + hash["did"] + "\n");
+while (db.next()) {
+  hash = db.fetch();
+  console.log("name = " + hash["name"] + " number " + hash["did"] + "\n");
 }
 ```
 
   
 ### DB.path
 
-Returns the path for the SQLite database.
+返回SQLite数据库的路径。
 
-Usage:
+使用方法：
 
-console_log(DB.path + "\n");
+console.log(DB.path + "\n");
 
 ### DB.prepare
 
-Prepares the specified SQL statement for use.
+为指定的SQL语句做准备。
 
-Usage:
+使用方法：
 
 prepare(statement)
 
   
-**DB.prepare example**
+**DB.prepare示例**
 
-```js
+```javascript
 use("CoreDB");
 
 var db = new CoreDB("js");
-var sql="select * from users;";
+var sql = "select * from users;";
 db.prepare(sql);
-while(db.next()) {
-   hash = db.fetch();
-   console_log("name = " + hash["name"] + " number " + hash["did"] + "\n");
+while (db.next()) {
+  hash = db.fetch();
+  console.log("name = " + hash["name"] + " number " + hash["did"] + "\n");
 }
 ```
 
   
 ## email
 
-Sends an email from within your application
+从应用程序中发送电子邮件
 
-Usage:
+使用方法：
 
 email(to, from, headers, body, [&lt;filename>]);
 
-Arguments:
+参数：
 
-* from - from email address
-* to - to email address
-* headers - optional headers (i.e. "Subject: yadayada")
-* body - body of email message
-* filename - optional filename to attach
+* from - 发送方电子邮件地址
+* to - 接收方电子邮件地址
+* headers - 可选的头部信息（比如"Subject: yadayada"）
+* body - 邮件正文
+* filename - 可选的附件文件名
 
   
-**email example**
+**email示例**
 
-```js
+```javascript
 if (eMailTo != "") {
   var tmp_eMailSubject = eMailSubject + sv_caller_id_name + " (" + sv_caller_id_num + ")";
   email(eMailTo, eMailFrom, "Subject: " + tmp_eMailSubject, eMailBody, tmp_Filename);
@@ -449,47 +447,47 @@ if (eMailTo != "") {
 
 ### FetchUrl
 
-Usage:
+使用方法：
 
 var result = fetchUrl(&lt;url>, [bufferSize]);
 
-Arguments:
+参数：
 
-* result - Will contain document info, or false if an error occurred during the fetching.
-* url - The complete url to the document.
-* bufferSize - Optional parameter that specifies size of the buffer, default size is 65535 bytes.
+* result - 包含文档信息，如果获取过程中发生错误，则为false。
+* url - 文档的完整URL。
+* bufferSize - 可选参数，用于指定缓冲区的大小，默认大小为65535字节。
 
-##### Error reasons
+##### 错误原因
 
-* The url is incorrect.
-* The buffer is too small for the document.
+* URL不正确。
+* 缓冲区对于文档来说太小。
 
-##### Use through web proxy
+##### 通过网络代理使用
 
-If you have to use fetchUrl through a corporate web proxy you can set the environment variable http\_proxy='http://proxy\_username:proxy\_password@proxy.ip.address:proxy.port' You can done this only if security is not a first concern for you (e.g. you are the only one using the freeswitch machine).
+如果您必须通过公司网络代理使用fetchUrl，您可以设置环境变量http\_proxy='http://proxy\_username:proxy\_password@proxy.ip.address:proxy.port'。只有在安全性不是首要问题时才可以这样做（例如，您是唯一一个使用freeswitch机器的人）。
 
-##### Example
+##### 示例
 
 ```xml
 var result = fetchUrl("https://localhost/user/get/1");
 if (result == false)
-  console_log("Failed to get user");
+  console_log("获取用户失败");
 else
-  console_log("User doc: " + result);
+  console_log("用户文档：" + result);
 ```
 
 ### FetchUrlFile
 
-Fetches the content of a webpage and stores it into a file. This is safer than fetching directly into memory directly since you may not know how much memory it will take until after the page has loaded.
+从网页获取内容并将其存储到文件中。与直接获取到内存中相比，这样更安全，因为您在加载页面之后可能不知道它会占用多少内存。
 
-Usage:
+用法：
 
 fetchUrlFile(url,file)
 
-Arguments
+参数
 
-* url - any cURL supported URL.
-* file - the file including path into which to store the response.
+* url - 任何cURL支持的URL。
+* file - 包括路径的文件，用于存储响应。
 
 ```xml
 fetchUrlFile("http://www.somewhere.tld/somepage.html","/tmp/somepage.html");
@@ -497,37 +495,37 @@ fetchUrlFile("http://www.somewhere.tld/somepage.html","/tmp/somepage.html");
 
 ### FetchUrlHash
 
-Fetch the response from a webserver and store it in a hash.
+从Web服务器获取响应并将其存储在哈希中。
 
-Usage:
+用法：
 
 fetchUrlHash(url,hash)
 
-* url - any CURL supported format (you can encode data you want to send to the server)
-* hash - name of the hash to save data into
+* url - 任何支持CURL的格式（可以对要发送到服务器的数据进行编码）
+* hash - 要保存数据的哈希名称
 
-Note: the hash variable name must be enclosed between quotes.
+注意：哈希变量名必须用引号括起来。
 
-The web server must return data with a
+Web服务器必须在响应的头部有一个
 
  Content-type: text/plain\n\n
 
-header and `attribute=value` pairs in the body, e.g.:
+标头，并且在主体中具有`attribute=value`对，例如：
 
  moo=ojnk  
  foo=bar
 
-Spaces on either side of the name or value will be trimmed off, so 'foo = bar' is valid and in Javascript would be the same as 'foo=bar'
+姓名或值两边的空格将被去掉，所以 'foo = bar' 是合法的，并且在Javascript中与 'foo=bar' 是相同的。
 
-You may have to escape any quoted parameters ( " ) with \\" (backslash quote) to get it to work properly due to the way this is converted into Javascript. e.g.
+你可能需要使用 \\"（反斜杠引号）来转义任何带引号的参数，以使其正确工作，这是因为它会转换为Javascript的方式。例如：
 
- foo=\"bar\"
+ foo=\\"bar\\"
 
   
-**FetchURLHash example**
+**FetchURLHash 示例**
 
 ```js
-var myhash = new Array(); // must be defined in the same scope, i.e. same function
+var myhash = new Array(); // 必须定义在同一个作用域，即同一个函数中
 fetchUrlHash("http://www.somewhere.tld/somepage.html","myhash");
 for (key in myhash) {
     console_log(key + ": " + myhash[key] + "\n");
@@ -535,118 +533,118 @@ for (key in myhash) {
 ```
 
   
-Security Warning
+安全警告
 
-The data returned is processed with eval(), which means that if the web server has control to send anything it wants the returned data will be processed and can overwrite other variables, execute arbitrary code, whatever. An example might be:
+返回的数据将使用 eval() 进行处理，这意味着如果Web服务器控制着发送任何它想要的东西，返回的数据将被处理，并且可能会覆盖其他变量，执行任意代码，等等。一个例子可能是：
 
-foo=bar";console_log("pwned\n");var blah="
+foo=bar\\";console_log(\\"pwned\\n\\");var blah=\\"
 
-the last `var blah="` is to catch the trailing quote and not have a parse error.
+最后的 `var blah=` 是为了捕获尾引号，避免解析错误。
 
-Do not fetch arbitrary URLs off the internet with this, only use sites that you control to avoid an evil user from causing harm.
-
-  
-## File
-
-File class is still **not yet implemented in v1.10**, use FileIO instead**.**
+不要使用此方法从互联网上获取任意URL，只使用你自己控制的网站，以避免恶意用户造成危害。
 
   
-Click here to expand...
+## 文件
+
+v1.10中仍未实现文件类，使用FileIO代替。
+
+  
+点击此处展开...
 
 ### File.canAppend
 
-Returns a boolean indicating whether or not we can append to the specified file.
+返回一个布尔值，指示是否可以追加到指定文件。
 
-Usage:
+用法：
 
 canAppend
 
   
-**File.canAppend example**
+**File.canAppend 示例**
 
 ```js
 var fd = new File("/tmp/blah");
 fd.open("write,append");
 if (fd.canAppend) {
-  console_log(fd.name) + "can be appended to\n");
+  console_log(fd.name) + "可以追加\n");
 } else {
-  console_log(fd.name) + "cannot be append to\n");
+  console_log(fd.name) + "无法追加\n");
 }
 ```
 
 ### File.canRead
 
-Returns a boolean indicating whether or not we can read this file.
+返回一个布尔值，指示是否可以读取这个文件。
 
-Usage:
+用法：
 
 canRead
 
   
-**File.canRead example**
+**File.canRead 示例**
 
 ```js
 var fd = new File("/tmp/blah");
-if (fd.canRead) {
-  console_log((fd.name) + "can be read\n");
+if (fd.exists) {
+  console_log((fd.name) + "可以读取\n");
 } else {
-  console_log((fd.name) + "can not be read\n");
+  console_log((fd.name) + "无法读取\n");
 }
 ```
 
 ### File.canReplace
 
-Returns a boolean indicating whether or not we can replace the contents in this file.
+返回一个布尔值，表示是否可以替换此文件中的内容。
 
-Usage:
+用法：
 
 canReplace
 
   
-**File.canReplace example**
+**File.canReplace示例**
 
 ```js
 var fd = new File("/tmp/blah");
 fd.open("read,write,replace");
 if (fd.canReplace) {
-  console_log(fd.name) + "can be overwritten\n");
+  console_log(fd.name + "可以覆盖\n");
 } else {
-  console_log(fd.name) + "cannot be overwritten\n");
+  console_log(fd.name + "无法覆盖\n");
 }
 ```
 
   
 ### File.canWrite
 
-Returns a boolean indicating whether or not we can write to the file.
+返回一个布尔值，表示是否可以写入文件。
 
-Usage:
+用法：
 
 canWrite
 
   
-**File.canWrite example**
+**File.canWrite示例**
 
 ```js
 var fd = new File("/tmp/blah");
 if (fd.canWrite) {
-  console_log(fd.name) + "can be written to\n");
+  console_log(fd.name + "可以写入\n");
 } else {
-  console_log(fd.name) + "can not be written to\n");
+  console_log(fd.name + "无法写入\n");
 }
 ```
 
   
 ### File.close
 
-Closes an open file handle.
+关闭一个打开的文件句柄。
 
-Usage:
+用法：
 
 close()
 
   
-**File.close example**
+**File.close示例**
 
 ```js
 var fd = new File("/tmp/blah");
@@ -657,14 +655,14 @@ fd.close();
   
 ### File.copyTo
 
-Copy a file to a new file.
+将文件复制到新文件。
 
-Usage:
+用法：
 
 copyTo(dest)
 
   
-**File.copyTo example**
+**File.copyTo示例**
 
 ```js
 var fd = new File("/tmp/blah");
@@ -674,14 +672,14 @@ fd.copyTo("/tmp/moo");
   
 ### File.creationTime
 
-The timestamp of when the file was created.
+文件创建的时间戳。
 
-Usage:
+用法：
 
 creationTime
 
   
-**File.creationTime example**
+**File.creationTime示例**
 
 ```js
 var fd = new File("/tmp/blah");
@@ -690,14 +688,14 @@ console_log(fd.creationTime+"\n");
 
 ### File.error
 
-A File object for standard error.
+用于标准错误的File对象。
 
-Usage:
+用法：
 
 error
 
   
-**File.error example**
+**File.error示例**
 
 ```js
 var fd = File.error
@@ -708,151 +706,291 @@ fd.writeln("\n\ntesting\n\n");
   
 ### File.exists
 
-Returns a boolean indicating whether the file exists or not.
+返回一个布尔值，表示文件是否存在。
 
-Usage:
+用法：
 
 exists
 
   
-**File.exists example**
-
-```js
-var fd = new File("/tmp/blah");
-if (fd.exists) {
-  console_log((fd.name) + "exists\n");
-} else {
-  console_log((fd.name) + "does not exist\n");
-}
-```
-
-  
-### File.flush
-
-Flushes the buffer to the file.
-
-Usage:
-
-flush()
-
-  
-**File.flush example**
-
-```js
-var fd = new File("/tmp/blah");
-fd.open("write");
-fd.write("hi");
-fd.flush();
-```
-
-  
-### File.hasAutoFlush
-
-Returns a boolean indicating whether or not this file has automatic buffer flushing enabled.
-
-Usage:
-
-hasAutoFlush
-
-  
-**File.hasAutoFlush example**
-
-```js
-var fd = new File("/tmp/blah");
-fd.open("read,write,autoFlush");
-console_log("Do we have auto flush? " + fd.hasAutoFlush + "\n");
-```
-
-  
-### File.hasRandomAccess
-
-Returns a boolean indicating whether we have random access to this file or not, i.e. will (FreeSWITCH JavaScript File seek|seek) work.
-
-Usage:
-
-hasRandomAccess
-
-  
-**File.hasRandomAccess example**
-
-```js
-var fd = new File("/tmp/blah");
-fd.open("read");
-console_log("Do we have random access? " + fd.hasRandomAccess+"\n"); 
-```
-
-### File.input
-
-A file object for standard input.
-
-Usage:
-
-input
-
-  
-**File.input example**
-
-```js
-var fd = File.input
-fd.open("read");
-fd.readln();var fd = File.input
-fd.open("read");
-fd.readln();
-```
-
-### File.isDirectory
-
-Returns a boolean indicating whether or not the current file is a directory.
-
-Usage:
-
-isDirectory
-
-  
-**File.isDirectory example**
-
-```js
-var fd = new File("/tmp/blah");
-if (fd.isDirectory) {
-  console_log(fd.name) + "is a directory\n");
-} else {
-  console_log(fd.name) + "is not a directory\n");
-} 
-```
-
-### File.isFile
-
-Returns a boolean indicating whether or this resource is a file.
-
-Usage:
-
-isFile
-
-  
-**File.isFile example**
+**File.exists示例**
 
 ```js
 var fd = new File("/tmp/blah");
 if (fd.isFile) {
- console_log(fd.name) + "is a file\n");
+  console_log((fd.name) + "是一个文件\n");
 } else {
-  console_log(fd.name) + "is not a file\n");
-} 
+  console_log((fd.name) + "不是一个文件\n");
+}
 ```
+
+  
+### File.isReadable
+
+Returns a boolean indicating whether or not this file can be read.
+
+Usage:
+
+isReadable
+
+  
+**File.isReadable example**
+
+```js
+var fd = new File("/tmp/blah");
+console_log("这个文件可读吗？" + fd.isReadable + "\n");
+```
+
+  
+### File.isWritable
+
+Returns a boolean indicating whether or not this file can be written to.
+
+Usage:
+
+isWritable
+
+  
+**File.isWritable example**
+
+```js
+var fd = new File("/tmp/blah");
+console_log("这个文件可写吗？" + fd.isWritable + "\n");
+```
+
+  
+### File.lineSeparator
+
+The platform-dependent line separator string.
+
+Usage:
+
+lineSeparator
+
+  
+**File.lineSeparator example**
+
+```js
+var separator = File.lineSeparator;
+console_log("当前系统的行分隔符是：" + separator + "\n");
+```
+
+  
+### File.mark
+
+Marks the current position in this file for later return.
+
+Usage:
+
+mark()
+
+  
+**File.mark example**
+
+```js
+var fd = new File("/tmp/blah");
+fd.open("read");
+fd.mark();
+```
+
+  
+### File.move
+
+Moves this file to a new location.
+
+Usage:
+
+move(target)
+
+  
+**File.move example**
+
+```js
+var fd = new File("/tmp/blah");
+fd.move("/new/location/blah");
+```
+
+  
+### File.open
+
+Opens the file.
+
+Usage:
+
+open(mode)
+
+  
+**File.open example**
+
+```js
+var fd = new File("/tmp/blah");
+fd.open("read");
+```
+
+  
+### File.rename
+
+Renames this file.
+
+Usage:
+
+rename(newName)
+
+  
+**File.rename example**
+
+```js
+var fd = new File("/tmp/blah");
+fd.rename("new_name");
+```
+
+  
+### File.reset
+
+Resets the file pointer to the position marked by the most recent call to mark.
+
+Usage:
+
+reset()
+
+  
+**File.reset example**
+
+```js
+var fd = new File("/tmp/blah");
+fd.open("read");
+fd.mark();
+fd.reset();
+```
+
+  
+### File.seek
+
+Moves the file pointer to a specified byte index.
+
+Usage:
+
+seek(offset, [whence])
+
+  
+**File.seek example**
+
+```js
+var fd = new File("/tmp/blah");
+fd.open("read");
+fd.seek(10);
+```
+
+  
+### File.size
+
+Returns the size, in bytes, of this file.
+
+Usage:
+
+size
+
+  
+**File.size example**
+
+```js
+var fd = new File("/tmp/blah");
+console_log("这个文件的大小是：" + fd.size + " bytes\n");
+```
+
+  
+### File.sync
+
+Flushes file content to disk.
+
+Usage:
+
+sync()
+
+  
+**File.sync example**
+
+```js
+var fd = new File("/tmp/blah");
+fd.open("read,write");
+fd.write("Hello, World!");
+fd.sync();
+```
+
+  
+### File.tempFile
+
+Creates a new blank temporary file.
+
+Usage:
+
+tempFile(prefix, suffix)
+
+  
+**File.tempFile example**
+
+```js
+var tmpFile = File.tempFile("tmp", ".txt");
+console_log("创建了一个临时文件：" + tmpFile.path + "\n");
+```
+
+  
+### File.truncate
+
+Truncates this file.
+
+Usage:
+
+truncate([size])
+
+  
+**File.truncate example**
+
+```js
+var fd = new File("/tmp/blah");
+fd.open("read,write");
+fd.truncate(0);
+```
+
+  
+### File.write
+
+Writes to the file.
+
+Usage:
+
+write(text)
+
+  
+**File.write example**
+
+```js
+var fd = new File("/tmp/blah");
+fd.open("write");
+fd.write("Hello, World!");
+```
+
+```js
+var fd = new File("/tmp/blah");
+if (fd.isFile) {
+ console_log(fd.name + " 是一个文件\n");
+} else {
+  console_log(fd.name + " 不是一个文件\n");
+} 
 
 ### File.isNative
 
-Returns a boolean indicating whether or not we are using an OS specific FILE handle.
+返回一个 boolean 值，指示是否使用操作系统特定的 FILE 句柄。
 
-Usage:
+用法：
 
 isNative
 
   
-**File.isNative example**
+**File.isNative 示例**
 
 ```js
-var fd = new File("/dev/zero"); // or COM1 or whatever in windows
+var fd = new File("/dev/zero"); // 在 windows 中是 COM1 或其他
 console_log(fd.isNative);
 fd.close();
 ```
@@ -860,34 +998,34 @@ fd.close();
   
 ### File.isOpen
 
-Returns a boolean indicating whether or not the file is open.
+返回一个 boolean 值，指示文件是否已打开。
 
-Usage:
+用法：
 
 isOpen
 
   
-**File.isOpen example**
+**File.isOpen 示例**
 
 ```js
 var fd = new File("/tmp/blah");
-console_log("Is the file open? " + fd.isOpen + "\n");
+console_log("文件是否已打开？" + fd.isOpen + "\n");
 fd.open("read");
-console_log("Is the file open? " + fd.isOpen + "\n");
+console_log("文件是否已打开？" + fd.isOpen + "\n");
 fd.close(); 
 ```
 
   
 ### File.lastModified
 
-The timestamp of when the file was last modified.
+文件的最后修改时间戳。
 
-Usage:
+用法：
 
 lastModified
 
   
-**File.lastModified example**
+**File.lastModified 示例**
 
 ```js
 var fd = new File("/tmp/blah");
@@ -897,14 +1035,14 @@ console_log(fd.lastModified+"\n");
   
 ### File.length
 
-Returns the length of the file.
+返回文件的长度。
 
-Usage:
+用法：
 
 length
 
   
-**File.length example**
+**File.length 示例**
 
 ```js
 var fd = new File("/tmp/blah");
@@ -914,14 +1052,14 @@ console_log(fd.length+"\n"); 
   
 ### File.list
 
-Returns the file names in a directory.
+返回目录中的文件名。
 
-Usage:
+用法：
 
 list()
 
   
-**File.list example**
+**File.list 示例**
 
 ```js
 var fd = new File("/tmp");
@@ -931,14 +1069,14 @@ console_log(fd.list()); 
   
 ### File.mkdir
 
-Create a directory in the current directory and point the file object to it.
+在当前目录中创建一个目录，并将文件对象指向该目录。
 
-Usage:
+用法：
 
 mkdir(directory)
 
   
-**File.mkdir example**
+**File.mkdir 示例**
 
 ```js
 var fd = new File("/tmp")
@@ -948,26 +1086,26 @@ fd.mkdir("blah");
   
 ### File.mode
 
-A comma separated list of the modes that you are allowed to use for this file.
+用逗号分隔的模式列表，表示允许用于此文件的模式。
 
-Usage:
+用法：
 
 mode
 
-Modes:
+模式：
 
-mode - a comma separated list of the file modes
+mode - 用逗号分隔的文件模式列表
+```
 
-* read - open for reading
-* write - open for writing
-* readWrite - open for reading and writing
-* append - add to the end of a file
-* create - create the file if it doesnt exist
-* replace - replace the contents with new ones (truncate)
-* autoflush - auto flush the buffer when writing
+* read - 可供阅读
+* write - 可供写入
+* readWrite - 可供阅读和写入
+* append - 添加到文件末尾
+* create - 如果文件不存在，则创建文件
+* replace - 替换内容为新内容（截断）
+* autoflush - 写入时自动刷新缓冲区
 
-  
-**File.mode example**
+**File.mode示例**
 
 ```js
 var fd = new File("/tmp/blah");
@@ -978,9 +1116,9 @@ console_log(fd.mode+"\n");
   
 ### [File.name](http://File.name)
 
-Returns the name of the current file without the directory part, the basename.
+返回当前文件的文件名，不包括目录部分，即基本名称。
 
-Usage:
+用法:
 
 name
 
@@ -993,29 +1131,29 @@ console_log(fd.name);
   
 ### File.open
 
-Opens a file handle.
+打开文件句柄。
 
-Usage:
+用法:
 
 open(mode)
 
-where mode - a comma separated list of the file modes
+其中 mode - 由逗号分隔的文件模式列表
 
-* _read_ \- open for reading
-* _write_ \- open for writing
-* _readWrite_ \- open for reading and writing
-* _append_ \- add to the end of a file
-* _create_ \- create the file if it doesnt exist
-* _replace_ \- replace the contents with new ones (truncate)
-* _autoflush_ \- auto flush the buffer when writing
+* _read_ \- 可供阅读
+* _write_ \- 可供写入
+* _readWrite_ \- 可供阅读和写入
+* _append_ \- 添加到文件末尾
+* _create_ \- 如果文件不存在，则创建文件
+* _replace_ \- 替换内容为新内容（截断）
+* _autoflush_ \- 写入时自动刷新缓冲区
 
-**File.open example**
+**File.open示例**
 
 ```js
 var fd = new File("/tmp/blah");
 fd.open("read,write,create");
 
-// Read output from an application
+// 从应用程序读取输出
 var fd = new File("|ls /home");
 fd.open("read");
 var result = fd.read("128");
@@ -1024,14 +1162,14 @@ var result = fd.read("128");
   
 ### File.output
 
-A file object for standard output.
+一个标准输出的文件对象。
 
-Usage:
+用法:
 
 output
 
   
-**File.open example**
+**File.open示例**
 
 ```js
 var fd = File.output
@@ -1042,14 +1180,14 @@ fd.writeln("\n\ntesting\n\n");
   
 ### File.parent
 
-Returns the parent part of the path.
+返回路径的父部分。
 
-Usage:
+用法:
 
 parent
 
   
-**File.parent example**
+**File.parent示例**
 
 ```js
 var fd = new File("/tmp/blah");
@@ -1058,14 +1196,14 @@ console_log(fd.parent);
 
 ### File.path
 
-Returns the full path to the current file descriptor.
+返回当前文件描述符的完整路径。
 
-Usage:
+用法:
 
 path
 
   
-**File.path example**
+**File.path示例**
 
 ```js
 var fd = new File("/tmp/blah");
@@ -1075,34 +1213,34 @@ console_log(fd.path); 
   
 ### File.position
 
-The current position in the file.
+在文件中的当前位置。
 
-Usage:
+用法：
 
 position
 
   
-**File.position example**
+**File.position示例**
 
 ```js
 var fd = new File("/tmp/blah");
 fd.open("read");
 fd.seek(10);
-console_log("We are at offset " + fd.position + "\n");
+console_log("我们在偏移量为" + fd.position + "的位置\n");
 fd.close()
 ```
 
 ### File.read
 
-Reads a specified number of bytes into a buffer.
+将指定数量的字节读入缓冲区。
 
-Usage:
+用法：
 
 read(size)
 
-size - the number of bytes to read
+size - 要读取的字节数
 
-**File.read example**
+**File.read示例**
 
 ```js
 var fd = new File("/tmp/blah");
@@ -1112,17 +1250,15 @@ var buff = fd.read(10);
   
 ### File.readAll
 
-Reads the entire contents of a file into a buffer. 
-
-Be careful of memory allocation with this command so you don't have 1000 calls all trying to read in a 100MB file.
+将文件的全部内容读入缓冲区。请小心使用此命令以避免内存分配问题，避免同时有1000个调用尝试读取100MB文件。
   
   
-Usage:
+用法：
 
 readAll()
 
   
-**File.readAll example**
+**File.readAll示例**
 
 ```js
 var fd = new File("/tmp/blah");
@@ -1132,14 +1268,14 @@ var buff = fd.readAll();
   
 ### File.readln
 
-Reads a file up to a newline into a buffer.
+将文件读取到换行符位置的缓冲区。
 
-Usage:
+用法：
 
 readln()
 
   
-**File.readln example**
+**File.readln示例**
 
 ```js
 var fd = new File("/tmp/blah");
@@ -1148,14 +1284,14 @@ var buff = fd.readln();
 
 ### File.remove
 
-Deletes a file.
+删除文件。
 
-Usage:
+用法：
 
 remove();
 
   
-**File.remove example**
+**File.remove示例**
 
 ```js
 var fd = new File("/tmp/blah");
@@ -1165,15 +1301,15 @@ fd.remove();
   
 ### File.renameTo
 
-Renames a file name to some other name.
+将文件重命名为其他名称。
 
-Usage:
+用法：
 
 renameTo(newName)
 
-newName - the new name of the file
+newName - 文件的新名称
 
-**File.renameTo example**
+**File.renameTo示例**
 
 ```js
 var fd = new File("/tmp/blah");
@@ -1183,15 +1319,15 @@ fd.renameTo("/tmp/moo"); 
   
 ### File.seek
 
-Sets the file pointer to a specified position in a file.
+将文件指针设置到文件中的特定位置。
 
-Usage:
+用法：
 
 seek(offset)
 
-offset - the byte offset to seek to
+offset - 要查找的字节偏移量
 
-**File.seek example**
+**File.seek示例**
 
 ```js
 var fd = new File("/tmp/blah");
@@ -1202,14 +1338,14 @@ fd.seek(1024);
   
 ### File.size
 
-Return the file size. This appears to be the same as (FreeSWITCH JavaScript File length)
+返回文件大小。这似乎与（FreeSWITCH JavaScript文件长度）相同。
 
-Usage:
+用法：
 
 size
 
   
-**File.size example**
+**File.size示例**
 
 ```js
 var fd = new File("/tmp/blah");
@@ -1219,14 +1355,14 @@ console_log(fd.size+"\n"); 
   
 ### File.toString
 
-Returns a string for the path to the file.
+返回文件的路径字符串。
 
-Usage:
+用法：
 
 toString()
 
   
-**File.toString example**
+**File.toString 示例**
 
 ```js
 console_log(fd.toString());
@@ -1235,9 +1371,9 @@ console_log(fd.toString());
   
 ### File.toURL
 
-Returns a URL–formatted object for the file name/path.
+返回文件名/路径的URL格式化对象。
 
-Usage:
+用法：
 
 toURL()
 
@@ -1248,14 +1384,14 @@ console_log(fd.toURL() + "\n");
 
 ### File.type
 
-Returns the type (i.e. text, UTF, Unicode, etc.) of the file.
+返回文件的类型（如文本、UTF、Unicode等）。
 
-Usage:
+用法：
 
 type
 
   
-**File.type example**
+**File.type 示例**
 
 ```js
 var fd = new File("/tmp/blah");
@@ -1266,14 +1402,14 @@ console_log(fd.type+"\n");
   
 ### File.write
 
-Writes a string to a file.
+将字符串写入文件。
 
-Usage:
+用法：
 
 write(string)
 
   
-**File.write example**
+**File.write 示例**
 
 ```js
 var fd = new File("/tmp/blah");
@@ -1283,14 +1419,14 @@ fd.write("whee!\n");
   
 ### File.writeAll
 
-Writes an array to a file.
+将数组写入文件。
 
-Usage:
+用法：
 
 writeAll(data)
 
   
-**File.writeAll example**
+**File.writeAll 示例**
 
 ```js
 var data = new Array("moo","ojnk");
@@ -1302,14 +1438,14 @@ fd.writeAll(data); 
   
 ### File.writeln
 
-Writes a string and appends a \\n (newline) to the end into a file.
+将字符串写入文件并在末尾添加一个\n（换行符）。
 
-Usage:
+用法：
 
 writeln(string)
 
   
-**File.writeln example**
+**File.writeln 示例**
 
 ```js
 var fd = new File("/tmp/blah");
@@ -1319,23 +1455,23 @@ fd.writeln("this is a test!"); 
   
 ## fileDelete
 
-Deletes a file from the system.
+从系统中删除文件。
 
-Usage:
+用法：
 
 fileDelete(filename);
 
-Argument:
+参数：
 
-* filename - full path to filename (use unix slash "/" even on win32)
+* filename - 文件的完整路径名（即使在win32上也要使用Unix斜杠“/”）
 
-Returns:
+返回值：
 
-* true - on success
-* false - on file not found or failure
+* true - 成功
+* false - 文件未找到或失败
 
   
-**fileDelete example**
+**fileDelete 示例**
 
 ```js
 rtn = fileDelete("/tmp/recording.wav");
@@ -1343,27 +1479,28 @@ rtn = fileDelete("/tmp/recording.wav");
 
 ## FileIO
 
-### Description
+### 描述
 
-The FileIO object lets you manipulate files.
+FileIO对象可以操作文件。
 
-##### Synopsis
+##### 概要
 
-FileIO(filename,flags)
+FileIO(filename, flags)
 
-* name - the filename including path to open
-* flags are one of  
-   * r - read  
-   * w - write  
-   * c - create  
-   * a - append  
-   * t - truncate  
-   * b - binary
+* name - 要打开的文件名（包括路径）
+* flags可以是以下之一  
+   * r - 读取  
+   * w - 写入  
+   * c - 创建  
+   * a - 追加  
+   * t - 截断  
+   * b - 二进制
 
-Note: if the file does not exist and the 'c' flag is not set the JS script will abort and an error event will be generated saying it cant open the file.
+注意：如果文件不存在且未设置“c”标志，则JS脚本将中止并生成一个错误事件，指示无法打开文件。
 
-##### Example
+##### 示例
 
+```python
 fd = new FileIO(argv[[0], "r");
 
 ##### Methods
@@ -1378,14 +1515,14 @@ fd = new FileIO(argv[[0], "r");
 
 ### FileIO.data
 
-Returns the data from a previous read.
+返回上次读取操作的数据。
 
-Usage:
+用法：
 
 data()
 
   
-**FileIO.data example**
+**FileIO.data 示例**
 
 ```js
 fd = new FileIO("/tmp/blah","r");
@@ -1395,14 +1532,14 @@ console_log(fd.data() + "\n"); 
 
 ### FileIO.path
 
-Contains the path to the current file.
+包含当前文件的路径。
 
-Usage:
+用法：
 
 path
 
   
-**FileIO.path example**
+**FileIO.path 示例**
 
 ```js
 fd = new FileIO("/tmp/blah","rc");
@@ -1411,14 +1548,14 @@ console_log(fd.path + "\n"); 
 
 ### FileIO.read
 
-Reads data from a file.
+从文件中读取数据。
 
-Usage:
+用法：
 
 read(size)
 
   
-**FileIO.read example**
+**FileIO.read 示例**
 
 ```js
 fd = new FileIO("/tmp/blah","r");
@@ -1428,14 +1565,14 @@ console_log(fd.data()); 
 
 ### FileIO.write
 
-Writes data to a file.
+将数据写入文件。
 
-Usage:
+用法：
 
 write(data)
 
   
-**FileIO.write example**
+**FileIO.write 示例**
 
 ```js
 fd = new FileIO("/tmp/blah","wc");
@@ -1447,43 +1584,43 @@ fd.write("testing\n"); 
 
 SPIDERMONKEY V8 UNVERIFIED
 
-Global variables can be used to share information between all channels. You can save anything in a global variable.
+全局变量可以用来在所有通道之间共享信息。你可以将任何东西保存在全局变量中。
 
-This is not to be confused with a property of the global scope object.
+这与全局范围对象的属性不同。
 
-**getGlobalVariable usage**
+**getGlobalVariable 用法**
 
 ```js
 var varVal = getGlobalVariable(varName);
 ```
 
-* `varName` (`String`) - the name of the global variable
+* `varName` (`String`) - 全局变量的名称
 
-Returns: `varVal` (??) - the value of the gobal variable
+返回：`varVal` (??) - 全局变量的值
 
-**getGlobalVariable example**
+**getGlobalVariable 示例**
 
 ```js
-// retrieve the value of the 'clients' global variable
+// 检索 'clients' 全局变量的值
 var clients = getGlobalVariable("clients");
 ```
 
-### See Also
+### 另请参阅
 
 * [setGlobalVariable](index.mdx#setglobalvariable)
 
   
 ## include
 
-Includes a file into the current Javascript file.
+将文件包含到当前的Javascript文件中。
 
-Usage:
+用法：
 
 include(path)
 
-'path' should be the full path to the file
+'path' 应该是文件的完整路径
 
-**include example**
+**include 示例**
 
 ```js
 include("/path/to/file.js");
@@ -1491,72 +1628,70 @@ include("/path/to/file.js");
 
   
 ## Session
+```
 
-The session object provides methods that allow you to interact with the channel.
+会话对象提供了一些方法，允许您与通道进行交互。
 
-For applications written in Javascript: While the JavaScript application will continue to execute after a hangup is detected the session object will be destroyed and any attempt to access it will cause the JavaScript to terminate. Save any variables you might need for post–hangup processing and use your local variables instead.
+对于使用JavaScript编写的应用程序：当检测到挂机时，JavaScript应用程序将继续执行，但会话对象将被销毁，任何尝试访问它的操作都会导致JavaScript终止。请保存您可能需要进行挂断后处理的任何变量，并使用本地变量代替。
 
-### Constructor
+### 构造函数
 
-You can create a new session with the following:
+可以使用以下方法创建新会话：
 
 s = new Session();
 
-Creates an empty session object that provides methods that allow you to interact with the channel.
+创建一个空的会话对象，提供了一些方法，允许您与通道进行交互。
 
-  
 s = new Session(uuid);
 
-Creates a session object from an existing uuid. This allows you to interact with an existing channel.
+从现有的uuid创建会话对象。这样可以让您与现有的通道进行交互。
 
-You do not need to create a default session. 'session' is created automatically for the current session and your JavaScript is running in it already. Create a new session to originate a call to a new Leg B, for example.
+您不需要创建默认会话。'session'会话对象已经自动为当前会话创建，并且您的JavaScript已在其中运行。例如，创建一个新的会话以发起对新的Leg B的呼叫。
 
-  
-To create a new session and automatically dial out, proceeding only after the call has been answered (ignoring early media information), try this JS code:
+如果要创建一个新的会话并自动拨出，仅在通话被接听后才继续进行（忽略早期媒体信息），请尝试以下JS代码：
 
-**JS outdial example**
+**JS拨出示例**
 
 ```js
 s = new Session("{ignore_early_media=true}sofia/default/foo@bar.com");
 while (s.ready()) {
- // The call has been answered
+ // 通话已接听
 }
 ```
-  
-  
-Other options, such as those available to the [originate](../../../Modules/mod_commands_1966741.mdx#originate) command, may be used:
+
+也可以使用其他选项，比如`[originate](../../../Modules/mod_commands_1966741.mdx#originate)`命令中可用的选项：
 
 ```xml
 s = new Session("{ignore_early_media=true,origination_caller_id_name=Jack}sofia/default/foo@bar.com");
 while (s.ready()) {
- // The call has been answered
+ // 通话已接听
 }
 ```
 
 ### Session.sayPhrase
 
-Speaks a prompt macro using the FreeSwitch say macro API.
+使用FreeSwitch的say macro API语音播放提示音。
 
-Usage:
+用法：
 
 session.sayPhrase(macro_name [,macro_data] [,language] [,dtmf_callback] [,dtmf_callback_args]);
 
-Arguments:
+参数:
 
-* macro\_name - (string) The name of the say macro to speak
-* macro\_data - (string) Optional. Data to pass to the say macro
-* language - (string) Optional. Language to speak macro in (ie. "en" or "fr"). Defaults to "en".
-* dtmf\_callback - (function) DTMF callback function name (don't enclose it in quotes!).
-* dtmf\_callback\_args - (string) Optional. DTMF callback args to pass to the callback function when it is called.
+* macro\_name - （字符串）要说话的say宏的名称
+* macro\_data - （字符串）可选。要传递给say宏的数据
+* language - （字符串）可选。要用于say宏的语言（例如 "en" 或 "fr"）。默认为 "en"。
+* dtmf\_callback - （函数）DTMF回调函数名（不要用引号括起来！）。
+* dtmf\_callback\_args - （字符串）可选。在调用回调函数时传递给回调函数的DTMF回调参数。
 
-Callback return values and meanings:
+回调函数返回值和意义：
 
-* true or "true" - Causes prompts to continue speaking.
-* Any other value interrupts the prompt and returns the value from the dtmf\_callback function
+* true 或 "true" - 导致提示继续说话。
+* 任何其他值中断提示，并从dtmf\_callback函数返回该值。
 
-Macros should be placed in conf/lang\_XX.xml.
+宏应放置在conf/lang\_XX.xml中。
 
-**sayPhrase example** Expand source 
+**sayPhrase示例** 展开源代码
 
 ```js
   var dtmf_digits = "";
@@ -1570,8 +1705,7 @@ Macros should be placed in conf/lang\_XX.xml.
      return(true);
   }
   
-  /* Speaks a menu and waits for a single digit press. If the user does not enter a selection */
-  /* then the menu is repeated up to 3 times. */
+  /* 说出菜单并等待用户按下一个数字键。如果用户没有输入任何选择，菜单将重复最多3次 */
   function sayivrmenu(ivrsession, menuname, validdigits, timeout) {
       var repeat = 0;
   
@@ -1580,29 +1714,29 @@ Macros should be placed in conf/lang\_XX.xml.
       session.flushDigits();
       dtmf_digits = "";
   
-      while (ivrsession.ready() && dtmf_digits == "" && repeat < 3) {
-          /* play phrase - if digit keyed while playing callback will catch them*/
+      while (ivrsession.ready() && dtmf_digits === "" && repeat < 3) {
+          /* 播放语句 - 如果按键在播放过程中被敲击，回调函数将捕获按键*/
           ivrsession.sayPhrase(menuname, validdigits, "en", on_dtmf, "");
   
-          /* if caller still here and has not entered any selection yet - wait for a selection*/
-          if (ivrsession.ready() && dtmf_digits == "") {
+          /* 如果呼叫者还在此处并且尚未输入任何选择 - 等待选择*/
+          if (ivrsession.ready() && dtmf_digits === "") {
               dtmf_digits = ivrsession.getDigits(1, "", timeout);
-              /* if still no selection repeat menu */
-              if (dtmf_digits == "") {
+              /* 如果还没有选择，重复播放菜单 */
+              if (dtmf_digits === "") {
                   repeat++;
               }
           }
       }
-      return(dtmf_digits);
+      return dtmf_digits;
   }
   
   
   var menuselection = "";
   
-  /** Let's answer our call **/
+  /** 让我们接听电话 **/
   session.answer();
   
-  /** Play our Main Menu prompt (options 0, 1, 2, 3 and #) **/
+  /** 播放我们的主菜单提示信息（选项0、1、2、3和#） **/
   menuselection = sayivrmenu(session, "mainmenu", "0123#", 6000);
   
   if (session.ready()) {
@@ -1612,32 +1746,32 @@ Macros should be placed in conf/lang\_XX.xml.
 
 ### Session.speak
 
-Uses the TTS engine to say a phrase. You must have a TTS module loaded for this to work.
+使用TTS引擎说出一段话。要使其工作，必须先加载TTS模块。
 
-Usage:
+用法：
 
-speak(engine,voice,phrase,timer)
+speak(engine, voice, phrase, timer)
 
-Arguments:
+参数：
 
-* engine - the engine to use
-* voice - the name of the voice to use
-* phrase - what you want it to say
-* timer - optional timer to use (eg "soft")
+* `engine` - 要使用的引擎
+* `voice` - 要使用的语音名称
+* `phrase` - 想要它说的话
+* `timer` - 可选的计时器（例如"soft"）
 
-In Cepstral, 'phrase' can include SSML tags as well. See <http://www.cepstral.com/cgi-bin/support?page=faq&type=ssml> for more info.
+在Cepstral中，'phrase'可以包含SSML标签。请参阅<http://www.cepstral.com/cgi-bin/support?page=faq&type=ssml>了解更多信息。
 
-In Cepstral, if 'phrase' starts with / it will open the file specified and read its contents instead of a string; need windows specifics on path information
+在Cepstral中，如果'phrase'以/开始，它将打开指定的文件并读取其内容，而不是一个字符串。需要关于路径信息的Windows具体信息。
 
-**speak example**
+**speak示例**
 
 ```js
 session.speak("cepstral","David","Hello from FreeSwitch");
 ```
 
-Example with callback:
+带有回调的示例：
 
-**speak callback example**
+**speak回调示例**
 
 ```js
 function my_dtmf_callback(dtmf_str, digits, args)
@@ -1646,16 +1780,15 @@ function my_dtmf_callback(dtmf_str, digits, args)
     return true;
 }
  
-//invoke thus
+//这样调用
 session.speak("cepstral", "david", '<break time="500ms"/>Hello this is a test of the break tag', my_dtmf_callback); 
 ```
 
-Be sure not to put the name of the callback function in quotes.
+请确保不要将回调函数的名称放在引号中。
 
-  
-Example of reading a file:
+读取文件的示例：
 
-**speak file read example**
+**speak读取文件示例**
 
 ```js
 session.speak("cepstral","David","/etc/passwd"); 
@@ -1666,49 +1799,48 @@ session.speak("cepstral","David","/etc/passwd"); 
 
 SPIDERMONKEY V8 UNVERIFIED 
 
-Global variables can be used to share information between all channels. You can save anything in a global variable.
+全局变量可用于在所有通道之间共享信息。您可以在全局变量中保存任何内容。
 
-This is not to be confused with a property of the global scope object.
+这与全局作用域对象的属性不同。
 
-**setGlobalVariable usage**
+**setGlobalVariable使用方法**
 
 ```js
 var wasSet = setGlobalVariable(varName, varValue[, valCheck]);
 ```
 
-* `varName` (`String`) - the name of the global variable
-* `varValue` (`String, Object, Number`) - the desired new value to be stored in the global variable
-* `valCheck` (`String, Object, Number`) - the expected old value of the global variable, used to determine if another process has since modified the value
+* `varName` (`String`) - 全局变量的名称
+* `varValue` (`String, Object, Number`) - 要存储在全局变量中的期望新值
+* `valCheck` (`String, Object, Number`) - 全局变量的预期旧值，用于确定其他进程是否已修改该值
 
-Returns: `wasSet` (`Boolean`) - was the operation successful
+返回值: `wasSet` (`Boolean`) - 操作是否成功
 
-### Notes
+### 注意事项
 
-The ([defacto](https://brendaneich.com/2007/02/threads-suck/)) single-process model for JavaScript engines is not honored in FreeSWITCH. This means that multiple channels can access/change the information in a variable as others are accessing. You need to take care when changing data.
+在FreeSWITCH中，并不尊重JavaScript引擎中的([defacto](https://brendaneich.com/2007/02/threads-suck/))单进程模型。这意味着当多个通道访问/更改变量的信息时，其他通道也可以同时访问。所以，在更改数据时需要注意。
 
-For instance, this is example of a typical scenario in multi-threaded environments introduced by this deviation:
+例如，这是由于这种差异引入的多线程环境中的典型场景：
 
-* Global var `isExtensionFree` is `true`
-* Channel 1 reads the var and checks if it's `true`.
-* Channel 2 reads the var and checks if it's `true`.
-* Channel 1 saves value `false` and transfers the call to destination (since variable was `true`)
-* Channel 2 does the same thing since it read the var before Channel 1 managed to change it.
+* 全局变量`isExtensionFree`的值是`true`
+* 通道1读取该变量并检查其是否为`true`。
+* 通道2读取该变量并检查其是否为`true`。
+* 通道1将值保存为`false`并将呼叫转接到目标（因为变量此时为`true`）
+* 通道2执行相同的操作，因为它在通道1成功更改变量之前就已经读取了这个变量。
 
-To avoid this problem, use `valCheck`. The `valCheck` parameter will be used to validate that no changes have been made since the `getGlobalVariable` call (pass the variable that you read).
+为了避免这个问题，可以使用`valCheck`。`valCheck`参数将用于验证在`getGlobalVariable`调用之后是否有任何更改（传递你读取的变量）。
 
-* If `valCheck` agrees with the current value of the global variable, the global variable will be changed to `varValue` and the routine will return `true`.
-* If `valCheck` does not agree with the current value of the global variable, the global variable's value will not be changed and the routine will return `false`.
-* If the global variable does not exist and `valCheck` is not a zero length string, the global variable will not be set and the function will return `false`.
-* If the global variable exists, `varValue` is a zero length string, and `valCheck` agrees with the current value of the global variable, the global variable will be deleted, and the function will return `true`.
+* 如果`valCheck`与全局变量的当前值相符，全局变量将被更改为`varValue`，并且程序将返回`true`。
+* 如果`valCheck`与全局变量的当前值不符，全局变量的值将不会改变，并且程序将返回`false`。
+* 如果全局变量不存在且`valCheck`不是一个空字符串，则不会设置全局变量，并且函数将返回`false`。
+* 如果全局变量存在，`varValue`是一个空字符串，并且`valCheck`与全局变量的当前值相符，全局变量将被删除，并且函数将返回`true`。
 
-If you do not specify `valCheck`, no concurrency validation will be made.
+如果不指定`valCheck`，则不会进行并发验证。
 
-* The global variable `varName` will be set to `varValue`  
-   * If `varValue` is a zero length string, the global variable `varName` will be deleted.
-* `wasSet` will always return true.
+* 全局变量`varName`将被设置为`varValue`
+   * 如果`varValue`是空字符串，则全局变量`varName`将被删除。
+* `wasSet`将始终返回true。
 
-  
-**getGlobalVariable example**
+**getGlobalVariable示例**
 
 ```js
 var gvClients = getGlobalVariable("clients");
@@ -1719,21 +1851,21 @@ if (gvClients === true) {
 
 ```
 
-### See Also
+### 参见
 
 * [getGlobalVariable](#getglobalvariable)
 
 ## system
 
-Executes an external system command.
+执行外部系统命令。
 
-Usage:
+用法：
 
 var return_code = system( command );
 
-Output of the command is not returned. If you need to send or recieve output from the command, see the [File](https://wiki.freeswitch.org/wiki/File "File") object.
+不返回命令的输出。如果您需要发送或接收命令的输出，请参阅[File](https://wiki.freeswitch.org/wiki/File "File")对象。
 
-**system example**
+**system示例**
 
 ```js
 system("create_account");
@@ -1744,17 +1876,17 @@ system("create_account");
 
 ### TeleTone.addTone
 
-Adds a tone and associates it with a 'digit' which can be alphabetic or numeric and is not limited to what is on a normal DTMF keypad.
+添加一个音调，并将其与一个“digit”关联，该“digit”可以是字母或数字，并不限于DTMF键盘上的内容。
 
-Usage:
+用法：
 
-addTone(digit name, frequency1, frequencyN, 0.0)
+addTone(digit名称, frequency1, frequencyN, 0.0)
 
-* digit name is a character that will be used to identify this tone
-* frequencies are a null terminated list of all the component frequencies that make this tone
+* digit名称是一个字符，用于标识此音调
+* 频率是组成此音调的所有组成频率的以null结尾的列表
 
   
-**AddTone example**
+**AddTone示例**
 
 ```js
 use("TeleTone");
@@ -1762,25 +1894,25 @@ var tts = new TeleTone(session);
 tts.addTone("q", 2600.0, 2400.0, 0.0);
 dtmf = session.((FreeSwitch Javascript Session GetDigits|getDigits))(1, "", 20000, true);
 if (dtmf == "q") {
-  // do something fun here
+  // 在这里做一些有趣的事情
 }
 ```
 
   
 ### TeleTone.generate
 
-Generates a tone of a single or mixed frequencies.
+生成一个单频率或混合频率的音调。
 
-Usage:
+用法：
 
 generate(TGML)
 
-[TGML](../../../Modules/mod-dptools/mod-dptools:-gentones/TGML_6586573.mdx#lua) is a markup language that describes the component frequencies, duration, volume, decay, and other properties. It is quite powerful and avoids the need to record an audio file to generate tone sequences.
+[TGML](../../../Modules/mod-dptools/mod-dptools:-gentones/TGML_6586573.mdx#lua) 是一种描述组件频率、持续时间、音量、衰减和其他属性的标记语言。它非常强大，无需记录音频文件即可生成音调序列。
 
-**generate example**
+**生成示例**
 
 ```js
-// play the ITU E.184 'calling card bong'
+// 播放ITU E.184 'calling card bong'
 use("TeleTone");
 var BONG = "v=4000;>=0;+=2;#(60,0);v=2000;d(940,0)";
 var newtone = new TeleTone(session);
@@ -1790,14 +1922,14 @@ newtone.generate(BONG); 
   
 ### TeleTone.name
 
-Returns the name of this Teletone object.
+返回此Teletone对象的名称。
 
-Usage:
+用法：
 
 name
 
   
-**name example**
+**名称示例**
 
 ```js
 var tts = new TeleTone(session);
@@ -1807,32 +1939,30 @@ console_log(tts.name + "\n"); 
   
 ### TeleTone.onDTMF
 
-Causes a callback to be performed when DTMF is received.
+收到DTMF时导致回调执行。
 
-Usage:
+用法：
 
 onDTMF(callback)
 
-callback - The name of the function to call when DTMF is received. It will pass an argument to this callback containing the digits it received.
+callback - 接收到DTMF时要调用的函数的名称。它将向此回调传递一个包含接收到的数字的参数。
 
-**onDTMF example**
+**onDTMF示例**
 
 ```js
 use("TeleTone");
 tts = new TeleTone(session);
 function dtmf_test(digits)
 {
-    console_log("you pressed " + digits + "\n");
+    console_log("你按了 " + digits + "\n");
     return digits;
 }
 
 tts.onDTMF("dtmf_test"); 
 ```
 
-### Comments:
+### 注释：
 
-| File class is still **not yet implemented in v1.10**.You must use the FileIO object to operate with files in javascript as described [here](https://lists.freeswitch.org/pipermail/freeswitch-users/2017-June/126601.html). ![](/images/icons/contenttypes/comment_16.png) Posted by Fx at Apr 23, 2020 06:32 |
+| 文件类在 v1.10 版本仍**未实现**。您必须使用 FileIO 对象在 JavaScript 中操作文件，如此处所述（[链接](https://lists.freeswitch.org/pipermail/freeswitch-users/2017-June/126601.html)）。![](/images/icons/contenttypes/comment_16.png) 由 Fx 于 2020年4月23日 06:32 发布 |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| You're right, using \`new File()\` works if you put \`use('File');\` at the top of your JS script, but if you try to use the methods you'll get \`Exception: Not yet implemented\` ![](/images/icons/contenttypes/comment_16.png) Posted by TBG at Jul 05, 2021 05:50                                         |
-
-
+| 没错，如果您在 JS 脚本的顶部加上 \`use('File');\`，使用 \`new File()\` 是可行的。但是，如果您尝试使用这些方法，将会得到 \`Exception: Not yet implemented\` 错误！![](/images/icons/contenttypes/comment_16.png) 由 TBG 于 2021年7月5日 05:50 发布                                         |

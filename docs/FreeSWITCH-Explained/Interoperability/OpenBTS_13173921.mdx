@@ -1,23 +1,22 @@
-
 # OpenBTS 
 
  
 
-## About
+## 关于
 
-Configuring OpenBTS 2.5 with freeswitch 1.0.4
+使用 freeswitch 1.0.4 配置 OpenBTS 2.5
 
-Click here to expand Table of Contents
+单击此处展开目录
 
-* 1 [Configuring](#configuring)
+* 1 [配置](#configuring)
 
-## Configuring
+## 配置
 
-OpenBTS acts as a SIP client that registers into FreeSWITCH. You need to change OpenBTS.Config to match the IP address of your internal or external default profiles. If you use the external profile make sure that the port number is 5080 and not 5060\. FreeSWITCH needs a profile that accepts registrations without requesting authentication. If you try to register OpenBTS with FreeSWITCH, you want to make sure that 401 (Unauthorized) or 407 (Proxy Authentication Required) are not requested.
+OpenBTS 作为一个注册到 FreeSWITCH 的 SIP 客户端。您需要更改 OpenBTS.Config，以匹配您的内部或外部默认配置文件的 IP 地址。如果您使用外部配置文件，请确保端口号为 5080 而不是 5060。FreeSWITCH 需要一个接受注册但不要求身份验证的配置文件。 如果您尝试将 OpenBTS 注册到 FreeSWITCH，请确保之后不会收到 401（未授权）或 407（要求代理身份验证）的请求。
 
-OpenBTS has a very minimal SIP stack, so make sure that FreeSWITCH accepts the registration blindly.
+OpenBTS 的 SIP 栈非常简单，请确保 FreeSWITCH 盲目接受注册。
 
-One alternative is to use IP CIDR to ensure that only OpenBTS is accepted. Create a new entry in the directory to allow local registrations (registrations that come from the very same server) blindly.
+一种替代方法是使用 IP CIDR 来确保只有 OpenBTS 被接受。在目录中创建一个新的条目，以盲目允许本地注册（即来自同一服务器的注册）。
 
 ```xml
 <include>
@@ -41,10 +40,8 @@ One alternative is to use IP CIDR to ensure that only OpenBTS is accepted. Creat
 </include>
 ```
 
-Another issue that you need to consider is the codec, the current implementation of OpenBTS supports GSM. Make sure that your profile accepts GSM as default codec. If your audio sounds like dropping dozen of wine glasses against the floor, it might the case that FreeSWITCH is sending PCMU audio to the phone. Not good! :) There is a bug around (20090917) that should be fixed soon in trunk.
+另一个需要考虑的问题是编解码器，当前的OpenBTS实现支持GSM。请确保您的配置文件默认接受GSM作为编解码器。如果您的音频听起来像是十几个酒杯掉在地板上的声音，可能是因为FreeSWITCH将PCMU音频发送给手机。这不太好！:) 在(20090917)的版本中，有一个即将修复的错误问题。
 
-The third issue to deal with is DTMF detection. OpenBTS provides DTMF to FreeSWITCH as INFO SIP Messages. DTMF are sent to FreeSWITCH as Signal=Number {0-12} where 11 is \* and 12 is #. FreeSWITCH expects the \* and # as Signal=\* and not Signal=11\. There is a bug around (20090917) that should be fixed soon in trunk that relates to multiple DTMFs in a single call. The CSeq field in the SIP Message needs to increments per DTMF or the DTMF are not properly detected by FreeSWITCH (in fact, it will only detect the first one!).
+第三个需要处理的问题是DTMF检测。OpenBTS将DTMF作为INFO SIP消息发送给FreeSWITCH。DTMF以Signal=Number {0-12}的方式发送，其中11代表*，12代表#。而FreeSWITCH期望*和#被表示为Signal=\*，而不是Signal=11。在(20090917)的版本中，有一个即将修复的与单个呼叫中多个DTMF有关的错误问题。SIP消息中的CSeq字段需要每个DTMF递增，否则FreeSWITCH无法正确检测到DTMF（实际上，它只会检测到第一个DTMF）。
 
-If you are working with OpenBTS and FS drop me a line, check for my address in <http://www.it46.se/contact>
-
-
+如果你正在使用OpenBTS和FS进行工作，请给我留言，在<http://www.it46.se/contact>查找我的地址。

@@ -1,52 +1,49 @@
-
 # HA PBX 
 
- 
+## 关于
 
-## About
+高可用性五级交换机/PBX。目前，此页面记录了我公司构建高可用性五级PBX使用FreeSWITCH的尝试。
 
-High Availability Class 5 Switch/PBX. This page currently captures my company's attempt at building a high availability Class 5 PBX using FreeSWITCH.
+单击此处展开目录
 
-Click here to expand Table of Contents
+* 1 [什么是五级交换机/PBX](#what-is-a-class-5-switchpbx)
+* 2 [这是我的当前计划](#here-are-my-current-plans)
+* 3 [不想忘记的链接](#links-to-crap-i-dont-want-to-forget)
+* 4 [当前进展](#current-progress)
 
-* 1 [What is a Class 5 Switch/PBX](#what-is-a-class-5-switchpbx)
-* 2 [Here are my current plans](#here-are-my-current-plans)
-* 3 [Links to crap I don't want to forget](#links-to-crap-i-dont-want-to-forget)
-* 4 [Current Progress](#current-progress)
+## 什么是五级交换机/PBX
 
-## What is a Class 5 Switch/PBX
+五级交换机是一种电话交换机，提供终端用户功能。这包括呼叫路由、交互式语音应答系统(IVR)、语音邮件、语音邮件转发到电子邮件、呼叫转接、自动呼叫分配(ACD)、呼叫录音等功能。这提出了一个独特的挑战，因为交换机提供的有许多需要细心维护的有状态服务。
 
-A Class 5 switch is a phone switch that provides end-subscriber features. This includes features like call routing, IVRs, voice mail, voice mail to email, call forwarding, ACDs, call recording, etc. This presents a unique challenge, in that there are many more stateful services provided by the switch that need care and feeding.
+## 这是我的当前计划
 
-## Here are my current plans
+* 前端有两个运行HA Linux的SBC（状态非常稳定，只是负载均衡），没有共享状态。除了检查后端集群机器的负载外，这些机器都是无状态的。一个使用[Twisted]（http://twistedmatrix.com/documents/8.1.0/api/twisted.protocols.sip.html）SIP库和Twisted FreeSWITCH套接字接口提供SBC功能的Python脚本。[Python\_SBC]（https://wiki.freeswitch.org/wiki/Python%5FSBC "Python SBC")。
+  * 为了简化用户代理（设备）配置并保持高可用性。
+  * 这些SBC绕过所有媒体，没有用户目录，只有一个面向用户代理的SIP配置。（我认为 - 待定）
 
-* Dual SBCs on the front end, running HA Linux (Just Heartbeat, Configs are VERY static). No shared state. These machines are stateless, except for checking the load of the clustered machines on the back end. A Python script that uses the [Twisted](http://twistedmatrix.com/documents/8.1.0/api/twisted.protocols.sip.html) SIP library, and the Twisted FreeSWITCH Socket interface provides the SBC Functionality. [Python\_SBC](https://wiki.freeswitch.org/wiki/Python%5FSBC "Python SBC").  
-   * To allow a simpler User Agent (Device) configs and still have high availability  
-   * These SBCs bypass all media, have no user directory, and one SIP profile facing the User Agents. (I Think - TBD)
-* N+1 Clustered FreeSWITCH Media servers on the back end  
-   * These also handle registration, so a shared ODBC Sofia registration DB is required (MySQL Cluster = DONE)  
-   * Media Servers do all the dirty work - transcoding, dialplan, CDRs, as a normal PBX would.  
-   * Clustering is via a possibly custom ESL mod in the SBC that queries each server and checks the ratio of current calls to MAX\_CALLS and routes the session to the server doing the least work. Any server failing to respond gets no traffic sent to it.  
-   * This could also be round robin for simplicity. Statistically, load should get distributed as call volume increases. N+1 Load should be managed such that any one server causes no impact. After the second failure, there may be some performance impact but it should be negligible.
-* Clustered MySQL  
-   * Stores lots of things. Each Back End Media Switch is also a data node in the MySQL Cluster  
-   * Front End SBCs are also MySQL Load Balancers, and one is the Cluster Manager.  
-      * Sofia Registrations
-* Configs are still regular XML. One node gets updated, then pushes its config to the others via rsync. This is to allow a UI like [Blue.Box](http://2600hz.org/) or [FusionPBX](http://fusionpbx.com/) to unknowingly manage a cluster of FS servers.
+* 后端是N+1集群化的FreeSWITCH媒体服务器。
+   * 这些服务器还处理注册，所以需要一个共享的ODBC Sofia注册数据库（MySQL Cluster = 完成）。
+   * 媒体服务器完成所有繁重的工作 - 编码转换、拨号计划、CDR，就像一个普通的PBX一样。
+   * 集群是通过SBC中的可能是定制的ESL模块查询每个服务器并检查当前通话量与最大通话量的比率，然后将会话路由到工作最少的服务器。未能响应的服务器将不会接收任何流量。为了简单起见，这也可以是轮询方式。统计上来说，负载应该在呼叫量增加时得到平均分配。N+1负载应当得到管理，使得任何一个服务器都不会造成冲击。在第二次失败之后，可能会有一些性能影响，但应该可以忽略不计。
 
-## Links to crap I don't want to forget
+* 集群化的MySQL。
+   * 存储了许多东西。每个后端媒体转换器也是一个MySQL集群的数据节点。
+   * 前端SBC也是MySQL负载均衡器，其中一个是集群管理器。
+      * Sofia注册。
 
-* [Sofia recover (OOOOH!)](https://wiki.freeswitch.org/wiki/Freeswitch%5FHA "Freeswitch HA")
+* 配置仍然是常规的XML格式。一个节点进行更新后，通过rsync将其配置推送到其他节点。这样一来，类似于[Blue.Box]（http://2600hz.org/）或[FusionPBX]（http://fusionpbx.com/）的UI可以无意识地管理一个FS服务器集群。
+
+## 要记住的链接
+
+* [Sofia恢复（哦哦哦！）](https://wiki.freeswitch.org/wiki/Freeswitch%5FHA "Freeswitch HA")
 * <http://www.puppetlabs.com/puppet/introduction/>
 * <http://www.softwareprojects.com/resources/programming/t-replicating-web-servers-using-rsync-1736.html>
 * <http://wiki.freeswitch.org/wiki/Enterprise%5Fdeployment%5FOpenSIPS>
 
-## Current Progress
+## 当前进展
 
-* 2 servers, [Super Micro Mini Boxes with Quad Core Xeons, single 500 GB HD, Dual GB Lan](http://www.newegg.com/Product/Product.aspx?Item=N82E16816101244)  
-   * Centos 5.5  
-   * [MySQL Cluster](http://www.mysql.com/downloads/mirror.php?id=392174)  
-   * UnixODBC  
+* 2台服务器，[Super Micro Mini Boxes，配备四核Zeon CPU，单个500GB硬盘，双千兆以太网](http://www.newegg.com/Product/Product.aspx?Item=N82E16816101244)  
+   * CentOS 5.5
+   * [MySQL Cluster](http://www.mysql.com/downloads/mirror.php?id=392174)
+   * UnixODBC
    * FreeSWITCH
-
-

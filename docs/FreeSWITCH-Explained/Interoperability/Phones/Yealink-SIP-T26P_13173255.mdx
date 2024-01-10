@@ -1,51 +1,48 @@
+# Yealink-SIP-T26P
 
-# Yealink-SIP-T26P 
+单击此处展开目录
 
- 
-
-Click here to expand Table of Contents
-
-* 1 [OpenVPN](#openvpn)  
-   * 1.1 [Phone Setup](#phone-setup)
-* 2 [Logo](#logo)
-* 3 [Ring Tones](#ring-tones)
+* 1 [OpenVPN](#openvpn)
+   * 1.1 [电话设置](#phone-setup)
+* 2 [商标](#logo)
+* 3 [铃声](#ring-tones)
 
 ## OpenVPN
 
-It's pretty well documented that the OpenVPN configuration on this phone is wonky. <http://www.pluteus.at/HelpDesk/ViewKBIssue.aspx?IssueID=852>
+众所周知，此电话上的OpenVPN配置相当奇怪。 [点击此处](http://www.pluteus.at/HelpDesk/ViewKBIssue.aspx?IssueID=852) 查看一些编辑后的信息。
 
-Here's some \[edited\] info from there:
+以下是其中一些信息：
 
-### Phone Setup
+### 电话设置
 
-Yealink T28's web GUI allows you to upload a VPN configuration file, but they dont supply any hints on how to format the file in their publicly available documentation.
+Yealink T28的Web图形用户界面允许您上传VPN配置文件，但是他们在公开的文档中没有提供有关如何格式化文件的提示。
 
-Format of Configuration TAR Archive
+配置TAR存档的格式
 
-The TAR archive has an unusual structure. The upper most folder is a "." folder.
+TAR存档的结构不寻常。最上层的文件夹是一个"."文件夹。
 
-To be more precise, the TAR archive folder structure is:
+更准确地说，TAR存档的文件夹结构如下：
 
 ```xml
-. (folder)
-→vpn.cnf (standard OpenVPN client config file)
-→keys (folder)
+. (文件夹)
+→vpn.cnf (标准的OpenVPN客户端配置文件)
+→keys (文件夹)
 →→ca.crt
 →→client.crt
 →→client.key
 ```
 
-Here's how to generate the archive.
+以下是如何生成存档的方法。
 
 ```xml
 tar cvf openvpn.tar ./vpn.cnf ./keys
 ```
 
-The './' is important. This will create the '.' folder initial directory. I also did a chmod 666 on all files, and 777 on the keys directory to be safe. Not sure if that matters.
+'./'很重要。这将创建'.'文件夹的初始目录。我还对所有文件执行了chmod 666的操作，并且对keys目录执行了777操作以确保安全。不确定是否重要。
 
-[Sample TAR Archive and basic documentation supplied by Yealink openvpn.zip](http://www.yealink.co.uk/assets/Document-Downloads/Open%20VPN.zip)
+[提供样本TAR存档和Yealink openvpn.zip的基本文档](http://www.yealink.co.uk/assets/Document-Downloads/Open%20VPN.zip)
 
-CONFIG FILE TIP: When specifying the location of the ca, cert, and key, you must include the full path to the file:
+配置文件提示：在指定ca、cert和key的位置时，必须包括文件的完整路径：
 
 ```xml
 ca /yealink/config/openvpn/keys/ca.crt
@@ -53,58 +50,54 @@ cert /yealink/config/openvpn/keys/client1.crt
 key /yealink/config/openvpn/keys/client1.key
 ```
 
-ON the phone, you need to go to Menu->Setting->Advanced Settings->Network->VPN
+在电话上，您需要转到菜单->设置->高级设置->网络->VPN
 
-* default password for advanced settings is: 'admin'  
-   * yes virginia, good ole multi-tap
+* 高级设置的默认密码是：'admin'
+   * 是的，弗吉尼亚，请相信，充满了良好的多次按键输入
 
-If it works, you'll see VPN in a square on the upper right hand corner of the display. DNS works fine as well. Here's a test setup:
+如果正常工作，您将在显示器右上角的一个正方形中看到VPN的标志。DNS也正常工作。以下是一个测试设置：
 
 ```xml
-FS -> Router (vpn server) -> Internet-> DSL-> Tomato Router (nat1)[1] -> wireless -> Gargoyle Router [client route] (nat2) -> Yealink (openvpn)
+FS -> 路由器（VPN服务器）->互联网-> DSL-> 番茄路由器（nat1）[1] -> 无线->Gargoyle路由器[客户路由]（nat2）-> Yealink（openvpn）
 ```
 
-  
-So far 8.5+ hours (before I hung up) listening to music on hold (conference) through this mess back to my remote server = Awesome.
+迄今为止，已经通过这个困境回到我的远程服务器上听了8.5个多小时（挂断之前）的音乐会议曲目 = 太棒了。
 
-1. Also of note, the tomato router has all sip and rtp ports forwarded to an Obi100 device.
+1. 还值得注意的是，番茄路由器将所有SIP和RTP端口转发给了一个Obi100设备。
 
 ## Logo
 
-The general procedure here is convert a bitmap to a '.dob' file. It doesn't like long names, so I renamed mine to logo.dob
+这里的一般流程是将位图文件转换为'.dob'文件。它不喜欢长的文件名，所以我将我的文件重命名为logo.dob。
 
-* [This one from Yealink was crashy (and in chinese).](http://www.yealink.com/fae/How%20to%20change%20the%20YEALINK%20logo%20on%20LCD.rar)
-* [You might try this one from voipstore](http://support.voipstore.com/index.php?/Knowledgebase/Article/GetAttachment/202/3624), which eventually worked...
+* [这个Yealink的文件会崩溃（而且是中文的）](http://www.yealink.com/fae/How%20to%20change%20the%20YEALINK%20logo%20on%20LCD.rar)
+* [您可以尝试这个来自voipstore的文件](http://support.voipstore.com/index.php?/Knowledgebase/Article/GetAttachment/202/3624)，最终起作用了...
 
-The tar file containing the .dob and advertising.index doesn't work anymore. Pity since you used to be able to control how long the logo was displayed on screen. Now it's clock for 7 seconds, logo for 3 seconds.
+包含.dob和advertising.index的tar文件不再起作用。很可惜，因为以前您可以控制标志显示在屏幕上的时间。现在是7秒钟的时钟和3秒钟的标志。
 
-## Ring Tones
+## 铃声
 
-Another wonky one. Had to use sox to convert a wav file due to the strange formats. [Yanked from here](http://forum.voipstore.com/yealink/600-creating-wav-files-for-yealink-ringtones.html)
+另一个有问题的事情。由于奇怪的格式，不得不使用sox来转换wav文件。[从这里拿来](http://forum.voipstore.com/yealink/600-creating-wav-files-for-yealink-ringtones.html)
 
-Default Audio File for Ring Tones Note: Audio files (once converted per instructions below) can not exceed 100k.
+铃声默认音频文件。注意：音频文件（按照下面的说明进行转换后）不能超过100k。
 
-Easiest way to convert a file for use as audio file in Yealink phone.
+将文件转换为Yealink电话中的音频文件的最简单方法。
 
-1. Use your audio editing program of your choice to edit the file.
-2. Save it as MONO .wav file
-3. Use SOX command line version for Windows (have not got it work in Linux).
+1. 使用您选择的音频编辑程序编辑文件。
+2. 将其另存为MONO .wav文件。
+3. 使用Windows的SOX命令行版本进行转换（尚未在Linux中运行成功）。
 
-You want to convert the .wav file to a .wav file with U-Law encoding. There is a typo on the Yealink web interface (probably also in the manual) - it says to use 16 bit file... u-law will not encode at 16bit, it will at 14bit and that will work.
+你想将.wav文件转换为使用U-Law编码的.wav文件。Yealink的网络界面上有一个拼写错误（可能在手册中也有）- 它说要使用16位文件... U-Law将无法以16位进行编码，但以14位进行编码是可行的。
 
-command line to convert the file:
+使用命令行进行文件转换：
 
 ```xml
 sox InputFileName.wav -e u-law -r 8000 OutputFileName.wav
 ```
 
-  
-If it gives you a WARN flag related to clipping, it's because the input file volume is too high.
+如果出现与剪切相关的WARN标志，那是因为输入文件的音量太高。
 
-To lower it, you can use the -v (volume) parameter in front of the input file. The -v parameter operates in multiple of volume, so you need a fractional number to decrease volume. Here's an example:
+要降低音量，可以在输入文件名称前使用-v（音量）参数。-v参数以音量倍数运行，因此您需要用小数来降低音量。以下是一个示例：
 
 ```xml
 sox -v 0.95 InputFileName.wav -e u-law -r 8000 OutputFileName.wav
 ```
-
-

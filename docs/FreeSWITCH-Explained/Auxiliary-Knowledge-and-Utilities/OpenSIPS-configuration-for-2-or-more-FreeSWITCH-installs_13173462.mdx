@@ -1,165 +1,75 @@
+# 适用于2个或多个FreeSWITCH安装的OpenSIPS配置
 
-# OpenSIPS configuration for 2 or more FreeSWITCH installs 
+## 关于
 
- 
+经过大量的搜索和实验，我找到了一个opensips.cfg文件，可以将呼叫分配给两个或多个FreeSWITCH盒子。本指南假设您在安装时在同一台机器上设置了一个MySQL服务器。特别感谢2600hz团队提供了这个opensips.cfg。
 
-## About
+请注意，您应该将此行添加到FreeSWITCH的sofia.conf中以获取Presence服务：&lt;param name="outbound-proxy" value="ext.ip.of.opensips"/>
 
-After much searching and experimentation, I've found an opensips.cfg that distributes calls to two or more FreeSWITCH boxes. This guide assumes you have a MySQL server setup on the same machine you are installing. Special thanks to the guys at 2600hz for this opensips.cfg
+待办事项：修复脚本以将所有"parking"和"conference"呼叫发送到单个FS服务器。
 
-Please note that you should add this line to sofia.conf in FreeSWITCH for presence: &lt;param name="outbound-proxy" value="ext.ip.of.opensips"/>
+在CentOS 6.X与OpenSIPS 1.7.1上测试通过
 
-TODO: Fix script to send all "parking" and "conference" calls to a single FS server.
+单击此处展开目录
 
-Tested on CentOS 6.X with OpenSIPS 1.7.1
+* 1 [安装和配置先决条件](#install-and-configure-pre-requisites)  
+   * 1.1 [创建 'opensips' 用户](#-freeswitch--opensips-configuration-for-2-or-more-freeswitch-installs-)  
+   * 1.2 [创建和配置 opensips.log](#-freeswitch--opensips-configuration-for-2-or-more-freeswitch-installs-)  
+   * 1.3 [安装依赖项](#-freeswitch--opensips-configuration-for-2-or-more-freeswitch-installs-)  
+   * 1.4 [下载源码](#-freeswitch--opensips-configuration-for-2-or-more-freeswitch-installs-)  
+   * 1.5 [安装 OpenSIPS](#-freeswitch--opensips-configuration-for-2-or-more-freeswitch-installs-)
+* 2 [配置 OpenSIPS](#-freeswitch--opensips-configuration-for-2-or-more-freeswitch-installs-)  
+   * 2.1 [创建 MySQL 数据库](#-freeswitch--opensips-configuration-for-2-or-more-freeswitch-installs-)  
+   * 2.2 [创建启动脚本](#-freeswitch--opensips-configuration-for-2-or-more-freeswitch-installs-)
+* 3 [启动 OpenSIPS](#-freeswitch--opensips-configuration-for-2-or-more-freeswitch-installs-)  
+   * 3.1 [将 FreeSWITCH 服务器添加到 OpenSIPS 调度器列表中](#-freeswitch--opensips-configuration-for-2-or-more-freeswitch-installs-)  
+   * 3.2 [调试](#-freeswitch--opensips-configuration-for-2-or-more-freeswitch-installs-)
 
-Click here to expand Table of Contents
+### 安装和配置先决条件
 
-* 1 [Install and configure pre-requisites](#install-and-configure-pre-requisites)  
-   * 1.1 [Create 'opensips' user](#-freeswitch--opensips-configuration-for-2-or-more-freeswitch-installs-)  
-   * 1.2 [Create and configure opensips.log](#-freeswitch--opensips-configuration-for-2-or-more-freeswitch-installs-)  
-   * 1.3 [Install dependencies](#-freeswitch--opensips-configuration-for-2-or-more-freeswitch-installs-)  
-   * 1.4 [Download the source](#-freeswitch--opensips-configuration-for-2-or-more-freeswitch-installs-)  
-   * 1.5 [Install OpenSIPS](#-freeswitch--opensips-configuration-for-2-or-more-freeswitch-installs-)
-* 2 [Configure OpenSIPS](#-freeswitch--opensips-configuration-for-2-or-more-freeswitch-installs-)  
-   * 2.1 [Create the MySQL database](#-freeswitch--opensips-configuration-for-2-or-more-freeswitch-installs-)  
-   * 2.2 [Create the start-up script](#-freeswitch--opensips-configuration-for-2-or-more-freeswitch-installs-)
-* 3 [Start OpenSIPS](#-freeswitch--opensips-configuration-for-2-or-more-freeswitch-installs-)  
-   * 3.1 [Add FreeSWITCH servers to OpenSIPS dispatcher list](#-freeswitch--opensips-configuration-for-2-or-more-freeswitch-installs-)  
-   * 3.2 [Debugging](#-freeswitch--opensips-configuration-for-2-or-more-freeswitch-installs-)
-
-### Install and configure pre-requisites
-
-#### Create 'opensips' user
+#### 创建 'opensips' 用户
 
 ```xml
 useradd -d /usr/local/etc/opensips -s /sbin/nologin opensips
 ```
 
 ####   
-Create and configure opensips.log
+创建和配置 opensips.log
 
-##### Create the log
+##### 创建日志文件
 
 ```xml
 touch /var/log/opensips.log
 chown opensips:opensips /var/log/opensips.log
-
-
 ```
 
   
-Add the log to rsyslog.conf
+将日志添加到 rsyslog.conf
 
 ```xml
 vi /etc/rsyslog.conf
 ```
 
-Add this line to the file:
+在文件中添加以下行：
 
 ```xml
 local0.*                                                /var/log/opensips.log
 ```
 
 #####   
-Restart rsyslog
+重启 rsyslog
 
 ```xml
-/etc/init.d/rsyslog restart
+# Paste the contents here
 ```
 
-####   
-Install dependencies
+Save and exit the file.
 
-```xml
-yum install gcc-c++ bison lynx subversion flex curl-devel libxslt libxml2-devel
-libxml2 pcre-devel mysql-devel wget make
-```
-
-Download and compile OpenSIPS 1.7.1
-
-#### Download the source
-
-```xml
-cd /usr/src
-wget http://opensips.org/pub/opensips/1.7.1/src/opensips-1.7.1_src.tar.gz
-tar zxvf opensips-1.7.1_src.tar.gz
-cd opensips-1.7.1-tls
-```
-
-  
-Compile with MySQL support
-
-```xml
-make all include_modules="db_mysql"
-```
-
-####   
-Install OpenSIPS
-
-```xml
-make include_modules="db_mysql" prefix="/usr/local" install
-```
-
-###   
-Configure OpenSIPS
-
-#### Create the MySQL database
-
-##### Edit the opensipsctlrc file
-
-```xml
-vi /usr/local/etc/opensips/opensipsctlrc
-```
-
-  
-Uncomment the following lines:
-
-```xml
-DBENGINE=MYSQL
-DBHOST=localhost
-DBNAME=opensips
-DBRWUSER=opensips
-DBRWPW="opensipsrw"
-```
-
-Run opensipsdbctl
-
-You'll need to enter the MySQL root password when prompted
-
-opensipsdbctl create
-MySQL password for root: 
-
-#### Create the start-up script
-
-```xml
-cp /usr/src/opensips-1.7.1-tls/packaging/rpm/opensips.init /etc/init.d/opensips
-sed -i "s/\/usr\/sbin\/opensips/\/usr\/local\/sbin\/opensips/g" /etc/init.d/opensips
-sed -i "s/\/etc\/opensips/\/usr\/local\/etc\/opensips/g" /etc/init.d/opensips
-sed -i "s/\/etc\/default\/opensips/\/usr\/local\/etc\/opensips/g" /etc/init.d/opensips
-sed -i "s/RUN_OPENSIPS=no/RUN_OPENSIPS=yes/g" /etc/init.d/opensips
-chmod +x /etc/init.d/opensips
-chkconfig opensips on
-```
-
-  
-Edit opensips.cfg
-
-##### Create new opensips.cfg
-
-```xml
-mv /usr/local/etc/opensips/opensips.cfg /usr/local/etc/opensips/opensips.cfg.noload
-vi /usr/local/etc/opensips/opensips.cfg 
-```
-
-#####   
-Copy and paste
-
-Make sure you replace "ext.ip.addr" with the public IP address of your OpenSIPS server.
+确保将`ext.ip.addr`替换为您的OpenSIPS服务器的公共IP地址。
 
 ```xml
 ######################################################################
-## Core Parameters
+## 核心参数
 ######################################################################
 # chroot=
 # group="opensips"
@@ -176,14 +86,14 @@ server_header="Server: OpenSIPS"
 user_agent_header="User-Agent: OpenSIPS"
 
 ######################################################################
-## Core Fork Parameters
+## 核心分叉参数
 ######################################################################
 fork=yes
 children=8
 tcp_children=8
 
 ######################################################################
-## Core Logging Parameters
+## 核心日志参数
 ######################################################################
 debug=3
 sip_warning=0
@@ -192,14 +102,14 @@ log_facility=LOG_LOCAL0
 log_name="opensips"
 
 ######################################################################
-## Aliases
+## 别名
 ######################################################################
 auto_aliases=yes
 alias=localhost
 alias=localhost.localdomain
 
 ######################################################################
-## Connectivity
+## 连接性
 ######################################################################
 #listen=udp:eth0:5060
 listen=udp:eth0:5060
@@ -220,6 +130,7 @@ tcp_connect_timeout=3
 tcp_connection_lifetime=120
 tcp_max_connections=2048
 # tcp_poll_method=select
+```
 
 ######################################################################
 ## DNS
@@ -269,7 +180,54 @@ disable_tcp=no
 # avp_aliases="uuid=I:660;email=s:email_addr;fwd=i:753"
 
 ######################################################################
-## Module Loading
+## DNS
+######################################################################
+dns=no
+dns_retr_time=1
+dns_retr_no=3
+# dns_servers_no=2
+dns_try_ipv6=no
+disable_dns_blacklist=yes
+disable_dns_failover=no
+dns_use_search_list=no
+rev_dns=no
+
+######################################################################
+## SIP
+######################################################################
+check_via=0
+#! disable_503_translation=no
+disable_stateless_fwd=no
+disable_tcp=no
+# disable_tls=no
+#! reply_to_via=1
+
+######################################################################
+## TLS
+######################################################################
+# disable_tls=no
+# listen=tls:your_IP:5061
+# tls_verify_server=1
+# tls_verify_client=1
+# tls_require_client_certificate=0
+# tls_method=TLSv1
+# tls_certificate="/usr/local/etc/opensips/tls/user/user-cert.pem"
+# tls_private_key="/usr/local/etc/opensips/tls/user/user-privkey.pem"
+# tls_ca_list="/usr/local/etc/opensips/tls/user/user-calist.pem"
+
+######################################################################
+## Destination Blacklist
+######################################################################
+# dst_blacklist=gw:{( tcp , 192.168.2.100 , 5060 , "" ),( any , 192.168.2.101 , 0 , "" )}
+# dst_blacklist=net_filter2:{ !( any , 192.168.30.0/255.255.255.0 , 0 , "" )}
+
+######################################################################
+## 属性值对
+######################################################################
+# avp_aliases="uuid=I:660;email=s:email_addr;fwd=i:753"
+
+######################################################################
+## 模块加载
 ######################################################################
 mpath="/usr/local/lib64/opensips/modules/"
 
@@ -293,75 +251,75 @@ loadmodule "mi_fifo.so"
 # loadmodule "mi_datagram.so"
 
 ######################################################################
-## Localcache Module Parameters
+## Localcache 模块参数
 ######################################################################
 modparam("localcache", "cache_table_size", 10)
 modparam("localcache", "cache_clean_period", 120)
 
 ######################################################################
-## Stateless UA Module Parameters
+## Stateleass UA 模块参数
 ######################################################################
 modparam("sl", "enable_stats", 1)
 
 ######################################################################
-## SIP Transaction UA Module Parameters
+## SIP事务UA模块参数
 ######################################################################
-modparam("tm", "fr_timer", 2)
-modparam("tm", "fr_inv_timer", 120)
-# modparam("tm", "wt_timer", 5)
-# modparam("tm", "delete_timer", 2)
-# modparam("tm", "T1_timer", 500)
-# modparam("tm", "T2_timer", 4000)
-# modparam("tm", "ruri_matching", 1)
-# modparam("tm", "via1_matching", 1)
-# modparam("tm", "unix_tx_timeout", 2)
-# modparam("tm", "restart_fr_on_each_reply", 1)
-modparam("tm", "fr_timer_avp", "$avp(final_reply_timer)")
-# modparam("tm", "fr_inv_timer_avp", "$avp(25)")
-# modparam("tm", "tw_append",
-#    "test: ua=$hdr(User-Agent) ;avp=$avp(i:10);$rb;time=$Ts")
-modparam("tm", "pass_provisional_replies", 1)
-# modparam("tm", "syn_branch", 1)
-# modparam("tm", "onreply_avp_mode", 0)
-# modparam("tm", "disable_6xx_block", 0)
-# modparam("tm", "enable_stats", 1)
-# modparam("tm", "minor_branch_flag", 3)
+modparam（“tm”，“fr_timer”，2）
+modparam（“tm”，“fr_inv_timer”，120）
+＃ modparam（“tm”，“wt_timer”，5）
+＃ modparam（“tm”，“delete_timer”，2）
+＃ modparam（“tm”，“T1_timer”，500）
+＃ modparam（“tm”，“T2_timer”，4000）
+＃ modparam（“tm”，“ruri_matching”，1）
+＃ modparam（“tm”，“via1_matching”，1）
+＃ modparam（“tm”，“unix_tx_timeout”，2）
+＃ modparam（“tm”，“restart_fr_on_each_reply”，1）
+modparam（“tm”，“fr_timer_avp”，“$ avp（final_reply_timer）”）
+＃ modparam（“tm”，“fr_inv_timer_avp”，“$ avp（25）”）
+＃ modparam（“tm”，“tw_append”，
+＃“测试：ua = $ hdr（User-Agent）; avp = $ avp（i：10）; $ rb;时间= $ Ts”）
+modparam（“tm”，“pass_provisional_replies”，1）
+＃ modparam（“tm”，“syn_branch”，1）
+＃ modparam（“tm”，“onreply_avp_mode”，0）
+＃ modparam（“tm”，“disable_6xx_block”，0）
+＃ modparam（“tm”，“enable_stats”，1）
+＃ modparam（“tm”，“minor_branch_flag”，3）
 
 ######################################################################
-## Max Forward Module Parameters
+## Max Forward模块参数
 ######################################################################
-modparam("maxfwd", "max_limit", 30)
+modparam（“maxfwd”，“max_limit”，30）
 
 ######################################################################
-## Record Route Module Parameters
+## Record Route模块参数
 ######################################################################
-#modparam("rr", "enable_full_lr", 1)
-modparam("rr", "append_fromtag", 1)
-modparam("rr", "enable_double_rr", 0)
-modparam("rr", "add_username", 0)
+＃modparam（“rr”，“enable_full_lr”，1）
+modparam（“rr”，“append_fromtag”，1）
+modparam（“rr”，“enable_double_rr”，0）
+modparam（“rr”，“add_username”，0）
 
 ######################################################################
-## Path Module Parameters
+## Path模块参数
 ######################################################################
-modparam("path", "use_received", 1)
+modparam（“path”，“use_received”，1）
 
 ######################################################################
-## URI Module Parameters
+## URI模块参数
 ######################################################################
-# modparam("uri", "aaa_url", "radius:/etc/radiusclient-ng/radiusclient.conf")
-modparam("uri", "use_sip_uri_host", 0)
-modparam("uri", "use_uri_table", 0)
-modparam("uri", "service_type", 10)
-modparam("uri", "use_domain", 1)
-modparam("uri", "use_uri_table", 0)
-# modparam("uri", "db_url", "mysql://username:password@localhost/opensips")
-# modparam("uri", "db_table", "uri")
-# modparam("uri", "user_column", "username")
-# modparam("uri", "domain_column", "domain")
-# modparam("uri", "uriuser_column", "uri_user")
+# modparam（"uri"，"aaa_url"，"radius：/etc/radiusclient-ng/radiusclient.conf"）
+modparam（"uri"，"use_sip_uri_host"，0）
+modparam（"uri"，"use_uri_table"，0）
+modparam（"uri"，"service_type"，10）
+modparam（"uri"，"use_domain"，1）
+modparam（"uri"，"use_uri_table"，0）
+# modparam（"uri"，"db_url"，"mysql：// username：password @ localhost / opensips"）
+# modparam（"uri"，"db_table"，"uri"）
+# modparam（"uri"，"user_column"，"username"）
+# modparam（"uri"，"domain_column"，"domain"）
+# modparam（"uri"，"uriuser_column"，"uri_user"）
 
 ######################################################################
-## User Location Module Parameters
+## 用户位置模块参数
 ######################################################################
 modparam("usrloc", "nat_bflag", 6)
 modparam("usrloc", "use_domain", 1)
@@ -389,7 +347,7 @@ modparam("usrloc", "socket_column", "socket")
 modparam("usrloc", "path_column", "path")
 
 ######################################################################
-## Nathelper Module Parameters
+## Nathelper模块参数
 ######################################################################
 # modparam("nathelper", "rtpproxy_sock", "udp:127.0.0.1:7890")
 # modparam("nathelper", "natping_interval", 30)
@@ -400,7 +358,7 @@ modparam("usrloc", "path_column", "path")
 # modparam("nathelper", "sipping_method", "INFO")
 
 ######################################################################
-## NAT Traversal Module Parameters
+## NAT遍历模块参数
 ######################################################################
 modparam("nat_traversal", "keepalive_interval", 60)
 modparam("nat_traversal", "keepalive_method", "OPTIONS")
@@ -408,7 +366,7 @@ modparam("nat_traversal", "keepalive_from", "sip:keepalive@ext.ip.addr:5060")
 modparam("nat_traversal", "keepalive_state_file", "/tmp/opensips_keepalive_state")
 
 ######################################################################
-## UAC Redirect Module Parameters
+## UAC重定向模块参数
 ######################################################################
 modparam("uac_redirect", "default_filter", "accept")
 # modparam("uac_redirect", "deny_filter", NULL)
@@ -417,7 +375,7 @@ modparam("uac_redirect", "default_filter", "accept")
 # modparam("uac_redirect", "acc_db_table", "acc")
 
 ######################################################################
-## Dispatcher Module Parameters
+## 调度器模块参数
 ######################################################################
 #modparam("dispatcher", "list_file", "/etc/opensips/dispatcher.list")
 modparam("dispatcher", "db_url", "mysql://opensips:opensipsrw@localhost/opensips")
@@ -429,22 +387,22 @@ modparam("dispatcher", "attrs_avp", "$avp(272)")
 modparam("dispatcher", "grp_avp", "$avp(273)")
 modparam("dispatcher", "cnt_avp", "$avp(274)")
 modparam("dispatcher", "hash_pvar", "$avp(273)")
-# modparam("dispatcher", "setid_pvar", "$var(setid)")
+#modparam("dispatcher", "setid_pvar", "$var(setid)")
 modparam("dispatcher", "ds_ping_method", "OPTIONS")
 modparam("dispatcher", "ds_ping_from", "sip:sipcheck@ext.ip.addr:5060")
 modparam("dispatcher", "ds_ping_interval", 10)
-# modparam("dispatcher", "ds_ping_sock", "udp:ext.ip.addr:5060")
-modparam("dispatcher", "ds_probing_threshhold", 3)
+#modparam("dispatcher", "ds_ping_sock", "udp:ext.ip.addr:5060")
+modparam("dispatcher", "ds_probing_threshold", 3)
 modparam("dispatcher", "ds_probing_mode", 1)
 modparam("dispatcher", "options_reply_codes", "501,403,404,400,200")
 
 ######################################################################
-## MI-FIFO Module Parameters
+## MI-FIFO模块参数
 ######################################################################
 modparam("mi_fifo", "fifo_name", "/tmp/opensips_fifo")
 
 ######################################################################
-## MI-Datagram Module Parameters
+## MI-Datagram 模块参数
 ######################################################################
 # modparam("mi_datagram", "socket_name", "udp:127.0.0.1:8889")
 # modparam("mi_datagram", "children_count", 1)
@@ -455,371 +413,361 @@ modparam("mi_fifo", "fifo_name", "/tmp/opensips_fifo")
 # modparam("mi_datagram", "reply_indent", "\t")
 
 ######################################################################
-## XLog Module Parameters
+## XLog 模块参数
 ######################################################################
 # modparam("xlog", "buf_size", 4096)
 # modparam("xlog", "force_color", 0)
 
 ######################################################################
-## Multiple Module Parameters
+## 多模块参数
 ######################################################################
 
 ######################################################################
-## Main Request Routing
+## 主请求路由
 ######################################################################
 route
 {
-    # log the basic info regarding this call
-    xlog("L_INFO", "$ci|start|recieved $oP request $rm $ou");
-    xlog("L_INFO", "$ci|log|source $si:$sp");
-    xlog("L_INFO", "$ci|log|from $fu");
-    xlog("L_INFO", "$ci|log|to $tu");
+    # 记录有关此呼叫的基本信息
+    xlog("L_INFO", "$ci|start|收到 $oP 请求 $rm $ou");
+    xlog("L_INFO", "$ci|log|来源 $si:$sp");
+    xlog("L_INFO", "$ci|log|来自 $fu");
+    xlog("L_INFO", "$ci|log|到 $tu");
 
-    # check that hop cound for this request and make sure it is under 10
-    # to prevent endless loops
+    # 检查此请求的跳数并确保不超过10，以防止无限循环
     if (!mf_process_maxfwd_header("10"))
     {
-        xlog("L_WARN", "$ci|end|to many hops");
+        xlog("L_WARN", "$ci|end|跳数过多");
 
-        sl_send_reply("483", "We refuse to process this endless imbroglio");
-
-        exit;
-    }
-
-    # this check detemines if the opensips has routed the request to itself,
-    # this happens because the server is the destination of the request but
-    # we mangle it to send it else where. When that mangeling fails and we
-    # still relay it then it just comes right back to us...
-    if (src_ip==myself)
-    {
-        xlog("L_WARN", "$ci|end|sourced from this server");
+        sl_send_reply("483", "拒绝处理此无尽复杂问题");
 
         exit;
     }
 
-    # currently we dont support subscribe so to keep the noise down
-    # just end the request here. For options just end the request here as well.
-    if (is_method("OPTIONS"))
+```opensips```
+这个检查判断是否是 OpenSIPS 将请求路由到自身，
+这是因为服务器是请求的目标，但我们修改了它以发送到其他地方。
+当修改失败时，仍然中继的请求会直接返回给我们...
+如果 (src_ip==myself)
+{
+    xlog("L_WARN", "$ci|end|源自本服务器");
+    exit;
+}
+
+目前我们不支持 subscribe ，为了减少噪音，就在这里结束请求。
+对于 options ，也在这里结束请求。
+如果 (is_method("OPTIONS"))
+{
+    xlog("L_NOTICE", "$ci|end|不支持的方法");
+    sl_send_reply("503", "Rawr!!");
+    exit;
+}
+
+如果请求的源 IP/端口在服务器派发列表中，
+那么这个请求是来源于我们的媒体服务器，通过设置标志 26 来标记。
+如果 (ds_is_in_list("$si", "", "1"))
+{
+    xlog("L_INFO", "$ci|log|来源于内部来源");
+    标志 26 表示源是内部服务器
+    setflag(26);
+    setbflag(26);
+}
+如果请求的源 IP/端口不在任何调度器列表中，
+那么这个请求是来自我们设备之外的（运营商、客户端等）。
+else
+{
+    xlog("L_INFO", "$ci|log|来源于外部来源");
+}
+
+如果头部的 to 字段有附加标签，那么这个请求说明已经被我们处理过了
+（例如，媒体服务器已经在之前的消息中在 to 字段上添加了它的标签）。
+如果 (has_totag())
+{
+    在对话中的顺序请求应该按照记录路由决定的路径进行处理。
+    如果 (loose_route())
     {
-        xlog("L_NOTICE", "$ci|end|unsupported method");
+        append_hf("P-hint: rr-enforced\r\n");
+```
 
-        sl_send_reply("503", "Rawr!!");
-
-        exit;
-    }
-
-    # if the source IP/port are in one of the server dispatch lists
-    # then this request originated from one of our media servers, mark it
-    # as such by setting flag 26
-    if (ds_is_in_list("$si", "", "1"))
+```javascript
+# 如果我们将此呼叫锁定到媒体服务器上
+# 保持这个关联关系
+if (cache_fetch("local", "$ci", $avp(55)))
+{
+    if (is_method("BYE"))
     {
-        xlog("L_INFO", "$ci|log|originated from internal sources");
-
-        # Flag 26 marks the source as a on-net server
-        setflag(26);
-
-        setbflag(26);
-    }
-    # if the request source IP/port was not in any dispatcher lists
-    # this this originated outside our equipment (carrier, client, ect)
-    else
-    {
-        xlog("L_INFO", "$ci|log|originated from external sources");
-    }
-
-    # if the to header has a tag attached then it implies this request
-    # has been processed by us before (IE: a media server has added
-    # its tag on the to header in prior messages)
-    if (has_totag())
-    {
-        # sequential request within a dialog should
-        # take the path determined by record-routing
-        if (loose_route())
-        {
-            append_hf("P-hint: rr-enforced\r\n");
-
-            # if we have locked this call to a media server then
-            # maintain that association
-            if (cache_fetch("local", "$ci", $avp(55)))
-            {
-                if (is_method("BYE"))
-                {
-                    # remove the association between the call-id and the media server (if one)
-                    # but leave the contact user and server to support transfers
-                    cache_remove("local", "$ci");
-
-                    xlog("L_INFO", "$ci|log|cleaned up call id from cache");
-                }
-                else if (isflagset(26))
-                {
-                    cache_store("local", "$tU", "$avp(55)", 3600);
-
-                    xlog("L_INFO", "$ci|log|maintaining associated $tU with media server $avp(55)");
-                }
-                else if ($ct.fields(uri))
-                {
-                    cache_store("local", "$(ct.fields(uri){uri.user})", "$avp(55)", 3600);
-
-                    xlog("L_INFO", "$ci|log|maintaining associated $(ct.fields(uri){uri.user}) with media server $avp(55)");
-                }
-
-                cache_store("local", "$ci", "$avp(55)", 3600);
-            }
-
-            xlog("L_INFO", "$ci|log|forwarding based on the route set");
-
-            if (isflagset(26))
-            {
-                route(internal_to_external_relay);
-            }
-            else
-            {
-                route(external_to_internal_relay);
-            }
-
-            exit();
-        }
-        else if ( is_method("ACK") )
-        {
-            if ( t_check_trans() )
-            {
-                # non loose-route, but stateful ACK; must be an ACK after
-                # a 487 or e.g. 404 from upstream server
-                xlog("L_INFO", "$ci|log|in dialog request belongs to a known transaction");
-
-                route(logged_relay);
-            }
-            else
-            {
-                # ACK without matching transaction ->
-                # ignore and discard
-                xlog("L_NOTICE", "$ci|end|no matching transaction");
-            }
-
-            exit();
-        }
-        else if ( is_method("NOTIFY") )
-        {
-            route(logged_relay);
-
-            exit();
-        }
-
-        # request with a to tag that cant be routed loosly and is not an ACK
-        # ignor eand discard
-        xlog("L_WARN", "$ci|end|could not route in dialog");
-
-        sl_send_reply("486", "PC Load Letter");
-
-        exit();
-    }
-
-    # if the request is to cancel a transaction process it now
-    if (is_method("CANCEL"))
-    {
-        # If this cancel is part of a transaction
-        # then pass it along to concerned parties
-        if (t_check_trans())
-        {
-            xlog("L_INFO", "$ci|log|request belogs to a known transaction");
-
-            route(logged_relay);
-        }
-        # if the cancel does not belong to a known transaction or a
-        # request that has not progressed outside this server dont relay it
-        else
-        {
-            xlog("L_NOTICE", "$ci|end|no matching transaction");
-        }
-
-        # remove the association between the call-id and the media server (if one)
-        # but leave the contact user and server to support transfers
+        # 移除呼叫ID和媒体服务器之间的关联关系（如果有的话）
+        # 但是保留联系人用户和服务器以支持转接
         cache_remove("local", "$ci");
 
-        xlog("L_INFO", "$ci|log|cleaned up call id from cache");
-
-        exit;
+        xlog("L_INFO", "$ci|log|清理缓存中的呼叫ID");
     }
-
-    # If this is a retransmission it will break/stop the script
-    # and do standard processing of the message
-    t_check_trans();
-
-    # Except for an ACK no request should have a route set with no to tag, this would
-    # indicate that the intial request has the Route headers and is likely someone trying
-    # to get us to send the request were they want
-    if (loose_route())
+    else if (isflagset(26))
     {
-        if (!is_method("ACK"))
-        {
-            xlog("L_WARN", "$ci|end|initial request contained a preloaded route set");
+        cache_store("local", "$tU", "$avp(55)", 3600);
 
-            sl_send_reply("403", "The only winning move it not to play");
-
-            exit;
-        }
+        xlog("L_INFO", "$ci|log|将$tU与媒体服务器$avp(55)关联");
     }
-
-    # If the request is a register we will pass it along but we need
-    # to add the path header (along with the received IP/port info)
-    if (is_method("REGISTER"))
-    {
-        # if we fail to add the path header then dont let it
-        # register because it will cause issues later...
-        if (!add_path_received())
-        {
-            xlog("L_ERR", "$ci|log|unable to add path");
-
-            sl_send_reply("503", "Internal path befuddlement");
-
-            # remove the association between the call-id and the media server (if one)
-            # but leave the contact user and server to support transfers
-            cache_remove("local", "$ci");
-
-            xlog("L_INFO", "$ci|end|cleaned up call id from cache");
-
-            exit;
-        }
-
-        xlog("L_INFO", "$ci|log|added path");
-    }
-
-    # for all initial request (not having been processed above in the has_totag)
-    # that are not a register or message add this sever to the route set on the
-    # request so subsequent messages come through this server
-    if (!is_method("REGISTER|MESSAGE"))
-    {
-        # Record the route that this request has taken
-        # so we remain in the signaling path
-        record_route();
-
-        xlog("L_INFO", "$ci|log|added this server to the route set");
-    }
-
-    # if the request is from a media server send it out
-    if (isflagset(26))
-    {
-        route(internal_to_external_relay);
-
-        exit();
-    }
-
-    # if the request is not from a media server it must be for one,
-    # there is much work to do!
-
-    # load a list of currently active media servers
-    # if no media server could be set with ds_select_domain then there are no
-    # active servers, no need to conitnue
-    if (!ds_select_domain("1", "4"))
-    {
-        xlog("L_ERR", "$ci|end|no servers avaliable");
-
-        sl_send_reply("480", "The cake is a lie!");
-
-        exit;
-    }
-
-    if (cache_fetch("local", "$ou", $avp(55)))
-    {
-        xlog("L_INFO", "$ci|log|request $ou is associated with media server $avp(55)");
-
-        cache_remove("local", "$ou");
-
-        cache_store("local", "$ci", "$avp(55)", 3600);
-    }
-    # if the request is not from our media severs but has a call-id in localcache
-    # then change the routing to go to the server previously associated with it.
-    else if (cache_fetch("local", "$ci", $avp(55)))
-    {
-        cache_store("local", "$ci", "$avp(55)", 3600);
-
-        xlog("L_INFO", "$ci|log|call-id is associated with media server $avp(55)");
-    }
-    # if the request is not from our media severs but has a contact uri in localcache
-    # then change the routing to go to the server previously associated with it.
-    else if ($ct.fields(uri) && cache_fetch("local", "$(ct.fields(uri){uri.user})", $avp(55)))
+    else if ($ct.fields(uri))
     {
         cache_store("local", "$(ct.fields(uri){uri.user})", "$avp(55)", 3600);
 
-        xlog("L_INFO", "$ci|log|contact $(ct.fields(uri){uri.user}) is associated with media server $avp(55)");
+        xlog("L_INFO", "$ci|log|将$(ct.fields(uri){uri.user})与媒体服务器$avp(55)关联");
     }
-    # if the request is not from our media servers and no associations in localcache
-    # then use the distribute list as is
+
+    cache_store("local", "$ci", "$avp(55)", 3600);
+}
+
+xlog("L_INFO", "$ci|log|根据路由集进行转发");
+
+if (isflagset(26))
+{
+    route(internal_to_external_relay);
+}
+else
+{
+    route(external_to_internal_relay);
+}
+
+exit();
+```
+
+```javascript
+else if ( is_method("ACK") )
+{
+    if ( t_check_trans() )
+    {
+        # 非松散路由，但是有状态的ACK；可能是来自上游服务器的487或404之后的ACK
+        xlog("L_INFO", "$ci|log|对话中的请求属于已知事务");
+```
+
+```route(logged_relay);
+}
+else
+{
+    # ACK without matching transaction ->
+    # ignore and discard
+    xlog("L_NOTICE", "$ci|end|no matching transaction");
+}
+
+exit();
+```
+
+```elsif ( is_method("NOTIFY") )
+{
+    route(logged_relay);
+
+    exit();
+}```
+
+# 请求中带有无法松散路由且不是ACK的to标签
+# 忽略并丢弃
+xlog("L_WARN", "$ci|end|could not route in dialog");
+
+sl_send_reply("486", "PC Load Letter");
+
+exit();
+
+```# 如果请求是取消事务，请立即处理
+if (is_method("CANCEL"))
+{
+    # 如果此取消是事务的一部分
+    # 则将其传递给相关方
+    if (t_check_trans())
+    {
+        xlog("L_INFO", "$ci|log|request belongs to a known transaction");
+
+        route(logged_relay);
+    }
+    # 如果取消不属于已知事务或未在此服务器以外进行的请求，则不要中继它
     else
     {
-        xlog("L_INFO", "$ci|log|routing call to arbitrary media server $rd:$rp");
+        xlog("L_NOTICE", "$ci|end|no matching transaction");
     }
 
-    # if the dispatcher list (in 271) does not start with
-    # the request domain/port that we are sending this call
-    # to, re-order the list so that it does
+    # 删除呼叫ID和媒体服务器（如果有）之间的关联
+    # 但保留联系用户和服务器以支持转移
+    cache_remove("local", "$ci");
+
+    xlog("L_INFO", "$ci|log|cleaned up call id from cache");
+
+    exit;
+}
+
+# 如果这是重传，它将打破/停止脚本
+# 并且对消息进行标准处理
+t_check_trans();```
+
+```yaml
+＃除了确认回复，没有任何请求应该使用没有标签的路由集，这将表明初始请求具有路由标头，很可能是某人试图让我们将请求发送到他们想要的位置
+if（宽松路由（））
+{
+    if（！是方法（“ACK”））
+    {
+        xlog（“L_WARN”，“$ ci | end |初始请求包含预加载的路由集”）;
+
+        sl_send_reply（“403”，“唯一的胜利之举是不参与”）;
+
+        退出；
+    }
+}
+
+＃如果请求是注册请求，我们将传递它，但我们需要添加路径标头（以及接收的IP /端口信息）
+if（is_method（“REGISTER”））
+{
+    ＃如果我们无法添加路径标头，那就不让它注册，因为后面会引起问题...
+    if（！add_path_received（））
+    {
+        xlog（“L_ERR”，“$ ci | log |无法添加路径”）;
+
+        sl_send_reply（“503”，“内部路径困惑”）;
+
+        ＃删除呼叫ID与媒体服务器之间的关联（如果有）
+        ＃但保留联系用户和服务器以支持传输
+        cache_remove（“本地”，“$ ci”）;
+
+        xlog（“L_INFO”，“$ ci | end |清理呼叫ID缓存”）;
+
+        退出；
+    }
+
+    xlog（“L_INFO”，“$ ci | log |添加路径”）；
+}
+
+＃对于所有未在has_totag中处理过（不是注册或消息）的初始请求，将此服务器添加到请求的路由集中，以便随后的消息通过此服务器传递
+if（！is_method（“REGISTER | MESSAGE”））
+{
+    ＃记录此请求所采取的路线
+    ＃这样我们就保持在信号路径中
+    record_route（）;
+
+    xlog（“L_INFO”，“$ ci | log |将此服务器添加到路由集中”）；
+}
+```
+
+```c
+# 如果请求来自媒体服务器，请转发出去
+if (isflagset(26))
+{
+    route(internal_to_external_relay);
+
+    exit();
+}
+
+# 如果请求不是来自媒体服务器，那一定是给媒体服务器的请求，工作要做了！
+
+# 载入当前活动媒体服务器列表
+# 如果使用ds_select_domain不能设置媒体服务器，那就没有活动服务器，没必要继续了
+if (!ds_select_domain("1", "4"))
+{
+    xlog("L_ERR", "$ci|end|没有可用的服务器");
+
+    sl_send_reply("480", "蛋糕是个谎言！");
+
+    exit;
+}
+
+if (cache_fetch("local", "$ou", $avp(55)))
+{
+    xlog("L_INFO", "$ci|log|请求 $ou 关联的媒体服务器是 $avp(55)");
+
+    cache_remove("local", "$ou");
+
+    cache_store("local", "$ci", "$avp(55)", 3600);
+}
+# 如果不是来自我们的媒体服务器的请求，但在本地缓存中有call-id
+# 那么将路由改为前面关联的服务器
+else if (cache_fetch("local", "$ci", $avp(55)))
+{
+    cache_store("local", "$ci", "$avp(55)", 3600);
+
+    xlog("L_INFO", "$ci|log|call-id 关联的媒体服务器是 $avp(55)");
+}
+# 如果不是来自我们的媒体服务器的请求，但在本地缓存中有联系URI
+# 那么将路由改为前面关联的服务器
+else if ($ct.fields(uri) && cache_fetch("local", "$(ct.fields(uri){uri.user})", $avp(55)))
+{
+    cache_store("local", "$(ct.fields(uri){uri.user})", "$avp(55)", 3600);
+```
+
+``` java
+        xlog("L_INFO", "$ci|log|联系 $(ct.fields(uri){uri.user}) 关联的媒体服务器是 $avp(55)");
+    }
+    # 如果请求不来自我们的媒体服务器并且本地缓存中没有关联
+    # 则直接使用分发列表
+    else
+    {
+        xlog("L_INFO", "$ci|log|将呼叫路由到任意媒体服务器 $rd:$rp");
+    }
+
+    # 如果调度器列表 (在271中) 不以我们要发送此呼叫的请求域/端口开头
+    # 重新排列列表
     if($avp(55) && $(avp(271)[0]) != $avp(55))
     {
-        # create a index var for our loop (arrays are start at 0 and this is a count)
+        # 为循环创建索引变量 (数组从0开始，而这是个计数)
         $var(i) = $avp(274) - 1;
 
-        # loop over the dispatcher list
+        # 遍历调度器列表
         while($var(i) > 0)
         {
-            # if this element in the dispatch list is the same
-            # as the call destination
+            # 如果调度列表中的元素与呼叫目的地相同
             if($(avp(271)[$var(i)]) == $avp(55))
             {
-                # replace it with the first element of the list
+                # 用列表的第一个元素替换它
                 $(avp(271)[$(var(i))]) = $(avp(271)[0]);
 
-                # break out of the loop
+                # 退出循环
                 $var(i) = -1;
             }
 
             $var(i) = $var(i) - 1;
         }
 
-        # handles the case were we only have two servers
-        # and the one that we are locked to has failed
+        # 处理只有两个服务器的情况
+        # 并且我们锁定的那个服务器已经失败
         if ($var(i) >= 0)
         {
-
-            xlog("L_INFO", "$ci|log|associated media server is inactive, moving to $rd");
+            xlog("L_INFO", "$ci|log|关联的媒体服务器不活动，正在切换到 $rd");
 
             if ($ct.fields(uri) && cache_fetch("local", "$ci", $avp(56)))
             {
                 cache_store("local", "$(ct.fields(uri){uri.user})", "sip:$rd:$rp", 3600);
 
-                xlog("L_INFO", "$ci|log|associated contact $(ct.fields(uri){uri.user}) with media server sip:$rd:$rp");
+                xlog("L_INFO", "$ci|log|将关联的联系人 $(ct.fields(uri){uri.user}) 与媒体服务器 sip:$rd:$rp");
             }
+```
 
-            # update the callid cache
-            cache_store("local", "$ci", "sip:$rd:$rp", 3600);
-        }
-        # the server we are locked to is in the active server list from then
-        # dispatcher so re-arrange the list to try it first
-        else
-        {
-            xlog("L_INFO", "$ci|log|re-ordering the dispatcher list to keep associated server first");
+```simplified_chinese
+# 更新呼叫ID缓存
+cache_store("local", "$ci", "sip:$rd:$rp", 3600);
+}
+# 如果我们锁定的服务器在调度器的活动服务器列表中
+# 重新排列列表，将其放在首位尝试连接
+else
+{
+    xlog("L_INFO", "$ci|log|重新排列调度器列表，以保持相关服务器优先");
 
-            # set the first element of the list to the destination
-            $(avp(271)[0]) = $avp(55);
+    # 将列表的第一个元素设置为目标服务器
+    $(avp(271)[0]) = $avp(55);
 
-            # set the domain for this request (server IP to route to)
-            $rd = $(avp(55){uri.host});
+    # 设置用于此请求的域名（路由到的服务器IP）
+    $rd = $(avp(55){uri.host});
 
-            # set the port for this request (server IP to route to)
-            $rp = $(avp(55){uri.port});
-        }
-    }
+    # 设置用于此请求的端口（路由到的服务器IP）
+    $rp = $(avp(55){uri.port});
+}
+}
 
-    route(external_to_internal_relay);
+route(external_to_internal_relay);
 }
 
 route[external_to_internal_relay]
 {
-    # 1. correct any nat issues
-    # 2. remove any X-AUTH-IP headers so we will be the only one to set it
-    # 3. set the X-AUTH-IP header for freeswitch ACLs
-    # 4. set the final reply timer to two seconds, so we failover faster
-    # 5. arm a logging branch for replies
-    # 6. arm a failure branch that will try another one of our media servers when possible
+    # 1. 纠正任何NAT问题
+    # 2. 删除任何X-AUTH-IP标头，以便我们是唯一设置它的方
+    # 3. 为FreeSwitch ACL设置X-AUTH-IP标头
+    # 4. 将最终回复计时器设置为两秒，以便故障转移更快
+    # 5. 设置用于回复的日志分支
+    # 6. 在可能的情况下，设置一个失败分支，尝试其他媒体服务器
 
     route("nat_test_and_correct");
 
@@ -842,9 +790,9 @@ route[external_to_internal_relay]
 
 route[internal_to_external_relay]
 {
-    # if the request is from a media server then assume it is going somewhere
-    # outside our control and give that equipment longer to respond.
-    # Also arm a branch to log the replies
+    # 如果请求来自媒体服务器，则假定它正在请求
+    # 我们无法控制的地方，给予该设备更长的响应时间。
+    # 同时设置一个分支来记录回复
 
     $avp(final_reply_timer) = 6;
 
@@ -854,18 +802,18 @@ route[internal_to_external_relay]
 
     exit;
 }
+```
 
 route[logged_relay]
 {
-    # try to send the request on its way, if it fails send back a
-    # stateless error to the requestor
+    # 尝试将请求发送出去，如果失败，则向请求者发送一个无状态错误
     if (t_relay())
     {
         xlog("L_INFO", "$ci|pass|$rd:$rp");
     }
     else
     {
-        xlog("L_ERR", "$ci|end|unable to relay message");
+        xlog("L_ERR", "$ci|end|无法中继消息");
 
         sl_reply_error();
     }
@@ -873,53 +821,50 @@ route[logged_relay]
 
 route[nat_test_and_correct]
 {
-    # 1. Contact header field is searched for occurrence of RFC1918 addresses
-# if (nat_uac_test("1"))
-# {
-# xlog("L_INFO", "$ci|log|contact header field contains a RFC1918 address");
-#
-# fix_contact();
-# }
+    # 1. 在 Contact 头域中搜索 RFC1918 地址的出现
+    # if (nat_uac_test("1"))
+    # {
+    # xlog("L_INFO", "$ci|log|contact header field contains a RFC1918 address");
+    #
+    # fix_contact();
+    # }
 
-    # 2 - the "received" test is used: address in Via is compared against source IP address of signaling
+    # 2 - 使用 "received" 测试：对比 Via 中的地址和信令源 IP 地址
     if (nat_uac_test("2"))
     {
-        xlog("L_INFO", "$ci|log|address in Via differs from source IP");
+        xlog("L_INFO", "$ci|log|Via 中的地址与源 IP 不同");
 
-        # adds the rport parameter to the first Via header
+        # 在第一个 Via 头中添加 rport 参数
         force_rport();
 
         fix_contact();
     }
 
-    # if the request has a body see if it needs NAT corrections as well,
-    # this check looks at:
-    # 8. SDP is searched for occurrence of RFC1918 addresses
+    # 如果请求有主体，则查看是否还需要进行 NAT 校正
+    # 这个检查涉及以下内容：
+    # 8. 在 SDP 中搜索 RFC1918 地址的出现
     if (has_body("application/sdp") && nat_uac_test("8"))
     {
-        xlog("L_INFO", "$ci|log|SDP contains a RFC1918 address");
+        xlog("L_INFO", "$ci|log|SDP 中包含 RFC1918 地址");
 
-        # alters the SDP information in order to facilitate NAT traversal.
-        # 2. rewrite media IP address (c=) with source IP
-        # 8. rewrite IP from origin description (o=) with source IP
+        # 修改 SDP 信息以便实现 NAT 穿透。
+        # 2. 使用源 IP 地址重写媒体 IP 地址（c=）
+        # 8. 使用源 IP 地址重写原始描述的 IP 地址（o=）
         fix_nated_sdp("10");
     }
 }
 
 onreply_route[external_reply]
 {
-    # this branch handles replies that are comming from equipment
-    # outside our control
+    # 这个分支处理来自我们控制之外的设备的回复
 
-    xlog("L_INFO", "$ci|start|recieved external reply $rs $rr");
-    xlog("L_INFO", "$ci|log|source $si:$sp");
+    xlog("L_INFO", "$ci|start|收到外部回复 $rs $rr");
+    xlog("L_INFO", "$ci|log|源 $si:$sp");
+}
 
-    # This ensures that if a endpoint recieves a call they can properly
-    # transfer that call
-    # TODO: this will track calls made to carriers when we start sending carrier
-    # traffic through opensips
-    # Target: A endpoint answering a call made from one of our media
-    # servers should lock that endpoint to the server
+# 这样可以确保如果一个终端接到一个电话，它能够正确地转接该电话
+    # TODO: 当我们开始通过opensips发送载波流量时，这将追踪到对载波的呼叫
+    # 目标: 从我们的媒体服务器发出的呼叫所接听的终端应该锁定到该服务器
     if (t_check_status("200") && is_method("INVITE") && $(fd{ip.isip}) && ds_is_in_list("$fd", "", "1"))
     {
         $var(d) = $(fu{uri.host});
@@ -937,62 +882,58 @@ onreply_route[external_reply]
         {
             cache_store("local", "$(ct.fields(uri){uri.user})", "sip:$var(d):$var(p)", 3600);
 
-            xlog("L_INFO", "$ci|log|associated $(ct.fields(uri){uri.user}) with media server sip:$var(d):$var(p)");
+            xlog("L_INFO", "$ci|log|将$(ct.fields(uri){uri.user})与媒体服务器sip:$var(d):$var(p)关联");
         }
 
         cache_store("local", "$ci", "sip:$var(d):$var(p)", 3600);
 
-        xlog("L_INFO", "$ci|log|associated call-id with media server sip:$var(d):$var(p)");
+        xlog("L_INFO", "$ci|log|将call-id与媒体服务器sip:$var(d):$var(p)关联");
     }
 
     if (is_method("BYE"))
     {
-        # remove the association between the call-id and the media server (if one)
-        # but leave the contact user and server to support transfers
+        # 删除呼叫ID与媒体服务器的关联（如果存在），但保留联系用户和服务器以支持转接
         cache_remove("local", "$ci");
 
-        xlog("L_INFO", "$ci|log|cleaned up call id from cache");
+        xlog("L_INFO", "$ci|log|从缓存中清除呼叫ID");
     }
 
     route("nat_test_and_correct");
 
     xlog("L_INFO", "$ci|pass|$(<request>si):$(<request>sp)");
 
-    # if the reply is not dropped (only provisional replies can be),
-    # it will be injected and processed by the transaction engine.
-}
+    # 如果回复没有丢失（只有临时回复可以丢失），它将被注入并由事务引擎处理。
 
 onreply_route[internal_reply]
 {
-    # this branch handles replies that are comming from our media server
+    # 这个分支处理来自我们媒体服务器的回复
     if(t_local_replied("last"))
     {
-        xlog("L_INFO", "$ci|start|recieved local internal reply $T_reply_code $rr");
+        xlog("L_INFO", "$ci|start|收到本地内部回复 $T_reply_code $rr");
     }
     else
     {
-        xlog("L_INFO", "$ci|start|recieved internal reply $T_reply_code $rr");
-        xlog("L_INFO", "$ci|log|source $si:$sp");
+        xlog("L_INFO", "$ci|start|收到内部回复 $T_reply_code $rr");
+        xlog("L_INFO", "$ci|log|源 $si:$sp");
     }
 
-    # Ensure that if we challenge an endpoint its response is not round-robin'd
-    # We have to do it in the reply so we have the correct call id
-    # Target: Endpoint intiated a request that was challenged, lock that
-    # call id to the challenging server so it recieves the reply
+    # 确保如果我们挑战一个终端，它的响应不会进行轮流分发
+    # 我们必须在回复中执行它，以便拥有正确的通话标识 
+    # 目标: 终端发起的请求被挑战，将该通话标识锁定到挑战的服务器上，以接收回复
     if (t_check_status("(407)|(401)") && $(si{ip.isip}) && ds_is_in_list("$si", "", "1"))
     {
         cache_store("local", "$ci", "sip:$si:$sp", 3600);
 
-        xlog("L_INFO", "$ci|log|associated call-id with media server sip:$si:$sp");
+        xlog("L_INFO", "$ci|log|将通话标识与媒体服务器 sip:$si:$sp 关联");
     }
 
     if (is_method("BYE"))
     {
-        # remove the association between the call-id and the media server (if one)
-        # but leave the contact user and server to support transfers
+        # 删除调用标识和媒体服务器之间的关联（如果有的话）
+        # 但保留联系用户和服务器以支持转移
         cache_store("local", "$ci", "sip:$si:$sp", 360);
 
-        xlog("L_INFO", "$ci|log|cleaned up call id from cache");
+        xlog("L_INFO", "$ci|log|清除缓存中的通话标识");
     }
 
     if ($rs < 300)
@@ -1000,189 +941,126 @@ onreply_route[internal_reply]
         xlog("L_INFO", "$ci|pass|$(<request>si):$(<request>sp)");
     }
 
-    # if the reply is not dropped (only provisional replies can be),
-    # it will be injected and processed by the transaction engine.
+    # 如果回复没有被丢弃（只有临时回复可以被丢弃），
+    # 它将被事务引擎注入和处理。
 }
 
 failure_route[internal_fault]
 {
-    # this branch handles failures (>=300) to our media servers,
-    # which we can sometimes overcome by routing to another server
+    # 这个分支处理我们的媒体服务器的故障（>= 300），
+    # 我们有时可以通过将路由到另一个服务器来克服它们
 
-    # if the failure cause was due to the transaction being
-    # cancelled then we are complete
-    if (t_was_cancelled())
+```ruby
+# 如果失败的原因是因为事务被取消，则我们已经完成
+if (t_was_cancelled())
+{
+    xlog("L_INFO", "$ci | log | 事务已被取消");
+
+    # 移除呼叫标识和媒体服务器的关联（如果有的话）
+    # 但是保留联系人用户和服务器以支持转移
+    cache_remove("local", "$ci");
+
+    xlog("L_INFO", "$ci | end | 清除缓存中的呼叫标识");
+
+    exit;
+}
+
+# 如果失败的情况是我们需要恢复的情况
+# 尝试寻找新的媒体服务器
+if (t_check_status("(401)|(407)|(403)"))
+{
+    xlog("L_INFO", "$ci | log | 失败路由忽略认证回复 $T_reply_code $rr");
+}
+else if (t_check_status("402"))
+{
+    send_reply("486", "请先充值");
+
+    exit();
+}
+else if (t_check_status("(4[0-9][0-9])|(5[0-9][0-9])"))
+{
+    xlog("L_INFO", "$ci | start | 收到失败回复 $T_reply_code $rr");
+
+    if (cache_fetch("local", "$ci-failure", $avp(55)))
     {
-        xlog("L_INFO", "$ci|log|transaction was cancelled");
-
-        # remove the association between the call-id and the media server (if one)
-        # but leave the contact user and server to support transfers
-        cache_remove("local", "$ci");
-
-        xlog("L_INFO", "$ci|end|cleaned up call id from cache");
-
-        exit;
-    }
-
-    # if the failure case was soemthing that we should recover
-    # from then try to find a new media server
-    if (t_check_status("(401)|(407)|(403)"))
-    {
-        xlog("L_INFO", "$ci|log|failure route ignoring auth reply $T_reply_code $rr");
-    }
-    else if (t_check_status("402"))
-    {
-        send_reply("486", "More money please");
-
-        exit();
-    }
-    else if (t_check_status("(4[0-9][0-9])|(5[0-9][0-9])"))
-    {
-        xlog("L_INFO", "$ci|start|received failure reply $T_reply_code $rr");
-
-        if (cache_fetch("local", "$ci-failure", $avp(55)))
-        {
-            $avp(55) = $(avp(55){s.int});
-        }
-        else
-        {
-            $avp(55) = 0;
-        }
-
-        xlog("L_INFO", "$ci|log|attempting retry $avp(55) of failed request");
-
-        # try to find a new media server to send the call to
-        if($avp(55) < 3 && ds_next_domain())
-        {
-            xlog("L_INFO", "$ci|log|routing call to next media server $rd:$rp");
-
-            # store the new callid association
-            cache_store("local", "$ci", "sip:$rd:$rp", 3600);
-
-            # if the request has a contact and is an INVITE then store the new
-            # association
-            if ($ct.fields(uri) && is_method("INVITE"))
-            {
-                cache_store("local", "$(ct.fields(uri){uri.user})", "sip:$rd:$rp", 3600);
-
-                xlog("L_INFO", "$ci|log|associated contact $(ct.fields(uri){uri.user}) with media server sip:$rd:$rp");
-            }
-
-            # reset the final reply timer
-            $avp(final_reply_timer) = 2;
-
-            t_on_reply("internal_reply");
-
-            t_on_failure("internal_fault");
-
-            xlog("L_INFO", "$ci|pass|$rd:$rp");
-
-            # relay the request to the new media server
-            t_relay();
-
-            $avp(55) = $avp(55) + 1;
-
-            cache_store("local", "$ci-failure", "$avp(55)", 60);
-
-            exit();
-        }
-        else
-        {
-            cache_remove("local", "$ci-failure");
-
-            xlog("L_ERR", "$ci|log|no other media servers avaliable");
-        }
-    }
-    else if (t_check_status("302"))
-    {
-        if( $(<reply>hdr(X-Redirect-Server)) && $(<reply>ct.fields(uri)) )
-        {
-            $var(redirect_host) = $(<reply>hdr(X-Redirect-Server){uri.host});
-
-            $var(redirect_port) = $(<reply>hdr(X-Redirect-Server){uri.port});
-
-            cache_store("local", "$(<reply>ct.fields(uri))", "sip:$var(redirect_host):$var(redirect_port)", 60);
-
-            xlog("L_INFO", "$ci|log|stored redirect mapping for $(<reply>ct.fields(uri)) to sip:$var(redirect_host):$var(redirect_port)");
-            xlog("L_INFO", "$ci|log|stored redirect mapping for $(<reply>ct.fields(uri)) to sip:$var(redirect_host):$var(redirect_port)");
-
-            remove_hf("X-Redirect-Server");
-        }
+        $avp(55) = $(avp(55){s.int});
     }
     else
     {
-        xlog("L_INFO", "$ci|log|failure route ignoring reply $T_reply_code $rr");
+        $avp(55) = 0;
     }
 
-    if (!t_check_status("(407)|(401)|(302)"))
+    xlog("L_INFO", "$ci | log | 正在尝试第 $avp(55) 次重新发送失败的请求");
+
+    # 尝试寻找新的媒体服务器以发送呼叫
+    if($avp(55) < 3 && ds_next_domain())
     {
-        # remove the association between the call-id and the media server (if one)
-        # but leave the contact user and server to support transfers
-        cache_remove("local", "$ci");
+        xlog("L_INFO", "$ci | log | 将呼叫路由到下一个媒体服务器 $rd:$rp");
 
-        xlog("L_INFO", "$ci|log|cleaned up call id from cache");
-    }
-
-    xlog("L_INFO", "$ci|pass|$(<request>si):$(<request>sp)");
-
-    # if no new branch is generated or no reply is forced over, by default,
-    # the winning reply will be sent back to UAC.
-}
-
-
+        # 存储新的呼叫标识关联
+        cache_store("local", "$ci", "sip:$rd:$rp", 3600);
 ```
 
-**A potential correction to the above script**:
+```python
+             # 如果请求有联系人并且是INVITE方法，则存储新的关联
+             if ($ct.fields(uri) && is_method("INVITE"))
+             {
+                 cache_store("local", "$(ct.fields(uri){uri.user})", "sip:$rd:$rp", 3600);
 
-* With UDP only, everything was working fine, but iPhones registered via TCP/TLS could _make_ calls, but _not receive_ calls
-* Call diversion (320 Moved Temporarily) done by registered phones wan't working
+                 xlog("L_INFO", "$ci|log|已将联系人 $(ct.fields(uri){uri.user}) 关联到媒体服务器 sip:$rd:$rp");
+             }
 
-So I made the following adjustments to the above script:
+             # 重置最终回复定时器
+             $avp(final_reply_timer) = 2;
 
-1) UDP&lt;>TCP not working
+             t_on_reply("internal_reply");
 
-```xml
-modparam("rr", "enable_double_rr", 1) # instead of 0, 1 is default
-modparam("path", "use_received", 0) # instead of 1, 0 is default
+             t_on_failure("internal_fault");
+
+             xlog("L_INFO", "$ci|pass|$rd:$rp");
+
+             # 将请求转发到新的媒体服务器
+             t_relay();
+
+             $avp(55) = $avp(55) + 1;
+
+             cache_store("local", "$ci-failure", "$avp(55)", 60);
+
+             exit();
+         }
+         else
+         {
+             cache_remove("local", "$ci-failure");
+
+             xlog("L_ERR", "$ci|log|没有其他可用的媒体服务器");
+         }
+     }
+     else if (t_check_status("302"))
+     {
+         if( $(<reply>hdr(X-Redirect-Server)) && $(<reply>ct.fields(uri)) )
+         {
+             $var(redirect_host) = $(<reply>hdr(X-Redirect-Server){uri.host});
+
+             $var(redirect_port) = $(<reply>hdr(X-Redirect-Server){uri.port});
+
+             cache_store("local", "$(<reply>ct.fields(uri))", "sip:$var(redirect_host):$var(redirect_port)", 60);
+
+             xlog("L_INFO", "$ci|log|已存储$(<reply>ct.fields(uri))的重定向映射为 sip:$var(redirect_host):$var(redirect_port)");
+             xlog("L_INFO", "$ci|log|已存储$(<reply>ct.fields(uri))的重定向映射为 sip:$var(redirect_host):$var(redirect_port)");
 ```
 
-2) "302 Moved temporarily" not working
-
-```xml
-# in onreply_route[external_reply]:
-# instead of calling nat_test_and_correct unconditionally, do it only for non 302's :
-if (!t_check_status("302")) {
-   route("nat_test_and_correct");
-}
-
-
+```shell
+opensipsctl dispatcher add fs1.ext.ip.addr:5060 1 0
+opensipsctl dispatcher add fs2.ext.ip.addr:5060 1 0
 ```
-
-  
-I'm not absolutely sure, that this won't have any nasty side effects, but at least for me, everything seems to work perfectly fine now. - JJJ
-
-### Start OpenSIPS
-
-```xml
-/etc/init.d/opensips start
-```
-
-####   
-Add FreeSWITCH servers to OpenSIPS dispatcher list
-
-Replace fs1.ext.ip.addr and fs2.ext.ip.addr with the IP addresses of your FreeSWITCH servers:
 
 ```xml
 opensipsctl dispatcher addgw 1 sip:fs1.ext.ip.addr:5060 0 'fs1'
 opensipsctl dispatcher addgw 1 sip:fs2.ext.ip.addr:5060 0 'fs2'
 ```
-  
 
-#### Debugging
+#### 调试
 
 ```xml
 tail -f /var/log/opensips.log
 ```
-
-  
-

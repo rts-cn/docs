@@ -1,49 +1,46 @@
+# mod_dptools: 转接
 
-# mod_dptools: transfer 
+## 关于
 
- 
+立即将呼叫通道转接到新的上下文。如果存在一个名为&lt;destination\_number>的xml扩展名，那么控制权将直接"跳转"到该扩展名。否则，它将通过整个上下文进行匹配。
 
-## About
+TODO 在[mod\_commands](../mod_commands_1966741.mdx#--)中的`uuid_transfer`与[mod\_dptools: transfer](./6586616.mdx#about)之间有什么区别？
 
-Immediately transfer the calling channel to a new context. If there happens to be an xml extension named &lt;destination\_number> then control is "warped" directly to that extension. Otherwise it goes through the entire context checking for a match.
+单击此处展开目录
 
-TODO What is the difference between `uuid_transfer` in [mod\_commands](../mod_commands_1966741.mdx#--) and [mod\_dptools: transfer](./6586616.mdx#about)?
+- 1 [描述](#描述)
+- 2 [用法](#-freeswitch--mod_dptools-transfer-)
+- 3 [示例](#示例)
 
-Click here to expand Table of Contents
+## 描述
 
-* 1 [Description](#description)
-* 2 [Usage](#-freeswitch--mod_dptools-transfer-)
-* 3 [Examples](#examples)
+立即将呼叫通道转接到新的上下文。如果存在一个名为&lt;destination\_number>的xml扩展名，那么控制权将直接"跳转"到该扩展名。否则，它将通过整个上下文进行匹配。
 
-## Description
-
-Immediately transfer the calling channel to a new context. If there happens to be an xml extension named &lt;destination\_number> then control is "warped" directly to that extension. Otherwise it goes through the entire context checking for a match.
-
-Example: say caller dials 3015551212, causing conf/dialplan/public/3015551212.xml to "answer". If 3015551212.xml does an:
+示例：假设呼叫者拨打了3015551212，导致conf/dialplan/public/3015551212.xml文件"接听"。如果3015551212.xml文件执行以下操作：
 
 ```xml
 <action application="transfer" data="1047 XML cntxt_a"/>
 ```
 
-that causes the conf/dialplan/cntxt\_a/1047.xml to be parsed (assuming that file does a match on "^1047$". If dialplan or context are not defined, they default to XML and default.
+这将导致解析conf/dialplan/cntxt\_a/1047.xml文件（假设该文件在"^1047$"上匹配）。如果未定义拨号计划或上下文，则它们默认为XML和default。
 
-The transfer app does not actually "transfer a call" (It might have been better named _dialplan-jump_). It changes the destination extension and/or context and restarts the parsing of the dialplan. Actual transfers are done after a call is answered by use of the bridge application. see [bridge](./6586484.mdx#45-user).
+转接应用程序实际上并不是"转接呼叫"（最好将其命名为_dialplan-jump_）。它更改目标分机和/或上下文，并重新启动拨号计划的解析。实际转接是在呼叫被使用桥接应用程序接听后完成的。参见[bridge](./6586484.mdx#45-user)。
 
-Each transfer app call will decrement max\_forwards variable that is by default set to 70\. After 70 transfers the call will go on-hook. If you have a large IVR dialplan application, to prevent call going on-hook, you can set max\_session\_transfers variable to a large value. Once max\_session\_transfers is defined for a channel, max\_forwards is not touched by transfer application, and the value in max\_session\_transfers gets decremented.
+每个转接应用的调用都会减少默认设置为70的max\_forwards变量。在进行了70次转接后，呼叫将被挂断。如果您有一个庞大的IVR拨号计划应用程序，为了防止呼叫被挂断，您可以将max\_session\_transfers变量设置为一个较大的值。一旦为通道定义了max\_session\_transfers，transfer应用程序将不会触及max\_forwards，并且max\_session\_transfers中的值会递减。
 
-## Usage
+## 用法
 
 ```xml
 transfer <destination_number> [<dialplan> [<context>]]
 ```
 
-## Examples
+## 示例
 
 ```xml
 <action application="transfer" data="500"/>
 ```
 
-This example is found in public.xml. It transfers the call to the given extension in the default context, which is located in default.xml. Please note the use of XML as a dialplan as it is defined in freeswitch.xml
+此示例可在public.xml中找到。它将呼叫转接到默认上下文中给定扩展号码，该上下文位于default.xml中。请注意，将XML用作拨号计划的定义方式为freeswitch.xml
 
 ```xml
 <extension name="public_extensions">
@@ -53,33 +50,30 @@ This example is found in public.xml. It transfers the call to the given extensio
 </extension>
 ```
 
-If the call is currently in a bridge it will transfer the other side of the call instead of itself:
+如果呼叫当前正在桥接中，它将转接到呼叫的另一端，而不是自身：
 
 ```xml
 <action application="transfer" data="-bleg 2103"/>
 ```
 
-This would transfer both legs of the call to the same ext. i.e a conference extension:
+这将同时将呼叫的两个通路转接到相同的分机上（例如会议扩展）：
 
 ```xml
 <action application="transfer" data="-both 2103"/>
 ```
 
-When a call is transferred back through the dialplan, the RDNIS value is populated with the previous destination\_number value.
+当呼叫通过拨号计划再次转接时，RDNIS值中会填充先前的destination\_number值。
 
-**Note:** You can also specify an [inline dialplan](./6586667.mdx#about)
+**注意：** 您还可以指定[内联拨号计划](./6586667.mdx#about)
 
-**Note:** Transfer will begin parsing extensions from the beginning of the dialplan. Be careful to avoid loops.
+**注意：** Transfer将从拨号计划的开头开始解析扩展。请小心避免循环。
 
-**Note:** The transfer application also works with **mod\_xml\_curl**, it just does another request to mod\_xml\_curl and starts over again, just like in the static dialplan.
+**注意：**转移申请也可以与**mod\_xml\_curl**一起使用，它只是向**mod\_xml\_curl**发送另一个请求，然后重新开始，就像在静态拨号计划中一样。
 
-  
-### Comments:
+### 评论：
 
-| In lua, try session:getVariable("max\_session\_transfers") got nil.How can I get the channel variable **max\_session\_transfers** ? Thanks. ![](/images/icons/contenttypes/comment_16.png) Posted by livem at Aug 29, 2017 22:16                                                                                              |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Initially max\_session\_transfers is not set. You need to set it to a numeric value; only then this variable going to be decremented instead of max\_forwards. ![](/images/icons/contenttypes/comment_16.png) Posted by tomasb at Apr 23, 2019 14:59                                                                          |
-| it transfers to extension with name="&lt;destination\_number>" or to file with name=&lt;destination\_number>.xml ? ![](/images/icons/contenttypes/comment_16.png) Posted by clx88 at Mar 09, 2021 00:22                                                                                                                             |
-| Yeah, that example is just plain wrong, unless I'm misunderstanding it. It transfers the session to search for the desired extension in another &lt;dialplan name>.xml which is NOT named after the number. So there is no 3015551212.xml ![](/images/icons/contenttypes/comment_16.png) Posted by boteman at Mar 11, 2021 14:28 |
-
-
+| 在lua中，使用`session:getVariable("max_session_transfers")`获取到的是`nil`。我该如何获取通道变量`max_session_transfers`？谢谢。![](/images/icons/contenttypes/comment_16.png) 由livem于2017年8月29日22:16发布 |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 最初`max_session_transfers`未设置。您需要将其设置为一个数字值；只有在设置为数字值时，该变量才会减少，而不是`max_forwards`。![](/images/icons/contenttypes/comment_16.png) 由tomasb于2019年4月23日14:59发布 |
+| 它会将呼叫转到`name="&lt;destination_number>"`的扩展或`name=&lt;destination_number>.xml`的文件吗？![](/images/icons/contenttypes/comment_16.png) 由clx88于2021年3月9日00:22发布 |
+| 是的，那个例子完全错误，除非我误解了它。它会将会话转移到另一个`<dialplan name>.xml`中搜索所需扩展，而不是按号码命名的`3015551212.xml`。![](/images/icons/contenttypes/comment_16.png) 由boteman于2021年3月11日14:28发布 |

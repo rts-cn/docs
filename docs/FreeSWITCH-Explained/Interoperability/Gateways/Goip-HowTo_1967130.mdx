@@ -1,143 +1,136 @@
+# Goip如何操作
 
-# Goip HowTo 
+## 关于
 
- 
+Goip是一种来自中国的GSM网关模型。有几家公司以不同的品牌名称提供此设备，例如MadCom、Hybertone、Etross等等。它们价格便宜，在eBay.com、alibaba.com等网站上非常受欢迎。它们都拥有相同的功能，并且通常很容易配置。一些型号支持1、4、8和32个SIM卡。通常，它们都共享同一个用于配置的网页菜单。
 
-## About
+点击此处展开目录
 
-Goip is just a GSM Gateway model made in China. There are several companies that offer this device under different brand names such us MadCom, Hybertone, Etross etc. They are cheap and quite popular in sites like eBay.com, alibaba.com etc. They all share the same features and they are normally easy to configure. Some models support up to 1, 4, 8 and 32 Sim cards. Normally, all of them share the same web menu to be configured.
+* 1 [](#关于)
+* 2 [Goip GSM网关操作指南](#goip-gsm网关操作指南)
+* 3 [Goip GSM网关操作指南所需条件](#goip-gsm网关操作指南所需条件)
+* 4 [开始之前的Goip设备准备工作](#开始之前的goip设备准备工作)
+* 5 [登录到FS的Goip设备](#登录到fs的goip设备)
+* 6 [Goip设备状态](#goip设备状态)
+* 7 [FreeSwitch网关配置示例](#freeswitch网关配置示例)
+* 8 [FreeSwitch上下文（出站）配置示例](#freeswitch上下文出站配置示例)
+* 9 [FreeSwitch上下文（入站）配置示例](#freeswitch上下文入站配置示例)
+* 10 [故障排查和实用提示](#故障排查和实用提示)
+* 11 [实用文档](#实用文档)  
+   * 11.1 [另请参阅](#另请参阅)
 
-Click here to expand Table of Contents
+## Goip GSM网关操作指南
 
-## 
+这是使用FreeSwitch使Goip GSM网关正常工作的最基本配置。
 
-* 1 [](#about)
-* 2 [Goip GSM Gateway HowTo](#goip-gsm-gateway-howto)
-* 3 [Goip GSM Gateway HowTo ASSUMPTIONS](#goip-gsm-gateway-howto-assumptions)
-* 4 [Goip Device Before you Start](#goip-device-before-you-start)
-* 5 [Goip Device Login to FS](#goip-device-login-to-fs)
-* 6 [Goip Device Status](#goip-device-status)
-* 7 [FreeSwitch Gateway Configuration Example](#freeswitch-gateway-configuration-example)
-* 8 [FreeSwitch Context (Outbound) Configuration Example](#freeswitch-context-outbound-configuration-example)
-* 9 [FreeSwitch Context (Inbound) Configuration Example](#freeswitch-context-inbound-configuration-example)
-* 10 [Troubleshooting and Useful Tips](#troubleshooting-and-useful-tips)
-* 11 [Useful Docs](#useful-docs)  
-   * 11.1 [See Also](#see-also)
+## Goip GSM网关操作指南所需条件
 
-## Goip GSM Gateway HowTo
+您拥有默认的Goip GSM网关配置。
 
-This is the minimal basic configuration to make the Goip GSM Gateway work with FreeSwitch. 
+您已经完成了FreeSwitch的初始化安装。
 
-## Goip GSM Gateway HowTo ASSUMPTIONS
+您熟悉FreeSwitch的拨号计划和CLI命令。
 
-You have the default Goip GSM Gateway configuration.
+## 开始之前的Goip设备准备工作
 
-You have the initial FreeSwitch install.
+记得从你的SIM卡中移除PIN码。用手机确认一下你的SIM卡。它不应该要求你输入PIN码。检查一下LED指示灯（绿色和红色）是否正常闪烁。
 
-You have are familiar with FreeSwitch dialplan and CLI commands.
+## 登录Goip设备到FS
 
-## Goip Device Before you Start
+**goipSetup -> 呼叫设置 -> 配置模式 -> SIP电话**
 
-Remember to remove the PIN number from your SIM card. Double check your SIM card with a Phone. It should not ask you for a PIN. Check out that the led lights (green and red) are blinking as they should.
+配置模式 -> 单服务器模式
 
-## Goip Device Login to FS
+电话号码 -> 1000
 
-**goipSetup -> Call Setting -> Config Mode -> Sip Phone**
+SIP代理 -> 192.168.2.1
 
-Config Mode -> Single Server Mode
+SIP注册机 -> 服务器
 
-Phone Number -> 1000
+身份认证ID -> 1000
 
-Sip Proxy -> 192.168.2.1
+密码 -> 1234
 
-Sip Registrar ->Server
+**goipSetup -> 呼叫转移 -> 转接号码（VoIP到PSTN）-> 10000**
 
-Authentication ID -> 1000
+这将把所有呼入电话重定向到Freeswitch分机（10000）。
 
-Password -> 1234
+* SIP代理应该指向FS运行的IP地址。
+* 不要更改任何其他参数，它们应该按默认值设置。
 
-**goipSetup -> Call Divert -> Forward Number(VoIP to PSTN) -> 10000**
+**goipSetup -> 保存更改**
 
-This will redirect all your inbound calls to this Freeswitch extension (10000) in this case
+## Goip设备状态
 
-* Sip proxy should aim to the IP where your FS is running.
-* Do not change any other parameter, they should be as they are by default.
+**goipSetup -> 状态**
 
-**goipSetup -> Save Changes**
+* 在Goip状态页上，电话状态和GSM状态必须为登录状态。
+* 在Goip状态页上，GSM运营商不能为空。（通常需要大约1分钟才能显示GSM运营商的参考ID）
+* GSM信号必须良好，如果低于12，可能会出现问题。
 
-## Goip Device Status
+## FreeSwitch网关配置示例
 
-**goipSetup -> Status**
-
-* On the Goip status page the Phone Status and your GSM Status must be LOGIN.
-* On the Goip status page GSM operator must not be blank.(It normaly takes about 1 minute to show a Reference ID from your GSM operator)
-* GSM signal must be good, you may have trouble if it is below 12.
-
-## FreeSwitch Gateway Configuration Example
-
-**Create file goip.xml in this folder freeswitch/conf/sip\_profiles/external/**
+**在此文件夹freeswitch/conf/sip\_profiles/external/中创建goip.xml文件**
 
 ```xml
 <include>
   <gateway name="goip">
-  <!--/// account username *required* ///-->
-  <!-- Extension 1000 in my case -->
+  <!--/// 账号用户名*必填*///-->
+  <!-- 在我的情况下，连接到分机1000 -->
   <param name="username" value="1000"/>
-  <!--/// auth realm: *optional* same as gateway name, if blank ///-->
-  <!-- It must aim to the Goip GateWay IP 192.168.2.2 in my case -->
+  <!--/// auth realm: *可选*，如果留空，则与网关名称相同 ///-->
+  <!-- 在我的情况下，它必须指向Goip网关的IP地址192.168.2.2 -->
   <param name="realm" value="192.168.2.2"/>
-  <!--1234 in my case-->
+  <!-- 在我的情况下为1234 -->
   <param name="password" value="1234"/> 
-  <!--/// expire in seconds: *optional* 3600, if blank ///-->
+  <!--/// 过期时间（秒）: *可选*，如果留空则为3600 ///-->
   <param name="expire-seconds" value="30"/>
-  <!--/// do not register ///-->
+  <!--/// 不注册 ///-->
   <param name="register" value="false"/>
-  <!-- which transport to use for register -->
+  <!-- 使用哪种协议来注册 -->
   </gateway>
  </include>
 ```
 
-## FreeSwitch Context (Outbound) Configuration Example
+## FreeSwitch（出站）上下文配置示例
 
 ```xml
-  <extension name="Goip outbound">
+  <extension name="Goip出站">
     <condition field="destination_number" expression="^(6(\d{8}))$">
-      <action application="log" data="INFO goip outbound to $1"/>
+      <action application="log" data="INFO：将呼叫转接到Goip GSM网关：$1"/>
       <action application="bridge" data="sofia/gateway/goip/$1"/>
     </condition>
   </extension>
 ```
 
-* In this example if you dial a number that starts with 6 plus 8 more digits the call will be bridged to the Goip GSM, change it accordingly to your country phone format or the desired format.
+* 在此示例中，如果拨打的号码以6开头，后面跟着8位数字，则将呼叫转接到Goip GSM网关，根据您的国家电话格式或所需格式进行更改。
 
-## FreeSwitch Context (Inbound) Configuration Example
+## FreeSwitch（入站）上下文配置示例
 
 ```xml
-  <extension name="Goip inbound">
+  <extension name="Goip入站">
     <condition field="destination_number" expression="^(10000)$">
-      <action application="log" data="INFO do you inbound stuff here!!!!! ani --${ani} "/>
+      <action application="log" data="INFO：在此处执行入站处理操作!!!!! 来电号码--${ani} "/>
       <action application="hangup" />
    </condition>
   </extension>
 ```
 
-* In this example all the inbound calls are sent to the extension 10000 then they are hanged up. The ani should appear.
+* 在此示例中，所有入站呼叫都发送到分机10000，然后自动挂断。来电号码应显示。
 
-## Troubleshooting and Useful Tips
+## 故障排除和有用提示
 
-* sofia status profile internal (to verify that the Goip extension is logged in FS).
-* sofia status (to check that the Goip gateway is properly configured and it is running).
-* If you are having trouble with the outbound calls try to log **directly** into the Goip Gateway, that is to say create an account with your favorite SIP client (Jitsy, X-Lite, SipDroid, CSipSimple...) use the same username and password and remember that **the IP must aim at your Goip Gateway IP, not the Freeswitch one**, then when your client is logged, try to make a call.
-* If you are having trouble with the inbound call, **goipSetup -> tools -> Restore Factory Settings** make a call with another phone to your Goip Gateway Sim phone number. The green light should remain still, then you should hear the Goip answering machine asking you to dial an extension plus # sign to transfer you to that extension. If this is the case check out your Sip parameters specially your Forward Number in Goip, set your FS to debug, some traces should appear, if not double check the SIM card. Extract it from Goip test it with your cell phone.
+* sofia 状态配置文件（用于验证 Goip 分机是否已登录到 FS）。
+* sofia 状态（用于检查 Goip 网关是否正确配置并正常运行）。
+* 如果你在拨出电话时遇到问题，请**直接**登录到 Goip 网关，即使用你喜欢的 SIP 客户端（Jitsy、X-Lite、SipDroid、CSipSimple...）创建一个帐户，使用相同的用户名和密码，并记住**IP 地址必须指向你的 Goip 网关 IP，而不是 Freeswitch 的 IP**，然后当你的客户端已登录时，试着拨打一个电话。
+* 如果你在接入电话时遇到问题，点击 goipSetup -> tools -> 还原出厂设置，然后用另一部手机拨打你的 Goip 网关 SIM 卡电话号码。绿色灯应该保持亮起，然后你应该听到 Goip 语音信箱要求你拨打一个分机号码加上#号来转接你到该分机。如果是这种情况，请检查你的 SIP 参数，特别是在 Goip 中的转接号码，将你的 FS 设置为 debug 模式，应该会出现一些跟踪信息；如果没有，请再次检查 SIM 卡，将它从 Goip 中取出，用你的手机进行测试。
 
-## Useful Docs
+## 有用的文档
 
-* [Documentation 1 pdf](http://goip.com.ua/download/goip-series-manual.pdf)
-* [Documentation 2 pdf](http://www.justtech.co.nz/manuals/goIP%5Fr1.2.pdf)
+* [文档 1 pdf](http://goip.com.ua/download/goip-series-manual.pdf)
+* [文档 2 pdf](http://www.justtech.co.nz/manuals/goIP%5Fr1.2.pdf)
 
-### See Also
+### 参见
 
 * [Sofia\_Configuration\_Files#Structure\_of\_a\_Profile](http://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Structure%5Fof%5Fa%5FProfile)
 * [XML Dialplan](../../Dialplan/XML-Dialplan/index.mdx#about)
-
-

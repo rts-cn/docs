@@ -1,104 +1,84 @@
+# Polycom企业通讯录
 
-# Polycom Corporate Directory 
 
- 
+## 关于
 
-## About
+Polycom提供了"企业通讯录"的配置，可以从LDAP服务器获取条目。本页面介绍了如何在Debian上设置一个基本的基于OpenLDAP的联系人目录，适用于像我这样的LDAP新手。
 
-Polycom offers configuration of a "corporate directory", which fetches entries from an LDAP-Server. This page describes how to set up a minimal OpenLDAP-based contacts directory on Debian, aimed at LDAP noobs like me.
+本文档基于[UC Admin Guide 3.3.4](http://support.polycom.com/global/documents/support/setup%5Fmaintenance/products/voice/spip%5Fssip%5FAdmin%5FGuide%5FUCS%5Fv3%5F3%5F0.pdf)，[Corporate Directory Best Practices](http://support.polycom.com/global/documents/support/technical/products/voice/Corporate%5FDirectory%5FBest%5FPractices%5FTB41137.pdf)和Polycom UC Software Version 3.3.4。
 
-This documentation is based on [UC Admin Guide 3.3.4](http://support.polycom.com/global/documents/support/setup%5Fmaintenance/products/voice/spip%5Fssip%5FAdmin%5FGuide%5FUCS%5Fv3%5F3%5F0.pdf), [Corporate Directory Best Practices](http://support.polycom.com/global/documents/support/technical/products/voice/Corporate%5FDirectory%5FBest%5FPractices%5FTB41137.pdf) and Polycom UC Software Version 3.3.4 obviously.
+点击展开目录
 
-Click to expand Table of Contents
+* 1 [在Debian Squeeze上安装slapd服务器](#openldap服务器-在-debian-squeeze-上安装slapd服务器)  
+   * 1.1 [基本安装和配置](#基本安装和配置)  
+   * 1.2 [向目录添加联系人信息](#向目录添加联系人信息)
+* 2 [配置电话](#配置电话)
+* 3 [调试](#调试-freeswitch-polycom企业通讯录)
 
-* 1 [slapd Server On Debian Squeeze](#slapd-server-on-debian-squeeze)  
-   * 1.1 [Basic installation and configuration](#basic-installation-and-configuration)  
-   * 1.2 [Add contact information to the directory](#add-contact-information-to-the-directory)
-* 2 [Configure the phone](#configure-the-phone)
-* 3 [Debugging](#-freeswitch--polycom-corporate-directory-)
+* 跳过OpenLDAP服务器配置？**否**
+* DNS域名：**my\_domain**
+* 组织名称：**my\_organization**
+* 管理员密码：**my\_secret**
+* 要使用的数据库后端：**HDB**
+* 当slapd被清除时，您是否希望删除数据库？：**是**（实际上，我曾经清除过一次，这样可以重新开始）
+* 移动旧数据库：**是**（如果您进行第二次重新配置，它会报告/var/backups/\*.ldapd中已经存在备份文件，并且重新配置将失败 - 可以安全地删除此文件，然后重启重新配置）
+* 允许LDAPv2协议？：**否**
 
-## slapd Server On Debian Squeeze
+在core.schema中添加caseIgnoreOrderingMatch
 
-### Basic installation and configuration
-
-Install slapd and ldap-utils
-
-```xml
-# apt-get install slapd ldap-utils
-```
-
-Reconfigure slapd
-
-```xml
-# dpkg-reconfigure -plow slapd
-```
-
-The package configuration will ask you a few questions:
-
-* Omit OpenLDAP server configuration? **No**
-* DNS domain name: **my\_domain**
-* Organization name: **my\_organization**
-* Adminstrator password: **my\_secret**
-* Database backend to use: **HDB**
-* Do you want the database to be removed when slapd is purged?: **Yes**(I actually had to purge once, so this makes for a clean start)
-* Move old database: **Yes** (If you reconfigure a second time, it will complain that there's already a backup-file in /var/backups/\*.ldapd and reconfiguration will fail - it's safe to delete this file, then restart reconfiguration)
-* Allow LDAPv2 protocol?: **No**
-
-Add caseIgnoreOrderingMatch to core.schema
-
-We now have to add "ORDERING caseIgnoreOrderingMatch" to the surname- and givenName-Attributes, because Polycom uses simple search expressions like '>=' and '&lt;=' when querying the LDAP-addressbook.
+现在我们需要为姓氏和名字属性添加"ORDERING caseIgnoreOrderingMatch"，因为Polycom在查询LDAP通讯录时使用简单搜索表达式如'>='和'<='。
 
 ```xml
 root@uunet # /etc/init.d/slapd stop
 root@uunet # vim /etc/ldap/slapd.d/cn\=config/cn\=schema/cn\=\{0\}core.ldif
 ```
 
-In this file, substitute
+在这个文件中，将
 
-**surname original**
+**原姓氏**
 
 ```xml
 olcAttributeTypes: {1}( 2.5.4.4 NAME ( 'sn' 'surname' ) DESC 'RFC2256: last (family) name(s) for which the entity is known by' SUP name )
 ```
 
-with
+替换为
 
-**surname ORDERING**
+**姓氏ORDERING**
 
 ```xml
 olcAttributeTypes: {1}( 2.5.4.4 NAME ( 'sn' 'surname' ) DESC 'RFC2256: last (family) name(s) by which the entity is known' SUP name ORDERING caseIgnoreOrderingMatch)
 ```
 
-Replace
+将
 
-**givenName original**
+**原名字**
 
 ```xml
 olcAttributeTypes: {35}( 2.5.4.42 NAME ( 'givenName' 'gn' ) DESC 'RFC2256: first name(s) for which the entity is known by' SUP name )
 ```
 
-with
+替换为
 
-**givenName ORDERING**
+**名字ORDERING**
 
 ```xml
 olcAttributeTypes: {35}( 2.5.4.42 NAME ( 'givenName' 'gn' ) DESC 'RFC2256: first name(s) by which the entity is known' SUP name ORDERING caseIgnoreOrderingMatch)
 ```
 
   
-Start slapd
+启动slapd
 
-**start slapd**
+**启动slapd**
 
 ```xml
 root@uunet # /etc/init.d/slapd start
 ```
 
-### Add contact information to the directory
+### 向目录添加联系信息
 
-Go to your home-directory and create a some ldif-files with the content we want to add to LDAP:
+进入您的主目录并创建一些包含我们要添加到LDAP的内容的ldif文件：
 
-**Create Directories**
+**创建目录**
 
 ```xml
 root@uunet # cd
@@ -106,7 +86,7 @@ root@uunet # mkdir directory_files
 root@uunet # cd directory_files
 ```
 
-Create a file for the organizationUnit "people" that holds a user-account we need for the phones to login:
+为"people"组织单元创建一个文件，其中包含一个我们需要用于电话登录的用户帐户：
 
 **people.ldif**
 
@@ -118,9 +98,9 @@ root@uunet # vim people.ldif
    objectClass: organizationalUnit
 ```
 
-Create a file for the polycom-User which we use for the phone-login:
+为我们用于电话登录的polycom用户创建一个文件：
 
-**polycom\_user.ldif**
+**polycom_user.ldif**
 
 ```xml
  # vim polycom_user.ldif
@@ -135,10 +115,10 @@ Create a file for the polycom-User which we use for the phone-login:
    objectclass: inetorgperson
    uid: polycom
    sn: polycom
-   userPassword: supersecret #Change the password!
+   userPassword: supersecret #更改密码！
 ```
 
-Create a file for the organizationalUnit "contacts", that holds the contact-information:
+为包含联系信息的"contacts"组织单元创建一个文件：
 
 **phonebook.ldif**
 
@@ -150,9 +130,9 @@ Create a file for the organizationalUnit "contacts", that holds the contact-info
    objectClass: organizationalUnit
 ```
 
-Create a file for the contaction-information of contact "John Doe" of "ACME Corporation".
+为ACME Corporation的联系人John Doe的联系信息创建一个文件。
 
-The Polycom phones don't seem to understand parenthesis (perhaps other special characters also) so they won't show a contact if any attribute-value has a parenthesis in it.
+Polycom电话似乎不理解括号（或许还有其他特殊字符），因此如果任何属性值中含有括号，它们将不会显示联系人。
 
 **phonebook.ldif**
 
@@ -169,31 +149,31 @@ The Polycom phones don't seem to understand parenthesis (perhaps other special c
  objectClass: top
 ```
 
-Parse files with ldapadd to add their content to the database
+使用 `ldapadd` 解析文件，将其内容添加到数据库中。
 
-Change "`my_domain`" to your server. `Password` is the one you entered during reconfiguration.
+将 "`my_domain`" 更改为您的服务器。`Password` 是您在重新配置过程中输入的密码。
 
 **ldapadd**
 
 ```xml
 root@uunet # ldapadd -x -D "cn=admin,dc=my_domain" -W -v -f people.ldif
  ldap_initialize( <DEFAULT> )
- Enter LDAP Password: 
- add ou:
+ 输入 LDAP 密码：
+ 添加 ou:
  	  contacts
- add description:
- 	  lists all contacts
- add objectClass:
+ 添加 description:
+ 	  列出所有联系人
+ 添加 objectClass:
  	  organizationalUnit
- adding new entry "ou=contacts,dc=my_domain"
- modify complete
+ 正在添加新条目 "ou=contacts,dc=my_domain"
+ 修改完成
 ```
 
-Repeat with all the files you've created, in order.
+按顺序使用您创建的所有文件重复此操作。
 
-## Configure the phone
+## 配置手机
 
-Assuming you are already using the excellent file-based [Polycom Configuration](./Polycom-Configuration_1967052.mdx#fonts), add these entries to your sip.cfg (or custom-config):
+假设您已经在使用优秀的基于文件的 [Polycom 配置](./Polycom-Configuration_1967052.mdx#fonts)，将这些条目添加到您的 sip.cfg（或 custom-config）文件中：
 
 **sip.cfg**
 
@@ -260,24 +240,22 @@ Assuming you are already using the excellent file-based [Polycom Configuration](
  />
 ```
 
-Adapt these values according to your personal settings and preferences. Use the password of the user "polycom", not "admin". All parameters are documented in detail in the [UC Admin Guide 3.3.4](http://support.polycom.com/global/documents/support/setup%5Fmaintenance/products/voice/spip%5Fssip%5FAdmin%5FGuide%5FUCS%5Fv3%5F3%5F0.pdf). YMMV if you use version 4 of the UC-software.
+根据您的个人设置和偏好来调整这些值。使用用户"polycom"的密码，而不是"admin"的密码。所有参数的详细文档都在[UC Admin Guide 3.3.4](http://support.polycom.com/global/documents/support/setup%5Fmaintenance/products/voice/spip%5Fssip%5FAdmin%5FGuide%5FUCS%5Fv3%5F3%5F0.pdf)中。如果您使用UC软件的4版本，则可能会有所不同。
 
-Reboot your phone to fetch the configuration. Press the new softkey "Dir" (Or the "Directories" button if you have one and you should see a menu item "Corporate Directory...". Enter it and you can use the search function to search for firstname, lastname and companyname. Unfortunately the companyname is only displayed in the contact details.
+重新启动您的电话以获取配置。按下新的软键"Dir"（如果您有一个的话，也可以是"Directories"按钮），您应该会看到菜单项"Corporate Directory..."。进入之后，您可以使用搜索功能来搜索名字、姓氏和公司名。不幸的是，公司名只会显示在联系人详细信息中。
 
-Of course, you can add additional attributes such as email, address, hair color, etc. to be able to search for them.
+当然，您可以添加额外的属性，例如电子邮件、地址、头发颜色等，以便能够搜索它们。
 
-## Debugging
+## 调试
 
-Search the directory:
+搜索目录：
 
 ```xml
 ldapsearch -D "uid=polycom,ou=people,dc=my_domain" -b "ou=contacts,dc=my_domain" -w supersecret -h 127.0.0.1 "(sn=*)"
 ```
 
-### Comments:
+### 注释：
 
-| Please fix this typo:ldapsearch -D "uid=polycom,ou=people,dc='my\_domain" -b "ou=contacts,dc=my\_domain" -w supersecret -h 127.0.0.1 "(sn=\*)"Must beldapsearch -D "uid=polycom,ou=people,dc=my\_domain" -b "ou=contacts,dc=my\_domain" -w supersecret -h 127.0.0.1 "(sn=\*)" RegardsCharlie ![](/images/icons/contenttypes/comment_16.png) Posted by at Jun 02, 2014 16:53 |
+| 请修复这个拼写错误：ldapsearch -D "uid=polycom,ou=people,dc='my\_domain" -b "ou=contacts,dc=my\_domain" -w supersecret -h 127.0.0.1 "(sn=\*)"必须改为ldapsearch -D "uid=polycom,ou=people,dc=my\_domain" -b "ou=contacts,dc=my\_domain" -w supersecret -h 127.0.0.1 "(sn=\*)" RegardsCharlie ![](/images/icons/contenttypes/comment_16.png) 发布者于 Jun 02, 2014 16:53 |
 | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| fixed ![](/images/icons/contenttypes/comment_16.png) Posted by nneul at Feb 16, 2016 13:31                                                                                                                                                                                                                                                                                  |
-
-
+| 已修复！[](/images/icons/contenttypes/comment_16.png) 发布者 nneul 于Feb 16, 2016 13:31                                                                                                                                                                                                                                                                                    |

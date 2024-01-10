@@ -1,144 +1,138 @@
+# Windows安装
 
-# Windows Install 
+## 关于
 
- 
+在Windows平台上构建和安装FreeSWITCH™的概述。
 
-## About
+展开目录
 
-Overview of building and installing FreeSWITCH™ on Windows platforms.
+* 1 [已废弃的说明](#deprecated-notes)
+* 2 [简便方法](#easy-way--)
+* 3 [源码安装](#install-from-source)
+   * 3.1 [准备工作](#prepare) 
+   * 3.2 [Windows上的Git客户端](#git-clients-for-windows)
+      * 3.2.1 [mSysGit](#msysgit)
+         * 3.2.2 [Windows GUI工具 TortoiseGit](#tortoisegit-for-windows-gui-tool)
+   * 3.3 [构建备注](#notes-on-building)
+   * 3.4 [编译](#compiling)
+   * 3.5 [构建安装程序](#building-the-installer)
+* 4 [运行FreeSWITCH](#running-freeswitch--)
+   * 4.1 [基本命令](#basic-commands)
+   * 4.2 [开始使用和基本配置](#getting-started-and-basic-configuration)
+   * 4.3 [路径分隔符](#path-separator)
+* 5 [电子邮件语音信箱](#email-voicemail)
 
-Click to expand Table of Contents
+## 已废弃的说明
 
-* 1 [Deprecated Notes](#deprecated-notes)
-* 2 [Easy Way](#easy-way--)
-* 3 [Install from Source](#install-from-source)  
-   * 3.1 [Prepare](#prepare)  
-   * 3.2 [Git Clients for Windows](#git-clients-for-windows)  
-      * 3.2.1 [mSysGit](#msysgit)  
-         * 3.2.2 [TortoiseGit for Windows GUI Tool](#tortoisegit-for-windows-gui-tool)  
-   * 3.3 [Notes On Building](#notes-on-building)  
-   * 3.4 [Compiling](#compiling)  
-   * 3.5 [Building The Installer](#building-the-installer)
-* 4 [Running FreeSWITCH](#running-freeswitch--)  
-   * 4.1 [Basic Commands](#basic-commands)  
-   * 4.2 [Getting Started and Basic Configuration](#getting-started-and-basic-configuration)  
-   * 4.3 [Path Separator](#path-separator)
-* 5 [Email Voicemail](#email-voicemail)
+参见[Windows安装旧版](https://freeswitch.org/confluence/display/FAH/Windows+Install+old)了解有关旧版本的非常旧的说明，仅供历史参考。
 
-## Deprecated Notes
+## 简便方法
 
-See [Windows Install old](https://freeswitch.org/confluence/display/FAH/Windows+Install+old) for very old notes on older releases, retained for historical reference only.
+**预构建的二进制文件**
 
-## Easy Way  
+[Freeswitch安装程序.msi](https://files.freeswitch.org/windows/installer/x64/)
 
-**Pre-Built Binaries**
+二进制的MSI安装程序会针对每个版本进行构建。您还可以在这里找到[声音包](https://files.freeswitch.org/windows/installer/x64/sounds/)。
 
-[Freeswitch Installer .msi](https://files.freeswitch.org/windows/installer/x64/)
-
-The binary MSI installer is built for each release. You can also find [sound packages here](https://files.freeswitch.org/windows/installer/x64/sounds/).
-
-  
 ---
 
-## Install from Source
+## 源码安装
 
-### Prepare
+### 准备工作
 
-Install Visual Studio 2017 (with C++ component) and Windows SDK 8.1\. It's OK to not install the WIX toolset if you don't need msi packages to be produced, just ignore all errors about that.
+安装Visual Studio 2017（包含C++组件）和Windows SDK 8.1。如果您不需要生成MSI安装程序包，则可以不安装WIX工具集，只需忽略所有有关该工具集的错误提示。
 
-Source path must not contain spaces!
+源代码路径不能包含空格！
 
-Windows line endings
+Windows换行符
 
-Windows uses CR+LF (carriage return plus line feed) to represent the end of text lines, whereas linux uses only LF (line feed). This causes problems when using linux source code on a Windows system, so beware of the notes below about CRLF line endings.
+Windows使用CR+LF（回车加换行）来表示文本行的末尾，而Linux只使用LF（换行）。这在Windows系统上使用Linux源代码时会引起问题，所以请注意下面关于CRLF行尾的注意事项。
 
-### Git Clients for Windows
+### Windows的Git客户端
 
-To obtain the most up-to-date FreeSWITCH version, a Git client must be installed.
+要获取最新版本的FreeSWITCH，必须安装Git客户端。
 
 #### mSysGit
 
-The [mSysGit](https://msysgit.github.io/index.old.html) Git client for Windows works well and provides both a bash CLI as well as a Windows GUI and shell integration, so you won't need TortoiseGit after all.
+[mSysGit](https://msysgit.github.io/index.old.html)是适用于Windows的Git客户端，可以很好地工作，并提供了Bash命令行界面以及Windows GUI和Shell集成，因此您不再需要TortoiseGit。
 
-Windows vs linux line endings
+Windows与Linux的行尾差异
 
-On Windows you must Select **CheckOut as-is, Commit as-is** in order to Set core.autocrlf = False. 
+在Windows上，您必须选择**"As-is"进行"CheckOut"，"As-is"进行"Commit"**，以设置core.autocrlf = False。
 
-Verify the core.autocrlf values type on _git config --get-all core.autocrlf_ is false
+通过_git config --get-all core.autocrlf_验证core.autocrlf值的类型是false
 
-  
-Once Git is installed, the FreeSWITCH source can be cloned from the Git Bash command line, for instance:
+安装完Git后，可以使用Git Bash命令行克隆FreeSWITCH源代码，例如：
 
 ```xml
 git clone https://github.com/signalwire/freeswitch.git C:/FS_GIT/
 ```
 
-Consult mSysGit documentation to learn about using the GUI.
+请查阅mSysGit文档以了解如何使用GUI。
 
-#### TortoiseGit for Windows GUI Tool
+#### Windows GUI工具TortoiseGit
 
-TortoiseGit is an optional Front-End GUI to the Git client previously installed.
+TortoiseGit是之前安装的Git客户端的可选前端GUI。
 
-[TortoiseGit x64 and x32](https://tortoisegit.org/)
+[TortoiseGit x64和x32](https://tortoisegit.org/)
 
-Check the TortoiseGit general settings for the location of the Git client. `msysgit -> Git.exe Path` otherwise set it to the path on your system, for example "`C:\Program Files (x86)\Git\bin"`
+查看TortoiseGit的常规设置以了解Git客户端的位置。`msysgit -> Git.exe Path`，否则将其设置为您系统上的路径，例如"`C:\Program Files (x86)\Git\bin"`
 
-Once TortoiseGit is installed, follow these steps:
+安装完TortoiseGit后，请按照以下步骤操作：
 
-BE SURE TO VERIFY AUTOCRLF!
+一定要验证AUTOCRLF！
 
-* See the screen shot below. To check the actual .gitconfig file select edit global config to verify.
-* If you do not have this properly set the line endings will be incorrect and your build will fail.
-* I've see the GUI not update the actual .gitconfig file so that is why it is good to verify it.
-* Open the Windows Explorer
-* Navigate to a folder to hold the source code (like My Documents\\sources)
-* Create a new folder named "FreeSWITCH"
-* Set autocrlf=false otherwise the gawk scripts will fail!
-* Right-click the "FreeSWITCH" folder and click on "Git Clone"
-* The clone will take several minutes to download the source code.
+* 请参考下方的屏幕截图。选择编辑全局配置以验证实际的.gitconfig文件。
+* 如果没有正确设置，行尾将不正确，构建将失败。
+* 我曾经见过GUI不会更新实际的.gitconfig文件，所以验证它是很有必要的。
+* 打开Windows资源管理器。
+* 导航到一个用于存放源代码的文件夹（例如我的文档\source）。
+* 创建一个名为"FreeSWITCH"的新文件夹。
+* 设置autocrlf=false，否则gawk脚本将失败！
+* 右键单击"FreeSWITCH"文件夹，然后点击"Git克隆"。
+* 克隆将花费几分钟时间来下载源代码。
 
-When the clone is finished, you can check the status by right-clicking and selecting properties on the cloned folder, and selecting the Git tab. You'll see something like:
+当克隆完成后，您可以通过右键单击克隆的文件夹并选择属性，然后选择Git选项卡来检查状态。您将看到类似以下内容：
 
 ```xml
   HEAD:             3c66b497d66ae180de30bffe449d0421f5d16221
-                    S-2784, missing incoming calls to one interfacename
+                    S-2784，丢失对一个接口名称的呼入电话
                     Giovanni Maruzzelli
                     2010-10-29 01:57:37
 
   Last Modified:    3c66b497d66ae180de30bffe449d0421f5d16221
-                    skypopen: fix FS-2784, missing incoming calls to one interfacename
+                    skypopen:修复FS-2784，丢失对一个接口名称的呼入电话
                     Giovanni Maruzzelli
                     2010-10-29 01:57:37
 ```
 
-### Notes On Building
+### 构建注意事项
 
-To compile FreeSWITCH on Windows, you will need Visual Studio 2017 (with C++ component) and Windows SDK 8.1
+在Windows上编译FreeSWITCH，您将需要Visual Studio 2017（带有C++组件）和Windows SDK 8.1。
 
-Solution file
+解决方案文件
 
-See also [Freeswitch.2017.sln.bat](https://github.com/signalwire/freeswitch/blob/master/Freeswitch.2017.sln.bat "Freeswitch.2017.sln.bat") on github
+请参考github上的[Freeswitch.2017.sln.bat](https://github.com/signalwire/freeswitch/blob/master/Freeswitch.2017.sln.bat "Freeswitch.2017.sln.bat")。
 
 mod managed
 
-NOTE (1): mod\_managed requires C# which might not be included with your Visual Studio build system. In that case, remove it from the build list.
+注意（1）：mod_managed需要C#，可能没有包含在您的Visual Studio构建系统中。在这种情况下，请从构建列表中将其删除。
 
-To 'remove' modules from the build, just right click on the module name in the Solution Explorer, select Unload Project. 
+要“删除”构建中的模块，只需在解决方案资源管理器中右键单击模块名称，然后选择卸载项目。
 
-  
 mod cepstral
 
-NOTE (2): You will need to 'Remove' mod\_cepstral unless you have the SDK installed.
+注意（2）：除非已安装SDK，否则您将需要“删除”mod_cepstral。
 
-To 'remove' modules from the build, just right click on the module name in the Solution Explorer, select Unload Project. 
+要“删除”构建中的模块，只需在解决方案资源管理器中右键单击模块名称，然后选择卸载项目。
 
-### Compiling
+### 编译
 
-* Open Freeswitch.2017.sln
-* Go to the Main Menu → Build → Configuration Manager -> Select whether you want a Release or Debug build and Win32 or x64
-* Go to the Main Menu → Build → Build Solution (Ctrl + Shift + B)
+* 打开Freeswitch.2017.sln
+* 转到主菜单→构建→配置管理器→选择Release或Debug构建和Win32或x64
+* 转到主菜单→构建→构建解决方案（Ctrl+Shift+B）
 
-Note that building for Windows within a tree that has previously been built for a different platform will result in numerous errors and build failures. To resolve, delete the following generated files:
+请注意，在为Windows进行构建时，如果之前已为不同平台构建过该树，则会导致多个错误和构建失败。要解决此问题，请删除以下生成的文件：
 
 * libs/apr/include/apr.h
 * libs/js/config.h
@@ -146,76 +140,76 @@ Note that building for Windows within a tree that has previously been built for 
 * libs/js/nsprpub/pr/include/prcpucfg.h
 * libs/iksemel/include/config.h
 * libs/xmlrpc/xmlrpc\_config.h
-* libs/libsndfile/src/sfconfig.h; also rename libs/win32/libsndfile/config.h to libs/win32/libsndfile/sfconfig.h
+* libs/libsndfile/src/sfconfig.h；还将libs/win32/libsndfile/config.h重命名为libs/win32/libsndfile/sfconfig.h
 * libs/sofia-sip/libsofia-sip-ua/su/sofia-sip/su\_configure.h
 
-Alternatively, right click on the main Solution node and select Clean. 
+或者，右键单击主解决方案节点，然后选择清理。
 
-Then Rebuild the solution.
+然后重新构建解决方案。
 
-You may need to "Enable default libraries" in the properties pane for XML Interfaces\\mod\_xml\_rpc if VS complains of numerous unresolved external symbols, e.g., \_memset, \_strcmp.
+如果VS抱怨有许多未解析的外部符号（例如\_memset，\_strcmp），您可能需要在XML Interfaces\mod\_xml\_rpc的属性窗格中“启用默认库”。
 
-You may also have to disable your virus scanner(AVG2011, Avast) in case you have gawk failures (resulting in missing .h files), and remember to turn it back on after!
+您还可能需要在gawk失败（导致缺少.h文件）的情况下禁用病毒扫描器（AVG2011，Avast），请记得在之后重新打开病毒扫描器！
 
-Building for other platforms
+构建其他平台时
 
-After following the instructions above to build for Windows, you will need to delete "libs/js/nsprpub/pr/include/prcpucfg.h" and rerun "./bootstrap.sh" before building for another platform.
+在按照上述步骤构建Windows版本后，您需要删除 "libs/js/nsprpub/pr/include/prcpucfg.h" 并重新运行 "./bootstrap.sh"，然后才能构建另一个平台的版本。
 
-### Building The Installer
+### 构建安装程序
 
-The above steps produce a Debug or Release version of FreeSWITCH in the &lt;git dir>/Win32/Release or Debug directories. 
+上述步骤会在&lt;git dir>/Win32/Release 或 Debug 目录下生成 Debug 或 Release 版本的FreeSWITCH。
 
-To build the FreeSWITCH install package:
+要构建FreeSWITCH安装包，请按照以下步骤进行：
 
-* Use the full VS 2017, Express version will not build the Installer
-* This requires you to install WIX 3.0 or later. [WIX](https://wixtoolset.org/)
-* Set the Solution Configuration to Release and right-click on Setup in the Solution Explorer. This creates the msi files in &lt;git dir>/&lt;Platform>/Release.
+* 使用完整版 VS 2017，Express 版本无法构建安装程序
+* 需要安装 WIX 3.0 或更高版本。[WIX](https://wixtoolset.org/)
+* 将解决方案配置设置为 Release，并在解决方案资源管理器中右键单击 Setup。这将在&lt;git dir>/&lt;Platform>/Release 目录中创建msi文件。
 
 ---
 
-## Running FreeSWITCH  
+## 运行FreeSWITCH
 
-Windows Firewall
+Windows防火墙
 
-If you are using the Windows or other firewall you must add FreeSWITCH as an exception, otherwise no incoming SIP connections will work. If you permit an exception for the FreeSWITCH process it will be able to listen on the standard SIP ports as well as ephemeral media ports to allow audio to pass through the firewall.
+如果您正在使用Windows或其他防火墙，您必须将FreeSWITCH添加为异常，否则将无法建立SIP连接。如果您允许FreeSWITCH进程作为异常，它将能够监听标准的SIP端口以及临时媒体端口，以便通过防火墙传递音频。
 
-### Basic Commands
+### 基本命令
 
-All of the console commands are covered on this wiki page: [Core Commands](../Modules/mod_commands_1966741.mdx#--)
+所有控制台命令都在这个维基页面中介绍：[核心命令](../Modules/mod_commands_1966741.mdx#--)
 
-### Getting Started and Basic Configuration
+### 入门和基本配置
 
-Finally, the [Configuring FreeSWITCH](../Configuration/Configuring-FreeSWITCH/index.mdx#set) wiki page has some useful information to get you started. The default configuration includes 20 endpoint definitions in %FS%\\conf\\directory\\default\\ (1000-1019).xml. More information see the [User Directory](../Directory/index.mdx#about) page where registered endpoints (extensions) are defined.
+最后，[配置FreeSWITCH](../Configuration/Configuring-FreeSWITCH/index.mdx#set)维基页面提供了一些有用的信息，可帮助您入门。默认配置在%FS%\\conf\\directory\\default\\ (1000-1019).xml中包含了20个端点定义。更多信息，请参阅[用户目录](../Directory/index.mdx#about)页面，其中定义了已注册的端点（分机）。
 
-See here to configure a trunk (gateway) - [Sample Gateway Configuration](../Configuration/Configuring-FreeSWITCH/index.mdx#gateway-configuration) which also shows how to test inbound and outbound calls via your new gateway definition.
+在此处查看如何配置一个中继（网关）- [示例网关配置](../Configuration/Configuring-FreeSWITCH/index.mdx#gateway-configuration)，该示例还展示了如何通过新的网关定义测试呼入和呼出。
 
-### Path Separator
+### 路径分隔符
 
-Although Windows generally uses the backslash character as the path separator, all modern versions of Windows support using the forward slash as well. Internally FreeSWITCH uniformly uses the forward slash character for path separation. In your configuration files use the forward slash and not a back slash:
+虽然Windows通常使用反斜杠作为路径分隔符，但所有现代版本的Windows也支持使用正斜杠。FreeSWITCH 在内部统一使用正斜杠字符作为路径分隔符。在配置文件中使用正斜杠而不是反斜杠：
 
-**Use Forward Slash**
+**使用正斜杠**
 
 ```xml
 <action application="playback" data="c:/path/to/soundfile.wav"/>
 ```
 
-## Email Voicemail
+## 邮件语音信箱
 
-FreeSWITCH on Windows supports sending email notifications of voicemail via SMTP from Windows.
+在Windows上，FreeSWITCH支持通过SMTP发送语音邮件通知。
 
-You'll need to change a value in _prefix_/conf/autoload\_configs/switch\_conf.xml
+您需要在 _prefix_/conf/autoload\_configs/switch\_conf.xml 中更改一个值。
 
-The parameter, **mailer-app**, defaults to **sendmail**. This needs to be changed to **msmtp**
+参数 **mailer-app** 默认为 **sendmail**。这需要更改为 **msmtp**。
 
 ```xml
 <param name="mailer-app" value="msmtp"/>
 ```
 
-You will also need to download a sendmail clone for Windows (msmtp): <http://msmtp.sourceforge.net/index.html>. Download and copy the .exe to %winddir%\\system32\. You'll need to create a small config file for smtp credentials (host name, authentication, tls, etc.) in %USERPROFILE%\\Application Data\\ called "msmtprc.txt". Below is a sample copy of this file:
+您还需要下载Windows版的sendmail克隆(msmtp): <http://msmtp.sourceforge.net/index.html>。下载并将 .exe 文件复制到 %winddir%\\system32\\。您需要在 %USERPROFILE%\\Application Data\\ 中创建一个名为 "msmtprc.txt" 的 smtp 凭据的配置文件（主机名、认证、tls等）。下面是此文件的示例副本：
 
 ```xml
 ###################################
-# The SMTP server of the provider.
+# 供应商的 SMTP 服务器。
 account provider
 host smtp.myisp.com
 from john@myisp.com
@@ -223,15 +217,14 @@ auth login
 user johndoe
 password mypassword
 
-# Set a default account
+# 设置默认账户
 account default : provider
 ###################################
 ```
 
-If you plan to send email via your Gmail account you'll have to follow a guide similar to this one for configuring Gmail's signed server certificate (you have to use TLS with Gmail).
+如果您计划通过Gmail账户发送电子邮件，您将需要按照类似本指南的方式配置Gmail的签名服务器证书（您必须使用Gmail的TLS）。
 
-  
-Once configured your msmtprc.txt file should look something like this one:
+一旦配置完成，您的msmtprc.txt文件应该类似于以下内容：
 
 ```xml
 ###################################
@@ -252,11 +245,8 @@ account default : gmail
 ###################################
 ```
 
-  
-### Comments:
+### 评论：
 
-| Hello I am trying to install Windows FreeSWITCH, installers do not work .msi.to open the console closes immediately. and compiled with Visual Studio gives me error ![](/images/icons/contenttypes/comment_16.png) Posted by cynttiam at Jun 04, 2015 12:55 |
+|您好，我正在尝试安装Windows版FreeSWITCH，但安装程序无法运行。.msi文件打开后立即关闭，使用Visual Studio编译时遇到错误。![](/images/icons/contenttypes/comment_16.png) 由cynttiam于2015年6月4日12:55发布|
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Please ask on the #freeswitch irc channel or the freeswitch-users mailing list. Sorry you are having trouble. ![](/images/icons/contenttypes/comment_16.png) Posted by boteman at Jun 12, 2015 12:00                                                        |
-
-
+|请在#freeswitch irc频道或freeswitch-users邮件列表上提问。很抱歉给您带来了麻烦。![](/images/icons/contenttypes/comment_16.png) 由boteman于2015年6月12日12:00发布|

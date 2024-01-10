@@ -1,74 +1,71 @@
+# 抓包
 
-# Packet Capture 
+## 关于
 
- 
+捕获SIP和RTP报文可以揭示FreeSWITCH的配置问题或连接到其上的终端的故障。开发人员可能需要进行数据包捕获来帮助排查你的安装问题。
 
-## About
-
-Capturing SIP and RTP packets can reveal trouble with the configuration of FreeSWITCH or the endpoints connecting to it. A packet capture might be required by developers to help troubleshoot your installation.
-
-Click to expand Table of Contents
+点击展开目录
 
 * 1 [tcpdump](#tcpdump)  
-   * 1.1 [Examples](#examples)  
-      * 1.1.1 [Basic Logging](#basic-logging)  
-         * 1.1.2 [Capturing Calls For a Specific User](#capturing-calls-for-a-specific-user-)  
-         * 1.1.3 [Using Wireshark to Analyze pcap Files](#-using-wireshark-to-analyze-pcap-files-)
+   * 1.1 [例子](#examples)  
+      * 1.1.1 [基本日志记录](#basic-logging)  
+         * 1.1.2 [捕获特定用户的通话](#capturing-calls-for-a-specific-user-)  
+         * 1.1.3 [使用Wireshark分析pcap文件](#-using-wireshark-to-analyze-pcap-files-)
 * 2 [ngrep](#ngrep)  
    * 2.1 [HOMER Sip Capture](#homer-sip-capture)
 * 3 [sipgrep](#sipgrep)
 * 4 [pcapsipdump](#tcpdump)  
-   * 4.1 [Example](#example)
+   * 4.1 [例子](#example)
 * 5 [tshark aka tethereal](#editcap)
 * 6 [sngrep](#sngrep)  
-   * 6.1 [Tips for using sngrep interface](#tips-for-using-sngrep-interface)
-* 7 [Truncate a pcap File](#truncate-a-pcap-file)  
-   * 7.1 [With The Wireshark GUI](#with-the-wireshark-gui--)  
+   * 6.1 [使用sngrep接口的技巧](#tips-for-using-sngrep-interface)
+* 7 [截断pcap文件](#truncate-a-pcap-file)  
+   * 7.1 [使用Wireshark GUI](#with-the-wireshark-gui--)  
    * 7.2 [editcap](#editcap)
-* 8 [TLS with sharka](#tls-with-sharka--)
-* 9 [TLS, real time, with sngrep](#tls-real-time-with-sngrep)
+* 8 [sharka支持的TLS](#tls-with-sharka--)
+* 9 [sngrep实时TLS](#tls-real-time-with-sngrep)
 * 10 [](#editcap)
 * 11 [](#editcap)
 * 12 [](#editcap)
-* 13 [Example Analyses](#example-analyses--)  
-   * 13.1 [SIP TLS with sharka](#sip-tls-with-sharka--)  
-   * 13.2 [SIP TLS on port 5061](#sip-tls-on-port-5061)  
-   * 13.3 [RTP events](#rtp-events)  
-   * 13.4 [Analyze RTP Quality](#analyze-rtp-quality)  
-   * 13.5 [Remote live capture with local wireshark](#remote-live-capture-with-local-wireshark)  
-      * 13.5.1 [Windows workstation to remote linux server](#windows-workstation-to-remote-linux-server)
-* 14 [See Also](#see-also)
+* 13 [示例分析](#example-analyses--)  
+   * 13.1 [使用sharka进行SIP TLS分析](#sip-tls-with-sharka--)  
+   * 13.2 [在5061端口上进行SIP TLS分析](#sip-tls-on-port-5061)  
+   * 13.3 [RTP事件分析](#rtp-events)  
+   * 13.4 [分析RTP质量](#analyze-rtp-quality)  
+   * 13.5 [使用本地Wireshark进行远程实时捕获](#remote-live-capture-with-local-wireshark)  
+      * 13.5.1 [从Windows工作站到远程Linux服务器](#windows-workstation-to-remote-linux-server)
+* 14 [参考资料](#see-also)
 
   
 ## tcpdump
 
-SRC: <http://www.tcpdump.org/>
+来源: <http://www.tcpdump.org/>
 
-Use tcpdump if you want a pcap to open up in Wireshark later. Else, use tshark if you want a "text only" view of the SIP traffic without all the headers and extra information.
+如果你想在稍后用Wireshark打开pcap文件，请使用tcpdump。否则，如果你只想查看SIP流量的“纯文本”视图，而没有头部和额外信息，请使用tshark。
 
-### Examples
+### 示例
 
-#### Basic Logging
+#### 基本日志记录
 
-Real-time traffic dump (full packets) to stdout:
+即时将完整数据包转储到stdout：
 
   tcpdump -nq -s 0 -A -vvv -i eth0 port 5060
 
-Dump to file:
+转储到文件：
 
-  tcpdump -nq -s 0 -i eth0 -w /tmp/dump.pcap port 5060 
+  tcpdump -nq -s 0 -i eth0 -w /tmp/dump.pcap port 5060
 
-Save a new time-stamped file approximately once per hour on the specified port
+在指定的端口上，大约每小时保存一次带时间戳的文件
 
   tcpdump -nq -s 0 -i eth0 -G3600 -w /tmp/trace/sip-%F--%H-%M-%S.pcap port 5060
 
-Daemonize and log 2 ports, rotate log every hour.
+守护进程模式下记录2个端口，每小时旋转日志。
 
   nohup tcpdump -nq -s 0 -i eth0 -G3600 -w /tmp/trace/sip-%F--%H-%M-%S.pcap port 5080 or port 5060 &
 
-Daemonize and log 2 ports, rotate log every hour, and place into hierarchical directory structure.
+守护进程模式下记录2个端口，每小时旋转日志，并放入分级目录结构中。
 
-**tcpdump log example**
+**tcpdump日志示例**
 
 ```bash
  #!/bin/bash
@@ -88,413 +85,403 @@ Daemonize and log 2 ports, rotate log every hour, and place into hierarchical di
  nohup tcpdump -nq -s 0 -i eth0 -G3600 -w '/var/spool/pcap/%Y/%m/%d/%H%M%S.pcap' port 5060 or port 5080 &> /opt/freeswitch/log/tcpdump.log &
 ```
 
-This should be run from cron / init services at the first minute of each new day.
+应该在每天的凌晨第一分钟从cron / init服务中运行此脚本。
 
-#### Capturing Calls For a Specific User 
+#### 捕获特定用户的通话
 
   sofia status profile $profile user $user_id
 
-to get the remote ip/and port, then use:
+获取远程IP和端口，然后使用：
 
   tcpdump -i $INTERFACE -s 1500 -A host $IPADDRESS and port $SIPPORT
 
-####  Using Wireshark to Analyze pcap Files 
+#### 使用Wireshark分析pcap文件
 
-Wireshark has some nice tools for analyzing your packet captures. See the tutorial linked at the bottom of this page for tips.
+Wireshark有一些方便的工具用于分析您的数据包捕获。参考本页面底部链接的教程获取技巧。
 
 ## ngrep
 
-SRC: <http://ngrep.sourceforge.net/>
+源代码： <http://ngrep.sourceforge.net/>
 
-[ngrep](https://packages.debian.org/wheezy/ngrep) on the Debian Wheezy repository
+在Debian Wheezy存储库上的[ngrep](https://packages.debian.org/wheezy/ngrep)
 
-**ngrep help** Expand source 
+**ngrep帮助** 扩展源 
 
 ```text
-USAGE:usage: ngrep <-hNXViwqpevxlDtTRM> <-IO pcap_dump> <-n num> <-d dev> <-A num>
+用法：ngrep <-hNXViwqpevxlDtTRM> <-IO pcap_dump> <-n num> <-d dev> <-A num>
              <-s snaplen> <-S limitlen> <-W normal|byline|single|none> <-c cols>
              <-P char> <-F file> <match expression> <bpf filter>
-   -h  is help/usage
-   -V  is version information
-   -q  is be quiet (don't print packet reception hash marks)
-   -e  is show empty packets
-   -i  is ignore case
-   -v  is invert match
-   -R  is don't do privilege revocation logic
-   -x  is print in alternate hexdump format
-   -X  is interpret match expression as hexadecimal
-   -w  is word-regex (expression must match as a word)
-   -p  is don't go into promiscuous mode
-   -l  is make stdout line buffered
-   -D  is replay pcap_dumps with their recorded time intervals
-   -t  is print timestamp every time a packet is matched
-   -T  is print delta timestamp every time a packet is matched
-   -M  is don't do multi-line match (do single-line match instead)
-   -I  is read packet stream from pcap format file pcap_dump
-   -O  is dump matched packets in pcap format to pcap_dump
-   -n  is look at only num packets
-   -A  is dump num packets after a match
-   -s  is set the bpf caplen
-   -S  is set the limitlen on matched packets
-   -W  is set the dump format (normal, byline, single, none)
-   -c  is force the column width to the specified size
-   -P  is set the non-printable display char to what is specified
-   -F  is read the bpf filter from the specified file
-   -N  is show sub protocol number
-   -d  is use specified device instead of the pcap default
+   -h  显示帮助/用法
+   -V  显示版本信息
+   -q  静默模式（不打印数据包接收哈希标记）
+   -e  显示空数据包
+   -i  忽略大小写
+   -v  反向匹配
+   -R  不执行特权撤销逻辑
+   -x  以另一种十六进制转储格式打印
+   -X  将匹配表达式解释为十六进制
+   -w  使用单词正则表达式（表达式必须完全匹配为一个单词）
+   -p  不进入混杂模式
+   -l  将标准输出设置为行缓冲模式
+   -D  以记录的时间间隔重放pcap_dump的数据包流
+   -t  每次匹配到一个数据包时打印时间戳
+   -T  每次匹配到一个数据包时打印时间戳差
+   -M  不执行多行匹配（改为执行单行匹配）
+   -I  从pcap格式文件pcap_dump中读取数据包流
+   -O  将匹配到的数据包以pcap格式转储到pcap_dump文件中
+   -n  仅查看num个数据包
+   -A  在匹配后转储num个数据包
+   -s  设置bpf抓取长度
+   -S  设置匹配到的数据包的限制长度
+   -W  设置转储格式（normal、byline、single、none）
+   -c  强制指定列宽
+   -P  设置非打印字符的显示字符为指定值
+   -F  从指定的文件中读取bpf过滤器
+   -N  显示子协议编号
+   -d  使用指定的设备而不是pcap的默认设备
 
-EXAMPLES:
+示例：
  ngrep -qt -W byline port 5060
  ngrep -d any port 5060 -W byline > outfile.txt
- ngrep -q '8005551212' -W byline port 5060 #<swk>:  only shows packets on 5060 with 8005551212 inside the payload
+ ngrep -q '8005551212' -W byline port 5060 #<swk>: 仅显示负载中包含 8005551212 的 5060 端口数据包
 ```
-
-For a more in–depth tutorial on using ngrep check out this [post](http://www.jonathanmanning.com/2009/11/17/how-to-sip-capture-using-ngrep-debug-sip-packets/) by Jonathan Manning. VIM users may be interested in this [syntax highlighter](http://www.vim.org/scripts/script.php?script%5Fid=2296).
+可以通过查看 Jonathan Manning 的这篇[文章](http://www.jonathanmanning.com/2009/11/17/how-to-sip-capture-using-ngrep-debug-sip-packets/)来获得有关使用 ngrep 的更深入教程。对于 VIM 用户可能对这个[语法高亮器](http://www.vim.org/scripts/script.php?script%5Fid=2296)感兴趣。
 
 ### HOMER Sip Capture
 
 SRC: <http://www.sipcapture.org>  
- DESC: SIP capturing server with HEP and IP-proto-4 (IPIP) & Monitoring Application with CallFlows, PCAP extraction, powerful search tools, statistics and API. Native HEP [capture agent](http://code.google.com/p/homer/wiki/HOWTO#Capture%5FAgent) integrated in FreeSWITCH
+ DESC: HOMER Sip Capture 是一个具有 HEP 和 IP-proto-4（IPIP）的 SIP 捕获服务器和监控应用程序，提供 CallFlows、PCAP 提取、强大的搜索工具、统计信息和 API。原生 HEP [捕获代理](http://code.google.com/p/homer/wiki/HOWTO#Capture%5FAgent)集成到 FreeSWITCH 中。
 
 ## sipgrep
 
 SRC: <https://github.com/sipcapture/sipgrep>  
- DESC: Sipgrep is a powerful pcap-aware tool command line tool to sniff, capture, display and troubleshoot SIP signaling over IP networks, allowing the user to specify extended regular expressions matching against SIP headers.
+ DESC: sipgrep 是一个功能强大的基于 pcap 的命令行工具，用于在 IP 网络上嗅探、捕获、显示和排除故障 SIP 信令，允许用户指定与 SIP 标头匹配的扩展正则表达式。
 
-**sipgrep help** Expand source 
+**sipgrep 帮助**展开源代码
 
-```text
-usage: sipgrep <-ahNViwgGJpevxlDTRMmqCJjxK> <-IO pcap_dump> <-n num> <-d dev> <-A num>
+使用方法：sipgrep <-ahNViwgGJpevxlDTRMmqCJjxK> <-IO pcap_dump> <-n num> <-d dev> <-A num>
              <-s snaplen> <-S limitlen> <-c contact user> <-j user agent>
                  <-f from user>  <-t to user> <-H capture url> <-q autostop cond.>
                  <-Q split cond.> <-P portrange> <-F file> <-z duration>
                  <match expression> <bpf filter>
-   -h  is help/usage
-   -V  is version information
-   -e  is show empty packets
-   -i  is ignore case
-   -x  is disable bad parsing notification
-   -v  is invert match
-   -R  is don't do privilege revocation logic
-   -w  is word-regex (expression must match as a word)
-   -p  is don't go into promiscuous mode
-   -l  is make stdout line buffered
-   -D  is replay pcap_dumps with their recorded time intervals
-   -T  is print delta timestamp every time a packet is matched
-   -m  is don't do dialog match
-   -M  is don't do multi-line match (do single-line match instead)
-   -I  is read packet stream from pcap format file pcap_dump
-   -O  is dump matched packets in pcap format to pcap_dump
-   -n  is look at only num packets
-   -A  is dump num packets after a match
-   -s  is set the bpf caplen
-   -S  is set the limitlen on matched packets
-   -C  is no colors in stdout
-   -c  is search user in Contact: header
-   -f  is search user in From: header
-   -t  is search user in To: header
-   -F  is read the bpf filter from the specified file
-   -H  is homer sipcapture URL (i.e. udp:10.0.0.1:9061)
-   -N  is show sub protocol number
-   -g  is disabled clean up dialogs during trace
-   -G  is print dialog report during clean up
-   -J  is kill friendly scanner automatically
-   -j  is kill friendly scanner automatically matching user agent string
-   -K  is kill friendly scanner providing IP and port/portrange i.e.: 10.0.0.1:5060-5090
-   -q  is auto stop condition:
-        duration:NUM - stop after NUM seconds
-        filesize:NUM - stop this file after NUM KB
-   -Q  is pcap_dump split condition:
-        duration:NUM - switch to next file after NUM secs
-        filesize:NUM - switch to next file after NUM KB
-   -a  is disable packet re-assemblation
-   -P  is use specified portrange instead of default 5060-5061
-   -d  is use specified device instead of the pcap default
-   -z  is make statistics count maximum <duration> seconds
+   -h  帮助/用法
+   -V  版本信息
+   -e  显示空白数据包
+   -i  忽略大小写
+   -x  禁用错误解析通知
+   -v  反转匹配
+   -R  不执行特权回收逻辑
+   -w  单词正则表达式（表达式必须作为一个单词匹配）
+   -p  不进入混杂模式
+   -l  使 stdout 行缓冲
+   -D  使用其记录的时间间隔重放 pcap_dumps
+   -T  每次匹配一个数据包时打印差值时间戳
+   -m  不进行对话匹配
+   -M  不进行多行匹配（而是进行单行匹配）
+   -I  从 pcap 格式文件 pcap_dump 中读取数据包流
+   -O  将匹配的数据包以 pcap 格式保存到 pcap_dump
+   -n  仅查看 num 个数据包
+   -A  匹配后将 num 个数据包保存
+   -s  设置 BPF 抓取长度
+   -S  设置匹配的数据包限制长度
+   -C  stdout 中不用颜色显示
+   -c  在 Contact: 头中搜索用户
+   -f  在 From: 头中搜索用户
+   -t  在 To: 头中搜索用户
+   -F  从指定文件中读取 BPF 过滤器
+   -H  homer sipcapture URL（例如：udp:10.0.0.1:9061）
+   -N  显示子协议号
+   -g  在跟踪期间禁用对话清理
+   -G  清理期间打印对话报告
+   -J  自动终止友好扫描器
+   -j  自动终止匹配用户代理字符串的友好扫描器
+   -K  提供 IP 和端口/端口范围以终止友好扫描器，例如：10.0.0.1:5060-5090
+   -q  自动停止条件：
+        duration:NUM - 在 NUM 秒后停止
+        filesize:NUM - 在 NUM KB 后停止此文件
+   -Q  pcap_dump 分割条件：
+        duration:NUM - 在 NUM 秒后切换到下一个文件
+        filesize:NUM - 在 NUM KB 后切换到下一个文件
+   -a  禁用数据包重组
+   -P  使用指定的端口范围而不是默认的 5060-5061
+   -d  使用指定的设备而不是默认的 pcap
+   -z  统计计数的最大持续时间（秒数）
 
-
-Examples:
-#Find a dialog there From user contains '2323232'
+示例：
+#找到用户包含'2323232'的对话
 sipgrep -f 2323232
 
-#Find a dialog there To user contains '1111' and print dialog report
+#找到用户包含'1111'的对话，并打印对话报告
 sipgrep -f 1111 -G
 
-#Display only 603 replies without dialog match
+#仅显示回复为603的消息，没有对话匹配
 sipgrep '^SIP/2.0 603' -m
 
-#Display only OPTIONS and NOTIFY requests
+#仅显示OPTIONS和NOTIFY请求
 sipgrep '^(OPTIONS|NOTIFY)'
 
-#Display only SUBSCRIBE dialog
+#仅显示SUBSCRIBE对话
 sipgrep 'CSeq:\s?\d* (SUBSCRIBE|PUBLISH|NOTIFY)' -M
 
-#Kill friendly-scanner
+#终止friendly-scanner
 sipgrep -J
 
-#Kill friendly-scanner with custom UAC
+#使用自定义UAC终止friendly-scanner
 sipgrep -j sipvicious
 
-#Display dialogs and duplicate all traffic to HOMER sipcapture in HEPv3
+#显示对话并将所有流量复制给HOMER sipcapture（使用HEPv3协议）
 sipgrep -f 23333 -H udp:10.0.0.1:9061
 
-#collect all Calls/Regisrations dialogs during 120 seconds, print reports and exit.
+#在120秒内收集所有通话/注册对话，打印报告并退出
 sipgrep -g -G -q 120
 
-# Find dialogs from user/number 0123456 to user/number 0654321, STDOUT line buffered
+#从用户/号码0123456到用户/号码0654321找到对话，STDOUT行缓冲
 sipgrep -f 0123456 -t 0654321 -l
 
-# Find dialogs from user/number 0123456, STDOUT line buffered, packet reassembly enabled
+#从用户/号码0123456找到对话，STDOUT行缓冲，启用数据包重组
 sipgrep -f 0123456 -a -l debug.sip
  
-```
 
-##   
+## 
 pcapsipdump
 
-SRC: <http://sourceforge.net/projects/pcapsipdump/>  
- DESC: pcapsipdump is a tool for dumping SIP sessions (+RTP traffic, if available) to disk in a fashion similar to "tcpdump -w" (format is exactly the same), but one file per sip session (even if there are thousands of concurrect SIP sessions). As of SVN r128, there is limited but functional support for SIP over TCP. This functionality is not enabled by default and requires a specific make command:
+来源： http://sourceforge.net/projects/pcapsipdump/
+描述：
+pcapsipdump 是一个将 SIP 会话（+RTP 流量，如果有）转储到磁盘的工具，类似于 "tcpdump -w" 的方式（格式完全相同），但每个 SIP 会话一个文件（即使有成千上万个并发的 SIP 会话）。从 SVN r128 版本开始，pcapsipdump 有有限但功能正常的对 SIP over TCP 的支持。此功能默认未启用，需要特定的 make 命令：
 
 make CXXFLAGS=-DUSE_TCP=1
 
-The pcapsipdump program will attempt to capture SIP dialogs regardless of port number. Note that older versions of pcapsipdump do only port 5060\. The trunk version of pcapsipdump is stable and is good for most production environments.
+pcapsipdump 程序将尝试在任何端口上捕获 SIP 对话。请注意，旧版的 pcapsipdump 仅限端口 5060。pcapsipdump 的主干版本稳定，并适用于大多数生产环境。
 
-### Example
+### 示例
 
 ```xml
-/* store all SIP sessions on tmp folder */
+/*将所有 SIP 会话存储在 tmp 文件夹中*/
 pcapsipdump -i eth0 -d /tmp/
 
-pcapsipdump version 0.2-trunk
-Usage: pcapsipdump [-fpUt] [-i <interface> | -r <file>] [-d <working directory>]
+pcapsipdump 版本 0.2-trunk
+用法：pcapsipdump [-fpUt] [-i <interface> | -r <file>] [-d <working directory>]
                    [-v level] [-R filter] [-m filter] [-n filter] [-l filter]
                    [-B size] [-T limit] [-t trigger:action:param] [expression]
- -f   Do not fork or detach from controlling terminal.
- -p   Do not put the interface into promiscuous mode.
- -U   Make .pcap files writing 'packet-buffered' - slower method,
-      but you can use partitially written file anytime, it will be consistent.
- -i   Specify network interface name (i.e. eth0, em1, ppp0, etc).
- -r   Read from .pcap file instead of network interface.
- -v   Set verbosity level (higher is more verbose).
- -B   Set the operating system capture buffer size, a.k.a. ring buffer size.
-      This can be expressed in bytes/KB(*1000)/KiB(*1024)/MB/MiB/GB/GiB. ex.: '-B 64MiB'
-      Set this to few MiB or more to avoid packets dropped by kernel.
- -R   RTP filter. Specifies what kind of RTP information to include in capture:
-      'rtp+rtcp' (default), 'rtp', 'rtpevent', 't38', or 'none'.
- -m   Method-filter. Default is '^(INVITE|OPTIONS|REGISTER)$'
- -n   Number-filter. Only calls to/from specified number will be recorded
-      Argument is a regular expression. See 'man 7 regex' for details.
- -l   Record only each N-th call (i.e. '-l 3' = record only each third call)
- -d   Set directory (or filename template), where captured files will be stored.
-      ex.: -d /var/spool/pcapsipdump/%Y%m%d/%H/%Y%m%d-%H%M%S-%f-%t-%i.pcap
- -T   Unconditionally stop recording a call after it was active for this many seconds.
-      Might be useful for broken peers that keep sending RTP long after call ended.
- -t   <trigger>:<action>:<parameter>. Parameter is %-expanded (see below)
-      Triggers: open = when opening a new .pcap file; close = when closing
-      Actions and their parameters:
-      mv:<directory> - move .pcap files to <directory> (using /bin/mv)
-      exec:"/bin/blah args..." - fork and execute /bin/blah with arguments
-      sh:"shell code" - fork and execute /bin/sh -c "shell code"
- *    Following %-codes are expanded in -d and -t: %f (from/caller), %t (to/callee),
-      %i (call-id), and call date/time (see 'man 3 strftime' for details)
- *    Trailing argument is pcap filter expression syntax, see 'man 7 pcap-filter'
-
+ -f   不要分叉或分离控制终端。
+ -p   不要将界面设置为混杂模式。
+ -U   使.pcap文件写入"packet-buffered" - 较慢的方法，
+      但您可以随时使用部分写入的文件，它将保持一致性。
+ -i   指定网络接口名称（例如，eth0、em1、ppp0等）。
+ -r   从.pcap文件而不是网络接口读取。
+ -v   设置详细程度（较高的值表示更详细）。
+ -B   设置操作系统的捕获缓冲区大小，也称为环形缓冲区大小。
+      可以用字节/KB(*1000)/KiB(*1024)/MB/MiB/GB/GiB的形式表示。例如：'-B 64MiB'
+      将其设置为几MiB或更大，以避免内核丢弃数据包。
+ -R   RTP过滤器。指定要在捕获中包含什么类型的RTP信息：
+      'rtp+rtcp'（默认），'rtp'，'rtpevent'，'t38'或'none'。
+ -m   方法过滤器。默认为'^(INVITE|OPTIONS|REGISTER)$'
+ -n   数字过滤器。只记录与指定号码之间的通话
+      参数是一个正则表达式。请参阅 'man 7 regex' 了解详细信息。
+ -l   仅记录每第 N 个通话（例如 '-l 3' = 仅记录每第三个通话）
+ -d   设置捕获文件存储的目录（或文件名模板）。
+      例如：-d /var/spool/pcapsipdump/%Y%m%d/%H/%Y%m%d-%H%M%S-%f-%t-%i.pcap
+ -T   在通话活动的时间达到指定秒数后，无条件停止记录通话。
+      对于在通话结束后继续发送 RTP 的故障对等方可能会有用。
+ -t   <trigger>:<action>:<parameter>。参数是 % 扩展的（见下文）
+      触发器：open = 当打开一个新的.pcap文件时；close = 当关闭一个.pcap文件时
+      动作及其参数：
+      mv:<directory> - 将.pcap文件移动到 <directory>（使用 /bin/mv）
+      exec:"/bin/blah args..." - 分叉并执行带有参数的 /bin/blah
+      sh:"shell code" - 分叉并执行 /bin/sh -c "shell code"
+ *    -d 和 -t 中以下 %-代码会被扩展：%f（来自/主叫），%t（到/被叫），
+      %i（呼叫id），呼叫日期/时间（请参阅 'man 3 strftime' 了解详细信息）
+ *    末尾的参数是 pcap 过滤器表达式语法，参见 'man 7 pcap-filter'
 
 ```
 
 ##   
-tshark aka tethereal
+Tshark（也称为tethereal）
 
 SRC: <http://www.wireshark.org>  
- DESC: Dump and analyze network traffic.
+DESC: 转储和分析网络流量。
 
 ```xml
 TShark 0.99.4
-Dump and analyze network traffic.
-See http://www.wireshark.org for more information.
+转储和分析网络流量。
+更多信息请参见http://www.wireshark.org。
 
-Copyright 1998-2006 Gerald Combs <gerald@wireshark.org> and contributors.
-This is free software; see the source for copying conditions. There is NO
-warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+版权所有1998-2006 Gerald Combs <gerald@wireshark.org>及其贡献者。
+这是免费的软件；请参阅源代码的复制条件。没有任何
+保修；甚至没有为特定目的的适销性。
 
-Usage: tshark [options] ...
+用法：tshark [选项] ...
 
-Capture interface:
-  -i <interface>           name or idx of interface (def: first non-loopback)
-  -f <capture filter>      packet filter in libpcap filter syntax
-  -s <snaplen>             packet snapshot length (def: 65535)
-  -p                       don't capture in promiscuous mode
-  -y <link type>           link layer type (def: first appropriate)
-  -D                       print list of interfaces and exit
-  -L                       print list of link-layer types of iface and exit
+捕获接口：
+  -i <interface>           接口的名称或idx（默认：第一个非回环接口）
+  -f <capture filter>      以libpcap过滤器语法为准的数据包过滤器
+  -s <snaplen>             数据包快照长度（默认：65535）
+  -p                       不以混杂模式进行捕获
+  -y <link type>           链路层类型（默认：第一个合适的）
+  -D                       打印接口列表并退出
+  -L                       打印接口的链路层类型列表并退出
 
-Capture stop conditions:
-  -c <packet count>        stop after n packets (def: infinite)
-  -a <autostop cond.> ...  duration:NUM - stop after NUM seconds
-                           filesize:NUM - stop this file after NUM KB
-                              files:NUM - stop after NUM files
-Capture output:
-  -b <ringbuffer opt.> ... duration:NUM - switch to next file after NUM secs
-                           filesize:NUM - switch to next file after NUM KB
-                              files:NUM - ringbuffer: replace after NUM files
-Input file:
-  -r <infile>              set the filename to read from (no pipes or stdin!)
-
-Processing:
-  -R <read filter>         packet filter in Wireshark display filter syntax
-  -n                       disable all name resolutions (def: all enabled)
-  -N <name resolve flags>  enable specific name resolution(s): "mntC"
-  -d <layer_type>==<selector>,<decode_as_protocol> ...
-                           "Decode As", see the man page for details
-                           Example: tcp.port==8888,http
-Output:
-  -w <outfile|->           set the output filename (or '-' for stdout)
-  -F <output file type>    set the output file type, default is libpcap
-                           an empty "-F" option will list the file types
-  -V                       add output of packet tree        (Packet Details)
-  -x                       add output of hex and ASCII dump (Packet Bytes)
-  -T pdml|ps|psml|text     output format of text output (def: text)
-  -t ad|a|r|d              output format of time stamps (def: r: rel. to first)
-  -l                       flush output after each packet
-  -q                       be more quiet on stdout (e.g. when using statistics)
-  -X <key>:<value>         eXtension options, see the man page for details
-  -z <statistics>          various statistics, see the man page for details
-
-Miscellaneous:
-  -h                       display this help and exit
-  -v                       display version info and exit
-  -o <name>:<value> ...    override preference setting
-
-
-Filter with tshark then seperate them per call into different pcap files with pcapsipdump:
-EXAMPLE:  'sip.uri contains "soemname" or rtp or rtcp' -w -|pcapsipdump -
-
-
-Capture SIP, RTP, ICMP, DNS, RTCP, and T38 traffic in a ring buffer capturing 100 50MB files continuously:
-EXAMPLE: tshark -i eth0 -o "rtp.heuristic_rtp: TRUE" -w /tmp/capture.pcap -b filesize:51200 -b files:100 -R 'sip or rtp or icmp or dns or rtcp or t38'
-
-
-Filter on RTCP packets reporting any packet loss or jitter over 30ms
-EXAMPLE: tshark -i eth0 -o "rtp.heuristic_rtp: TRUE" -R 'rtcp.ssrc.fraction >= 1 or rtcp.ssrc.jitter >= 240' -V
-
-
-Filter on SIP and all RTP packets
-EXAMPLE: tshark -S -w capture.pcap -f "(udp port sip) or (udp[1] & 1 != 1 && udp[3] & 1 != 1 && udp[8] & 0x80 == 0x80 && length < 250)"
-
-
-Capture all SIP on specified port and switch files every hour
-tshark -nq -i eth0 -b duration:3600 -w /tmp/trace/sip.pcap port 5080
-
+捕获停止条件：
+  -c <packet count>        捕获n个数据包后停止（默认：无限制）
+  -a <autostop cond.> ...  duration:NUM - 经过NUM秒后停止
+                           filesize:NUM - 经过NUM KB后停止此文件
+                              files:NUM - 捕获NUM个文件后停止
+捕获输出：
+  -b <ringbuffer opt.> ... duration:NUM - 经过NUM秒后切换到下一个文件
+                           filesize:NUM - 经过NUM KB后切换到下一个文件
+                              files:NUM - ringbuffer：在捕获NUM个文件后替换
+输入文件：
+  -r <infile>              设置要读取的文件名（不支持管道或标准输入！）
 ```
+
+处理中:
+  -R <读取过滤器>         使用Wireshark显示过滤器语法的数据包过滤器
+  -n                       禁用所有名称解析（默认启用全部）
+  -N <名称解析标志>       启用特定的名称解析: "mntC"
+  -d <层类型>==<选择器>,<解码协议> ...
+                           "解码为", 详见man页
+                           示例: tcp.port==8888,http
+输出:
+  -w <输出文件名|->      设置输出文件名（'-'代表标准输出）
+  -F <输出文件类型>      设置输出文件类型，默认为libpcap
+                          空的 "-F"选项将列出文件类型
+  -V                      添加数据包树状图输出（数据包详情）
+  -x                      添加十六进制和ASCII转储输出（数据包字节）
+  -T pdml|ps|psml|text  文本输出的输出格式（默认为text）
+  -t ad|a|r|d             时间戳的输出格式（默认为r: 相对于第一个）
+  -l                      每个数据包后刷新输出
+  -q                      在标准输出上更加安静（例如用于统计）
+  -X <键>:<值>           扩展选项，详见man页
+  -z <统计信息>          各种统计信息，详见man页
+
+杂项:
+  -h                      显示帮助信息并退出
+  -v                      显示版本信息并退出
+  -o <名称>:<值> ...      覆盖首选项设定
+
+
+使用tshark过滤器，然后使用pcapsipdump将其按通话分隔为不同的pcap文件：
+示例: 'sip.uri contains "soemname" or rtp or rtcp' -w -|pcapsipdump -
+
+在一个环形缓冲区中连续捕获100个50MB大小的文件中的SIP、RTP、ICMP、DNS、RTCP和T38流量：
+示例：tshark -i eth0 -o "rtp.heuristic_rtp: TRUE" -w /tmp/capture.pcap -b filesize:51200 -b files:100 -R 'sip or rtp or icmp or dns or rtcp or t38'
+
+筛选报告任何包丢失或延迟超过30ms的RTCP数据包：
+示例：tshark -i eth0 -o "rtp.heuristic_rtp: TRUE" -R 'rtcp.ssrc.fraction >= 1 or rtcp.ssrc.jitter >= 240' -V
+
+筛选SIP和所有RTP数据包：
+示例：tshark -S -w capture.pcap -f "(udp port sip) or (udp[1] & 1 != 1 && udp[3] & 1 != 1 && udp[8] & 0x80 == 0x80 && length < 250)"
+
+捕获指定端口上的所有SIP流量，并每小时切换文件：
+tshark -nq -i eth0 -b duration:3600 -w /tmp/trace/sip.pcap port 5080
 
 ## sngrep
 
-SRC: irontec on [github](https://github.com/irontec/sngrep)
+源代码：irontec [github](https://github.com/irontec/sngrep)
 
-DESC: Linux/OSX console-based SIP traffic viewer with filtering capabilities
+描述：sngrep是一个基于Linux/OSX的控制台SIP流量查看工具，具有过滤功能。
 
-sngrep is a handy utility for quickly capturing and viewing SIP traffic. It can be run on existing pcap files or it can capture traffic live. It can filter based on many criteria, including source/destination as well as message type. This is particularly useful when you have a lot of SIP traffic on a system and you need to find a specific dialog or message. (Have you ever wanted to see only NOTIFY traffic without being bombarded with REGISTERs, OPTIONS, and INVITEs? Or just INVITEs without all the other SIP traffic? If so, sngrep is the tool for you.) Once you find a dialog you can explicitly export it to a pcap file. The irontec github page has several [screen shots](https://github.com/irontec/sngrep/wiki/Screenshots) that demonstrate its capabilities. Note that sngrep does not capture RTP, only SIP.
+sngrep是一个方便的实用工具，可以快速捕获和查看SIP流量。它可以在现有的pcap文件上运行，也可以实时捕获流量。它可以根据许多条件进行过滤，包括源/目标以及消息类型。当您的系统上有大量的SIP流量，并且您需要找到特定的对话或消息时，这非常有用。（您是否曾经想过只看到NOTIFY流量而不受REGISTER、OPTIONS和INVITE的干扰？或者只看到INVITE而没有其他SIP流量？如果是的话，sngrep是适合您的工具。）一旦找到对话，您可以将其明确地导出为pcap文件。irontec的github页面上有几个屏幕截图，展示了其功能。请注意，sngrep不会捕获RTP，只捕获SIP流量。
 
-An especially useful feature of sngrep is its ability to create SIP "ladder graphs" showing the progression of the SIP dialog. The ladder graph appears on the left and the content of the highlighted SIP message appears on the right. Scroll up and down and you can quickly review the progression of a SIP dialog. Being able to see this right at the Linux/OSX command line can save you the effort of having to export a potentially large pcap file and open in Wireshark. Also, sngrep works well in conjunction with Wireshark. Use sngrep to locate quickly specific SIP traffic and then export a pcap to Wireshark for more detailed analysis.
+sngrep的一个特别有用的功能是它可以创建SIP“梯形图”，显示SIP对话的进展情况。梯形图显示在左侧，突出显示的SIP消息内容显示在右侧。上下滚动，您可以快速查看SIP对话的进展情况。在Linux/OSX命令行上能够直接看到这个功能，可以节省您导出潜在的大型pcap文件并在Wireshark中打开的麻烦。此外，sngrep与Wireshark配合使用效果很好。使用sngrep快速定位特定的SIP流量，然后将pcap导出到Wireshark进行更详细的分析。 
 
-**sngrep help** Expand source 
+**sngrep帮助** 展开来源
 
-```text
-Usage: sngrep [-hVcivNqrD] [-IO pcap_dump] [-d dev] [-l limit] [<match expression>] [<bpf filter>]
-    -h --help            This usage
-    -V --version         Version information
-    -d --device          Use this capture device instead of default
-    -I --input           Read captured data from pcap file
-    -O --output          Write captured data to pcap file
-    -c --calls           Only display dialogs starting with INVITE
-    -r --rtp             Capture RTP packets payload
-    -l --limit           Set capture limit to N dialogs
-    -i --icase           Make <match expression> case insensitive
-    -v --invert          Invert <match expression>
-    -N --no-interface    Don't display sngrep interface, just capture
-    -q --quiet           Don't print captured dialogs in no interface mode
-    -D --dump-config     Print active configuration settings and exit
-    -f --config          Read configuration from file
-    -F --no-config       Do not read configuration from default config file
-    -R --rotate          Rotate calls when capture limit have been reached
- 
-Examples:
-# look at live SIP traffic on default interface:
+用法：sngrep [-hVcivNqrD] [-IO pcap_dump] [-d dev] [-l limit] [\<match expression>] [\<bpf filter>]
+    -h --help             显示帮助
+    -V --version          显示版本信息
+    -d --device           使用指定的抓包设备，默认为默认设备
+    -I --input            从pcap文件读取已抓包的数据
+    -O --output           将抓包的数据写入pcap文件
+    -c --calls            只显示以INVITE开头的会话
+    -r --rtp              抓取RTP传输的数据
+    -l --limit            设置会话数的抓包限制为N个
+    -i --icase            忽略\<match expression>的大小写
+    -v --invert           反转\<match expression>
+    -N --no-interface     不显示sngrep界面，只进行抓包
+    -q --quiet            在无界面模式下不打印抓到的会话
+    -D --dump-config      打印当前的配置设置并退出
+    -f --config           从文件中读取配置
+    -F --no-config        不从默认配置文件中读取配置
+    -R --rotate           当抓包限制达到后轮转会话
+  
+示例：
+# 查看默认接口上的实时SIP流量：
 sngrep
- 
-# look at live SIP traffic on specified interface:
+  
+# 查看指定接口上的实时SIP流量：
 sngrep -d eth0
- 
-# look at live SIP traffic, calls only (i.e. INVITEs):
+  
+# 仅查看实时SIP流量中的会话（即INVITE）：
 sngrep -c
- 
-# look at live SIP traffic for with SIP from or two containing a name or number:
+  
+# 查看包含姓名或号码的SIP发件人或收件人的实时SIP流量：
 sngrep 1000
 sngrep someuser
- 
-# look at live SIP traffic, calls/INVITEs only, for with SIP from or two containing a name or number: 
+  
+# 仅查看实时SIP流量中的会话/INVITE，包含姓名或号码的SIP发件人或收件人：
 sngrep -c 1000
 sngrep -c someuser
-
-# open an existing pcap file and review all SIP traffic:
+  
+# 打开现有的pcap文件并查看所有SIP流量：
 sngrep -I filename.pcap
- 
-# open an existing pcap file and review SIP calls only:
+  
+# 打开现有的pcap文件并仅查看SIP会话：
 sngrep -c -I filename.pcap
 
+### 使用sngrep界面的提示
 
-```
+使用向上和向下箭头移动选择器，并按&lt;enter>打开特定对话框。这将显示梯形图和对话框中的所有消息。
 
-### Tips for using sngrep interface
+通过使用空格键选择，可以在单个梯形图中查看多个（可能相关的）对话框。当选择完所有对话框并按下&lt;enter>时，将显示一个多端点的梯形图。
 
-Arrow up and down to move selector and press &lt;enter> to open a specific dialog. This brings up the ladder-graph and all messages within the dialog.
+通过按下F7键更改显示过滤器。您可以选择To：和From：、源和目标、负载和SIP消息类型。
 
-View multiple (perhaps related) dialogs in a single ladder-graph by selecting them with the space bar. Press &lt;enter> when all dialogs have been selected and a multi-endpoint ladder-graph will be displayed. 
+通过按下F2键导出选定的对话框。
 
-Change display filter by pressing F7\. You can select To: and From:, source and destination, payload, and SIP message types.
+通过按下F3键搜索对话框。
 
-Export selected dialogs by pressing F2.
+## 截断 pcap 文件
 
-Search through dialogs by pressing F3.
+### 使用 Wireshark 图形界面  
 
-## Truncate a pcap File
-
-### With The Wireshark GUI  
-
-Open the pcap, then click "Save as". Look at the options - from frame $x to $y, the marked ones, from the first marked one to the last marked one, etc. To mark packets, you can right–click them in the viewer.
+打开 pcap 文件，然后点击“另存为”。查看选项 - 从第 $x 帧到第 $y 帧、被标记的帧、从第一个被标记的帧到最后一个被标记的帧等。要标记数据包，可以在查看器中右键单击它们。
 
 ### editcap
 
-If you have a large pcap from any of the above methods and want to share part of it, you can use the "editcap" command line program that comes with Wireshark. Read the [full manual](http://www.wireshark.org/docs/man-pages/editcap.html).
+如果您有一个大的 pcap 文件，并希望分享其中的一部分，可以使用 Wireshark 提供的命令行程序“editcap”。阅读[完整手册](http://www.wireshark.org/docs/man-pages/editcap.html)。
 
-In short, if you want just packets $x to $y, use:
+简而言之，如果只想保留第 $x 到 $y 的数据包，可以使用：
 
 editcap -r $source_infile $outfile $x-$y
 
-where -r means "only include x-y" otherwise without -r, this command would cut out x-y
+其中-r 表示“仅包括 x-y”，否则，如果没有 -r，此命令将剪切出 x-y。
 
-If you want to omit some packets, then skip the -r and list the ones to omit, e.g. to omit packets 1000 to 3000:
+如果要省略某些数据包，则跳过 -r 并列出要省略的数据包，例如要省略第 1000 到第 3000 个数据包：
 
 editcap $source_infile $outfile 1000-3000
 
-## TLS with sharka  
+## 使用 sharka 进行 TLS
 
-after some experimentation with various tools, I come out with a little shell tool that maybe can be useful to you too.  
-It can only work with non-forward secrecy ciphers, obviously, and only if is started before the client do the initial TLS handshake (eg, just restart the client). Forward secrecy cannot be decrypted after fact, so don't waste effort.
+经过一些尝试不同的工具后，我创建了一个小的Shell工具，也许对你也有用。 
 
-An example of ciphers that can be decrypted are the "AES256-SHA" openssl cipher group. In FreeSWITCH, edit vars.xml and put
+显然，它只能使用非前向保密的密码，而且只能在客户端进行初始TLS握手之前启动（例如，只需重新启动客户端）。前向保密不能在事后解密，因此不要浪费努力。
 
-`<X-PRE-PROCESS cmd="set" data="sip_tls_ciphers=AES256-SHA"/>`
+可以解密的密码示例是“AES256-SHA”openssl密码组。在FreeSWITCH中，编辑vars.xml，添加以下代码：
 
-You can use ssldump to check what cipher is used by serverhello.
+```xml
+<X-PRE-PROCESS cmd="set" data="sip_tls_ciphers=AES256-SHA"/>
+```
 
-Enjoy, make it better, and share it :)  
+你可以使用ssldump检查服务器hello使用的密码。
 
-**sharka shell script**
+享受使用，让它更好，并分享出去 :)
+
+**sharka shell脚本**
 
 ```bash
 #!/bin/bash 
-# brought to you by Giovanni Maruzzelli
+# 由Giovanni Maruzzelll提供
 # 
 SERVERIP="192.168.1.150"
 SERVERPORT="5061"
@@ -503,32 +490,33 @@ STDERR2DEVNULL=" 2>/dev/null "
 REGEX="notyet"
 
 if [ -z "$1" ]; then
-        REGEX="\\\.*"
+        REGEX="\\\.\\\*"
 else
         REGEX="$1"
 fi
-FILTER="ssl.app_data and sip matches"
+FILTER="ssl.app_data and sip匹配"
 FILTER2="$FILTER \"$REGEX\""
 FILTER3="'$FILTER2'"
-ARGUMENT="-i 1 -Y $FILTER3 -E header=y -T fields -e frame.number -e frame.time -e frame.time_delta_displayed -e ip.src -e ip.dst -e sip.Status-Line -e sip.Request-Line -e sip.msg_hdr -l -d tcp.port\=\=$SERVERPORT,sip  -o \"ssl.keys_list: $SERVERIP,$SERVERPORT,sip,$PRIVKEY\" $STDERR2DEVNULL | sed -u 's/\t/\n/g' | sed -u '/^$/d' | sed -u 's/^[0-9]*$/\n==&==============================/g'"
+ARGUMENT="-i 1 -Y $FILTER3 -E header=y -T fields -e frame.number -e frame.time -e frame.time_delta_displayed -e ip.src -e ip.dst -e sip.Status-Line -e sip.Request-Line -e sip.msg_hdr -l -d tcp.port\=\=$SERVERPORT,sip  -o \"ssl.keys_list: $SERVERIP,$SERVERPORT,sip,$PRIVKEY\" $STDERR2DEVNULL | sed -u 's/\\\t/\\\n/g' | sed -u '/^$/d' | sed -u 's/^[0-9]*$/\\\n==&==============================/g'"
+```
 
+```text
 echo ""
-echo "NB: if it do not works, edit script so that STDERR2DEVNULL=\" \" and try again"
+echo "注意：如果不起作用，请编辑脚本，将STDERR2DEVNULL=\"\"，然后重试"
 echo ""
-echo "NB: remember to quote and escape match patterns, using triple slash"
-echo "    eg, for matching 1010@pbx.example.com, use \"1010@pbx.example.com\""
-echo "    eg, for matching anything, use \"\\\\\\.*\""
-echo "    eg, for matching *98, use \"\\\\\\*98\""
-echo "USAGE: $0 \"\\\\\\*98@pbx.example.com\""
+echo "注意：记得用三斜杠引用和转义匹配模式"
+echo "例如，要匹配 1010@pbx.example.com，请使用 \"1010@pbx.example.com\""
+echo "例如，要匹配任何内容，请使用 \"\\\\\\.*\""
+echo "例如，要匹配 *98，请使用 \"\\\\\\*98\""
+echo "用法：$0 \"\\\\\\*98@pbx.example.com\""
 echo ""
-
 
 case "$1" in
         -help|--help|?)
         exit 0
         ;;
 *)
-        echo "THIS TIME WE'RE DOING:"
+        echo "这次我们要做的是："
         echo "tshark $ARGUMENT"
         echo ""
         bash -c "tshark $ARGUMENT"
@@ -536,11 +524,11 @@ case "$1" in
 esac
 ```
 
-## TLS, real time, with sngrep
+## 使用TLS和sngrep实时跟踪和可视化TLS和非TLS SIP流量
 
-How to TRACE and visualize TLS and non-TLS SIP traffic in real time (thanks to Homer's Lorenzo Mangani for pointing me toward Frida)
+如何实时跟踪和可视化TLS和非TLS SIP流量（感谢Homer的Lorenzo Mangani指点我使用Frida）
 
-**RTP analysis example**
+**RTP分析示例**
 
 ```text
 #fosdem #voip #tls #sngrep #hep #frida #ssl #sip #homer #sipcapture #freeswitch #asterisk #opensips #kamailio
@@ -551,23 +539,24 @@ pip install frida
 pip install hexdump
 wget https://raw.githubusercontent.com/google/ssl_logger/master/ssl_logger.py
 
-#first ssh terminal
-# create fifo pipe, then will send the content from fifo pipe to an sngrep without gui, which will be reading pcap from stdin, and sending eep packets to the other sngrep (third terminal)
+#第一个ssh终端
+# 创建一个FIFO管道，然后将管道的内容发送到没有GUI的sngrep中，该sngrep将从stdin读取pcap，并将eep数据包发送给另一个sngrep（第三个终端）
 
 mkfifo /tmp/pipe
 cat /tmp/pipe | sngrep -N -q -H udp:127.0.0.1:5077 -I -
 
-#second ssh terminal
-# writes as pcap to fifo pipe what freeswitch writes and reads from ssl lib
+#第二个ssh终端
+# 将freeswitch写入和从ssl库读取的内容作为pcap写入FIFO管道
 
 python ssl_logger_giova.py -pcap /tmp/pipe freeswitch
 
-#third ssh terminal
-# sngrep that receives packets from both the Ethernet device, and the eep packets sent by the other sngrep (eg, the tls packets ssl_logger grabs from freeswitch's ssl lib)
+#第三个ssh终端
+# 从以太网设备和另一个sngrep（例如ssl_logger从freeswitch的ssl库中获得的tls数据包）接收数据包的sngrep
 
 sngrep -L udp:127.0.0.1:5077
+```
 
-(you may want to edit ssl_logger.py and change 228 to be 101 - LINKTYPE_IPV4 to be LINKTYPE_RAW )
+（你可能需要编辑`ssl_logger.py`，将`228`更改为`101`，将`LINKTYPE_IPV4`更改为`LINKTYPE_RAW`）
 ```
 
 ##   
@@ -576,25 +565,25 @@ sngrep -L udp:127.0.0.1:5077
 
 ##   
 
-## Example Analyses  
+## 示例分析  
 
-### SIP TLS with sharka  
+### 使用sharka分析SIP TLS  
 
-Edit the script first few lines with your own values.
+首先在脚本的前几行中编辑您自己的值。
 
-Visualize the packets related to "1010@[pbx.example.com](http://pbx.example.com)"  
+可视化与"1010@[pbx.example.com](http://pbx.example.com)"相关的数据包  
 
-**sharka example**
+**sharka示例**
 
 ```text
 sharka "1010@pbx.example.com"
 ```
 
-### SIP TLS on port 5061
+### 在5061端口上的SIP TLS
 
-Replace 4.2.2.2 with your own IP address.
+将`4.2.2.2`替换成您自己的IP地址。
 
-**Wireshark example**
+**Wireshark示例**
 
 ```text
 wireshark -o "ssl.desegment_ssl_records: TRUE" \
@@ -605,7 +594,7 @@ wireshark -o "ssl.desegment_ssl_records: TRUE" \
   -f "tcp port 5061"
 ```
 
-**tshark example**
+**tshark示例**
 
 ```text
 tshark -o "ssl.desegment_ssl_records: TRUE" \
@@ -616,51 +605,61 @@ tshark -o "ssl.desegment_ssl_records: TRUE" \
   -f "tcp port 5061"
 ```
 
-### RTP events
+### RTP事件
 
-**RTP analysis example**
+**RTP分析示例**
 
 ```text
 tshark -o "rtp.heuristic_rtp: TRUE" -R rtpevent
-or with tethereal:
+或者使用tethereal：
 tethereal -o "rtp.heuristic_rtp: TRUE" -R rtpevent
 ```
 
-### Analyze RTP Quality
+### 分析RTP质量
 
 sudo tshark -q -f 'udp portrange 16384-32768' -o rtp.heuristic_rtp:TRUE -z rtp,streams
 
-If you're doing long-term captures, you may want to get a bit more paranoid about security:
+如果您进行长期的捕获，您可能希望对安全性保持更谨慎：
 
 sudo setuid 4755 /usr/bin/dumpcap
 dumpcap -f 'udp portrange 16384-32768' -i eth0 -w /tmp/qos.pcap
 tshark -qr /tmp/qos.pcap -o rtp.heuristic_rtp:TRUE -z rtp,streams  
  
-### Remote live capture with local wireshark
+### 通过本地Wireshark进行远程实时捕获
 
-you can also use tcpdump in conjunction with ssh to bring the packets back to your workstation so you can watch it live in Wireshark. Something to bare in mind with this approach is you must set the filter on the tcpdump or you are going to end up with either echoed data, or to much data.
+你也可以使用tcpdump结合ssh将数据包传送回你的工作站，这样你就可以在Wireshark上实时查看了。需要注意的是，使用这种方法时，你必须在tcpdump上设置过滤器，否则你要么会得到重复的数据，要么会得到太多的数据。
 
-#### Windows workstation to remote linux server
+#### 从Windows工作站到远程Linux服务器
 
-with wireshark and putty installed locally and tcpdump installed on the remote server
+在本地安装了Wireshark和putty，并在远程服务器上安装了tcpdump
 
 ```powershell
 "C:\Program Files (x86)\PuTTY\plink.exe" -ssh root@{server} "tcpdump -ni {server_interface} -s 0 -w - port 5060 or portrange 16384-32768" | "c:\Program Files\Wireshark\Wireshark.exe" -k -i -
 ```
 
-## See Also
+## 另请参阅
 
-* [RTP Issues](../RTP-Issues_1048973.mdx#about)
-* [Jitterbuffer](../../Codecs-and-Media/JitterBuffer_6587407.mdx#about)
-* [Tutorial on using Wireshark and tcpdump to analyze SIP and RTP streams](./Wireshark-How-To_7144220.mdx#about)
+* [RTP问题](../RTP-Issues_1048973.mdx#about)
+* [抖动缓冲](../../Codecs-and-Media/JitterBuffer_6587407.mdx#about)
+* [使用Wireshark和tcpdump分析SIP和RTP流的教程](./Wireshark-How-To_7144220.mdx#about)
 
 "C:\\Program Files (x86)\\PuTTY\\plink.exe" -ssh root@x56 "tcpdump -ni eth0.1020 -s 0 -w - not port 22 and not proto ospf and not arp and not portrange 16384-32768" | "c:\\Program Files\\Wireshark\\Wireshark.exe" -k -i -
 
-### Comments:
+### 评论:
 
-| The second presentation is here: <http://www.viddler.com/explore/cluecon/videos/33/>The first presentation got cut short, but it's still good: <http://www.viddler.com/explore/cluecon/videos/8/> The page you were looking for doesn't exist.You may have mistyped the address or the page may have moved. ![](/images/icons/contenttypes/comment_16.png) Posted by vlad1983 at Sep 09, 2014 00:46                                                                                   |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Even those links have died a miserable, horrible death.Thanks. ![](/images/icons/contenttypes/comment_16.png) Posted by boteman at Mar 17, 2015 15:15                                                                                                                                                                                                                                                                                                                                 |
-| &lt;param name="sip-capture" value="yes"/>&lt;param name="capture-server" value="udp:HOMER\_EXTERNAL:5061;hep=3;capture\_id=100"/> root@[ts180:/usr/share/freeswitch/scripts#](http://ts180/usr/share/freeswitch/scripts) tcpdump -nq -s 0 -A -vvv -i eth0 port 5061tcpdump: listening on eth0, link-type EN10MB (Ethernet), capture size 262144 bytes Not was be sent capture, not working. Thanks. ![](/images/icons/contenttypes/comment_16.png) Posted by aztrock at Feb 16, 2017 17:43 |
+| 第二个演示在这里：[http://www.viddler.com/explore/cluecon/videos/33/](http://www.viddler.com/explore/cluecon/videos/33/)第一个演示因为时间不足而被截断了，但仍然很好：[http://www.viddler.com/explore/cluecon/videos/8/](http://www.viddler.com/explore/cluecon/videos/8/)您正在寻找的页面不存在。您可能输错了地址，或者该页面可能已经移动了。![](/images/icons/contenttypes/comment_16.png) 发表者：vlad1983 于 2014年9月9日00:46|
+|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|即使那些链接已经死了，也感谢您。![](/images/icons/contenttypes/comment_16.png)发表者: boteman于2015年3月17日15:15|
+|&lt;param name="sip-capture" value="yes"/>&lt;param name="capture-server" value="udp:HOMER_EXTERNAL:5061;hep=3;capture_id=100"/> root@[ts180:/usr/share/freeswitch/scripts#](http://ts180/usr/share/freeswitch/scripts) tcpdump -nq -s 0 -A -vvv -i eth0 port 5061tcpdump: listening on eth0, link-type EN10MB (Ethernet), capture size 262144 bytes 没有发送捕获信息，不起作用。谢谢。![](/images/icons/contenttypes/comment_16.png)发表者：aztrock 于2017年2月16日17:43 |
 
+# 你好！欢迎来到我们的网站！
 
+我们专注于提供高质量的翻译服务。无论您需要将文件、文章、网站或其他内容翻译成简体中文，我们都能够满足您的需求。
+
+我们的团队由一群经验丰富、熟练的翻译专家组成。他们具备流利的中文和英文沟通能力，并且熟悉各个领域的词汇和术语。
+
+我们致力于提供准确、准时的翻译服务。我们深知翻译对于理解和沟通的重要性，因此我们会尽力确保译文的质量和准确性。
+
+无论您有任何关于翻译的需求，我们都能够为您提供专业的帮助。请随时联系我们，我们将竭诚为您服务！
+
+谢谢！

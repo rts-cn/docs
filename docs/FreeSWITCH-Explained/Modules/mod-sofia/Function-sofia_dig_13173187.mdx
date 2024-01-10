@@ -1,48 +1,43 @@
+# 函数 sofia_dig
 
-# Function sofia_dig 
+## 关于
 
- 
+sofia_dig 是一个用于查询SIP NAPTR/SRV/AAAA/A记录的API命令。
 
-## About
+单击这里展开目录
 
-sofia\_dig is an API command for looking up SIP NAPTR/SRV/AAAA/A records.
+* 1 [用法](#usage)
+* 2 [示例](#examples)
+* 3 [选项](#options)
 
-Click here to expand Table of Contents
-
-* 1 [Usage](#usage)
-* 2 [Examples](#examples)
-* 3 [Options](#options)
-
-## Usage
+## 用法
 
 ```xml
-usage: sofia_dig [OPTIONS] [@dnsserver] uri
+用法: sofia_dig [选项] [@dnsserver] uri
 ```
 
-## Examples
+## 示例
 
 ```xml
 freeswitch@internal> sofia_dig conference.freeswitch.org
- Preference          Weight       Transport            Port         Address
+ 服务器选择 显示         传输方式          端口           地址
  ================================================================================
         1           0.500             udp            5060      74.112.133.77
         1           0.500             tcp            5060      74.112.133.77
 
-
 ```
 
-Or for just UDP:
+或者只查询UDP记录：
 
 ```xml
  freeswitch@internal> sofia_dig --udp conference.freeswitch.org  
- Preference          Weight       Transport            Port         Address  
+ 服务器选择 显示         传输方式          端口           地址  
  ================================================================================
         1           1.000             udp            5060      74.112.133.77
 
-
 ```
 
-You can also get the result as XML:
+您也可以以XML格式获取结果：
 
 ```xml
 freeswitch@internal> sofia_dig xml freeswitch.org
@@ -57,20 +52,19 @@ freeswitch@internal> sofia_dig xml freeswitch.org
 </routes>
 ```
 
-Or resolve a SIP URI:
+或解析SIP URI：
 
 ```xml
  freeswitch@internal> sofia_dig sip:888@conference.freeswitch.org
- Preference          Weight       Transport            Port         Address
+ 服务器选择 显示         传输方式          端口           地址
  ================================================================================
         1           0.500             udp            5060      74.112.133.77
         1           0.500             tcp            5060      74.112.133.77
 ```
 
-If the zone doesn't have any NAPTR/SRV records, it returns a pair of "fake" routes that assume SIP UDP and TCP on port 5060 of the AAAA and the A record for the hostname.
+如果区域没有任何NAPTR/SRV记录，它将返回一对“假”的路由，假设AAAA记录和主机名的A记录在端口5060上使用SIP UDP和TCP。
 
-  
-I set up a zone with one of each kind of NAPTR/SRV records as a demo:
+我设置了一个区域，其中包含每种NAPTR/SRV记录作为演示：
 
 ```xml
 freeswitch@internal> sofia_dig cataclysm-software.net
@@ -84,17 +78,14 @@ Preference          Weight       Transport            Port         Address
 
 ```
 
-## Options
+## 选项
 
-\-v : "be verbatim" (doesn't seem to do anything)
+\-v： "保持逐字逐句"（似乎没有任何作用）
 
-\-p=\[udp|tcp|tls|sctp|tls-sctp|tls-udp\] : only query for specific protocols
+\-p=\[udp|tcp|tls|sctp|tls-sctp|tls-udp\]：仅查询特定协议
 
-\--\[udp|tcp|tls|sctp|tls-sctp|tls-udp\] : ditto (these are stackable, eg. --sctp --udp to query only SCTP and UDP records)
+\--\[udp|tcp|tls|sctp|tls-sctp|tls-udp\]：同上（这些可以叠加使用，例如，--sctp --udp 查询仅SCTP和UDP记录）
 
-\--no-sctp : duh
+\--no-sctp：显而易见
 
-You can also (in theory) specify the nameserver to query by using @\[dnsserver\] but it doesn't seem to work (the variable is never used in the code).
-
-  
-
+理论上，您也可以通过使用@\[dnsserver\]指定要查询的域名服务器，但似乎不起作用（变量在代码中从未使用）。

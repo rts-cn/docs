@@ -1,42 +1,38 @@
+# 使用Lua进行服务配置
 
-# Serving Configuration with Lua 
+TODO 这应该位于主要的Lua页面下，就像JavaScript特定的文档位于[JavaScript](../../Client-and-Developer-Interfaces/JavaScript/index.mdx#api)下，而[mod\_v8](../mod_v8_1048935.mdx#api)只是[Modules](../index.mdx#about)下的一个模块描述。
 
- 
+TODO 尽管目前还没有Lua页面，但与Lua相关的文档分散在各个地方...
 
-TODO This should be under the main [Lua](/confluence/pages/createpage.action?spaceKey=FREESWITCH&title=Lua&linkCreation=true&fromPageId=3965134) page, just as JavaScript-specific documents are under [JavaScript](../../Client-and-Developer-Interfaces/JavaScript/index.mdx#api), and [mod\_v8](../mod_v8_1048935.mdx#api) is only a module description under [Modules](../index.mdx#about).
+## 关于
 
-TODO Although, there is no [Lua](/confluence/pages/createpage.action?spaceKey=FREESWITCH&title=Lua&linkCreation=true&fromPageId=3965134) page yet, and Lua-related docs are scattered all over the place...
+[mod\_lua](../mod_lua_1048944.mdx#--)允许您使用Lua脚本提供配置数据，以替换静态XML文件的查找。
 
-## About
+点击此处展开目录
 
-[mod\_lua](../mod_lua_1048944.mdx#--) allows you to replace static XML file lookups with configuration data served by Lua scripts.
-
-  
-Click here to expand ToC
-
-* [Serving Configuration with mod\_lua](#serving-configuration-with-mod_lua)
-* [Module configuration](#serving-configuration-with-mod_lua)
-* [Directory](#serving-configuration-with-mod_lua)  
-   * [Initial startup](#serving-configuration-with-mod_lua)  
-      * [Params event headers](#serving-configuration-with-mod_lua)  
-         * [Network lists](#serving-configuration-with-mod_lua)  
-   * [When looking for a user](#serving-configuration-with-mod_lua)  
-      * [When registering (REGISTER)](#when-registering-register)  
-         * [When calling (INVITE)](#serving-configuration-with-mod_lua)  
-         * [When being called (by another extension)](#when-being-called-by-another-extension)
-* [Dialplan](#serving-configuration-with-mod_lua)  
+* [使用mod_lua提供配置](#serving-configuration-with-mod_lua)
+* [模块配置](#serving-configuration-with-mod_lua)
+* [目录](#serving-configuration-with-mod_lua)  
+   * [初始启动](#serving-configuration-with-mod_lua)  
+      * [参数事件头](#serving-configuration-with-mod_lua)  
+         * [网络列表](#serving-configuration-with-mod_lua)  
+   * [查找用户时](#serving-configuration-with-mod_lua)  
+      * [注册时（REGISTER）](#when-registering-register)  
+         * [呼叫时（INVITE）](#serving-configuration-with-mod_lua)  
+         * [被其他分机呼叫时](#when-being-called-by-another-extension)
+* [拨号计划](#serving-configuration-with-mod_lua)  
    * [XML](#serving-configuration-with-mod_lua)  
-   * [Not found](#serving-configuration-with-mod_lua)
+   * [未找到](#serving-configuration-with-mod_lua)
 
-## Serving Configuration with mod_lua
+## 使用mod_lua提供配置
 
-With mod\_lua you can serve your configurations. You can bind a Lua script to the XML req, like you do with URL in [mod\_xml\_curl](https://wiki.freeswitch.org/wiki/Mod%5Fxml%5Fcurl "Mod xml curl"). When FreeSWITCH looks up sections in the XML registry, it calls your script. Your script will do any db lookups or whatever it needs, and it returns the XML string.
+使用`mod_lua`可以提供配置服务。您可以将Lua脚本绑定到XML请求，就像在[mod_xml_curl](https://wiki.freeswitch.org/wiki/Mod%5Fxml%5Fcurl "Mod xml curl")中使用URL一样。当FreeSWITCH在XML注册表中查找节时，会调用您的脚本。您的脚本可以执行任何数据库查找或其他操作，并返回XML字符串。
 
-The file conf/autoload\_configs/lua.conf.xml is used in the default FreeSWITCH setup.
+文件`conf/autoload_configs/lua.conf.xml`是默认的FreeSWITCH设置中使用的文件。
 
-When you edit lua.conf.xml, giving the reloadxml command from the FreeSWITCH console is not sufficient to recognize the "xml-handler-script" parameters, you have to restart FreeSWITCH.
+当您编辑`lua.conf.xml`时，仅执行FreeSWITCH控制台中的`reloadxml`命令是不足以识别“xml-handler-script”参数的，您需要重启FreeSWITCH。
 
-Here is a minimum configuration file, it will fetch a [Dialplan](../../Dialplan/index.mdx#0-about) from _Lua script._
+以下是一个最基本的配置文件示例，它将从Lua脚本中获取[Dialplan](../../Dialplan/index.mdx#0-about)。
 
 ```xml
 <configuration name="lua.conf" description="LUA Configuration">
@@ -47,22 +43,22 @@ Here is a minimum configuration file, it will fetch a [Dialplan](../../Dialplan/
 </configuration>
 ```
 
-**Some examples for the "xml-handler-bindings" parameter:** "dialplan" "directory" "configuration" "dialplan|directory|configuration"
+**"xml-handler-bindings"参数的一些示例：** "dialplan"、"directory"、"configuration"、"dialplan|directory|configuration"
 
-* The script is passed an XML\_REQUEST object which has section, tag\_name, key\_name, and key\_value (see [mod\_xml\_curl](../mod_xml_curl_1049001.mdx)). For some configuration requests, for directory requests, and for diaplan requests, an event object is also passed in the variable 'params'.
-* Whatever you put in XML\_STRING will be returned to FreeSWITCH once the script is finished.
+* 脚本将接收到一个XML_REQUEST对象，其中包含section、tag_name、key_name和key_value（参见[mod_xml_curl](../mod_xml_curl_1049001.mdx)）。对于某些配置请求、目录请求和拨号计划请求，还会将一个事件对象传递给变量'params'。
+* 脚本完成后，XML_STRING中的内容将返回给FreeSWITCH。
 
-You can access the XML\_REQUEST object in lua with the variables XML\_REQUEST\["section"\], XML\_REQUEST\["tag\_name"\], XML\_REQUEST\["key\_name"\], and XML\_REQUEST\["key\_value"\]
+在lua中，您可以使用XML_REQUEST["section"]、XML_REQUEST["tag_name"]、XML_REQUEST["key_name"]和XML_REQUEST["key_value"]变量访问XML_REQUEST对象。
 
-**Example:**
+**示例：**
 
 ```xml
 freeswitch.consoleLog("notice", "SECTION " .. XML_REQUEST["section"] .. "\n")
 ```
 
-## Module configuration
+## 模块配置
 
-If mod\_lua is loaded during initial startup, then modules loaded after initial starup may have their configuration served by the bound script whenever they request configuration, which for many modules is on loading.
+如果在初始启动期间加载了 mod_lua 模块，则在初始启动后加载的模块在请求配置时，其配置会由绑定的脚本提供，对于许多模块来说，这是在加载时进行的。
 
 ```xml
 <configuration name="lua.conf" description="LUA Configuration">
@@ -73,46 +69,46 @@ If mod\_lua is loaded during initial startup, then modules loaded after initial 
 </configuration>
 ```
 
-Then when the module is started, XML\_REQUEST object in the Lua script will have: 
+然后当模块启动时，Lua 脚本中的 XML_REQUEST 对象会有：
 
-* **key\_value =** 'iax.conf'|'event\_socket.conf'|sofia.conf'|...
-* **key\_name =** 'name'
+* **key_value =** 'iax.conf'|'event_socket.conf'|sofia.conf'|...
+* **key_name =** 'name'
 * **section =** 'configuration'
-* **tag\_name =** 'configuration'
+* **tag_name =** 'configuration'
 
-| 'params' event object   |     |                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| 'params' 事件对象   |     |                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | ----------------------- | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| acl.conf                | no  | N/A                                                                                                                                                                                                                                                                                                                                                                                                               |
-| event\_socket.conf      | no  | N/A                                                                                                                                                                                                                                                                                                                                                                                                               |
-| post\_load\_switch.conf | no  | N/A                                                                                                                                                                                                                                                                                                                                                                                                               |
-| sofia.conf              | yes | Event-Name: REQUEST\_PARAMS Core-UUID: 0f8afb73-2183-a1e2-2316-71053c746130 FreeSWITCH-Hostname: hostname FreeSWITCH-IPv4: 192.168.1.12 FreeSWITCH-IPv6: %3A%3A1 Event-Date-Local: 2010-08-06%2014%3A04%3A38 Event-Date-GMT: Fri,%2006%20Aug%202010%2018%3A04%3A38%20GMT Event-Date-Timestamp: 1281117878629975 Event-Calling-File: sofia.c Event-Calling-Function: config\_sofia Event-Calling-Line-Number: 2637 |
-| switch.conf             | no  | N/A                                                                                                                                                                                                                                                                                                                                                                                                               |
-| syslog.conf             | no  | N/A                                                                                                                                                                                                                                                                                                                                                                                                               |
+| acl.conf                | 否  | N/A                                                                                                                                                                                                                                                                                                                                                                                                               |
+| event\_socket.conf      | 否  | N/A                                                                                                                                                                                                                                                                                                                                                                                                               |
+| post\_load\_switch.conf | 否  | N/A                                                                                                                                                                                                                                                                                                                                                                                                               |
+| sofia.conf              | 是 | Event-Name: REQUEST\_PARAMS Core-UUID: 0f8afb73-2183-a1e2-2316-71053c746130 FreeSWITCH-Hostname: hostname FreeSWITCH-IPv4: 192.168.1.12 FreeSWITCH-IPv6: %3A%3A1 Event-Date-Local: 2010-08-06%2014%3A04%3A38 Event-Date-GMT: Fri,%2006%20Aug%202010%2018%3A04%3A38%20GMT Event-Date-Timestamp: 1281117878629975 Event-Calling-File: sofia.c Event-Calling-Function: config\_sofia Event-Calling-Line-Number: 2637 |
+| switch.conf             | 否  | N/A                                                                                                                                                                                                                                                                                                                                                                                                               |
+| syslog.conf             | 否  | N/A                                                                                                                                                                                                                                                                                                                                                                                                               |
 
-## Directory
+## 目录
 
-### Initial startup
+### 初始启动
 
-During initial startup/reading profiles, the directory is read for gateways and aliasing domains.
+在首次启动/读取配置文件时，目录用于读取网关和别名域名。
 
-Then when the module is started, XML\_REQUEST object in the Lua script will have: 
+然后，在模块启动时，Lua脚本中的XML\_REQUEST对象将具有：
 
 * **key\_value =** ''
 * **key\_name =** ''
 * **section =** 'directory'
 * **tag\_name =** ''
 
-And **"params"** will have an **event object**.
+并且**"params"**将拥有一个**事件对象**。
 
-The directory is read once for each profile in the sofia configuration
+在sofia配置中，目录针对每个配置文件进行一次读取。
 
-The variables are the empty string, not nil.
+这些变量是空字符串，而不是nil。
 
-#### Params event headers
+#### Params事件头部
 
-##### External profile
+##### 外部配置文件
 
-**Event External profile** Expand source 
+**事件的外部配置文件** 展开源代码
 
 ```xml
 Event-Name: REQUEST_PARAMS
@@ -130,7 +126,7 @@ purpose: gateways
 profile: external
 ```
 
-**The important bits:**
+**重要内容:**
 
 ```xml
 purpose: gateways
@@ -140,9 +136,9 @@ FreeSWITCH-Hostname: hostname
 FreeSWITCH-IPv4: 192.168.1.11
 ```
 
-##### Internal profile
+##### 内部配置文件
 
-**Event Internal profile** Expand source 
+**事件的内部配置文件** 展开源代码
 
 ```xml
 Event-Name: REQUEST_PARAMS
@@ -160,7 +156,7 @@ purpose: gateways
 profile: internal
 ```
 
-**The important bits:**
+**重要内容:**
 
 ```xml
 purpose: gateways
@@ -170,7 +166,7 @@ FreeSWITCH-Hostname: hostname
 FreeSWITCH-IPv4: 192.168.1.11
 ```
 
-#### Network lists
+#### 网络列表
 
 Also during initial startup the network lists are read from the directory, however at this point the XML\_REQUEST has:
 
@@ -179,7 +175,7 @@ Also during initial startup the network lists are read from the directory, howev
 * **section =** 'directory'
 * **tag\_name =** 'domain'
 
-**Event Network lists** Expand source 
+**事件网络列表** 扩展源
 
 ```xml
 Event-Name: GENERAL
@@ -197,7 +193,7 @@ domain: 192.168.1.11
 purpose: network-list
 ```
 
-**The important bits:**
+**重要内容:**
 
 ```xml
 domain: 192.168.1.11
@@ -207,181 +203,181 @@ FreeSWITCH-Hostname: hostname
 FreeSWITCH-IPv4: 192.168.1.11
 ```
 
-### When looking for a user
+### 当查找用户时
 
-When looking for a user, FreeSWITCH looks for the user in a particular domain.
+当查找用户时，FreeSWITCH会在特定的域中查找用户。
 
-XML\_REQUEST will have: 
+XML\_REQUEST将会有：
 
 * **key\_value =** '&lt;name-of-domain>'
 * **key\_name =** 'name'
 * **section =** 'directory'
 * **tag\_name =** 'domain'
 
-and '**params**' will have an **event object**
+而'**params**'将会有一个**事件对象**
 
-#### When registering (REGISTER)
+#### 当注册（REGISTER）
 
-**Event REGISTER** Expand source 
+**事件 REGISTER** 扩展源
 
 ```xml
-Event-Name: REQUEST_PARAMS
-Core-UUID: <uuid>
-FreeSWITCH-Hostname: hostname
-FreeSWITCH-IPv4: 192.168.1.11
-FreeSWITCH-IPv6: %3A%3A1
-Event-Date-Local: 2010-08-06%2014%3A04%3A43
-Event-Date-GMT: Fri,%2006%20Aug%202010%2018%3A04%3A43%20GMT
-Event-Date-Timestamp: 1281117883173795
-Event-Calling-File: sofia_reg.c
-Event-Calling-Function: sofia_reg_parse_auth
-Event-Calling-Line-Number: 1797
-action: sip_auth
-sip_profile: internal
-sip_user_agent: IP-Phone-V3.2.49T5.13%20-%20G729
-sip_auth_username: 1000
-sip_auth_realm: 192.168.1.11
-sip_auth_nonce: <auth_nonce_uuid>
-sip_auth_uri: sip%3A192.168.1.11
-sip_contact_user: 1000
-sip_contact_host: 192.168.88.202
-sip_to_user: 1000
-sip_to_host: 192.168.1.11
-sip_to_port: 5060
-sip_from_user: 1000
-sip_from_host: 192.168.1.11
-sip_from_port: 5060
-sip_request_host: 192.168.1.11
-sip_auth_qop: auth
-sip_auth_cnonce: 829326
-sip_auth_nc: 00000001
-sip_auth_response: <auth_response - md5sum?>
-sip_auth_method: REGISTER
-key: id
-user: 1000
-domain: 192.168.1.11
-ip: 192.168.88.202
+事件名称: REQUEST_PARAMS
+核心UUID: <uuid>
+FreeSWITCH主机名: hostname
+FreeSWITCH IPv4地址: 192.168.1.11
+FreeSWITCH IPv6地址: %3A%3A1
+本地事件日期: 2010-08-06%2014%3A04%3A43
+GMT事件日期: 星期五，2010年8月6日 18%3A04%3A43 GMT
+事件时间戳: 1281117883173795
+调用文件: sofia_reg.c
+调用函数: sofia_reg_parse_auth
+调用行号: 1797
+操作: sip_auth
+SIP配置文件: internal
+SIP用户代理: IP-Phone-V3.2.49T5.13%20-%20G729
+SIP鉴权用户名: 1000
+SIP鉴权域: 192.168.1.11
+SIP鉴权随机数: <auth_nonce_uuid>
+SIP鉴权URI: sip%3A192.168.1.11
+SIP联系人用户名: 1000
+SIP联系人主机名: 192.168.88.202
+SIP目标用户: 1000
+SIP目标主机名: 192.168.1.11
+SIP目标端口: 5060
+SIP发送方用户: 1000
+SIP发送方主机名: 192.168.1.11
+SIP发送方端口: 5060
+SIP请求主机: 192.168.1.11
+SIP鉴权品质: auth
+SIP鉴权随机字符串: 829326
+SIP鉴权计数: 00000001
+SIP鉴权响应: <auth_response - md5sum?>
+SIP鉴权方式: REGISTER
+关键字: id
+用户: 1000
+域名: 192.168.1.11
+IP地址: 192.168.88.202
 ```
 
-**The important bits:**
+**重要部分:**
 
 ```xml
-key: id
-user: 1000
-domain: 192.168.1.11
+关键字: id
+用户: 1000
+域名: 192.168.1.11
 ...
-action: sip_auth
-sip_profile: internal
-FreeSWITCH-Hostname: hostname
-FreeSWITCH-IPv4: 192.168.1.11
-ip: 192.168.88.202
+操作: sip_auth
+SIP配置文件: internal
+FreeSWITCH主机名: hostname
+FreeSWITCH IPv4地址: 192.168.1.11
+IP地址: 192.168.88.202
 ```
 
-#### When calling (INVITE)
+#### 在发起呼叫时（INVITE）
 
-**Event INVITE** Expand source 
+**事件 INVITE** 展开源代码
 
 ```xml
-Event-Name: REQUEST_PARAMS
-Core-UUID: <uuid>
-FreeSWITCH-Hostname: hostname
+事件名称: REQUEST_PARAMS
+核心UUID: <uuid>
+FreeSWITCH主机名: 主机名
 FreeSWITCH-IPv4: 192.168.1.11
 FreeSWITCH-IPv6: %3A%3A1
-Event-Date-Local: 2010-08-06%2016%3A28%3A08
-Event-Date-GMT: Fri,%2006%20Aug%202010%2020%3A28%3A08%20GMT
-Event-Date-Timestamp: 1281126488274011
-Event-Calling-File: sofia_reg.c
-Event-Calling-Function: sofia_reg_parse_auth
-Event-Calling-Line-Number: 1797
-action: sip_auth
-sip_profile: internal
-sip_user_agent: IP-Phone-V3.2.49T5.13%20-%20G729
-sip_auth_username: 1001
-sip_auth_realm: 192.168.1.11
-sip_auth_nonce: 1fe3d1fa-a199-11df-b392-b105e374638e
-sip_auth_uri: sip%3A1000%40192.168.1.11
-sip_contact_user: 1001
-sip_contact_host: 192.168.88.99
-sip_to_user: 1000
-sip_to_host: 192.168.1.11
-sip_to_port: 5060
-sip_from_user: 1001
-sip_from_host: 192.168.1.11
-sip_from_port: 5060
-sip_request_user: 1000
-sip_request_host: 192.168.1.11
-sip_auth_qop: auth
-sip_auth_cnonce: 10560d0
-sip_auth_nc: 00000001
-sip_auth_response: b99d1213022480a2b6c4e14432661821
-sip_auth_method: INVITE
-key: id
-user: 1001
-domain: 192.168.1.11
-ip: 192.168.88.99
+事件本地日期: 2010-08-06%2016%3A28%3A08
+事件GMT日期: 星期五，2010年8月6日，20%3A28%3A08%20GMT
+事件时间戳: 1281126488274011
+事件调用文件: sofia_reg.c
+事件调用函数: sofia_reg_parse_auth
+事件调用行号: 1797
+操作: sip_auth
+SIP配置文件: internal
+SIP用户代理: IP-Phone-V3.2.49T5.13%20-%20G729
+SIP认证用户名: 1001
+SIP认证域: 192.168.1.11
+SIP认证随机数: 1fe3d1fa-a199-11df-b392-b105e374638e
+SIP认证URI: sip%3A1000%40192.168.1.11
+SIP联系人用户: 1001
+SIP联系人主机: 192.168.88.99
+SIP目标用户: 1000
+SIP目标主机: 192.168.1.11
+SIP目标端口: 5060
+SIP发起用户: 1001
+SIP发起主机: 192.168.1.11
+SIP发起端口: 5060
+SIP请求用户: 1000
+SIP请求主机: 192.168.1.11
+SIP认证质询: auth
+SIP认证客户端随机数: 10560d0
+SIP认证计数器: 00000001
+SIP认证响应: b99d1213022480a2b6c4e14432661821
+SIP认证方法: INVITE
+关键字: id
+用户: 1001
+域: 192.168.1.11
+IP地址: 192.168.88.99
 ```
 
-**The important bits:**
+**重要部分：**
 
 ```xml
-key: id
-user: 1001
-domain: 192.168.1.11
-...
-ip: 192.168.88.99
-FreeSWITCH-Hostname: hostname
+关键字: id
+用户: 1001
+域: 192.168.1.11
+…
+IP地址: 192.168.88.99
+FreeSWITCH主机名: 主机名
 FreeSWITCH-IPv4: 192.168.1.11
-action: sip_auth
-sip_profile: internal 
+操作: sip_auth
+SIP配置文件: internal 
 ```
 
-#### When being called (by another extension)
+#### 当被其他分机呼叫时
 
-**Event when being called** Expand source 
+**被呼叫时事件**
 
 ```xml
-Event-Name: REQUEST_PARAMS
-Core-UUID: <uuid>
-FreeSWITCH-Hostname: hostname
-FreeSWITCH-IPv4: 192.168.1.11
-FreeSWITCH-IPv6: %3A%3A1
-Event-Date-Local: 2010-08-06%2016%3A28%3A09
-Event-Date-GMT: Fri,%2006%20Aug%202010%2020%3A28%3A09%20GMT
-Event-Date-Timestamp: 1281126489462522
-Event-Calling-File: mod_dptools.c
-Event-Calling-Function: user_outgoing_channel
-Event-Calling-Line-Number: 2662
+事件名: REQUEST_PARAMS
+核心UUID: <uuid>
+FreeSWITCH主机名: hostname
+FreeSWITCH IPv4地址: 192.168.1.11
+FreeSWITCH IPv6地址: %3A%3A1
+本地事件时间: 2010-08-06%2016%3A28%3A09
+GMT事件时间: Fri,%2006%20Aug%202010%2020%3A28%3A09%20GMT
+事件时间戳: 1281126489462522
+调用文件: mod_dptools.c
+调用函数: user_outgoing_channel
+调用行号: 2662
 as_channel: true
-action: user_call
-key: id
-user: 1000
-domain: 192.168.1.11
+操作: user_call
+关键字: id
+用户: 1000
+域名: 192.168.1.11
 ```
 
-**the important bits:**
+**重要部分:**
 
 ```xml
-key: id
-user: 1000
-domain: 192.168.1.11
+关键字: id
+用户: 1000
+域名: 192.168.1.11
 ...
-FreeSWITCH-Hostname: hostname
-FreeSWITCH-IPv4: 192.168.1.11
+FreeSWITCH主机名: hostname
+FreeSWITCH IPv4地址: 192.168.1.11
 as_channel: true
-Event-Calling-Function: user_outgoing_channel
+调用函数: user_outgoing_channel
 ```
 
-## Dialplan
+## 拨号计划
 
 ### XML
 
-This is a Lua script sample dp.lua to provision a Dialplan, whatever is in XML\_STRING will be returned to Freeswitch once the script is finished.
+这是一个用于配置拨号计划的Lua脚本示例dp.lua，脚本完成后，无论XML\_STRING中包含了什么内容，都将返回给Freeswitch。
 
-**Lua script dp.lua - Dialplan** Expand source 
+**Lua脚本 dp.lua - 拨号计划** 
 
 ```xml
--- params is the event passed into us we can use params:getHeader to grab things we want.
-io.write("TEST\n" .. params:serialize("xml") .. "\n");  
+-- params 是传递给我们的事件，我们可以使用 params:getHeader 来获取我们想要的内容。
+io.write("测试\n" .. params:serialize("xml") .. "\n"); 
 
 mydialplan = [[
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -399,13 +395,13 @@ mydialplan = [[
 ]]
 
 XML_STRING = mydialplan
--- comment the following line for production:
-freeswitch.consoleLog("notice", "Debug XML:\n" .. XML_STRING .. "\n")
+-- 用于生产环境时注释下面一行：
+freeswitch.consoleLog("notice", "调试XML:\n" .. XML_STRING .. "\n")
 ```
 
 Lua
 
-In for example a sip profile you can - instead of XML dialplan - use Lua directly to generate a dialplan:
+举个例子，在一个SIP配置文件中，你可以直接使用Lua来生成拨号计划，而不是使用XML拨号计划。
 
 ```xml
 <profile name="phones">
@@ -418,7 +414,7 @@ In for example a sip profile you can - instead of XML dialplan - use Lua directl
 </profile>
 ```
 
-Then create a dialplan in scripts/dialplan-from-phones.lua like this:
+然后在`scripts/dialplan-from-phones.lua`中创建一个拨号计划，如下所示：
 
 ```xml
 -- dialplan-from-phones.lua
@@ -430,33 +426,33 @@ table.insert(ACTIONS, "answer")
 table.insert(ACTIONS, {"log", "NOTICE after your script"})
 ```
 
-The entire table (array) of actions will be executed **after** the Lua script has stopped.
+在Lua脚本停止后，将按顺序执行整个动作表（数组）。
 
-This works the same as when the XML dialplan generates a list of actions that is run after it has reached the end.
+这个方法的工作方式与XML拨号计划生成一个在达到结束后运行的动作列表相同。
 
-**Note** that you must not use media directly from your script (eg _session:answer()_) like you could if it were called as an IVR script.
+请注意，您不能像在IVR脚本中那样直接从脚本中使用媒体（例如 `_session:answer()`）。
 
-**Advantage** of this method over answering from an IVR script is that during the call itself there will be no Lua script (per session) running - which could add up if you have a few thousand sessions going.
+与从IVR脚本应答相比，此方法的优点是在通话过程中不会运行任何Lua脚本（每个会话），这样如果有几千个会话，就不会增加负担。
 
-**Alternative** is to call a Lua script from the XML dialplan that only sets some channel variables that will be picked up by consecutive applications - or you can generate an XML stub as is described in the previous section.
+另一种方法是从XML拨号计划中调用一个Lua脚本，该脚本仅设置一些通道变量，后续应用程序将使用这些变量，或者可以生成一个XML stub，如前一节所述。
 
-**Of course it is also possible to transfer from one dialplan to another:**
+当然，也可以在拨号计划之间进行转接，如下所示：
 
-From Lua to XML:
+从Lua到XML:
 
 ```xml
 table.insert(ACTIONS, {"transfer", "123 XML some-context"})
 ```
 
-From XML to Lua:
+从XML到Lua:
 
 ```xml
 <action application="transfer" data="123 LUA some-dialplan.lua"/>
 ```
 
-### Not found
+### 未找到
 
-If your LUA application receives a request and you don't wish to serve dialplan or like to fallback to plain XML dialplan, then you should return the following "not found" result.
+如果您的LUA应用程序收到了一个请求，但您不希望服务于拨号计划，或者希望回退到纯XML拨号计划，则应返回以下"未找到"结果。
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -467,10 +463,8 @@ If your LUA application receives a request and you don't wish to serve dialplan 
 </document>
 ```
 
-If you return an empty response instead of the not found, you may see the following error;
+如果您返回了一个空响应而不是"未找到"，您可能会看到以下错误；
 
 ```xml
 [ERR] switch_xml.c:1534 switch_xml_locate() Error[[error near line 1]: root tag missing]
 ```
-
-

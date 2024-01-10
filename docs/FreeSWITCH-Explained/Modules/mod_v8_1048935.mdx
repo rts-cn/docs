@@ -1,89 +1,84 @@
+# mod_v8
 
-# mod_v8 
+## 关于
 
- 
+请参阅主要的[JavaScript](../Client-and-Developer-Interfaces/JavaScript/index.mdx#api)页面，了解如何在FreeSWITCH中使用JavaScript。
 
-## About
+从提交版本号为b76233266931ca0b53f3bcc589277b972d714216（2014年1月14日）的git主分支开始，FreeSWITCH开始支持Google [V8](https://code.google.com/p/v8/) JavaScript（ECMAScript）引擎。它支持所有标准的JavaScript语言元素，例如'for'和'while'循环、正则表达式等。此外，还有一些特定于FreeSWITCH的功能，下面列出了这些功能。您需要编译并安装mod\_v8以利用这些功能。每个部分都在下面有详细说明。
 
-See the main [JavaScript](../Client-and-Developer-Interfaces/JavaScript/index.mdx#api) page to learn how to use JavaScript with FreeSWITCH.
+#### 构建/安装
 
-From commit b76233266931ca0b53f3bcc589277b972d714216 (January 14'th 2014) in git master, FreeSWITCH has support for the Google [V8](https://code.google.com/p/v8/) JavaScript (ECMAScript) engine. It supports all the standard JavaScript language elements, for example 'for' and 'while' loops, regexps, etc. In addition there are things that are specific to FreeSWITCH which are listed below. You need to have mod\_v8 compiled and installed to take advantage of these functions. Each of those sections are documented below.
+从版本号为b76233266931ca0b53f3bcc589277b972d714216的修订版本开始，默认情况下会构建和安装mod\_v8。
 
-#### Build/Install
+如果由于某种原因没有构建和安装mod\_v8，请按照以下步骤进行操作：
 
-mod\_v8 is built and installed by default as of revision b76233266931ca0b53f3bcc589277b972d714216.
+* 在源代码目录中的modules.conf中取消注释languages/mod\_v8（使其始终构建和安装mod\_v8）
+* 运行'make mod\_v8-install'来编译和安装v8模块
+* 在FreeSWITCH™安装目录中的conf/autoload\_configs/modules.conf.xml中编辑，以加载mod\_v8
+* 在fs\_cli中运行"load mod\_v8"
 
-If for some reason it's not, do the following:
+对于数据库支持，系统必须配置为使用ODBC。如果是这样的话，ODBC的内置类将自动构建。
 
-* Uncomment languages/mod\_v8 in modules.conf in your src directory (make it always build and install mod\_v8)
-* Run 'make mod\_v8-install' to make and install just the v8 module
-* Edit conf/autoload\_configs/modules.conf.xml in your FreeSWITCH™ install directory to load mod\_v8
-* In fs\_cli, run "load mod\_v8"
+旧的mod\_spidermonkey和mod\_v8之间的一个区别是，基本的额外模块（ODBC、CoreDB、Socket等）现在直接编译到mod\_v8中。
 
-For database support, the system must be configured to use ODBC. If it is, the built-in class for ODBC will automatically be built.
+#### 执行脚本
 
-A difference between the old mod\_spidermonkey and mod\_v8 is that the basic extra modules (ODBC, CoreDB, Socket, etc.) are now compiled directly into mod\_v8.
+有两种执行脚本的方法，通过API调用_jsrun_和应用程序_javascript_。当您使用API时，不会创建默认的[会话](../Client-and-Developer-Interfaces/JavaScript/Session/index.mdx#methods)对象，因为没有与之相关的调用。默认情况下，脚本将从{FS\_ROOT}/scripts目录加载，您可以通过在类Unix系统中将/作为第一个字符或在Windows系统中将x:\\作为脚本名称来覆盖此设置。
 
-#### Execution of a script
+##### 应用程序
 
-There are two methods for script execution, via an API call _jsrun_ and via an application _javascript_. When you use the API a default [Session](../Client-and-Developer-Interfaces/JavaScript/Session/index.mdx#methods) object is not created, as there is no call to associate it with. By default, scripts will be loaded from the {FS\_ROOT}/scripts directory, you may override this by placing a / as the first character in Unix-like systems or a x:\\ in Windows systems as the script name.
-
-##### Application
-
-From the [Dialplan](../Dialplan/XML-Dialplan/index.mdx#about), you simply call it as an application similar to:
+从[Dialplan](../Dialplan/XML-Dialplan/index.mdx#about)中，您可以将其作为应用程序调用如下：
 
 &lt;action application="javascript" data="/path/to/some/script.js"/>
 
-If you need to pass arguments into to the javascript application, they can be passed in as a single string to the variable "argv" by doing the following:
+如果您需要将参数传递给javascript应用程序，则可以将它们作为单个字符串传递给变量"argv"，具体做法如下：
 
 &lt;action application="javascript" data="/path/to/some/script.js $1"/>
 
 ##### API
 
-At the FreeSWITCH™ console, or some other application/interface execute the jsrun call with the script name as its argument.
+在FreeSWITCH™控制台或其他应用程序/接口上，使用脚本名称作为参数执行jsrun调用。
 
 jsrun /path/to/some/script.js
 
   
-####  Examples 
+####  示例
 
 * [Javascript clam](../Client-and-Developer-Interfaces/JavaScript/Javascript-Examples/JavaScript-Example---cnam_7144664.mdx#about)
-* Other Javascript Examples exist (search confluence) and include database connectivity and grabbing external content via [CURL](http://en.wikipedia.org/wiki/CURL).
+* 其他JavaScript示例存在（搜索协同工作空间），包括数据库连接和通过[CURL](http://en.wikipedia.org/wiki/CURL)获取外部内容。
 
-####  Function Reference 
+####  函数参考
 
-####  Other Points Of Interest 
+####  其他值得注意的地方
 
-* [Run](../Client-and-Developer-Interfaces/JavaScript/JavaScript-API-Reference/Run_13173558.mdx#--) \- Use CURL from within your JavaScript
+* [运行](../Client-and-Developer-Interfaces/JavaScript/JavaScript-API-Reference/Run_13173558.mdx#--) \- 在JavaScript中使用CURL
 * [Javascript\_Event](../Client-and-Developer-Interfaces/JavaScript/JavaScript-Event/JavaScript-Event-Handler_7144102.mdx#about)
 * [Javascript\_XML](../Client-and-Developer-Interfaces/JavaScript/Javascript-Examples/JavaScript-example---XML_7144136.mdx#about)
 
-## Logging
+## 日志记录
 
-Logs a message to the console logger.
+将消息记录到控制台日志。
 
-### Synopsis
+### 概要
 
 console_log(message)
 console_log(level, message)
 
-* You most likely want to add a \\n to the end of your message, other than that its just a text string.
-* In the single-argument form, the level defaults to "debug"
-* Levels: "DEBUG", "INFO", "NOTICE", "WARNING", "ERR", "CRIT", "ALERT".
+* 你最好在消息的末尾添加一个\\n，除此之外它只是一个文本字符串。
+* 在单参数形式中，级别默认为"debug"
+* 级别有："DEBUG", "INFO", "NOTICE", "WARNING", "ERR", "CRIT", "ALERT".
 
-### Example
+### 示例
 
 console_log("Hello there\n");
 console_log("WARNING", "Ho!\n");
 
-#### FAQ
+#### 常见问题
 
 * [Javascript FAQ](../Client-and-Developer-Interfaces/JavaScript/index.mdx#-freeswitch--javascript-)
 
-###  See Also 
+###  另请参阅 
 
-* [Mozilla JavaScript reference](http://developer.mozilla.org/en/docs/JavaScript)
-* [Misc FreeSWITCH Javascript functions](../Client-and-Developer-Interfaces/JavaScript/Javascript-Miscellaneous_16352162.mdx#-freeswitch--javascript-miscellaneous-)
-* [Script Language Choice](../Client-and-Developer-Interfaces/Script-Language-Choice_1048942.mdx#about)
-
-
+* [Mozilla JavaScript 参考](http://developer.mozilla.org/en/docs/JavaScript)
+* [Misc FreeSWITCH Javascript 函数](../Client-and-Developer-Interfaces/JavaScript/Javascript-Miscellaneous_16352162.mdx#-freeswitch--javascript-miscellaneous-)
+* [脚本语言选择](../Client-and-Developer-Interfaces/Script-Language-Choice_1048942.mdx#about)

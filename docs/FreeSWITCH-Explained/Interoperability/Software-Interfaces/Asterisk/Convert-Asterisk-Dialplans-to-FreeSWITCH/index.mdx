@@ -1,17 +1,14 @@
+# 将Asterisk的拨号计划转换为FreeSWITCH
 
-# Convert Asterisk Dialplans to FreeSWITCH 
+**渲染宏'toc'时发生错误**
 
- 
+空
 
-**Error rendering macro 'toc'**
+### 简介
 
-null
+在从Asterisk切换到FreeSWITCH™时，你可能会发现在拨号计划中做事情的方式与你习惯的有所不同，特别是在处理IVR时。这个页面展示了我是如何将我的Asterisk IVR转换为FreeSWITCH™的XML拨号计划。
 
-### Introduction
-
-In switching from Asterisk to FreeSWITCH™ you may discover that it's a little different doing things in the dialplan when compared to what you're used to, especially when you're dealing with IVRs. This page shows how I chose to convert my Asterisk IVRs to FreeSWITCH™ XML Dialplans.
-
-### The Asterisk Dialplan
+### Asterisk拨号计划
 
 ```xml
 [IVR-2617559]
@@ -36,67 +33,64 @@ exten => 3,n,Hangup()
 exten => i,1,Goto(s,2)
 ```
 
-So, this is a relatively simple IVR, but it does pretty much everything you'd expect to see in something like this, it plays some sounds to the caller, waits for DTMF input and based on that input does some different behaviour.
+所以，这是一个相对简单的IVR，但它几乎包含了你希望在这样的IVR中看到的一切。它向呼叫者播放一些声音，等待DTMF输入，并根据输入执行不同的行为。
 
-More specifically, it asks the caller to press 2 if they're a DSL customer and 3 or nothing if they're anything else (dialup, effectively). Then, depending on that selection, it plays an additional message, stores what they picked and puts them in queue.
+更具体地说，它要求呼叫者按2键，如果他们是DSL客户，按3键或不按任何键（代表拨号上网）。然后，根据所选项，它会播放附加消息，存储他们的选择，并将他们放入队列。
 
-### The FreeSWITCH™ Version
+### FreeSWITCH™版本
 
-Now, here's how I converted it to FreeSWITCH™
+现在，我来展示一下我是如何将它转换为FreeSWITCH™的。
 
 ```xml
-<include>
-  <extension name="IVR Conversion">
-    <condition field="destination_number" expression="^2617559$"/>
-    <condition field="${ivrlevel}" expression="^$" break="never">
-      <action application="set" data="domain_name=$${domain}"/>
-      <action application="playback" data="IVR/00200003/brand.wav"/>
-      <action application="play_and_get_digits" data="0 1 1 5000 # IVR/00200003/greeting.wav /invalid.wav ivrsel (2|3)"/>
-      <action application="set" data="ivrlevel=2"/>
-      <action application="transfer" data="${destination_number}"/>
-    </condition>
-    <condition field="${ivrlevel}-${ivrsel}" expression="^2-2$" break="never">
-      <action application="playback" data="IVR/00200003/ivr2.wav"/>
-      <action application="set" data="ivropt=DSL Issue"/>
-      <action application="playback" data="IVR/callmonitoring.wav"/>
-      <action application="fifo" data="L2-00200003 in /tmp/exit-message.wav /tmp/music-on-hold.wav"/>
-    </condition>
-    <condition field="${ivrlevel}-${ivrsel}" expression="^2-(3|)$">
-      <action application="playback" data="IVR/00200003/ivr3.wav"/>
-      <action application="set" data="ivropt=Dial-up Support"/>
-      <action application="playback" data="IVR/callmonitoring.wav"/>
-      <action application="fifo" data="L1-00200003 in /tmp/exit-message.wav /tmp/music-on-hold.wav"/>
-    </condition>
-  </extension>
-</include>
+<包括>
+  <扩展名 name="IVR 转接">
+    <条件 field="目标号码" expression="^2617559$"/>
+    <条件 field="${ivr级别}" expression="^$" break="never">
+      <动作 application="设置" data="域名=$${域名}"/>
+      <动作 application="播放音频" data="IVR/00200003/brand.wav"/>
+      <动作 application="播放并获取按键" data="0 1 1 5000 # IVR/00200003/greeting.wav /invalid.wav ivrsel (2|3)"/>
+      <动作 application="设置" data="ivr级别=2"/>
+      <动作 application="转接" data="${目标号码}"/>
+    </条件>
+    <条件 field="${ivr级别}-${ivrsel}" expression="^2-2$" break="never">
+      <动作 application="播放音频" data="IVR/00200003/ivr2.wav"/>
+      <动作 application="设置" data="ivropt=DSL 问题"/>
+      <动作 application="播放音频" data="IVR/callmonitoring.wav"/>
+      <动作 application="先进先出" data="L2-00200003 in /tmp/exit-message.wav /tmp/music-on-hold.wav"/>
+    </条件>
+    <条件 field="${ivr级别}-${ivrsel}" expression="^2-(3|)$">
+      <动作 application="播放音频" data="IVR/00200003/ivr3.wav"/>
+      <动作 application="设置" data="ivropt=拨号支持"/>
+      <动作 application="播放音频" data="IVR/callmonitoring.wav"/>
+      <动作 application="先进先出" data="L1-00200003 in /tmp/exit-message.wav /tmp/music-on-hold.wav"/>
+    </条件>
+  </扩展名>
+</包括>
 ```
+这与原文有点不同，但行为是相同的。
 
-This is looks a little different than the original but the behaviour is the same:
+* 条件检查目标号码-这必须匹配才能继续。
+* 条件检查是我们是否已经通过ivrlevel变量遍历过IVR（交互式语音响应），如果没有，则进行以下操作：
+   * 播放第一个声音
+   * 播放第二个声音，并等待5秒钟进行2或3（存储在ivrsel变量中）的1个数字
+   * 将ivrlevel变量设置为2，表示我们将进入IVR的第二层级
+   * 返回到我们最初匹配的目标号码（再次进行扩展评估，回到开始的地方）
+* 条件检查以查看ivrlevel是否为2，且ivr selection为2：
+   * 播放消息
+   * 将选择保存在通道变量中
+   * 播放有关通话正在进行质量保证监控的消息
+   * 插入到FIFO队列中
+* 条件检查以查看ivrlevel是否为2且ivr selection为3或空（无效输入）：
+   * 与前一个条件相同
 
-* Condition checks destination number - this must match to continue.
-* Condition check is if we've traversed the IVR before (via the ivrlevel variable), if not, the following occurs:  
-   * Play the first sound  
-   * Play the second sound and wait 5 seconds for 1 digit of either 2 or 3 (stored in the ivrsel variable)  
-   * Set the ivrlevel variable to 2 to indicate we're going to the second level of the IVR  
-   * Transfer back to the destination number we originally matched on (the extension is evaluated again, go back to the start)
-* Condition check to see if the ivrlevel is 2 and the ivr selection is 2:  
-   * Play message  
-   * Store choice in channel variable  
-   * Play a message about calls being monitored for QA  
-   * Insert into a FIFO queue
-* Condition check to see if the ivrlevel is 2 and the ivr selection is 3 or blank (invalid input)  
-   * Same as previous condition
+如果您想在输入无效时重新提示，可以通过检查ivrlevel是否为2且ivrsel为空，然后再进行play_and_get_digits，并转接回destination_number。
 
-If you wanted to re-prompt on invalid input, you could do so by checking for when ivrlevel is 2 and ivrsel is blank and then do another play\_and\_get\_digits and transfer back to destination\_number.
+## 提示：
 
-## Tips:
-
-Since Asterisk uses multiple dialplan formats, read the input using the Asterisk library utilities and parse into a data struct, then write it out to the FreeSWITCH™ format.
+由于Asterisk使用多个拨号计划格式，您可以使用Asterisk库实用程序读取输入并解析为数据结构，然后将其写入FreeSWITCH™格式。
 
 ###   
 
-### See Also
+### 参见
 
-* [XML Dialplan](../../../../Dialplan/XML-Dialplan/index.mdx#about)
-
-
+* [XML拨号计划](../../../../Dialplan/XML-Dialplan/index.mdx#about)

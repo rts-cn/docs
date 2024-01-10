@@ -1,73 +1,68 @@
+# mod_dptools: 正则表达式
 
-# mod_dptools: regex 
+## 关于
 
- 
+执行一个[正则表达式](../../Examples/Regular-Expression/index.mdx#42x)。
 
-## About
+从技术上讲，这不是一个拨号计划应用程序，而是一个API。API通常在CLI上完成，但是使用`${my\_api(my\_args)}`语法和`set`应用程序在拨号计划本身中使用多个API是允许的。
 
-Executes a [Regular Expression](../../Examples/Regular-Expression/index.mdx#42x).
+点击这里展开目录
 
-Technically this is not a dialplan application but rather an API. API's are normally done at the CLI, however using the ${my\_api(my\_args)} syntax with the ''set'' application allows for the use of many API's inside the dialplan itself.
+* 1 [用法](#usage)
+* 2 [参数](#parameters)
+* 3 [示例](#examples)
+* 4 [参见](#see-also)
 
-Click here to expand Table of Contents
-
-* 1 [Usage](#usage)
-* 2 [Parameters](#parameters)
-* 3 [Examples](#examples)
-* 4 [See Also](#see-also)
-
-### Usage
+### 用法
 
 ```xml
 regex value expression results*
 ```
 
-(results is optional, without this argument the regex returns true or false)
+（results是可选的，没有此参数，正则表达式将返回true或false）
 
-You can test your dialplan on the FS console like this.
+您可以在FS控制台上测试您的拨号计划，比如：
 
 ```xml
 regex 61555555555|^61([0-9]{9})$|0%1 
 ```
 
-This would return 0555555555.
+这将返回0555555555。
 
 ```xml
 regex 61555555555|^61([0-9]{9})$
 ```
 
-This would return true.
+这将返回true。
 
-### Parameters
+### 参数
 
-* value = string to run regex against
-* expression = the actual regular expression
-* results = result handling string ( optional. without the regex returns true / false )
+* value = 要对正则表达式运行的字符串
+* expression = 实际的正则表达式
+* results = 结果处理字符串（可选。没有此参数，正则表达式返回true / false）
 
-In your results string, you can not use $0 $1 $2 $3 as you normally would, as they would contain the results of your "condition" expression.
+在结果字符串中，您不能像通常那样使用$0 $1 $2 $3，因为它们将包含您的“条件”表达式的结果。
 
-So inline Regex's use %0 %1 %2 %3 as their format.
+因此，内联正则表达式使用%0 %1 %2 %3作为它们的格式。
 
-If you want to use pipes as an logical OR in regular expressions you must escape them, because the regex command already uses pipes to separate parameters.
+如果您想在正则表达式中使用竖线作为逻辑OR运算符，您必须对它们进行转义，因为正则表达式命令已经使用竖线来分隔参数。
 
 ```xml
 regex 9999|^(1234\|9999)$
 ```
 
-This would return true.
+这将返回true。
 
-### Examples
+### 示例
 
-Modify an Australian E164 caller\_id to 0NSN format.
+将澳大利亚的E164呼叫者ID修改为0NSN格式。
 
 ```xml
 <action application="set" data="effective_caller_id_number=${regex(${caller_id_number}|^61([0-9]{9})$|0%1)}"/>
 ```
 
-### See Also
+### 参见
 
-* [Dialplan](../../Dialplan/index.mdx#0-about)
+* [拨号计划](../../Dialplan/index.mdx#0-about)
 * [mod\_commands](../mod_commands_1966741.mdx#--)
-* [Regular Expression](../../Examples/Regular-Expression/index.mdx#42x)
-
-
+* [正则表达式](../../Examples/Regular-Expression/index.mdx#42x)

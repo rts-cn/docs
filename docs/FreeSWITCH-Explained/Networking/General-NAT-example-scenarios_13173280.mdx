@@ -1,126 +1,116 @@
+# 通用NAT示例场景 
 
-# General NAT example scenarios 
+点击此处展开目录
 
- 
+* 1 [场景1](#-freeswitch--general-nat-example-scenarios-)
+* 2 [场景2](#-freeswitch--general-nat-example-scenarios-)
+* 3 [场景3](#-freeswitch--general-nat-example-scenarios-)
+* 4 [场景4](#-freeswitch--general-nat-example-scenarios-)
+* 5 [场景5](#-freeswitch--general-nat-example-scenarios-)
+* 6 [相关链接](#-freeswitch--general-nat-example-scenarios-)
 
-Click here to expand Table of Contents
-
-* 1 [Scenario 1](#-freeswitch--general-nat-example-scenarios-)
-* 2 [Scenario 2](#-freeswitch--general-nat-example-scenarios-)
-* 3 [Scenario 3](#-freeswitch--general-nat-example-scenarios-)
-* 4 [Scenario 4](#-freeswitch--general-nat-example-scenarios-)
-* 5 [Scenario 5](#-freeswitch--general-nat-example-scenarios-)
-* 6 [See Also](#-freeswitch--general-nat-example-scenarios-)
-
-## Scenario 1
+## 场景1
 
 ```xml
-FS (192.168.0.4) -> NAT (Public IP 1.2.3.4) -> INTERNET -> NAT (Public IP 5.6.7.8) -> FS (192.168.0.5)
+FS (192.168.0.4) -> NAT (公网IP 1.2.3.4) -> 互联网 -> NAT (公网IP 5.6.7.8) -> FS (192.168.0.5)
 ```
 
-In this scenario you have to do two things.
+在这个场景中，您需要完成以下两个任务：
 
-1. Setup a profile with ext-sip-ip and ext-rtp-ip set.
-2. If you setup ext-sip-ip and ext-rtp-ip on a profile then that profile **CAN NOT BE USED BY ANYTHING BEHIND THE SAME NAT PERIOD.**
-3. Port forward the ports for that profile.
+1. 配置具有ext-sip-ip和ext-rtp-ip设置的配置文件。
+2. 如果在一个配置文件上设置了ext-sip-ip和ext-rtp-ip，那么该配置文件**不能被相同NAT后面的任何东西使用。**
+3. 针对该配置文件设置端口转发。
 
-## Scenario 2
+## 场景2
 
 ```xml
-FS (192.168.0.4) -> NAT (Public IP 1.2.3.4) -> INTERNET -> NAT (Public IP 5.6.7.8) -> PHONE (192.168.1.100)
+FS (192.168.0.4) -> NAT (公网IP 1.2.3.4) -> 互联网 -> NAT (公网IP 5.6.7.8) -> PHONE (192.168.1.100)
 ```
 
-Prior to setting up your plan you must decide which domain you are going to use for your phone registration and which port the profile will listen to. The general SIP structure being.
+在设置计划之前，您必须决定您要为电话注册使用哪个域，并决定配置文件将监听哪个端口。通常的SIP结构如下：
 
 ```xml
 Phone {port} -> NAT 1 -> INTERNET -> NAT 2 -> {port}FS sip_profile {sip_profile domain} -> REGISTER {sip_profile domain} or Dialplan {sip_profile domain}
 ```
 
-The easiest would be to use the default domain. Keeping in mind you still have to create a new sip_profile (for example, we'll call it doublenat.xml) to handle the double NAT. The steps look like this.
+最简单的方法是使用默认域。但请记住，您仍然需要创建一个新的sip_profile（例如，我们将其命名为doublenat.xml）来处理双重NAT。步骤如下：
 
-1. copy the external.xml and rename it doublenat.xml
-2. in doublenat.xml, change the profile name: &lt;profile name="doublenat">
-3. add the &lt;param name="ext-rtp-ip" value="$${external\_rtp\_ip}"/>
-4. add the &lt;param name="ext-sip-ip" value="$${external\_sip\_ip}"/>
-5. add the &lt;param name="force-register-domain" value="$${domain}"/>
-6. add the &lt;param name="auth-calls" value="true"/>
-7. change port to 5090 ( make sure to change it on the phone as well )
-8. add the &lt;param name="aggressive-nat-detection" value="true"/>
-9. add the &lt;param name="apply-nat-acl" value="rfc1918"/>
-10. register the phone
-11. check to see if your phone is registered with the doublenat profile.
+1. 复制 external.xml 文件并将其重命名为 doublenat.xml。
+2. 在 doublenat.xml 文件中，更改配置文件名称：<profile name="doublenat">
+3. 添加 <param name="ext-rtp-ip" value="$${external_rtp_ip}"/>
+4. 添加 <param name="ext-sip-ip" value="$${external_sip_ip}"/>
+5. 添加 <param name="force-register-domain" value="$${domain}"/>
+6. 添加 <param name="auth-calls" value="true"/>
+7. 将端口更改为 5090（确保在电话上也进行更改）
+8. 添加 <param name="aggressive-nat-detection" value="true"/>
+9. 添加 <param name="apply-nat-acl" value="rfc1918"/>
+10. 注册电话。
+11. 检查电话是否已注册到 doublenat 配置文件。
 
-  
 ```xml
 sofia status profile doublenat
 ```
 
-  
-If your phone is not registered to doublenat then add :5090 to the domain/proxy on the phone configuration.
+如果电话未注册到 doublenat，将 :5090 添加到电话配置文件的 domain/proxy 字段。
 
-Example External IP:
+示例外部 IP：
 
 ```xml
- 216.109.112.135:5090
+216.109.112.135:5090
 ```
 
-  
-Example Domain:
+示例域名：
 
 ```xml
 example.com:5090
 ```
 
-Keep in mind this profile will only be suitable for the double NAT scenario. Also keep in mind that this is the toughest scenario to conquer so you still may have adjustments on your phone or router.
+请记住，此配置文件只适用于双重 NAT 场景。另外，请记住，这是最困难的情况，因此您可能仍需要调整电话或路由器的设置。
 
-## Scenario 3
-
-```xml
-FS (192.168.0.4) -> NAT (Public IP 1.2.3.4) -> INTERNET -> Softphone Registering to FS
-```
-
-In this scenario you also need a dedicated profile. Getting devices to register to your FS instance sitting behind NAT.
-
-1. dedicated profile with ext-sip-ip and ext-rtp-ip set. **Again NOTHING BEHIND THE SAME NAT WILL BE ABLE TO USE THIS PROFILE PERIOD.**
-
-## Scenario 4
+**情景 3**
 
 ```xml
-PHONE -> FS -> NAT -> Public Internet
+FS (192.168.0.4) -> NAT (公网 IP 1.2.3.4) -> 互联网 -> 注册至 FS 的软电话
 ```
 
-In this case you setup a profile for the phones to register without the ext-sip-ip and ext-rtp-ip options set. This profile would be used for all devices registering to the
+在此情况下，您还需要一个专用的配置文件。用于注册设备到位于 NAT 后面的 FS 实例。
 
-FS instance that are behind the same NAT.
+1. 创建一个带有已设置 ext-sip-ip 和 ext-rtp-ip 的专用配置文件。**重要：同一个 NAT 后面的任何设备都将无法使用此配置文件。**
 
-  
-Then your outbound call would traverse another profile setup to bust through the NAT with the proper ext-sip-ip and ext-rtp-ip options set.
-
-## Scenario 5
+**情景 4**
 
 ```xml
-FS (1.2.3.4) -> INTERNET -> NAT (Public IP 5.6.7.8) -> Client (192.168.0.5)
+电话机 -> FS -> NAT -> 公共互联网
 ```
 
-More in depth article at [Nat](./NAT_6587473.mdx#about)
+在这种情况下，您为电话机设置一个配置文件，不设置 ext-sip-ip 和 ext-rtp-ip 选项。该配置文件将用于所有注册到 FS 的设备。
 
-## See Also  
+与同一NAT后面的FS实例。
 
-[Auto NAT](./Auto-Nat_6587487.mdx#about) \- let FreeSWITCH do the work
+然后，您的出站呼叫将通过另一个配置文件进行穿越，以通过设置适当的ext-sip-ip和ext-rtp-ip选项来突破NAT。
 
-[NAT Traversal](./NAT-Traversal_3375417.mdx#about)
+## 场景5
 
-[External profile](../Configuration/Sofia-SIP-Stack/External-Profile_13173235.mdx#about)
+```xml
+FS (1.2.3.4) -> INTERNET -> NAT(公共IP 5.6.7.8) -> 客户端 (192.168.0.5)
+```
 
-[Access Control List (ACL)](./General-NAT-example-scenarios_13173280.mdx#scenario-1) About modifying NAT behavior when matching a certain access list
+更深入的文章请参阅[NAT](./NAT_6587473.mdx#about)
 
-[General NAT example scenarios](./General-NAT-example-scenarios_13173280.mdx#scenario-1) \- real-world examples
+## 另请参阅  
 
-[NAT](./NAT_6587473.mdx#about) \- Network Address Translation
+[自动NAT](./Auto-Nat_6587487.mdx#about) \- 让FreeSWITCH完成工作
 
-[NAT traversal](./NAT-Traversal_3375417.mdx#about) \- user NAT traversal
+[NAT穿越](./NAT-Traversal_3375417.mdx#about)
 
-[sofia ext-rtp-ip settings](https://freeswitch.org/confluence/display/~boteman/sofia.conf.xml#sofia.conf.xml-Settings)
-  
-  
+[外部配置](../Configuration/Sofia-SIP-Stack/External-Profile_13173235.mdx#about)
 
+[访问控制列表(ACL)](./General-NAT-example-scenarios_13173280.mdx#scenario-1) 关于在匹配特定访问列表时修改NAT行为
+
+[通用NAT示例场景](./General-NAT-example-scenarios_13173280.mdx#scenario-1) \- 真实世界的示例
+
+[NAT](./NAT_6587473.mdx#about) \- 网络地址转换
+
+[NAT穿越](./NAT-Traversal_3375417.mdx#about) \- 用户NAT穿越
+
+[sofia ext-rtp-ip设置](https://freeswitch.org/confluence/display/~boteman/sofia.conf.xml#sofia.conf.xml-Settings)

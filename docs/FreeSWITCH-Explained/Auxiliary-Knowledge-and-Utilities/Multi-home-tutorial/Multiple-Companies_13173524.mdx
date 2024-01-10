@@ -1,62 +1,59 @@
+# 多个公司
 
-# Multiple Companies 
+## 关于
 
- 
+**注意**: _在[多租户](../../Examples/Multi-tenant_13173521.mdx#about)页面上也有一些有用的信息需要合并。_
 
-## About
+这是一个如何使一个FreeSWITCH服务器成为一个多租户系统的教程，用于为两个或更多公司提供独立的域名/用户和独立的[拨号计划](../../Dialplan/index.mdx#0-about)。
 
-**Note**: _There is also some useful information on the [Multi-tenant](../../Examples/Multi-tenant_13173521.mdx#about) page, which needs merging._
+基本上，我们希望一个FS服务器为多个独立的公司提供电话服务，就像我们是一个VoIP提供商。让我们从两个公司开始，并为这两个公司提供相同的两个用户（公司A的1000和公司B的1000）。这些公司应该完全独立于彼此，它们具有相同编号的分机不应该重叠或有任何关联，并且每个公司（以及其所有用户/分机）应该有独立的拨号计划。
 
-This is HOWTO to make one FreeSWITCH server act as a multi-tenant system for two or more companies, each with its own domain/users and independent [dialplans](../../Dialplan/index.mdx#0-about).
+单击此处展开目录
 
-Basically, we want to have one FS server provide phone services to several separate companies, as if we are a VoIP provider. Let's start with two companies and give both companies the same two users (1000 for company-a and 1000 for company-b). These companies should be completely independent of each other, their identically-numbered extensions should not overlap or have anything to do with each other, and each company (and all of it's users/extensions) should have independent dialplans.
+* 1 [启用多个域名](#enabling-multiple-domains)
+  * 1.1 [2011-12-23更新](#update-2011-12-23)
+* 2 [创建文件和目录](#creating-the-files-and-directories)
+  * 2.1 [向目录添加用户](#adding-users-to-the-directories)
+* 3 [设置SIP配置文件](#setting-up-the-sip-profile)
+* 4 [为每个域名创建拨号计划](#creating-a-dialplan-for-each-domain)
+  * 4.1 [用法](#usage)
+* 5 [注意事项](#gotchas)
+* 6 [参见](#see-also)
 
-Click here to expand Table of Contents
+## 启用多个域名
 
-* 1 [Enabling Multiple Domains](#enabling-multiple-domains)  
-   * 1.1 [Update 2011-12-23](#update-2011-12-23)
-* 2 [Creating the Files and Directories](#creating-the-files-and-directories)  
-   * 2.1 [Adding Users to the Directories](#adding-users-to-the-directories)
-* 3 [Setting Up the SIP Profile](#setting-up-the-sip-profile)
-* 4 [Creating a Dialplan for Each Domain](#creating-a-dialplan-for-each-domain)  
-   * 4.1 [Usage](#usage)
-* 5 [Gotchas](#gotchas)
-* 6 [See also](#see-also)
+这是来自[多租户](../../Examples/Multi-tenant_13173521.mdx#about)的SIP配置文件部分：
 
-## Enabling Multiple Domains
-
-This is from the SIP Profiles section of [Multi-tenant](../../Examples/Multi-tenant_13173521.mdx#about):
-
-Edit `conf/sip_profiles/internal.xml` to comment the params "force-register-domain" and "force-register-db-domain":
+编辑`conf/sip_profiles/internal.xml`文件，将参数"force-register-domain"和"force-register-db-domain"注释掉：
 
 ```xml
  <!--
-        These are enabled to make the default config work better out of the box.
-        If you need more than ONE domain you **MUST DISABLE** these options.
+        这些选项已经启用，可以使默认配置更好地运作。
+        如果您需要多个域名，**务必禁用**这些选项。
 
     -->
-    <!--all inbound reg will look in this domain for the users -->
+    <!-- 所有传入注册将在这个域名中查找用户 -->
     <param name="force-register-domain" value="$${domain}"/>
-    <!--all inbound reg will stored in the db using this domain -->
+    <!-- 所有传入注册将使用此域名存储在数据库中 -->
     <param name="force-register-db-domain" value="$${domain}"/>
 ```
 
-### Update 2011-12-23
+### 更新于2011-12-23
 
-File conf/sip\_profiles/internal.xml should have its newest option, "force-subscription-domain" (present as of FS git date 2011-12-23), also commented out. Current correct setting:
+文件`conf/sip_profiles/internal.xml`应该有最新选项，"force-subscription-domain"（自FreeSWITCH git日期2011-12-23起）也应该被注释掉。当前正确的设置：
 
 ```xml
-    <!--all inbound reg will look in this domain for the users -->
+    <!-- 所有传入注册将在这个域名中查找用户 -->
     <!--<param name="force-register-domain" value="$${domain}"/>-->
-    <!--force the domain in subscriptions to this value -->
+    <!-- 强制订阅域名的值为此 -->
     <!--<param name="force-subscription-domain" value="$${domain}"/>-->
-    <!--all inbound reg will stored in the db using this domain -->
+    <!-- 所有传入注册将使用此域名存储在数据库中 -->
     <!--<param name="force-register-db-domain" value="$${domain}"/>-->
 ```
 
-## Creating the Files and Directories
+## 创建文件和目录
 
-Assuming FreeSWITCH is installed in `/usr/local/freeswitch/`, cd there and create the files and directories:
+假设FreeSWITCH安装在`/usr/local/freeswitch/`，进入该目录并创建文件和目录：
 
 ```xml
 $ cp conf/directory/default.xml conf/directory/company-a.org.xml
@@ -65,12 +62,14 @@ $ cp -a conf/directory/default conf/directory/company-a.org
 $ cp -a conf/directory/default conf/directory/company-b.org
 ```
 
-`/usr/local/freeswitch/conf/directory`  now should look like this:
+`/usr/local/freeswitch/conf/directory`现在应该看起来像这样：
 
 ```xml
 $ ls -l
+```
 
-total 24
+```markdown
+一共 24 个文件
 drwxr-xr-x 3 diego diego 4096 2009-09-23 04:30 company-a.org
 -rw-r--r-- 1 diego diego 2656 2009-09-29 22:21 company-a.org.xml
 drwxr-xr-x 3 diego diego 4096 2009-09-23 04:30 company-b.org
@@ -80,12 +79,12 @@ drwxr-xr-x 3 diego diego 4096 2009-09-23 04:30 default
 $
 ```
 
-Let's edit the files now:
+让我们现在编辑这些文件：
 
 **conf/directory/company-a.org.xml**
 
 ```xml
- <include>
+<include>
   <!--the domain or ip (the right hand side of the @ in the addr-->
   <domain name="company-a.org">
     <params>
@@ -113,7 +112,7 @@ Let's edit the files now:
 </include>
 ```
 
-Notice the lines into which "company-a.org" has been inserted. Do the same for company-b below, and extend to however many other companies are to be hosted on this FreeSWITCH server.
+请注意，已经插入了"company-a.org"的行。对于下面的"company-b"，也做同样的操作，然后根据需要将这些扩展到其他要托管在此FreeSWITCH服务器上的公司。
 
 **conf/directory/company-b.org.xml**
 
@@ -124,31 +123,32 @@ Notice the lines into which "company-a.org" has been inserted. Do the same for c
     <params>
       <param name="dial-string" value="{presence_id=${dialed_user}@${dialed_domain}}${sofia_contact(${dialed_user}@${dialed_domain})}"/>
     </params>
+```
 
+```xml
+<include>
+  <user id="1000">
+    <params>
+      <param name="password" value="$${default_password}"/>
+      <param name="vm-password" value="1000"/>
+    </params>
     <variables>
-      <variable name="record_stereo" value="true"/>
-      <variable name="default_gateway" value="$${default_provider}"/>
-      <variable name="default_areacode" value="$${default_areacode}"/>
-      <variable name="transfer_fallback_extension" value="operator"/>
-      <variable name="user_context" value="company-b.org"/>
+      <variable name="toll_allow" value="domestic,international,local"/>
+      <variable name="accountcode" value="1000"/>
+      <!--<variable name="user_context" value="default"/>-->
+      <variable name="effective_caller_id_name" value="分机 1000"/>
+      <variable name="effective_caller_id_number" value="1000"/>
+      <variable name="outbound_caller_id_name" value="$${outbound_caller_name}"/>
+      <variable name="outbound_caller_id_number" value="$${outbound_caller_id}"/>
+      <variable name="callgroup" value="技术支持"/>
     </variables>
-
-    <groups>
-      <group name="company-b.org">
-        <users>
-          <X-PRE-PROCESS cmd="include" data="company-b.org/*.xml"/>
-        </users>
-      </group>
-
-    </groups>
-
-  </domain>
+  </user>
 </include>
 ```
 
-### Adding Users to the Directories
+### 添加用户到目录
 
-Now let's create the users in the newly created directories: For example, add two users, one in `conf/directory/company-a.org` and another one in `conf/directory/company-b.org`, something like this:
+现在让我们在新创建的目录中添加用户：例如，在`conf/directory/company-a.org`中添加一个用户，在`conf/directory/company-b.org`中添加另一个用户，类似于以下设置：
 
 **conf/directory/company-a.org/1000.xml**
 
@@ -163,11 +163,11 @@ Now let's create the users in the newly created directories: For example, add tw
       <variable name="toll_allow" value="domestic,international,local"/>
       <variable name="accountcode" value="1000"/>
       <!--<variable name="user_context" value="default"/>-->
-      <variable name="effective_caller_id_name" value="Extension 1000"/>
+      <variable name="effective_caller_id_name" value="分机 1000"/>
       <variable name="effective_caller_id_number" value="1000"/>
       <variable name="outbound_caller_id_name" value="$${outbound_caller_name}"/>
       <variable name="outbound_caller_id_number" value="$${outbound_caller_id}"/>
-      <variable name="callgroup" value="techsupport"/>
+      <variable name="callgroup" value="技术支持"/>
     </variables>
   </user>
 </include>
@@ -196,11 +196,11 @@ Now let's create the users in the newly created directories: For example, add tw
 </include>
 ```
 
-* **NOTE:** Delete or comment-out the `user_context` option line inside all the extension (user) `*.xml` files and instead put that option line inside the master XML file for each domain (i.e., the `conf/directory/company-a.org.xml` file and also the `conf/directory/company-b.org.xml`file), as doing so will save time by obviating specification of `user_context` inside every extension (user) file subsequently created under `conf/directory/company-a.org/` or `conf/directory/company-b.org/`.
+* **注意：** 删除或注释掉`*.xml`文件中所有分机（用户）内的`user_context`选项行，并将该选项行放在每个域的主XML文件中（即，`conf/directory/company-a.org.xml`文件和`conf/directory/company-b.org.xml`文件），这样做可以节省时间，因为不需要在随后在`conf/directory/company-a.org/`或`conf/directory/company-b.org/`下的每个分机（用户）文件中指定`user_context`。
 
-## Setting Up the SIP Profile
+## 设置SIP配置文件
 
-Comment `force-register-domain` and `force-register-db-domain`from the profile, it should look like this:
+从配置文件中注释掉`force-register-domain`和`force-register-db-domain`，配置文件应如下所示：
 
 **conf/sip\_profiles/internal.xml**
 
@@ -210,16 +210,16 @@ Comment `force-register-domain` and `force-register-db-domain`from the profile, 
 <!--<param name="force-subscription-domain" value="$${domain}"/>-->
 ```
 
-## Creating a Dialplan for Each Domain
+## 为每个域创建拨号计划
 
-You could copy `conf/dialplan/default.xml` to `conf/dialplan/company-a.org.xml` and `conf/dialplan/company-b.org.xml` and edit the context on each to match the context from the users/directories.
+你可以将 `conf/dialplan/default.xml` 复制到 `conf/dialplan/company-a.org.xml` 和 `conf/dialplan/company-b.org.xml`，并编辑每一个文件中的上下文以匹配用户/目录中的上下文。
 
 **conf/dialplan/company-a.org.xml**
 
 ```xml
 <include>
   <context name="company-a.org">
-    <!-- your extensions here -->
+    <!-- 这里是你的分机 -->
   </context>
 </include>
 ```
@@ -229,29 +229,26 @@ You could copy `conf/dialplan/default.xml` to `conf/dialplan/company-a.org.xml` 
 ```xml
 <include>
   <context name="company-b.org">
-    <!-- your extensions here -->
+    <!-- 这里是你的分机 -->
   </context>
 </include>
 ```
 
-### Usage
+### 使用方法
 
-Now if the 1000@company-a.org user tries to dial a extension, it should look into the company-a.org context/dialplan and if 1000@company-b.org tries to dial it should look into the company-b.org context/dialplan. Bow to the power of FreeSWITCH!
+现在，如果称为 1000@company-a.org 的用户尝试拨打分机，它应该查找 company-a.org 上下文/拨号计划；如果称为 1000@company-b.org 的用户尝试拨打分机，它应该查找 company-b.org 上下文/拨号计划。顺从 FreeSWITCH 的强大力量吧！
 
-## Gotchas
+## 注意事项
 
-As I painfully found and noted \[[(old wiki) here](http://wiki.freeswitch.org/wiki/User:MichaelBrenden)\] I just relearned the same thing, painfully, a different way. The domain established in vars.xml must not be the same as any of the tenant's domains you're hosting; otherwise, that tenant's domain will not work while all the others will. Yes, maddening.
+正如我痛苦地发现并记录于此 [【(旧维基)在此处】](http://wiki.freeswitch.org/wiki/User:MichaelBrenden)，我以痛苦之饵重新学到了同一件事情，用了不同的方式。在 vars.xml 中建立的域名不能与您托管的任何租户域名相同；否则，该租户的域名将无法正常工作，而其他所有域名都能正常工作。是的，非常令人恼火。
 
-`<X-PRE-PROCESS cmd="set" data="domain=boxen.mydom.net"/> `present in vars.xml file must be different from all other tenant's domains!
+`<X-PRE-PROCESS cmd="set" data="domain=boxen.mydom.net"/>` 在 vars.xml 文件中必须与所有其他租户的域名不同！
 
-## See also
+## 另请参阅
 
-* [Multi-tenant](../../Examples/Multi-tenant_13173521.mdx#about)
-* [Music on hold](../../Configuration/Music-on-Hold_6587503.mdx#about)
+* [多租户](../../Examples/Multi-tenant_13173521.mdx#about)
+* [等候时音乐](../../Configuration/Music-on-Hold_6587503.mdx#about)
 
-### Comments:
+### 评论：
 
-| if you are using this, please be care and DO NOT put the address or domains you are using in the acl.conf.xml or you ACL any where. this makes it to your endpoints dont really auth, and thereby causing the user\_context to not be honored, and instead dumping them into the context defined inside of the sofia profile that the devices register against ![](/images/icons/contenttypes/comment_16.png) Posted by akp at Apr 29, 2020 14:41 |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-
-
+如果你正在使用这个功能，请小心，并且在`acl.conf.xml`或任何地方不要填写你所使用的地址或域名。这样会导致你的终端不会真正进行身份验证，从而导致`user_context`不被遵守，并且将其转移到设备注册的`sip`配置文件中定义的上下文中！发布者：akp，2020年4月29日14:41。

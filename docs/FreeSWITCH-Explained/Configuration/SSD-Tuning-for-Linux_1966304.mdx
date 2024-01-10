@@ -1,313 +1,312 @@
+# Linux下的SSD调优
 
-# SSD Tuning for Linux 
+## 关于
 
- 
+通过使用固态硬盘（SSD）并特别是避免这些独特存储设备的早期故障来优化FreeSWITCH™性能的注意事项。
 
-## About
+点击展开目录
 
-Notes on optimizing FreeSWITCH™ performance using Solid State Drives and especially preventing early failures of these unique storage devices.
-
-Click to expand Table of Contents
-
-* 1 [Preface](#preface)
-* 2 [Introduction](#introduction)
-* 3 [The Problem](#the-problem)  
-   * 3.1 [What You Should Know](#what-you-should-know)  
-      * 3.1.1 [The Basics](#the-basics)  
-         * 3.1.2 [SSD trim, Partition Alignment, and Erase Block Size](#ssd-trim-partition-alignment-and-erase-block-size)  
-   * 3.2 [Objectives](#objectives)  
-   * 3.3 [Decision Time](#decision-time)  
-      * 3.3.1 [Select Your SSD](#select-your-ssd)  
-         * 3.3.2 [Decide Partitioning Format](#decide-partitioning-format)  
-         * 3.3.3 [Decide Which File System to Use](#decide-which-file-system-to-use)  
-         * 3.3.4 [Increase Use of tmpfs](#increase-use-of-tmpfs)  
-         * 3.3.5 [Journalling](#journalling)  
-   * 3.4 [AHCI is Required!](#ahci-is-required)  
-   * 3.5 [Prepare the SSD for Partitioning](#prepare-the-ssd-for-partitioning)  
-      * 3.5.1 [Update Firmware](#update-firmware)  
-         * 3.5.2 [Perform a Secure Erase](#perform-a-secure-erase)  
-   * 3.6 [Partition the SSD](#partition-the-ssd)  
-      * 3.6.1 [Partition Alignment](#partition-alignment)  
-         * 3.6.2 [Partition Table Type](#partition-table-type)  
-   * 3.7 [Formatting the File System](#formatting-the-file-system)  
-   * 3.8 [Prepare FSTAB Entries](#prepare-fstab-entries)  
-   * 3.9 [Prepare the Source Drive](#prepare-the-source-drive)  
-   * 3.10 [Linux Tuning](#linux-tuning)  
-      * 3.10.1 [Elevator Setting](#elevator-setting)  
+* 1 [前言](#preface)
+* 2 [介绍](#introduction)
+* 3 [问题](#the-problem)  
+   * 3.1 [你应该知道的事情](#what-you-should-know)  
+      * 3.1.1 [基础知识](#the-basics)  
+         * 3.1.2 [SSD trim、分区对齐和擦除块大小](#ssd-trim-partition-alignment-and-erase-block-size)  
+   * 3.2 [目标](#objectives)  
+   * 3.3 [决策时间](#decision-time)  
+      * 3.3.1 [选择你的SSD](#select-your-ssd)  
+         * 3.3.2 [决定分区格式](#decide-partitioning-format)  
+         * 3.3.3 [选择文件系统](#decide-which-file-system-to-use)  
+         * 3.3.4 [增加tmpfs的使用](#increase-use-of-tmpfs)  
+         * 3.3.5 [日志记录](#journalling)  
+   * 3.4 [AHCI是必需的！](#ahci-is-required)  
+   * 3.5 [准备SSD进行分区](#prepare-the-ssd-for-partitioning)  
+      * 3.5.1 [更新固件](#update-firmware)  
+         * 3.5.2 [执行安全擦除](#perform-a-secure-erase)  
+   * 3.6 [分区SSD](#partition-the-ssd)  
+      * 3.6.1 [分区对齐](#partition-alignment)  
+         * 3.6.2 [分区表类型](#partition-table-type)  
+   * 3.7 [格式化文件系统](#formatting-the-file-system)  
+   * 3.8 [准备FSTAB项](#prepare-fstab-entries)  
+   * 3.9 [准备源驱动器](#prepare-the-source-drive)  
+   * 3.10 [Linux调优](#linux-tuning)  
+      * 3.10.1 [磁盘调度设置](#elevator-setting)  
          * 3.10.2 [Swappiness](#swappiness)  
-         * 3.10.3 [Never Do This!](#never-do-this)  
-         * 3.10.4 [FreeSWITCH's core.db I/O bottleneck](#freeswitchs-coredb-io-bottleneck)
+         * 3.10.3 [永远不要这样做！](#never-do-this)  
+         * 3.10.4 [FreeSWITCH的core.db I/O瓶颈](#freeswitchs-coredb-io-bottleneck)
 
-## Preface
+## 前言
 
-I spent a months researching **S**olid **S**tate **D**rives before replacing a **H**ard **D**isk **D**rive in July 2012\. I learned two things: First, SSDs have unique characteristics that if taken into account, can improve speed and longevity. Second, most people are not aware of the considerations or don't bother with them. This information was compiled from months of research and testing, and is not unique to FreeSWITCH™. However, FreeSWITCH™ can benefit from the much faster startup times. This is a minor update to that information. FreeSWITCH™ users be sure to read [FreeSWITCH's core.db I/O bottleneck](#freeswitchs-coredb-io-bottleneck) below.
+我在2012年7月将硬盘驱动器替换为固态硬盘之前花了一个月的时间进行研究。我了解到两件事情：首先，固态硬盘具有独特的特性，如果考虑到这些特性，可以提高速度和寿命。其次，大多数人不了解这些注意事项，或者并不关心它们。这些信息是通过数月的研究和测试编制而成的，并不只适用于FreeSWITCH™。然而，FreeSWITCH™可以受益于更快的启动时间。这是对该信息的一个小更新。使用FreeSWITCH™的用户一定要阅读下面的[FreeSWITCH的core.db I/O瓶颈](#freeswitchs-coredb-io-bottleneck)。
 
-by Mario G
+作者：Mario G
 
-## Introduction
+## 简介
 
-This introduces SSD performance considerations and illustrates how to implement a "tuned" SSD on Linux. _This article is not meant to explain the details of SSD operation._ There are many well written articles providing very detailed information, some referenced below. The objective here is to _pull the information together_ to quickly obtain SSD performance and longevity. If you are converting from an HDD to an SSD and want it performing at it's best _make sure you prepare a plan first!_ These considerations are identical for other operating systems but different commands and utilities are required.
+本文介绍了SSD性能考虑因素，并且阐述了如何在Linux上实施“调整”SSD。_本文不旨在解释SSD操作的细节。_有许多写得很好的文章提供非常详细的信息，其中一些在下面引用了。本文旨在将这些信息_整合在一起_，以快速获取SSD的性能和寿命。如果您要从HDD转换到SSD，并希望它发挥最佳性能，请_确保您先准备一个计划！_这些考虑因素对于其他操作系统来说也是相同的，但需要使用不同的命令和工具。
 
-## The Problem
+## 问题
 
-SSD performance is largely ignored because it's so easy to do so! When most people replace an HDD with an SSD they simply partition the SSD and copy data to it. If tuning steps are not performed the SSD will still function like an HDD, however, _it is not a good idea_. Unless SSD tuning considerations and preparation steps are taken:
+SSD性能很大程度上被忽视，因为它很容易被忽视！当大多数人用SSD替换HDD时，他们只是对SSD进行分区并将数据复制到其中。如果不执行调整步骤，SSD仍然会像HDD一样工作，然而，_这不是一个好主意。_除非进行SSD调整和准备的考虑因素和步骤：
 
-1. The SSD can't provide its best possible performance.
-2. Rewrite performance is degraded.
-3. SSD performance degrades faster over time. In one benchmark, it got slower than an HDD!
-4. The life of the SSD is reduced.
+1. SSD 无法提供其最佳性能。
+2. 重写性能下降。
+3. SSD 性能随着时间的推移而下降得更快。在一项基准测试中，它比一个HDD速度更慢！
+4. SSD 的寿命缩短。
 
-### What You Should Know
+### 你应该知道的事情
 
-#### The Basics
+#### 基础知识
 
-If you just want to get it done without understanding the mechanics jump to the [Objectives](http://wiki.freeswitch.org/wiki/SSD%5FTuning%5Ffor%5FLinux#Objectives) section. However, if you want to understand _the purpose_ of the actions below you must understand that unlike an HDD, an SDD has characteristics that are very important to remember for tuning:
+如果你只是想快速完成而不理解原理，请跳到[目标](http://wiki.freeswitch.org/wiki/SSD%5FTuning%5Ffor%5FLinux#Objectives)部分。但是，如果你想要理解下面操作的目的，你必须理解和记住SSD与HDD不同之处的特性：
 
-* SSDs cannot overwrite existing data, data must be erased before writing to the same location.
-* SSDs are divided into blocks.
-* Blocks are divided into pages.
-* Data can be written to an empty page.
-* Only blocks can be erased.
-* In order to reuse pages that contain invalid data, the valid data must be first copied to another block, then the old block erased. This is called "Garbage Collection".
+- SSD 不能覆盖现有数据，必须在写入相同位置之前擦除数据。
+- SSD 分为块。
+- 块分为页。
+- 数据可以写入空白页。
+- 只有块可以被擦除。
+- 为了重用包含无效数据的页面，必须首先将有效数据复制到另一个块，然后擦除旧块。这被称为"垃圾回收"。
 
-#### SSD trim, Partition Alignment, and Erase Block Size
+#### SSD trim、分区对齐和擦除块大小
 
-SSD functional details are complex and there are many well written articles to explain them, during this project I compiled about 20 very good web sites. The following are a great place to start:
+SSD 的功能细节很复杂，有许多写得很好的文章来解释它们，在这个项目中，我编写了约20个非常好的网站。以下是一个很好的起点：
 
-* <http://www.anandtech.com/show/2738> &lt;- The SSD Anthology article, one of the best ever written!
-* <http://en.wikipedia.org/wiki/Write%5Famplification>
-* <http://en.wikipedia.org/wiki/Flash%5Fmemory#Block%5Ferasure>
-* <http://en.wikipedia.org/wiki/TRIM>
-* <http://www.anandtech.com/show/2614/3>
-* <https://wiki.archlinux.org/index.php/SSD#Tips%5Ffor%5FMaximizing%5FSSD%5FPerformance>
-* <http://wiki.debian.org/SSDoptimization>
+- <http://www.anandtech.com/show/2738> &lt;- SSD文集文章，有史以来最好的之一！
+- <http://en.wikipedia.org/wiki/Write%5Famplification>
+- <http://en.wikipedia.org/wiki/Flash%5Fmemory#Block%5Ferasure>
+- <http://en.wikipedia.org/wiki/TRIM>
+- <http://www.anandtech.com/show/2614/3>
+- <https://wiki.archlinux.org/index.php/SSD#Tips%5Ffor%5FMaximizing%5FSSD%5FPerformance>
+- <http://wiki.debian.org/SSDoptimization>
 
-### Objectives
+### 目标
 
-There are two objectives:
+有两个目标：
 
-* Reduce the _number_ of writes, accomplished using tmpfs, trim support, and other techniques.
-* Reduce the _size_ of data written, accomplished with partition alignment and formatted block size.
+* 减少写入次数，使用tmpfs、修剪支持和其他技术来完成。
+* 减少写入数据的大小，通过分区对齐和格式化块大小来实现。
 
-### Decision Time
+### 决策时间
 
-#### Select Your SSD
+#### 选择你的SSD
 
-Make sure the SSD has trim support and is known to work on your operating system, especially if GPT partitioning will be used. All SSD release since 2013 support trim. Note that the trim command can invoke a slowdown in an SSD due to the duration of the function, this is offset by the benefits. The SATA 3.1 specification provides for a new Queued Trim Command, that allows SATA SSDs to execute trim without impacting normal operation. Hopefully, this will eventually show up in SSDs and Linux support soon.
+确保SSD支持修剪功能并且在你的操作系统上能够正常工作，尤其是如果将使用GPT分区。自2013年以来发布的所有SSD都支持修剪。请注意，由于函数的时间，修剪命令可能会导致SSD变慢，然而这会被它的好处所抵消。SATA 3.1规范提供了一个新的排队修剪命令，允许SATA SSD在不影响正常操作的情况下执行修剪。希望这个功能很快会在SSD和Linux中得到支持。
 
-#### Decide Partitioning Format
+#### 决定分区格式
 
-Most people will keep the same partition table format as the HDD to be replaced, however, consider changing if it uses the old and ancient **M**aster **B**oot **R**ecord format. The newer **G**UID **P**artition **T**able format has many advantages, some are:
+大多数人会保留与要替换的HDD相同的分区表格式，但如果它使用了旧的和古老的MBR（主引导记录）格式，考虑更改。新的GUID（全局唯一标识符）分区表格式具有许多优势，其中一些是：
 
-* GPT is required for UEFI motherboards
-* Support many more partitions
-* Support much larger partitions
-* Keeps a duplicate partition table for recovery
+* UEFI主板需要GPT格式
+* 支持更多的分区
+* 支持更大的分区
+* 保留恢复的副本分区表
 
-The reason to decide now will become obvious later. Consider these issues during your decision:
+你现在决定的原因将在后面变得明显。在你的决策过程中考虑以下问题：
 
-* Does the motherboard use BIOS or UEFI?
-* Does your boot mechanism or boot manager support GPT?
-* Will the SSD be used on future UEFI motherboard upgrades?
+* 主板使用的是BIOS还是UEFI？
+* 你的启动机制或引导管理器支持GPT吗？
+* 这个SSD将在未来的UEFI主板升级中使用吗？
 
-In our case, the original HDD used MBR partitioning, and LVM circumvented the limits of MBR since there were many partitions. Our SSD uses GPT partitioning for the following reasons:
+在我们的情况下，原始的HDD使用了MBR分区，而LVM绕过了MBR的限制，因为有很多分区。我们的SSD使用GPT分区出于以下原因：
 
-1. Eliminate the MBR partition limits, although not as elegantly as LVM.
-2. Eliminate LVM since there could be potential trim issues, also reduces complexity.
-3. All future motherboards will be UEFI and GPT is required for UEFI.
+1. 消除MBR分区的限制，虽然不如LVM那样优雅。
+2. 消除LVM，因为可能会出现修剪问题，同时减少复杂性。
+3. 所有未来的主板将使用UEFI，UEFI要求使用GPT分区。
 
-#### Decide Which File System to Use
+#### 决定使用哪种文件系统
 
-_Activating SSD trim support is mandatory tuning_. Trim is not supported for all file systems on all Linux kernels so it's very important that you select a file system that has trim support in your kernel version. Starting with 3.7 of the kernel, mounting with trim is supported for btrfs, ext4, (v)fat, gfs2, jfs, nilfs2, and xfs file systems. There is an fstrim utility that can be used with btrfs, ext3, etx4, ocfs2, and xfs.
+**激活SSD修剪支持是必需的调整**。并非所有文件系统在所有Linux内核上都支持修剪，所以选择一个在您的内核版本中具有修剪支持的文件系统非常重要。从内核的3.7版本开始，btrfs、ext4、(v)fat、gfs2、jfs、nilfs2和xfs文件系统都支持修剪。还有一个名为fstrim的实用工具，可用于btrfs、ext3、ext4、ocfs2和xfs。
 
-#### Increase Use of tmpfs
+#### 增加tmpfs的使用
 
-Since reducing writes to the SSD is the major objective you should decide what directories can be moved to tmpfs. I decided to move /tmp, some /var and even thumbnails to tmpfs. Another critical item to move to tmpfs is the web browser and/or server cache. You will have to decide how much you can move based on available memory, the more the better. Of course, keep in mind all tmpfs is cleared with each reboot.
+由于减少对SSD的写入是主要目标，您应该决定哪些目录可以移动到tmpfs。我决定将/tmp，一些/var甚至缩略图移动到tmpfs。另一个需要移动到tmpfs的关键项目是Web浏览器和/或服务器缓存。根据可用内存，您将不得不决定可以移动多少，越多越好。当然，请记住每次重新启动都会清除所有tmpfs。
 
-#### Journalling
+#### 日志
 
-Some sites recommend turning journalling off for the file system to reduce writes. I felt more comfortable leaving journalling on which turned out to be a wise decision since there were kernel crashes during this work unrelated to the SSD. No data was lost at any time. If you decide to turn journalling off, a web search will show you how.
+一些网站建议关闭文件系统的日志功能以减少写入。出于对于SSD无关的内核崩溃的安全考虑，我选择保持日志功能打开，这证明是一个明智的决定。在任何时间都没有丢失数据。如果您决定关闭日志功能，可以通过网络搜索找到相关方法。
 
-### AHCI is Required!
+### AHCI 是必须的！
 
-SSD trim support is very important! The Linux kernel requires the SATA controller set to AHCI mode to use trim support. Most motherboards have an option in the BIOS or UEFI, just make sure its set for AHCI.
+SSD修剪支持非常重要！Linux内核要求将SATA控制器设置为AHCI模式以使用修剪支持。大多数主板在BIOS或UEFI中都有一个选项，确保设置为AHCI模式。
 
-### Prepare the SSD for Partitioning
+### 准备SSD进行分区
 
-#### Update Firmware
+#### 更新固件
 
-Always use the latest firmware since SSDs are far more complicated than HDDs and there are a constant stream of fixes from vendors. At the time of this writing the vendor with the GPT problem is still fixing it. Our Intel SSD had a firmware update before the install.
+始终使用最新的固件，因为SSD比HDD复杂得多，并且供应商不断提供修复。在撰写本文时，出现GPT问题的供应商仍在修复中。我们的Intel SSD在安装之前进行了固件更新。
 
-#### Perform a Secure Erase
+#### 进行安全擦除
 
-Never take an SSD that has been used and simply copy over it! If you read about how SSDs work you learned that previous data can cause a slowdown, and an _operating system format will not resolve the problem, in fact, it may make it worse_. To demonstrate the issue let's compare the SSD and HDD with this process:
+千万不要拿已经使用过的SSD直接复制覆盖！如果你了解SSD的工作原理，你会知道先前的数据会导致减速，而**操作系统的格式化并不能解决这个问题，事实上可能会更糟**。为了证明这个问题，我们将SSD和HDD进行比较：
 
-1. Take two previously used identical HDDs.
-2. Partition and format them with the operating system identically.
-3. Copy identical data to both HDDs, or use a disk duplicator.
+1. 取两个先前使用过的相同HDD。
+2. 使用操作系统对它们进行相同的划分和格式化。
+3. 将相同的数据复制到两个HDD中，或使用磁盘复制。
 
-Both HDDs will have identical physical locations for all of the data. Now perform the same steps on two identical SSDs with one or both of them previously used. Although the OS will report identical sectors, directories, etc. _the true physical location of data will be different_ and _they will perform differently_. Any previously used SSD must first be _Security Erased_ prior to partitioning to restore the SSD to it's factory state and closer to its factory performance. Here are the steps that worked on this system:
+两个HDD将具有完全相同的数据物理位置。现在，在一个或两个先前使用过的相同SSD上执行相同的步骤。尽管操作系统会报告相同的扇区、目录等，**数据的真实物理位置将是不同的，并且它们的性能也会不同**。任何先前使用过的SSD在分区之前必须先进行**安全擦除**，以恢复SSD到出厂状态并接近其出厂性能。以下是在本系统上工作的步骤：
 
-Examine the SSD options with the Linux hdparm command (change sdX to your SSD):
+使用Linux的hdparm命令查看SSD选项（将sdX更改为您的SSD）：
 
-   hdparm -I /dev/sdX
+  hdparm -I /dev/sdX
 
-The response should look something like this:
+响应应该类似于以下内容：
 
-  Security: 
-   Master password revision code = 65534
-               supported
-       not     enabled
-       not     locked
-       not     frozen
-       not     expired: security count
-               supported: enhanced erase
-       2min for SECURITY ERASE UNIT. 2min for ENHANCED SECURITY ERASE UNIT.
+  安全: 
+   主密码修订代码 = 65534
+               支持
+       未     启用
+       未     锁定
+       未     冻结
+       未     过期: 安全计数
+               支持: 增强擦除
+       安全擦除单位需要 2 分钟。增强安全擦除单位需要 2 分钟。
 
-If you see "not frozen" proceed with the next step. If you see "frozen" then you cannot proceed. The most common way to unfreeze is to pull the data and power plugs out of the SSD and reinsert them. If this does not solve the issue you will need to research how to unfreeze your model of SSD.
+如果你看到"not frozen"，则进行下一步。如果你看到"frozen"，则不能进行。解冻的最常见方法是将数据和电源插头拔出SSD，然后重新插入。如果这不能解决问题，你就需要研究如何解冻你型号的SSD。
 
-In order to perform a security erase you must first set a password by issuing the command (Abcd is the password):
+要执行安全擦除操作，你首先需要通过以下命令设置密码（Abcd是密码）：
 
    hdparm --user-master u --security-set-pass Abcd /dev/sdX
 
-Check the a password is set:
+检查是否设置了密码：
 
    hdparm -I /dev/sdX
 
-You should see "enabled" under "Master Password". In my case "frozen" was also set on so I unplugged/plugged the SSD as mentioned above to unfreeze.
+你应该在"Master Password"下看到"enabled"。在我的情况下，"frozen"也被设置了，因此我按照上述方法拔掉/插回了SSD来解冻。
 
-Perform the SSD security erase:
+执行SSD安全擦除：
 
    time hdparm --user-master u --security-erase Abcd /dev/sdX
 
-This not only resets all the cells but clears the password as well.
+这不仅会重置所有的单元，还会清除密码。
 
-Additional information can be found at <https://wiki.archlinux.org/index.php/SSD%5FMemory%5FCell%5FClearing> and many other sites.
+可以在 <https://wiki.archlinux.org/index.php/SSD%5FMemory%5FCell%5FClearing> 和其他许多网站上找到更多信息。
 
-### Partition the SSD
+### 分区SSD
 
-#### Partition Alignment
+#### 分区对齐
 
-_Partition alignment turns out to be one of the most important items to get right but is very complicated_. There are many web articles about partition alignment that you can spend weeks reading. I decided to use the gparted live CD to partition because it has an easy option to align partitions on a megabyte boundary which solves the problem. That wastes a few bytes but gets it right. I highly recommend aligning on 1 meg boundaries to avoid the issue. Getting this wrong will cost a lot of time since you have to start over with a security erase.
+_分区对齐是一个非常重要的步骤，但也非常复杂。_有很多关于分区对齐的网络文章，你可能会花几周时间阅读。我决定使用gparted live CD来进行分区，因为它有一个简便的选项可以在以MB为边界对齐分区，这解决了问题。这会浪费一些字节，但可以正确对齐。我强烈建议使用1MB边界进行对齐，以避免问题。如果做错了，将会浪费很多时间，因为你必须重新执行安全擦除操作。
 
-#### Partition Table Type
+#### 分区表类型
 
-Remember the MBR/GPT decision? Now is the time to use it. If you're not changing from MBR to GPT skip to [Formatting the File System](http://wiki.freeswitch.org/wiki/SSD%5FTuning%5Ffor%5FLinux#Formatting%5Fthe%5FFile%5FSystem), otherwise, determine if a special "bios\_boot" partition must be added to the beginning of the SSD:
+还记得MBR/GPT的选择吗？现在是使用的时候了。如果你不打算从MBR改成GPT，请跳到[格式化文件系统](http://wiki.freeswitch.org/wiki/SSD%5FTuning%5Ffor%5FLinux#Formatting%5Fthe%5FFile%5FSystem)。否则，确定是否需要在SSD的开头添加一个特殊的"bios\_boot"分区：
 
-* If the SSD is to use MBR then the motherboard must be BIOS and no bios partition is needed.
-* If the SSD is to use GPT and the motherboard is UEFI then no bios partition is needed.
-* If the SSD is to use GPT and the motherboard is BIOS then a special bios\_boot partition is required.
+* 如果SSD要使用MBR，则主板必须是BIOS，不需要bios分区。
+* 如果SSD要使用GPT且主板是UEFI，则不需要bios分区。
+* 如果SSD要使用GPT且主板是BIOS，则需要一个特殊的bios\_boot分区。
 
-This motherboard is BIOS and the SSD is GPT so bios\_boot is required as partition number 1\. GPARTED was used to create the following partitions:
+这个主板是BIOS，SSD是GPT，所以需要bios\_boot作为1号分区。使用GPARTED创建了以下分区：
 
- Number  Start   End     Size    File system     Name  Flags 
-  1      1049kB  3146kB  2097kB                        bios_grub 
-  2      3146kB  135MB   132MB   ext4 
-  3      135MB   32.3GB  32.2GB  ext4 
-  4      32.3GB  64.6GB  32.2GB  ext4 
-  5      64.6GB  96.8GB  32.2GB  ext4 
-  6      96.8GB  129GB   32.2GB  ext4 
-  7      129GB   138GB   8590MB  linux-swap(v1)
+ 数字  开始位置  结束位置  大小     文件系统        名称    标志 
+  1    1049kB   3146kB   2097kB                  
+  2    3146kB   135MB    132MB    ext4 
+  3    135MB    32.3GB   32.2GB   ext4 
+  4    32.3GB   64.6GB   32.2GB   ext4 
+  5    64.6GB   96.8GB   32.2GB   ext4 
+  6    96.8GB   129GB    32.2GB   ext4 
+  7    129GB    138GB    8590MB   linux-swap(v1)
 
-Grub2 is the boot manager, it requires a 2 megabyte bios partition with the bios\_grub flag turned on. After the partitions were created the flag was turned on using the parted command:
+Grub2是引导管理器，它需要一个带有bios\_grub标志的2兆字节的bios分区。在创建分区后，可以使用parted命令打开该标志：
 
    parted /dev/sdX
-      set 1 bios_grub on     &lt;- type this as input to parted
+      set 1 bios_grub on     &lt;-将此作为输入键入parted
 
-When grub2 is installed as the boot manager to this SSD, it will automatically load the bios partition. There is no need to ever reference it. If a different boot manager is used you will need to find the GPT requirements for your boot manager although most are very similar.
+当将grub2安装为此SSD的引导管理器时，它将自动加载bios分区。不需要引用它。如果使用其他引导管理器，您需要找到适用于该引导管理器的GPT要求，虽然大多数相似。
 
-### Formatting the File System
+### 格式化文件系统
 
-Unlike an HDD, when data is rewritten to an SSD the old data is deleted and the new data written to a different area, the old data must eventually be erased by the SSD. Another difference is that although the smallest data that can be written is a page such as 4k, the smallest data that can be erased is the much larger erase block size which may be 512k! If your SSD is MLC then 4k formatting will be fine, if it's an SLC the erase block size is much smaller and varies depending on SSD model. The details are described in the links provided above. Most often the default file system block size is fine, although you may want to look into this if your SSD uses SLC flash.
+与HDD不同的是，当数据重新写入SSD时，旧数据将被删除，新数据被写入不同的区域，而旧数据最终必须被SSD擦除。另一个区别是，即使最小可写入的数据是一个页面，比如4k，最小可擦除的数据是更大的擦除块大小，可能为512k！如果您的SSD是MLC，则使用4k格式化就可以了，如果是SLC，则擦除块大小要小得多，并且因SSD型号而异。详细信息请参考上面提供的链接。大多数情况下，默认文件系统块大小是可以的，但如果您的SSD使用SLC闪存，您可能需要考虑一下这个问题。
 
-### Prepare FSTAB Entries
+### 准备FSTAB条目
 
-You should prepare the new FSTAB entries _before_ copying a source drive to avoid copying data moved to tmpfs. Changes made to this system include:
+在复制源驱动器之前，您应该准备好新的FSTAB条目，以避免复制到tmpfs中移动的数据。对系统所做的更改包括：
 
-* Added discard to the ext4 file system to activate SSD trim support.
-* Added noatime to reduce writes, note that it is known some applications have problems with this but they are rare.
-* Added nodiratime to reduce writes.
-* Moved some directories to tmpfs.
-* Created /ramdisk for Firefox cache but could have used Firefox config to replace disk cache with memory cache.
+* 在ext4文件系统中添加discard以激活SSD TRIM支持。
+* 添加noatime以减少写入量，请注意，已知某些应用程序在使用此选项时可能会出现问题，但这种情况很少见。
+* 添加nodiratime以减少写入量。
+* 将某些目录移动到tmpfs中。
+* 为Firefox缓存创建/ramdisk目录，但也可以使用Firefox配置将磁盘缓存替换为内存缓存。
 
-This is the FSTAB used, the first six are the SSD partitions:
+以下是使用的FSTAB，前六个是SSD分区：
 
- LABEL=SSDsuse121     /                    ext4 acl,noatime,nodiratime,discard   1 1 
- LABEL=SSDsuse121m    /suse121m            ext4 acl,noatime,nodiratime,discard   0 2 
- LABEL=SSDcommon      /common              ext4 acl,noatime,nodiratime,discard   0 2 
- LABEL=SSDsuse122m    /suse122m            ext4 acl,noatime,nodiratime,discard   0 2 
- LABEL=SSDgrub        /grub                ext4 noacl,noatime,nodiratime,discard 0 2 
- LABEL=SSDswap        swap                 swap defaults              0 0 
- proc                 /proc                proc defaults              0 0 
- sysfs                /sys                 sysfs noauto               0 0 
- debugfs              /sys/kernel/debug    debugfs noauto             0 0 
- usbfs                /proc/bus/usb        usbfs noauto               0 0 
- devpts               /dev/pts             devpts mode=0620,gid=5     0 0 
- tmpfs                /ramdisk             tmpfs nodev,nosuid,noatime,mode=1777,size=100M 0 0 
- tmpfs                /tmp                 tmpfs defaults,noatime,mode=1777   0  0 
- tmpfs                /var/spool           tmpfs defaults,noatime,mode=1777   0  0 
- tmpfs                /var/tmp             tmpfs defaults,noatime,mode=1777   0  0
- #  .thumbnails files are never deleted and can grow quite large over time.
- tmpfs                /root/.thumbnails    tmpfs defaults,noatime,mode=1777   0  0
- tmpfs                /home/mario/.thumbnails    tmpfs defaults,noatime,mode=1777   0  0
+标签=SSDsuse121 / ext4 acl，不记录访问时间，不记录目录访问时间，丢弃 1 1
+标签=SSDsuse121m /suse121m ext4 acl，不记录访问时间，不记录目录访问时间，丢弃 0 2
+标签=SSDcommon /common ext4 acl，不记录访问时间，不记录目录访问时间，丢弃 0 2
+标签=SSDsuse122m /suse122m ext4 acl，不记录访问时间，不记录目录访问时间，丢弃 0 2
+标签=SSDgrub /grub ext4 无acl，不记录访问时间，不记录目录访问时间，丢弃 0 2
+标签=SSDswap swap 默认 0 0
+proc /proc proc 默认 0 0
+sysfs /sys sysfs 不自动挂载 0 0
+debugfs /sys/kernel/debug debugfs 不自动挂载 0 0
+usbfs /proc/bus/usb usbfs 不自动挂载 0 0
+devpts /dev/pts devpts mode=0620，gid=5 0 0
+tmpfs /ramdisk tmpfs nodev，nosuid，不记录访问时间，模式=1777，大小=100M 0 0
+tmpfs /tmp tmpfs 默认，不记录访问时间，模式=1777 0 0
+tmpfs /var/spool tmpfs 默认，不记录访问时间，模式=1777 0 0
+tmpfs /var/tmp tmpfs 默认，不记录访问时间，模式=1777 0 0
+#  .thumbnails文件不会被删除，而且随着时间的推移可能会变得很大。
+tmpfs /root/.thumbnails tmpfs 默认，不记录访问时间，模式=1777 0 0
+tmpfs /home/mario/.thumbnails tmpfs 默认，不记录访问时间，模式=1777 0 0
 
-### Prepare the Source Drive
+### 准备源驱动器
 
-_Before copying_ data from the source drive you should delete all of the files you decided to move to tmpfs. Once the data is copied and the new fstab is used you will not have access to the old data. It's best not to copy it in the first place anyway. If you are booted from the partition you are to copy from it would be better to copy it somewhere else first so the files can be deleted easily. If you turned off browser disk caching, etc. don't forget to delete the old HDD caches before copying to the SSD.
+在从源驱动器复制数据之前，您应该删除所有您决定移动到tmpfs的文件。一旦数据被复制并且使用新的fstab文件，您将无法访问旧数据。最好根本不要复制它。如果您是从要复制的分区引导的，最好先复制到其他地方，这样可以轻松删除文件。如果您关闭了浏览器的磁盘缓存等功能，请不要忘记在复制到SSD之前删除旧的HDD缓存。
 
-### Linux Tuning
+### Linux调整
 
-#### Elevator Setting
+#### 电梯设置
 
-Most Linux systems use I/O scheduling algorithms designed for HDDs. For instance, some order disk writes to the same device to reduce total seek time. Since SSDs are so fast and don't have any seek time, the I/O scheduler for an SSD should be deactivated because it adds unnecessary overhead. There are two ways to achieve this:
+大多数Linux系统使用为HDD设计的I/O调度算法。例如，一些将磁盘写入排序到同一设备上以减少总寻道时间。由于SSD速度非常快且没有任何寻道时间，SSD的I/O调度程序应该被停用，因为它会增加不必要的开销。有两种方法可以实现这一点：
 
-1. If the only drive(s) in the system are SSD, add elevator=noop to the kernel boot options. This is typically done in the boot manager configuration.
-2. If the main drive is an SSD and there is a very low use HDD, consider adding elevator=noop to the kernel boot options.
-3. if the system uses SSDs and HDDs heavily, noop should be activated only for the SSDs, not the HDDs. This usually involves adding a startup script. How this is accomplished varies depending on the Linux distribution so you need to do some basic research for your distribution. You may find this useful: <https://wiki.archlinux.org/index.php/SSD#I.2FO%5FScheduler>
+1. 如果系统中的唯一驱动器是SSD，请将elevator=noop添加到内核引导选项中。这通常在引导管理器配置中完成。
+2. 如果主要驱动器是SSD，并且有一个几乎不使用的HDD，请考虑将elevator=noop添加到内核引导选项中。
+3. 如果系统在大量使用SSD和HDD，则只应为SSD激活noop，而不是HDD。这通常涉及添加一个启动脚本。如何完成这个任务取决于Linux发行版，因此您需要对您的发行版进行一些基本研究。您可能会发现这个链接有用：<https://wiki.archlinux.org/index.php/SSD#I.2FO%5FScheduler>
 
 #### Swappiness
 
-This only applies if the swap file is moved to the SSD. The swappiness value affects the activity of the swap file. If you placed the swap file on the SSD you should _reduce_ the swappiness of Linux. There are many good explanations but simply put: Linux tries to anticipate when something _might_ need to be swapped and does it anyway. By reducing swappiness Linux is less likely to do this so swap writes are reduced. Swappiness is a value from 0 to 100, the higher the more swappiness. You can check your current value using:
+只有当交换文件被移动到 SSD 后才适用此操作。swappiness 值会影响交换文件的活动。如果你将交换文件放在 SSD 上，应该*减小* Linux 的 swappiness。有很多好的解释，简单来说：Linux 试图预测什么时候可能需要进行交换，并且一直进行交换。通过降低 swappiness，Linux 更不太可能这样做，从而减少了交换的写入。Swappiness 是一个从 0 到 100 的值，越高越大。可以使用以下命令来检查当前值：
 
    cat /proc/sys/vm/swappiness
 
-There are a couple of different ways to change swappiness permanently. I changed this system from it's default of 60 to 1 by adding the following to /etc/sysctl.conf:
+有几种不同的方法可以永久更改 swappiness。我通过在 /etc/sysctl.conf 中添加以下内容将该系统的默认值从 60 更改为 1：
 
    vm.swappiness=1
    vm.vfs_cache_pressure=50
 
-Research showed that reducing swappiness when using HDDs also resulted in better performance.
+研究表明，在使用 HDD 时减小 swappiness 也能获得更好的性能。
 
-#### Never Do This!
+#### 绝不能这样做！
 
-* Never perform defragmentation, it serves no purpose but to increase SSD wear and slow it down.
-* Never use utilities that overwrite a file repeatedly such as shred, unlike an HDD each SSD rewrite is to a different area, the rm command is sufficient.
+* 绝对不要进行碎片整理，这只会增加 SSD 的磨损并降低速度。
+* 永远不要使用多次覆盖文件的工具，例如 shred，与 HDD 不同，每次 SSD 重写都是在不同的区域，使用 rm 命令就足够了。
 
-#### FreeSWITCH's core.db I/O bottleneck
+#### FreeSWITCH 的 core.db I/O 瓶颈
 
-On a normal configuration, core.db is written to disk almost every second, generating hundreds of block-writes per second. To avoid this problem, turn /usr/local/freeswitch/db into an in-memory filesystem. If you use SSDs, it is CRITICAL that you move coe.db to a RAM disk to prolong the life of the SSD.
+在正常配置下，core.db 几乎每秒都会写入磁盘，每秒产生数百个块写入。为了避免此问题，将 /usr/local/freeswitch/db 转换为内存文件系统。如果使用的是 SSD，请务必将 coe.db 移动到 RAM 磁盘以延长 SSD 的使用寿命。
 
-On current FreeSWITCH versions you should use the documented "core-db-name" parameter in switch.conf.xml (simply restart FreeSwitch to apply the changes):
+在当前的 FreeSWITCH 版本中，您应该在 switch.conf.xml 文件中使用文档中描述的 "core-db-name" 参数（只需重启 FreeSwitch 即可应用更改）：
 
    &lt;param name="core-db-name" value="/dev/shm/core.db" />
 
-Otherwise you may create a dedicated in-memory filesystem, for example by adding the following to the end of /etc/fstab
+否则，您可以创建一个专用的内存文件系统，例如在 /etc/fstab 的末尾添加以下内容：
 
+```plaintext
 #
-# Example of /etc/fstab entry (using default size)
+# /etc/fstab 示例（使用默认大小）
 #
 tmpfs /usr/local/freeswitch/db tmpfs defaults 0 0
 #
-# To specify a size for the filesystem use the appropriate mount(1) option:
+# 若要为文件系统指定大小，请使用适当的 mount(1) 选项：
 #
 # tmpfs /usr/local/freeswitch/db tmpfs defaults,size=4g 0 0
 #
+```
 
-To use the new filesystem run the following commands (or the equivalent commands for your OS):
+要使用新的文件系统，请运行以下命令（或适用于您的操作系统的等效命令）：
 
+```plaintext
 mount /usr/local/freeswitch/db
 /etc/init.d/freeswitch restart
+```
 
-An alternative is to move the core DB into an ODBC database, which will move this processing to a DBMS which is capable of handling large numbers of requests far better and can even move this processing onto another server.
-
-
+另一种选择是将核心数据库移入到一个 ODBC 数据库中，这将把这个处理工作转移到能更好地处理大量请求的数据库管理系统(DBMS)，甚至可以将这个处理工作转移到另一台服务器上。

@@ -1,33 +1,30 @@
+# Lua调用函数的参数
 
-# Lua arguments calling functions 
+## 关于
 
- 
+本文是一个简短的代码片段，展示了如何通过使用脚本的参数来调用函数。
 
-## About
+点击此处展开目录
 
-This article is brief code snippet to show how you can call functions in a script by using arguments to the script.
+* 1 [通过传递给脚本的参数调用lua函数](#通过传递给脚本的参数调用lua函数)
 
-Click here to expand Table of Contents
+## 通过传递给脚本的参数调用lua函数
 
-* 1 [Call a lua function via an argument passed to the script.](#call-a-lua-function-via-an-argument-passed-to-the-script)
-
-## Call a lua function via an argument passed to the script.
-
-add this to your dialplan, and dial 582
+将以下代码添加到您的拨号计划，并拨打582
 
 ```xml
     <extension name="test lua">
       <condition field="destination_number" expression="^(lua|582)$">
         <action application="lua" data="test.lua"/>
-     </condition>
+      </condition>
     </extension>
 
 
 ```
 
-This example is using bind\_digit\_action to make this happen. You can dial \*, #, or 0 to hear script in action
+此示例使用bind\_digit\_action实现。您可以拨打\*、#或0来听脚本的执行情况
 
-```xml
+```lua
 local uuid = session:getVariable("uuid");
 local wav1 = "ivr/ivr-welcome_to_freeswitch.wav";
 local wav2 = "ivr/ivr-please_hold_while_party_contacted.wav";
@@ -64,6 +61,4 @@ session:execute("playback","tone_stream://%(100,0,150);loops=-1");
 
 ```
 
- in this test case you initially hear a high beep then land on endless tone... dialing star(\*), the bind\_digit\_action is calling up a second instance of the script, so in those argumentative functions 1 & 2 you call "session:destroy();" when finished with that function to end that secondary instance of script, and return you back to first instance of script. Notice you do not hear the high beep this time, so basically picking up where you left off on first lua instance, landing you back on the endless tone from which you came before hitting \* or #... Dial 0 to hangup...
-
-
+在这个测试用例中，你开始听到一个高音蜂鸣声，然后进入无休止的音调...拨打星号(\*)时，bind\_digit\_action会调用脚本的第二个实例，所以在这些有争议的功能1和2中，你在完成这个函数后调用"session:destroy();"来结束脚本的第二个实例，并将你返回到第一个脚本实例。注意，这次你听不到高音蜂鸣声，所以基本上你从之前按下\*或#之前停下的地方继续进行第一个lua实例，将你带回到无休止的音调...拨打 0 来挂断。。。

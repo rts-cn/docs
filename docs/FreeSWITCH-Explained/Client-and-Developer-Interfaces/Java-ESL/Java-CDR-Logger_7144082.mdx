@@ -1,41 +1,38 @@
+# Java CDR记录器
 
-# Java CDR Logger 
+## 关于
 
- 
+CDRLogger是一个Java servlet应用程序，与 [mod\_xml\_cdr](../../Modules/mod_xml_cdr_6587377.mdx#faq) 协同工作，将CDR记录存储到数据库表中。该应用程序解析CDR XML数据，并将其存储到预配置的字段中。当前应用程序的“war”打包只包括并与PostgreSQL数据库驱动进行了测试。其他数据库驱动程序支持可以轻松地添加（MySQL，SQL Server，Oracle等）。
 
-## About
+单击此处以展开目录
 
-CDRLogger is a Java servlet application that works together with [mod\_xml\_cdr](../../Modules/mod_xml_cdr_6587377.mdx#faq) to store CDR records into a database table. The application parses the CDR XML data and stores it into pre-configured fields. Current application 'war' packaging only includes and tests with PostgreSQL database driver. Other database driver support could be easily included (MySQL, SQL Server, Oracle, etc).
+* 1 [需求](#requirement)
+   * 1.1 [使用Tomcat进行安装](#installation-w-tomcat)
+   * 1.2 [数据库连接设置](#database-connection-setup)
+   * 1.3 [测试安装](#testing-the-installation)
+   * 1.4 [自动模式生成](#automatic-schema-generation)
+   * 1.5 [配置mod\_xml\_cdr](#configure-mod_xml_cdr)
+   * 1.6 [其他配置](#additional-configuration)
 
-Click here to expand Table of Contents
-
-* 1 [Requirement](#requirement)  
-   * 1.1 [Installation w/ Tomcat](#installation-w-tomcat)  
-   * 1.2 [Database Connection Setup](#database-connection-setup)  
-   * 1.3 [Testing The Installation](#testing-the-installation)  
-   * 1.4 [Automatic Schema Generation](#automatic-schema-generation)  
-   * 1.5 [Configure mod\_xml\_cdr](#configure-mod_xml_cdr)  
-   * 1.6 [Additional Configuration](#additional-configuration)
-
-## Requirement
+## 需求
 
 * Java Runtime Environment 1.5
-* Java Servlet Container (Tomcat, JBoss, Weblogic, etc)
-* Database Server: PostgreSQL ( MySQL, Oracle, SQL Server, etc)
+* Java Servlet容器（Tomcat，JBoss，Weblogic等）
+* 数据库服务器：PostgreSQL（MySQL，Oracle，SQL Server等）
 
-### Installation w/ Tomcat
+### 使用Tomcat进行安装
 
-* Make sure JRE and Tomcat is successfully installed.
-* Download cdr-logger war package from [here](http://svn.freeswitch.org/svn/freeswitch/branches/jkr888/CDRLogger/tags/Release-1.0/target/cdr-logger-1.0.war)
-* Copy cdr-logger-x.x.war to tomcat web apps directory (replace x.x with the right version, ie. cdr-logger-1.0.war)
+* 确保JRE和Tomcat已成功安装。
+* 从[这里](http://svn.freeswitch.org/svn/freeswitch/branches/jkr888/CDRLogger/tags/Release-1.0/target/cdr-logger-1.0.war)下载cdr-logger war包。
+* 将cdr-logger-x.x.war复制到tomcat web apps目录（用正确版本替换x.x，例如cdr-logger-1.0.war）
 
-cp &lt;your-download-path>/cdr-logger-x.x.war &lt;tomcat-webapps-dir>
+cp <your-download-path>/cdr-logger-x.x.war <tomcat-webapps-dir>
 
-* If tomcat is running, the war package should automatically expanded into its own directory
+* 如果tomcat正在运行，war包应该会自动扩展为其自己的目录。
 
-### Database Connection Setup
+### 数据库连接设置
 
-Edit cdr-logger-x.x/WEB-INF/classes/hibernate.conf.xml under tomcat web apps. Change the database connection setup according to your database settings. For example for postgresql:
+编辑cdr-logger-x.x/WEB-INF/classes/hibernate.conf.xml文件，在tomcat的web应用程序下进行修改。根据你的数据库设置修改数据库连接设置。例如，针对postgresql:
 
 &lt;property name="connection.url">jdbc:postgresql://localhost/mydb&lt;/property>
 &lt;property name="connection.username">postgres&lt;/property>
@@ -44,30 +41,31 @@ Edit cdr-logger-x.x/WEB-INF/classes/hibernate.conf.xml under tomcat web apps. Ch
 &lt;property name="connection.password">yourpassword&lt;/property>
 &lt;property name="transaction.factory_class">org.hibernate.transaction.JDBCTransactionFactory&lt;/property>
 
-### Testing The Installation
+### 测试安装
 
-Restart tomcat, under Ubuntu should be like
+重新启动tomcat，在Ubuntu下应该是如下命令：
 
 /etc/init.d/tomcat5.5 restart
 
-point your browser to
+在浏览器中输入以下地址：
 
 http://yourip:port/cdr-logger-x.x/schema
 
-It should return some error message similar to below
+它应该返回类似以下的错误信息：
 
-Unrecognized 'null' operation type. Type should be 'insert' or 'create'.
+无法识别的'null'操作类型。类型应该是'insert'或'create'。
 
-This indicate, the CDRLogger application properly installed.
+这表明CDRLogger应用程序已经成功安装。
 
-### Automatic Schema Generation
+### 自动模式生成
 
-Now, to automatically generate database schema, point your browser to :
+现在，要自动生成数据库模式，请在浏览器中输入以下地址：
 
 http://yourip:port/cdr-logger-x.x/schema?type=create
 
-This will start automatic schema generation. Check your database, it should generate following database table :
+这将启动自动模式生成。检查你的数据库，应该生成以下数据库表：
 
+```sql
 CREATE TABLE freeswitch_cdrs
 (
   id bigint NOT NULL,
@@ -116,110 +114,145 @@ CREATE TABLE freeswitch_cdr_data
 WITH (OIDS=FALSE);
 ALTER TABLE freeswitch_cdr_data OWNER TO postgres;
 
-You can test the application to insert test record, point your browser to :
+您可以测试应用程序以插入测试记录，将浏览器指向：
 
 http://yourip:port/cdr-logger-x.x/schema?type=insert
 
-Then check freeswitch\_cdrs table, it should create a sample record.
+然后检查freeswitch\_cdrs表，应该会创建一个示例记录。
 
-### Configure mod_xml_cdr
+### 配置mod_xml_cdr
 
-Setup mod\_xml\_cdr to point to CDRLogger application.
+设置mod\_xml\_cdr指向CDRLogger应用程序。
+```
 
-&lt;configuration name="xml_cdr.conf" description="XML CDR CURL logger">
-&lt;settings>
-   &lt;param name="url" value="http://yourip:port/cdr-logger-x.x/cdr"/>
-   &lt;param name="retries" value="2"/>
-   &lt;param name="delay" value="120"/>
-   &lt;param name="log-dir" value="/var/log/cdr"/>
-   &lt;param name="err-log-dir" value="/var/log/cdr/errors"/>
-   &lt;param name="encode" value="true"/>
-&lt;/settings>
+<configuration name="xml_cdr.conf" description="XML CDR CURL logger">
+<settings>
+   <param name="url" value="http://yourip:port/cdr-logger-x.x/cdr"/>
+   <param name="retries" value="2"/>
+   <param name="delay" value="120"/>
+   <param name="log-dir" value="/var/log/cdr"/>
+   <param name="err-log-dir" value="/var/log/cdr/errors"/>
+   <param name="encode" value="true"/>
+</settings>
 
-Make a test call and check the database table. if there is a new CDR record populated. Sit down and enjoy your coffee ;)
+进行一次测试通话并检查数据库表。如果有新的CDR记录生成，请坐下来享受咖啡 ;)
 
-### Additional Configuration
+### 其他配置
 
-vi cdr-logger-x.x/WEB-INF/web.xml, there is a couple settings that you can tune. Don't forget to restart tomcat to make sure it pickup the latest changes.
+在 cdr-logger-x.x/WEB-INF/web.xml 中，有一些您可以调整的设置。别忘了重新启动tomcat以确保它使用最新的更改。
 
-* Turn on/off raw xml storage (storeRawXML)
-* Customize xml tag storage (custom\_tag\_n)
-* Turn on/off automatic schema generation url (allowChemaGenerator)
+* 打开/关闭原始XML存储（storeRawXML）
+* 自定义XML标签存储（custom\_tag\_n）
+* 打开/关闭自动生成模式URL（allowChemaGenerator）
 
-&lt;?xml version="1.0" encoding="UTF-8"?>
-&lt;web-app xmlns="http://java.sun.com/xml/ns/j2ee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://java.sun.com/xml/ns/j2ee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	version="2.4"
 	xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd">
-	&lt;description>Freeswitch CDR Logger&lt;/description>
-	&lt;display-name>com.jkr.freeswitch.cdr.logger
-	&lt;/display-name>
-	&lt;distributable />
-	&lt;welcome-file-list>
-		&lt;welcome-file>index.jsp&lt;/welcome-file>
-		&lt;welcome-file>index.html&lt;/welcome-file>
-	&lt;/welcome-file-list>
-	&lt;servlet>
-		&lt;servlet-name>CDRLogger&lt;/servlet-name>
-		&lt;servlet-class>com.jkr.freeswitch.cdr.logger.FreeswitchCDRLogger&lt;/servlet-class>
-		&lt;!-- Log raw cdr XML -->
-		&lt;init-param>
-			&lt;param-name>StoreRawXML&lt;/param-name>
-			&lt;param-value>false&lt;/param-value>
-		&lt;/init-param>
-		&lt;init-param>
-			&lt;param-name>custom_tag_1&lt;/param-name>
-			&lt;param-value>caller_id_number&lt;/param-value>
-		&lt;/init-param>
-		&lt;init-param>
-			&lt;param-name>custom_tag_2&lt;/param-name>
-			&lt;param-value>caller_id_name&lt;/param-value>
-		&lt;/init-param>
-		&lt;init-param>
-			&lt;param-name>custom_tag_3&lt;/param-name>
-			&lt;param-value>destination_number&lt;/param-value>
-		&lt;/init-param>
-		&lt;init-param>
-			&lt;param-name>custom_tag_4&lt;/param-name>
-			&lt;param-value>uuid&lt;/param-value>
-		&lt;/init-param>
-		&lt;init-param>
-			&lt;param-name>custom_tag_5&lt;/param-name>
-			&lt;param-value>chan_name&lt;/param-value>
-		&lt;/init-param>
-		&lt;init-param>
-			&lt;param-name>custom_tag_6&lt;/param-name>
-			&lt;param-value>&lt;/param-value>
-		&lt;/init-param>
-		&lt;init-param>
-			&lt;param-name>custom_tag_7&lt;/param-name>
-			&lt;param-value>&lt;/param-value>
-		&lt;/init-param>
-		&lt;init-param>
-			&lt;param-name>custom_tag_8&lt;/param-name>
-			&lt;param-value>&lt;/param-value>
-		&lt;/init-param>
-		&lt;init-param>
-			&lt;param-name>custom_tag_9&lt;/param-name>
-			&lt;param-value>&lt;/param-value>
-		&lt;/init-param>
-	&lt;/servlet>
-	&lt;servlet>
-		&lt;servlet-name>CDRSchema&lt;/servlet-name>
-		&lt;servlet-class>com.jkr.freeswitch.cdr.logger.FreeswitchCDRSchema&lt;/servlet-class>
-		&lt;!-- Log raw cdr XML -->
-		&lt;init-param>
-			&lt;param-name>allowShemaGenerator&lt;/param-name>
-			&lt;param-value>true&lt;/param-value>
-		&lt;/init-param>
-	&lt;/servlet>	
-	&lt;servlet-mapping>
-		&lt;servlet-name>CDRLogger&lt;/servlet-name>
-		&lt;url-pattern>/cdr&lt;/url-pattern>
-	&lt;/servlet-mapping>
-		&lt;servlet-mapping>
-		&lt;servlet-name>CDRSchema&lt;/servlet-name>
-		&lt;url-pattern>/schema&lt;/url-pattern>
-	&lt;/servlet-mapping>
-&lt;/web-app>
+	<description>FreeSwitch CDR Logger</description>
+	<display-name>com.jkr.freeswitch.cdr.logger</display-name>
+	<distributable />
+	<welcome-file-list>
+		<welcome-file>index.jsp</welcome-file>
+		<welcome-file>index.html</welcome-file>
+	</welcome-file-list>
+	<servlet>
+		<servlet-name>CDRLogger</servlet-name>
+		<servlet-class>com.jkr.freeswitch.cdr.logger.FreeSwitchCDRLogger</servlet-class>
+		<!-- Log raw CDR XML -->
+		<init-param>
+			<param-name>StoreRawXML</param-name>
+			<param-value>false</param-value>
+		</init-param>
+		<init-param>
+			<param-name>custom_tag_1</param-name>
+			<param-value>caller_id_number</param-value>
+		</init-param>
+		<init-param>
+			<param-name>custom_tag_2</param-name>
+			<param-value>caller_id_name</param-value>
+		</init-param>
+		<init-param>
+			<param-name>custom_tag_3</param-name>
+			<param-value>destination_number</param-value>
+		</init-param>
+		<init-param>
+			<param-name>custom_tag_4</param-name>
+			<param-value>uuid</param-value>
+		</init-param>
+		<init-param>
+			<param-name>custom_tag_5</param-name>
+			<param-value>chan_name</param-value>
+		</init-param>
+		<init-param>
+			<param-name>custom_tag_6</param-name>
+			<param-value></param-value>
+		</init-param>
+		<init-param>
+			<param-name>custom_tag_7</param-name>
+			<param-value></param-value>
+		</init-param>
+		<init-param>
+			<param-name>custom_tag_8</param-name>
+			<param-value></param-value>
+		</init-param>
+		<init-param>
+			<param-name>custom_tag_9</param-name>
+			<param-value></param-value>
+		</init-param>
+	</servlet>
+	<servlet>
+		<servlet-name>CDRSchema</servlet-name>
+		<servlet-class>com.jkr.freeswitch.cdr.logger.FreeSwitchCDRSchema</servlet-class>
+		<!-- Log raw CDR XML -->
+		<init-param>
+			<param-name>allowShemaGenerator</param-name>
+			<param-value>true</param-value>
+		</init-param>
+	</servlet>	
+	<servlet-mapping>
+		<servlet-name>CDRLogger</servlet-name>
+		<url-pattern>/cdr</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>CDRSchema</servlet-name>
+		<url-pattern>/schema</url-pattern>
+	</servlet-mapping>
+</web-app>
+```
 
+# Markdown 标题
 
+这是一段示例文本，用于演示Markdown格式的翻译。
+
+## 引用文本
+
+> 这是一段引用的文本。
+
+## 列表
+
+- 项目 1
+- 项目 2
+- 项目 3
+
+## 代码块
+
+```python
+print("Hello, World!")
+```
+
+## 链接与图片
+
+这是一个 [百度](https://www.baidu.com) 链接。
+
+这是一张图片：
+
+![图片](https://example.com/image.jpg)
+
+## 表格
+
+| 标题 1 | 标题 2 | 标题 3 |
+|--------|--------|--------|
+| 项目 1 | 项目 2 | 项目 3 |
+| 项目 4 | 项目 5 | 项目 6 |

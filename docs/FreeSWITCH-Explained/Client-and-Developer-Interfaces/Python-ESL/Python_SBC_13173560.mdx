@@ -1,64 +1,49 @@
+# Python_SBC
 
-# Python_SBC 
+## 关于
 
- 
+由[Addison Martin](https://freeswitch.org/confluence/display/~nikko)撰写。本文档介绍了PySBC的相关信息。
 
-## About
+点击此处展开目录
 
-by [Addison Martin](https://freeswitch.org/confluence/display/~nikko) This document covers information about PySBC.
+* 1 [PySBC: 使用Python编写的会话边界控制器](#pysbc-a-session-border-controller-in-python)  
+   * 1.1 [我的计划](#my-plans)  
+   * 1.2 [初始代码](#beginning-code)
 
-Click here to expand Table of Contents
+## PySBC: 使用Python编写的会话边界控制器
 
-* 1 [PySBC: A Session Border Controller in Python](#pysbc-a-session-border-controller-in-python)  
-   * 1.1 [My Plans](#my-plans)  
-   * 1.2 [Beginning Code](#beginning-code)
+FreeSWITCH并不是一个纯会话边界控制器（SBC）。要在FreeSWITCH集群中实现真正的可伸缩度、负载均衡和故障转移，您需要在FreeSWITCH媒体服务器前面使用一个轻量级、高性能的SBC集群来处理媒体代理。
 
-## PySBC: A Session Border Controller in Python
+### 我的计划
 
-FreeSWITCH is not a pure Session Border Controller (SBC). To have a truly scaleable FreeSWITCH cluster with load balancing, and failover, you need a lightweight, high-performance SBC cluster in front of FreeSWITCH Media Servers that handle the media proxy.
-
-### My Plans
-
-SBC written in Python — Using FreeSWITCH ESL libs and Twisted, PySBC is a server written in Python that tracks call volume in each server using ESL. Then, every SIP request PySBC receives, it checks for the lowest loaded server, and responds to the request with a 302 Redirect to that server.
+使用Python编写的SBC - 使用FreeSWITCH ESL库和Twisted，PySBC是一个使用Python编写的服务器，它使用ESL来跟踪每个服务器的呼叫量。然后，PySBC接收到的每个SIP请求，都会检查负载最低的服务器，并通过302重定向将请求发送到该服务器。
 
 BAM! SBC
 
-Redundancy handled with Heartbeat on 2x of these servers
+冗余性由2个服务器上的心跳处理
 
-### Beginning Code
+### 初始代码
 
 ```py
-#NOTE THIS CODE IS INCOMPLETE! It will run, but not without runtime errors.
+#注：这段代码是不完整的！它可以运行，但会产生运行时错误。
 """
-PySBC.py  - Nik's Python Based Load Balancing SBC for FreeSWITCH
+PySBC.py  - Nik基于Python的用于FreeSWITCH的负载均衡SBC
 
-Copyright (c) 2010, Nik Martin, Server Corps LLC
-All rights reserved.
+版权所有（c）2010 Nik Martin, Server Corps LLC
+保留所有权利。
 
-Redistribution and use in source and binary forms, with or without modification,
-are permitted provided that the following conditions are met:
+在满足以下条件的情况下，允许以源代码和二进制形式再分发和使用，
+无论是否进行修改：
 
-Redistributions of source code must retain the above copyright notice, this list
-of conditions and the following disclaimer.
-Redistributions in binary form must reproduce the above copyright notice, this
-list of conditions and the following disclaimer in the documentation and/or
-other materials provided with the distribution.
-Neither the name of the <ORGANIZATION> nor the names of its contributors may be
-used to endorse or promote products derived from this software without specific
-prior written permission.
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+```
+源代码的再分发必须保留上述版权声明、条件列表和以下免责声明。
+以二进制形式再分发时，必须在文档和/或其他提供的材料中复制上述版权声明、条件列表和以下免责声明。
+未经事先书面许可，不得使用<ORGANIZATION>的名称或其贡献者的姓名来认可或推广从此软件衍生的产品。
+此软件按原样提供，包括但不限于任何明示或暗示的保证，包括但不限于适销性和特定用途适用性的保证。
+在任何情况下，版权所有者或贡献者都不对任何直接、间接、附带、特殊、惩罚性或后果性损害（包括但不限于替代货物或服务采购、使用、数据或利润的损失或业务中断）承担责任，无论是基于合同、严格责任还是侵权行为（包括疏忽或其他）的任何理论，即使已被告知存在这种可能性。
+```
 
-"""
-
+```python
 import ConfigParser
 import sys
 from twisted.internet import reactor
@@ -68,20 +53,23 @@ from twisted.internet.protocol import ServerFactory
 from ESL import ESLconnection
 
 class SipProxy(sip.Proxy):
-    """The actual Proxy SBC"""
+    """实际的代理SBC"""
 
     def __init__(self):
-        """this code just runs"""
+        """这段代码只是运行"""
         sip.Proxy.__init__(self, host=listenip, port=5060)
 
     def handle_request(self, message, addr):
-        """Proxy all requests, we don;t currently care wha they are"""
+        """代理所有请求，我们当前不关心它们是什么"""
+```
+
+```python
 
         print message.toString()
         print dir(message)
         if message.method == 'ACK':
             return
-        #Now, get the lest loaded server
+        # 现在，获取负载最小的服务器
         server = loadbalancer.getserver(fslist)
         
         response = self.responseFromRequest(302, message)
@@ -99,29 +87,29 @@ class sipfactory(ServerFactory):
 """
 
 class loadbalancer:
-    """The FreeSWITCH Load Balancer.
-    Currently uses Current_Calls/Max_Calls=%load"""
+    """FreeSWITCH 负载均衡器。
+    当前使用 Current_Calls/Max_Calls=%load"""
     def getserver(fslist):
-        """gets the best server to redirect the nect action to"""
+        """获取将下一步操作重定向到的最佳服务器"""
         try:
             for server in server_list(len(fslist)):
                 con = ESLconnection(server, esl_port, esl_pass)
 
-            #are we connected?
+            # 是否已连接？
             if con.connected():
-                #run command
+                # 执行命令
                 e = con.api('show calls count')
                 print e.getBody()
 
             else:
-                print "Not Connected"
+                print "未连接"
                 sys.exit(2)
 
         except:
-            print "error connecting to server" + server
+            print "连接服务器时出错" + server
 
 class setup:
-    """setup class that gets everything initialized"""
+    """进行初始化的设置类"""
     config = ConfigParser.RawConfigParser()
     config.read('/etc/pysbc.cfg')
     myip = config.get('pysbc_config', 'listen_ip')
@@ -137,5 +125,3 @@ fslist = sconfig.server_list
 reactor.listenUDP(5060, SipProxy(), listenip)
 reactor.run()
 ```
-
-

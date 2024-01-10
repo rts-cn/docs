@@ -1,64 +1,59 @@
+# 终节点
 
-# Endpoints 
+## 关于
 
- 
+每个[呼叫端](./呼叫链5843921.mdx#0-关于)（通道）的定义是FreeSWITCH与其他设备之间的连接。这个其他设备可以是VoIP电话、PRI连接，甚至是计算机上的音频设备。每种类型的设备都有自己的协议用于设置通道、协商[编解码器](../编解码器与媒体/index.mdx#关于)、发送和接收媒体。在FreeSWITCH中，通道本身与特定协议无关，而是使用终节点模块实现协议。这种架构使我们能够使用不同的协议来桥接通道。它也使我们能够轻松实现新的协议。
 
-## About
+您有时会见到术语**会话**，这是终节点模块用于创建和管理通道的编程接口。
 
-Every [call leg](./Call-Legs_7143972.mdx#0-about) (channel) is by definition a connection between FreeSWITCH and something else. That something else can be a VoIP phone, a PRI connection or even an audio device on your computer. Each type of device has their own protocol for setting up channels, negotiating [codecs](../Codecs-and-Media/index.mdx#about), sending and receiving media. In FreeSWITCH a channel itself is not tied to a specific protocol, instead it uses an Endpoint module to implement the protocol. This architecture allows us to bridge channels using different protocols. It also allows us to easily implement new protocols.
+单击此处展开目录
 
-You will sometimes see the term **Session**, this is a programmatic interface used by Endpoint modules to create and manage a channel.
+* 1 [终节点](#终节点)
+* 2 [拨号字符串](#拨号字符串)
+* 3 [模块](#终节点)
 
-Click here to expand Table of Contents
+## 终节点
 
-* 1 [Endpoints](#endpoints)
-* 2 [Dialstrings](#dialstrings)
-* 3 [Modules](#endpoints)
+通信使用了两种类型的协议。
 
-## Endpoints
+**信令** - 这些协议负责通知对方我们打算启动通信通道，协商设置通道所需的所有细节，通道的状态以及结束通道。
 
-There are 2 types of protocols used for communications.
+**媒体** - 这些协议处理实际的媒体流。
 
-**Signaling** \- these protocols are responsible for notifying the other party of our intention to start a communication channel, negotiating all the details required for setting up the channel, status of the channel and ending the channel
+VoIP最流行的信令协议是SIP，在FreeSWITCH中我们使用[Sofia SIP栈](../配置/Sofia-SIP栈/index.mdx#常见问题)。将Sofia与FreeSWITCH关联起来的终节点模块是[mod\_sofia](../模块/mod_sofia_1048707.mdx#关于)。
 
-**Media** \- These protocols handle the actual media streams.
+对于任何类型的互联网电话，RTP通常用于媒体协议。实际上，RTP已经内置在FreeSWITCH核心中。
 
-The most popular signaling protocol for VoIP is SIP, In FreeSWITCH we use the [Sofia SIP Stack](../Configuration/Sofia-SIP-Stack/index.mdx#faq). The endpoint module that ties Sofia to FreeSWITCH is [mod\_sofia](../Modules/mod_sofia_1048707.mdx#about).
+另一个流行的协议是WebRTC（使用SRTP）。WebRTC只是一个媒体协议，它不是一个信令协议。许多人使用SIP作为WebRTC的信令协议。在FreeSWITCH中，我们支持这一点，但我们还有自己的信令协议叫做[Verto](../Modules/mod_verto_3964934.mdx#about)，它被设计成能与JavaScript很友好地配合。
 
-For any type of internet calls RTP is usually used for the Media protocol. In fact RTP is actually built into the FreeSWITCH core.
+## 拨号字符串
 
-Another popular protocol is WebRTC (which uses SRTP). WebRTC is only a media protocol, it's not a signalling protocol. Many people use SIP as the signaling protocol for WebRTC. In FreeSWITCH we support that, however we also have our own signalling protocol called [Verto ](../Modules/mod_verto_3964934.mdx#about)which is designed to be javascript friendly.
+FreeSWITCH如何确定特定通道将由哪个端点模块处理？
 
-## Dialstrings
+对于呼入通道来说很简单。当加载一个端点模块时，它开始侦听使用配置文件中的信息进行连接，侦听器可以绑定到IP地址和端口（在VoIP协议的情况下），或者它可以是连接的硬件上的物理端口，无论哪种情况，监听该端口的端点模块将处理呼叫。
 
-How does FreeSWITCH know which endpoint module will handle a particular channel?
-
-For incoming channels it's pretty simple. When an endpoint module is loaded, it starts listening for connections using the information in the configuration file, the listener can be tied to an IP Address and port in case of a VoIP protocol, or it can be a physical port on a connected piece of hardware, in either case, the endpoint module that's listening on that port is the one that will handle the call.
-
-For outgoing channels, you have to specify which endpoint to use. When you start an outgoing channel, you use a dialstring to identify the recipient. The dialstring starts with the identity of the endpoint module that should be used, followed (optionally) by additional information specific to the module, then finally the destination number. The components of a dialstring are separated by a "/" For example to make a call using the SIP protocol your dialstring would look something like
+对于呼出通道，您必须指定要使用的端点。开始一个呼出通道时，您可以使用拨号字符串来标识收件人。拨号字符串以应该使用的端点模块的标识开头，然后是（可选的）特定于模块的其他信息，最后是目标号码。拨号字符串的各个组件之间用斜杠分隔。例如，要使用SIP协议进行呼叫，您的拨号字符串可能是这样的
 
 ```xml
 sofia/external/18005551212
 ```
 
-## Modules
+## 模块
 
-| Protocol             | Module                                           | Dialstring Prefix | Comments                                                                                                                                                                  |
-| -------------------- | ------------------------------------------------ | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| SIP                  | [mod\_sofia](../Modules/mod_sofia_1048707.mdx#about)         | sofia             | This is the most commonly used endpoint                                                                                                                                   |
-| H.323                | [mod\_h323](../Modules/mod_h323_6587443.mdx#about)           | h323              |                                                                                                                                                                           |
-| H.323                | [mod\_opal](../Modules/mod_opal_6587390.mdx#about)           | opal/h323         |                                                                                                                                                                           |
-| IAX2                 | [mod\_opal](../Modules/mod_opal_6587390.mdx#about)           | opal/iax2         |                                                                                                                                                                           |
-| SCCP (Skinny)        | [mod\_skinny](../Modules/mod_skinny_3375354.mdx#docs)       | skinny            |                                                                                                                                                                           |
-| Jingle (google talk) | [mod\_dingaling](../Modules/mod_dingaling_6587385.mdx#faq) | dingaling         |                                                                                                                                                                           |
-| Skype                | [mod\_skypopen](../Modules/mod_skypopen_3966336.mdx#-sk-)   | skypopen          |                                                                                                                                                                           |
-| GSM                  | [mod\_gsmopen](../Modules/mod_gsmopen_7143567.mdx#list)     | gsmopen           | Supports voice & SMS over a GSM network                                                                                                                                   |
-| PortAudio            | [mod\_portaudio](../Modules/mod_portaudio_9634724.mdx#about) | portaudio         | For interacting with the sound card on your computer                                                                                                                      |
-| Verto                | [mod\_verto](../Modules/mod_verto_3964934.mdx#about)         | verto.rtc         | You can also use the verto\_contact function to generate the dialstring                                                                                                   |
-| WebRTC               | [mod\_rtc](../Modules/mod_rtc_3965027.mdx#about)             | rtc               | This endpoint is only for media, not signaling                                                                                                                            |
-| RTMP (flash)         | [mod\_rtmp](../Modules/mod_rtmp_5046427.mdx#api)           | rtmp              | You can also use the rtmp\_contact function to generate the dialstring                                                                                                    |
-| TDM                  | [mod\_freetdm](../Client-and-Developer-Interfaces/FreeTDM/index.mdx#--)          | freetdm           | Provides support for telephony cards from manufacturers such as Digium, Sangoma and Zaptel. Can communicate in most legacy telephony protocols such as ISDN, SS7 & analog |
+| Protocol   | Module                                 | Dialstring Prefix | Comments                                                                                                             |
+| ---------- | -------------------------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------- |
+| SIP        | [mod\_sofia](../Modules/mod_sofia_1048707.mdx#about) | sofia             | 这是最常用的终端点                                                                                                        |
+| H.323      | [mod\_h323](../Modules/mod_h323_6587443.mdx#about) | h323              |                                                                                                                      |
+| H.323      | [mod\_opal](../Modules/mod_opal_6587390.mdx#about) | opal/h323         |                                                                                                                      |
+| IAX2       | [mod\_opal](../Modules/mod_opal_6587390.mdx#about) | opal/iax2         |                                                                                                                      |
+| SCCP (Skinny) | [mod\_skinny](../Modules/mod_skinny_3375354.mdx#docs) | skinny            |                                                                                                                      |
+| Jingle (google talk) | [mod\_dingaling](../Modules/mod_dingaling_6587385.mdx#faq) | dingaling         |                                                                                                                      |
+| Skype      | [mod\_skypopen](../Modules/mod_skypopen_3966336.mdx#-sk-) | skypopen          |                                                                                                                      |
+| GSM        | [mod\_gsmopen](../Modules/mod_gsmopen_7143567.mdx#list) | gsmopen           | 支持通过GSM网络进行语音和短信                                                                                            |
+| PortAudio  | [mod\_portaudio](../Modules/mod_portaudio_9634724.mdx#about) | portaudio         | 用于与计算机上的声卡进行交互                                                                                            |
+| Verto      | [mod\_verto](../Modules/mod_verto_3964934.mdx#about) | verto.rtc         | 您还可以使用verto\_contact函数生成拨号字符串                                                                             |
+| WebRTC     | [mod\_rtc](../Modules/mod_rtc_3965027.mdx#about) | rtc               | 此终端点仅用于媒体，而不是信令                                                                                             |
+| RTMP(flask) | [mod\_rtmp](../Modules/mod_rtmp_5046427.mdx#api) | rtmp              | 您还可以使用rtmp\_contact函数生成拨号字符串                                                                              |
+| TDM        | [mod\_freetdm](../Client-and-Developer-Interfaces/FreeTDM/index.mdx#--) | freetdm           | 提供对来自厂商（如Digium、Sangoma和Zaptel）的电话卡的支持。可以使用大多数传统电话协议进行通信，例如ISDN, SS7和模拟信号   |
 
-There are also a few pseudo Endpoint Modules that don't actually handle any calls themselves, but provide shortcuts or customized functionality to the other endpoints. These are listed on the [bridge](../Modules/mod_dptools_1970333.mdx#see-also) page.
-
-
+还有一些伪端点模块，实际上并不处理任何调用，而是为其他端点提供快捷方式或定制功能。这些在[桥接](../Modules/mod_dptools_1970333.mdx#see-also)页面上列出。

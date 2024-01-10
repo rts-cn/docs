@@ -1,11 +1,8 @@
+# 路由器
 
-# Routers 
+关于路由器在FreeSWITCH™应用中的注意事项。
 
- 
-
-Notes about routers as they apply to FreeSWITCH™ applications.
-
-Click to expand Table of Contents
+点击展开目录
 
 * 1 [Apple AirPort Extreme](#comcast)
 * 2 [ActionTect MI424WR - Verizon FIOS](#-freeswitch--routers-)
@@ -14,56 +11,53 @@ Click to expand Table of Contents
 
 ## [Apple AirPort Extreme](http://store.apple.com/us/product/MB763LL/A/AirPort-Extreme)
 
-Using an Apple AirPort Extreme in NAT-PMP mode, it is pretty much Plug-n-Play. Simply enable NAT-PMP, Port Mapping is not required. FreeSWITCH detects NAT-PMP and enables the required ports. I have tested this using a new AirPort Extreme, Firmware Version 7.4.2\. Static IP Address assigned to the WAN, NAT-PMP enabled, FreeSWITCH server assigned a static RFC-1918 address on the LAN. Pointed DNS record for the server to the static address of the router. Installed iSip from the Apple iTunes Store on my iPhone 3GS, registered the client to the DNS of the FreeSWITCH, added user/pass information and was able to place a call through the 3G network thanks to 3G Unrestrictor (jailbroken phone) which is available through the Cydia store. RTP sets up correctly, two-way audio works and this was using stock configs from installing the sample configs.
+在NAT-PMP模式下，使用苹果AirPort Extreme非常简单。只需启用NAT-PMP，无需进行端口映射。FreeSWITCH会检测到NAT-PMP并启用所需的端口。我已经使用新的AirPort Extreme进行了测试，固件版本为7.4.2。WAN接口分配了静态IP地址，启用了NAT-PMP，FreeSWITCH服务器在LAN上被分配了静态RFC-1918地址。将服务器的DNS记录指向路由器的静态地址。我在我的iPhone 3GS上从Apple iTunes Store安装了iSip，并将客户端注册到FreeSWITCH的DNS，添加了用户名/密码信息，通过3G网络成功拨打了电话，得益于可以通过Cydia Store下载的3G Unrestrictor（越狱手机）。RTP设置正确，双向语音正常工作，这是使用安装示例配置的默认配置。
 
-Let me know if you need more info! [paige@bainbridge.comcastbiz.net](mailto:paige@bainbridge.comcastbiz.net)
+如果需要更多信息，请告诉我！[paige@bainbridge.comcastbiz.net](mailto:paige@bainbridge.comcastbiz.net)
 
 ## [ActionTect MI424WR - Verizon FIOS](http://www.actiontec.com/products/product.php?pid=189#.UNTBGG9IeTY)
 
-I am running Cisco SPA504g and Polycom 335 phones through this NAT Router. I was succesful with 2 different configurations. Using any SINGLE phone does not appear to need any router changes, just the NAT setup on the phones. For multiple phones we first got them working with NDLB-connectile-dysfunction and NDLB-force-rport in each of the user profiles AND enabling SIP ALG on the router.
+我通过这个NAT路由器连接了Cisco SPA504g和Polycom 335电话。我成功地进行了两种不同的配置。只使用一个电话似乎不需要进行任何路由器更改，只需要在电话上进行NAT设置。对于多个电话，我们首先在每个用户配置文件中使用NDLB-connectile-dysfunction和NDLB-force-rport使它们工作，并在路由器上启用SIP ALG。
 
-I was later able to turn OFF SIP ALG (as many people reccomend) with changes in the phones configurations. For each LINE (i.e. SIP Registration) used on each phone I had to configure the LOCAL SIP Port to a unqiue port. It appears that this router has a 1-to-1 mapping of external ports to internal devices with SIP ALG disabled. I am refering to the sip port on the phone end not the FS Server SIP Port.
+后来，我成功地关闭了SIP ALG（正如许多人推荐的那样），并在电话配置中进行了更改。对于每个电话上使用的每条线路（即SIP注册），我需要将本地SIP端口配置为独特的端口。在关闭SIP ALG的情况下，这个路由器似乎有一个将外部端口映射到内部设备的一对一映射。我指的是电话端的SIP端口，而不是FS服务器的SIP端口。
 
 ## Comcast
 
-The DOCSIS combination cable modem and router supplied by Comcast employs a SIP ALG that causes numerous problems with telephony. Users report phones not registering or registering intermittently, calls dropping, NAT traversal problems, and others. Here's an anecdotal exchange on the FreeSWITCH users mailing list from early January, 2016
+由Comcast提供的DOCSIS组合电缆调制解调器和路由器使用了SIP ALG，这会导致与电话业务相关的许多问题。用户报告电话无法注册或间歇性注册、通话中断、NAT穿越问题等。以下是2016年1月初在FreeSWITCH用户邮件列表上的一段轶事交流。
 
-**Comcast Knowledgebase**
+**Comcast知识库**
 
-On Jan 9, 2016, at 11:24 PM, Sean Devoy &lt;[sdevoy@bizfocused.com](mailto:sdevoy@bizfocused.com)\> wrote:  
+On Jan 9, 2016, at 11:24 PM, Sean Devoy &lt;[sdevoy@bizfocused.com](mailto:sdevoy@bizfocused.com)\> 写道:  
  \>  
  \>
 
-\> The extension did not have 
+\> 这个分机没有 
 
 \> &lt;variable name="sip-force-contact" value="NDLB-connectile-dysfunction"/>
 
-\> And all the working extensions do have it. I added it.
+\> 所有工作正常的分机都有这个。我已添加。
 
-\> I don’t know what else happens when that is set, but I know it makes my extension re-register every 30 seconds (which seems excessive to me). I think that is probably just masking the underlying problem where the Comcast router is dropping the NAT connection after some time period. I am thrilled to have it working, but there must be a cleaner fix. Is there at least a way to extend that 30 second time to 60, 90, 120?
+> 我不知道当设置这个时还会发生什么，但我知道它会让我的扩展程序每30秒重新注册一次（我觉得这有点过度了）。我想这可能只是掩盖了底层问题，即康卡斯特路由器在一段时间后会断开 NAT 连接。我很高兴它能正常工作，但肯定有一种更简洁的修复方法。至少有没有一种方法可以将这30秒的时间延长到60、90或120秒？
 
-Daniel Corbe &lt;dcorbe@[hammerfiber.com](http://hammerfiber.com)\> wrote:  
- This is slightly off-topic; however, it really is your Comcast-supplied CPE causing this particular issue. You’re better off buying an inexpensive cable modem that only runs in bridge mode and using a router that you have more direct configuration control over. The person that maintained this before you obviously took note of how stupidly aggressive the default timers are on their CPE.
+Daniel Corbe &lt;dcorbe@[hammerfiber.com](http://hammerfiber.com)\> 写道：
+ 这话题稍微离题了，但这确实是你由康卡斯特提供的 CPE 导致的特定问题。你最好购买一个廉价的只在桥接模式下运行的电缆调制解调器，并使用你可以更直接配置控制的路由器。在你之前维护这个的人显然注意到了默认计时器有多么愚蠢地激进。
 
-Larry Morley &lt;lmorley@[neny.cslimits.net](http://neny.cslimits.net)\> wrote:
+Larry Morley &lt;lmorley@[neny.cslimits.net](http://neny.cslimits.net)\> 写道：
 
-We had customers experience the same problem - and others apparently stemming from the same root cause - particularly with this ISP. And, it turned out they had experienced the same problems with their phone service when they were receiving it from the company before us.
+我们的客户也遇到了同样的问题，以及其他一些明显源于相同根本原因的问题，尤其是与这个ISP相关的问题。而且，事实证明当他们之前是从我们之前的公司接收电话服务时，也遇到了同样的问题。
 
-The cause of that problem, along with others such as users receiving calls from their own extensions several times an hour, 24x7, were ultimately determined to be the result of Comcast having an incompatible SIP ALG enabled on the CPE: a SIP ALG that's properly implemented and properly working shouldn't cause any issues. Also, the users that experienced the worst variants of these problems had a SIP ALG, and apparently other ALGs for other protocols, enabled on their own routers.
+这个问题的原因，以及其他一些问题，比如用户每小时以前他们自己的分机号码多次接到电话，全天候，最终确定是康卡斯特的CPE启用了一个不兼容的SIP ALG所致：一个正确实施和正常工作的SIP ALG不应该引起任何问题。此外，遇到这些问题变体最严重的用户还启用了一个SIP ALG，并且显然还启用了其他协议的其他ALG。
 
-Calling Comcast technical support and requesting that they change the "cable router" settings, then power cycling the CPE and the local routers as necessary, invariably solved the problem(s) we'd been experiencing.
+打电话给Comcast技术支持，并请求他们更改“有线路由器”的设置，然后根据需要对CPE和本地路由器进行热重启，通常可以解决我们遇到的问题。
 
-Note that in the course of fixing these issues, we discovered that, according to the current DOCSIS specifications, by design, end users aren't supposed to be able to modify much with respect to DOCSIS "cable modem" settings. That's why we decided to go the ISP tech support route first.
+值得注意的是，在解决这些问题的过程中，我们发现根据当前的DOCSIS规范，按设计，终端用户不应该能够修改与DOCSIS“有线调制解调器”设置有关的很多内容。这就是为什么我们决定首先使用ISP技术支持路线的原因。
 
-We haven't seen a recurrence of any of the problems noted initially since we made the changes noted, well over six months ago.
+自从我们做出这些改变以来，六个多月前，我们没有再次出现最初提到的任何问题。
 
-Hopefully this is of use to someone.
+希望对某些人有所帮助。
 
-## [MiFi 2200 - Verizon Version](http://www.verizionwireless.com/)
+[Verizon版MiFi 2200](http://www.verizonwireless.com/)
 
-Running FreeSWITCH on a netbook using this 3G router as a gateway. Plug and Play. No adjustments needed. The reason I'm using FW instead of something more straightforward such as Twinkle is that I wanted to use a WIFI phone that did not traverse NAT well.
+在一个上网本上运行FreeSWITCH，使用这个3G路由器作为网关。即插即用，不需要进行任何调整。我选择使用FW而不是像Twinkle这样更直接的软件是因为我想使用一个不擅长穿越NAT的WIFI电话。
 
-See notes in Cisco SPA 3xx/5xx and Polycom Generic sections above on phone settings.
-
-  
-
+关于电话设置，请参阅上面的Cisco SPA 3xx/5xx和Polycom通用部分的注释。

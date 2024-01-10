@@ -1,96 +1,93 @@
+# JavaScript
 
-# JavaScript 
+## 关于
 
- 
+对FreeSWITCH™中的JavaScript进行轻松讨论。
 
-## About
+单击此处展开目录
 
-A light discussion of JavaScript in FreeSWITCH™.
-
-Click here to expand Table of Contents
-
-* 1 [V8 Supersedes SpiderMonkey](#v8-supersedes-spidermonkey)
-* 2 [Build and Install](#build-and-install)
-* 3 [Execution of a script](#execution-of-a-script)  
-   * 3.1 [Application](#application)  
+* 1 [V8代替SpiderMonkey](#v8-supersedes-spidermonkey)
+* 2 [构建和安装](#build-and-install)
+* 3 [执行脚本](#execution-of-a-script)  
+   * 3.1 [应用程序](#application)  
    * 3.2 [API](#api)
-* 4 [Examples](#examples-)
-* 5 [Function Reference](#function-reference-)  
-   * 5.1 [SpiderMonkey Specific Objects](#spidermonkey-specific-objects)  
-   * 5.2 [Other Points Of Interest](#other-points-of-interest-)
-* 6 [FAQ](#faq)  
-   * 6.1 [Passing variables to my JavaScript](#passing-variables-to-my-javascript)  
-   * 6.2 [How can I print stuff inside my JavaScript](#how-can-i-print-stuff-inside-my-javascript)
-* 7 [See Also](#see-also-)
+* 4 [示例](#examples-)
+* 5 [函数参考](#function-reference-)  
+   * 5.1 [特定于SpiderMonkey的对象](#spidermonkey-specific-objects)  
+   * 5.2 [其他注意事项](#other-points-of-interest-)
+* 6 [常见问题](#faq)  
+   * 6.1 [如何将变量传递给我的JavaScript](#passing-variables-to-my-javascript)  
+   * 6.2 [如何在我的JavaScript中打印输出](#how-can-i-print-stuff-inside-my-javascript)
+* 7 [参见](#see-also-)
 
-## V8 Supersedes SpiderMonkey
+## V8代替SpiderMonkey
 
-FreeSWITCH originally used the Mozilla [SpiderMonkey](http://www.mozilla.org/js/spidermonkey/) JavaScript (ECMAScript) engine. It supports all the standard JavaScript language elements, for example 'for' and 'while' loops, regexps, etc. In addition there are things that are specific to FreeSWITCH which are listed below. You need to have mod\_v8 compiled and installed to take advantage of these functions. Each of those sections is documented below.
+FreeSWITCH最初使用Mozilla的[SpiderMonkey](http://www.mozilla.org/js/spidermonkey/) JavaScript（ECMAScript）引擎。它支持所有标准的JavaScript语言元素，例如'for'和'while'循环，正则表达式等。此外，还有一些特定于FreeSWITCH的内容，下面列出了其中的一些。要使用这些函数，您需要编译和安装mod\_v8，每个部分的详细说明已在下面给出。
 
-From commit b76233266931ca0b53f3bcc589277b972d714216 (January 14'th 2014) in git master, FreeSWITCH has support for the [Google V8](https://code.google.com/p/v8/) JavaScript (ECMAScript) engine. This is provided from the module [mod\_v8](../../Modules/mod_v8_1048935.mdx#api). In current git master [mod\_v8](../../Modules/mod_v8_1048935.mdx#api) is the default JavaScript engine. mod\_v8 is a drop-in replacement for mod\_spidermonkey, so the old scripts should work as before. There are two differences though, the SpiderMonkey engine has support for built in classes XML and File; these classes are not available in the V8 engine. mod\_v8 provides a different XML interface, you can read more about it here: [Javascript XML](Javascript-Examples/index.mdx#about). mod\_v8 will publish similar functions as the File class, but this is still work in progress so check the status of that functionality.
+从 git 主分支的提交 b76233266931ca0b53f3bcc589277b972d714216（2014年1月14日）开始，FreeSWITCH 支持 [Google V8](https://code.google.com/p/v8/) JavaScript（ECMAScript）引擎。这是通过模块 [mod\_v8](../../Modules/mod_v8_1048935.mdx#api) 提供的。在当前的 git 主分支中，[mod\_v8](../../Modules/mod_v8_1048935.mdx#api) 是默认的 JavaScript 引擎。mod\_v8 是 mod\_spidermonkey 的一个插入式替代，因此旧的脚本应该与以前一样工作。然而，这两者有两个区别，SpiderMonkey 引擎支持内置的 XML 和 File 类；而在 V8 引擎中，这些类不可用。mod\_v8 提供了一个不同的 XML 接口，你可以在这里了解更多信息：[Javascript XML](Javascript-Examples/index.mdx#about)。mod\_v8 将发布与 File 类相似的函数，但这仍然是正在进行的工作，所以请检查该功能的状态。
 
-## Build and Install
+## 构建和安装
 
-mod\_v8 is now built and installed by default.
+现在默认情况下已经构建和安装了 mod\_v8。
 
-If for some reason it's not, do the following:
+如果出于某种原因没有安装，可以按照以下步骤操作：
 
-* Uncomment languages/mod\_v8 in modules.conf in your src directory (make it always build and install v8)
-* Run 'make mod\_v8-install' to make and install just the v8 module
-* Edit conf/autoload\_configs/modules.conf.xml in your FreeSWITCH™ install directory to load mod\_v8
-* Restart freeswitch
+* 在 src 目录下的 modules.conf 文件中取消注释 languages/mod\_v8（使其始终构建和安装 v8）
+* 运行 'make mod\_v8-install' 来编译和安装 v8 模块
+* 在 FreeSWITCH™ 安装目录下的 conf/autoload\_configs/modules.conf.xml 文件中编辑，加载 mod\_v8
+* 重新启动 freeswitch
 
-## Execution of a script
+## 脚本的执行
 
-There are two methods for script execution, via an API call _jsrun_ and via an application _javascript_. When you use the API a default [Session](Session/index.mdx#methods) object is not created, as there is no call to associate it with. By default, scripts will be loaded from the {FS\_ROOT}/scripts directory, you may override this by placing a / as the first character in Unix-like systems or a x:\\ in Windows systems as the script name.
+有两种执行脚本的方法，一种是通过 API 调用 _jsrun_，另一种是通过应用程序 _javascript_。当使用 API 时，不会创建默认的 [Session](Session/index.mdx#methods) 对象，因为没有关联的通话。默认情况下，脚本将从 {FS\_ROOT}/scripts 目录加载，你可以通过在类Unix系统中将 / 放在脚本名称的第一个字符位置，或在Windows系统中将 x:\\ 作为脚本名称来覆盖这一点。
 
-### Application
+### 应用程序
 
-From the [Dialplan](../../Dialplan/XML-Dialplan/index.mdx#about), you simply call it as an application similar to:
+从[Dialplan](../../Dialplan/XML-Dialplan/index.mdx#about)中，您可以将它作为一个应用程序进行调用，类似于：
 
 &lt;action application="javascript" data="/path/to/some/script.js"/>
 
-If you need to pass arguments into to the javascript application, they can be passed in as a single string to the variable "argv" by doing the following:
+如果您需要将参数传递给JavaScript应用程序，则可以将它们作为一个字符串传递给变量"argv"，方法如下：
 
 &lt;action application="javascript" data="/path/to/some/script.js $1"/>
 
 ### API
 
-At the FreeSWITCH™ console, or some other application/interface execute the jsrun call with the script name as its argument.
+在FreeSWITCH™控制台或其他应用程序/接口中，使用脚本名称作为参数来执行jsrun调用。
 
 jsrun /path/to/some/script.js
 
-## Examples 
+## 示例 
 
 * [Javascript Hello World](Javascript-Examples/Javascript-Example---HelloWorld_7144139.mdx#about)  
-   * A quick-start guide through creating and launching your first Javascript application.
-* [Javascript Examples](https://freeswitch.org/confluence/dosearchsite.action?queryString=javascript+example) exist and include database connectivity and grabbing external content via [CURL](http://en.wikipedia.org/wiki/CURL).
+   * 快速入门指南，介绍如何创建和启动您的第一个Javascript应用程序。
+* [Javascript Examples](https://freeswitch.org/confluence/dosearchsite.action?queryString=javascript+example) 包括数据库连接和通过[CURL](http://en.wikipedia.org/wiki/CURL)获取外部内容等示例。
 
-## Function Reference 
+## 函数参考 
 
 * [Misc Javascript functions](https://wiki.freeswitch.org/wiki/Misc%5FJavascript%5Ffunctions "Misc Javascript functions")
 
-### SpiderMonkey Specific Objects
+### SpiderMonkey 特定对象
 
-* [File](https://wiki.freeswitch.org/wiki/File "File") \- File IO methods (Spidermonkey object)
+* [File](https://wiki.freeswitch.org/wiki/File "File") \- 文件IO方法（Spidermonkey对象）
 
-### Other Points Of Interest 
+### 其他注意事项 
 
-* [Run](https://wiki.freeswitch.org/wiki/Run "Run") \- Use CURL from within your Spidermonkey script
+* [Run](https://wiki.freeswitch.org/wiki/Run "Run") \- 在Spidermonkey脚本中使用CURL
 * [Javascript\_Event](https://wiki.freeswitch.org/wiki/Javascript%5FEvent "Javascript Event")
 * [Javascript\_XML](https://wiki.freeswitch.org/wiki/Javascript%5FXML "Javascript XML")
 
-## FAQ
+## 常见问题
 
-### Passing variables to my JavaScript
+### 如何将变量传递给我的JavaScript
 
-On console:
+在控制台上：
 
   jsrun script.js arg1 arg2 ...
 
-These can be accessed as argv\[0\], argv\[1\],.. in the script
+在脚本中，可以通过argv\[0\]，argv\[1\]等访问这些变量。
 
-In dialplan
+在拨号计划中。
 
 **Dialplan JS example**
 
@@ -102,25 +99,23 @@ In dialplan
    </extension>
 ```
 
-If you're running the script as an application for originate command:
+如果您正在将脚本作为发起命令的应用程序运行：
 
-**JS originate examples**
+**JS发起命令示例**
 
 ```js
-//single argument
+// 单个参数
    originate sofia/internal/1000 &javascript(script.js arg1)          
  
-//multiple arguments
+// 多个参数
    originate sofia/internal/1000 '&javascript(script.js arg1 arg2)'   
 ```
 
-### How can I print stuff inside my JavaScript
+### 如何在JavaScript中打印内容
 
-  console_log("notice","&lt;Whatever you need to print>");
+  console_log("notice","&lt;您需要打印的内容>");
 
   
-## See Also 
+## 参考资料 
 
-* [Mozilla JavaScript reference](http://developer.mozilla.org/en/docs/JavaScript)
-
-
+* [Mozilla JavaScript 参考](http://developer.mozilla.org/zh-CN/docs/JavaScript)

@@ -1,44 +1,38 @@
+# mod_abstraction
 
-# mod_abstraction 
+## 关于
 
- 
+mod_abstraction使用正则表达式解析器将一个新的API函数链接到另一个函数，并调整提供的参数。它允许简化、标准化的脚本替换API。
 
-## About
+在更改XML以添加或删除API时，必须重新加载mod_abstraction，否则API将不会被创建或删除。目标设置和解析可以实时更改。
 
-mod\_abstraction links a new API function to another using a regular expression parser to adapt the provided arguments. It allows for simplified, standardized script replacement API.
+## 使用方法
 
-You MUST reload mod\_abstraction when changing the XML to add or remove an API, or else they won't be created or removed. Destination settings and parsing can be changed in real time.
-
-## Usage
-
-This defines what API link should be created and what to do once executed.
+这定义了应创建哪个API链接及执行后应执行的操作。
 
 ```xml
 <api name="user_name" description="Return Name for extension" syntax="<exten>" parse="(.*)" destination="user_data" argument="$1@default var effective_caller_id_name"/>
 ```
 
-* name - API name
-* description - API description
-* syntax - API Syntax
-* parse - Regex parsing the original argument provided
-* destination - The API name of the final api execution
-* argument - Format for the argument sent to the final API. You can use $1 $2 $3... from the () result of the parse regex
+* name - API名称
+* description - API描述
+* syntax - API语法
+* parse - 解析原始提供的参数的正则表达式
+* destination - 最终API执行的API名称
+* argument - 发送给最终API的参数格式。您可以使用parse正则表达式的()结果中的$1 $2 $3... 
 
-##  Security 
+## 安全性
 
-With [mod\_event\_socket](mod_event_socket_1048924.mdx#11-acl) per-user API restriction, this can be useful to limit the capabilities a user can have over some API commands by restricting certain parameters a user can do.
+使用mod_event_socket每用户API限制，请限制用户对某些API命令的能力，限制用户可以执行的某些参数，这可以很有用。
 
-## Examples 
+## 示例
 
-Here are 2 examples:
+以下是两个示例：
 
-tts\_path(&lt;text>) could be rewritten to python(tts2wav &lt;text>)
+tts_path(<text>)可以重写为python(tts2wav <text>)
 
-user\_password(&lt;id>) could be rewritten to user\_data(&lt;id> param password)
+user_password(<id>)可以重写为user_data(<id> param password)
 
 ### Comments:
 
-| Shouldn't the XML attribute syntax be escaped since it contains &lt; and > to be valid? If so, would the below be correct? &lt;api name\="user\_name" description\="Return Name for extension" syntax="&lt;exten&gt;" parse="(.\*)" destination="user\_data" argument="$1@default var effective\_caller\_id\_name"/> ![](/images/icons/contenttypes/comment_16.png) Posted by wralphcook at Jun 14, 2015 11:23 |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-
-
+| XML属性语法中包含&lt; 和 >需要转义才能使其有效，难道不是吗？如果是这样，下面的写法是否正确？&lt;api name\="user\_name" description\="返回扩展名的姓名" syntax="&lt;exten&gt;" parse="(.\*)" destination="user\_data" argument="$1@default var effective\_caller\_id\_name"/> ![](/images/icons/contenttypes/comment_16.png) 作者：wralphcook 发表于 2015年6月14日 11:23 |

@@ -1,112 +1,106 @@
+# 高级SBC与mod_lcr和mod_easyroute
 
-# Advanced SBC with mod_lcr and mod_easyroute 
+## 关于
 
- 
+由[Meftah Tayeb](https://freeswitch.org/confluence/display/~delphiworld)撰写
 
-## About
+以下是一份安装FreeSWITCH™作为SBC的逐步指南。LCR引擎由mod\_lcr提供。DID路由由mod\_easyroute完成。
 
-by [Meftah Tayeb](https://freeswitch.org/confluence/display/~delphiworld)
+这仍然是开发工作，并需要测试。
 
-Below you'll find a step by step guide for installing FreeSWITCH™ as a SBC. The LCR engine is provided by mod\_lcr. The DID routing is done by mod\_easyroute
+点击此处展开目录
 
-This is all still development work and needs testing.
-
-Click here to expand Table of Contents
-
-* 1 [Installation](#-freeswitch--advanced-sbc-with-mod_lcr-and-mod_easyroute-)  
-   * 1.1 [Install Debian stable netinstall](#install-debian-stable-netinstall)  
-      * 1.1.1 [Upgrade debian distribution](#upgrade-debian-distribution)  
-         * 1.1.2 [Install SSH Server for remote administration](#-freeswitch--advanced-sbc-with-mod_lcr-and-mod_easyroute-)  
-         * 1.1.3 [This will add MySQL enter a password etc.](#-freeswitch--advanced-sbc-with-mod_lcr-and-mod_easyroute-)  
-         * 1.1.4 [Install FreeSWITCH dependencies](#-freeswitch--advanced-sbc-with-mod_lcr-and-mod_easyroute-)  
-         * 1.1.5 [Restart server](#-freeswitch--advanced-sbc-with-mod_lcr-and-mod_easyroute-)  
-         * 1.1.6 [Install utils for compilation](#-freeswitch--advanced-sbc-with-mod_lcr-and-mod_easyroute-)  
-         * 1.1.7 [Edit modules.conf depending on your needs but you must enable mod\_easyroute and mod\_lcr modules. I recommend disabling mod\_voicemail and mod\_conferencing this is an SBC not a softswitch.](#-freeswitch--advanced-sbc-with-mod_lcr-and-mod_easyroute-)  
-         * 1.1.8 [Upgrade to latest git](#-freeswitch--advanced-sbc-with-mod_lcr-and-mod_easyroute-)  
-         * 1.1.9 [Edit sip\_profiles to use our outside IP](#edit-sip_profiles-to-use-our-outside-ip)  
-         * 1.1.10 [Optimizations before launching FreeSwitch](#optimizations-before-launching-freeswitch)  
-         * 1.1.11 [Start FreeSWITCH verify it works before we go too far.](#start-freeswitch-verify-it-works-before-we-go-too-far)  
-         * 1.1.12 [To connect to FreeSWITCH via fs\_cli Command Line](#to-connect-to-freeswitch-via-fs_cli-command-line)  
-         * 1.1.13 [To Check if FS is running](#-freeswitch--advanced-sbc-with-mod_lcr-and-mod_easyroute-)  
-         * 1.1.14 [Tell FreeSWITCH to actually use MOD\_Easyroute & MOD\_LCR module when running. Add the modules to modules.conf.xml in /usr/local/freeswitch/conf/autoload\_configs.](#tell-freeswitch-to-actually-use-mod_easyroute--mod_lcr-module-when-running-add-the-modules-to-modulesconfxml-in-usrlocalfreeswitchconfautoload_configs)  
-         * 1.1.15 [Now we need to enable odbc. This is for a mysql database.](#now-we-need-to-enable-odbc-this-is-for-a-mysql-database)  
-         * 1.1.16 [This is where you configure your various odbc drivers. On Debian systems the file was in /etc/odbcinst.ini](#easyrouteconfxml)  
-         * 1.1.17 [](#-freeswitch--advanced-sbc-with-mod_lcr-and-mod_easyroute-)  
-         * 1.1.18 [easyroute.conf.xml](#-freeswitch--advanced-sbc-with-mod_lcr-and-mod_easyroute-)  
+* 1 [安装](#-freeswitch--高级sbc-with-mod_lcr-和-mod_easyroute-)  
+   * 1.1 [安装 Debian 稳定版全新安装](#安装-debian-稳定版全新安装)  
+      * 1.1.1 [升级 Debian 分发](#升级-debian-分发)  
+         * 1.1.2 [安装用于远程管理的 SSH 服务器](#-freeswitch--高级sbc-with-mod_lcr-和-mod_easyroute-)  
+         * 1.1.3 [这将添加 MySQL 输入密码等等](#-freeswitch--高级sbc-with-mod_lcr-和-mod_easyroute-)  
+         * 1.1.4 [安装 FreeSWITCH 依赖项](#-freeswitch--高级sbc-with-mod_lcr-和-mod_easyroute-)  
+         * 1.1.5 [重新启动服务器](#-freeswitch--高级sbc-with-mod_lcr-和-mod_easyroute-)  
+         * 1.1.6 [安装编译工具](#-freeswitch--高级sbc-with-mod_lcr-和-mod_easyroute-)  
+         * 1.1.7 [根据您的需求编辑 modules.conf，但必须启用 mod_easyroute 和 mod_lcr 模块。我建议禁用 mod_voicemail 和 mod_conferencing，这是一个 SBC 而不是软交换机。](#-freeswitch--高级sbc-with-mod_lcr-和-mod_easyroute-)  
+         * 1.1.8 [升级到最新的 Git 版本](#-freeswitch--高级sbc-with-mod_lcr-和-mod_easyroute-)  
+         * 1.1.9 [编辑 sip_profiles 使用我们的外部 IP](#编辑-sip_profiles-使用我们的外部-ip)  
+         * 1.1.10 [启动 FreeSwitch 前的优化](#启动-freeswitch-前的优化)  
+         * 1.1.11 [在进一步之前，启动 FreeSWITCH 并验证其正常工作](#启动-freeswitch-并验证其正常工作)  
+         * 1.1.12 [通过 fs_cli 命令行连接到 FreeSWITCH](#通过-fs_cli-命令行连接到-freeswitch)  
+         * 1.1.13 [检查 FS 是否正在运行](#-freeswitch--高级sbc-with-mod_lcr-和-mod_easyroute-)  
+         * 1.1.14 [告诉 FreeSWITCH 在运行时实际使用 MOD_Easyroute 和 MOD_LCR 模块。将这些模块添加到 /usr/local/freeswitch/conf/autoload_configs 中的 modules.conf.xml 中。](#告诉-freeswitch-在运行时实际使用-mod_easyroute--mod_lcr-模块-将这些模块添加到-userlocalfreeswitchconfautoload_configs)  
+         * 1.1.15 [现在我们需要启用 odbc。这是为了一个 MySQL 数据库。](#现在我们需要启动-odbc-这是为了一个-mysql-数据库)  
+         * 1.1.16 [这是您配置各种 odbc 驱动程序的地方。在 Debian 系统中，该文件位于 /etc/odbcinst.ini](#easyrouteconfxml)  
+         * 1.1.17 [](#-freeswitch--高级sbc-with-mod_lcr-和-mod_easyroute-)  
+         * 1.1.18 [easyroute.conf.xml](#-freeswitch--高级sbc-with-mod_lcr-和-mod_easyroute-)  
          * 1.1.19 [lcr.conf.xml & switch.conf.xml & db.conf.xml](#lcrconfxml--switchconfxml--dbconfxml)  
-         * 1.1.20 [That should have populated the database table with the NPA data.](#-freeswitch--advanced-sbc-with-mod_lcr-and-mod_easyroute-)  
-         * 1.1.21 [Testing our database connections](#-freeswitch--advanced-sbc-with-mod_lcr-and-mod_easyroute-)  
-         * 1.1.22 [If this comes back our databases are working.](#if-this-comes-back-our-databases-are-working)  
-         * 1.1.23 [Each SIP Trunk endpoint will need an extension in the dialplan Providers will need an easyroute extension & Customers will need a LCR extension.](#each-sip-trunk-endpoint-will-need-an-extension-in-the-dialplan-providers-will-need-an-easyroute-extension--customers-will-need-a-lcr-extension)  
-         * 1.1.24 [Then we check that we are not over the limit for this trunk](#-freeswitch--advanced-sbc-with-mod_lcr-and-mod_easyroute-)  
-         * 1.1.25 [This is a customer that sends me traffic and I route based on IP then LCR database lookup.](#this-is-a-customer-that-sends-me-traffic-and-i-route-based-on-ip-then-lcr-database-lookup)
-* 2 [Related](#-freeswitch--advanced-sbc-with-mod_lcr-and-mod_easyroute-)
+         * 1.1.20 [这应该填充数据库表中的 NPA 数据。](#-freeswitch--高级sbc-with-mod_lcr-和-mod_easyroute-)  
+         * 1.1.21 [测试我们的数据库连接](#-freeswitch--高级sbc-with-mod_lcr-和-mod_easyroute-)  
+         * 1.1.22 [如果返回结果，表示我们的数据库正常工作。](#如果返回结果-表示我们的数据库正常工作)  
+         * 1.1.23 [每个 SIP Trunk 端点都需要在拨号计划中设置一个分机，供应商需要一个 easyroute 分机，客户需要一个 LCR 分机。](#每个-sip-trunk-端点都需要在拨号计划中设置一个分机-供应商需要一个-easyroute-分机-客户需要一个-lcr-分机)  
+         * 1.1.24 [然后我们检查该干线是否超出限制](#-freeswitch--高级sbc-with-mod_lcr-和-mod_easyroute-)  
+         * 1.1.25 [这是一个为我发送流量并且我根据 IP 和 LCR 数据库查找路由的客户。](#这是一个为我发送流量并且我根据-ip-和-lcr-数据库查找路由的客户)
+* 2 [相关](#-freeswitch--高级sbc-with-mod_lcr-和-mod_easyroute-)
 
-## Installation
+## 安装
 
-### Install Debian stable netinstall
+### 安装 Debian stable netinstall
 
 <https://www.debian.org/releases/jessie/debian-installer/>
 
-#### Upgrade debian distribution
+#### 升级 Debian 发行版
 
 ```xml
-  apt-get update
+apt-get update
 
-  apt-get dist-upgrade
-
-
+apt-get dist-upgrade
 ```
 
 ####    
-**Install SSH Server for remote administration**
+**安装 SSH 服务器以进行远程管理**
 
 ```xml
-  apt-get install ssh
+apt-get install ssh
 ```
 
 ####    
-**This will add MySQL enter a password etc.**
+**这将添加 MySQL 输入密码等**
 
 ```xml
-  apt-get install gcc bison flex make openssl libmysqlclient15-dev libradiusclient-ng2 libradiusclient-ng-dev mysql-server libxmlrpc-c3-dev
+apt-get install gcc bison flex make openssl libmysqlclient15-dev libradiusclient-ng2 libradiusclient-ng-dev mysql-server libxmlrpc-c3-dev
 ```
 
 ####    
-**Install FreeSWITCH dependencies**
+**安装 FreeSWITCH 依赖项**
 
 ```xml
-  apt-get install subversion subversion-tools automake1.9 gcc-4.1 autoconf make wget libtool g++ libncurses5 libncurses5-dev
+apt-get install subversion subversion-tools automake1.9 gcc-4.1 autoconf make wget libtool g++ libncurses5 libncurses5-dev
 ```
 
 ```xml
- apt-get install debhelper automake1.9 autoconf libtool unixodbc-dev libasound2-dev libcurl4-openssl-dev libssl-dev libogg-dev
-   libvorbis-dev libperl-dev libgdbm-dev libdb-dev libgnutls-dev libspandsp-dev libtiff4-dev
+apt-get install debhelper automake1.9 autoconf libtool unixodbc-dev libasound2-dev libcurl4-openssl-dev libssl-dev libogg-dev
+libvorbis-dev libperl-dev libgdbm-dev libdb-dev libgnutls-dev libspandsp-dev libtiff4-dev
 ```
 
 ```xml
- apt-get install screen bridge-utils libmysql++-dev libconfuse-dev libpcre3-dev curl libcurl4-gnutls-dev
-
+apt-get install screen bridge-utils libmysql++-dev libconfuse-dev libpcre3-dev curl libcurl4-gnutls-dev
 ```
 
 ```xml
-  apt-get install libxml2-dev libmemcache-dev
+apt-get install libxml2-dev libmemcache-dev
 ```
 
-#### **Restart server**
+#### **重启服务器**
 
 ```xml
-  reboot
+reboot
 ```
 
 ####    
-**Install utils for compilation**
+**安装编译工具**
 
 ```xml
-  apt-get install build-essential
+apt-get install build-essential
 ```
 
-Download FreeSWITCH latest trunk and put them in /usr/src/freewitch
+下载最新的 FreeSWITCH trunk，并将其放置在 /usr/src/freewitch
 
 ```xml
 cd /usr/src/
@@ -116,7 +110,6 @@ echo "deb http://files.freeswitch.org/repo/deb/debian-unstable/ jessie main" >> 
 apt-get update
 apt-get install -y --force-yes freeswitch-video-deps-most
 
-
 git config --global pull.rebase true
 git clone https://freeswitch.org/stash/scm/fs/freeswitch.git /usr/src/freeswitch
 
@@ -124,142 +117,133 @@ cd /usr/src/freeswitch
 ./bootstrap.sh 
 ```
 
-####    
-**Edit modules.conf depending on your needs but you must enable mod\_easyroute and mod\_lcr modules.** **I recommend disabling mod\_voicemail and mod\_conferencing this is an SBC not a softswitch.**
+#### 根据您的需求编辑`modules.conf`文件，但必须启用`mod_easyroute`和`mod_lcr`模块。我建议禁用`mod_voicemail`和`mod_conferencing`，因为这是一个会话边界控制器（SBC），而不是软交换。
 
-Enable mod\_easyroute & mod\_lcr in trunk/modules.conf by uncommenting the lines.
-
+通过取消注释的方式在`trunk/modules.conf`中启用`mod_easyroute`和`mod_lcr`。
 ```xml
-#applications/mod_easyroute 
-#applications/mod_lcr 
+#applications/mod_easyroute
+#applications/mod_lcr
 ```
 
 ```xml
- ./configure -prefix=/usr/local/freeswitch --enable-core-odbc-support 
-  make 
-  make install 
-  make sounds-install 
-  make moh-install 
+./configure -prefix=/usr/local/freeswitch --enable-core-odbc-support
+make
+make install
+make sounds-install
+make moh-install
 ```
 
-####    
-**Upgrade to latest git**
+#### 升级到最新的git版本
+```xml
+cd /usr/src/freeswitch
+make current
+```
+完成后，您将在`/usr/src/freeswitch`目录下获得最新的git版本。
+
+#### 编辑`sip_profiles`文件以使用我们的外部IP
+```xml
+cd /usr/local/freeswitch/conf/sip_profiles
+```
+编辑`external.xml`，将`$${local_ip_v4}`和`$${external_rtp_ip}`替换为您的外部IP。您将使用外部配置文件来连接所有终端。稍后我们将添加安全性。我也建议您将内部端口5060与默认端口5080交换位置。大多数供应商使用5060端口。
+
+#### 在启动FreeSwitch之前进行优化
 
 ```xml
- cd /usr/src/freeswitch
- make current 
+ulimit -c unlimited
+ulimit -d unlimited
+ulimit -f unlimited
+ulimit -i unlimited
+ulimit -n 999999
+ulimit -q unlimited
+ulimit -u unlimited
+ulimit -v unlimited
+ulimit -x unlimited
+ulimit -s 240
+ulimit -l unlimited
+ulimit -a
 ```
 
-and that's it you get the latest git in /usr/src/freeswitch
+#### 在进一步操作之前，启动FreeSWITCH并验证其正常运行
+```xml
+cd /usr/local/freeswitch/bin/
+./freeswitch -hp
+```
+`-hp`表示以高优先级运行。
 
-#### **Edit sip_profiles to use our outside IP**
+您可能会看到关于未加载ODBC的错误信息。
 
-cd /usr/local/freeswitch/conf/sip\_profiles
-
-edit external.xml and replace $${local\_ip\_v4} and $${external\_rtp\_ip} your external IP. You will use external profiles for all endpoints. We will need to add security later. I also recommend you swap the internal port 5060 with the default port 5080\. Most providers use 5060.
-
-#### **Optimizations before launching FreeSwitch**
+#### 使用fs_cli命令行连接到FreeSWITCH
 
 ```xml
-  ulimit -c unlimited
-  ulimit -d unlimited
-  ulimit -f unlimited
-  ulimit -i unlimited
-  ulimit -n 999999
-  ulimit -q unlimited
-  ulimit -u unlimited
-  ulimit -v unlimited
-  ulimit -x unlimited
-  ulimit -s 240
-  ulimit -l unlimited
-  ulimit -a
+cd /usr/local/freeswitch/bin/
+./fs_cli
 ```
 
-#### **Start FreeSWITCH verify it works before we go too far.**
+使用此工具，您可以获取到与FS的控制台连接。日志级别尚未更改，因此可能会非常冗长。要禁用日志，请在控制台中输入/nolog。
+
+#### **检查FS是否正在运行**
+
+```
+netstat -unlp
+```
+
+#### **告知FreeSWITCH在运行时实际使用MOD_Easyroute和MOD_LCR模块。** **将模块添加到`/usr/local/freeswitch/conf/autoload_configs`目录下的`modules.conf.xml`中。**
 
 ```xml
- cd /usr/local/freeswitch/bin/
-  ./freeswitch -hp 
+<load module="mod_easyroute"/>
+<load module="mod_lcr"/>
 ```
 
-\-hp stands for high priority
+还要禁用任何未使用的编解码器, mod_voicemail和mod_conferencing.
 
-You may see errors about ODBC not loaded
-
-#### **To connect to FreeSWITCH via fs_cli Command Line**
+#### **现在需要启用ODBC，这是为了连接到MySQL数据库。**
 
 ```xml
-  cd /usr/local/freeswitch/bin/
-  ./fs_cli 
+apt-get install unixodbc
+apt-get install libmyodbc
 ```
 
-with this tool you'll be able to get a console connection to FS the log level has not been changed so it could be very verbose to disable log, type /nolog in console
-
-#### **To Check if FS is running**
-
- ```xml
-  netstat -unlp 
-```
-
-#### **Tell FreeSWITCH to actually use MOD_Easyroute & MOD_LCR module when running.** **Add the modules to modules.conf.xml in /usr/local/freeswitch/conf/autoload_configs.**
+**配置ODBC** 
 
 ```xml
-  <load module="mod_easyroute"/>
-  <load module="mod_lcr"/>
+基本配置odbcinst.ini:
 ```
 
-  
-Also disable any unused codecs, mod\_voicemail and mod\_conferencing
 
-#### **Now we need to enable odbc. This is for a mysql database.**
+**这是您配置各种ODBC驱动程序的位置。在Debian系统中，此文件位于/etc/odbcinst.ini**
 
 ```xml
-  apt-get install unixodbc
-  apt-get install libmyodbc
+[MySQL]
+Description     = MySQL驱动
+Driver          = /usr/lib/odbc/libmyodbc.so
+Setup           = /usr/lib/odbc/libodbcmyS.so
+CPTimeout       =
+CPReuse         =
+FileUsage       = 1
 ```
 
-**Configuring ODBC**
+注意：您可能需要根据文件安装位置更改.so文件的路径。Debian的默认位置为：/usr/lib/odbc/
+
+基本配置odbc.ini:
+
+**这里是配置数据源的位置。您的配置将引用\[MySQL-free\]，因为这是一个ODBC连接。在Debian系统中，此文件位于/etc/odbc.ini**
 
 ```xml
-Basic odbcinst.ini:
-```
-
-####    
-**This is where you configure your various odbc drivers. On Debian systems the file was in /etc/odbcinst.ini**
-
-```xml
-   [MySQL]
-  Description     = MySQL driver
-  Driver          = /usr/lib/odbc/libmyodbc.so
-  Setup           = /usr/lib/odbc/libodbcmyS.so
-  CPTimeout       =
-  CPReuse         =
-  FileUsage       = 1
-```
-
-  
-Note: you may have to change the path to the .so files depending on where they are installed. Default location for Debian: /usr/lib/odbc/
-
-Basic odbc.ini:
-
-**This is where you configure your datasources. Your configs will reference \[MySQL-free\] since this is an ODBC connection.** **On Debian systems the file was in /etc/odbc.ini\`\`\`** 
-
-```xml
-   [MySQL-free] <--note free is a database we will create -->
-   Description     =      MySQL ODBC Database
-   TraceFile       =      stderr
-   Driver          =      MySQL
-   SERVER          =      localhost
-   USER            =      root
-   PASSWORD        =      password
-   DATABASE        =      free  <-- Your DSN -- >     
+[MySQL-free] <--注意free是我们将创建的数据库-->
+Description     = MySQL ODBC数据库
+TraceFile       = stderr
+Driver          = MySQL
+SERVER          = localhost
+USER            = root
+PASSWORD        = password
+DATABASE        = free  <-- 您的DSN -->
 ```
 
 #### 
 
 #### **easyroute.conf.xml**
 
-This file is in /usr/local/freeswitch/conf/autoload\_configs **The easyroute.conf.xml file will need to be configured with the settings for your database:**
+这个文件位于`/usr/local/freeswitch/conf/autoload_configs`。**`easyroute.conf.xml`文件需要配置与数据库相关的设置：**
 
 ```xml
    <param name="db-username" value="root"/>
@@ -269,27 +253,24 @@ This file is in /usr/local/freeswitch/conf/autoload\_configs **The easyroute.con
    <param name="default-gateway" value="192.168.66.6"/>
 ```
 
-  
-NOTE: The default technology profile and default gateway will be returned if the db lookup fails.
+注意：如果数据库查找失败，则会返回默认的技术配置文件和默认的网关。
 
 #### **lcr.conf.xml & switch.conf.xml & db.conf.xml**
 
-These files are in /usr/local/freeswitch/conf/autoload\_configs They will need to be configured with the settings for your database:
+这些文件位于`/usr/local/freeswitch/conf/autoload_configs`。它们需要配置与数据库相关的设置：
 
 ```xml
   <param name="odbc-dsn" value="MySQL-free:root:password"/>
 ```
 
-  
-Create MySQL database
+创建MySQL数据库
 
 ```xml
     mysql --user=root --password=password
     create database free;
 ```
 
-  
-Okay now we need to create the tables - check the latest code first. There should be .sql files in the trunk but they normally are Postgresql or need tweaked.
+好了，现在我们需要创建表格 - 先检查最新的代码。通常在主干中会有.sql文件，但它们通常是针对Postgresql的，或者需要稍作调整。
 
 ```xml
  /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
@@ -303,8 +284,9 @@ Okay now we need to create the tables - check the latest code first. There shoul
    /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
    /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
-  DROP TABLE IF EXISTS `gateways`;
-  CREATE TABLE `gateways` (
+```sql
+DROP TABLE IF EXISTS `gateways`;
+CREATE TABLE `gateways` (
  `gateway_id` int(10) unsigned NOT NULL auto_increment,
  `gateway_ip` varchar(16) NOT NULL,
  `group` varchar(15) NOT NULL,
@@ -339,20 +321,63 @@ Okay now we need to create the tables - check the latest code first. There shoul
 
   /*!40000 ALTER TABLE `numbers` ENABLE KEYS */;
   UNLOCK TABLES;
+```
 
+```sql
+IF EXISTS `gateways`表存在则删除;
+创建 `gateways`表 (
+ `gateway_id` int(10) unsigned NOT NULL 自增,
+ `gateway_ip` varchar(16) NOT NULL,
+ `group` varchar(15) NOT NULL,
+ `limit` int(10) unsigned NOT NULL,
+ `techprofile` varchar(128) NOT NULL,
+  主键  (`gateway_id`),
+  KEY `gateway_ip` (`gateway_ip`,`group`)
+  ) 引擎=MyISAM AUTO_INCREMENT=2 默认字符集=utf8 注释='网关表';
+  锁定表 `gateways` 以便写入;
+
+  /*!40000 修改表 `gateways` 关闭键约束 */;
+  插入到 `gateways`表中的值为 (1,'192.168.99.1','mustang',50,'sofia/default');
+
+  /*!40000 修改表 `gateways` 打开键约束 */;
+  解锁表;
+ 
+  IF EXISTS `numbers`表存在则删除;
+  创建 `numbers`表 (
+ `number_id` int(10) unsigned NOT NULL 自增,
+ `gateway_id` int(10) unsigned NOT NULL,
+ `number` varchar(16) NOT NULL,
+ `acctcode` varchar(16) NOT NULL,
+ `translated` varchar(16) NOT NULL,
+  主键  (`number_id`),
+  唯一键 `number` (`number`),
+  KEY `gateway_id` (`gateway_id`)
+  ) 引擎=InnoDB 默认字符集=utf8 注释='号码表';
+  锁定表 `numbers` 以便写入;
+
+  /*!40000 修改表 `numbers` 关闭键约束 */;
+  插入到 `numbers`表中的值为 (1,1,'19018577141','999999', '9018577141'),(2,1,'19995551212','666666', '9995551212');
+
+  /*!40000 修改表 `numbers` 打开键约束 */;
+  解锁表;
+```
+
+```simplified_chinese
+  -- 如果存在则删除 `lcr` 表
   DROP TABLE IF EXISTS `lcr`;
+  -- 创建 `lcr` 表
   CREATE TABLE `lcr` (
-  `id` int(11) NOT NULL auto_increment,
-  `digits` varchar(15) default NULL,
-  `rate` float(11,5) unsigned NOT NULL,
-  `intrastate_rate` float(11, 5) unsigned NOT NULL,
-  `intralata_rate` float(11, 5) unsigned NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `digits` varchar(15) DEFAULT NULL,
+  `rate` float(11,5) UNSIGNED NOT NULL,
+  `intrastate_rate` float(11, 5) UNSIGNED NOT NULL,
+  `intralata_rate` float(11, 5) UNSIGNED NOT NULL,
   `carrier_id` int(11) NOT NULL,
   `lead_strip` int(11) NOT NULL,
   `trail_strip` int(11) NOT NULL,
   `prefix` varchar(16) NOT NULL,
   `suffix` varchar(16) NOT NULL,
-  `lcr_profile` varchar(32) default NULL,
+  `lcr_profile` varchar(32) DEFAULT NULL,
   `date_start` datetime NOT NULL DEFAULT '1970-01-01',
   `date_end` datetime NOT NULL DEFAULT '2030-12-31',
   `quality` float(10,6) NOT NULL,
@@ -368,15 +393,19 @@ Okay now we need to create the tables - check the latest code first. There shoul
    CONSTRAINT `carrier_id` FOREIGN KEY (`carrier_id`) REFERENCES `carriers` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
    ) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=latin1;
 
+   -- 如果存在则删除 `carriers` 表
    DROP TABLE IF EXISTS `carriers`;
+   -- 创建 `carriers` 表
    CREATE TABLE `carriers` (
-  `id` int(11) NOT NULL auto_increment,
-  `carrier_name` varchar(255) default NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `carrier_name` varchar(255) DEFAULT NULL,
   `enabled` boolean NOT NULL DEFAULT '1',
    PRIMARY KEY  (`id`)
    ) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=latin1;
 
+   -- 如果存在则删除 `npa_nxx_company_ocn` 表
    DROP TABLE IF EXISTS `npa_nxx_company_ocn`;
+   -- 创建 `npa_nxx_company_ocn` 表
    CREATE TABLE npa_nxx_company_ocn (
    npa smallint NOT NULL,
    nxx smallint NOT NULL,
@@ -387,37 +416,40 @@ Okay now we need to create the tables - check the latest code first. There shoul
    ratecenter text,
    state text
    );
+   -- 在 `npa_nxx_company_ocn` 表上创建唯一索引
    CREATE UNIQUE INDEX npanxx_idx USING BTREE ON npa_nxx_company_ocn (npa, nxx);
-
-   DROP TABLE IF EXISTS `carrier_gateway`;
-   CREATE TABLE `carrier_gateway` (
-  `id` int(11) NOT NULL auto_increment,
-  `carrier_id` int(11) default NULL,
-  `prefix` varchar(255) NOT NULL,
-  `suffix` varchar(255) NOT NULL,
-  `codec` varchar(255) NOT NULL,
-  `enabled` boolean NOT NULL DEFAULT '1',
-  PRIMARY KEY  (`id`),
-  KEY `carrier_id` (`carrier_id`)
-  ) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=latin1;
-
-  /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
-  /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
-  /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
-  /*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
-  /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-  /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-  /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-  /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 ```
 
-**Create some table data**
+```sql
+   DROP TABLE IF EXISTS `carrier_gateway`;
+   CREATE TABLE `carrier_gateway` (
+   `id` int(11) NOT NULL auto_increment,
+   `carrier_id` int(11) default NULL,
+   `prefix` varchar(255) NOT NULL,
+   `suffix` varchar(255) NOT NULL,
+   `codec` varchar(255) NOT NULL,
+   `enabled` boolean NOT NULL DEFAULT '1',
+   PRIMARY KEY  (`id`),
+   KEY `carrier_id` (`carrier_id`)
+   ) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=latin1;
 
-**Now we have tables. You will want to populate the npa\_nxx\_company\_ocn table**
+   /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+   /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+   /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+   /*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+   /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+   /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+   /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+   /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+```
+
+**创建一些表数据**
+
+**现在我们有了表格。您将希望填充npa_nxx_company_ocn表**
 
 <http://files.freeswitch.org/npa-nxx-companytype-ocn.csv>
 
-**download this via ftp to you server. Enter into MySQL**
+**通过FTP下载到您的服务器。进入MySQL**
 
 ```xml
   mysql --user=root --password=password 
@@ -429,20 +461,23 @@ Okay now we need to create the tables - check the latest code first. There shoul
 ```
 
 ####    
-**That should have populated the database table with the NPA data.**
+**这应该已经填充了NPA数据的数据库表格。**
 
-**Sample data for lcr**
+**lcr的样本数据**
 
 ```xml
-  -- insert two carriers
+  -- 插入两个承运商
   INSERT INTO carriers (id, carrier_name, enabled) VALUES (1, 'carrier1', 1);
   INSERT INTO carriers (id, carrier_name, enabled) VALUES (2, 'carrier2', 1);
+```
 
-  -- insert some gateway info
+```sql
+
+  -- 插入一些网关信息
   INSERT INTO carrier_gateway (id, carrier_id, prefix, suffix) VALUES (1, 1, 'sofia/gateway/carrier1/', );
   INSERT INTO carrier_gateway (id, carrier_id, prefix, suffix) VALUES (2, 2, 'sofia/external/', '@proxy.carrier2.net:5060');
 
-  -- insert some lcr data
+  -- 插入一些LCR数据
   INSERT INTO lcr (id, digits, rate, carrier_id, lead_strip, trail_strip, prefix, suffix, date_start, date_end, quality, reliability)
   VALUES (1, '1', 0.15, 1, 0, 0, , , current_timestamp - interval 1 year, current_timestamp + interval 1 year , 0, 0);
   INSERT INTO lcr (id, digits, rate, carrier_id, lead_strip, trail_strip, prefix, suffix, date_start, date_end, quality, reliability)
@@ -453,26 +488,26 @@ Okay now we need to create the tables - check the latest code first. There shoul
   VALUES (4, '1234', 0.02, 2, 1, 0, '0', , current_timestamp - interval 1 year, current_timestamp + interval 1 year , 0, 0);
 ```
 
-####    
-**Testing our database connections**
+####   
+**测试我们的数据库连接**
 
-From the freeswitch command line issue something similar to:
+从freeswitch命令行输入类似以下的命令：
 
 ```xml
  lcr 12145551111
 ```
 
   
-Which would respond with something like:
+响应会是类似以下的内容：
 
 ```xml
-   API CALL [lcr(12145551111)] output:
-  | Digit Match | Carrier  | Rate     | Dialstring                         |
+   API调用[lcr(12145551111)]输出:
+  | 数字匹配 | 运营商 | 费率     | 拨号字符串                           |
   | 1214        | carrier1 | 0.01000  | sofia/gateway/carrier1/12145551111 |
   | 1           | carrier2 | 0.01440  | sofia/gateway/carrier2/12145551111 
 ```
 
-From the freeswitch command line issue something similar to:
+从freeswitch命令行发出类似的指令：
 
 ```xml
   easyroute 19018577141
@@ -483,102 +518,95 @@ From the freeswitch command line issue something similar to:
   19018577141     50              mustang         999999          sofia/default/9018577141@192.168.99.1
 ```
 
-#### **If this comes back our databases are working.**
+#### **如果返回结果，则表示我们的数据库正常工作。**
 
-Okay now we need to use this data to route traffic. I don’t know if this is the best way to do this but hey we are all learning. I route my traffic based on the sending IP. This is also a means of security. If the sending IP isn’t in the dialplan it won’t route in theory.
+现在我们需要使用这些数据来路由流量。我不知道这是否是最佳方法，但我们都在学习。我根据发送IP路由我的流量。这也是一种安全措施。如果发送IP不在分机计划中，则理论上不会路由到该IP。
 
-#### **Each SIP Trunk endpoint will need an extension in the dialplan** **Providers will need an easyroute extension & Customers will need a LCR extension.**
+#### **每个SIP Trunk终端都需要一个分机号** **供应商需要一个easyroute分机号和客户需要一个LCR分机号。**
 
-This is a provider that sends me traffic and I route based on IP then DID database lookup. I have also added ringback and audio error if out of trunks just like a wireline carrier..
+这是一个向我发送流量的供应商，我根据IP和DID数据库进行路由。我还添加了回铃音和音频错误处理，如果通道不足，就像有线运营商一样。
 
- ```xml
-   <extension name="verizon">
-       <condition field="network_addr" expression="^216\.185\.35\.25$" break="on-false"/>
-       <condition field="destination_number" expression="^1?(\d{10})$" break="on-true">
-               <action application="set" data="instant_ringback=true"/>
-               <action application="set" data="ringback=%(2000,4000,440.0,480.0)"/>
-               <action application="easyroute" data="$1"/>
-               <action application="limit" data="db easyroute ${easy_group} ${easy_limit} LE-$1"/>
-               <action application="bridge" data="${easy_dialstring}"/>
-    </condition>
-   </extension>
+```xml
+<extension name="verizon">
+     <condition field="network_addr" expression="^216\.185\.35\.25$" break="on-false"/>
+     <condition field="destination_number" expression="^1?(\d{10})$" break="on-true">
+             <action application="set" data="instant_ringback=true"/>
+             <action application="set" data="ringback=%(2000,4000,440.0,480.0)"/>
+             <action application="easyroute" data="$1"/>
+             <action application="limit" data="db easyroute ${easy_group} ${easy_limit} LE-$1"/>
+             <action application="bridge" data="${easy_dialstring}"/>
+  </condition>
+</extension>
 ```
 
 ####    
-**Then we check that we are not over the limit for this trunk**
+**然后我们检查该通道是否超过限制。**
 
 ```xml
-   <extension name="easyroute_limit_exceeded">
-       <condition field="destination_number" expression="^LE-(\d{10})$" break="on-true">
-              <action application="answer" />
-              <action application="playback" data="/usr/local/freeswitch/sounds/en/us/callie/misc/8000/circuitsbusy.wav"/>
-              <action application="respond" data="503 Out of Channels"/>
-       </condition>
-   </extension>
+<extension name="easyroute_limit_exceeded">
+    <condition field="destination_number" expression="^LE-(\d{10})$" break="on-true">
+        <action application="answer" />
+        <action application="playback" data="/usr/local/freeswitch/sounds/en/us/callie/misc/8000/circuitsbusy.wav"/>
+        <action application="respond" data="503 Out of Channels"/>
+    </condition>
+</extension>
 ```
 
-#### **This is a customer that sends me traffic and I route based on IP then LCR database lookup.**
+#### **这是一个向我发送流量的客户，我根据 IP 进行路由，然后进行 LCR 数据库查询。**
 
 ```xml
-   <extension name="Customer_Outbound to PSTN 11 Digits">
-       <condition field="network_addr" expression="^192\.168\.1\.1$"/>
-       <condition field="destination_number" expression="^(1[2-9][0-9]{2}[2-9]{7})$">
-     <action application="lcr" data="$1"/>
-     <action application="bridge" data="${lcr_auto_route}"/>
-   </condition>
-   </extension>
+<extension name="Customer_Outbound to PSTN 11 Digits">
+    <condition field="network_addr" expression="^192\.168\.1\.1$"/>
+    <condition field="destination_number" expression="^(1[2-9][0-9]{2}[2-9]{7})$">
+        <action application="lcr" data="$1"/>
+        <action application="bridge" data="${lcr_auto_route}"/>
+    </condition>
+</extension>
 ```
 
-  
-**Optimizations** Stop FreeSWITCH /usr/local/freeswitch/bin/freeswitch -stop
+**优化** 停止 FreeSWITCH /usr/local/freeswitch/bin/freeswitch -stop
 
-Lowering FS Log Level vi /usr/local/freeswitch/conf/autoload\_configs/switch.conf.xml
+降低 FS 日志级别 vi /usr/local/freeswitch/conf/autoload\_configs/switch.conf.xml
 
 ```xml
-   <param name="loglevel" value="err"/>
+<param name="loglevel" value="err"/>
 ```
 
-  
-Set Call Admission Control vi /usr/local/freeswitch/conf/autoload\_configs/switch.conf.xml
+设置呼叫接纳控制 vi /usr/local/freeswitch/conf/autoload\_configs/switch.conf.xml
 
 ```xml
- <param name="max-sessions" value="1000"/>
- <param name="sessions-per-second" value="100"/>
+<param name="max-sessions" value="1000"/>
+<param name="sessions-per-second" value="100"/>
 ```
 
-  
-With these settings, we have defined a maximum of 500 bridged calls (2\*500 channels) and a maximum of 100 new sessions per second. You should set these parameters according to your hardware
+通过这些设置，我们定义了最多 500 个桥接呼叫（2 \* 500 通路）和每秒最多 100 个新会话。您应根据您的硬件设置这些参数。
 
-Creation of a ramdisk for the FS database
+创建用于 FS 数据库的 ramdisk
 
 ```xml
-   mv /usr/local/freeswitch/db /usr/local/freeswitch/db_old 
-   mkdir /usr/local/freeswitch/db 
-   mount -t tmpfs tmpfs /usr/local/freeswitch/db 
+mv /usr/local/freeswitch/db /usr/local/freeswitch/db_old 
+mkdir /usr/local/freeswitch/db 
+mount -t tmpfs tmpfs /usr/local/freeswitch/db 
 ```
 
-  
-Use Proxy Media to keep FS in the RTP media path (topology hiding) but without analyzing RTP or DTMF vi /usr/local/freeswitch/conf/sip\_profiles/external.xml
+使用代理媒体来保持FS在RTP媒体路径中（隐藏拓扑），但不分析RTP或DTMF，将以下内容插入到`/usr/local/freeswitch/conf/sip\_profiles/external.xml`文件中：
 
 ```xml
    <param name="inbound-late-negotiation" value="true"/>
 ```
 
-  
-Disable Presence Support in SIP\_Profiles vi /usr/local/freeswitch/conf/sip\_profiles/internal.xml
+禁用SIP\_Profiles中的Presence Support，将以下内容插入到`/usr/local/freeswitch/conf/sip\_profiles/internal.xml`文件中：
 
 ```xml
   <param name="manage-presence" value="false"/>
 ```
 
-Okay at this point we have the general setup complete. You will need to add gateways and clean up the dialplan and add cdrs into the mix.. If you need help let me know I'm happy to help. This setup is the basic way most ITSP use SBCs. I need help with some things so If we want to start an SBC group I would be happy to help.
+到目前为止，我们已经完成了一般设置。您需要添加网关，整理拨号计划，并将cdrs添加到混合中...如果您需要帮助，请告诉我，我很乐意帮忙。这个设置是大多数ITSP使用SBC的基本方法。我需要在某些问题上的帮助，如果我们想要开始一个SBC群组，我很乐意帮忙。
 
-**I’m really open to help on making a web interface for all this and making it more efficient.** **I pulled a lot of data from other posts please help move this along** **Thanks to all the Devel Teams' great work**
+**我真的很愿意帮助制作一个网页界面来管理这一切，并使其更高效。** **我从其他帖子中提取了很多数据，请帮助推进这个工作** **感谢所有开发团队的辛勤工作**
 
-Right now I use phpmyadmin to manage the SBC database.
+目前我使用phpmyadmin来管理SBC数据库。
 
-## Related
+## 相关
 
-Can I know you? I am Tayeb (aka DelphiWorld)
-
-
+我可以知道你是谁吗？我是Tayeb (aka DelphiWorld)。

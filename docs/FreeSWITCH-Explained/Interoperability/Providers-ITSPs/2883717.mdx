@@ -1,13 +1,9 @@
-
-# Provider iinet (Australia) 
-
- 
+# 服务提供商 iinet（澳大利亚）
 
 ## [iinet.net.au](http://iinet.net.au)
 
-Last update: 9 August 2011
+上次更新日期：2011年8月9日
 
-  
 ```xml
 <include>
   <gateway name="iinet">
@@ -23,37 +19,35 @@ Last update: 9 August 2011
 </include>
 ```
 
-## For outbound calls to work!
+## 为使出站呼叫正常工作！
 
-The above example says that "caller-id-in-from" is required. This is NOT actually required. In fact, even with this set it will still fail. The crucial thing you need to do if you want to place calls is that you must set two variables in your outbound dialplan:
-
-```xml
-<action application="set" data="effective_caller_id_number=***your number***"/>
-<action application="set" data="effective_caller_id_name=***your number***"/>
-```
-
-You will need these in every dialplan entry that uses this gateway.
-
-The reason for this is that iinet will reject any call that comes to it from anywhere other than the callerid that is registered with them. By default, freeswitch will send the caller id of your extension with the outgoing call, therefore iinet will reject the call. By setting these variables you override that default behaviour and iinet sees what it wants to see.
-
-A more elegant way to achieve this is to set the following in your extension definitions:
+上述示例中指出了需要 "caller-id-in-from" 的设置。实际上，这是不必要的。事实上，即使设置了这个参数，呼叫仍然会失败。如果您想要进行呼叫，您必须在出站拨号计划中设置两个变量：
 
 ```xml
-<variable name="outbound_caller_id_name" value="***your number***"/>
-<variable name="outbound_caller_id_number" value="***your number***"/> 
+<action application="set" data="effective_caller_id_number=***您的号码***"/>
+<action application="set" data="effective_caller_id_name=***您的号码***"/>
 ```
 
-And then in your outbound dialplan set:
+每个使用该网关的拨号计划条目都需要设置这些变量。
+
+原因是 iinet拒绝从与其注册的呼叫者ID不同的任何其他位置接收呼叫。默认情况下，FreeSWITCH将使用外呼时的分机呼叫者ID，因此iinet会拒绝呼叫。通过设置这些变量，您可以覆盖默认行为，让iinet看到它想要看到的内容。
+
+一个更优雅的实现方法是在您的分机定义中设置以下内容：
+
+```xml
+<variable name="outbound_caller_id_name" value="***您的号码***"/>
+<variable name="outbound_caller_id_number" value="***您的号码***"/> 
+```
+
+然后在您的出站拨号计划中设置：
 
 ```xml
 <action application="set" data="effective_caller_id_number=${outbound_caller_id_number}"/>
 <action application="set" data="effective_caller_id_name=${outbound_caller_id_name}"/> 
 ```
 
-## WARNING
+## 警告
 
-Users have reported that iinet delivers calls with Max-Forwards=4 rather than the usual setting of 70.
+用户报告说iinet以Max-Forwards=4的方式传送呼叫，而不是常规设置的70。
 
-This has been observed to cause FreeSWITCH to be unable to do much with the call before Max-Forwards has been exceeded. If you have strange behaviour of calls from iinet to FreeSWITCH it would be worth considering this. For instance, if you process the call through IVRs or other call logic before delivering it to a phone it is possible that it will not be able to deliver the call to a phone as Max-Forwards may have already been exceeded.
-
-
+观察到这会导致FreeSWITCH在超过Max-Forwards之前无法对呼叫进行处理。如果您在来自iinet的呼叫到达FreeSWITCH时遇到奇怪的行为，考虑一下这一点是值得的。例如，如果您在将呼叫发送到电话之前通过IVR或其他呼叫逻辑处理呼叫，可能无法将呼叫传递给电话，因为Max-Forwards可能已经超过了。

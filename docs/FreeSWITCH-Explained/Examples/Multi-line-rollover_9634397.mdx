@@ -1,51 +1,48 @@
+# 多线路接入
 
-# Multi-line rollover 
+## 关于
 
- 
+模拟2线路电话上的共享呼叫外观。模拟一个电话系统，每个电话都有2个分机号码。当第一条线路被呼叫时，如果忙线，呼叫将转移到该电话的第二条线路。如果第二条线路忙线，呼叫将转移到语音信箱。
 
-## About
+点击此处展开目录
 
-Emulate shared call appearance on 2-line phones.Emulate a phone system where each phone has 2 extension numbers. When the first line is called, if it is busy the call rolls over to the second line for that phone. If the second line is busy, the call rolls over into voicemail.
+* 1 [目标](#goal)
+* 2 [SIP配置文件](#sip-profile)
+* 3 [拨号计划](#dialplan--)  
+   * 3.1 [外拨呼叫](#outbound-calls)  
+   * 3.2 [呼入](#inbound)
+* 4 [用户目录](#user-directory)  
+   * 4.1 [线路1](#line-1)  
+   * 4.2 [线路2](#line-1)
+* 5 [相关](#related)
 
-Click here to expand Table of Contents
+## 目标
 
-* 1 [Goal](#goal)
-* 2 [SIP Profile](#sip-profile)
-* 3 [Dialplan](#dialplan--)  
-   * 3.1 [Outbound Calls](#outbound-calls)  
-   * 3.2 [Inbound](#inbound)
-* 4 [User Directory](#user-directory)  
-   * 4.1 [Line 1](#line-1)  
-   * 4.2 [Line 2](#line-1)
-* 5 [Related](#related)
+模拟一个电话系统，每个电话都有2个分机号码。当第一条线路被呼叫时，如果忙线，呼叫将转移到该电话的第二条线路。如果第二条线路忙线，呼叫将转移到语音信箱。与每个人只有一个分机号相比，这种设置的优点是，如果有人监听该人的两条线路，当第二个电话来时，他们可以看到该人已经在通话中 - 因为第一个分机的监听灯会亮起，而第二个分机的监听灯会闪烁。非常适合需要在上级正在通话时代接电话的助理职位。
 
-## Goal
+除了修改conf/dialplan/default.xml中Local_Extensions部分之外，每个用户的xml文件将包含变量，说明每个分机允许多少通话（max_calls），自定义回铃音（cringback）以及需要转接到哪个语音信箱（fail_over）。
 
-Emulate a phone system where each phone has 2 extension numbers. When the first line is called, if it is busy the call rolls over to the second line for that phone. If the second line is busy, the call rolls over into voicemail. An advantage to this setup as opposed to having just one extension per person is that if someone monitors that person's two lines, they can see that the person is already on a call when the second one comes in - because the monitor light for the first extension will be solid and the monitor light for the second extension will be blinking. Perfect for a professional with assistant that has to pick up calls if their boss is already on the phone.
+在这个例子中，手机注册了两个身份 - 315 和 415。当有一个电话呼入到315时，如果它还没有被用于一通电话，FreeSWITCH会把这个电话转接到315。如果315已经有一通活动电话，FreeSWITCH会把电话转接到用户的第二个线路（415）。我已经将第二个线路的回铃设置为英国式回铃，这意味着呼叫者会听到特殊的铃声（与第一个线路上的美国式回铃相对），并能够知道用户已经在通话中。如果315和415都在使用中，那么电话将被转接到语音信箱:315（用户的语音信箱）。
 
-In addition to the Local\_Extensions section of the conf/dialplan/default.xml being modified, each user's xml file will contain variables stating how many calls are allowed per extension (max\_calls), a custom ringback (cringback) and which voicemail box to rollover into (fail\_over).
+## SIP配置文件
 
-In this example, the phone is registered with two identities - 315 and 415\. When a call comes into 315, if it isn't already in use with 1 call, FreeSWITCH will transfer the call to 315\. If 315 is already in an active call, FreeSWITCH will transfer the call to the user's second line ( 415 ). I have set the ringback to the uk-ring for the second line which means the caller will hear a distinctive ring ( as opposed to the us-ring on the first line ) and be able to tell that the user is already on a call. If 315 and 415 are both in use then the call is transferred to voicemail:315 ( the user's voicemailbox ).
+conf/sip_profiles/default.xml
 
-## SIP Profile
+如果您有多台电话并且希望它们都使用相同的分机号码登录，则需要启用多个注册。例如，如果您让助理除了自己的电话之外，还使用专业人员的分机登录，当专业人员的分机号码被呼叫时，助理的电话将会响铃并显示呼叫信息，方便助理接听。
 
-conf/sip\_profiles/default.xml
-
-You need to enable multiple registrations if you have users with more than one phone and you want them all to log in with the same extensions. If you have the assistant login with the professional's extension in addition to his/her own, their phone will ring and show the call info when the professional's extensions are called allowing her to pickup the call easily.
-
-**sip\_profiles/default.xml**
+**sip_profiles/default.xml**
 
 ```xml
   <param name="multiple-registrations" value="true"/>
 ```
 
-## Dialplan  
+## 拨号规则
 
-### Outbound Calls
+### 呼出电话
 
-conf/dialplan/default.xml (tracking outbound calls)
+conf/dialplan/default.xml（跟踪呼出电话）
 
-In order for the rollover to take effect if the extension is making an outbound call also, add the following to your outbound extension condition. In my case, it is put in the extension that matches "9^(\\d+)$" where calls go out my gateway.
+为了使呼叫溢出的效果生效，如果分机正在拨打电话，需要将以下内容添加到您的呼出方案的条件中。在我的情况下，它被放在与"9^(\\d+)$"相匹配的分机中，这个分机用于通过我的网关进行呼叫。
 
 **dialplan/default.xml**
 
@@ -53,47 +50,47 @@ In order for the rollover to take effect if the extension is making an outbound 
 <action application="limit" data="$${domain} ${caller_id_number} 10"/> 
 ```
 
-### Inbound
+### 呼入电话
 
-conf/dialplan/default.xml (Local\_Extension example)
+conf/dialplan/default.xml（本地分机号码示例）
 
 ```xml
-    <extension name="Local_Extension">
-     <condition field="destination_number" expression="^([34][01][0-9])$">
-       <action application="set" data="dialed_ext=$1"/>
-       <action application="export" data="dialed_ext=$1"/>
-       <action application="set_user" data="${dialed_ext}@${domain}"/>
-       <action application="limit" data="$${domain} ${dialed_ext} ${max_calls} ${fail_over}"/>
-       <action application="bind_meta_app" data="1 a a execute_extension::dx XML features"/>
-       <action application="bind_meta_app" data="2 a a record_session::$${base_dir}/recordings/${caller_id_number}.${strftime(%Y-%m-%d-%H-%M-%S)}.wav"/>
-       <action application="bind_meta_app" data="3 a a execute_extension::cf XML features"/>
-       <action application="set" data="transfer_ringback=${us-ring}"/>
-       <action application="set" data="ringback=${${cringback}}"/>
-       <action application="set" data="call_timeout=30"/>
-       <action application="set" data="hangup_after_bridge=true"/>
-       <action application="set" data="continue_on_fail=true"/>
-       <action application="db" data="insert/call_return/${dialed_ext}/${caller_id_number}"/>
-       <action application="db" data="insert/last_dial_ext/${dialed_ext}/${uuid}"/>
-       <action application="bridge" data="${sofia_contact($${domain}/${dialed_ext}@$${domain})}"/>
-       <action application="answer"/>
-       <action application="send_display" data="Voicemail for ${vm_extension}"/>
-       <action application="sleep" data="1000"/>
-       <action application="voicemail" data="default $${domain} ${vm_extension}"/>
-     </condition>
-   </extension>
-   <extension name="voicemail">
-     <condition field="destination_number" expression="^voicemail:(.*)$">
-       <action application="sleep" data="1000"/>
-       <action application="voicemail" data="default $${domain} $1"/>
-     </condition>
-   </extension>
+<extension name="本地扩展" >
+    <condition field="destination_number" expression="^([34][01][0-9])$" >
+        <action application="set" data="dialed_ext=$1" />
+        <action application="export" data="dialed_ext=$1" />
+        <action application="set_user" data="${dialed_ext}@${domain}" />
+        <action application="limit" data="$${domain} ${dialed_ext} ${max_calls} ${fail_over}" />
+        <action application="bind_meta_app" data="1 a a execute_extension::dx XML features" />
+        <action application="bind_meta_app" data="2 a a record_session::$${base_dir}/recordings/${caller_id_number}.${strftime(%Y-%m-%d-%H-%M-%S)}.wav" />
+        <action application="bind_meta_app" data="3 a a execute_extension::cf XML features" />
+        <action application="set" data="transfer_ringback=${us-ring}" />
+        <action application="set" data="ringback=${${cringback}}" />
+        <action application="set" data="call_timeout=30" />
+        <action application="set" data="hangup_after_bridge=true" />
+        <action application="set" data="continue_on_fail=true" />
+        <action application="db" data="insert/call_return/${dialed_ext}/${caller_id_number}" />
+        <action application="db" data="insert/last_dial_ext/${dialed_ext}/${uuid}" />
+        <action application="bridge" data="${sofia_contact($${domain}/${dialed_ext}@$${domain})}" />
+        <action application="answer" />
+        <action application="send_display" data="给${vm_extension}的语音信箱" />
+        <action application="sleep" data="1000" />
+        <action application="voicemail" data="default $${domain} ${vm_extension}" />
+    </condition>
+</extension>
+<extension name="voicemail" >
+    <condition field="destination_number" expression="^voicemail:(.*)$" >
+        <action application="sleep" data="1000" />
+        <action application="voicemail" data="default $${domain} $1" />
+    </condition>
+</extension>
 ```
 
-## User Directory
+## 用户目录
 
-### Line 1
+### 第一行
 
-conf/directory/default/user1-ext1.xml example
+conf/directory/default/user1-ext1.xml 示例
 
 **default/user1-ext1.xml**
 
@@ -116,9 +113,9 @@ conf/directory/default/user1-ext1.xml example
 </include> 
 ```
 
-### Line 2
+### 第二行
 
-conf/directory/default/user1-ext2.xml example
+conf/directory/default/user1-ext2.xml 示例
 
 **default/user1-ext2.xml**
 
@@ -141,8 +138,6 @@ conf/directory/default/user1-ext2.xml example
 </include> 
 ```
 
-## Related
+## 相关内容
 
-* [Dialplan Recipes](../Dialplan/Dialplan-Recipes_9634252.mdx#about)
-
-
+* [拨号计划配方](../Dialplan/Dialplan-Recipes_9634252.mdx#about)

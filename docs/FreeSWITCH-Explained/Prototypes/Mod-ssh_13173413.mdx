@@ -1,64 +1,60 @@
+# SSH模块
 
-# Mod ssh 
+## 关于
 
- 
+本文档涵盖了有关mod_ssh的信息。
 
-## About
+点击此处展开目录
 
-This document covers information about mod\_ssh.
-
-Click here to expand Table of Contents
-
-* 1 [mod\_ssh](#mod_ssh)  
-   * 1.1 [Version](#version)  
-   * 1.2 [Introduction](#introduction)  
-   * 1.3 [Status](#status)  
-   * 1.4 [Installation](#installation)  
-   * 1.5 [Configuration](#configuration)  
-   * 1.6 [Usage](#usage)  
-   * 1.7 [Applications](#applications)  
-   * 1.8 [API commands](#api-commands)  
-   * 1.9 [Events](#events)  
-   * 1.10 [Channel Variables](#channel-variables)  
-   * 1.11 [Known Bugs](#known-bugs)
+- 1 [mod_ssh](#mod_ssh)
+   - 1.1 [版本](#版本)
+   - 1.2 [介绍](#介绍)
+   - 1.3 [状态](#状态)
+   - 1.4 [安装](#安装)
+   - 1.5 [配置](#配置)
+   - 1.6 [使用](#使用)
+   - 1.7 [应用程序](#应用程序)
+   - 1.8 [API命令](#api-commands)
+   - 1.9 [事件](#事件)
+   - 1.10 [通道变量](#通道变量)
+   - 1.11 [已知问题](#已知问题)
 
 ## mod_ssh
 
-This module is still in development, it may or may not work as expected and features may be missing
+该模块目前仍在开发中，可能无法按预期工作，并且可能缺少某些功能。
 
-### Version
+### 版本
 
-This is an external module and not part of the FreeSWITCH package.
+它是一个外部模块，不包含在FreeSWITCH软件包中。
 
-### Introduction
+### 介绍
 
-mod\_ssh is a Secure-SHell (SSH) remote console module based on (a modified version of) [libssh](http://0xbadc0de.be/wiki/).
+mod_ssh是一个基于(libssh的修改版本)[libssh](http://0xbadc0de.be/wiki/)的Secure-SHell (SSH)远程控制台模块。
 
-  
-**Features:**
+**特点：**
 
-* Multiple user accounts
-* Password authentication (public-key method is not supported by libssh at the moment)
-* Passwords stored in cleartext or MD5/SHA1 hashed
-* Basic line-editing capabilities
-* API commands to list accounts, active sessions, kick users and (temporarily) lock accounts
-* Login/Logout events
+- 多个用户账户
+- 密码认证（目前libssh不支持公钥认证方法）
+- 密码以明文或MD5/SHA1哈希存储
+- 基本的行编辑功能
+- API命令用于列出账户、活动会话、踢出用户和（临时）锁定账户
+- 登录/注销事件
 
-**ToDo:**
+**待办事项：**
 
-* Command history
-* More advanced line-editing
-* Per-Session threads (mostly done, still experimental, disabled for now)
-* Log output
-* Handle window-resize event
+- 命令历史
+- 更高级的行编辑功能
+- 每个会话线程（已完成大部分工作，但仍在试验阶段，目前已禁用）
+- 日志输出
+- 处理窗口调整事件
 
-### Status
+### 状态
 
-In development (alpha release coming soon)
+正在开发中（即将发布Alpha版本）
 
-### Installation
+### 安装
 
-You need [GIT](http://git.or.cz/) to get the current development snapshot.
+您需要[GIT](http://git.or.cz/)获取当前的开发快照。
 
 ```xml
 git clone http://oss.axsentis.de/git/mod_ssh.git
@@ -70,82 +66,83 @@ make
 make install
 ```
 
-### Configuration
+### 配置
 
-The configuration consists of several sections:
+配置包含多个部分：
 
-* "users" section, containing accounts and their passwords
-* "settings" section for global parameters like bind ip and port
-* "cli-keybindings" section for console keybindings for function keys (F1-F12)
+* "用户"部分，包含账户和密码
+* "设置"部分用于全局参数，如绑定IP和端口
+* "cli-keybindings"部分用于控制台功能键（F1-F12）的键绑定
 
 mod\_ssh.conf.xml:
 
 ```xml
-<configuration name="ssh.conf" description="SSH Console">
-  <!-- user accounts -->
+<configuration name="ssh.conf" description="SSH控制台">
+  <!-- 用户账户 -->
   <users>
   <!--
-    Example: plaintext pw
+    示例：明文密码
     <user name="test" pass="test"/>
     
   -->
   <!--
-    Example: sha1 hashed pw
+    示例：SHA1加密的密码
     <user name="test" sha1="a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"/>
     
   -->
   <!--
-    Example: md5 hashed pw
+    示例：MD5加密的密码
     <user name="test" md5="098f6bcd4621d373cade4e832627b4f6"/>
     
   -->
   <!--
-         Q: How to create hashed passwords?
-         A: Use one of the following methods:
+         问：如何创建加密的密码？
+         答：可以使用以下方法之一：
 
            echo -n mypassword | sha1sum
            echo -n mypassword | md5sum
 
            echo -n mypassword | openssl sha1
            echo -n mypassword | openssl md5
+```
 
-         (Note: the -n (= no newline) parameter to echo is important!)
-    
+(注意：echo的-n（=无换行符）参数很重要！）
+
   -->
   </users>
-  <!-- module settings -->
-  <settings>
-    <!-- port and ip to listen on -->
+  <!-- 模块设置 -->
+  <设置>
+    <!-- 监听的端口和IP -->
     <param name="port" value="2222"/>
     <param name="ip" value="127.0.0.1"/>
-    <!-- connection timeout (seconds) -->
+    <!-- 连接超时时间（秒） -->
     <param name="timeout" value="300"/>
-    <!-- generate events? (on user login/logout) -->
+    <!-- 生成事件？（用户登录/注销） -->
     <param name="events" value="yes"/>
-    <!-- customize terminal prompt -->
+    <!-- 自定义终端提示符 -->
     <param name="prompt" value="freeswitch/%u@%h %%"/>
     <!--
-         Q: What are the possible format tags for the prompt?
+         Q: 提示符的可能格式标签有哪些？
          A:
-              %h     Hostname (e.g. "fsbox")
-              %d     Date (2008-12-03)
-              %D     Full date including time (2008-12-03 13:35:14)
-              %t     Time (13:35:14)
-              %u     Username (e.g. "test")
-              %p     PID of the freeswitch process (e.g. 1234)
-              %%     Literal %
+              %h     主机名（例如 "fsbox"）
+              %d     日期（2008-12-03）
+              %D     包括时间的完整日期（2008-12-03 13:35:14）
+              %t     时间（13:35:14）
+              %u     用户名（例如 "test"）
+              %p     Freeswitch进程的PID（例如 1234）
+              %%     原义 %
 
-         Examples:
+         示例：
 
-                      Format                        Final prompt
+                      格式                        最终提示符
 
                 "freeswitch/%u@%h %%"  ==>  "freeswitch/test@fsbox %"
                 "%h[%p] %d >"          ==>  "fsbox[1234] 2008-12-03 >"
     
     -->
-  </settings>
+  </设置>
 
-  <!-- function key bindings -->
+  <!-- 功能键绑定 -->
   <cli-keybindings>
     <key name="1" value="help"/>
     <key name="2" value="status"/>
@@ -163,43 +160,41 @@ mod\_ssh.conf.xml:
 </configuration>
 ```
 
-### Usage
+### 用法
 
-Configure and load the module, then use a ssh client (openssh tested and works) to connect to FreeSWITCH on the configured ip and port.
+配置并加载模块，然后使用SSH客户端（已测试并可正常工作的openssh）连接到配置的IP和端口上的FreeSWITCH。
 
-### Applications
+### 应用程序
 
-none
+无
 
-### API commands
+### API命令
 
-* **ssh version** \- Display mod\_ssh version string
-* **ssh help** \- List of supported commands
+* **ssh version** \- 显示mod\_ssh的版本信息
+* **ssh help** \- 显示支持的命令列表
 
-* **ssh account \[list\]** \- Outputs list of configured useraccounts
-* **ssh account disable &lt;account>** \- Lock the specified account (user can not log in)
-* **ssh account enable &lt;account>** \- Unlock the account
+* **ssh account \[list\]** \- 输出配置的用户账户列表
+* **ssh account disable &lt;account>** \- 锁定指定账户（用户无法登录）
+* **ssh account enable &lt;account>** \- 解锁账户
 
-* **ssh session \[list\]** \- Lists currently active sessions
-* **ssh session kick &lt;name>** \- Kick session (forced log out)
+* **ssh session \[list\]** \- 列出当前活动的会话
+* **ssh session kick &lt;name>** \- 强制断开会话（强制退出登录）
 
-### Events
+### 事件
 
-If enabled in ssh.conf.xml (parameter "events"):
+如果在ssh.conf.xml中启用（参数"events"）：
 
-* **ssh::login** \- after a user successfully logged in
-* **ssh::logout** \- after a user logged out
+* **ssh::login** \- 用户成功登录后
+* **ssh::logout** \- 用户退出登录后
 
-### Channel Variables
+### 通道变量
 
-none
+无
 
-### Known Bugs
+### 已知错误
 
-A session executing a long running command will block other SSH sessions, this will be fixed by the (still experimental) per-session thread support.
+执行长时间命令的会话将阻塞其他SSH会话，这将通过（仍在试验阶段的）每个会话线程支持来修复。
 
-Log output is not supported.
+不支持日志输出。
 
-Libedit can not be used multiple times in a task (even though it's API seems to be able to), a custom terminal library had to be written, this code is still in an early stage...
-
-
+Libedit无法在一个任务中使用多次（尽管它的API似乎能够），因此必须编写一个定制的终端库，此代码仍处于早期阶段...

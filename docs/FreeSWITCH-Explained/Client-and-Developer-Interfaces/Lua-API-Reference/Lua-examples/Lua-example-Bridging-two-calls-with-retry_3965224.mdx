@@ -1,21 +1,18 @@
+# Lua示例 连接两个呼叫并进行重试
 
-# Lua example Bridging two calls with retry 
+## 关于
 
- 
+下面的代码首先进行一次呼叫，最多重试max\_retries1次，在两个不同的网关之间交替进行，呼叫建立后，播放问候语，然后进行第二次呼叫，最多重试max\_retries2次，一旦第二次呼叫建立，就将两个呼叫连接起来。还包含两行代码，用于启用立体声通话录音（每个通道一个腿）。
 
-## About
+## 注意事项
 
-The following code makes one call first, retries max\_retries1 times, alternating between 2 different gateways, once the call has been established, it plays a greeting message, it makes the second call, retries max\_retries2 times and once the second call has been established, it bridges the two calls. There are also two lines of code included for enabling call recording in stereo (one leg per channel).
+- uuid参数用于通过Event Socket识别通话事件。您可以通过读取该参数来标识呼叫/通道变量。
+- dialstrXY参数应该以以下形式：sofia/gateway/gateway\_name/dial\_number或类似的形式，遵循originate命令的规范，根据您希望进行的呼叫类型进行设置。
+- greeting\_snd参数是可选的，如果未传递该参数，第一次呼叫建立后将不会播放问候信息。
+- 根据greeting\_snd文件的格式，您可能需要安装和启用mod\_shout。
+- 您需要将此代码保存在文件中，例如bridge.lua，然后通过发出'luarun bridge.lua uuid dialstr1 dialstr2 dialstr12 dialstr22 \[greeting\_snd\]'的命令来运行它（greeting\_snd可选）。您可以从控制台或通过Event Socket执行此操作。
 
-## Notes
-
-* The uuid parameter is used so you may identify the call through the Event Socket by reading that call/channel variable.
-* The dialstrXY parameters should be in the form: sofia/gateway/gateway\_name/dial\_number or similar, following the originate command specifications and according to what kind of call you would like to make
-* The greeting\_snd parameter is optional, if it is not passed, the greeting message won't be played after the first call is established
-* Depending on the format of your greeting\_snd file, you might need to install and enable mod\_shout
-* You have to save this code in a file, e.g. bridge.lua, and then run it by issuing 'luarun bridge.lua uuid dialstr1 dialstr2 dialstr12 dialstr22 \[greeting\_snd\]" (greeting\_snd is optional). You can do this either from the console or through the Event Socket
-
-## Script example
+## 脚本示例
 
 ```xml
 uuid = argv[1];
@@ -31,8 +28,8 @@ max_retriesl1 = 5;
 max_retriesl2 = 3;
 connected = false;
 timeout = 45;
-freeswitch.consoleLog("notice", "*********** STARTING Call ***********\n");
-freeswitch.consoleLog("notice", "*********** DIALING "..dialstr1.." ***********\n");
+freeswitch.consoleLog("notice", "*********** 开始通话 ***********\n");
+freeswitch.consoleLog("notice", "*********** 拨号 "..dialstr1.." ***********\n");
 originate_base1 = "{ignore_early_media=true,originate_timeout=90,hangup_after_bridge=true,uuid="..uuid..",leg=1}";
 originate_str1 = originate_base1..dialstr1;
 originate_str12 = originate_base1..dialstr12;
@@ -46,54 +43,106 @@ repeat
     else 
         ostr = originate_str12; 
     end
-    freeswitch.consoleLog("notice", "*********** Dialing Leg1: " .. ostr .. " - Try: "..retries.." ***********\n");
+    freeswitch.consoleLog("notice", "*********** 拨号 Leg1: " .. ostr .. " - 尝试: "..retries.." ***********\n");
     session1 = freeswitch.Session(ostr);
     local hcause = session1:hangupCause();
-    freeswitch.consoleLog("notice", "*********** Leg1: " .. hcause .. " - Try: "..retries.." ***********\n");
+    freeswitch.consoleLog("notice", "*********** Leg1: " .. hcause .. " - 尝试: "..retries.." ***********\n");
 until not ((hcause == 'NO_ROUTE_DESTINATION' or hcause == 'RECOVERY_ON_TIMER_EXPIRE' or hcause == 'INCOMPATIBLE_DESTINATION' or hcause == 'CALL_REJECTED' or hcause == 'NORMAL_TEMPORARY_FAILURE') and (retries < max_retriesl1))
 if (session1:ready()) then
-    -- log to the console
-    freeswitch.consoleLog("notice", "*********** Leg1 ("..ostr..") CONNECTED! ***********\n");
-    -- Play greeting message
+    -- 打印到控制台
+    freeswitch.consoleLog("notice", "*********** Leg1 ("..ostr..") 连接成功! ***********\n");
+    -- 播放问候提示音
     if (not greeting_snd == "") then
-        freeswitch.consoleLog("notice", "*********** Playing greeting sound: "..greeting_snd.." ***********\n");
+        freeswitch.consoleLog("notice", "*********** 播放问候音: "..greeting_snd.." ***********\n");
         --session1:execute("sleep", 100);
         session1:execute("playback", greeting_snd);
     end
     originate_base2 = "{ignore_early_media=true,originate_timeout=90,hangup_after_bridge=true,uuid="..uuid..",leg=2}";
     originate_str2 = originate_base2..dialstr2;
     originate_str22 = originate_base2..dialstr22;
-    -- Set recording: uncomment these two lines if you'd like to record the call in stereo (one leg on each channel)
+    -- 设置录音：如果要在立体声中记录通话（每个通道上的一条信道）
     -- session1:setVariable("RECORD_STEREO", "true");
     -- session1:execute("record_session", "/tmp/"..uuid..".wav");
-    -- Set ringback
+    -- 设置回铃音
     session1:setVariable("ringback", "%(2000,4000,440,480)");
     retries = 0;
     session2 = null;
     repeat  
-        -- Create session2
+        -- 创建 Session2
         retries = retries + 1;
         if (retries % 2) then 
             ostr2 = originate_str2;
         else 
             ostr2 = originate_str22; 
         end
-        freeswitch.consoleLog("notice", "*********** Dialing: " .. ostr2 .. " Try: "..retries.." ***********\n");
+        freeswitch.consoleLog("notice", "*********** 拨号: " .. ostr2 .. " 尝试: "..retries.." ***********\n");
         session2 = freeswitch.Session(ostr2, session1);
         local hcause = session2:hangupCause();
-        freeswitch.consoleLog("notice", "*********** Leg2: " .. hcause .. " Try: " .. retries .. " ***********\n");
+        freeswitch.consoleLog("notice", "*********** Leg2: " .. hcause .. " 尝试: " .. retries .. " ***********\n");
     until not ((hcause == 'NO_ROUTE_DESTINATION' or hcause == 'RECOVERY_ON_TIMER_EXPIRE' or hcause == 'INCOMPATIBLE_DESTINATION' or hcause == 'CALL_REJECTED' or hcause == 'NORMAL_TEMPORARY_FAILURE') and (retries < max_retriesl2))
     if (session2:ready()) then
-        freeswitch.consoleLog("notice", "*********** Leg2 ("..ostr2..") CONNECTED! ***********\n");
+        freeswitch.consoleLog("notice", "*********** Leg2 ("..ostr2..") 连接成功! ***********\n");
         freeswitch.bridge(session1, session2);
-        -- Hangup session2 if session1 is over
+        -- 如果 session1 结束，挂断 session2
         if (session2:ready()) then 
             session2:hangup(); 
         end
     end
-    -- hangup when done
+    -- 结束后挂断
     if (session1:ready()) then session1:hangup(); end
 end
 ```
 
+# Title: 关于注射疫苗的重要通知
 
+---
+
+## `重要提示`
+
+**亲爱的居民，**
+
+为了保护您和社区的健康，我们提醒您参加注射COVID-19疫苗的计划。
+
+疫苗将在 **[to_be_replaced[时间]]** 在 **[to_be_replaced[地点]]** 提供。
+
+我们强烈鼓励每位符合条件的居民都参与疫苗接种计划。
+
+请仔细阅读以下信息，以便您了解重要的细节。
+
+---
+
+## `注射疫苗指南`
+
+**1. 注册和预约**
+
+在参加疫苗接种计划之前，您需要通过我们的在线注册系统进行注册和预约。预约可根据您的条件和可用性安排。
+
+**2. 了解疫苗**
+
+在接种疫苗之前，建议您了解有关疫苗的基本信息。我们已提供有关疫苗的各种资源，供您参考。
+
+**3. 准备就绪**
+
+请提前安排好您前往注射地点的交通和住宿。确保您在指定的时间和地点准时到达。
+
+**4. 健康调查**
+
+在接种疫苗之前，您将需要完成一份健康调查问卷。请如实回答问卷中的问题，并告知医务人员您的任何过敏史或疾病情况。
+
+**5. 接种程序**
+
+接种程序将由资深医务人员和专业团队进行指导和执行。请听从工作人员的指示，并按照他们的建议进行操作。
+
+**6. 观察和咨询**
+
+在接种疫苗后，您将需要在现场接受一段时间的观察。如有任何疑问或不适，请立即向医务人员寻求帮助和咨询。
+
+---
+
+请记住，接种疫苗是一项重要的公共卫生措施，旨在保护您和社区的健康。我们鼓励每个人都参与其中，共同抗击COVID-19。
+
+谢谢您的合作！
+
+*感谢您对我们工作的支持！*
+
+**[to_be_replaced[X]]**

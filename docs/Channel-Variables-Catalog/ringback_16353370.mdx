@@ -1,49 +1,46 @@
+# 回铃音
 
-# ringback 
+由 Ryan Harris 创建，于2018年02月07日修改
 
- Created by  Ryan Harris, last modified on 2018.02.07
+## 回铃音
 
-## ringback
+字符串 这个功能允许你在等待发起呼叫的通道上设置人工回铃音。这将指定在未应答的A路上播放的音频，也称为（早期媒体）。
 
-string This addition lets you set artificial ringback on a channel that is waiting for an originated call to be answered. This will specify the audio to play to the A leg on unanswered aka (early media) calls.
+语法：`<action application="set" data="ringback=[data]"/>`
 
-Syntax: `<action application="set" data="ringback=[data]"/>`
+其中，`data`是音频文件的完整路径（![（警告）](/images/icons/emoticons/warning.svg)必须是完整路径！），或者是[听觉信号生成的标记语言](../FreeSWITCH-Explained/Modules/mod-dptools/mod-dptools:-gentones/TGML_6586573.mdx#lua)。
 
-Where `data` is either the full path (![(warning)](/images/icons/emoticons/warning.svg) must be full path!) to an audio file or [teletone generation markup language](../FreeSWITCH-Explained/Modules/mod-dptools/mod-dptools:-gentones/TGML_6586573.mdx#lua).
+您还可以将此功能与[ring\_ready](../FreeSWITCH-Explained/Modules/mod-dptools/6586994.mdx#about)应用程序结合使用。在这种情况下，呼叫方会在这段时间内听到正常的回铃音，然后听到定义的回铃音媒体。
 
-You may also combine this with the [ring\_ready](../FreeSWITCH-Explained/Modules/mod-dptools/6586994.mdx#about) application. In this case the caller hears the normal ringback tone for a fraction of a second, then he hears the defined ringback media.
+![(信息)](/images/icons/emoticons/information.svg) 自从r15025起，仅在没有早期媒体时生成本地回铃音。要强制生成本地回铃音而不考虑早期媒体，请使用[ignore\_early\_media](../FreeSWITCH-Explained/Dialplan/Variables-Master-List_16352570.mdx#ignore_early_media)通道变量。
 
-![(info)](/images/icons/emoticons/information.svg) Since r15025 local ringback tone is generated only when there is no early media. To force local ringback despite early media use the [ignore\_early\_media](../FreeSWITCH-Explained/Dialplan/Variables-Master-List_16352570.mdx#ignore_early_media) channel variable.
+![(信息)](/images/icons/emoticons/information.svg) 除非设置了变量，并且被呼叫方出现了响铃提示，否则不会发送回铃音。如果您希望在尚未接收到响铃指示时伪造回铃音，请参阅[instant\_ringback](../FreeSWITCH-Explained/Dialplan/Variables-Master-List_16352570.mdx#instant_ringback)。
 
-![(info)](/images/icons/emoticons/information.svg) Ringback will not be sent unless the variable is set _and_ there's a ringing indication from the party that is being called. See [instant\_ringback](../FreeSWITCH-Explained/Dialplan/Variables-Master-List_16352570.mdx#instant_ringback) if you want to fake ringback even when ringing indication hasn't been received yet.
+**用法**
 
-**Usage**
-
-Using the French ring tone defined in `vars.xml`:
+使用在`vars.xml`中定义的法国回铃音：
 
 ```xml
 <action application="set" data="ringback=${fr-ring}"/>
 ```
 
-US ring tone:
+美国回铃音：
 
 ```xml
 <action application="set" data="ringback=%(2000,4000,440.0,480.0)"/>
 ```
 
-You can send ringback after the call is answered:
+在电话被接通后，您可以发送回铃音：
 
 ```xml
 def handler(uuid):
     session = PySession(uuid)
     session.answer()
-    session.speak("Hello, connecting your call to the first available agent")
+    session.speak("您好，正在将您的通话连接到第一个可用的坐席")
     session.execute("set","call_timeout=30")
     session.execute("set","continue_on_fail=true")
     session.execute("set","hangup_after_bridge=true")
     session.execute("set","ringback=%(2000,4000,440.0,480.0)")
     session.execute("bridge","sofia/foo/bar@test.com,sofia/foo/baz@test2.com:5070")
-    session.speak("doh!")
+    session.speak("哎呀！")
 ```
-
-

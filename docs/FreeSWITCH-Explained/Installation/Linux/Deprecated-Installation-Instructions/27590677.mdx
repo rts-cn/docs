@@ -1,28 +1,25 @@
+# Debian 10 Buster (适用于 Stretch) 的 FreeSWITCH 企业版
 
-# Debian 10 Buster (applies for Stretch) for FreeSWITCH Enterprise 
+## 关于
 
- 
+FreeSWITCH 企业版项目已迁至 GitHub: <https://github.com/signalwire/stack>  
+请在以下地址提交新问题: <https://github.com/signalwire/stack/issues>
 
-## About
+Debian 10 "Buster" 是 FreeSWITCH™ 自版本1.10起的参考平台。
 
-FreeSWITCH Enterprise project has been moved to GitHub: <https://github.com/signalwire/stack>  
-Please open new issues in: <https://github.com/signalwire/stack/issues>
+通过 "apt-get build-dep freeswitch" 命令可以从 FreeSWITCH 仓库获取相关依赖。
 
-Debian 10 "Buster" is the reference platform for FreeSWITCH™ as of version 1.10
+## 提交记录
 
-Dependencies are available from FreeSWITCH repository via the "apt-get build-dep freeswitch" command.
+在此查看所有 FreeSWITCH 的提交记录: <https://github.com/signalwire/stack/commits/master>
 
-## Commit Log
+**简单方法**
 
-See all FreeSWITCH commits here: <https://github.com/signalwire/stack/commits/master>
+## 通过 Debian 软件包进行安装
 
-**Easy Way**
+### 最新发布分支:
 
-## Installing From Debian Packages
-
-### Latest Release Branch:
-
-**Release package**
+**发布软件包**
 
 ```bash
 apt-get update && apt-get install -y gnupg2 wget lsb-release software-properties-common apt-transport-https 
@@ -33,12 +30,12 @@ echo "machine fsa.freeswitch.com login $USERNAME password $PASSWORD" > /etc/apt/
 echo "deb https://fsa.freeswitch.com/repo/deb/fsa/ `lsb_release -sc` 1.8" > /etc/apt/sources.list.d/freeswitch.list
 echo "deb-src https://fsa.freeswitch.com/repo/deb/fsa/ `lsb_release -sc` 1.8" >> /etc/apt/sources.list.d/freeswitch.list
 
-# you may want to populate /etc/freeswitch at this point.
-# if /etc/freeswitch does not exist, the standard vanilla configuration is deployed
+# 此时可能需要填充 /etc/freeswitch 目录。
+# 如果 /etc/freeswitch 不存在，将部署标准的原始配置
 apt-get update && apt-get install -y freeswitch-meta-all
 ```
 
-FreeSWITCH™ is now installed and can be accessed with
+FreeSWITCH™ 已安装完成，可以通过以下方式访问：
 
 **FreeSwitch CLI**
 
@@ -46,11 +43,11 @@ FreeSWITCH™ is now installed and can be accessed with
 fs_cli -rRS
 ```
 
-Dev Branch ("git"):
+开发分支 ("git"):
 
-WARNING not suitable for production
+警告：不适用于生产环境
 
-**Master Test Package**
+**Master 测试软件包**
 
 ```bash
 apt-get update && apt-get install -y gnupg2 wget lsb-release software-properties-common apt-transport-https 
@@ -61,18 +58,19 @@ echo "machine fsa.freeswitch.com login $USERNAME password $PASSWORD" > /etc/apt/
 echo "deb https://fsa.freeswitch.com/repo/deb/fsa/ `lsb_release -sc` unstable" > /etc/apt/sources.list.d/freeswitch.list
 echo "deb-src https://fsa.freeswitch.com/repo/deb/fsa/ `lsb_release -sc` unstable" >> /etc/apt/sources.list.d/freeswitch.list
 
-# you may want to populate /etc/freeswitch at this point.
-# if /etc/freeswitch does not exist, the standard vanilla configuration is deployed
+# 此时，您可能希望填充/etc/freeswitch。
+# 如果/etc/freeswitch不存在，则会部署标准的基础配置。
 apt-get update && apt-get install -y freeswitch-meta-all
 ```
 
-### Building Debian Packages From Dev Branch
+### 从Dev分支构建Debian软件包
 
-WARNING not suitable for production
+**警告：不适合生产环境**
 
-The master branch depends on different libraries which are not available as packages in Debian distribution, but are available from FreeSWITCH repository. Thus, you will need internet access to the FreeSWITCH DEB repository.
+Master分支依赖于Debian发行版中不可用的不同库，但可以从FreeSWITCH存储库获得。因此，您需要访问FreeSWITCH DEB存储库的互联网。
 
-**Build your own .deb Master package**
+**构建您自己的.deb Master软件包**
+```
 
 ```bash
 apt-get update && apt-get install -y gnupg2 wget lsb-release software-properties-common apt-transport-https 
@@ -84,30 +82,30 @@ echo "deb https://fsa.freeswitch.com/repo/deb/fsa/ `lsb_release -sc` unstable" >
 echo "deb-src https://fsa.freeswitch.com/repo/deb/fsa/ `lsb_release -sc` unstable" >> /etc/apt/sources.list.d/freeswitch.list
 apt-get update && apt-get install -y xz-utils devscripts cowbuilder git screen
 
-# get the latest master. Use the -b flag to get a specific branch
+# 获取最新的主干代码。使用 -b 标志来获取特定的分支
 mkdir /usr/src/freeswitch-debs
 git clone https://github.com/signalwire/stack.git /usr/src/freeswitch-debs/freeswitch
 
 cd /usr/src/freeswitch-debs
-# here it's good to run screen with logging, so that you can detach from the shell prompt
+# 在这里，最好使用带日志记录的 screen 命令，以便可以从 shell 提示中分离出来
 screen -L
 cd freeswitch
 ./debian/util.sh build-all -aamd64 -c`lsb_release -sc`
 
-# here you can detach by Ctrl-a Ctrl-d and see the log files in /usr/src/freeswitch-debs/log/ folder.
-# The build may last about an hour, depending on your CPU speed.
-# If the build is successful, you will have a bunch of .deb files in /usr/src/freeswitch-debs
+# 然后您可以通过按下 Ctrl-a Ctrl-d 来分离，并在 /usr/src/freeswitch-debs/log/ 文件夹中查看日志文件。
+# 编译过程可能需要约一个小时，具体取决于您的 CPU 速度。
+# 如果编译成功，您将在 /usr/src/freeswitch-debs 中找到一堆 .deb 文件
 
 
 ```
 
-**Compiling from source code**
+**从源代码编译**
 
-## Building From Source
+## 从源代码构建
 
-### Compiling Release Branch (production)
+### 编译发布分支（用于生产）
 
-**Release source build**
+**发布源代码构建**
 
 ```bash
 apt-get update && apt-get install -y gnupg2 wget lsb-release software-properties-common apt-transport-https 
@@ -120,30 +118,29 @@ echo "deb-src https://fsa.freeswitch.com/repo/deb/fsa/ `lsb_release -sc` 1.8" >>
 
 apt-get update
  
-# Install dependencies required for the build
+# 安装编译所需依赖
 apt-get build-dep freeswitch
  
-# then let's get the source. Use the -b flag to get a specific branch
+# 获取源代码，使用 -b 参数指定特定的分支
 cd /usr/src/
 git clone -b release https://github.com/signalwire/stack.git freeswitch
 cd freeswitch
  
-# Because we're in a branch that will go through many rebases, it's
-# better to set this one, or you'll get CONFLICTS when pulling (update).
+# 因为我们在一个将经历多次变基的分支中，最好设置该项，否则在拉取（更新）时会出现冲突。
 git config pull.rebase true
  
-# ... and do the build
+# 进行编译
 ./bootstrap.sh -j
 ./configure
 make
 make install
 ```
 
-### Compiling Latest Dev (for testing)
+### 编译最新的开发版本进行测试
 
-WARNING not suitable for production
+警告：不适用于生产环境
 
-**Master source build**
+**主分支源代码编译**
 
 ```bash
 apt-get update && apt-get install -y gnupg2 wget lsb-release software-properties-common apt-transport-https 
@@ -156,44 +153,40 @@ echo "deb-src https://fsa.freeswitch.com/repo/deb/fsa/ `lsb_release -sc` unstabl
 
 apt-get update
 
-# Install dependencies required for the build
+# 安装构建所需的依赖项
 apt-get build-dep freeswitch
 
-# Then let's get the source. Use the -b flag to get a specific branch
+# 然后获取源代码。使用 -b 参数可以获取特定分支
 cd /usr/src/
 git clone https://github.com/signalwire/stack.git freeswitch
 cd freeswitch
 
-# Because we're in a branch that will go through many rebases, it's
-# better to set this one, or you'll get CONFLICTS when pulling (update).
+# 由于我们在一个将经历多次变基的分支中，最好设置这个选项，否则在拉取（更新）时会出现冲突。
 git config pull.rebase true
 
-# ... and do the build
+# ...然后开始构建
 
-# The -j argument spawns multiple threads to speed the build process, but causes trouble on some systems
+# -j 参数会启动多个线程以加快构建过程，但在一些系统上会出问题
 ./bootstrap.sh -j
 
-# if you want to add or remove modules from the build, edit modules.conf
+# 如果您想在构建过程中添加或删除模块，请编辑 modules.conf
 vi modules.conf
 
-# add a module by removing '#' comment character at the beginning of the line
-# remove a module by adding the '#' comment character at the beginning of the line 
-# containing the name of the module to be skipped in the build process
+# 通过删除行开头处的 '#' 注释字符来添加模块
+# 通过在行开头处添加 '#' 注释字符来删除构建过程中要跳过的模块的名称所在的行
 
 ./configure
 make
 make install
 
-# Install audio files:
+# 安装音频文件：
 make cd-sounds-install cd-moh-install
 
-# To update an installed build:
+# 更新已安装的构建版本：
 cd /usr/src/freeswitch
 make current
 ```
 
-### Before Starting FreeSWITCH
+### 在开始之前
 
-If you built FreeSWITCH™ from source code you should set file permissions and ownership before starting FreeSWITCH. Follow the [post-installation instructions](./Debian-Post-Install-Tasks_13172868.mdx#about).
-
-
+如果您是从源代码构建FreeSWITCH™，在启动FreeSWITCH之前，您应该设置文件权限和所有权。请按照[安装后操作指南](./Debian-Post-Install-Tasks_13172868.mdx#about)进行操作。

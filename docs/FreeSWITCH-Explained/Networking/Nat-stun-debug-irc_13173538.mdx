@@ -1,90 +1,149 @@
+# NAT轰炸调试irc
 
-# Nat stun debug irc 
+## 关于
 
- 
+如何让SIP设备在NAT后正常工作的问题一直受到关注... 这里有一些关于调试特定设置的信息交流，可能对您有帮助。
 
-## About
+单击此处展开目录
 
-The question on how to get SIP devices working behind NAT just keeps coming up... here are some informative conversations regarding debugging particular setups that might be relevant.
+* 1 [对话1](#对话1)
 
-Click here to expand Table of Contents
-
-* 1 [Conversation 1](#conversation-1)
-
-#### Conversation 1
+#### 对话1
 
 ```text
-<brettnem> is there anyway to connect to NATed SIP clients without RTP
-           proxying? or is the issue that it just doesn't work with symmetric
-           NAT?
-<brettnem> so any thoughts on my silly nat question? I feel like I made this
-           work before... but maybe symmetric nat is my problem
-<brettnem> Just trying to think if I want to do my solution with OpenSER +
-           RTPProxy or just plain freeswitch.. any thoughts? :)
-<anthm> you need it to register
-<brettnem> yeah, they register
-<brettnem> that's ok
-<anthm> the client behind nat has to register and register a lot to keep the
-          path open
-<brettnem> really? what about options pinging?
-<anthm> or you can set the nat-connectile-dysfunction mode
-<anthm> and the server will send MESSAGE to you telling you to use stun over
-          and over
-<brettnem> anthm: and that would allow me to pass RTP to other servers as long
-           as I'm not using symmetric nat, right?
-<anthm> rtp fixes itself on nat
-<anthm> its the sip you have to worry about
-<brettnem> anthm: That's a freeswitch core, trick, right? you don't mean that
-           generically, right?
-<anthm> yah its got a sanity check
-<brettnem> ok, what about symmetric nat then?
-<anthm> if the client advertises 1.2.3.4 and you suddenly get 10 packets in a
-          row from 4.3.2.1 then it will adjust itself
-<brettnem> but if you have symmetric nat, and the packets are coming from a
-           new location where the signalling isn't coming from, will it ever
-           make it to the client?
-<brettnem> Yeah, I just don't have any control over the NAT type at the
-           client.
-<anthm> as long as you can get a reply based on the same route
-<trixter> asterisk when nat=yes in some 1.2 series do that as well with remote
-          ip matching, but nat must be yes which breaks other stuff
-<anthm> it will reply the rtp back to the same ip and port it sees rtp coming
-          from
-<anthm> that takes precedence over whatever it "said" to use 100% of the time
-          within the first 20 or so packets after an invite
-<trixter> is it only 20 or so packets to prevent hijacking?
-<brettnem> so as long as some rtp leaves the client and goes to the other
-<brettnem> I'd just really like to not have to proxy audio if it's not
-           necessary and I *thought* it wasn't but with freeswitch now, and a
-           natted cisco phone, I get no audio without the connectile
-           dysfunction param
-<MikeJ> yeah..
-<MikeJ> brettnem, set up stun on your cisco
-<brettnem> hmm. didn't know the cisco supported STUN
-<MikeJ> hmmm
-<MikeJ> that sucks
-<brettnem> maybe it does.. I'll look
-<brettnem> it has a "Nat Enabled" and "Nat Address"
-<CtRiX> brettnem, i think it's in sip-ua
-<brettnem> sip-ua?
-<CtRiX> ah no it's not there
-<CtRiX> yes sip-ua  but it's not there
-<anthm> brettnem, the connectile dysfunction param only influences the contact
-          address
-<anthm> of the sip register
-<anthm> it has nothing to do with media
-<anthm> it's essentially the same trick as the rtp
-<anthm> only it's not used unless you enable it
-<brettnem> so the rtp trick is always used then?
-<anthm> when something registers it will rewrite the contact to be the ip and
-          port the reg came from instead of what it says in the packet
-<anthm> yes the rtp trick is auto
-<anthm> the sip one is manual
-<brettnem> so why would audio not pass without that param? am I smoking crack?
-<anthm> because without that param
-<anthm> we dont know where to send the sip msgs
-<anthm> to answer the call
-<anthm> or place a call
+<brettnem> 有没有办法在不进行 RTP 代理的情况下连接到带有 NAT 的 SIP 客户端？或者问题是对称 NAT 下根本行不通？
+<brettnem> 关于我的愚蠢 NAT 问题，你有什么想法吗？我感觉以前可以解决这个问题...但也许对称 NAT 是我的问题
+<brettnem> 我只是在考虑是否要用 OpenSER + RTPProxy 还是只用普通的 FreeSWITCH 来实现我的解决方案...你有什么想法？:)
+<anthm> 你需要进行注册
+<brettnem> 是的，它们已经注册了
+brettnem> 没关系
+<anthm> NAT 后面的客户端必须注册并且要频繁注册，以保持路径打开
+brettnem> 真的吗？那 options pinging 呢？
+<anthm> 或者你可以设置 NAT 连接功能障碍模式
+anthm> 服务器会给你发送 MESSAGE，告诉你一遍又一遍使用 STUN
+brettnem> anthm: 只要我不使用对称 NAT，这样我就可以将 RTP 传递给其他服务器，对吗？
+anthm> rtp 在 NAT 上会自动修复
+anthm> 你只需要担心 SIP
+brettnem> anthm: 这是 FreeSWITCH 的核心技巧，对吗？你不是泛指其他情况，对吗？
+anthm> 是的，它有一个检查程序
+brettnem> 好吧，那对称 NAT 呢？
+anthm> 如果客户端宣布是 1.2.3.4，然后你突然连续收到来自 4.3.2.1 的 10 个数据包，它会自动调整自己
+brettnem> 但如果你是对称 NAT，而数据包来自一个新的位置，信令并不来自该位置，它会到达客户端吗？
+brettnem> 是的，但我对客户端的 NAT 类型没有任何控制权
+anthm> 只要你可以通过相同的路由获得答复
+trixter> Asterisk 在某些 1.2 系列中的 nat=yes 的情况下也会进行匹配，但这会破坏其他东西
+anthm> 它会将 RTP 回复发送到与接收 RTP 的相同 IP 和端口
+anthm> 这将在邀请后的前 20 个数据包内 100% 的时间里优先于它所"说"的
+trixter> 为了防止劫持，它只有20个数据包左右吗？
+brettnem> 只要某个 RTP 从客户端离开并发往其他方
+brettnem> 我只是不想在不必要的情况下代理音频，我原以为不需要代理，但现在使用了 FreeSWITCH 和一个经过 NAT 的 Cisco 电话后，没有音频，除非使用 connectile-dysfunction 参数
+MikeJ> 是的...
+MikeJ> brettnem，在 Cisco 上设置 STUN
+brettnem> 嗯，我不知道 Cisco 支持 STUN
+MikeJ> 嗯嗯
+MikeJ> 那很糟糕
+brettnem> 也许支持...我查一下
+brettnem> 它有一个 "Nat Enabled" 和 "Nat Address"
+CtRiX> brettnem，我想在 sip-ua 那儿
+brettnem> sip-ua？
+CtRiX> 啊不对，不是那儿
+CtRiX> 是 sip-ua，但不是那儿
+anthm> brettnem，connectile-dysfunction 参数只会影响联系地址
+anthm> 在 sip 注册时
+anthm> 与媒体无关
+anthm> 这本质上与 RTP 做的事情一样
+anthm> 只有在启用之后才会使用
+brettnem> 那么 RTP 的技巧是总是被使用的？
+anthm> 当有注册事件发生时，它将重写联系地址为注册来自的 IP 和端口，而不是数据包中所指定的地址
+anthm> 是的，RTP 技巧是自动的
+anthm> SIP 的则是手动的
+brettnem> 那么为什么不设置该参数时音频无法传递？难道我在开玩笑吗？
+anthm> 因为没有该参数
+anthm> 我们不知道将 SIP 消息发送到哪里
+anthm> 来应答通话
+anthm> 或拨打电话
 ```
 
+# Markdown
 
+标题
+======
+
+副标题
+-------
+
+## 分节标题
+
+### 子分节标题
+
+段落中的普通文本。
+
+**粗体文本**
+
+*斜体文本*
+
+### 列表
+
+- 项目1
+- 项目2
+- 项目3
+
+1. 项目1
+2. 项目2
+3. 项目3
+
+### 链接
+
+这是一个[链接](http://www.example.com)。
+
+### 图片
+
+![图片](http://www.example.com/image.png)
+
+### 引用
+
+> 这是一段引用文本。
+
+### 代码块
+
+下面是一个代码块的例子：
+
+```java
+public static void main(String[] args) {
+    System.out.println("Hello, World!");
+}
+```
+
+### 表格
+
+| 列1        | 列2        |
+| ----------- | ----------- |
+| 单元格1     | 单元格2     |
+| 单元格3     | 单元格4     |
+
+### 数学公式
+
+这是一个内联数学公式：$E=mc^2$。
+
+这是一个独立数学公式：
+
+$$
+\sum_{i=1}^{n} i = \frac{n(n+1)}{2}
+$$
+
+### 注释
+
+这是一个[^示例注释]。
+
+[^示例注释]: 这是一个示例注释的内容。
+
+### 删除线
+
+~~这是一段被删除的文本。~~
+
+
+# 要替换的标题
+
+这是要替换的内容。
+
+这里也有要替换的内容。

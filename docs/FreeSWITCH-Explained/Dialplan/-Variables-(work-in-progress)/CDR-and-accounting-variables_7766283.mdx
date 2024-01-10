@@ -1,20 +1,17 @@
+# CDR和会计变量
 
-# CDR and accounting variables 
+## 关于
 
- 
+这些变量在与CDR和会计相关的各个模块中使用：
 
-## About
-
-These variables are used in various modules related to CDR and accounting:
-
-| Module name                                           |
-| ----------------------------------------------------- |
-| [mod\_cdr\_csv](../../Modules/mod_cdr_csv_6587322.mdx#legs)       |
+| 模块名称                                       |
+| --------------------------------------------- |
+| [mod\_cdr\_csv](../../Modules/mod_cdr_csv_6587322.mdx#legs)     |
 | [mod\_cdr\_sqlite](../../Modules/mod_cdr_sqlite_6587351.mdx#about) |
-| mod\_xml\_ldap                                        |
-| [mod\_nibblebill](../../Modules/mod_nibblebill_3966513.mdx#faqs)    |
+| mod\_xml\_ldap                                |
+| [mod\_nibblebill](../../Modules/mod_nibblebill_3966513.mdx#faqs)  |
 
-Click here to expand Table of Contents
+点击此处展开目录
 
 * 1 [accountcode](#accountcode)
 * 2 [cdr\_csv\_base](#cdr_csv_base)
@@ -27,129 +24,129 @@ Click here to expand Table of Contents
 
 ## accountcode
 
-Account code is mostly an arbitrary value that you can assign on a per leg basis. An important feature of _accountcode_ is that if its value matches one of the CDR CSV templates defined in **cdr\_csv.conf.xml** then that CDR template will be used when generating a CSV CDR.
+账户代码主要是一个任意值，可以按每个通话分配。_accountcode_ 的一个重要特性是如果其值与 **cdr\_csv.conf.xml** 中定义的CDR CSV模板之一匹配，那么在生成CSV CDR时将使用该CDR模板。
 
-#### **Usage:**
+#### **用法:**
 
 ```xml
 <action application="set" data="accountcode=custom"/>
 ```
 
-#### **Implemented By:**
+#### **由以下模块实现:**
 
-| **Module Name**                                 | **Source File** | **Last Revised** |
-| ----------------------------------------------- | --------------- | ---------------- |
-| [mod\_cdr\_csv](../../Modules/mod_cdr_csv_6587322.mdx#legs) | mod\_cdr\_csv.c | 6564             |
+| **模块名称**                                   | **源文件**         | **最后修订** |
+| --------------------------------------------- | ----------------- | ------------ |
+| [mod\_cdr\_csv](../../Modules/mod_cdr_csv_6587322.mdx#legs) | mod\_cdr\_csv.c   | 6564          |
 
 ## cdr_csv_base
 
-Description needed! Please contribute one.
+需要描述！请贡献您的描述。
 
-#### **Usage:**
+#### **用法:**
 
-Example needed! Please contribute one.
+需要示例！请贡献您的示例。
 
-#### **Implemented By:**
+#### **由以下模块实现:**
 
-| **Module Name**                                 | **Source File** | **Last Revised** |
-| ----------------------------------------------- | --------------- | ---------------- |
-| [mod\_cdr\_csv](../../Modules/mod_cdr_csv_6587322.mdx#legs) | mod\_cdr\_csv.c | 6542             |
+| **模块名称**                                          | **源文件**       | **最近修订** |
+| ------------------------------------------------ | --------------- | ---------- |
+| [mod\_cdr\_csv](../../Modules/mod_cdr_csv_6587322.mdx#legs) | mod\_cdr\_csv.c | 6542       |
 
 ## copy_xml_cdr
 
-Copy's the other leg's XML CDR into this leg's CDR. For example, the A leg's CDR will contain a variable named **b\_leg\_cdr** whose contents are the URL-encoded XML CDR data from the B leg. This variable must be set on the B leg, so use **{copy\_xml\_cdr=true}** in the dialstring or use **export** instead of set.
+将另一个通话的XML CDR复制到该通话的CDR中。例如，A通话的CDR将包含一个名为**b\_leg\_cdr**的变量，其内容是B通话的URL编码XML CDR数据。必须在B通话中设置此变量，因此在拨号字符串中使用**{copy\_xml\_cdr=true}**或使用**export**而不是set。
 
-#### **Usage:**
+#### **用法:**
 
 ```xml
 <action application="bridge" data="{copy_xml_cdr=true} user/${dialed_extension}@${domain_name}"/>
 ```
 
-#### **Implemented By:**
+#### **实现者:**
 
-| **Module Name** | **Source File**       | **Last Revised** |
-| --------------- | --------------------- | ---------------- |
-| core            | switch\_ivr\_bridge.c | 8955             |
+| **模块名称** | **源文件**              | **最近修订** |
+| ------------- | ------------------------ | ------------ |
+| core          | switch\_ivr\_bridge.c    | 8955         |
 
 ## failed_xml_cdr_prefix
 
-If you set that on the A leg and any and all failed B originates generate a full XML CDR report and set it as a variable, this includes during a forked dial.
+如果在A通话上设置了这个参数，并且任何失败的B通话都生成一个完整的XML CDR报告并将其设置为一个变量，这个变量包括在分叉拨号中。
 
-So say you try to call sofia/profile/a@xxxxxxx,sofia/profile/b@xxxxxxx
+假设您尝试拨打`sofia/profile/a@xxxxxxx,sofia/profile/b@xxxxxxx`
 
-And it fails completely, before you make the call you set failed\_xml\_cdr\_prefix to "bad\_call"
+而且它在完全失败之前，您将`failed\_xml\_cdr\_prefix`设置为"bad\_call"。
 
-Then you end up with ${bad\_call\_1} and ${bad\_call\_2} which are each a full XML report including all the vars etc.
+那么你最终将得到`${bad\_call\_1}`和`${bad\_call\_2}`，它们各自是一个包含所有变量等的完整XML报告。
 
-#### **Usage:**
+#### **用法:**
 
 ```xml
 <action application="set" data="failed_xml_cdr_prefix=failinggw" />
 ```
 
-#### **See also:**
+#### **另请参阅:**
 
 * Maillist message [\[1\]](http://www.mail-archive.com/freeswitch-dev@lists.freeswitch.org/msg00341.html)
 
-#### **Implemented By:**
+#### **实现者:**
 
-| **Module Name** | **Source File**          | **Last Revised** |
-| --------------- | ------------------------ | ---------------- |
-| core            | switch\_ivr\_originate.c | 8730             |
+| **模块名称** | **源文件**         | **最后修改** |
+| ------------ | ----------------- | ------------- |
+| 核心         | switch_ivr_originate.c | 8730          |
 
 ## process_cdr
 
-**Indicates how to process CDR records.**
+**指示如何处理CDR记录。**
 
-Can be undefined or set to "false", "true", "a\_only", "b\_only"
+可以未定义或设置为"false"、"true"、"a_only"、"b_only"
 
-* false - indicates to not process the record.
-* true - or undefined indicates the default behavior which is to process all CDR records.
-* a\_only - indicates to only process CDR records on the inbound leg of a call.
-* b\_only - indicates to only process CDR records on the outbound leg of a call.
+* false - 表示不处理记录。
+* true - 或未定义，表示默认行为，即处理所有CDR记录。
+* a_only - 表示仅处理呼入通话的CDR记录。
+* b_only - 表示仅处理呼出通话的CDR记录。
 
-_This variable is unconditionally exported_
+_此变量无条件导出_
 
 ####   
-**Usage:**
+**用法:**
 
 &lt;action application="set" data="process_cdr=a_only"/>
 
-#### **Implemented By:**
+#### **实现者:**
 
-| **Module Name** | **Source File**                | **Last Revised** |
-| --------------- | ------------------------------ | ---------------- |
-| core            | switch\_core\_session.c        | 7214             |
-| core            | switch\_core\_state\_machine.c | 7212             |
+| **模块名称** | **源文件**              | **最后修改** |
+| ------------ | ------------------------ | ------------- |
+| 核心         | switch_core_session.c        | 7214          |
+| 核心         | switch_core_state_machine.c | 7212          |
 
 ## skip_cdr_causes
 
-This is a list of call hangup causes that should not trigger cdr processing.
+这是一个不应触发CDR处理的呼叫挂断原因列表。
 
-#### **Implemented By:** 
+#### **实现者:** 
 
-| Module Name | Source File | Last Revised                                                    |
-| ----------- | ----------- | --------------------------------------------------------------- |
-| mod\_sofia  | sofia.c     | 2012-09-19, git commit 3cf238fc9a1370a45d362c2193b8d3634ccd1d11 |
+| 模块名称   | 源文件   | 最后修改                   |
+| ---------- | -------- | -------------------------- |
+| mod_sofia  | sofia.c  | 2012年09月19日，Git提交3cf238fc9a1370a45d362c2193b8d3634ccd1d11 |
 
 ## xml_cdr_base
 
-Description needed! Please contribute one.
+需要一个说明！请贡献一个。
 
-#### **Usage:**
+#### **用法:**
 
-| Example needed! Please contribute one. |
-| -------------------------------------- |
+| 需要示例！请贡献一个。 |
+| -------------------- |
 
-#### **Implemented By:**
+#### **实现者:**
 
-| **Module Name**                                                                    | **Source File** | **Last Revised** |
+| **模块名称**                                                                    | **源文件**      | **最后修改时间** |
 | ---------------------------------------------------------------------------------- | --------------- | ---------------- |
 | [mod\_xml\_cdr](../../Introduction/Variables/index.mdx#0-about) | mod\_xml\_cdr.c | 6708             |
 
-## mod_xml_cdr variable list and definitions (under contruction)
 
-  
+## mod_xml_cdr 变量列表和定义（施工中）
+
 | &lt;?xml version="1.0"?>                                               |                                               |                                                |                         |  |  |  |
 | ------------------------------------------------------------------- | --------------------------------------------- | ---------------------------------------------- | ----------------------- |  |  |  |
 | &lt;cdr core-uuid="\[UUID\]" switchname="freeswitch">                  |                                               |                                                |                         |  |  |  |
@@ -157,110 +154,122 @@ Description needed! Please contribute one.
 | |                                                                   | &lt;state>                                       |                                                |                         |  |  |  |
 | |                                                                   | &lt;direction>                                   |                                                |                         |  |  |  |
 | |                                                                   | &lt;state\_number>                               |                                                |                         |  |  |  |
-| |                                                                   | &lt;flags>                                       |                                                |                         |  |  |  |
-| |                                                                   | &lt;caps>                                        |                                                |                         |  |  |  |
-| | &lt;/channel\_data>                                                  |                                               |                                                |                         |  |  |  |
-| | &lt;call-stats>                                                      |                                               |                                                |                         |  |  |  |
-| |                                                                   | &lt;audio>                                       |                                                |                         |  |  |  |
-| |                                                                   |                                               | &lt;inbound>                                      |                         |  |  |  |
-| |                                                                   |                                               |                                                | &lt;raw\_bytes>            |  |  |  |
-| |                                                                   |                                               |                                                | &lt;media\_bytes>          |  |  |  |
-| |                                                                   |                                               |                                                | &lt;packet\_count>         |  |  |  |
-| |                                                                   |                                               |                                                | &lt;media\_packet\_count>  |  |  |  |
-| |                                                                   |                                               |                                                | &lt;skip\_packet\_count>   |  |  |  |
-| |                                                                   |                                               |                                                | &lt;jitter\_packet\_count> |  |  |  |
-| |                                                                   |                                               |                                                | &lt;dtmf\_packet\_count>   |  |  |  |
-| |                                                                   |                                               |                                                | &lt;cng\_packet\_count>    |  |  |  |
-| |                                                                   |                                               |                                                | &lt;flush\_packet\_count>  |  |  |  |
-| |                                                                   |                                               |                                                | &lt;largest\_jb\_size>     |  |  |  |
-| |                                                                   |                                               |                                                | &lt;jitter\_min\_variance> |  |  |  |
-| |                                                                   |                                               |                                                | &lt;jitter\_max\_variance> |  |  |  |
-| |                                                                   |                                               |                                                | &lt;jitter\_loss\_rate>    |  |  |  |
-| |                                                                   |                                               |                                                | &lt;jitter\_burst\_rate>   |  |  |  |
-| |                                                                   |                                               |                                                | &lt;mean\_interval>        |  |  |  |
-| |                                                                   |                                               |                                                | &lt;flaw\_total>           |  |  |  |
-| |                                                                   |                                               |                                                | &lt;quality\_percentage>   |  |  |  |
-| |                                                                   |                                               |                                                | &lt;mos>                   |  |  |  |
-| |                                                                   |                                               | &lt;/inbound>                                     |                         |  |  |  |
-| |                                                                   |                                               | &lt;outbound>                                     |                         |  |  |  |
-| |                                                                   |                                               |                                                | &lt;raw\_bytes>            |  |  |  |
-| |                                                                   |                                               |                                                | &lt;media\_bytes>          |  |  |  |
-| |                                                                   |                                               |                                                | &lt;packet\_count>         |  |  |  |
-| |                                                                   |                                               |                                                | &lt;media\_packet\_count>  |  |  |  |
-| |                                                                   |                                               |                                                | &lt;skip\_packet\_count>   |  |  |  |
-| |                                                                   |                                               |                                                | &lt;dtmf\_packet\_count>   |  |  |  |
-| |                                                                   |                                               |                                                | &lt;cng\_packet\_count>    |  |  |  |
-| |                                                                   |                                               |                                                | &lt;rtcp\_packet\_count>   |  |  |  |
-| |                                                                   |                                               |                                                | &lt;rtcp\_octet\_count>    |  |  |  |
-| |                                                                   |                                               | &lt;/outbound>                                    |                         |  |  |  |
-| |                                                                   | &lt;/audio>                                      |                                                |                         |  |  |  |
-| |                                                                   | &lt;video>                                       |                                                |                         |  |  |  |
-| |                                                                   |                                               | &lt;inbound>                                      |                         |  |  |  |
-| |                                                                   |                                               |                                                | &lt;raw\_bytes>            |  |  |  |
-| |                                                                   |                                               |                                                | &lt;media\_bytes>          |  |  |  |
-| |                                                                   |                                               |                                                | &lt;packet\_count>         |  |  |  |
-| |                                                                   |                                               |                                                | &lt;media\_packet\_count>  |  |  |  |
-| |                                                                   |                                               |                                                | &lt;skip\_packet\_count>   |  |  |  |
-| |                                                                   |                                               |                                                | &lt;jitter\_packet\_count> |  |  |  |
-| |                                                                   |                                               |                                                | &lt;dtmf\_packet\_count>   |  |  |  |
-| |                                                                   |                                               |                                                | &lt;cng\_packet\_count>    |  |  |  |
-| |                                                                   |                                               |                                                | &lt;flush\_packet\_count>  |  |  |  |
-| |                                                                   |                                               |                                                | &lt;largest\_jb\_size>     |  |  |  |
-| |                                                                   |                                               |                                                | &lt;jitter\_min\_variance> |  |  |  |
-| |                                                                   |                                               |                                                | &lt;jitter\_max\_variance> |  |  |  |
-| |                                                                   |                                               |                                                | &lt;jitter\_loss\_rate>    |  |  |  |
-| |                                                                   |                                               |                                                | &lt;jitter\_burst\_rate>   |  |  |  |
-| |                                                                   |                                               |                                                | &lt;mean\_interval>        |  |  |  |
-| |                                                                   |                                               |                                                | &lt;flaw\_total>           |  |  |  |
-| |                                                                   |                                               |                                                | &lt;quality\_percentage>   |  |  |  |
-| |                                                                   |                                               |                                                | &lt;mos>                   |  |  |  |
-| |                                                                   |                                               | &lt;/inbound>                                     |                         |  |  |  |
-| |                                                                   |                                               | &lt;outbound>                                     |                         |  |  |  |
-| |                                                                   |                                               |                                                | &lt;raw\_bytes>            |  |  |  |
-| |                                                                   |                                               |                                                | &lt;media\_bytes>          |  |  |  |
-| |                                                                   |                                               |                                                | &lt;packet\_count>         |  |  |  |
-| |                                                                   |                                               |                                                | &lt;media\_packet\_count>  |  |  |  |
-| |                                                                   |                                               |                                                | &lt;skip\_packet\_count>   |  |  |  |
-| |                                                                   |                                               |                                                | &lt;dtmf\_packet\_count>   |  |  |  |
-| |                                                                   |                                               |                                                | &lt;cng\_packet\_count>    |  |  |  |
-| |                                                                   |                                               |                                                | &lt;rtcp\_packet\_count>   |  |  |  |
-| |                                                                   |                                               |                                                | &lt;rtcp\_octet\_count>    |  |  |  |
-| |                                                                   |                                               | &lt;/outbound>                                    |                         |  |  |  |
-| |                                                                   | &lt;/video>                                      |                                                |                         |  |  |  |
-| | &lt;/call-stats>                                                     |                                               |                                                |                         |  |  |  |
-| | &lt;variables>                                                       |                                               |                                                |                         |  |  |  |
-| |                                                                   | &lt;is\_outbound>                                |                                                |                         |  |  |  |
-| |                                                                   | &lt;uuid>                                        |                                                |                         |  |  |  |
-| |                                                                   | &lt;session\_id>                                 |                                                |                         |  |  |  |
-| |                                                                   | &lt;text\_media\_flow>                           |                                                |                         |  |  |  |
+
+| &lt;?xml version="1.0"?>                                               |                                               |                                                |                         |  |  |  |
+| ------------------------------------------------------------------- | --------------------------------------------- | ---------------------------------------------- | ----------------------- |  |  |  |
+| &lt;cdr core-uuid="\[UUID\]" switchname="freeswitch">                  |                                               |                                                |                         |  |  |  |
+| | &lt;channel\_data>                                                   |                                               |                                                |                         |  |  |  |
+| |                                                                   | &lt;state>                                       |                                                |                         |  |  |  |
 | |                                                                   | &lt;direction>                                   |                                                |                         |  |  |  |
-| |                                                                   | &lt;ep\_codec\_string>                           |                                                |                         |  |  |  |
-| |                                                                   | &lt;channel\_name>                               |                                                |                         |  |  |  |
-| |                                                                   | &lt;secondary\_recovery\_module>                 |                                                |                         |  |  |  |
-| |                                                                   | &lt;verto\_dvar\_email>                          |                                                |                         |  |  |  |
-| |                                                                   | &lt;verto\_dvar\_avatar>                         |                                                |                         |  |  |  |
-| |                                                                   | &lt;jsock\_uuid\_str>                            |                                                |                         |  |  |  |
-| |                                                                   | &lt;verto\_user>                                 |                                                |                         |  |  |  |
-| |                                                                   | &lt;presence\_id>                                |                                                |                         |  |  |  |
-| |                                                                   | &lt;verto\_client\_address>                      |                                                |                         |  |  |  |
-| |                                                                   | &lt;chat\_proto>                                 |                                                |                         |  |  |  |
-| |                                                                   | &lt;verto\_host>                                 |                                                |                         |  |  |  |
-| |                                                                   | &lt;event\_channel\_cookie>                      |                                                |                         |  |  |  |
-| |                                                                   | &lt;verto\_profile\_name>                        |                                                |                         |  |  |  |
-| |                                                                   | &lt;record\_stereo>                              |                                                |                         |  |  |  |
-| |                                                                   | &lt;default\_areacode>                           |                                                |                         |  |  |  |
-| |                                                                   | &lt;transfer\_fallback\_extension>               |                                                |                         |  |  |  |
-| |                                                                   | &lt;toll\_allow>                                 |                                                |                         |  |  |  |
-| |                                                                   | &lt;accountcode>                                 |                                                |                         |  |  |  |
-| |                                                                   | &lt;user\_context>                               |                                                |                         |  |  |  |
-| |                                                                   | &lt;effective\_caller\_id\_name>                 |                                                |                         |  |  |  |
-| |                                                                   | &lt;effective\_caller\_id\_number>               |                                                |                         |  |  |  |
-| |                                                                   | &lt;outbound\_caller\_id\_name>                  |                                                |                         |  |  |  |
-| |                                                                   | &lt;outbound\_caller\_id\_number>                |                                                |                         |  |  |  |
-| |                                                                   | &lt;callgroup>                                   |                                                |                         |  |  |  |
-| |                                                                   | &lt;user\_name>                                  |                                                |                         |  |  |  |
-| |                                                                   | &lt;domain\_name>                                |                                                |                         |  |  |  |
-| |                                                                   | &lt;Event-Name>                                  |                                                |                         |  |  |  |
+| |                                                                   | &lt;state\_number>                               |                                                |                         |  |  |  |
+
+| |                                                              | &lt;标志>                                      |                                                |                    |  |  |  |
+| |                                                              | &lt;大写字母>                                   |                                                |                    |  |  |  |
+| | &lt;/通道数据>                                                   |                                              |                                                |                    |  |  |  |
+| | &lt;呼叫统计>                                                    |                                              |                                                |                    |  |  |  |
+| |                                                              | &lt;音频>                                       |                                                |                    |  |  |  |
+| |                                                              |                                              | &lt;入站>                                       |                    |  |  |  |
+| |                                                              |                                              |                                                | &lt;原始字节>           |  |  |  |
+| |                                                              |                                              |                                                | &lt;媒体字节>           |  |  |  |
+| |                                                              |                                              |                                                | &lt;数据包计数>         |  |  |  |
+| |                                                              |                                              |                                                | &lt;媒体数据包计数>  |  |  |  |
+| |                                                              |                                              |                                                | &lt;跳过数据包计数>   |  |  |  |
+| |                                                              |                                              |                                                | &lt;抖动数据包计数> |  |  |  |
+| |                                                              |                                              |                                                | &lt;DTMF数据包计数> |  |  |  |
+| |                                                              |                                              |                                                | &lt;CNG数据包计数>    |  |  |  |
+| |                                                              |                                              |                                                | &lt;刷新数据包计数>  |  |  |  |
+| |                                                              |                                              |                                                | &lt;最大缓冲区大小>  |  |  |  |
+| |                                                              |                                              |                                                | &lt;最小方差百分比> |  |  |  |
+| |                                                              |                                              |                                                | &lt;最大方差百分比> |  |  |  |
+| |                                                              |                                              |                                                | &lt;丢包率>              |  |  |  |
+| |                                                              |                                              |                                                | &lt;冲击率>              |  |  |  |
+| |                                                              |                                              |                                                | &lt;平均间隔>          |  |  |  |
+| |                                                              |                                              |                                                | &lt;缺陷总数>          |  |  |  |
+| |                                                              |                                              |                                                | &lt;质量百分比>      |  |  |  |
+| |                                                              |                                              |                                                | &lt;MOS>                 |  |  |  |
+| |                                                              |                                              | &lt;/入站>                                       |                    |  |  |  |
+| |                                                              |                                              | &lt;出站>                                       |                    |  |  |  |
+| |                                                              |                                              |                                                | &lt;原始字节>           |  |  |  |
+| |                                                              |                                              |                                                | &lt;媒体字节>           |  |  |  |
+| |                                                              |                                              |                                                | &lt;数据包计数>         |  |  |  |
+| |                                                              |                                              |                                                | &lt;媒体数据包计数>  |  |  |  |
+| |                                                              |                                              |                                                | &lt;跳过数据包计数>   |  |  |  |
+| |                                                              |                                              |                                                | &lt;DTMF数据包计数> |  |  |  |
+| |                                                              |                                              |                                                | &lt;CNG数据包计数>    |  |  |  |
+| |                                                              |                                              |                                                | &lt;RTCP数据包计数>  |  |  |  |
+| |                                                              |                                              |                                                | &lt;RTCP字节计数>    |  |  |  |
+
+|   |                                                             |                                                   | &lt;/出站>                                        |                          |  |  |  |
+|   |                                                             | &lt;/音频>                                         |                                                   |                          |  |  |  |
+|   |                                                             | &lt;视频>                                          |                                                   |                          |  |  |  |
+|   |                                                             |                                                   | &lt;入站>                                          |                          |  |  |  |
+|   |                                                             |                                                   |                                                   | &lt;原始字节>             |  |  |  |
+|   |                                                             |                                                   |                                                   | &lt;媒体字节>             |  |  |  |
+|   |                                                             |                                                   |                                                   | &lt;数据包计数>           |  |  |  |
+|   |                                                             |                                                   |                                                   | &lt;媒体数据包计数>       |  |  |  |
+|   |                                                             |                                                   |                                                   | &lt;跳过数据包计数>       |  |  |  |
+|   |                                                             |                                                   |                                                   | &lt;抖动数据包计数>       |  |  |  |
+|   |                                                             |                                                   |                                                   | &lt;DTMF数据包计数>       |  |  |  |
+|   |                                                             |                                                   |                                                   | &lt;CNG数据包计数>        |  |  |  |
+|   |                                                             |                                                   |                                                   | &lt;刷新数据包计数>       |  |  |  |
+|   |                                                             |                                                   |                                                   | &lt;最大缓冲区大小>      |  |  |  |
+|   |                                                             |                                                   |                                                   | &lt;最小抖动方差>        |  |  |  |
+|   |                                                             |                                                   |                                                   | &lt;最大抖动方差>        |  |  |  |
+|   |                                                             |                                                   |                                                   | &lt;抖动丢包率>           |  |  |  |
+|   |                                                             |                                                   |                                                   | &lt;抖动突发速率>        |  |  |  |
+|   |                                                             |                                                   |                                                   | &lt;平均间隔>             |  |  |  |
+|   |                                                             |                                                   |                                                   | &lt;漏洞总数>             |  |  |  |
+|   |                                                             |                                                   |                                                   | &lt;音质百分比>           |  |  |  |
+|   |                                                             |                                                   |                                                   | &lt;MOS>                  |  |  |  |
+|   |                                                             |                                                   | &lt;/出站>                                         |                          |  |  |  |
+|   |                                                             |                                                   | &lt;入站>                                          |                          |  |  |  |
+|   |                                                             |                                                   |                                                   | &lt;原始字节>             |  |  |  |
+
+|  |                                                                 |                                             |                                              | &lt;media\_bytes>       | |  |  |
+|  |                                                                 |                                             |                                              | &lt;packet\_count>      | |  |  |
+|  |                                                                 |                                             |                                              | &lt;media\_packet\_count> | |  |  |
+|  |                                                                 |                                             |                                              | &lt;skip\_packet\_count> | |  |  |
+|  |                                                                 |                                             |                                              | &lt;dtmf\_packet\_count> | |  |  |
+|  |                                                                 |                                             |                                              | &lt;cng\_packet\_count> | |  |  |
+|  |                                                                 |                                             |                                              | &lt;rtcp\_packet\_count> | |  |  |
+|  |                                                                 |                                             |                                              | &lt;rtcp\_octet\_count> | |  |  |
+|  |                                                                 |                                             | &lt;/outbound>                                 |                         |  |  |  |
+|  |                                                                 | &lt;/video>                                   |                                              |                         |  |  |  |
+|  | &lt;/call-stats&gt;                                                  |                                             |                                              |                         |  |  |  |
+|  | &lt;variables&gt;                                                    |                                             |                                              |                         |  |  |  |
+|  |                                                                 | &lt;is\_outbound>                             |                                              |                         |  |  |  |
+|  |                                                                 | &lt;uuid>                                     |                                              |                         |  |  |  |
+|  |                                                                 | &lt;session\_id>                              |                                              |                         |  |  |  |
+|  |                                                                 | &lt;text\_media\_flow>                        |                                              |                         |  |  |  |
+|  |                                                                 | &lt;direction>                                |                                              |                         |  |  |  |
+|  |                                                                 | &lt;ep\_codec\_string>                        |                                              |                         |  |  |  |
+|  |                                                                 | &lt;channel\_name>                            |                                              |                         |  |  |  |
+|  |                                                                 | &lt;secondary\_recovery\_module>              |                                              |                         |  |  |  |
+|  |                                                                 | &lt;verto\_dvar\_email>                       |                                              |                         |  |  |  |
+|  |                                                                 | &lt;verto\_dvar\_avatar>                      |                                              |                         |  |  |  |
+|  |                                                                 | &lt;jsock\_uuid\_str>                         |                                              |                         |  |  |  |
+|  |                                                                 | &lt;verto\_user>                              |                                              |                         |  |  |  |
+|  |                                                                 | &lt;presence\_id>                             |                                              |                         |  |  |  |
+|  |                                                                 | &lt;verto\_client\_address>                   |                                              |                         |  |  |  |
+|  |                                                                 | &lt;chat\_proto>                              |                                              |                         |  |  |  |
+|  |                                                                 | &lt;verto\_host>                              |                                              |                         |  |  |  |
+|  |                                                                 | &lt;event\_channel\_cookie>                   |                                              |                         |  |  |  |
+|  |                                                                 | &lt;verto\_profile\_name>                     |                                              |                         |  |  |  |
+|  |                                                                 | &lt;record\_stereo>                           |                                              |                         |  |  |  |
+|  |                                                                 | &lt;default\_areacode>                        |                                              |                         |  |  |  |
+|  |                                                                 | &lt;transfer\_fallback\_extension>            |                                              |                         |  |  |  |
+|  |                                                                 | &lt;toll\_allow>                              |                                              |                         |  |  |  |
+|  |                                                                 | &lt;accountcode>                              |                                              |                         |  |  |  |
+|  |                                                                 | &lt;user\_context>                            |                                              |                         |  |  |  |
+|  |                                                                 | &lt;effective\_caller\_id\_name>              |                                              |                         |  |  |  |
+|  |                                                                 | &lt;effective\_caller\_id\_number>            |                                              |                         |  |  |  |
+|  |                                                                 | &lt;outbound\_caller\_id\_name>               |                                              |                         |  |  |  |
+|  |                                                                 | &lt;outbound\_caller\_id\_number>             |                                              |                         |  |  |  |
+|  |                                                                 | &lt;callgroup>                                |                                              |                         |  |  |  |
+|  |                                                                 | &lt;user\_name>                               |                                              |                         |  |  |  |
+|  |                                                                 | &lt;domain\_name>                             |                                              |                         |  |  |  |
+|  |                                                                 | &lt;Event-Name>                               |                                              |                         |  |  |  |
+
 | |                                                                   | &lt;Core-UUID>                                   |                                                |                         |  |  |  |
 | |                                                                   | &lt;FreeSWITCH-Hostname>                         |                                                |                         |  |  |  |
 | |                                                                   | &lt;FreeSWITCH-Switchname>                       |                                                |                         |  |  |  |
@@ -310,200 +319,206 @@ Description needed! Please contribute one.
 | |                                                                   | &lt;rtp\_video\_pt>                              |                                                |                         |  |  |  |
 | |                                                                   | &lt;rtp\_video\_recv\_pt>                        |                                                |                         |  |  |  |
 | |                                                                   | &lt;video\_read\_codec>                          |                                                |                         |  |  |  |
-| |                                                                   | &lt;video\_read\_rate>                           |                                                |                         |  |  |  |
-| |                                                                   | &lt;video\_write\_codec>                         |                                                |                         |  |  |  |
-| |                                                                   | &lt;video\_write\_rate>                          |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_last\_video\_codec\_string>             |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_use\_video\_codec\_name>                |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_use\_video\_codec\_rate>                |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_use\_video\_codec\_ptime>               |                                                |                         |  |  |  |
-| |                                                                   | &lt;remote\_video\_ip>                           |                                                |                         |  |  |  |
-| |                                                                   | &lt;remote\_video\_port>                         |                                                |                         |  |  |  |
-| |                                                                   | &lt;remote\_video\_rtcp\_ip>                     |                                                |                         |  |  |  |
-| |                                                                   | &lt;remote\_video\_rtcp\_port>                   |                                                |                         |  |  |  |
-| |                                                                   | &lt;local\_media\_ip>                            |                                                |                         |  |  |  |
-| |                                                                   | &lt;local\_media\_port>                          |                                                |                         |  |  |  |
-| |                                                                   | &lt;advertised\_media\_ip>                       |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_use\_timer\_name>                       |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_use\_pt>                                |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_use\_ssrc>                              |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_2833\_send\_payload>                    |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_2833\_recv\_payload>                    |                                                |                         |  |  |  |
-| |                                                                   | &lt;remote\_media\_ip>                           |                                                |                         |  |  |  |
-| |                                                                   | &lt;remote\_media\_port>                         |                                                |                         |  |  |  |
-| |                                                                   | &lt;local\_video\_ip>                            |                                                |                         |  |  |  |
-| |                                                                   | &lt;local\_video\_port>                          |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_use\_video\_pt>                         |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_use\_video\_ssrc>                       |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_local\_sdp\_str>                        |                                                |                         |  |  |  |
-| |                                                                   | &lt;current\_application\_data>                  |                                                |                         |  |  |  |
-| |                                                                   | &lt;current\_application>                        |                                                |                         |  |  |  |
-| |                                                                   | &lt;send\_silence\_when\_idle>                   |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_has\_crypto>                            |                                                |                         |  |  |  |
-| |                                                                   | &lt;endpoint\_disposition>                       |                                                |                         |  |  |  |
-| |                                                                   | &lt;conference\_name>                            |                                                |                         |  |  |  |
-| |                                                                   | &lt;conference\_member\_id>                      |                                                |                         |  |  |  |
-| |                                                                   | &lt;conference\_moderator>                       |                                                |                         |  |  |  |
-| |                                                                   | &lt;conference\_ghost>                           |                                                |                         |  |  |  |
-| |                                                                   | &lt;conference\_uuid>                            |                                                |                         |  |  |  |
-| |                                                                   | &lt;video\_width>                                |                                                |                         |  |  |  |
-| |                                                                   | &lt;video\_height>                               |                                                |                         |  |  |  |
-| |                                                                   | &lt;video\_fps>                                  |                                                |                         |  |  |  |
-| |                                                                   | &lt;verto\_hangup\_disposition>                  |                                                |                         |  |  |  |
-| |                                                                   | &lt;read\_codec>                                 |                                                |                         |  |  |  |
-| |                                                                   | &lt;read\_rate>                                  |                                                |                         |  |  |  |
-| |                                                                   | &lt;hangup\_cause>                               |                                                |                         |  |  |  |
-| |                                                                   | &lt;hangup\_cause\_q850>                         |                                                |                         |  |  |  |
-| |                                                                   | &lt;digits\_dialed>                              |                                                |                         |  |  |  |
-| |                                                                   | &lt;start\_stamp>                                |                                                |                         |  |  |  |
-| |                                                                   | &lt;profile\_start\_stamp>                       |                                                |                         |  |  |  |
-| |                                                                   | &lt;answer\_stamp>                               |                                                |                         |  |  |  |
-| |                                                                   | &lt;progress\_media\_stamp>                      |                                                |                         |  |  |  |
-| |                                                                   | &lt;end\_stamp>                                  |                                                |                         |  |  |  |
-| |                                                                   | &lt;start\_epoch>                                |                                                |                         |  |  |  |
-| |                                                                   | &lt;start\_uepoch>                               |                                                |                         |  |  |  |
-| |                                                                   | &lt;profile\_start\_epoch>                       |                                                |                         |  |  |  |
-| |                                                                   | &lt;profile\_start\_uepoch>                      |                                                |                         |  |  |  |
-| |                                                                   | &lt;answer\_epoch>                               |                                                |                         |  |  |  |
-| |                                                                   | &lt;answer\_uepoch>                              |                                                |                         |  |  |  |
-| |                                                                   | &lt;bridge\_epoch>                               |                                                |                         |  |  |  |
-| |                                                                   | &lt;bridge\_uepoch>                              |                                                |                         |  |  |  |
-| |                                                                   | &lt;last\_hold\_epoch>                           |                                                |                         |  |  |  |
-| |                                                                   | &lt;last\_hold\_uepoch>                          |                                                |                         |  |  |  |
-| |                                                                   | &lt;hold\_accum\_seconds>                        |                                                |                         |  |  |  |
-| |                                                                   | &lt;hold\_accum\_usec>                           |                                                |                         |  |  |  |
-| |                                                                   | &lt;hold\_accum\_ms>                             |                                                |                         |  |  |  |
-| |                                                                   | &lt;resurrect\_epoch>                            |                                                |                         |  |  |  |
-| |                                                                   | &lt;resurrect\_uepoch>                           |                                                |                         |  |  |  |
-| |                                                                   | &lt;progress\_epoch>                             |                                                |                         |  |  |  |
-| |                                                                   | &lt;progress\_uepoch>                            |                                                |                         |  |  |  |
-| |                                                                   | &lt;progress\_media\_epoch>                      |                                                |                         |  |  |  |
-| |                                                                   | &lt;progress\_media\_uepoch>                     |                                                |                         |  |  |  |
-| |                                                                   | &lt;end\_epoch>                                  |                                                |                         |  |  |  |
-| |                                                                   | &lt;end\_uepoch>                                 |                                                |                         |  |  |  |
-| |                                                                   | &lt;last\_app>                                   |                                                |                         |  |  |  |
-| |                                                                   | &lt;last\_arg>                                   |                                                |                         |  |  |  |
-| |                                                                   | &lt;caller\_id>                                  |                                                |                         |  |  |  |
-| |                                                                   | &lt;duration>                                    |                                                |                         |  |  |  |
-| |                                                                   | &lt;billsec>                                     |                                                |                         |  |  |  |
-| |                                                                   | &lt;progresssec>                                 |                                                |                         |  |  |  |
-| |                                                                   | &lt;answersec>                                   |                                                |                         |  |  |  |
-| |                                                                   | &lt;waitsec>                                     |                                                |                         |  |  |  |
-| |                                                                   | &lt;progress\_mediasec>                          |                                                |                         |  |  |  |
-| |                                                                   | &lt;flow\_billsec>                               |                                                |                         |  |  |  |
-| |                                                                   | &lt;mduration>                                   |                                                |                         |  |  |  |
-| |                                                                   | &lt;billmsec>                                    |                                                |                         |  |  |  |
-| |                                                                   | &lt;progressmsec>                                |                                                |                         |  |  |  |
-| |                                                                   | &lt;answermsec>                                  |                                                |                         |  |  |  |
-| |                                                                   | &lt;waitmsec>                                    |                                                |                         |  |  |  |
-| |                                                                   | &lt;progress\_mediamsec>                         |                                                |                         |  |  |  |
-| |                                                                   | &lt;flow\_billmsec>                              |                                                |                         |  |  |  |
-| |                                                                   | &lt;uduration>                                   |                                                |                         |  |  |  |
-| |                                                                   | &lt;billusec>                                    |                                                |                         |  |  |  |
-| |                                                                   | &lt;progressusec>                                |                                                |                         |  |  |  |
-| |                                                                   | &lt;answerusec>                                  |                                                |                         |  |  |  |
-| |                                                                   | &lt;waitusec>                                    |                                                |                         |  |  |  |
-| |                                                                   | &lt;progress\_mediausec>                         |                                                |                         |  |  |  |
-| |                                                                   | &lt;flow\_billusec>                              |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_audio\_in\_raw\_bytes>                  |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_audio\_in\_media\_bytes>                |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_audio\_in\_packet\_count>               |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_audio\_in\_media\_packet\_count>        |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_audio\_in\_skip\_packet\_count>         |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_audio\_in\_jitter\_packet\_count>       |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_audio\_in\_dtmf\_packet\_count>         |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_audio\_in\_cng\_packet\_count>          |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_audio\_in\_flush\_packet\_count>        |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_audio\_in\_largest\_jb\_size>           |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_audio\_in\_jitter\_min\_variance>       |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_audio\_in\_jitter\_max\_variance>       |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_audio\_in\_jitter\_loss\_rate>          |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_audio\_in\_jitter\_burst\_rate>         |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_audio\_in\_mean\_interval>              |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_audio\_in\_flaw\_total>                 |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_audio\_in\_quality\_percentage>         |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_audio\_in\_mos>                         |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_audio\_out\_raw\_bytes>                 |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_audio\_out\_media\_bytes>               |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_audio\_out\_packet\_count>              |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_audio\_out\_media\_packet\_count>       |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_audio\_out\_skip\_packet\_count>        |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_audio\_out\_dtmf\_packet\_count>        |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_audio\_out\_cng\_packet\_count>         |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_audio\_rtcp\_packet\_count>             |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_audio\_rtcp\_octet\_count>              |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_video\_in\_raw\_bytes>                  |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_video\_in\_media\_bytes>                |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_video\_in\_packet\_count>               |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_video\_in\_media\_packet\_count>        |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_video\_in\_skip\_packet\_count>         |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_video\_in\_jitter\_packet\_count>       |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_video\_in\_dtmf\_packet\_count>         |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_video\_in\_cng\_packet\_count>          |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_video\_in\_flush\_packet\_count>        |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_video\_in\_largest\_jb\_size>           |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_video\_in\_jitter\_min\_variance>       |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_video\_in\_jitter\_max\_variance>       |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_video\_in\_jitter\_loss\_rate>          |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_video\_in\_jitter\_burst\_rate>         |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_video\_in\_mean\_interval>              |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_video\_in\_flaw\_total>                 |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_video\_in\_quality\_percentage>         |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_video\_in\_mos>                         |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_video\_out\_raw\_bytes>                 |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_video\_out\_media\_bytes>               |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_video\_out\_packet\_count>              |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_video\_out\_media\_packet\_count>       |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_video\_out\_skip\_packet\_count>        |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_video\_out\_dtmf\_packet\_count>        |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_video\_out\_cng\_packet\_count>         |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_video\_rtcp\_packet\_count>             |                                                |                         |  |  |  |
-| |                                                                   | &lt;rtp\_video\_rtcp\_octet\_count>              |                                                |                         |  |  |  |
-| | &lt;/variables>                                                      |                                               |                                                |                         |  |  |  |
-| | &lt;app\_log>                                                        |                                               |                                                |                         |  |  |  |
-| |                                                                   | &lt;application app\_name="..." app\_data="..."> |                                                |                         |  |  |  |
-| |                                                                   | &lt;application app\_name="..." app\_data="..."> |                                                |                         |  |  |  |
-| | &lt;/app\_log>                                                       |                                               |                                                |                         |  |  |  |
-| | &lt;callflow dialplan="XML" unique-id="\[UUID\]" profile\_index="1"> |                                               |                                                |                         |  |  |  |
-| |                                                                   |                                               | &lt;extension name="my conference" number="3500"> |                         |  |  |  |
-| |                                                                   |                                               | &lt;application app\_name="..." app\_data="...">  |                         |  |  |  |
-| |                                                                   | &lt;/extension>                                  |                                                |                         |  |  |  |
-| |                                                                   | &lt;caller\_profile>                             |                                                |                         |  |  |  |
-| |                                                                   |                                               | &lt;username>                                     |                         |  |  |  |
-| |                                                                   |                                               | &lt;dialplan>                                     |                         |  |  |  |
-| |                                                                   |                                               | &lt;caller\_id\_name>                             |                         |  |  |  |
-| |                                                                   |                                               | &lt;caller\_id\_number>                           |                         |  |  |  |
-| |                                                                   |                                               | &lt;callee\_id\_name>                             |                         |  |  |  |
-| |                                                                   |                                               | &lt;callee\_id\_number>                           |                         |  |  |  |
-| |                                                                   |                                               | &lt;ani>                                          |                         |  |  |  |
-| |                                                                   |                                               | &lt;aniii>                                        |                         |  |  |  |
-| |                                                                   |                                               | &lt;network\_addr>                                |                         |  |  |  |
-| |                                                                   |                                               | &lt;rdnis>                                        |                         |  |  |  |
-| |                                                                   |                                               | &lt;destination\_number>                          |                         |  |  |  |
-| |                                                                   |                                               | &lt;uuid>                                         |                         |  |  |  |
-| |                                                                   |                                               | &lt;source>                                       |                         |  |  |  |
-| |                                                                   |                                               | &lt;context>                                      |                         |  |  |  |
-| |                                                                   |                                               | &lt;chan\_name>                                   |                         |  |  |  |
-| |                                                                   | &lt;/caller\_profile>                            |                                                |                         |  |  |  |
-| |                                                                   | &lt;times>                                       |                                                |                         |  |  |  |
-| |                                                                   |                                               | &lt;created\_time>                                |                         |  |  |  |
-| |                                                                   |                                               | &lt;profile\_created\_time>                       |                         |  |  |  |
-| |                                                                   |                                               | &lt;progress\_time>                               |                         |  |  |  |
-| |                                                                   |                                               | &lt;progress\_media\_time>                        |                         |  |  |  |
-| |                                                                   |                                               | &lt;answered\_time>                               |                         |  |  |  |
-| |                                                                   |                                               | &lt;bridged\_time>                                |                         |  |  |  |
-| |                                                                   |                                               | &lt;last\_hold\_time>                             |                         |  |  |  |
-| |                                                                   |                                               | &lt;hold\_accum\_time>                            |                         |  |  |  |
-| |                                                                   |                                               | &lt;hangup\_time>                                 |                         |  |  |  |
-| |                                                                   |                                               | &lt;resurrect\_time>                              |                         |  |  |  |
-| |                                                                   |                                               | &lt;transfer\_time>                               |                         |  |  |  |
-| |                                                                   | &lt;/times>                                      |                                                |                         |  |  |  |
-| | &lt;/callflow>                                                       |                                               |                                                |                         |  |  |  |
-| &lt;/cdr>                                                              |                                               |                                                |                         |  |  |  |
 
-### Comments:
+| |                                                                   | &lt;Core-UUID&gt;                                |                                                |                         |  |  |  |
+| |                                                                   | &lt;FreeSWITCH-主机名&gt;                       |                                                |                         |  |  |  |
+| |                                                                   | &lt;FreeSWITCH-交换机名称&gt;                   |                                                |                         |  |  |  |
+| |                                                                   | &lt;FreeSWITCH-IPv4&gt;                          |                                                |                         |  |  |  |
+| |                                                                   | &lt;FreeSWITCH-IPv6&gt;                          |                                                |                         |  |  |  |
+| |                                                                   | &lt;事件日期-本地&gt;                            |                                                |                         |  |  |  |
+| |                                                                   | &lt;事件日期-GMT&gt;                             |                                                |                         |  |  |  |
+| |                                                                   | &lt;事件日期时间戳&gt;                          |                                                |                         |  |  |  |
+| |                                                                   | &lt;事件调用文件&gt;                            |                                                |                         |  |  |  |
+| |                                                                   | &lt;事件调用函数&gt;                            |                                                |                         |  |  |  |
+| |                                                                   | &lt;事件调用行号&gt;                            |                                                |                         |  |  |  |
+| |                                                                   | &lt;事件顺序&gt;                                |                                                |                         |  |  |  |
+| |                                                                   | &lt;verto\_远程\_呼叫者\_名称&gt;              |                                                |                         |  |  |  |
+| |                                                                   | &lt;verto\_远程\_呼叫者\_号码&gt;            |                                                |                         |  |  |  |
+| |                                                                   | &lt;切换\_r\_sdp&gt;                            |                                                |                         |  |  |  |
+| |                                                                   | &lt;DP\_MATCH&gt;                                |                                                |                         |  |  |  |
+| |                                                                   | &lt;DP\_MATCH&gt;                                |                                                |                         |  |  |  |
+| |                                                                   | &lt;呼叫\_UUID&gt;                              |                                                |                         |  |  |  |
+| |                                                                   | &lt;开启&gt;                                    |                                                |                         |  |  |  |
+| |                                                                   | &lt;rtp\_安全\_媒体&gt;                          |                                                |                         |  |  |  |
+| |                                                                   | &lt;导出\_变量&gt;                              |                                                |                         |  |  |
 
-| The variables on this document have been reconciled into the Variables Master List. ![](/images/icons/contenttypes/comment_16.png) Posted by ryharris at Feb 07, 2018 12:49 |
+|   |                                                                   | &lt;video\_read\_rate&gt;                       |                                                |                         |  |  |  |
+|   |                                                                   | &lt;video\_write\_codec&gt;                     |                                                |                         |  |  |  |
+|   |                                                                   | &lt;video\_write\_rate&gt;                      |                                                |                         |  |  |  |
+|   |                                                                   | &lt;rtp\_last\_video\_codec\_string&gt;         |                                                |                         |  |  |  |
+|   |                                                                   | &lt;rtp\_use\_video\_codec\_name&gt;            |                                                |                         |  |  |  |
+|   |                                                                   | &lt;rtp\_use\_video\_codec\_rate&gt;            |                                                |                         |  |  |  |
+|   |                                                                   | &lt;rtp\_use\_video\_codec\_ptime&gt;           |                                                |                         |  |  |  |
+|   |                                                                   | &lt;remote\_video\_ip&gt;                       |                                                |                         |  |  |  |
+|   |                                                                   | &lt;remote\_video\_port&gt;                     |                                                |                         |  |  |  |
+|   |                                                                   | &lt;remote\_video\_rtcp\_ip&gt;                 |                                                |                         |  |  |  |
+|   |                                                                   | &lt;remote\_video\_rtcp\_port&gt;               |                                                |                         |  |  |  |
+|   |                                                                   | &lt;local\_media\_ip&gt;                        |                                                |                         |  |  |  |
+|   |                                                                   | &lt;local\_media\_port&gt;                      |                                                |                         |  |  |  |
+|   |                                                                   | &lt;advertised\_media\_ip&gt;                   |                                                |                         |  |  |  |
+|   |                                                                   | &lt;rtp\_use\_timer\_name&gt;                   |                                                |                         |  |  |  |
+|   |                                                                   | &lt;rtp\_use\_pt&gt;                            |                                                |                         |  |  |  |
+|   |                                                                   | &lt;rtp\_use\_ssrc&gt;                          |                                                |                         |  |  |  |
+|   |                                                                   | &lt;rtp\_2833\_send\_payload&gt;                |                                                |                         |  |  |  |
+|   |                                                                   | &lt;rtp\_2833\_recv\_payload&gt;                |                                                |                         |  |  |  |
+|   |                                                                   | &lt;remote\_media\_ip&gt;                       |                                                |                         |  |  |  |
+|   |                                                                   | &lt;remote\_media\_port&gt;                     |                                                |                         |  |  |  |
+|   |                                                                   | &lt;local\_video\_ip&gt;                        |                                                |                         |  |  |  |
+|   |                                                                   | &lt;local\_video\_port&gt;                      |                                                |                         |  |  |  |
+|   |                                                                   | &lt;rtp\_use\_video\_pt&gt;                     |                                                |                         |  |  |  |
+|   |                                                                   | &lt;rtp\_use\_video\_ssrc&gt;                   |                                                |                         |  |  |  |
+|   |                                                                   | &lt;rtp\_local\_sdp\_str&gt;                    |                                                |                         |  |  |  |
+|   |                                                                   | &lt;current\_application\_data&gt;              |                                                |                         |  |  |  |
+|   |                                                                   | &lt;current\_application&gt;                    |                                                |                         |  |  |  |
+|   |                                                                   | &lt;send\_silence\_when\_idle&gt;               |                                                |                         |  |  |  |
+|   |                                                                   | &lt;rtp\_has\_crypto&gt;                        |                                                |                         |  |  |  |
+|   |                                                                   | &lt;endpoint\_disposition&gt;                   |                                                |                         |  |  |  |
+|   |                                                                   | &lt;conference\_name&gt;                        |                                                |                         |  |  |  |
+|   |                                                                   | &lt;conference\_member\_id&gt;                  |                                                |                         |  |  |  |
+|   |                                                                   | &lt;conference\_moderator&gt;                   |                                                |                         |  |  |  |
+|   |                                                                   | &lt;conference\_ghost&gt;                       |                                                |                         |  |  |  |
+|   |                                                                   | &lt;conference\_uuid&gt;                        |                                                |                         |  |  |  |
+|   |                                                                   | &lt;video\_width&gt;                            |                                                |                         |  |  |  |
+|   |                                                                   | &lt;video\_height&gt;                           |                                                |                         |  |  |  |
+|   |                                                                   | &lt;video\_fps&gt;                              |                                                |                         |  |  |  |
+|   |                                                                   | &lt;verto\_hangup\_disposition&gt;              |                                                |                         |  |  |  |
+|   |                                                                   | &lt;read\_codec&gt;                             |                                                |                         |  |  |  |
+|   |                                                                   | &lt;read\_rate&gt;                              |                                                |                         |  |  |  |
+|   |                                                                   | &lt;hangup\_cause&gt;                           |                                                |                         |  |  |  |
+|   |                                                                   | &lt;hangup\_cause\_q850&gt;                     |                                                |                         |  |  |  |
+|   |                                                                   | &lt;digits\_dialed&gt;                          |                                                |                         |  |  |  |
+|   |                                                                   | &lt;start\_stamp&gt;                            |                                                |                         |  |  |  |
+|   |                                                                   | &lt;profile\_start\_stamp&gt;                   |                                                |                         |  |  |  |
+|   |                                                                   | &lt;answer\_stamp&gt;                           |                                                |                         |  |  |  |
+|   |                                                                   | &lt;progress\_media\_stamp&gt;                  |                                                |                         |  |  |  |
+|   |                                                                   | &lt;end\_stamp&gt;                              |                                                |                         |  |  |  |
+|   |                                                                   | &lt;start\_epoch&gt;                            |                                                |                         |  |  |  |
+|   |                                                                   | &lt;start\_uepoch&gt;                           |                                                |                         |  |  |  |
+|   |                                                                   | &lt;profile\_start\_epoch&gt;                   |                                                |                         |  |  |  |
+
+|   |                                                                   | &lt;profile\_start\_uepoch>                      |                                                |                         |  |  |  |
+|   |                                                                   | &lt;answer\_epoch>                               |                                                |                         |  |  |  |
+|   |                                                                   | &lt;answer\_uepoch>                              |                                                |                         |  |  |  |
+|   |                                                                   | &lt;bridge\_epoch>                               |                                                |                         |  |  |  |
+|   |                                                                   | &lt;bridge\_uepoch>                              |                                                |                         |  |  |  |
+|   |                                                                   | &lt;last\_hold\_epoch>                           |                                                |                         |  |  |  |
+|   |                                                                   | &lt;last\_hold\_uepoch>                          |                                                |                         |  |  |  |
+|   |                                                                   | &lt;hold\_accum\_seconds>                        |                                                |                         |  |  |  |
+|   |                                                                   | &lt;hold\_accum\_usec>                           |                                                |                         |  |  |  |
+|   |                                                                   | &lt;hold\_accum\_ms>                             |                                                |                         |  |  |  |
+|   |                                                                   | &lt;resurrect\_epoch>                            |                                                |                         |  |  |  |
+|   |                                                                   | &lt;resurrect\_uepoch>                           |                                                |                         |  |  |  |
+|   |                                                                   | &lt;progress\_epoch>                             |                                                |                         |  |  |  |
+|   |                                                                   | &lt;progress\_uepoch>                            |                                                |                         |  |  |  |
+|   |                                                                   | &lt;progress\_media\_epoch>                      |                                                |                         |  |  |  |
+|   |                                                                   | &lt;progress\_media\_uepoch>                     |                                                |                         |  |  |  |
+|   |                                                                   | &lt;end\_epoch>                                  |                                                |                         |  |  |  |
+|   |                                                                   | &lt;end\_uepoch>                                 |                                                |                         |  |  |  |
+|   |                                                                   | &lt;last\_app>                                   |                                                |                         |  |  |  |
+|   |                                                                   | &lt;last\_arg>                                   |                                                |                         |  |  |  |
+|   |                                                                   | &lt;caller\_id>                                  |                                                |                         |  |  |  |
+|   |                                                                   | &lt;duration>                                    |                                                |                         |  |  |  |
+|   |                                                                   | &lt;billsec>                                     |                                                |                         |  |  |  |
+|   |                                                                   | &lt;progresssec>                                 |                                                |                         |  |  |  |
+|   |                                                                   | &lt;answersec>                                   |                                                |                         |  |  |  |
+|   |                                                                   | &lt;waitsec>                                     |                                                |                         |  |  |  |
+|   |                                                                   | &lt;progress\_mediasec>                          |                                                |                         |  |  |  |
+|   |                                                                   | &lt;flow\_billsec>                               |                                                |                         |  |  |  |
+|   |                                                                   | &lt;mduration>                                   |                                                |                         |  |  |  |
+|   |                                                                   | &lt;billmsec>                                    |                                                |                         |  |  |  |
+|   |                                                                   | &lt;progressmsec>                                |                                                |                         |  |  |  |
+|   |                                                                   | &lt;answermsec>                                  |                                                |                         |  |  |  |
+|   |                                                                   | &lt;waitmsec>                                    |                                                |                         |  |  |  |
+|   |                                                                   | &lt;progress\_mediamsec>                         |                                                |                         |  |  |  |
+|   |                                                                   | &lt;flow\_billmsec>                              |                                                |                         |  |  |  |
+|   |                                                                   | &lt;uduration>                                   |                                                |                         |  |  |  |
+|   |                                                                   | &lt;billusec>                                    |                                                |                         |  |  |  |
+|   |                                                                   | &lt;progressusec>                                |                                                |                         |  |  |  |
+|   |                                                                   | &lt;answerusec>                                  |                                                |                         |  |  |  |
+|   |                                                                   | &lt;waitusec>                                    |                                                |                         |  |  |  |
+|   |                                                                   | &lt;progress\_mediausec>                         |                                                |                         |  |  |  |
+|   |                                                                   | &lt;flow\_billusec>                              |                                                |                         |  |  |  |
+|   |                                                                   | &lt;rtp\_audio\_in\_raw\_bytes>                  |                                                |                         |  |  |  |
+|   |                                                                   | &lt;rtp\_audio\_in\_media\_bytes>                |                                                |                         |  |  |  |
+|   |                                                                   | &lt;rtp\_audio\_in\_packet\_count>               |                                                |                         |  |  |  |
+|   |                                                                   | &lt;rtp\_audio\_in\_media\_packet\_count>        |                                                |                         |  |  |  |
+|   |                                                                   | &lt;rtp\_audio\_in\_skip\_packet\_count>         |                                                |                         |  |  |  |
+|   |                                                                   | &lt;rtp\_audio\_in\_jitter\_packet\_count>       |                                                |                         |  |  |  |
+|   |                                                                   | &lt;rtp\_audio\_in\_dtmf\_packet\_count>         |                                                |                         |  |  |  |
+|   |                                                                   | &lt;rtp\_audio\_in\_cng\_packet\_count>          |                                                |                         |  |  |  |
+|   |                                                                   | &lt;rtp\_audio\_in\_flush\_packet\_count>        |                                                |                         |  |  |  |
+|   |                                                                   | &lt;rtp\_audio\_in\_largest\_jb\_size>           |                                                |                         |  |  |  |
+|   |                                                                   | &lt;rtp\_audio\_in\_jitter\_min\_variance>       |                                                |                         |  |  |  |
+|   |                                                                   | &lt;rtp\_audio\_in\_jitter\_max\_variance>       |                                                |                         |  |  |  |
+|   |                                                                   | &lt;rtp\_audio\_in\_jitter\_loss\_rate>          |                                                |                         |  |  |  |
+|   |                                                                   | &lt;rtp\_audio\_in\_jitter\_
+
+|         |                                                        | &lt;rtp\_video\_out\_dtmf\_packet\_count> |                                                   |                       |  |  |  |
+|         |                                                        | &lt;rtp\_video\_out\_cng\_packet\_count>  |                                                   |                       |  |  |  |
+|         |                                                        | &lt;rtp\_video\_rtcp\_packet\_count>      |                                                   |                       |  |  |  |
+|         |                                                        | &lt;rtp\_video\_rtcp\_octet\_count>       |                                                   |                       |  |  |  |
+|         | &lt;/variables>                                           |                                          |                                                   |                       |  |  |  |
+|         | &lt;app\_log>                                             |                                          |                                                   |                       |  |  |  |
+|         |                                                        | &lt;application app\_name="..." app\_data="...">                                                |                                                   |                       |  |  |  |
+|         |                                                        | &lt;application app\_name="..." app\_data="...">                                                |                                                   |                       |  |  |  |
+|         | &lt;/app\_log>                                            |                                          |                                                   |                       |  |  |  |
+|         | &lt;callflow dialplan="XML" unique-id="[UUID]" profile\_index="1"> |                                          |                                                   |                       |  |  |  |
+|         |                                                        |                                          | &lt;extension name="my conference" number="3500"> |                       |  |  |  |
+|         |                                                        |                                          | &lt;application app\_name="..." app\_data="..."> |                       |  |  |  |
+|         |                                                        | &lt;/extension>                           |                                                   |                       |  |  |  |
+|         |                                                        | &lt;caller\_profile>                      |                                                   |                       |  |  |  |
+|         |                                                        |                                          | &lt;username>                                  |                       |  |  |  |
+|         |                                                        |                                          | &lt;dialplan>                                  |                       |  |  |  |
+|         |                                                        |                                          | &lt;caller\_id\_name>                          |                       |  |  |  |
+
+|         |                                                        | &lt;rtp\_video\_out\_dtmf\_packet\_count> |                                                   |                       |  |  |  |
+|         |                                                        | &lt;rtp\_video\_out\_cng\_packet\_count>  |                                                   |                       |  |  |  |
+|         |                                                        | &lt;rtp\_video\_rtcp\_packet\_count>      |                                                   |                       |  |  |  |
+|         |                                                        | &lt;rtp\_video\_rtcp\_octet\_count>       |                                                   |                       |  |  |  |
+|         | &lt;/variables>                                           |                                          |                                                   |                       |  |  |  |
+|         | &lt;app\_log>                                             |                                          |                                                   |                       |  |  |  |
+|         |                                                        | &lt;application app\_name="..." app\_data="...">                                                |                                                   |                       |  |  |  |
+|         |                                                        | &lt;application app\_name="..." app\_data="...">                                                |                                                   |                       |  |  |  |
+|         | &lt;/app\_log>                                            |                                          |                                                   |                       |  |  |  |
+|         | &lt;callflow dialplan="XML" unique-id="[UUID]" profile\_index="1"> |                                          |                                                   |                       |  |  |  |
+|         |                                                        |                                          | &lt;extension name="my conference" number="3500"> |                       |  |  |  |
+|         |                                                        |                                          | &lt;application app\_name="..." app\_data="..."> |                       |  |  |  |
+|         |                                                        | &lt;/extension>                           |                                                   |                       |  |  |  |
+|         |                                                        | &lt;caller\_profile>                      |                                                   |                       |  |  |  |
+|         |                                                        |                                          | &lt;username>                                  |                       |  |  |  |
+|         |                                                        |                                          | &lt;dialplan>                                  |                       |  |  |  |
+|         |                                                        |                                          | &lt;caller\_id\_name>                          |                       |  |  |  |
+
+| |                                                                   |                                               | <caller_id_number>                           |                         |  |  |  |
+| |                                                                   |                                               | <callee_id_name>                             |                         |  |  |  |
+| |                                                                   |                                               | <callee_id_number>                           |                         |  |  |  |
+| |                                                                   |                                               | <ani>                                          |                         |  |  |  |
+| |                                                                   |                                               | <aniii>                                        |                         |  |  |  |
+| |                                                                   |                                               | <network_addr>                                |                         |  |  |  |
+| |                                                                   |                                               | <rdnis>                                        |                         |  |  |  |
+| |                                                                   |                                               | <destination_number>                          |                         |  |  |  |
+| |                                                                   |                                               | <uuid>                                         |                         |  |  |  |
+| |                                                                   |                                               | <source>                                       |                         |  |  |  |
+| |                                                                   |                                               | <context>                                      |                         |  |  |  |
+| |                                                                   |                                               | <chan_name>                                   |                         |  |  |  |
+| |                                                                   | </caller_profile>                            |                                                |                         |  |  |  |
+| |                                                                   | <times>                                       |                                                |                         |  |  |  |
+| |                                                                   |                                               | <created_time>                                |                         |  |  |  |
+| |                                                                   |                                               | <profile_created_time>                       |                         |  |  |  |
+| |                                                                   |                                               | <progress_time>                               |                         |  |  |  |
+| |                                                                   |                                               | <progress_media_time>                        |                         |  |  |  |
+| |                                                                   |                                               | <answered_time>                               |                         |  |  |  |
+| |                                                                   |                                               | <bridged_time>                                |                         |  |  |  |
+| |                                                                   |                                               | <last_hold_time>                             |                         |  |  |  |
+| |                                                                   |                                               | <hold_accum_time>                            |                         |  |  |  |
+| |                                                                   |                                               | <hangup_time>                                 |                         |  |  |  |
+| |                                                                   |                                               | <resurrect_time>                              |                         |  |  |  |
+| |                                                                   |                                               | <transfer_time>                               |                         |  |  |  |
+| |                                                                   | </times>                                      |                                                |                         |  |  |  |
+| | </callflow>                                                       |                                               |                                                |                         |  |  |  |
+| </cdr>                                                              |                                               |                                                |                         |  |  |  |
+
+### 评论：
+
+| 此文档中的变量已与变量主列表进行了协调。 ![](/images/icons/contenttypes/comment_16.png) 发表者：ryharris 于2018年2月7日12:49发布 |
 | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-
-

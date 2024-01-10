@@ -1,46 +1,41 @@
+# 如何做到
 
-# How To's 
+## 关于
 
- 
+这个页面包含常见用途的教程。所有的拨号方案均来自于邮件或对话。
 
-## About
+点击这里展开目录
 
-This pages contains tutorials for common use. All dialplan recipes gathered from emails or conversations could stay here.
+* 1 [锁定已协商的编解码器](#lock-negotiated-codec)
 
-Click here to expand Table of Contents
+## 锁定已协商的编解码器
 
-* 1 [Lock negotiated codec](#lock-negotiated-codec)
+在通话的过程中，如果一方将另一方放置在等候状态，将会出现重新邀请并重新协商编解码器的情况。有时候，当通话应答时，需要保持之前协商的相同编解码器。
 
-## Lock negotiated codec
-
-In the middle of a call if one side puts the other one on hold a re-invite will occur and a new codec negotiation will happen. There's cases where you need to keep the same codec previously negotiated when the call was answered.
-
-To accomplish this you can make an extension in the same context "assuming default for this example":
+为了实现这一点，可以在同一上下文中创建一个扩展（假设为默认示例）：
 
 ```xml
-<extension name="lock_codec">                                                                                                                                   
+<extension name="lock_codec">
   <condition field="destination_number" expression="^lock_codec$">
     <action application="set" data="absolute_codec_string=${rtp_use_codec_name}"/>
   </condition>
 </extension>
 ```
 
-In your normal call processing extension add this condition before calling bridge:
+在正常的呼叫处理扩展中，在呼叫桥接之前添加此条件：
 
 ```xml
 <action application="set" data="execute_on_answer=execute_extension lock_codec XML default"/>
 ```
 
-Then when the channel is answered it will execute the extension and set the absolute\_codec\_string to whatever codec was first negotiated, that should limit what it will choose on the re-invite.
+当通道应答时，它将执行扩展并将absolute_codec_string设置为先前协商的编解码器，这应该限制在重新邀请时可以选择的编解码器。
 
-You can probably set it on both legs with "export" instead of set or by adding it also to the {} before bridge.
+你可以通过将“set”替换成“export”或者在呼叫桥接之前也将它添加到{}中，同时在两条呼叫链路上设置它。
 
 ```xml
-Dialplan: sofia/internal/1007@192.168.168.35 Regex (PASS) [lock_codec] destination_number(lock_codec) =~ /^lock_codec$/ break=on-false
-Dialplan: sofia/internal/1007@192.168.168.35 Action set(absolute_codec_string=${rtp_use_codec_name}) 
-2016-12-14 00:51:19.722495 [NOTICE] switch_core_session.c:2966 Execute set(absolute_codec_string=${rtp_use_codec_name})
+拨号计划：sofia/internal/1007@192.168.168.35 正则表达式 (PASS) [lock_codec] destination_number(lock_codec) =~ /^lock_codec$/ break=on-false
+拨号计划：sofia/internal/1007@192.168.168.35 动作 set(absolute_codec_string=${rtp_use_codec_name}) 
+2016-12-14 00:51:19.722495 [注意] switch_core_session.c:2966 执行 set(absolute_codec_string=${rtp_use_codec_name})
 EXECUTE sofia/internal/1007@192.168.168.35 set(absolute_codec_string=PCMU)
-2016-12-14 00:51:19.722495 [DEBUG] mod_dptools.c:1562 SET sofia/internal/1007@192.168.168.35 [absolute_codec_string]=[PCMU]
+2016-12-14 00:51:19.722495 [调试] mod_dptools.c:1562 设置 sofia/internal/1007@192.168.168.35 [absolute_codec_string]=[PCMU]
 ```
-
-

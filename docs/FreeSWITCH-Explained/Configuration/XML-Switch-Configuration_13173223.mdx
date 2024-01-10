@@ -1,34 +1,31 @@
+# XML 开关配置
 
-# XML Switch Configuration 
+## 关于
 
- 
+FreeSWITCH 核心配置包含在 [autoload\_configs/switch.conf.xml](http://git.freeswitch.org/git/freeswitch/tree/conf/vanilla/autoload%5Fconfigs/switch.conf.xml) 文件中
 
-## About
+点击此处展开目录
 
-The FreeSWITCH core configuration is contained in [autoload\_configs/switch.conf.xml](http://git.freeswitch.org/git/freeswitch/tree/conf/vanilla/autoload%5Fconfigs/switch.conf.xml)
-
-Click here to expand Table of Contents
-
-* 1 [Default key bindings](#default-key-bindings)
-* 2 [Core parameters](#core-parameters)  
-   * 2.1 [core-db-dsn](#core-db-dsn)  
-   * 2.2 [max-db-handles](#-freeswitch--xml-switch-configuration-)  
-   * 2.3 [db-handle-timeout](#db-handle-timeout)  
-   * 2.4 [disable-monotonic-timing](#disable-monotonic-timing)  
-   * 2.5 [enable-use-system-time](#enable-use-system-time)  
-   * 2.6 [initial-event-threads](#initial-event-threads)  
-   * 2.7 [loglevel](#loglevel)  
-   * 2.8 [max-sessions](#max-sessions)  
-   * 2.9 [sessions-per-second](#sessions-per-second)  
-   * 2.10 [rtp-start-port](#rtp-start-port)  
+* 1 [默认按键绑定](#default-key-bindings)
+* 2 [核心参数](#core-parameters)
+   * 2.1 [core-db-dsn](#core-db-dsn)
+   * 2.2 [max-db-handles](#-freeswitch--xml-switch-configuration-)
+   * 2.3 [db-handle-timeout](#db-handle-timeout)
+   * 2.4 [disable-monotonic-timing](#disable-monotonic-timing)
+   * 2.5 [enable-use-system-time](#enable-use-system-time)
+   * 2.6 [initial-event-threads](#initial-event-threads)
+   * 2.7 [loglevel](#loglevel)
+   * 2.8 [max-sessions](#max-sessions)
+   * 2.9 [sessions-per-second](#sessions-per-second)
+   * 2.10 [rtp-start-port](#rtp-start-port)
    * 2.11 [rtp-end-port](#rtp-end-port)
-* 3 [Variables](#variables)
-* 4 [Example config](#example-config)
-* 5 [See Also:](#-freeswitch--xml-switch-configuration-)
+* 3 [变量](#variables)
+* 4 [示例配置](#example-config)
+* 5 [参见：](#-freeswitch--xml-switch-configuration-)
 
-### Default key bindings
+### 默认按键绑定
 
-Function keys can be mapped to API commands using the following configuration:
+可以使用以下配置将功能键映射到 API 命令：
 
 ```xml
 <cli-keybindings>
@@ -36,32 +33,32 @@ Function keys can be mapped to API commands using the following configuration:
 </cli-keybindings>
 ```
 
-The default keybindings are;
+默认按键绑定为：
 
 ```xml
-F1 = help
-F2 = status
-F3 = show channels
-F4 = show calls
-F5 = sofia status
-F6 = reloadxml
-F7 = console loglevel 0
-F8 = console loglevel 7
-F9 = sofia status profile internal
-F10 = sofia profile internal siptrace on
-F11 = sofia profile internal siptrace off
-F12 = version
+F1 = 帮助
+F2 = 状态
+F3 = 显示通道
+F4 = 显示呼叫
+F5 = sofia 状态
+F6 = 重新加载 XML
+F7 = 控制台日志级别 0
+F8 = 控制台日志级别 7
+F9 = sofia 状态 内部配置文件
+F10 = sofia 内部配置文件 开启 SIP 抓包
+F11 = sofia 内部配置文件 关闭 SIP 抓包
+F12 = 版本
 ```
 
-Beware that the option loglevel is actually setting the minimum hard\_log\_Level in the application. What this means is if you set this to something other than DEBUG no matter what log level you set the console to one you start up you will not be able to get any log messages below the level you set. Also be careful of mis-typing a log level, if the log level is not correct it will default to a hard\_log\_level of 0\. This means that virtually no log messages will show up anywhere.
+请注意，`loglevel`选项实际上是设置应用程序中的最低`hard_log_level`。这意味着，如果您将其设置为除DEBUG之外的其他级别，无论您设置什么日志级别，一旦启动，您将无法得到低于所设置级别的任何日志消息。此外，要注意不要输入错误的日志级别，如果日志级别不正确，则会默认将其设置为`hard_log_level`为0。这意味着几乎不会在任何地方显示日志消息。
 
-### Core parameters
+### 核心参数
 
 #### core-db-dsn
 
-Allows to use ODBC database instead of sqlite3 for freeswitch core.
+允许使用ODBC数据库替代sqlite3进行FreeSWITCH核心。
 
-Syntax
+语法
 
 ```xml
 dsn:user:pass
@@ -70,67 +67,67 @@ dsn:user:pass
 ####   
 max-db-handles
 
-Maximum number of simultaneous DB handles open
+同时打开的数据库句柄的最大数量
 
 #### db-handle-timeout
 
-Maximum number of seconds to wait for a new DB handle before failing
+在失败之前等待新的数据库句柄的最大秒数
 
 #### disable-monotonic-timing
 
-(bool) disables monotonic timer/clock support if it is broken on your system.
+（布尔型）如果系统上的单调计时器/时钟不正常，则禁用单调计时器/时钟支持。
 
 #### enable-use-system-time
 
-Enables FreeSWITCH to use system time.
+启用FreeSWITCH使用系统时间。
 
 #### initial-event-threads
 
-Number of event dispatch threads to allocate in the core. Default is 1.
+在核心中分配的事件分派线程数。默认为1。
 
-If you see the WARNING "Create additional event dispatch thread" on a heavily loaded server, you could increase the number of threads to prevent the system from falling behind.
+如果在负载过重的服务器上出现“创建附加事件分派线程”的警告，可以增加线程数以防止系统落后。
 
 #### loglevel
 
-amount of detail to show in log
+日志中显示的详细程度
 
 #### max-sessions
 
-limits the total number of concurrent channels on your FreeSWITCH™ system.
+限制FreeSWITCH™系统上并发通道的总数。
 
 #### sessions-per-second
 
-throttling mechanism, the switch will only create this many channels at most, per second.
+限制机制，开关每秒最多只会创建这么多通道。
 
 #### rtp-start-port
 
-RTP port range begin
+RTP端口范围开始
 
 #### rtp-end-port
 
-RTP port range end
+RTP端口范围结束
 
-### Variables
+### 变量
 
-Variables are default channel variables set on each channel automatically.
+变量是每个通道自动设置的默认通道变量。
 
-### Example config
+### 示例配置
 
 ```xml
-<configuration name="switch.conf" description="Modules">
+<configuration name="switch.conf" description="模块">
   <settings>
-    <!--Most channels to allow at once -->
+    <!-- 同时允许的最大通道数 -->
     <param name="max-sessions" value="1000"/>
     <param name="sessions-per-second" value="30"/>
     <param name="loglevel" value="debug"/>
 
-    <!-- Maximum number of simultaneous DB handles open -->
+    <!-- 同时打开的最大数据库句柄数 -->
     <param name="max-db-handles" value="50"/>
-    <!-- Maximum number of seconds to wait for a new DB handle before failing -->
+    <!-- 在失败之前等待新的数据库句柄的最大秒数 -->
     <param name="db-handle-timeout" value="10"/>
 
   </settings>
-  <!--Any variables defined here will be available in every channel, in the dialplan etc -->
+  <!-- 在这里定义的任何变量都将在每个通道、拨号计划等中可用 -->
   <variables>
     <variable name="uk-ring" value="%(400,200,400,450);%(400,2200,400,450)"/>
     <variable name="us-ring" value="%(2000, 4000, 440.0, 480.0)"/>
@@ -139,9 +136,6 @@ Variables are default channel variables set on each channel automatically.
 </configuration>
 ```
 
-###   
-See Also: 
+### 相关链接:
 
-[Default Configuration](./Default-Configuration_6587388.mdx#mod_vp8)
-
-
+[默认配置](./Default-Configuration_6587388.mdx#mod_vp8)

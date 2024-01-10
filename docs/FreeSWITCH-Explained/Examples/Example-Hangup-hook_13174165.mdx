@@ -1,58 +1,51 @@
+# 示例挂断钩子
 
-# Example Hangup hook 
+## 关于
 
- 
+这里是关于的说明文字。
 
-## About
+点击这里展开目录
 
-About text.
+* 1 [示例](#示例)
+* 2 [另请参阅](#示例)
 
-Click here to expand Table of Contents
-
-* 1 [Example](#example)
-* 2 [See Also](#example)
-
-## Example
+## 示例
 
 ```js
-function on_hangup(hup_session, how)                                                                                                                            
-{                                                                                                                                                               
-    console_log("err", how + " HOOK" +  " name: " + hup_session.name + " cause: " + hup_session.cause + "\n");                                                  
-                                                                                                                                                                
-    //exit here would end the script so you could cleanup and just be done                                                                                      
-    exit();                                                                                                                                                     
-}                                                                                                                                                               
-                                                                                                                                                                
-//set the on_hangup function to be called when this session is hungup                                                                                           
-session.setHangupHook(on_hangup);                                                                                                                               
-                                                                                                                                                                
-function onPlayFile(s, type, obj, arg)                                                                                                                          
-{                                                                                                                                                               
-    try {                                                                                                                                                       
-        if (type == "dtmf") {                                                                                                                                   
-            console_log("info", "DTMF digit: " + s.name + " [" + obj.digit + "] len [" + obj.duration + "]\n\n");                                               
-            session.execute("phrase", "spell," + obj.digit);                                                                                                    
-        }                                                                                                                                                       
-                                                                                                                                                                
-    }  catch (e) {                                                                                                                                              
-        console_log("err", e + "\n");                                                                                                                           
-    }                                                                                                                                                           
-                                                                                                                                                                
-    return true;                                                                                                                                                
-                                                                                                                                                                
-}                                                                                                                                                               
-                                                                                                                                                                
-session.answer();                                                                                                                                               
-                                                                                                                                                                
-while(session.ready()) {                                                                                                                                        
-    session.streamFile("/ram/swimp.raw", onPlayFile);                                                                                                           
-}                          
+function on_hangup(hup_session, how)
+{
+    console_log("err", how + " HOOK" +  " name: " + hup_session.name + " cause: " + hup_session.cause + "\n");
+    
+    // 如果在这里退出，脚本将终止，因此您可以进行清理并完成
+    exit();
+}
+
+// 设置当会话被挂断时调用 on_hangup 函数
+session.setHangupHook(on_hangup);
+
+function onPlayFile(s, type, obj, arg)
+{
+    try {
+        if (type == "dtmf") {
+            console_log("info", "DTMF 数字：" + s.name + " [" + obj.digit + "] 长度 [" + obj.duration + "]\n\n");
+            session.execute("phrase", "spell," + obj.digit);
+        }
+        
+    }  catch (e) {
+        console_log("err", e + "\n");
+    }
+    
+    return true;
+}
+
+session.answer();
+
+while(session.ready()) {
+    session.streamFile("/ram/swimp.raw", onPlayFile);
+}
 ```
 
-## See Also
+## 参见
 
 * [Session setAutoHangup](../Client-and-Developer-Interfaces/JavaScript/Session/Session_setAutoHangup_13174123.mdx#about)
 * [Session setHangupHook](../Client-and-Developer-Interfaces/JavaScript/Session/Session-setHangupHook_13174144.mdx#about)
-
-  
-

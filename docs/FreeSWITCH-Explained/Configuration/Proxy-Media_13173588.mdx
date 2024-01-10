@@ -1,120 +1,115 @@
+# 代理媒体
 
-# Proxy Media 
+## 关于
 
- 
+代理媒体模式将FreeSWITCH设置为“透明代理模式”来处理RTP流。RTP流仍然通过FreeSWITCH传递（与绕过媒体模式不同），使用一个无法解码的静态通用编解码器。因此，任何试图播放文件或记录通话的尝试都将导致通话立即挂断。最初的主要用途是使T.38的直通成为可能，因为通过忽略编解码器，FreeSWITCH可以在没有实际T38支持的情况下切换到T.38模式。现在，FreeSWITCH已经正确支持T.38和T.38直通，因此此功能变得不那么有用。此功能的另一个结果是RTP流上的所有读取都是阻塞的，并且无法进行异步RTP，因此如果您未连接到流的另一端的可靠RTP端点，则可能会出现音频问题。
 
-## About
+单击此处展开目录
 
-Proxy Media mode puts FreeSWITCH in a "transparent proxy mode" for the RTP streams. The RTP streams still pass through FreeSWITCH (unlike [bypass media mode](../Codecs-and-Media/Bypass-Media-Overview/index.mdx#faq)) by using a static all-purpose codec that cannot be decoded. As a consequence any attempts to play a file or record the call will result in a an immediate hangup of the call. Its main use was initially to make T.38-passthrough possible because by ignoring the codecs FreeSWITCH could switch to T.38 mode without actual support for T38\. FreeSWITCH now supports T.38 and T.38 passthrough properly so this feature is less useful. The other consequence of this feature is that all reads on the RTP stream are blocking and there is no async RTP possible so audio problems can arise if you are not connected to a reliable RTP endpoint on the other side of the stream.
+* 1 [常见误解（请仔细阅读）](#common-misconceptions-read-this)
+* 2 [为什么您几乎肯定不想使用它](#why-you-almost-certainly-dont-want-to-use-it)
+* 3 [为什么您可能希望使用它](#why-you-might-want-to-use-it)
+* 4 [如何启用它](#how-to-enable-it)
+* 5 [重要说明](#important-note)
+* 6 [常见问题解答](#faqs)
+   * 6.1 [我收到“编解码器PROXY PASS-THROUGH编码器错误”消息](#i-get-codec-proxy-pass-through-encoder-error-message)
+   * 6.2 [代理媒体不起作用](#proxy-media-doesnt-work)
+   * 6.3 [代理媒体无法与ZRTP可信任中间人攻击防护一起使用](#proxy-media-does-not-work-with-zrtp-trusted-mitm) **ZRTP现已弃用**
+* 7 [参考资料](#see-also)
 
-Click here to expand Table of Contents
+### 常见误解（请仔细阅读）
 
-* 1 [Common misconceptions (READ THIS)](#common-misconceptions-read-this)
-* 2 [Why you almost certainly don't want to use it](#why-you-almost-certainly-dont-want-to-use-it)
-* 3 [Why you might want to use it](#why-you-might-want-to-use-it)
-* 4 [How to enable it](#how-to-enable-it)
-* 5 [Important note](#important-note)
-* 6 [FAQs](#faqs)  
-   * 6.1 [I get "Codec PROXY PASS-THROUGH encoder error" message](#i-get-codec-proxy-pass-through-encoder-error-message)  
-   * 6.2 [Proxy media doesn't work](#proxy-media-doesnt-work)  
-   * 6.3 [Proxy media does not work with ZRTP trusted MITM](#proxy-media-does-not-work-with-zrtp-trusted-mitm) **ZRTP IS NOW DEPREICATED**
-* 7 [See Also](#see-also)
+许多人似乎认为`proxy_media`与`bypass_media`相反，并且因此需要通过FS代理媒体。但这是不正确的。FreeSWITCH有3种媒体处理模式：
 
-### Common misconceptions (READ THIS)
-
-Many people seem to think that proxy\_media is the opposite of [bypass\_media](../Codecs-and-Media/Bypass-Media-Overview/index.mdx#faq) and is therefore required to proxy media through FS. This is not true. FreeSWITCH has 3 media handling modes:
-
-* Default: media flows through FS, full processing options
+- 默认模式：媒体流通过FS传递，具有完整的处理选项
 
 ```xml
-- RTP proxied by FreeSWITCH
-- FreeSWITCH controls codec negotiation
-- If endpoints agree on same codec, no transcoding is performed
-- All features enabled - recording, DTMF interception, etc, etc
+- RTP由FreeSWITCH代理
+- FreeSWITCH控制编解码器协商
+- 如果终端设备就同一编解码器达成协议，则无需进行转码
+- 所有功能都可用-录音，DTMF拦截等等
 ```
 
- * Proxy: media flows through FS, no media processing options
+- 代理模式：媒体流通过FS传递，没有媒体处理选项
 
 ```xml
-- RTP proxied by FreeSWITCH (c= modified, that's it)
-- FreeSWITCH has no control or even understanding of other SDP parameters (pass through)
-- Endpoints *MUST* agree on same codec because FreeSWITCH can't help them
-- Virtually no features available
+- RTP由FreeSWITCH代理（仅修改c=）
+- FreeSWITCH无法控制或理解其他SDP参数（直接传递）
+- 终端设备*必须*就同一编解码器达成协议，因为FreeSWITCH无法提供帮助
+- 几乎没有可用功能
 ```
 
-* Bypass: media flows around FS directly between endpoints, no media processing options
+- 绕过模式：媒体直接在终端设备之间流动，绕过FS，没有媒体处理选项
 
 ```xml
-- RTP *NOT* proxied by FreeSWITCH
-- FreeSWITCH has no control over anything SDP related - it's completely pass through from one leg to next (including c=)
-- Endpoints must agree on same codec because FreeSWITCH doesn't even see the media or SDP
-- Virtually no features available
+- RTP *不会*由FreeSWITCH代理
+- FreeSWITCH对任何与SDP相关的内容没有控制权-完全传递到下一个连接点（包括c=）
+- 终端设备必须就同一编解码器达成协议，因为FreeSWITCH甚至无法看到媒体或SDP
+- 几乎没有可用功能
 ```
 
-Usually if you want to send media through FS so the endpoints don't talk to each other directly (topology hiding) you want the Default mode which accomplishes this but still gives you all the media processing abilities.
+通常，如果您希望通过FS发送媒体，以便终端设备之间不直接通信（隐藏拓扑结构），您应该选择默认模式，该模式既可以实现这一目标，又可以让您使用所有媒体处理功能。
 
-### Why you almost certainly don't want to use it
+### 为什么您几乎肯定不希望使用它
 
-* Anything that requires reading or modifying media will NOT work in Proxy Media mode. This includes:  
-   * Transcoding  
-   * Handling of inband DTMF (converting in either direction)  
-   * Conference, record, intercept, IVR etc  
-   * Pretty much any feature you can think of that involves media  
-   * Bridging between endpoints that don't use RTP for media (e.g. TDM, Skype)  
-   * It is no longer required for T38, as that is supported by [mod\_spandsp](../Modules/mod_spandsp_6587021.mdx#--).
+*任何需要阅读或修改媒体的操作都无法在代理媒体模式下工作。这包括：  
+   * 转码  
+   * 处理媒体中的内置DTMF（以任一方向进行转换）
+   * 会议、录音、拦截、IVR等
+   * 几乎涉及到任何与媒体相关的功能  
+   * 在不使用RTP进行媒体传输的终端之间进行桥接（例如TDM、Skype）  
+   * 对于T38来说已不再需要，因为它受到了[mod_spandsp](../Modules/mod_spandsp_6587021.mdx#--)的支持。
 
-Pretty much the only feature that will still work is bridge.
+桥接是唯一仍然可用的功能。
 
-### Why you might want to use it
+### 为什么你可能想使用它
 
-* Allows FreeSWITCH to handle codecs that it does not officially support (e.g. G.729 without licensed codecs for FreeSWITCH)
-* You wish to develop an [OSTN compliant](https://guardianproject.info/wiki/OSTN%5FCompliance%5FSpecification) soft switch that allows the media stream to flow through a proxy unaltered, which ensures [ZRTP](../Codecs-and-Media/ZRTP_7143709.mdx) handshake data will persist.
+* 允许FreeSWITCH处理它不正式支持的编解码器（例如在没有FreeSWITCH授权编解码器的情况下使用G.729）
+* 您希望开发一个符合[OSTN兼容规范](https://guardianproject.info/wiki/OSTN%5FCompliance%5FSpecification)的软交换，允许媒体流通过代理无损流过，以确保[ZRTP](../Codecs-and-Media/ZRTP_7143709.mdx)握手数据保持不变。
 
-### How to enable it
+### 如何启用它
 
-Set proxy\_media=true before the bridge.
+在进行桥接之前设置proxy\_media=true。
 
 ```xml
 <action application="set" data="proxy_media=true"/>
 ```
 
-Alternatively, configure the SIP profile to use proxy media by default:
+或者通过默认配置SIP配置文件使用代理媒体：
 
 ```xml
 <param name="inbound-proxy-media" value="true"/>
 ```
 
-(see example in conf/sip\_profiles/internal.xml)
+（在conf/sip\_profiles/internal.xml中可以找到示例）
 
-### Important note
+### 重要提示
 
-You can't "proxy\_media" two outbound legs.
+无法“proxy_media”两个出站通话。
 
-This means that if you originate a call through some API ('originate', for example), this will NOT work.
+这意味着如果您通过某个API（例如'originate'）发起呼叫，这将无法工作。
 
-In fact, the 1st leg will answer before the 2nd leg is called.
+事实上，第一个通话会在第二个通话发起之前接通。
 
-The 1st one will share the SDP with FreeSWITCH but will not be able to re-share with the 2nd one.
+第一个通话将与FreeSWITCH共享SDP，但无法与第二个通话重新共享。
 
-### FAQs
+### 常见问题解答
 
-#### I get "Codec PROXY PASS-THROUGH encoder error" message
+#### 我收到了“Codec PROXY PASS-THROUGH encoder error”消息
 
-Enable [late negotiation](../Codecs-and-Media/Codec-Negotiation_2883752.mdx#late-negotiation-requires-param).
+启用[后期协商](../Codecs-and-Media/Codec-Negotiation_2883752.mdx#late-negotiation-requires-param)。
 
-If you're trying to do anything that processes media, don't use proxy\_media.
+如果您正在进行任何处理媒体的操作，请不要使用proxy_media。
 
-#### Proxy media doesn't work
+#### 代理媒体不起作用
 
-Enable [late negotiation](../Codecs-and-Media/Codec-Negotiation_2883752.mdx#late-negotiation-requires-param).
+启用[后期协商](../Codecs-and-Media/Codec-Negotiation_2883752.mdx#late-negotiation-requires-param)。
 
-#### Proxy media does not work with ZRTP trusted MITM
+#### 代理媒体与可信中间人攻击（ZRTP）不兼容
 
-ZRTP call between 2 csipsimple UAs with Trusted mitm works. But when proxy-media is enabled the UAs ignore the zrtp-hash. In that case you should enable [inbound-zrtp-passtrhu](../Codecs-and-Media/ZRTP_7143709.mdx#zrtp-passthru)
+两个csipsimple用户代理之间的ZRTP通话可以正常运行。但是，当启用代理媒体时，用户代理会忽略ZRTP哈希。此时，您应该启用[inbound-zrtp-passthru](../Codecs-and-Media/ZRTP_7143709.mdx#zrtp-passthru)
 
-### See Also
+### 另请参阅
 
-* [Codecs](../Codecs-and-Media/index.mdx#about)
-* [Codec Negotiation](../Codecs-and-Media/Codec-Negotiation_2883752.mdx#about)
-
-
+* [编解码器](../Codecs-and-Media/index.mdx#about)
+* [编解码器协商](../Codecs-and-Media/Codec-Negotiation_2883752.mdx#about)

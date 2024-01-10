@@ -1,87 +1,84 @@
-
-# Enterprise deployment UltraMonkey 
+# 企业部署 UltraMonkey 
 
  
 
-## About
+## 关于
 
-This method provides load balancing, and scalability. It should work across many protocols such as SIP, IAX, Woomera, H.323, and others. You may use this method on your FreeSWITCH™ servers regardless of operating system or platform. The [Director Servers](#-freeswitch--enterprise-deployment-ultramonkey-) would however need to be Linux.
+这种方法提供负载均衡和可扩展性。它应该可以适用于诸多协议，比如SIP、IAX、Woomera、H.323等等。您可以在FreeSWITCH™服务器上使用此方法，不论操作系统或平台如何。但是，[Director Servers](#-freeswitch--enterprise-deployment-ultramonkey-)需要是Linux系统。
 
-Your users would only need to know about one IP address (probably via DNS) and would not have to have any special setup on their end. It is likely they would never know that you have more than one machine performing the switching and routing regardless of how many servers are installed.
+您的用户只需知道一个IP地址（可能通过DNS获取），而不需要在其端上进行任何特殊设置。他们可能永远不会知道您有多台机器来执行切换和路由操作，不管安装了多少台服务器。
 
-Click here to expand Table of Contents
+单击此处展开目录
 
-* 1 [Scope](#-freeswitch--enterprise-deployment-ultramonkey-)
-* 2 [Ultra Monkey Design](#ultra-monkey-design)
-* 3 [Caveats](#-freeswitch--enterprise-deployment-ultramonkey-)
-* 4 [Warranty](#-freeswitch--enterprise-deployment-ultramonkey-)
-* 5 [Total call volume](#-freeswitch--enterprise-deployment-ultramonkey-)
-* 6 [Network Map](#-freeswitch--enterprise-deployment-ultramonkey-)
+* 1 [范围](#-freeswitch--enterprise-deployment-ultramonkey-)
+* 2 [Ultra Monkey 设计](#ultra-monkey-design)
+* 3 [注意事项](#-freeswitch--enterprise-deployment-ultramonkey-)
+* 4 [保修](#-freeswitch--enterprise-deployment-ultramonkey-)
+* 5 [总通话量](#-freeswitch--enterprise-deployment-ultramonkey-)
+* 6 [网络图](#-freeswitch--enterprise-deployment-ultramonkey-)
 * 7 [Director Servers](#-freeswitch--enterprise-deployment-ultramonkey-)
-* 8 [Real Servers](#-freeswitch--enterprise-deployment-ultramonkey-)
-* 9 [Related Notes](#-freeswitch--enterprise-deployment-ultramonkey-)
+* 8 [真实服务器](#-freeswitch--enterprise-deployment-ultramonkey-)
+* 9 [相关说明](#-freeswitch--enterprise-deployment-ultramonkey-)
 
-## Scope
+## 范围
 
-PRI fail-over via SS7, Media Proxies for maintaining RTP streams if a failure occurs and network redundancy are beyond the scope of this document. While these methods may optionally be added, and it is recommended for a more redundant network to add them, they will not be discussed here.
+通过SS7实现PRI故障转移、媒体代理以保持RTP流在故障发生时的运行以及网络冗余超出了本文档的范围。尽管这些方法可以根据需要进行选择性添加，并且建议在构建更具冗余性的网络时进行添加，但本文中不会进行讨论。
 
-You are responsible for implementing additional measures as your topology and requirements dictate.
+根据您的拓扑和需求，您有责任实施额外的措施。
 
-## Ultra Monkey Design
+## Ultra Monkey 设计
 
-In an Ultra Monkey environment there are two types of servers employed. We will look at each in turn later on.
+在Ultra Monkey环境中，有两种类型的服务器被使用。我们稍后会逐个查看。
 
-Ultra Monkey utilizes 3 main components to accomplish its tasks:
+Ultra Monkey利用了3个主要组件来完成其任务：
 
-* [The Linux Virtual Server (LVS)](http://www.ultramonkey.org/3/lvs.html) for fast load balancing
-* [Linux HA framework](http://www.ultramonkey.org/3/linux-ha.html) is used to monitor the [directors](Enterprise-deployment-UltraMonkey_13173269.mdx#-freeswitch--enterprise-deployment-ultramonkey-)
-* [ldirectord](http://www.ultramonkey.org/3/ldirectord.html) which monitors the [real-servers](Enterprise-deployment-UltraMonkey_13173269.mdx#-freeswitch--enterprise-deployment-ultramonkey-).
+* [Linux虚拟服务器（LVS）](http://www.ultramonkey.org/3/lvs.html)用于快速负载均衡
+* [Linux HA框架](http://www.ultramonkey.org/3/linux-ha.html)用于监控[导向器](Enterprise-deployment-UltraMonkey_13173269.mdx#-freeswitch--enterprise-deployment-ultramonkey-)。
+* [ldirectord](http://www.ultramonkey.org/3/ldirectord.html)用于监控[真实服务器](Enterprise-deployment-UltraMonkey_13173269.mdx#-freeswitch--enterprise-deployment-ultramonkey-)。
 
-By utilizing these technologies, Ultra Monkey can use tested software and combine them in a way that provides a robust network.
+通过利用这些技术，Ultra Monkey可以使用经过测试的软件，并以一种提供稳健网络的方式组合它们。
 
-## Caveats
+## 注意事项
 
-* This configuration assumes that you are doing only bridged calls, effectively using the real servers as media gateways and not as application servers. While some applications may not matter such as an IVR system where each _real server_ has access to the same sound files and configuration data, others like conferencing becomes more tricky, although not impossible.
-* IPVS treats UDP packets from the same source IP+port as the same connection, so will send them to the same destination. If you have multiple calls coming from the same server (e.g. providing a SIP trunking service to another PBX/softswitch) they will not be load balanced.  
-    
-   * On 1st October 2010 a IPVS patch was announced on the netfilter mailing lists which added support for load balancing UDP SIP based on Call-ID through a new persistence engine framework. This will allow load balancing in the above scenario by individual call. This will be probably be available in a future version of the linux kernel.
+* 此配置假设您只进行桥接呼叫，将真实服务器作为媒体网关而不是应用服务器。虽然某些应用程序可能无关紧要，例如每个实际服务器都可以访问相同的声音文件和配置数据的IVR系统，但对于会议功能来说则更复杂一些，虽然不是不可能。
+* IPVS将来自相同源IP+端口的UDP数据包视为同一连接，因此会将它们发送到相同的目标位置。如果您从同一服务器上有多个呼叫（例如为另一个PBX/软交换提供SIP中继服务），它们将不会进行负载均衡。
 
-## Warranty
+   * 2010年10月1日，在netfilter邮件列表上宣布了一个IPVS补丁，通过新的持久性引擎框架实现基于Call-ID的UDP SIP负载均衡。这将允许根据每个呼叫进行负载均衡。这可能会在未来的Linux内核版本中可用。
 
-**No warranties are expressed or implied** this document is provided for informational and educational purposes only. If you use this method and your boxes crash and it doesnt fail-over, or something else bad happens, neither the author(s) of this page nor the FreeSWITCH™ community are liable. You should throughly test your environment for the level of fault tolerance you desire and ensure that it does work the way you want it to, but ultimately you are responsible for implementation of your servers and network.
+## 保修
 
-## Total call volume
+本文档仅供信息和教育目的提供，**不提供任何明示或暗示的保证**。如果您使用此方法导致您的盒子崩溃并且无法故障切换，或者发生其他不良情况，本页面的作者或FreeSWITCH™社区概不负责。您应该对您想要的容错级别进行充分测试，并确保它按照您的要求正常工作，但最终，您对服务器和网络的实施负有责任。
 
-The total call volume through this system depends on various factors, not limited to network bandwidth, network topology, cpu power, and specific applications being served. It largely boils down to money though. The more money you put into this configuration, in terms of bandwidth and servers, the more concurrent calls you can process. It is not unreasonable to say that 100,000 concurrent calls can be achieved, potentially even 1,000,000 concurrent calls can be processed, although that has yet to be tested since it would require roughly $600,000 worth of servers. As a volunteer project and FreeSWITCH™ planning on becoming a 501(c)(3) entity, we do not have the resources to test a million concurrent call network.
+## 总呼叫量
 
-In general if you are going to be doing transcoding, running heavy applciations such as [TTS](https://wiki.freeswitch.org/wiki/TTS "TTS") or [ASR](https://wiki.freeswitch.org/wiki/ASR "ASR") you will require more servers. This will not scale in a perfect linear fashion either, however it will generally be linear in real world scenarios.
+通过此系统的总呼叫量取决于各种因素，包括但不限于网络带宽、网络拓扑结构、CPU性能和提供的特定应用程序。但归根结底，主要还是要看投入多少资金。您在带宽和服务器方面投入的资金越多，您可以处理的并发呼叫就越多。可以说，最多可以实现100,000个并发呼叫，甚至可能处理1,000,000个并发呼叫，尽管尚未进行测试，因为这需要大约价值60万美元的服务器。作为一个志愿者项目和计划成为501(c)(3)机构的FreeSWITCH™，我们没有资源来测试100万个并发呼叫网络。
 
-## Network Map
+一般而言，如果您要进行转码、运行诸如[TTS](https://wiki.freeswitch.org/wiki/TTS "TTS")或[ASR](https://wiki.freeswitch.org/wiki/ASR "ASR")之类的重型应用程序，则需要更多的服务器。在实际情况下，这种扩展不会以完美的线性方式发生，但通常在现实世界的场景中是线性的。
+
+## 网络图
 
 ![](/attachments/13173269/13173239.jpg)
 
-This network diagram uses RFC1918 addresses, this does not mean that it will work in this configuration. They are used this way only for display purposes, and references later on in the configuration files will make use of them. If you want this to be internet accessable you should use your own **routable** IPs in their place.
+这个网络框图使用了RFC1918地址，但并不意味着它会在这个配置中正常工作。它们只是用于显示的目的，并且在配置文件的后续引用中会使用它们。如果您希望可以通过互联网访问，您应该使用自己的**可路由**IP地址来替代它们。
 
-You are not required to have 3 real servers, you may have no less than one but as many as you can reasonably fit into your network. 1 server by itself is a little silly since you cannot load balance or have any redundancy, 2 real servers would be the minimum. Keep in mind that as you add more servers you need to ensure that your network can handle that load.
+您并不需要拥有3台真实的服务器，但可以在您的网络中合理安放尽可能多的服务器，至少应该有两台真实的服务器。单独使用1台服务器有点荒谬，因为您无法进行负载平衡或实现冗余，最少也需要两台真实的服务器。请记住，随着您增加更多的服务器，您需要确保您的网络能够处理这样的负载。
 
-This document does not discuss having only one director server, since high availablity is part of the design. Having more than two is also not covered as that requires tweaks that would be outside the scope of this document.
+本文档不讨论只有一台主控服务器的情况，因为高可用性是设计的一部分。拥有超过两台服务器也不在本文档的范围内，因为那需要进行超出本文档范围的调整。
 
-## Director Servers
+## 主控服务器
 
-The directors are the servers that route traffic selectively to each of your FreeSWITCH™ servers. These machines will process only the traffic from the end user into your network, where the return from the real server goes direct. In this way the highest level of network performance can be obtained since the director boxes do not need to process the response packets. This also means that for a given amount of load the director boxes do not have to be super fast, since they arent routing as much traffic.
+主控服务器是路由流量到每个FreeSWITCH™服务器的服务器。这些服务器只处理终端用户进入您的网络的流量，真实服务器返回的流量直接发送。通过这种方式，可以获得最高级别的网络性能，因为主控服务器不需要处理响应的数据包。这也意味着对于给定负载量，主控服务器不必非常快，因为它们没有路由那么多的流量。
 
-Depending on network load you may be able to use a higher end Pentium III or low end Pentium 4 box. This reduces overall cost, while still providing a level of service that is as close to native as possible. You will not need a lot of memory, as the process of mapping connections takes only 16 bytes of ram per connection. You are encouraged to test the amount of load your setup can handle however and make provisioning decisions on hardware based on that.
+根据网络负载的不同，你可能可以使用更高端的 Pentium III 或者低端的 Pentium 4 机箱。这样可以降低整体成本，同时仍然提供尽可能接近本机的服务水平。你不需要太多的内存，因为连接映射的过程每个连接只需要 16 字节的内存。但你鼓励测试你的设置可以处理多大的负载，并根据测试结果选择硬件设备。
 
-## Real Servers
+## 真实服务器
 
-The real servers in this example would be running FreeSWITCH™ and processing the calls. They may run on almost any FreeSWITCH™ supported operating system including at least Linux, Windows 2003, \*BSD, etc. Please note that certain operating systems such as Windows CE are not suitable for this method due to some of the networking configurations that are required to avoid extra load on the directors. This, however should not be an issue as embedded systems running Windows CE are not likely to require a load balanced highly available network setup. 
+在这个例子中，真实服务器将运行 FreeSWITCH™ 并处理通话。它们可以运行在几乎任何 FreeSWITCH™ 支持的操作系统上，包括 Linux、Windows 2003、\*BSD 等。请注意，某些操作系统如 Windows CE 不适用于此方法，因为这可能会增加负载均衡器上的额外负荷。不过，这通常不是问题，因为运行 Windows CE 的嵌入式系统通常不需要负载均衡的高可用网络设置。
 
-## Related Notes
+## 相关注释
 
 [Asterisk behind UltraMonkey](http://www.danielaliaman.com/blog/files/ultramonkeyasterisk.pdf)
 
-### Attachments:
+### 附件:
 
-![](/images/icons/bullet_blue.gif) [Ultramonkey-network-map.jpg](/attachments/13173269/13173239.jpg) (image/jpeg)  
-
-
+![](/images/icons/bullet_blue.gif) [Ultramonkey-network-map.jpg](/attachments/13173269/13173239.jpg) (image/jpeg)

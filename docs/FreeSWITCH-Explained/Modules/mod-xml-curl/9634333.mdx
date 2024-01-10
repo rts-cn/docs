@@ -1,15 +1,14 @@
-
-# mod_xml_curl Ramaze/Sequel groups example 
+# mod_xml_curl Ramaze/Sequel 示例 
 
  
 
-## About
+## 关于
 
-mod\_xml\_curl example using Ramaze Ruby web framework and Sequel database toolkit.
+mod_xml_curl 示例使用了Ramaze Ruby Web框架和Sequel数据库工具包。
 
-Click here to expand Table of Contents
+点击此处展开目录
 
-This is the portion of [TinyQueue](http://code.rubyists.com/projects/tq) which returns the dial groups. This is written using [Sequel](http://sequel.rubyforge.org/) for the database layer and [Ramaze](http://www.ramaze.net/) for the web framework. First, the configuration, in /usr/local/freeswitch/conf/autoload\_confs/xml\_curl.conf.xml.
+这是[TinyQueue](http://code.rubyists.com/projects/tq)的一部分，用于返回拨号组。它使用了[Sequel](http://sequel.rubyforge.org/)作为数据库层，并使用[Ramaze](http://www.ramaze.net/)作为Web框架。首先，配置文件在/usr/local/freeswitch/conf/autoload_confs/xml_curl.conf.xml。
 
 ```xml
 <configuration name="xml_curl.conf" description="cURL XML Gateway">
@@ -21,7 +20,7 @@ This is the portion of [TinyQueue](http://code.rubyists.com/projects/tq) which r
 </configuration>
 ```
 
-And in /usr/local/freeswitch/conf/dialplan/default/04\_group\_dial.xml
+还有在/usr/local/freeswitch/conf/dialplan/default/04_group_dial.xml中
 
 ```xml
 <include>
@@ -39,7 +38,7 @@ And in /usr/local/freeswitch/conf/dialplan/default/04\_group\_dial.xml
 </include>
 ```
 
-Now for the Sequel models, migration for agents: 001\_agents\_table.rb
+现在是Sequel模型，代理迁移：001_agents_table.rb
 
 ```xml
 require "sequel"
@@ -59,7 +58,7 @@ class AgentsTable < Sequel::Migration
 end
 ```
 
-Our table to hold queues, which have agents: 002\_tiny\_queues\_table.rb
+我们创建一个代理表来存储代理人的信息。代理表包括以下字段：id（主键）、first_name（姓）、last_name（名）、extension（分机号）。
 
 ```xml
 class TinyQueuesTable < Sequel::Migration
@@ -77,7 +76,7 @@ class TinyQueuesTable < Sequel::Migration
 end
 ```
 
-And the join table for these: 003\_agents\_tiny\_queues\_table.rb
+我们创建一个队列表来存储队列的信息。队列表包括以下字段：id（主键）、name（名称）、description（描述）。
 
 ```xml
 class AgentsTinyQueuesTable < Sequel::Migration
@@ -100,7 +99,9 @@ class AgentsTinyQueuesTable < Sequel::Migration
 end
 ```
 
-Load those with sequel -m (see docs for full command line) The models which correspond with the above tables follow agent.rb
+我们创建一个连接表来存储代理人和队列的关联信息。连接表包括以下字段：id（主键）、tiny_queue_id（队列id）、agent_id（代理人id）、status（状态）、status_stamp（状态时间戳）、last_call_stamp（最后通话时间戳）、login_stamp（登录时间戳）、login（登录状态）。
+
+用sequel -m命令加载以上表结构的迁移脚本（完整命令请参考文档）。与以上表对应的模型代码如下：
 
 ```xml
 class Agent < Sequel::Model
@@ -110,25 +111,27 @@ class Agent < Sequel::Model
   def logged_in?
     self.agents_tiny_queues.first.login
   end
+```
 
-  def login
-    now = Time.now
-    self.agents_tiny_queues.each do |agent|
-      agent.update_with_params(:status => "Ready", :status_stamp => now, :login => true, :login_stamp => now, :last_call_stamp => now)
-    end
+Agent模型与agents表对应，并与agents_tiny_queues表建立一对多关系，与tiny_queues表建立多对多关系。该模型还定义了一个logged_in?方法，用于判断代理人是否登录。
+
+```xml
+def login
+  now = Time.now
+  self.agents_tiny_queues.each do |agent|
+    agent.update_with_params(:status => "Ready", :status_stamp => now, :login => true, :login_stamp => now, :last_call_stamp => now)
   end
+end
 
-  def logoff
-    now = Time.now
-    self.agents_tiny_queues.each do |agent|
-      agent.update_with_params(:status => "Offline", :status_stamp => now, :login => false)
-    end
+def logoff
+  now = Time.now
+  self.agents_tiny_queues.each do |agent|
+    agent.update_with_params(:status => "Offline", :status_stamp => now, :login => false)
   end
+end
 
-  def fullname
-    "%s %s" % [first_name, last_name]
-  end
-
+def fullname
+  "%s %s" % [first_name, last_name]
 end
 ```
 
@@ -156,64 +159,66 @@ class TinyQueue < Sequel::Model
 end
 ```
 
-The Ramaze controller - controller/main.rb
+控制器 Ramaze - controller/main.rb
 
 ```xml
-# Default url mappings are:
-#  a controller called Main is mapped on the root of the site: /
-#  a controller called Something is mapped on: /something
-# If you want to override this, add a line like this inside the class
+# 默认的 URL 映射为：
+# 一个名为 Main 的控制器映射到网站的根路径：/
+# 一个名为 Something 的控制器映射到：/something
+# 如果要覆盖默认设置，请在类的内部添加以下行：
 #  map '/otherurl'
-# this will force the controller to be mounted on: /otherurl
+# 这将强制将该控制器挂载到：/otherurl
 
 Ramaze::Route["/directory.xml"] = "/directory"
 class MainController < Controller
-  # the index action is called automatically when no other action is specified
+  # 当没有指定其他操作时，将自动调用 index 操作
 #  scaffold_all_models :except => ['init']
 
   def index
   end
+```
 
-  def directory
-    if request[:section] == "directory" and request[:group]
+```ruby
+def directory
+  if request[:section] == "directory" and request[:group]
+    @queues = TinyQueue.all
+    if this_queue = @queues.detect { |n| n.name.downcase == request[:group_name] } # request[:group_name] must match a TinyQueue name
+      Ramaze::Log.info "发送 Group.conf，请求的 #{request[:group_name]} 匹配 #{this_queue}"
       @queues = TinyQueue.all
-      if this_queue = @queues.detect { |n| n.name.downcase == request[:group_name] } # request[:group_name] must match a TinyQueue name
-        Ramaze::Log.info "Sending Group.conf, requested #{request[:group_name]} matched #{this_queue}"
-        @queues = TinyQueue.all
-        response['Content-Type'] = 'text/xml'
-        output = render_template("groups.rhtml")
-        got_called = this_queue.consumers.first
-        got_called.update_with_params(:last_call_stamp => Time.now)
-        output
-      else
-        not_found # MUST return not_found or fs gets an error parsing the empty response as xml
-      end
+      response['Content-Type'] = 'text/xml'
+      output = render_template("groups.rhtml")
+      got_called = this_queue.consumers.first
+      got_called.update_with_params(:last_call_stamp => Time.now)
+      output
     else
-      not_found # If it's not a directory request, return not_found so the static files get looked up as well
+      not_found # 必须返回 not_found，否则 fs 解析空响应为 xml 时会出错
     end
+  else
+    not_found # 如果不是目录请求，返回 not_found，以便查找静态文件
   end
+end
 
-  # the string returned at the end of the function is used as the html body
-  # if there is no template for the action. if there is a template, the string
-  # is silently ignored
-  def notemplate
-    "there is no 'notemplate.xhtml' associated with this action"
-  end
+# 如果没有与该动作相关联的模板，则在函数末尾返回的字符串将用作 html body。
+# 如果有模板存在，则该字符串会被静默忽略
+def notemplate
+  "没有与此动作关联的 'notemplate.xhtml'"
+end
 
-  def not_found
-    respond '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-    <include>
-      <document type="freeswitch/xml">
-        <section name="result">
-          <result status="not found" />
-        </section>
-      </document>
-    </include>', 200, "Content-Type" => "text/xml"
-  end
+def not_found
+  respond '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+  <include>
+    <document type="freeswitch/xml">
+      <section name="result">
+        <result status="not found" />
+      </section>
+    </document>
+  </include>', 200, "Content-Type" => "text/xml"
+end
 end
 ```
 
-And the view: view/groups.rhtml (Erubis templating)
+View: view/groups.rhtml (Erubis 模板)
+```
 
 ```xml
 <document type="freeswitch/xml">
@@ -253,5 +258,3 @@ And the view: view/groups.rhtml (Erubis templating)
   </section>
 </document>
 ```
-
-

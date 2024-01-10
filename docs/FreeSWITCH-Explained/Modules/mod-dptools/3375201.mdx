@@ -1,66 +1,61 @@
-
 # mod_dptools: limit 
 
- 
+## 关于
 
-## About
+在资源上设置呼叫数量限制。Limit模块旨在提供对资源的限制管理。这对于想要限制对任意资源的呼叫数量非常有用。
 
-  
-Set a limit on number of calls to/from a resource.Limit is designed to provide limit management on resources. This is useful if you want to limit the number of calls to or from an arbitrary resource.
+当达到限制时，呼叫会自动转移到相同上下文中的"limit_exceeded"或指定的上下文中。
 
-  
-When the limit is reached, the call is automatically transferred to "limit\_exceeded" in the same context or the specified context.
+请注意，限制只对给定上下文有效——如果您将公共拨号计划中的呼入呼叫转移到默认拨号计划中的分机上，您刚刚在公共拨号计划中设置的任何限制将被重置。
 
-Note that a limit is active within a given context - if you transfer an inbound call from the public dialplan to an extension in the default dialplan - any limit you just set in the public dialplan will be reset.
+注：如果限制是针对目标号码，则即使在同一上下文中将呼叫转移到另一个分机上，限制也会减少。
 
-NB: if the limit is on the destination number, and then the call is transferred to another extension even in same context, limit will be decreased
+另请注意，如果使用"REFER"方法转移呼叫，比如使用电话上的"TRANSFER"按钮，限制不会减少。
 
-Also note that a limit is not decreased if you transfer the call using the "REFER" method, eg using the TRANSFER button on the phone.
+单击展开目录
 
-Click to expand Table of Contents
+- 1 [拨号方案应用](#dialplan-apps)
+   - 1.1 [限制](#limit)
+      - 1.1.1 [领域](#limit)
+         - 1.1.2 [资源](#-resource-)
+         - 1.1.3 [最大值](#limit)
+         - 1.1.4 [传输目标号码](#-transfer_destination_number-)
+   - 1.2 [限制执行](#limit_execute)
+      - 1.2.1 [后端](#-backend-)
+         - 1.2.2 [领域](#-realm-)
+         - 1.2.3 [资源](#-resource-)
+         - 1.2.4 [最大值](#limit)
+         - 1.2.5 [应用](#-application-)
+         - 1.2.6 [应用参数](#-application-arguments-)
+- 2 [API](#limit)
+   - 2.1 [限制状态](#limit_status)
+   - 2.2 [限制使用情况](#limit_usage)
+   - 2.3 [UUID限制释放](#uuid_limit_release)
+   - 2.4 [限制间隔重置](#limit_interval_reset)
+   - 2.5 [散列远程](#-hash_remote-)
+- 3 [通道变量](#channel-variables)
+   - 3.1 [限制设置的变量](#variables-set-by-limit)
+   - 3.2 [影响限制的变量](#variables-that-affect-limit)
+- 4 [后端](#backends)
+   - 4.1 [数据库](#limit)
+   - 4.2 [散列](#limit)
+   - 4.3 [hiredis](#hiredis)
+- 5 [应该使用哪个后端？](#which-backend-do-i-use)
+- 6 [示例](#more-examples)
+   - 6.1 [限制访问一个应用](#-limit-access-to-an-application-)
+   - 6.2 [限制用户的并发呼叫](#limit-a-users-concurrent-calls)
+   - 6.3 [限制呼叫速率，抗SPIT](#rate-limiting-calls-anti-spit)
+   - 6.4 [用户忙碌](#user-busy)
+   - 6.5 [使用限制与每个网关或每个用户的通道限制](#using-limit-with-per-gateway-or-per-user-channel-limits)
+   - 6.6 [使用限制处理出站呼叫](#using-limit-with-an-outbound-gateway)
+   - 6.7 [使用限制监视每个网关IP地址](#using-limit-to-monitor-each-gateway-ip-address)
+   - 6.8 [使用限制处理出站呼叫](#using-limit-to-handle-outbound-calls)
+   - 6.9 [更多示例](#more-examples)
+      - 6.9.1 [从旧的FreeSwitch周刊文章导入](#imported-from-an-old-freeswitch-weekly-article)
 
-* 1 [Dialplan Apps](#dialplan-apps)  
-   * 1.1 [limit](#limit)  
-      * 1.1.1 [realm](#limit)  
-         * 1.1.2 [resource](#-resource-)  
-         * 1.1.3 [max](#limit)  
-         * 1.1.4 [transfer\_destination\_number](#-transfer_destination_number-)  
-   * 1.2 [limit\_execute](#limit_execute)  
-      * 1.2.1 [backend](#-backend-)  
-         * 1.2.2 [realm](#-realm-)  
-         * 1.2.3 [resource](#-resource-)  
-         * 1.2.4 [max](#limit)  
-         * 1.2.5 [application](#-application-)  
-         * 1.2.6 [application arguments](#-application-arguments-)
-* 2 [API](#limit)  
-   * 2.1 [limit\_status](#limit_status)  
-   * 2.2 [limit\_usage](#limit_usage)  
-   * 2.3 [uuid\_limit\_release](#uuid_limit_release)  
-   * 2.4 [limit\_interval\_reset](#limit_interval_reset)  
-   * 2.5 [hash\_remote](#-hash_remote-)
-* 3 [Channel Variables](#channel-variables)  
-   * 3.1 [Variables Set by Limit](#variables-set-by-limit)  
-   * 3.2 [Variables That Affect Limit](#variables-that-affect-limit)
-* 4 [Backends](#backends)  
-   * 4.1 [db](#limit)  
-   * 4.2 [hash](#limit)  
-   * 4.3 [hiredis](#hiredis)
-* 5 [Which Backend Do I Use?](#which-backend-do-i-use)
-* 6 [Examples](#more-examples)  
-   * 6.1 [Limit Access To an Application](#-limit-access-to-an-application-)  
-   * 6.2 [Limit a User's Concurrent Calls](#limit-a-users-concurrent-calls)  
-   * 6.3 [Rate Limiting Calls, Anti-SPIT](#rate-limiting-calls-anti-spit)  
-   * 6.4 [User Busy](#user-busy)  
-   * 6.5 [Using Limit With Per-Gateway or Per-User Channel Limits](#using-limit-with-per-gateway-or-per-user-channel-limits)  
-   * 6.6 [Using Limit With an Outbound Gateway](#using-limit-with-an-outbound-gateway)  
-   * 6.7 [Using Limit to Monitor Each Gateway IP Address](#using-limit-to-monitor-each-gateway-ip-address)  
-   * 6.8 [Using Limit to Handle Outbound Calls](#using-limit-to-handle-outbound-calls)  
-   * 6.9 [More Examples](#more-examples)  
-      * 6.9.1 [Imported from an old FreeSwitch weekly article.](#imported-from-an-old-freeswitch-weekly-article)
+## 拨号计划应用
 
-## Dialplan Apps
-
-The limit dialplan apps are implemented by [mod\_dptools](../mod_dptools_1970333.mdx#-c).
+限制拨号计划应用是由 [mod\_dptools](../mod_dptools_1970333.mdx#-c) 实现的。
 
 ### limit
 
@@ -71,186 +66,185 @@ limit <backend> <realm> <resource> <max[/interval]> [<transfer_destination_numbe
   
 backend
 
-The backend to use.
+要使用的后端。
 
 ####  realm 
 
-Arbitrary name
+任意名称
 
 ####  resource 
 
-The resource on which to limit the number of calls.
+限制呼叫数量的资源。
 
 ####  max 
 
-The maximum number of concurrent calls allowed to pass or a call rate in calls/sec. If not set or set to a negative value the limit application only acts as a counter.
+允许同时进行的最大通话数，或以每秒呼叫速率表示。如果未设置或设置为负值，则限制应用程序仅作为计数器。
 
-Note: limit is not decreased if you transfer the call using the "REFER" method, eg using the TRANSFER button on the phone.  
-NB: if the limit is on the destination number, and then the call is transferred to another extension even in same context, limit will be decreased
+注意：如果使用“REFER”方法转移呼叫（例如，使用电话上的“TRANSFER”按钮），限制不会减少。  
+注意：如果限制是针对目标号码的，然后将通话转移到同一上下文中的另一个分机，限制将会减少。
 
-The interval argument is ONLY supported by the hash and hiredis backend.
+interval 参数仅由 hash 和 hiredis 后端支持。
 
 ####  transfer_destination_number 
 
-Transfer to this extension in the dialplan. It's optional. If you don't give it, limit transfers to 'limit\_exceeded' extension in the current dialplan and context.
+转移到拨号计划中的这个分机。这是可选的。如果不提供此参数，限制会转移到当前拨号计划和上下文中的 'limit\_exceeded' 分机。
 
 ### limit_execute
 
-Execute requested APP only if resource has not reached its limit
+仅当资源未达到其限制时，执行所请求的应用程序
 
-Note: limit is not decreased if you transfer the call using the "REFER" method, eg using the TRANSFER button on the phone.  
-NB: if the limit is on the destination number, and then the call is transferred to another extension even in same context, limit will be decreased
+注意：如果使用“REFER”方法转移呼叫（例如，使用电话上的“TRANSFER”按钮），限制不会减少。  
+注意：如果限制是针对目标号码的，然后将通话转移到同一上下文中的另一个分机，限制将会减少。
 
 limit_execute &lt;backend> &lt;realm> &lt;resource> &lt;max[/interval]> &lt;application> [application arguments]
 
 ####  backend 
 
-The backend to use.
+要使用的后端。
 
 ####  realm 
 
-Arbitrary name
+任意名称
 
 ####  resource 
 
-The resource on which to limit application execution
+限制应用程序执行的资源
 
-####  max 
+####  max
 
-The maximum number of concurrent executions or an interval in executions/sec. If set to a negative value then there is no limit; the limit system simply acts as a counter. Setting the value to zero will set a limit of zero, meaning no concurrent executions.
+最大并发执行次数或执行速率间隔。如果设置为负值，则没有限制；限制系统只是充当计数器。将值设置为零将设置为零限制，表示没有并发执行。
 
-Note: limit is not decreased if you transfer the call using the "REFER" method, eg using the TRANSFER button on the phone.  
-NB: if the limit is on the destination number, and then the call is transferred to another extension even in same context, limit will be decreased
+注意: 如果使用“REFER”方法转移呼叫，例如使用电话上的“TRANSFER"按钮，则限制不减少。
+注意：如果限制是在目标号码上，然后将呼叫转移到同一上下文中的另一个分机，限制将减少。
 
-####  application 
+####应用程序
 
-The application to execute
+要执行的应用程序
 
-####  application arguments 
+####应用程序参数
 
-The optional application arguments
+可选的应用程序参数
 
-  
 ## API
 
-The limit APIs are implemented by [mod\_commands](../mod_commands_1966741.mdx#--). You can also use them via the dialplan like so:
+limit API由[mod_commands](../mod_commands_1966741.mdx#--)实现。您也可以通过拨号计划使用它们，例如：
 
 ```xml
 <action application="set" data="api_result=${limit_usage(<backend> <realm> <id></pre>)}"/>
 ```
 
-limit\_reset
+limit_reset
 
-Resets a given limit backend.
+重置给定的限制后端。
 
-* DB: deletes ALL entries for that hostname.
-* Hiredis: not implemented.  
-   * to reset the resource, use the command:  
+* DB：删除该主机名的所有条目。
+* Hiredis：未实现。
+   * 要重置资源，使用命令：
    * hiredis_raw set &lt;resource_name> 0
-* Hash: not implemented.
+* Hash：未实现。
 
-API: limit_reset &lt;backend>
+API：limit_reset &lt;backend>
 
-### limit_status
+###limit_status
 
-Retrieve current status of a given backend. Only supported in DB, not hash or hiredis.
+检索给定后端的当前状态。仅支持DB，不支持hash或hiredis。
 
-API: limit_status &lt;backend>
+API：limit_status &lt;backend>
 
 ### limit_usage
 
-Retrieve current usage for a given resource, all backends.
+检索给定资源的当前使用情况，所有后端。
 
-Note: limit is not decreased if you transfer the call using the "REFER" method, eg using the TRANSFER button on the phone.  
-NB: if the limit is on the destination number, and then the call is transferred to another extension even in same context, limit will be decreased
+注意：如果使用“REFER”方法转移呼叫，例如使用电话上的“TRANSFER"按钮，则限制不减少。
+注意：如果限制是在目标号码上，然后将呼叫转移到同一上下文中的另一个分机，限制将减少。
 
 limit_usage &lt;backend> &lt;realm> &lt;id>
 
 ### uuid_limit_release
 
-Manually decrease the usage by one by removing the "usage" entry for that UUID.
+通过删除该UUID的“usage”条目，手动减少一次使用量。
 
-If realm/resource is specified, it removes only that limit. Otherwise, it removes all limits held by the given UUID.
+如果指定了realm/resource，它将只移除该限制。否则，它将移除给定UUID所持有的所有限制。
 
-API: uuid_limit_release &lt;uuid> &lt;backend> [realm] [resource]
+API：uuid_limit_release <uuid> <backend> [realm] [resource]
 
 ### limit_interval_reset
 
-Manually reset the interval counter to zero prior to the next interval starting: Only implemented in Hash, not DB or hiredis.
+在下一个间隔周期开始之前，手动将间隔计数器重置为零: 仅在Hash中实现，而非DB或hiredis。
 
-API: limit_interval_reset &lt;backend> &lt;realm> &lt;resource>
+API：limit_interval_reset <backend> <realm> <resource>
 
-###  hash_remote 
+### hash_remote 
 
-You can access data from other FreeSWITCH systems with the **hash\_remote** API. The hash\_remote API uses the event socket. Configure your server names and credentials in conf/autoload\_configs/hash.conf.xml.
+您可以使用**hash\_remote** API从其他FreeSWITCH系统访问数据。hash\_remote API使用事件套接字。在conf/autoload\_configs/hash.conf.xml中配置服务器名称和凭据。
 
-It seems it queries each remote hash endpoint every 5 seconds for the entire hash list. It hen adds that to normal hash usage on the current server.
+它似乎每5秒查询一次完整的哈希列表的每个远程哈希端点。然后将其添加到当前服务器上的正常哈希使用中。
 
-hash_remote &lt;list>|&lt;kill> [name]|&lt;rescan>
+hash_remote <list>|<kill> [name]|<rescan>
 
-## Channel Variables
+## 通道变量
 
-### Variables Set by Limit
+### 由限制设置的变量
 
-The following [channel variables](../../Dialplan/Channel-Variables_16352493.mdx#about) are set when limit is called.
+当调用限制时，设置以下[通道变量](../../Dialplan/Channel-Variables_16352493.mdx#about)。
 
 * "limit\_realm"
 * "limit\_id"
 * "limit\_max"
 
-These channel variables are used at hang up to remove the record. More specifically, the delete is limited by uuid, hostname, realm and id.
+这些通道变量在挂机时用于删除记录。更具体地说，删除通过uuid、主机名、领域和ID进行限制。
 
-### Variables That Affect Limit
+### 影响限制的变量
 
-limit\_ignore\_transfer=true - causes the current call count to not be reset when the call is transferred. This is useful where calls that come into a gateway are transferred to an extension, but you want to preserve the call count.
+limit\_ignore\_transfer=true - 当呼叫被转移时，不会重置当前呼叫计数。这对于呼叫进入网关后转移到扩展时很有用，但您希望保留呼叫计数。
 
-limit\_ignore\_transfer=false - calls that are transferred cause the call count for that realm\_id to decrement
+limit\_ignore\_transfer=false - 被转移的呼叫会导致该realm\_id的呼叫计数减少
 
-Note: limit is not decreased if you transfer the call using the "REFER" method, eg using the TRANSFER button on the phone.
+注意：如果您使用“REFER”方法转移呼叫，例如在电话上使用TRANSFER按钮，限制不会减少。
 
-NB: if the limit is on the destination number, and then the call is transferred to another extension even in same context, limit will be decreased
+NB: 如果限制是在目标号码上，那么即使在同一上下文中呼叫被转接到另一个分机，限制也会减少。
 
-## Backends
+## 后端
 
 ### db
 
-You may choose to take advantage of the db backend [mod\_db](../mod_db_6586567.mdx#api) to allow multiple servers to limit the number of calls and stay aware of how many calls &lt;resource> has in session across all participating servers.
+您可以选择使用db后端[mod\_db](../mod_db_6586567.mdx#api)来允许多台服务器限制呼叫数量，并在所有参与服务器上了解&lt;resource>在会话中的呼叫数量。
 
 ### hash
 
-[mod\_hash](../mod_hash_6586975.mdx#api) provides a hashtable backend for limit. It uses a hashtable as data structure (faster) and has some additional features. Here is the syntax for the main application:
+[mod\_hash](../mod_hash_6586975.mdx#api) 模块提供了一个哈希表后端来进行限制。它使用哈希表作为数据结构（更快），并具有其他一些功能。以下是主要应用的语法：
 
 &lt;action application="limit" data="hash &lt;realm> &lt;id> [&lt;max>[/&lt;interval>] [number [dialplan [context]]]" />
 
-Note that you can also do rate-limiting with this application by specifying an interval, 5/1 will limit the resource to 5 calls per second. The application will transfer the call to the specified number/dialplan/context if the resource is currently over-limit. You can also use tell limit\_hash to automatically hangup the call when its over-limit, use a ! before the number to indicate that it is a hangup cause.
+请注意，您也可以通过指定一个间隔来使用此应用进行速率限制，例如5/1将将资源限制为每秒5个呼叫。如果当前资源超出限制，该应用将会将呼叫转移到指定的号码/拨号计划/上下文。您还可以使用tell limit\_hash来自动挂断超出限制的呼叫，使用感叹号“!”来指示它是一个挂断原因。
 
 &lt;action application="limit" data="hash inbound 15142223333 2 !USER_BUSY" />
 
-If the maximum isn't specified, limit will count the number of active calls but won't limit anything.
+如果未指定最大值，limit将计算活动呼叫的数量，但不会限制任何内容。
 
 ### hiredis
 
-mod\_hiredis[ provides a redis backend for limit.](../mod_redis_3964957.mdx#about)
+mod\_hiredis[提供了一个用于限制的 Redis 后端。](../mod_redis_3964957.mdx#about)
 
-## Which Backend Do I Use?
+## 如何选择后端？
 
-| Backend | Speed   | Persistence       | Cluster-ability  | Interval Support |
-| ------- | ------- | ----------------- | ---------------- | ---------------- |
-| Hash    | fastest | no                | see hash\_remote | yes              |
-| DB      | slow    | yes               | possible         | no               |
-| Hiredis | fast    | yes, configurable | yes              | yes              |
+| 后端   | 速度   | 持久性           | 集群能力     | 间隔支持 |
+| ------ | ------ | ---------------- | ------------ | -------- |
+| 哈希   | 最快   | 否               | 查看哈希远程 | 是       |
+| 数据库 | 慢     | 是               | 可能         | 否       |
+| Hiredis | 快    | 是，可配置      | 是           | 是       |
 
-##  Examples 
+##  示例 
 
-###  Limit Access To an Application 
+###  限制对应用程序的访问
 
-It is sometimes required to limit access to a single application, such as when trying outbound carriers, the following will do so:
+有时需要限制对单个应用程序的访问，例如在尝试出站载波时，可以使用以下方法：
 
 ```xml
 <action application="limit_execute" data="hash <realm> <id> <max>[/<interval>] <application> <data>" />
 ```
 
-**Example:** this will try 2 carriers, not sending more than 5 calls per carrier.
+**示例：**此示例将尝试2个载波，每个载波最多发送5个呼叫。
 
 ```xml
 <extension name="outbound">
@@ -261,66 +255,67 @@ It is sometimes required to limit access to a single application, such as when t
 </extension>
 ```
 
-### Limit a User's Concurrent Calls
+### 限制用户的并发呼叫
 
-The following is a simple example of limiting a user in your domain to 1 call. Here, max\_calls is set to 1 in the dialplan, but you could use a global variable (vars.xml) or a user variable (directory.conf).
+以下是限制域内用户呼叫数的简单示例。在此示例中，dialplan中将`max_calls`设置为1，但您也可以使用全局变量（vars.xml）或用户变量（directory.conf）。
 
 ```xml
-      <extension name="limit_exceeded">
-        <condition field="destination_number" expression="^limit_exceeded$">
-          <action application="playback" data="/sounds/overthelimit.wav"/>
-          <action application="hangup"/>
-        </condition>
-      </extension>
-
-      <extension name="limit" continue="true">
-        <condition>
-          <!-- You can set ${max_calls} per user in directory.conf and remove the line below -->
-          <action application="set" data="max_calls=1" inline="true"/>
-          <action application="limit" data="db $${domain} ${sip_auth_username} ${max_calls}"/>
-        </condition>
-      </extension> 
+<extension name="limit_exceeded">
+  <condition field="destination_number" expression="^limit_exceeded$">
+    <action application="playback" data="/sounds/overthelimit.wav"/>
+    <action application="hangup"/>
+  </condition>
+</extension>
 ```
 
-Note that limit\_exceeded comes before the limit extension as limit() uses transfer(), which will search from the beginning of the dialplan. You must do this or add regex to check the destination to avoid a transfer loop.
+```xml
+<extension name="limit" continue="true">
+  <condition>
+    <!-- 可以在directory.conf中设置每个用户的最大呼叫数量，并删除下面的行 -->
+    <action application="set" data="max_calls=1" inline="true"/>
+    <action application="limit" data="db $${domain} ${sip_auth_username} ${max_calls}"/>
+  </condition>
+</extension> 
+```
 
-  
-### Rate Limiting Calls, Anti-SPIT
+请注意，`limit_exceeded`需要在`limit`扩展之前出现，因为`limit()`使用`transfer()`，它将从拨号计划的开头开始搜索。你必须这样做，或者添加正则表达式来检查目标，以避免转移循环。
 
-Limit the calls per second by source ip + destination number:
+### 限制呼叫速率，抵御呼叫滥用（SPIT）
+
+通过源IP + 目标号码每秒限制呼叫：
 
 ```xml
 <action application="limit" data="hash ${sip_received_ip} ${destination_number} ${calls_per_second}/1" />
 ```
 
-Limit calls to 5 calls every 10 minutes:
+每10分钟限制5个呼叫：
 
 ```xml
 <action application="limit" data="hash ${sip_received_ip} ${destination_number} 5/600" />
 ```
 
-### User Busy
+### 用户忙线
 
-This checks the current usage a limit counter before dialing a user, conditionally returning user\_busy or putting the call through under a specific condition over the value of this counter. This can be useful if you wish to check against a counter managed by an external application or incremented by other events.
+在拨打用户之前，检查当前使用量的限制计数器，根据特定条件返回`user_busy`或在该计数器的值超过某个限制时继续呼叫。如果您希望根据由外部应用程序管理的计数器或其他事件递增的计数器进行检查，这可能会很有用。
 
 ```xml
 <action application="bridge" data="${cond(${limit_usage(db time_spent in_bed)} <= 60 ? error/user_busy : user/$1)}" />
 ```
 
-**Note:** The above action will not increment the limit counter.
+**注意：** 上述操作不会递增限制计数器。
 
-**Note:** In recent versions, in order for this function to return a non-zero value you must call the limit application before. It should set some limit for this resource (even -1 which is unlimited) in order to enable counting.
+**注意：** 在最新版本中，为了使该函数返回非零值，必须在调用该limit应用程序之前。它应该为该资源设置一些限制（甚至为-1，即无限制）以启用计数。
 
-### Using Limit With Per-Gateway or Per-User Channel Limits
+### 与网关或用户通道限制一起使用limit
 
-If you wish to set a limit bound to the b-leg part of a call (ex: outgoing counter), it is only possible using loopback channels. The following will do so:
+如果您希望对呼叫的b-leg部分（例如：外拨计数器）设置限制范围，只能使用回环通道。以下代码可实现此目的：
 
 ```xml
 <action application="set" data="destnum=${destination_number}" />
 <action application="bridge" data="loopback/context/gw1,loopback/context/gw2" />
 ```
 
-And inside the corresponding context:
+在相应的上下文中：
 
 ```xml
 <extension name="gw1">
@@ -337,24 +332,23 @@ And inside the corresponding context:
 </extension>
 ```
 
-The result of this example is that if the first gateway has too many channels open, then it cleans up the limit data for the first gateway before trying the next gateway.
+此示例的结果是，如果第一个网关打开了太多通道，那么在尝试下一个网关之前，会清除第一个网关的限制数据。
 
-If this was done within an extension as a series of limit and bridge apps, then the limit data wouldn't be cleaned up until the a-leg returned to the CS\_ROUTING state. That would mean calls would continue holding a channel open on a gateway they had tried while they were still connected to another gateway.
+如果在扩展中以一系列limit和bridge应用程序的方式执行此操作，那么直到a-leg返回到CS_ROUTING状态，限制数据才会被清除。这意味着在仍连接到另一个网关时，呼叫将继续保持一个通道开放状态，即使他们已经尝试了另一个网关。
 
-### Using Limit With an Outbound Gateway
+### 使用限制范围与出站网关
 
-Example below, things to note:
+以下是示例，需要注意的事项：
 
-* auto\_hunt=true so that you can jump directly to extensions without going through the entire dialplan
-* Replace PROVIDER1..3 with the relevant gateways
-* Replace PROVIDER1..3\_CHANNEL\_LIMIT with the relevant channel limit
-* transfer is done after the bridge so that failover works between the providers, ie, PROVIDER1 may be down
-* This example is only for 10 digit US phone numbers, please adapt as needed to other dialplans
+* `auto_hunt=true` 是为了能够直接跳转到扩展，而不必经过整个拨号计划流程
+* 将 PROVIDER1..3 替换为相应的网关
+* 将 PROVIDER1..3_CHANNEL_LIMIT 替换为相应的通道限制
+* 在桥接之后进行转接，以便在提供者之间进行故障恢复，例如 PROVIDER1 可能出现故障
+* 此示例仅适用于10位数的美国电话号码，请根据需要适应其他拨号计划
 
-  
 ```xml
 <extension name="Outbound calls">
-        <!-- support calls to 10 digit US phone numbers directly -->
+        <!-- 直接拨打到10位数的美国电话号码 -->
         <condition field="destination_number" expression="^(\d{10})$" break="on-true">
                 <action application="set" data="continue_on_fail=true"/>
                 <action application="set" data="hangup_after_bridge=true"/>
@@ -370,6 +364,7 @@ Example below, things to note:
                 <action application="transfer" data="usdirect2"/>
         </condition>
 </extension>
+```
 
 <extension name="usdirect2">
         <condition field="destination_number" expression="^usdirect2$"/>
@@ -396,17 +391,17 @@ Example below, things to note:
 </extension>
 ```
 
-### Using Limit to Monitor Each Gateway IP Address
+### 使用限制监视每个网关IP地址的通话数
 
-To get the number of concurrent calls per gateway ip address, you may issue a command as follows:
+您可以以下述命令来获取每个网关IP地址的并发呼叫数：
 
-To monitor "inbound"
+监视“inbound”
 # fs_cli -x 'limit_usage db inbound 1.2.3.4'
 
-To monitor "outbound
+监视“outbound”
 # fs_cli -x 'limit_usage db outbound 5.6.7.8'
 
-Example Dialplan:
+拨号计划示例：
 
 ```xml
     <extension name="customer_a">
@@ -418,20 +413,20 @@ Example Dialplan:
     </extension>
 ```
 
-### Using Limit to Handle Outbound Calls
+### 使用 Limit 处理呼出电话
 
-If you have the default configs then locate the Local\_Extension in conf/dialplan/default.xml. Add this line right after the condition:
+如果您使用的是默认配置，请在 `conf/dialplan/default.xml` 中找到 `Local_Extension`，在条件语句之后添加以下一行：
 
 ```xml
 <action application="limit" data="hash ${domain} $1 1 handle_over_limit XML over_limit_actions"/>
 ```
 
-Then add this new file as "limits.xml" in conf/dialplan/ :
+然后在 `conf/dialplan` 中添加一个名为 `limits.xml` 的新文件：
 
 ```xml
 <include>                                                                                                                                                       
  <context name="over_limit_actions">                                                                                                                           
-   <extension name="oops, too many calls for this one">                                                                                                        
+   <extension name="哎呀，这个太多了">                                                                                                        
      <condition field="destination_number" expression="handle_over_limit">                                                                                     
        <action application="answer"/>                                                                                                                          
        <action application="playback" data="ivr/ivr-no_no_no.wav"/>                                                                                            
@@ -444,34 +439,32 @@ Then add this new file as "limits.xml" in conf/dialplan/ :
 </include>
 ```
 
-Now when you call a local extension it won't allow more than one call. Note that you can change the value in the limit's data argument. For example, this would cause a limit of 4 concurrent calls, sending the 5th call into "oops, too many calls" extension:
+现在当您呼叫本地分机时，系统不会允许多个呼叫。请注意，您可以在限制的数据参数中更改该值。例如，这将导致最多同时处理4个呼叫，并将第5个呼叫发送到“糟糕，呼叫太多”的分机：
 
 ```xml
 <action application="limit" data="hash ${domain} $1 4 handle_over_limit XML over_limit_actions"/>
 ```
 
-Here is another example that when this person makes a call to a 7-digit number or does 1+ 7 or more digits, it will add to his limit totals. However, if he just calls another 4-digit extension on the system then it won't add to his limit. Put it right after the "global" extension in default.xml:
+这是另一个例子，当此人拨打7位数的号码或拨打1+ 7位或更多位的号码时，将增加其限制总数。然而，如果他只是呼叫系统中的另一个4位数分机，则不会增加到他的限制中。将其放在default.xml中“global”分机后面：
 
 ```xml
-    <!-- set outound caller limit -->                                                                                                                           
-    <extension name="set outbound limit" continue="true">                                                                                                       
-      <condition field="destination_number" expression="^1?\d{7}" break="on-false"/>                                                                            
-      <condition field="caller_id_number" expression="^(10[01][0-9])">                                                                                          
-        <action application="limit" data="hash ${domain} $1 4 handle_over_limit XML over_limit_actions"/>                
-        <action application="log" data="INFO Added limit for caller $1"/>                                                                                       
-      </condition>                                                                                                                                              
-    </extension>
+<!-- 设置外拨呼叫限制 -->
+<extension name="设置外拨限制" continue="true">
+  <condition field="destination_number" expression="^1?\d{7}" break="on-false"/>
+  <condition field="caller_id_number" expression="^(10[01][0-9])">
+    <action application="limit" data="hash ${domain} $1 4 handle_over_limit XML over_limit_actions"/>
+    <action application="log" data="INFO Added limit for caller $1"/>
+  </condition>
+</extension>
 ```
 
-### More Examples
+### 更多示例
 
-* Here are some [Dialplan Recipes](../../Dialplan/Dialplan-Recipes_9634252.mdx#about) using limit.
+这里有一些使用限制功能的[Dialplan Recipes（拨号计划示例）](../../Dialplan/Dialplan-Recipes_9634252.mdx#about)。
 
-#### Imported from an old FreeSwitch weekly article.
+#### 从一篇旧的FreeSwitch每周文章导入。
 
-With the growing number of SIP attacks on the rise, a lot of people are worried about their exposure to toll fraud. A simple way of protecting  
-your wallet would be to limit the number of outbound calls your system can place using the dial plan. If one your extension get compromised  
-your attacker can only do so much damage per day.
+随着SIP攻击的不断增加，很多人担心自己会受到话费欺诈的威胁。一个简单的保护钱包的方法就是使用拨号计划限制系统可以拨打的外呼数量。如果您的某个分机被入侵了，攻击者每天只能造成有限的损害。
 
 ```xml
   <extension name="domestic.VoiceNetwork.ca">
@@ -480,10 +473,10 @@ your attacker can only do so much damage per day.
       <action application="set" data="effective_caller_id_number=${outbound_caller_id_number}"/>
       <action application="set" data="effective_caller_id_name=${outbound_caller_id_name}"/>
 
-    <!-- Only allow 4 simultaneous call -->
+    <!-- 只允许同时进行4个呼叫 -->
       <action application="limit" data="hash fraud_protection calls_max 4 !NORMAL_TEMPORARY_FAILURE"/>
 
-    <!-- Only allow 250 calls per day -->
+    <!-- 每天只允许250个呼叫 -->
       <action application="limit" data="hash fraud_protection call_per_day 250/86400 !NORMAL_TEMPORARY_FAILURE"/>
 
       <action application="bridge" data="sofia/gateway/VoiceNetwork/$1"/>
@@ -491,81 +484,74 @@ your attacker can only do so much damage per day.
   </extension> 
 ```
 
-  
-If you're not doing a lot of international calls why not limit the number of calls per day, the maximum duration of any call, and  
-the number of simultaneous calls.
+如果您不经常进行国际通话，为什么不限制每天的呼叫次数、每次呼叫的最大时长以及同时进行的呼叫数量呢？
 
 ```xml
-  <extension name="international.VoiceNetwork.ca">
+<extension name="international.VoiceNetwork.ca">
     <condition field="${toll_allow}" expression="international"/>
     <condition field="destination_number" expression="^(011\d+)$">
-      <action application="set" data="effective_caller_id_number=${outbound_caller_id_number}"/>
-      <action application="set" data="effective_caller_id_name=${outbound_caller_id_name}"/>
+        <action application="set" data="effective_caller_id_number=${outbound_caller_id_number}"/>
+        <action application="set" data="effective_caller_id_name=${outbound_caller_id_name}"/>
 
-      <!-- Limit the Call duration to 30 minutes per call, set lower if you need to -->
-      <action application="sched_hangup" data="+1800 alloted_timeout"/>
+        <!-- 限制每通电话持续时间为30分钟，如果需要，可以设置更低 -->
+        <action application="sched_hangup" data="+1800 alloted_timeout"/>
 
-      <!-- Only allow 1 simultaneous call -->
-      <action application="limit" data="hash fraud_protection calls_max_intl 1 !NORMAL_TEMPORARY_FAILURE"/>
+        <!-- 仅允许同时进行1通电话 -->
+        <action application="limit" data="hash fraud_protection calls_max_intl 1 !NORMAL_TEMPORARY_FAILURE"/>
 
-      <!-- Only allow 10 calls per day -->
-      <action application="limit" data="hash fraud_protection call_per_day_intl 10/86400 !NORMAL_TEMPORARY_FAILURE"/>
-      <action application="bridge" data="sofia/gateway/VoiceNetwork/$1"/>
+        <!-- 每天仅允许进行10次电话 -->
+        <action application="limit" data="hash fraud_protection call_per_day_intl 10/86400 !NORMAL_TEMPORARY_FAILURE"/>
+        <action application="bridge" data="sofia/gateway/VoiceNetwork/$1"/>
     </condition>
-  </extension> 
+</extension> 
 ```
 
-  
-If you wanted to expand on this you could add variables to your user registrations this would allow you to set limits  
-for each registered user. Here is an example for user 1001.xml
+如果您想进一步扩展，您可以在用户注册中添加变量，这将允许您为每个注册用户设置限制。以下是对用户 1001.xml 的示例：
 
 ```xml
-  <user id="1001">
+<user id="1001">
     <params>
-      <param name="password" value="$${default_password}"/>
-      <param name="vm-password" value="1001"/>
+        <param name="password" value="$${default_password}"/>
+        <param name="vm-password" value="1001"/>
     </params>
     <variables>
-      <variable name="toll_allow" value="domestic,international,local"/>
+        <variable name="toll_allow" value="domestic,international,local"/>
 
-      <!-- Set your Limits outbound call limits here for International calls -->
-      <variable name="calls_max_intl" value="1"/>
-      <variable name="call_per_day_intl" value="3"/>
-
-      <variable name="accountcode" value="1001"/>
-      <variable name="user_context" value="default"/>
-      <variable name="effective_caller_id_name" value="Extension 1001"/>
-      <variable name="effective_caller_id_number" value="1001"/>
-      <variable name="outbound_caller_id_name" value="$${outbound_caller_name}"/>
-      <variable name="outbound_caller_id_number" value="$${outbound_caller_id}"/>
-      <variable name="callgroup" value="techsupport"/>
-    </variables>
-  </user> 
+        <!-- 在此设置国际电话的出站呼叫限制 -->
+        <variable name="calls_max_intl" value="1"/>
+        <variable name="call_per_day_intl" value="3"/>
 ```
-
-  
-And your new international dialplan would have variables instead of hard coded values, and  
-you could change the limits on a per user bases.
 
 ```xml
-  <extension name="international.VoiceNetwork.ca">
-    <condition field="${toll_allow}" expression="international"/>
-    <condition field="destination_number" expression="^(011\d+)$">
-      <action application="set" data="effective_caller_id_number=${outbound_caller_id_number}"/>
-      <action application="set" data="effective_caller_id_name=${outbound_caller_id_name}"/>
-
-      <!-- Limit the Call duration to 30 minutes per call, set lower if you need to -->
-      <action application="sched_hangup" data="+1800 alloted_timeout"/>
-
-      <!-- Only allow 1 simultaneous call -->
-      <action application="limit" data="hash fraud_protection calls_max_intl ${calls_max_intl} !NORMAL_TEMPORARY_FAILURE"/>
-
-      <!-- Only allow 10 calls per day -->
-      <action application="limit" data="hash fraud_protection call_per_day_intl ${call_per_day_intl}/86400 !NORMAL_TEMPORARY_FAILURE"/>
-      <action application="bridge" data="sofia/gateway/VoiceNetwork/$1"/>
-    </condition>
-  </extension> 
+<variable name="accountcode" value="1001"/>
+<variable name="user_context" value="default"/>
+<variable name="effective_caller_id_name" value="Extension 1001"/>
+<variable name="effective_caller_id_number" value="1001"/>
+<variable name="outbound_caller_id_name" value="$${outbound_caller_name}"/>
+<variable name="outbound_caller_id_number" value="$${outbound_caller_id}"/>
+<variable name="callgroup" value="techsupport"/>
+</variables>
+</user>
 ```
-  
-  
 
+而您的新国际拨号计划将具有变量而不是硬编码的值，您可以根据用户进行更改。
+
+```xml
+<extension name="international.VoiceNetwork.ca">
+<condition field="${toll_allow}" expression="international"/>
+<condition field="destination_number" expression="^(011\d+)$">
+<action application="set" data="effective_caller_id_number=${outbound_caller_id_number}"/>
+<action application="set" data="effective_caller_id_name=${outbound_caller_id_name}"/>
+
+<!-- 每通电话的通话时长限制为30分钟，如果需要可以设置更低 -->
+<action application="sched_hangup" data="+1800 alloted_timeout"/>
+
+<!-- 仅允许同时进行1个呼叫 -->
+<action application="limit" data="hash fraud_protection calls_max_intl ${calls_max_intl} !NORMAL_TEMPORARY_FAILURE"/>
+
+<!-- 每天仅允许10个呼叫 -->
+<action application="limit" data="hash fraud_protection call_per_day_intl ${call_per_day_intl}/86400 !NORMAL_TEMPORARY_FAILURE"/>
+<action application="bridge" data="sofia/gateway/VoiceNetwork/$1"/>
+</condition>
+</extension>
+```

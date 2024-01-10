@@ -1,369 +1,363 @@
-
-# SIP TLS 
+# SIP TLS
 
  
 
-Click here to expand Table of Contents
+点击这里展开目录
 
-* 1 [SIP Encryption Primer](#sip-encryption-primer)  
-      * 1.1.1 [Anatomy of a SIP Connection](#anatomy-of-a-sip-connection)  
-      * 1.1.2 [Anatomy of a SIPS Connection](#anatomy-of-a-sips-connection)  
-      * 1.1.3 [Anatomy of a SIPS and SRTP Connection](#anatomy-of-a-sips-and-srtp-connection)  
-      * 1.1.4 [FreeSWITCH Encryption Capabilities](#freeswitch-encryption-capabilities)  
-      * 1.1.5 [Hybrid Encryption](#hybrid-encryption)  
-      * 1.1.6 [Choosing Between Encryption Options](#-choosing-between-encryption-options-)  
-      * 1.1.7 [About IP Phones and Encryption](#-about-ip-phones-and-encryption-)  
-      * 1.1.8 [Limitations of the Freeswitch TLS/SSLv23 Implementation (FS-3877)](#-limitations-of-the-freeswitch-tlssslv23-implementation-fs-3877-)  
-   * 1.2 [Configuration](#configuration)  
-      * 1.2.1 [Step 1 - Generate the CA (Root) Certificate](#step-1---generate-the-ca-root-certificate)  
-         * 1.2.2 [Step 2 - Generate the Server Certificate](#step-2---generate-the-server-certificate)  
-         * 1.2.3 [Step 3 - Sofia Profile Configuration](#step-3---sofia-profile-configuration)  
-         * 1.2.4 [Step 4 Client Configuration](#-step-4-client-configuration-)  
-         * 1.2.5 [Commercial Certificates](#-commercial-certificates-)  
-         * 1.2.6 [Multiple Profile TLS](#-multiple-profile-tls-)  
-         * 1.2.7 [Troubleshooting](#troubleshooting)  
-         * 1.2.8 [Using Freeswitch as a SSL/TLS Client](#-using-freeswitch-as-a-ssltls-client-)  
-         * 1.2.9 [Advanced TLS Options](#-advanced-tls-options-)  
-         * 1.2.10 [Quick Setup of SSLv23 with SRTP](#-quick-setup-of-sslv23-with-srtp-)  
-         * 1.2.11 [Step 5 - Securing the RTP Channels (optional)](#step-5---securing-the-rtp-channels-optional)  
-         * 1.2.12 [Step 6 - DNS NAPTR & SRV Records (optional)](#step-6---dns-naptr--srv-records-optional)  
-   * 1.3 [SIP TLS Device Interoperability](#sip-tls-device-interoperability)  
-      * 1.3.1 [Aastra TLS Setup](#aastra-tls-setup)  
-         * 1.3.2 [Polycom TLS Setup](#polycom-tls-setup)  
-         * 1.3.3 [Linksys TLS Setup](#linksys-tls-setup)  
-         * 1.3.4 [Snom TLS Setup](#snom-tls-setup)  
-         * 1.3.5 [EyeBeam/Bria Setup](#eyebeambria-setup)  
-         * 1.3.6 [Nokia / Symbian S60 Setup](#nokia--symbian-s60-setup)
+* 1 [SIP加密入门](#sip-encryption-primer)  
+      * 1.1.1 [SIP连接的解剖](#anatomy-of-a-sip-connection)  
+      * 1.1.2 [SIPS连接的解剖](#anatomy-of-a-sips-connection)  
+      * 1.1.3 [SIPS和SRTP连接的解剖](#anatomy-of-a-sips-and-srtp-connection)  
+      * 1.1.4 [FreeSWITCH加密功能](#freeswitch-encryption-capabilities)  
+      * 1.1.5 [混合加密](#hybrid-encryption)  
+      * 1.1.6 [选择加密选项](#-choosing-between-encryption-options-)  
+      * 1.1.7 [关于IP电话和加密](#-about-ip-phones-and-encryption-)  
+      * 1.1.8 [FreeSwitch TLS/SSLv23实现的限制（FS-3877）](#-limitations-of-the-freeswitch-tlssslv23-implementation-fs-3877-)  
+   * 1.2 [配置](#configuration)  
+      * 1.2.1 [第一步-生成CA（根）证书](#step-1---generate-the-ca-root-certificate)  
+         * 1.2.2 [第二步-生成服务器证书](#step-2---generate-the-server-certificate)  
+         * 1.2.3 [第三步-Sofia配置文件](#step-3---sofia-profile-configuration)  
+         * 1.2.4 [第四步-客户端配置](#-step-4-client-configuration-)  
+         * 1.2.5 [商业证书](#-commercial-certificates-)  
+         * 1.2.6 [多个配置文件TLS](#-multiple-profile-tls-)  
+         * 1.2.7 [故障排除](#troubleshooting)  
+         * 1.2.8 [使用Freeswitch作为SSL/TLS客户端](#-using-freeswitch-as-a-ssltls-client-)  
+         * 1.2.9 [高级TLS选项](#-advanced-tls-options-)  
+         * 1.2.10 [使用SSLv23和SRTP的快速设置](#-quick-setup-of-sslv23-with-srtp-)  
+         * 1.2.11 [第五步-保护RTP通道（可选）](#step-5---securing-the-rtp-channels-optional)  
+         * 1.2.12 [第六步-DNS NAPTR和SRV记录（可选）](#step-6---dns-naptr--srv-records-optional)  
+   * 1.3 [SIP TLS设备互操作性](#sip-tls-device-interoperability)  
+      * 1.3.1 [Aastra TLS设置](#aastra-tls-setup)  
+         * 1.3.2 [Polycom TLS设置](#polycom-tls-setup)  
+         * 1.3.3 [Linksys TLS设置](#linksys-tls-setup)  
+         * 1.3.4 [Snom TLS设置](#snom-tls-setup)  
+         * 1.3.5 [EyeBeam/Bria设置](#eyebeambria-setup)  
+         * 1.3.6 [Nokia/Symbian S60设置](#nokia--symbian-s60-setup)
 
-  
-## SIP Encryption Primer
+## SIP加密入门
 
-FreeSWITCH supports both encrypted signaling known as SIPS which can be SSL or TLS with signed certificates, as well as encrypted audio/media known as SRTP. Typical convention is to have the unencrypted SIP control channel on UDP port 5060 (although the standards also allow for using TCP port 5060 as well), and an SSL encrypted or TLS encrypted SIP control channel known as SIPS on TCP port 5061\. The illustrations below depict SIP as being on port 5060, and SIPS as being on port 5061 and port (X). FreeSWITCH allows you to configure this port within the SIP profile.
+FreeSWITCH支持加密信令，称为SIPS，可以是使用SSL或TLS进行，同时还支持加密音频/媒体，称为SRTP。通常的约定是将未加密的SIP控制通道放在UDP端口5060上（尽管标准也允许使用TCP端口5060），将SSL加密或TLS加密的SIP控制通道称为SIPS，放在TCP端口5061上。下面的插图将SIP显示在端口5060上，SIPS显示在端口5061和端口(X)上。FreeSWITCH允许您在SIP配置文件中配置此端口。
 
-The RTP data utilizes UDP, but the port that RTP uses is dynamic in that it's negotiated within the SIP control channel. FreeSWITCH can be configured to use a specific port range for the RTP streams. In section 1 of this page we will go over the anatomy of a SIP connection and possible configurations so that you can choose which configuration would best suit your scenario and configure your FreeSWITCH system accordingly.
+RTP数据使用UDP，但是RTP使用的端口是动态的，它是在SIP控制通道中协商的。FreeSWITCH可以配置一个特定的端口范围用于RTP流。在本页的第1部分，我们将讨论SIP连接的结构以及可能的配置方式，以便您可以选择最适合您情况的配置，并相应地设置您的FreeSWITCH系统。
 
-#### Anatomy of a SIP Connection
+#### SIP连接结构
 
-First, let's review the anatomy of a SIP connection in order to dispel any confusion that may arise out of the assumption that encryption implies that the audio (or RTP) streams are encrypted.
+首先，让我们回顾一下SIP连接的结构，以消除可能因为加密暗示着音频（或RTP）流被加密而导致的混乱。
 
-  
-![](/attachments/9634135/16351738.gif)  
+![Figure 1](/attachments/9634135/16351738.gif)
 
-Figure 1:
+在图1中，你会注意到确实有三个独立的连接，一个是用于控制的TCP连接，另外两个是用于将音频流传输到和从交换机的UDP连接。控制信道可以实现许多功能，但就加密而言，我们主要关心的是通话期间拨号的DTMF音调，比如银行的PIN码或其他个人和最重要的私密信息。在图1所描述的场景中，网络上的任何用户都可以嗅探并解码这些有价值的数据。
 
-In figure 1 you'll note that there are indeed three separate connections, one TCP for control, and the other two are UDP for passing the audio streams to and from the switch. The control channel facilitates a number of capabilities, but with regard to encryption the ones that we're primarily concerned about is DTMF digits dialed during the call, such as a bank PIN, or some other sort of access code which is personal and, most importantly, private information. With the scenario depicted in figure 1, anyone on the network may sniff and decode this valuable data.
-
-#### Anatomy of a SIPS Connection
+#### SIPS连接的解剖
 
 ![](/attachments/9634135/16351737.gif)  
 
-Figure 2:
+图2：
 
-The answer to this problem is depicted in figure 2 and to encrypt the SIP channel with an SSL or TLS wrapper such that anyone sniffing packets on the wire cannot decrypt the data in the control channel. You'll note that in figure 2 we depict this as on port 5061, but with FreeSWITCH you can in fact configure it to be on any particular port you desire. This scenario here still leaves the packets for the audio data in the clear. Someone sniffing the packets will be able to reconstruct your audible conversation and "listen in" without much difficulty.
+解决这个问题的方法如图2所示，即通过使用SSL或TLS封装来加密SIP信道，以使嗅探网络数据包的人无法解密控制信道中的数据。请注意，在图2中我们将其表示为端口5061，但使用FreeSWITCH实际上可以将其配置为任何你想要的特定端口。但是这种情况下，音频数据包仍然是明文传输的。嗅探数据包的人可以轻松重构你的听觉对话并偷听。
 
-**\*Note:** _IP phones may advertise they support encryption, but you may want to check the specifications to validate they support both SSL and TLS signed certificates._
+**\*注意:**_IP电话可能宣传支持加密，但你可能需要检查规格说明以验证它们是否同时支持SSL和TLS签名证书。_
 
-#### Anatomy of a SIPS and SRTP Connection
+#### SIPS和SRTP连接的解剖
 
 ![](/attachments/9634135/13172797.gif)  
 
-  
-Figure 3:
+图3：
 
-In figure 3 you'll note that not only is the control channel encrypted, but the RTP streams are also encrypted and sent as SRTP. In this way, and only in this way, is your entire conversation reasonably secure from eavesdroppers. This is also important since the DTMF digits can also be sent in the RTP data as well (inband). Having both SIPS and SRTP encryption is your best option when it comes to making sure your SIP calls are secure.
+在图3中，您会注意到不仅控制信道被加密，RTP流也被加密并以SRTP形式发送。只有通过这种方式，您的整个通话才能相对安全地免受窃听者的侵扰。这也非常重要，因为DTMF数字也可以通过RTP数据进行传输（内部）。当涉及到确保您的SIP呼叫安全时，同时具备SIPS和SRTP加密是您的最佳选择。
 
-**\*Note:** _IP phones may advertise they support encryption, you will need to check the phones specifications to determine if it supports SRTP. More will be said on this below along with interoperability issues with certain phones at the bottom of this page._
+**\*注意：**_IP电话可能会宣传支持加密，您需要查看电话的规格说明以确定是否支持SRTP。稍后将在本页面底部详细介绍一些特定电话的互操作性问题。_
 
-#### FreeSWITCH Encryption Capabilities
+#### FreeSWITCH加密功能
 
-This page will cover only TLS, SSL and SRTP encryption.
+本页面仅涵盖TLS、SSL和SRTP加密。
 
-##### TLS, SSL and SRTP Encryption
+##### TLS、SSL和SRTP加密
 
-FreeSWITCH supports SIPS via SSL and/or TLS, along with SRTP encryption capabilities. It is unclear as to whether or not FreeSWITCH will encrypt video streams since this has not been tested in the kjv lab, however I suspect that it will. If you conduct testing encrypting SRTP video, by all means add your results to the Wiki.
+FreeSWITCH通过SSL和/或TLS支持SIPS，同时支持SRTP加密功能。目前尚不清楚FreeSWITCH是否支持加密视频流，因为这尚未在kjv实验室中进行测试，但我认为它应该支持。如果您进行了加密SRTP视频的测试，请务必将结果添加到Wiki上。
 
-##### ZRTP Encryption **ZRTP IS NOW DEPREICATED and will be removed out of the docs**
+##### ZRTP加密 **ZRTP现已被弃用，并将从文档中移除**
 
-ZRTP is an opportunistic encryption capability that can be compiled into FreeSWITCH. See the [ZRTP](https://wiki.freeswitch.org/wiki/ZRTP "ZRTP") page for the how-to and additional information pertaining to ZRTP.
+ZRTP是一种可以编译到FreeSWITCH中的机会性加密功能。请查看[ZRTP](https://wiki.freeswitch.org/wiki/ZRTP "ZRTP")页面，了解有关ZRTP的操作方法和其他相关信息。
 
-#### Hybrid Encryption
+#### 混合加密
 
-FreeSWITCH can in fact encrypt data for SIP traffic that passes through it. In this manner you can provide encryption for IP phones that don't natively support encryption. Since there is a plethora of SIP hardware that doesn't support encryption, this configuration may prove useful for any number of practical situations.
+FreeSWITCH实际上可以为通过它传输的SIP流量加密数据。通过这种方式，您可以为不支持原生加密的IP电话提供加密功能。由于有大量不支持加密的SIP硬件，这种配置可能对各种实际情况都很有用。
 
-[![](https://wiki.freeswitch.org/images/4/45/Hybrid-SIPS-encrypted.gif)](https://wiki.freeswitch.org/wiki/File:Hybrid-SIPS-encrypted.gif)
+![Figure 4](https://wiki.freeswitch.org/images/4/45/Hybrid-SIPS-encrypted.gif)
 
-Figure 4:
+图4：
 
-In figure 4 you'll notice that the SIP control channel from the phone to the switch is not encrypted whereas the control channel from FreeSWITCH to the other SIP PBX is encrypted. It's important to understand that in this situation SIP control and RTP (audio) data is both unencrypted between the IP phone and FreeSWITCH. Hence, if your SIP IP phone is somewhere behind a NAT router on a cable modem, and FreeSWITCH is not behind this router, both the phone's LAN and the Internet connection to FreeSWITCH are entirely in the open, meaning that someone could sniff those packets and obtain valuable information.
+在图4中，您会注意到从电话到交换机的SIP控制通道未加密，而来自FreeSWITCH到其他SIP PBX的控制通道是加密的。重要的是要了解，在这种情况下，SIP控制和RTP（音频）数据在IP电话和FreeSWITCH之间都是未加密的。因此，如果您的SIP IP电话在电缆调制解调器上的NAT路由器后面，而FreeSWITCH不在此路由器后面，那么电话的局域网和与FreeSWITCH的Internet连接都是完全公开的，这意味着有人可能会嗅探这些数据包并获取有价值的信息。
 
-Furthermore, the RTP (audio) data between FreeSWITCH and the remote endpoint illustrated as "Other SIP PBX" are also unencrypted and can be intercepted, however the control channel for this connection is encrypted and therefore reasonably secure. If FreeSWITCH were on the same LAN as the phone the possibility of interception is less, but the audio data is still capable of being intercepted.
+此外，FreeSWITCH与被标记为“其他SIP PBX”的远程端点之间的RTP（音频）数据也是未加密的，可以被拦截，但是此连接的控制通道是加密的，因此相对安全。如果FreeSWITCH和电话在同一个局域网上，拦截的可能性较小，但音频数据仍然可以被拦截。
 
-[![](https://wiki.freeswitch.org/images/c/c5/Hybrid-SIPS-and_SRTP-encrypted.gif)](https://wiki.freeswitch.org/wiki/File:Hybrid-SIPS-and%5FSRTP-encrypted.gif)
+![Figure 5](https://wiki.freeswitch.org/images/c/c5/Hybrid-SIPS-and_SRTP-encrypted.gif)
 
-Figure 5:
+图5：
 
-In figure 5 you'll notice that both SIP and RTP data from the IP phone is unencrypted, while the SIP and RTP data to the other SIP PBX is both SIPS and SRTP encrypted. This option will encrypt both the control channel and the audio data for the connections between FreeSWITCH and other endpoints that support encryption.
+在图5中，您会注意到IP电话的SIP和RTP数据都未加密，而与其他SIP PBX的SIP和RTP数据都是同时使用SIPS和SRTP加密的。此选项将为FreeSWITCH与支持加密的其他终端之间的连接加密控制通道和音频数据。
 
-It still needs to be understood that the connection from the phone to FreeSWITCH is entirely capable of being intercepted by a packet sniffer.
+但仍需理解，从电话到FreeSWITCH的连接完全可以被数据包嗅探器拦截。
 
-####  Choosing Between Encryption Options 
+### 在加密选项之间进行选择
 
-There are a variety of encryption options for FreeSWITCH as described above. TLSV1 encrypts everything over the TCP connection; this has the downside that jitter or delays due to TCP can occur. UDP is generally preferred for RTP and using TLSV1 has some additional traffic overhead. Finally there is SSLV23; this encrypts the SIP control channel over an encrypted TCP connection using SSL certificates, but by default doesn't provide anything for the RTP data. The login information and call metadata is transmitted over the control channel so if this is what you care about protecting this is enough and and adds no overhead to the RTP data. If you want to encrypt the voice data itself (so the voice data cannot be understood) it can be combined with SRTP. SRTP enables encryption of the RTP data with minor overhead to each of the RTP UDP packets. This has the benefit that the call data are encrypted but still is over UDP so there should be virtually no difference with SRTP on as with it off. The encryption key used for SRTP is exchanged over the control channel (which SSLV23 encrypts) so gives you something of the best of both worlds. Generally SSLV23 + SRTP is the most firewall friendly/has the fewest changes for existing installations. SSLv23 + SRTP is also fairly easy to configure on the FreeSWITCH server and most likely the most supported encryption method for most clients and SIP phones so generally should be where someone should start for encrypting call data.
+如上所述，FreeSWITCH有各种加密选项。TLSV1通过TCP连接加密所有内容；这种方式的缺点是由于TCP的抖动或延迟可能会出现。UDP通常用于RTP，使用TLSV1会导致一些额外的流量开销。最后是SSLV23，它通过SSL证书将SIP控制通道加密到一个加密的TCP连接中，但默认情况下不为RTP数据提供任何加密。登录信息和呼叫元数据通过控制通道传输，因此如果您关心保护这些信息，这就足够了，并且不会为RTP数据增加额外开销。如果您想加密语音数据本身（使语音数据无法理解），可以与SRTP结合使用。SRTP使得对RTP数据进行加密，对每个RTP UDP数据包都会产生一些额外开销。这样做的好处是呼叫数据被加密，但仍然通过UDP传输，所以在启用SRTP时几乎没有任何差别。用于SRTP的加密密钥在控制通道上交换（由SSLV23加密），因此可以同时兼顾两者的优点。通常，SSLV23 + SRTP是最符合防火墙友好性/对现有安装进行最少更改的选项。SSLv23 + SRTP在FreeSWITCH服务器上配置也相当简单，并且很可能是大多数客户端和SIP电话最支持的加密方式，因此通常应该是加密呼叫数据的起点。
 
-####  About IP Phones and Encryption 
+#### 关于IP电话和加密
 
-Some vendors will advertise that their product supports SIP encryption. The question becomes how well it supports SIP encryption. So let's review this convoluted marketing conundrum.
+一些供应商会宣传他们的产品支持SIP加密。问题是它们对SIP加密的支持有多好。让我们来看看这个复杂的市场困境。
 
-* The phone may support SSL and/or TLS encrypted SIP, which is to say "SIPS".
-* The phone may go so far as to support TLS with signed certificates.
-* Above and beyond those caveats, the phone may go so far as to support SRTP encrypted audio data.
-* Last but not least, make sure the IP phone supports **standard** SIPS and/or SRTP encryption. Essentially it's not too far fetched for a manufacturer to come up with a hair-brained encryption method which only works with their products.
+* 手机可能支持SSL和/或TLS加密的SIP协议，也就是说支持"SIPS"。
+* 这款手机可能还会支持带有签名证书的TLS。
+* 除了以上条件外，这款手机可能还会支持SRTP加密的音频数据。
+* 最后但同样重要的是，请确保IP电话支持**标准**的SIPS和/或SRTP加密。从本质上讲，制造商可能会提出一种只适用于其产品的天方夜谭的加密方法，这一点不是不可想象。
 
-**WARNING:** Check the specifications and do your research before buying any SIP IP phone that advertises itself as capable of performing encryption. You may also want to check to see if there are any issues with the version of SIP firmware your phone is running and its interoperability with FreeSWITCH.
+**警告：**在购买声称具备加密能力的任何SIP IP电话之前，请先检查规格和进行调查。您可能还需要检查您的电话所运行的SIP固件版本以及其与FreeSWITCH的互操作性是否存在任何问题。
 
-####  Limitations of the Freeswitch TLS/SSLv23 Implementation (FS-3877) 
+####  Freeswitch TLS/SSLv23 实现的限制 (FS-3877)
 
-Unfortunately the default lib\_sofia stack and FreeSWITCH configuration has one default (possibly unexpected) behavior which can cause hard-to-diagnose encryption problems. When a client connects to a server it creates an encrypted TCP channel used to communicate with the server. Anytime it places a call, registers, etc., it does so using this TCP session. Unfortunately, when FreeSWITCH attempts to communicate with the client to tell it about an incoming call, NOTIFYs, etc., it establishes a second TCP channel from the server to the client. While this is encrypted, it can cause some problems for some firewall configurations and for many of the TLS/SSL security options in FreeSWITCH. If FreeSWITCH cannot establish this channel the client will be able to make calls but it will not be able to receive calls (or anything else that is originated from the server to the client). In addition, many TLS features may act unexpectedly, so direction is important to consider. For example, tls-verify-policy set to "out" would cause FreeSWITCH to try to verify the client certificate when it connects back to the client, so even though the client is connecting to the server initially and that would skip validation for calls from the server->client, FreeSWITCH would verify it. In addition, this can open security holes, for example setting the policy to "in" for verification of incoming clients would NOT verify the client certificate when the server connects back to the client, which would allow a MITM attack to occur there. Things like subject validation can also be tricky, especially if FreeSWITCH is acting as a client. For example, subject validation checks the hostname to which FreeSWITCH connects against the certificate common name, while a nice security check cannot possibly be done when the server connects back to FreeSWITCH (as at that point FreeSWITCH actually tries to check the IP address against the common name). In addition, purpose validation (making sure when FreeSWITCH is connecting to a server its a certificate that has been issued for a server and not a client, or vice versa) currently is not supported. This allows MITM attacks against a FreeSWITCH server using a client certificate (or vice versa), but due to the connection going both ways, purpose validation is currently not supported (as an incoming connection may be from a server certificate while connecting back). So while FreeSWITCH's gentls\_cert does properly assign the purpose it is not currently used by FreeSWITCH itself. One solution to avoid this MITM hole is to issue client certs from a different CA for now.
+不幸的是，[to_be_replace[lib_sofia]]的默认堆栈和FreeSWITCH配置具有一个可能意想不到的默认行为，这可能会导致难以诊断的加密问题。当客户端连接到服务器时，它会创建一个用于与服务器通信的加密TCP通道。每次进行呼叫、注册等操作时，都会使用该TCP会话。不幸的是，当FreeSWITCH试图与客户端通信以告知其有关呼入呼叫、通知等的信息时，它会从服务器到客户端建立第二个TCP通道。虽然这个通道是加密的，但它可能会在某些防火墙配置以及FreeSWITCH的许多TLS/SSL安全选项中引起一些问题。如果FreeSWITCH无法建立这个通道，客户端将能够发起呼叫，但无法接收呼叫（或其他从服务器到客户端发起的任何内容）。此外，许多TLS功能可能会出现意外情况，因此方向是需要考虑的重要因素。例如，将`tls-verify-policy`设置为“out”，会导致FreeSWITCH在重新连接到客户端时尝试验证客户端证书，因此即使客户端最初连接到服务器并跳过了从服务器->客户端的验证，FreeSWITCH还是会进行验证。此外，这可能会导致安全漏洞，例如，为了验证传入的客户端，将策略设置为“in”则不会在服务器重新连接到客户端时验证客户端证书，这将允许进行中间人攻击。诸如主题验证之类的内容也可能会复杂，特别是如果FreeSWITCH充当客户端时。例如，主题验证会将FreeSWITCH连接的主机名与证书的通用名称进行比较，而当服务器重新连接到FreeSWITCH时，这个安全检查不可能完成（因为此时FreeSWITCH实际上尝试将IP地址与通用名称进行比较）。此外，目的验证（确保当FreeSWITCH连接到服务器时，所使用的证书是为服务器发行的，而不是为客户端发行的，反之亦然）目前不受支持。这使得使用客户端证书（或反之亦然）对FreeSWITCH服务器进行中间人攻击成为可能，但由于连接双向进行，目的验证目前不受支持（因为传入的连接可能来自服务器证书并重新连接到客户端）。因此，虽然FreeSWITCH的`gentls_cert`确实正确分配了目的，但FreeSWITCH本身目前没有使用它。避免此中间人攻击漏洞的一个解决方案是暂时从不同的CA发行客户端证书。
 
-### Configuration
+### 配置
 
-FreeSWITCH supports the encryption of SIP signaling traffic via SSL and/or TLS. The convention is to run the SIPS on port 5061\. More complex configurations are possible, however they will not be covered in this documentation.
+FreeSWITCH支持通过SSL和/或TLS对SIP信令流量进行加密。通常在端口5061上运行SIPS。但是，更复杂的配置是可能的，但是本文档不包含这方面的内容。
 
-**You will need the following in order to compile FreeSWITCH with TLS encryption support:**
+**要在FreeSWITCH中编译支持TLS加密的功能，您需要以下内容：**
 
-* libssl-dev (the OpenSSL development) package installed.
+* 安装libssl-dev（OpenSSL开发）软件包。
 
-If you do not have the libssl-dev package installed, the problem will be the sip\_profile that contains the encryption configuration directives specified below in Step 2 will fail to start.
+如果未安装libssl-dev软件包，则在第2步中指定的包含加密配置指令的sip_profile将无法启动。
 
-If you've compiled FreeSWITCH without this package installed, there will be no support for encryption and you will need to recompile it after you install the libssl-dev package.
+如果您在未安装此软件包的情况下编译了FreeSWITCH，则将无法支持加密，并且您需要在安装libssl-dev软件包后重新编译它。
 
-For Debian do aptitude install libssl-dev (on Lenny install libcurl4-openssl-dev) and then compile.
+对于Debian，请运行aptitude install libssl-dev（在Lenny上安装libcurl4-openssl-dev），然后进行编译。
 
-#### Step 1 - Generate the CA (Root) Certificate
+#### 第1步 - 生成CA（根）证书
 
-To use TLS/SSL you need at least two certificates: the root (CA) certificate and a certificate for every server. There is a script at _/{prefix}/freeswitch/bin/gentls\_cert_ or within the source tarball _{tarball}/scripts/gentls\_cert_ that helps generate these files. Assuming that the DNS name of your FreeSWITCH PBX is [pbx.freeswitch.org](http://pbx.freeswitch.org), With
+要使用TLS/SSL，您至少需要两个证书：根（CA）证书和每个服务器的证书。有一个脚本在_ /{prefix}/freeswitch/bin/gentls_cert_或者在源代码tarball_{tarball}/scripts/gentls_cert_中可以帮助生成这些文件。假设您的FreeSWITCH PBX的DNS名称是[pbx.freeswitch.org](http://pbx.freeswitch.org)，请使用以下命令：
 
-   ./gentls_cert setup -cn pbx.freeswitch.org -alt DNS:pbx.freeswitch.org -org freeswitch.org
+./gentls_cert setup -cn pbx.freeswitch.org -alt DNS:pbx.freeswitch.org -org freeswitch.org
 
-This will create CA certificate and key along with in conf/ssl/CA directory and certificate in the conf/ssl folder.
+这将在conf/ssl/CA目录中创建CA证书和密钥，并在conf/ssl文件夹中创建证书。
 
-\[ **Note:** The name given for -cn and -alt should be the same as the DNS name of your freeswitch installation and used as the registrar name on the phone (at least on Polycoms). \] You can change the "DAYS=2190" line in the gentls\_cert file to make the certificate valid for longer time. However making it too long has some wrap around problem, it appears.
+\[**注意：**-cn和-alt所给出的名称应与您的FreeSwitch安装的DNS名称相同，并用作电话上的注册名（至少在Polycom上有效）。\]您可以更改gentls\_cert文件中的“DAYS=2190”行，以使证书有效时间更长。然而，将其设置得太长可能会出现一些问题。
 
-#### Step 2 - Generate the Server Certificate
+#### 步骤2 - 生成服务器证书
 
-The command:
+命令：
 
    ./gentls_cert create_server -cn pbx.freeswitch.org -alt DNS:pbx.freeswitch.org -org freeswitch.org
 
-creates the server certificate at _/{prefix}/freeswitch/conf/ssl/agent.pem_. This file contains the certificate and the private key. It should contain the domain name in the common and alternate name. If you need to generate certificates for other servers use the -out flag for gentls\_cert to specify the output certificate/key file name and copy this to the remote server.
+在 _/{prefix}/freeswitch/conf/ssl/agent.pem_位置创建服务器证书。该文件包含证书和私钥。它应该在通用名称和备用名称中包含域名。如果您需要为其他服务器生成证书，请使用gentls\_cert的-out标志指定输出证书/密钥文件名，并将其复制到远程服务器。
 
-To set up new CA and create new certificate under Windows go here.
+要设置新的CA并在Windows下创建新证书，请按此处。
 
-In order for the new certificate to take effect (the only way for FreeSWITCH to use it), FreeSWITCH must be restarted.
+为了使新证书生效（FreeSWITCH使用它的唯一方法），需要重新启动FreeSWITCH。
 
-**Note:** The name given for -cn and -alt should be the same as the DNS name of your freeswitch installation and used as the registrar name on the phone (at least on Polycoms). This is required for Eyebeam (and probably Pangolin too).
+**注意：**-cn和-alt所给出的名称应与您的FreeSwitch安装的DNS名称相同，并用作电话上的注册名（至少在Polycom上有效）。这对于Eyebeam（可能也对Pangolin有效）是必需的。
 
-#####  Review your certificate 
+##### 查看您的证书
 
-You can review your certificate details with the command:
+您可以使用以下命令查看证书详细信息：
 
  openssl x509 -noout -inform pem -text -in /usr/local/freeswitch/conf/ssl/agent.pem
 
-#### Step 3 - Sofia Profile Configuration
+#### 步骤3 - Sofia配置文件设置
 
-Freeswitch requires only one file for acting as a TLS server and thats the agent.pem file. This contains the certificate and key it will use for listening. **Note it is extremely important that your agent.pem (and optionally cacert.pem) have read permissions for the user freeswitch will run as.** That means if you use -u freeswitch you want to "chmod 640 agent.pem cacert.pem" and "chown root.freeswitch agent.pem cacert.pem". Incorrect permissions will not allow the TLS listener to spin up properly. On your vars.xml:
+Freeswitch只需要一个文件来充当TLS服务器，即agent.pem文件。该文件包含了服务器用于监听的证书和密钥。**注意，对于freeswitch将要运行的用户，agent.pem（和可选的cacert.pem）必须具有读取权限。**这意味着如果您使用 -u freeswitch，您需要运行 "chmod 640 agent.pem cacert.pem" 和 "chown root.freeswitch agent.pem cacert.pem"命令。权限设置错误将无法正确启动TLS监听器。在vars.xml文件中，进行以下配置：
 
-ATTENTION: TLS is disabled by default; set internal\_ssl\_enable and/or external\_ssl\_enable to "true" to enable.
+注意：默认情况下，TLS被禁用；要启用TLS，请将internal\_ssl\_enable和/或external\_ssl\_enable设置为"true"。
 
-  &lt;!--
-      SIP and TLS settings.
-  -->
-  &lt;X-PRE-PROCESS cmd="set" data="sip_tls_version=sslv23"/>
+&lt;!--
+    SIP和TLS设置。
+-->
+&lt;X-PRE-PROCESS cmd="set" data="sip_tls_version=sslv23"/>
 
-  &lt;!-- Internal SIP Profile -->
-  &lt;X-PRE-PROCESS cmd="set" data="internal_auth_calls=true"/>
-  &lt;X-PRE-PROCESS cmd="set" data="internal_sip_port=5060"/>
-  &lt;X-PRE-PROCESS cmd="set" data="internal_tls_port=5061"/>
-  &lt;X-PRE-PROCESS cmd="set" data="internal_ssl_enable=false"/>
-  &lt;X-PRE-PROCESS cmd="set" data="internal_ssl_dir=$${base_dir}/conf/ssl"/>
+&lt;!-- 内部SIP Profile -->
+&lt;X-PRE-PROCESS cmd="set" data="internal_auth_calls=true"/>
+&lt;X-PRE-PROCESS cmd="set" data="internal_sip_port=5060"/>
+&lt;X-PRE-PROCESS cmd="set" data="internal_tls_port=5061"/>
+&lt;X-PRE-PROCESS cmd="set" data="internal_ssl_enable=false"/>
+&lt;X-PRE-PROCESS cmd="set" data="internal_ssl_dir=$${base_dir}/conf/ssl"/>
 
-  &lt;!-- External SIP Profile -->
-  &lt;X-PRE-PROCESS cmd="set" data="external_auth_calls=false"/>
-  &lt;X-PRE-PROCESS cmd="set" data="external_sip_port=5080"/>
-  &lt;X-PRE-PROCESS cmd="set" data="external_tls_port=5081"/>
-  &lt;X-PRE-PROCESS cmd="set" data="external_ssl_enable=false"/>
-  &lt;X-PRE-PROCESS cmd="set" data="external_ssl_dir=$${base_dir}/conf/ssl"/>
+&lt;!-- 外部SIP Profile -->
+&lt;X-PRE-PROCESS cmd="set" data="external_auth_calls=false"/>
+&lt;X-PRE-PROCESS cmd="set" data="external_sip_port=5080"/>
+&lt;X-PRE-PROCESS cmd="set" data="external_tls_port=5081"/>
+&lt;X-PRE-PROCESS cmd="set" data="external_ssl_enable=false"/>
+&lt;X-PRE-PROCESS cmd="set" data="external_ssl_dir=$${base_dir}/conf/ssl"/>
 
-####  Step 4 Client Configuration 
+#### 第4步 客户端配置
 
-Clients should all have at least the CA root certificate installed onto them in order to ensure security. Without enabling chain verification (that the server certificate was issued by the approved CA) a MITM attack is possible against a client. The CA certificate is the conf/ssl/cafile.pem it contains only a certificate and clients use it to ensure the server certificate is issued by the CA. In addition you may want (or have to depending on the device) install a client certificate issued by the same CA. You can generate a client certificate using the command:
+客户端应该至少安装了CA根证书以确保安全。如果没有启用链验证（即服务器证书是由批准的CA签发的），客户端就有可能遭受中间人攻击。CA证书是conf/ssl/cafile.pem，它只包含了一个证书，客户端使用它来确保服务器证书是由CA签发的。另外，您可能希望（或者根据设备的需求必须）安装一个由相同CA签发的客户端证书。您可以使用以下命令生成客户端证书：
 
    ./gentls_cert create_client -cn Client1 -out Client1
 
-This will create Client1.pem (note the common name here doesn't really matter, rarely would a server ever be enabled to check the subject of a client certificate so you can set this to what you want). This certificate/key pair should be installed on the client (recommended a different for each client for security) but does NOT need to remain on the server, even if you want the server to verify the client certificate. If the client is another freeswitch server that Client1.pem you would want to rename to agent.pem. Note IF the other freeswitch server is going to also use this certificate as a server and not just a client make sure to follow the steps above using the create\_server command to create a server certificate.
+这将创建Client1.pem文件（注意这里的通用名称并不重要，很少有服务器会启用对客户端证书主题的检查，所以您可以根据需要进行设置）。这个证书/密钥对应该安装在客户端上（出于安全考虑，建议每个客户端都使用不同的证书），但不需要留在服务器上，即使您希望服务器验证客户端证书也是如此。如果客户端是另一个FreeSWITCH服务器，那么您需要将Client1.pem重命名为agent.pem。注意，如果其他FreeSWITCH服务器要将此证书用作服务器而不仅仅是客户端，请确保按照上述步骤使用create\_server命令创建服务器证书。
 
-####  Commercial Certificates 
+#### 商用证书
 
-Most commercial Web server certificates should work for FreeSWITCH. For example, Thawte SSL123 certificates (their cheapest option) are known to work in at least one installation. If you have doubts about whether a certificate will work, you should only purchase the certificate from a company offering 30-day refund policy.
+大多数商用Web服务器证书都可以在FreeSWITCH上使用。例如，Thawte SSL123证书（价格最便宜的选项）已知在至少一个安装中可以使用。如果您对某个证书是否可用存在疑问，您应该只从提供30天退款政策的公司购买证书。
 
-####  Multiple Profile TLS 
+#### 多个配置档案TLS
 
-If you have multiple Sofia SIP profiles, you may find yourself wanting to enable TLS support for each of the profiles. However, each may be represented to third parties using a different DNS record. In this case, simply create a new directory under /{prefix}/freeswitch/conf/ssl/ for each DNS record . Then place an agent.pem and cafile.pem into each of the directories. Point each profile to the individual directory which contains its specific agent.pem file.
+如果您有多个Sofia SIP配置文件，您可能希望为每个配置文件启用TLS支持。然而，每个配置文件可能使用不同的DNS记录来向第三方表示。在这种情况下，只需在/{prefix}/freeswitch/conf/ssl/目录下创建每个DNS记录的新目录。然后将agent.pem和cafile.pem放置在每个目录中。将每个配置文件指向包含其特定agent.pem文件的单独目录。
 
-#### Troubleshooting
+#### 故障排除
 
-#####  Issues with TLSV1 
+##### TLSV1的问题
 
-**If you've opted for this configuration in your sip\_profile:**
+**如果您在sip_profile中选择了此配置:**
 
 &lt;param name="tls-version" value="tlsv1"/>
 
-There are a number of gotchas and snafus possible with TLS. TLS runs on TCP, rather than UDP, so make sure any firewalls are configured to work with TCP. Generate the proper certificate, and make sure it's loaded into the phone or ATA. Also, ensure that the time is configured properly on your endpoint as you will get cryptic "bad certificate" error messages if the time is too far off, and it will fail to handshake properly. (For example, certificates have "not valid before" and "not valid after" attributes.) If your phone won't register, or fails to work properly, you might consider checking the Interoperability list, and/or your phones documentation and firmware revision. If it still fails to work properly, you might consider sslv23 as a fallback.
+使用TLS可能会出现一些问题。TLS在TCP上运行，而不是UDP，因此确保任何防火墙都配置为与TCP配合使用。生成正确的证书，并确保将其加载到电话或ATA中。此外，确保终端上的时间配置正确，否则如果时间偏差太大，将会收到晦涩的“证书错误”消息，且握手过程将失败。（例如，证书具有“not valid before”和“not valid after”属性。）如果您的电话无法注册或无法正常工作，您可以考虑查看互操作性列表，或者参考电话文档和固件版本。如果仍然无法正常工作，您可以考虑作为备选方案选择sslv23。
 
-#####  Issues with SSLV23 
+##### SSLV23的问题
 
-**If you've opted for this configuration option in your sip\_profile:**
+**如果您在sip_profile中选择了此配置:**
 
 &lt;param name="tls-version" value="sslv23"/>
 
-This will give you the ability to encrypt the data. Security is similar to that of with web servers, certificate trusted roots can be checked, client certificate authentication is supported, subjects and cert dates can be validated (some of these do depend on client support for the feature). This may in fact be what you want, and considering that several phones do not support TLS, but do support SSL, you may want to configure accordingly.
+这将使您能够加密数据。安全性类似于Web服务器的安全性，可以检查受信任的根证书，支持客户端证书认证，可以验证主题和证书日期（其中一些取决于客户端对该功能的支持）。这可能是您想要的，考虑到有些手机不支持TLS，但支持SSL，您可能想相应地进行配置。
 
-#####  If your SIP profile fails to start up 
+#####  如果您的SIP配置文件启动失败 
 
-If you go into the FreeSWITCH CLI and type:
+如果您进入FreeSWITCH CLI并键入：
 
 sofia status
 
-You might find that your sip\_profile for which you configured the TLS/SSL settings is missing. Should that be the case, you're probably missing the libssl-dev package or the agent.pem file is not in place or has incorrect permissions. Ensure the user FreeSWITCH runs as has read permissions to the certificates and keys. Turning on sofia tport debug logging to high will help print out errors on why it is not starting up properly. Refer to your distribution in order to install the OpenSSL development package. This is necessary for the code which performs the encryption within FreeSWITCH to be compiled into the binary. Enabling a higher level of debug in sofia (sofia loglevel all 9, or sofia loglevel tport 9 generally give enough) and in the console can help debug issues and handshake problems.
+您可能会发现您配置了TLS/SSL设置的sip\_profile丢失了。如果是这种情况，您可能缺少libssl-dev软件包，或者agent.pem文件不在位或权限不正确。确保FreeSWITCH运行的用户具有对证书和密钥的读取权限。打开sofia tport调试日志的级别可以帮助打印出为何无法正确启动的错误。请查阅您的发行版以安装OpenSSL开发软件包。这对于在FreeSWITCH中执行加密的代码编译为二进制文件是必需的。在sofia中启用更高级别的调试（sofia loglevel all 9，或sofia loglevel tport 9通常足够），以及控制台可以帮助调试问题和握手问题。
 
-#####  TLS Negotiation Error 'No matching cipher' 
+#####  TLS协商错误 '无匹配的密码' 
 
-If you receive a 'no matching cipher' error message, first check to ensure you have concatenated your certificate key into your agent.pem file. If you still receive the error, regenerate both the key and the certificate and make a new agent.pem with the new key and certificate, then try again.
+如果您收到"无匹配的密码"错误消息，请首先检查是否将您的证书密钥连接到agent.pem文件中。如果仍然收到错误，请重新生成密钥和证书，并使用新的密钥和证书创建一个新的agent.pem文件，然后再次尝试。
 
-#####  Further Debugging Steps 
+#####  进一步的调试步骤
 
-If you are still having issues getting TLS running the following are suggested:
+如果您仍然遇到TLS运行问题，建议按照以下步骤操作：
 
-* ) set sofia loglevel to 9 (&lt;param name="log-level" value="9"/>) in autoload\_configs/sofia.conf.xml
-* ) Set freeswitch console loglevel to debug (F8)
-* ) Reload mod\_sofia and review the the logs
-* ) If everything looks fine on the server side, try using freeswitch or a freeswitch based [Softphones](https://wiki.freeswitch.org/wiki/Softphones "Softphones") like FSClient or FSComm. These will allow you to do the same on the client side (including attach fs\_cli to them to get log data) to try and see any errors the client may be having
-* ) Last resort put all the logs on pastebin and ask for help.
+* ) 在autoload\_configs/sofia.conf.xml文件中，将sofia日志级别设置为9（&lt;param name="log-level" value="9"/>)。
+* ) 将freeswitch控制台日志级别设置为debug（按F8键）。
+* ) 重新加载mod\_sofia并查看日志。
+* ) 如果服务器端一切正常，请尝试使用freeswitch或基于freeswitch的[软电话](https://wiki.freeswitch.org/wiki/Softphones "Softphones")，如FSClient或FSComm。这些软电话将允许您在客户端执行相同的操作（包括将fs\_cli附加到软电话以获取日志数据），以尝试查看客户端可能遇到的任何错误。
+* ) 如果以上方法都无效，可以将所有日志放在pastebin上并寻求帮助。
 
-####  Using Freeswitch as a SSL/TLS Client 
+####  将Freeswitch作为SSL/TLS客户端使用
 
-Freeswitch can communicate with another server and act as a sip client (AKA use another gateway). To do this you should have the cafile.pem on the client in the conf/ssl folder with the CA certificate. You will also need an agent.pem file (this can be a randomly generated public/private key pair or a valid client certificate) in the same folder used as the client certificate.
+Freeswitch可以与另一个服务器通信，并充当SIP客户端（也称为使用另一个网关）。为此，您应该在客户端的conf/ssl文件夹中放置cafile.pem文件，其中包含CA证书。您还需要在同一文件夹中放置一个agent.pem文件（可以是随机生成的公钥/私钥对或有效的客户端证书），用作客户端证书。
 
-####  Advanced TLS Options 
+####  高级TLS选项
 
-Freeswitch supports some advanced TLS parameters in the profile settings see [Sofia Configuration Files](../Configuration/Sofia-SIP-Stack/Sofia-Configuration-Files_7144453.mdx#--) for details.
+Freeswitch在配置文件中支持一些高级的TLS参数，请参考[Sofia配置文件](../Configuration/Sofia-SIP-Stack/Sofia-Configuration-Files_7144453.mdx#--)获取详细信息。
 
-####  Quick Setup of SSLv23 with SRTP 
+####  快速设置SSLv23和SRTP
 
-Quick Install on the Internal Profile if your server internal hostname is [pbx.freeswitch.org](http://pbx.freeswitch.org):
+如果您的服务器的内部主机名是[pbx.freeswitch.org](http://pbx.freeswitch.org)，请在内部配置文件上进行快速安装：
 
 ./gentls_cert setup -cn pbx.freeswitch.org -alt DNS:pbx.freeswitch.org -org freeswitch.org
 ./gentls_cert create_server -cn pbx.freeswitch.org -alt DNS:pbx.freeswitch.org -org freeswitch.org
 
-  
-If your clients support/validate the server certificate copy the ca certificate conf/ssl/cafile.pem to your clients.
+如果您的客户支持/验证服务器证书，请将ca证书conf/ssl/cafile.pem复制到您的客户端。
 
-  
-and in vars.xml
+在vars.xml文件中：
 
 &lt;X-PRE-PROCESS cmd="set" data="sip_tls_version=sslv23"/>
 &lt;X-PRE-PROCESS cmd="set" data="internal_ssl_enable=true"/>
 
-  
-Have your clients connect to freeswitch on port 5061 instead of 5060 and enable TLS (and if possible SRTP) on the client. If your client is freeswitch setting transport=tls under tls-bind-params in addition to the enable options above from the server. Finally on your freeswitch server for calls bound for the client you will want to enable them to go over SRTP by setting rtp\_secure\_media=true for the call (See Step 5 below for more details on how to do this more programatically for clients that only support this).
+让您的客户端连接到端口5061上的freeswitch，而不是5060，并在客户端上启用TLS（如果可能的话，还启用SRTP）。如果您的客户端是freeswitch，则在tls-bind-params下的enable选项之外，设置transport=tls。最后，在您的freeswitch服务器上，对于要发送到客户端的呼叫，您将希望通过设置rtp_secure_media=true来启用它们使用SRTP（有关如何为仅支持此选项的客户端进行更加程序化设置的更多详细信息，请参见下面的步骤5）。
 
-  
-Restart your FreeSWITCH server (or reload mod\_sofia) and have your client connect and you should be able to make and receive secure calls! To improve security check the full TLS options and enable certificate checking (also to stop MITM).
+重新启动您的FreeSWITCH服务器（或重新加载mod_sofia），让您的客户端连接，您应该能够进行安全的呼叫。为了提高安全性，请查看完整的TLS选项并启用证书检查（还可以阻止中间人攻击）。
 
-#### Step 5 - Securing the RTP Channels (optional)
+#### 步骤5 - 保护RTP通道（可选）
 
-Calls that originate from the phone have rtp\_secure\_media set if TLS is set up. Check the global extension. There is a section commented that out will require SRTP on the outbound leg if the inbound leg is encrypted. Enabling this will be problematic with most ITSPs since they do not support TLS.
+如果设置了TLS，则来自电话的呼叫将设置rtp_secure_media。检查全局扩展。有一个被注释掉的部分，如果入站连接加密，则要求对出站连接启用SRTP。启用此选项对大多数ITSP来说会有问题，因为它们不支持TLS。
 
-For calls that originate from (or are routed through) FreeSWITCH and are terminated on the user/ endpoint (e.g., calls to a phone), the following change will enable SRTP if the endpoint registered with TLS. Note that it is a valid configuration to register with TLS but not require SRTP. This disables that valid configuration option for user/ endpoints. It would also require further refinement to support ZRTP on user/ endpoints that connect with TLS. In that case, a better approach would be to set something on the user's directory entry that specifies which RTP encryption to support. (In other words, there is a reason this is not the default setting.)
+对于从（或通过）FreeSWITCH发出并在用户/端点上终止（例如，电话呼叫）的呼叫，以下更改将在使用TLS注册的端点上启用SRTP。请注意，使用TLS注册但不要求SRTP是有效的配置。这将禁用用户/端点的有效配置选项。它还需要进一步改进以支持通过TLS连接的用户/端点上的ZRTP。在这种情况下，更好的方法是在用户的目录条目上设置一个指定支持的RTP加密的选项。（换句话说，这不是默认设置，是有原因的。）
 
-Edit conf/directory/default.xml and change the **dial-string** param to:
+编辑conf/directory/default.xml并修改**dial-string**参数为：
 
- &lt;param name="dial-string" value="{rtp_secure_media=${regex(${sofia_contact(${dialed_user}@${dialed_domain})}|transport=tls)},
-  presence_id=${dialed_user}@${dialed_domain}}${sofia_contact(${dialed_user}@${dialed_domain})}" />
+```xml
+<param name="dial-string" value="{rtp_secure_media=${regex(${sofia_contact(${dialed_user}@${dialed_domain})}|transport=tls)}, presence_id=${dialed_user}@${dialed_domain}}${sofia_contact(${dialed_user}@${dialed_domain})}" />
+```
 
-  
-##### Why it's a good idea
+##### 为什么这是个好主意
 
-In the SIP Encryption Primer above we discussed why encrypting the RTP data may be a good idea. This is largely done in the dialplan and has its own page dedicated to its functionality.
+在上面的SIP加密介绍中，我们讨论了为什么加密RTP数据可能是个好主意。这在拨号计划中主要完成，并有一个专门介绍功能的页面。
 
-SRTP by itself without TLS is not secure since the keys are exchanged between the two endpoints in the clear over SIP, which is insecure without TLS or SSL.
+仅有SRTP而没有TLS并不安全，因为密钥在两个端点之间明文交换，而没有TLS或SSL是不安全的。
 
-See [Secure RTP](../../Channel-Variables-Catalog/rtp_secure_media_16353121.mdx#rtp_secure_media) page for how to deploy SRTP.
+请参考[安全的RTP](../../Channel-Variables-Catalog/rtp_secure_media_16353121.mdx#rtp_secure_media)页面了解如何部署SRTP。
 
-Note that the `sip_secure_media` parameter is no longer implemented and you should be setting `rtp_secure_media`
+请注意，`sip_secure_media`参数已不再实现，您应该设置`rtp_secure_media`。
 
-  
-For completely secure connection (signaling + media) use TLS + SRTP. TLS without SRTP secures SIP. SRTP without TLS does not really secure RTP!
+对于完全安全的连接（信令+媒体），请使用TLS + SRTP。TLS不使用SRTP可确保SIP的安全。SRTP不使用TLS无法真正保护RTP！
 
-#### Step 6 - DNS NAPTR & SRV Records (optional)
+#### 第6步 - DNS NAPTR和SRV记录（可选）
 
-##### Configuring DNS NAPTR and SRV for TLS 
+##### 配置DNS NAPTR和SRV用于TLS
 
-This isn't required as TLS will function without it, but it is recommended. If you're going to set up TLS you might take the time to set up the correct DNS SRV and NAPTR records.
+虽然不强制要求配置TLS所需的DNS NAPTR和SRV记录，但建议进行配置。如果您计划设置TLS，请花些时间配置正确的DNS SRV和NAPTR记录。
 
-Here is an example of the NAPTR records you will need (make subtitutions for "[domain.com](http://domain.com)" as necessary):
+以下是您需要的NAPTR记录示例（根据需要对"[domain.com](http://domain.com)"进行替换）：
 
+```
 domain.com.               IN      NAPTR 10 0       "s"     "SIPS+D2T"  "" _sips._tcp.domain.com.                                                                              
 domain.com.               IN      NAPTR 20 0       "s"     "SIP+D2T"   "" _sip._tcp.domain.com.                                                                                
-domain.com.               IN      NAPTR 30 0       "s"     "SIP+D2U"   "" _sip._udp.domain.com.    
+domain.com.               IN      NAPTR 30 0       "s"     "SIP+D2U"   "" _sip._udp.domain.com.
+```
 
-If you configure with --enable-sctp and have sctp loaded on Linux you can add this record:
+如果您启用了`--enable-sctp`选项，并在Linux上加载了SCTP，您可以添加以下记录：
 
+```
 domain.com.               IN      NAPTR 10 0       "s"     "SIPS+D2S"  "" _sip._sctp.domain.com.
+```
 
-  
-Then you will want to set up these SRV records in addition to the above NAPTR:
+然后，除了上述的NAPTR记录，您还需要设置以下SRV记录：
 
+```
 _sips._tcp.domain.com.       IN      SRV 10 0 5061   sip.domain.com.                                                                                                       
 _sip._udp.domain.com.        IN      SRV 10 0 5060   sip.domain.com.                                                                                                       
 _sip._tcp.domain.com.        IN      SRV 10 0 5060   sip.domain.com.   
+```
 
-If you configure with --enable-sctp and have SCTP loaded on Linux you can add this record:
+如果您启用了`--enable-sctp`选项，并在Linux上加载了SCTP，您还可以添加以下记录：
 
+```
 _sip._sctp.domain.com.       IN      SRV 10 0 5060   sip.domain.com.
+```
 
-Example: Snom phones will fully honor both the NAPTR and SRV as will Sofia-SIP on outbound calls originating from FreeSWITCH.
+例如，Snom电话和在FreeSWITCH上发起的呼出调用中的Sofia-SIP都会完全遵守NAPTR和SRV记录。
 
-### SIP TLS Device Interoperability
+### SIP TLS设备互操作性
 
-#### Aastra TLS Setup
+#### Aastra TLS设置
 
-See [Aastra TLS Setup](https://wiki.freeswitch.org/wiki/Interop%5FList#Aastra%5FTLS%5FSetup "Interop List")
+请参阅[Aastra TLS设置](https://wiki.freeswitch.org/wiki/Interop%5FList#Aastra%5FTLS%5FSetup "互操作性列表")
 
-#### Polycom TLS Setup
+#### Polycom TLS设置
 
-See [Polycom TLS Setup](https://wiki.freeswitch.org/wiki/Interop%5FList#Polycom%5FTLS%5FSetup "Interop List")
+请参阅[Polycom TLS设置](https://wiki.freeswitch.org/wiki/Interop%5FList#Polycom%5FTLS%5FSetup "互操作性列表")
 
-#### Linksys TLS Setup
+#### Linksys TLS设置
 
-See [Linksys TLS Setup](https://wiki.freeswitch.org/wiki/Interop%5FList#Linksys%5FTLS%5FSetup "Interop List")
+请参阅[Linksys TLS设置](https://wiki.freeswitch.org/wiki/Interop%5FList#Linksys%5FTLS%5FSetup "互操作性列表")
 
-#### Snom TLS Setup
+#### Snom TLS设置
 
-See [Snom TLS Setup](https://wiki.freeswitch.org/wiki/Interop%5FList#Snom%5FTLS%5FSetup "Interop List")
+请参阅[Snom TLS设置](https://wiki.freeswitch.org/wiki/Interop%5FList#Snom%5FTLS%5FSetup "互操作性列表")
 
-#### EyeBeam/Bria Setup
+#### EyeBeam/Bria设置
 
-See [Bria TLS Setup](https://wiki.freeswitch.org/wiki/Interop%5FList#Bria%5FTLS%5FSetup "Interop List") and/or [Eyebeam TLS Setup](https://wiki.freeswitch.org/wiki/Interop%5FList#EyeBeam%5FTLS%5FSetup "Interop List")
+请参阅[Bria TLS设置](https://wiki.freeswitch.org/wiki/Interop%5FList#Bria%5FTLS%5FSetup "互操作性列表")和/或[Eyebeam TLS设置](https://wiki.freeswitch.org/wiki/Interop%5FList#EyeBeam%5FTLS%5FSetup "互操作性列表")
 
-#### Nokia / Symbian S60 Setup
+#### Nokia / Symbian S60设置
 
-See [Nokia and/or Symbian TLS Setup](https://wiki.freeswitch.org/wiki/Interop%5FList#Nokia%5FTLS%5FSetup%5F.2F%5FSymbian%5FS60%5FTLS%5FSetup "Interop List")
+请参阅[Nokia和/或Symbian TLS设置](https://wiki.freeswitch.org/wiki/Interop%5FList#Nokia%5FTLS%5FSetup%5F.2F%5FSymbian%5FS60%5FTLS%5FSetup "互操作性列表")
 
-### Attachments:
+### 附件:
 
 ![](/images/icons/bullet_blue.gif) [Anatomy-SIPS-and\_SRTP-encrypted.gif](/attachments/9634135/13172797.gif) (image/gif)  
 ![](/images/icons/bullet_blue.gif) [Anatomy-SIPS-encrypted.gif](/attachments/9634135/16351737.gif) (image/gif)  
-![](/images/icons/bullet_blue.gif) [Anatomy-unencrypted.gif](/attachments/9634135/16351738.gif) (image/gif)  
-
-
+![](/images/icons/bullet_blue.gif) [Anatomy-unencrypted.gif](/attachments/9634135/16351738.gif) (image/gif)

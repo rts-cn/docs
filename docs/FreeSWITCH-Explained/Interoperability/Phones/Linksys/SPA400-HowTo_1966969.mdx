@@ -1,90 +1,86 @@
+# SPA400 使用指南
 
-# SPA400 HowTo 
+点击此处展开目录
 
- 
+* 1 [SPA400 瑕疵](#spa400-quirks)
+* 2 [SPA400 使用指南前提](#spa400-howto-assumptions)
+* 3 [SPA400 设备限制](#spa400-device-limitations)
+* 4 [SPA400 设备配置](#spa400-device-configuration)
+* 5 [SPA400 与 FreeSWITCH 连接](#spa400-freeswitch-connection)
+* 6 [SPA400 编解码器配置](#spa400-codec-configuration)
+* 7 [SPA400 与 FreeSWITCH 的连接性](#spa400-freeswitch-connectivity)
+* 8 [SPA400 FreeSWITCH XML 拨号计划使用指南](#spa400-freeswitch-xml-dialplan-howto)
+* 9 [SPA400 来电定向示例](#directing-spa400-incoming-calls-example)
+* 10 [SPA400 去电定向示例：](#directing-spa400-outgoing-calls-example)
 
-Click here to expand Table of Contents
+## SPA400 瑕疵
 
-* 1 [SPA400 Quirks](#spa400-quirks)
-* 2 [SPA400 HowTo ASSUMPTIONS](#spa400-howto-assumptions)
-* 3 [SPA400 DEVICE LIMITATIONS](#spa400-device-limitations)
-* 4 [SPA400 DEVICE CONFIGURATION](#spa400-device-configuration)
-* 5 [SPA400 FreeSWITCH Connection](#spa400-freeswitch-connection)
-* 6 [SPA400 CODEC CONFIGURATION](#spa400-codec-configuration)
-* 7 [SPA400 FreeSWITCH Connectivity](#spa400-freeswitch-connectivity)
-* 8 [SPA400 FreeSWITCH XML DialPlan HowTo](#spa400-freeswitch-xml-dialplan-howto)
-* 9 [Directing SPA400 Incoming Calls Example](#directing-spa400-incoming-calls-example)
-* 10 [Directing SPA400 Outgoing Calls Example:](#directing-spa400-outgoing-calls-example)
+SPA400 是一款相当（啊咳）"有趣"的ATA设备。
 
-## SPA400 Quirks
+首先需要注意的是，它无法与 FreeSWITCH 进行注册。这是因为 Sofia 模块无法为没有密码的终端进行注册。坦率地说，我也觉得很沮丧，但这需要让 Sofia 的人们改变他们的观点，或者让 Sipura（也就是 Linksys，也就是 Cisco）友好的人员将此功能添加到 SPA400 固件中，但这些都不太可能。
 
-  
-The SPA400 is a rather (ahem) "interesting" ATA.
+## SPA400 使用指南前提
 
-First item of note is that it will not register with FreeSWITCH. This is due to the inability of the Sofia module to register endpoints without a password. Frankly I find it frustrating as well, but that would involve getting the Sofia folks to change their perspective on the matter or getting the friendly folks at Sipura, errr Linksys, errr Cisco to add the capability into the SPA400 Firmware, all of which are not likely.
+此使用指南假设您已经在您的局域网上成功配置并运行了 SPA400，并且您已经可以访问其网页界面。
 
-## SPA400 HowTo ASSUMPTIONS
+此使用指南是使用固件版本为 1.1.2.2 的 SPA400 创建的\[[\[1\]](http://linksys.custhelp.com/cgi-bin/linksys.cfg/php/enduser/std%5Fadp.php?p%5Ffaqid=3655)\]，并假设您已安装了相同版本。
 
-This HowTo assumes that you have gotten the SPA400 configured and operational on your LAN and that you already have access to the web interface.
+## SPA400 设备限制
 
-This HowTo was created using an SPA400 with Firmware Revision 1.1.2.2\[[\[1\]](http://linksys.custhelp.com/cgi-bin/linksys.cfg/php/enduser/std%5Fadp.php?p%5Ffaqid=3655)\] and the assumption is that you have the same version installed.
+SPA400 必须在响铃两次以上才会接听。
 
-## SPA400 DEVICE LIMITATIONS
+盲目转接众所周知存在问题。
+_\*注意：这是在用于测试的Cisco 7960中发现的bug。如果您有类似的配置，请参阅Cisco 7960 Howto，了解解决方法的详细信息。_
 
-Will not answer with less than 2 rings.
+不了解也不使用代理。
 
-Blind Transfer is known to be problematic.   
-_\*Note: This was found to be a bug in the Cisco 7960 used for testing. See Cisco 7960 Howto for details on the workaround if you have a similar configuration_
+您必须告诉设备重新启动以使更改生效。（让我抓狂了好几个星期……）
 
-Does not understand or use proxies.
+## SPA400设备配置
 
-You have to tell the device to reboot in order for changes/alterations to take effect. (drove me nuts for weeks...)
+使用Web浏览器登录SPA400。
 
-## SPA400 DEVICE CONFIGURATION
+查看设备的网页界面右上方，并验证固件版本是否至少为1.1.2.2\[[\[2\]](http://linksys.custhelp.com/cgi-bin/linksys.cfg/php/enduser/std%5Fadp.php?p%5Ffaqid=3655)\]。
 
-Log into the SPA400 utilizing the web browser.
+如果固件版本不至少为1.1.2.2，请访问Linksys支持页面，下载最新可用的SPA400固件。
 
-Look at the top right hand side of the web interface for the device and validate that the Firmware revision is at least 1.1.2.2\[[\[2\]](http://linksys.custhelp.com/cgi-bin/linksys.cfg/php/enduser/std%5Fadp.php?p%5Ffaqid=3655)\]
+_**\*\*注意：**在配置设备后，您需要单击“Administration”选项卡，然后单击“Reboot”选项卡，并点击“Restart System”按钮，以使更改生效。_
 
-If the firmware is not at least 1.1.2.2, go to the Linksys support page and download the latest firmware available for the SPA400.
+## SPA400与FreeSWITCH的连接
 
-_**\*\*NOTE:** After configuring the device you WILL need to click on the "Administration" Tab, then on the "Reboot" Tab and click the "Restart System" button in order for your changes to take effect._
+在SPA400的Web界面上，点击“Setup”选项卡，然后点击“SPA9000 Interface”选项卡。
 
-## SPA400 FreeSWITCH Connection
+选择“Static Address”并输入您打算将SPA400连接到的FreeSWITCH配置文件的主机名/或/IP地址以及要连接的端口。在默认的Freeswitch Windows安装中，为了使呼入电话正常工作，您应该使用端口5080。如果您输入了错误的端口或将其保留为5060（默认值），您将收到一个错误提示，指示您应添加新的域和用户以转发呼叫。
 
-On the SPA400 Web Interface Click on the Setup Tab, and then on the SPA9000 Interface tab.
+## SPA400编解码器配置
 
-Select "Static Address" and type in the hostname /or/ IP Address of the FreeSWITCH profile you intend the SPA400 to connect to and the port you want it to connect to. You should use port 5080 in a default Freeswitch Windows installation for the incoming calls to work. If you enter a wrong port or leave it as 5060 (which is default), you will get an error saying you should add a new domain and user to forward the call.
+在SPA400的Web界面上，点击“Setup”选项卡，然后点击“Voice”选项卡。
 
-## SPA400 CODEC CONFIGURATION
+将G.711U选择为首选编解码器，并将Packetization设置为20毫秒。
 
-In the SPA400 Web interface click on the Setup Tab and then click on the Voice Tab.
+_**\*注意**: 我当前将G.711U和G.711A设置为20毫秒，将G.729A设置为30毫秒 - 根据您的配置，您的设置可能需要不同。_
 
-Select G.711U as the Preferred Codec and 20ms as the Packetization.
+在尝试之前，禁用每个编解码器的VAD（下拉选项设置为OFF）。
 
-_**\*note**: currently I have 20ms set for G.711U and G.711A with 30ms set for G.729A - your settings may need to be different depending on your configuration._
+根据您的需求，请参考手册配置其他部分，这将取决于您的环境。
 
-Disable VAD (Pulldown tab set to OFF) for each codec until you're sure you're ready to try it.
+向页面底部滚动，并单击“保存设置”。
 
-Consult the manual for configuring the other sections as per your requirements which will vary depending upon your environment.
+_**\*\*注意:** 配置设备后，您需要点击“Administration”选项卡，然后点击“Reboot”选项卡，并点击“Restart System”按钮，以使更改生效。_
 
-Scroll down to the bottom of the page and click "Save Settings"
+## SPA400 FreeSWITCH连接
 
-_**\*\*NOTE:** After configuring the device you WILL need to click on the "Administration" Tab, then on the "Reboot" Tab and click the "Restart System" button in order for your changes to take effect._
+点击SPA9000 Interface选项卡。在UserID字段中，为您的SPA400设备命名。
 
-## SPA400 FreeSWITCH Connectivity
+此名称将是FreeSWITCH XML Dialplan中的destination\_number。
 
-Click on the SPA9000 Interface Tab. In the UserID field, give your SPA400 a name.
+在本示例中，我们将使用UserID为“homespa400”。
 
-This name will be the destination\_number within the FreeSWITCH XML Dialplan.
+如果您不想对每条线路进行不同处理，在处理呼入电话方面，您在此阶段基本上已完成，假设您知道如何为UserID输入的destination\_number创建XML Dialplan。如果不知道，请参阅本页下方的XML Dialplan示例，您应该能够找出解决方法。
 
-For this example we're going to use a UserID of "homespa400".
+## SPA400 FreeSWITCH XML DialPlan操作指南
 
-If you don't want to treat each line differently, you're pretty much done at this stage for incoming calls, assuming you know how to create the XML Dialplan for the destination\_number of what you typed in for the UserID. If not see the XML Dialplan example further down this page and you should be able to figure it out.
-
-## SPA400 FreeSWITCH XML DialPlan HowTo
-
-Assuming you've followed the steps for SPA400 FreeSWITCH Connectivity above you will notice a section on that page entitled "Port ID" with:
+假设您已按照上述SPA400 FreeSWITCH连接的步骤进行操作，您将会注意到页面上有一个标题为"Port ID"的部分，其中包括：
 
 Port ID 1
 
@@ -94,35 +90,35 @@ Port ID 3
 
 Port ID 4
 
-When a call comes in on any of the following lines it will contain what you specify in the Port ID field in the ${sip\_to\_user} variable.
+当呼叫进入以下任何一条线路时，${sip\_to\_user}变量中会包含您在Port ID字段中指定的内容。
 
-**For this example we will assume the following data is used:**
+**在本示例中，我们将使用以下数据：**
 
-Port ID 1 : 237168330999
+Port ID 1: 237168330999
 
-Port ID 2 : 237168379168
+Port ID 2: 237168379168
 
-Port ID 3 : doorbell
+Port ID 3: doorbell
 
-Port ID 4 : 237168330756
+Port ID 4: 237168330756
 
-_**\*\*NOTE:** After configuring the device you WILL need to click on the "Administration" Tab, then on the "Reboot" Tab and click the "Restart System" button in order for your changes to take effect._
+_**\*\*注意:** 在配置设备之后，您需要单击"管理"选项卡，然后单击"重启"选项卡，并点击"重新启动系统"按钮，以便使更改生效。_
 
-## Directing SPA400 Incoming Calls Example
+## SPA400呼入呼叫示例
 
-The dialplan below dials several different users/endpoints depending on the criteria set forth in the Port ID and the UserID specified in the SPA400 Configuration.
+下面的拨号计划根据SPA400配置中设置的端口ID和用户ID拨打多个不同的用户/终端。
 
-**In the example below you will want to replace the:**
+**在下面的示例中，您需要替换:**
 
 ```xml
 <action application="playback" data="/opt/freeswitch/sounds/asterisk/pls-hold-while-try.wav"/>
 ```
 
-with your own audio filename otherwise the caller will not hear any indication that the call is being redirected.
+为您自己的音频文件名，否则呼叫者将听不到任何指示呼叫被重定向的声音。
 
-Since the SPA400 will not answer on less than two rings it's advisable to play something to the caller to let them know that their call is being transferred at that moment. Otherwise what occurs is that the caller is under the impression that (X) rings have occurred when in fact the phones have only been rung (X-2) rings. The end result is that the caller usually hangs up before the callee has a chance to answer.
+由于SPA400要在至少两个铃声后才会应答，建议给呼叫者播放一些声音，让他们知道他们的呼叫正在被转接。否则，呼叫者的印象是已经发生了(X)铃声，而实际上电话只响了(X-2)铃声。结果是，呼叫者通常在被呼叫者有机会接听之前挂断了电话。
 
-Using the above configuration we can direct connections to specific endpoints with the following XML DialPlan segment:
+使用上述配置，我们可以使用以下XML拨号计划段将连接定向到特定的终端。
 
 ```xml
 <extension name="SPA400 Incoming">
@@ -139,7 +135,7 @@ Using the above configuration we can direct connections to specific endpoints wi
       <action application="set" data="call_timeout=60"/>
       <action application="info" />
     </condition>
-    <!-- The SPA400 utilizes the ${sip_to_user} SIP header variable in order to direct the call -->
+    <!-- SPA400使用${sip_to_user} SIP头变量来定位呼叫 -->
     <condition field="${sip_to_user}" expression="^(237168330999)$" break="never">
       <action application="playback" data="/opt/freeswitch/sounds/asterisk/pls-hold-while-try.wav"/>
       <action application="set" data="hangup_after_bridge=true"/>
@@ -168,21 +164,21 @@ Using the above configuration we can direct connections to specific endpoints wi
   </extension>
 ```
 
-I had to put this into the conf/dialplan/public/00\_inbound\_did.xml file instead of the conf/dialplan/default.xml file, in a default Freeswitch Windows installation, to make it work.
+我不得不将这个放在`conf/dialplan/public/00_inbound_did.xml`文件中，而不是`conf/dialplan/default.xml`文件中。这是在默认的Freeswitch Windows安装中使其正常工作的方法。
 
-## Directing SPA400 Outgoing Calls Example:
+## 直接指定SPA400的呼出例子：
 
-_**\*\*Note:** this has been tested in a limited manner, I will remove this note when it's fully tested._
+_**\*\*注意：**这个例子只进行了有限的测试，等测试通过后我会移除这个注释。_
 
-The SPA400 does provide a mechanism for selecting the outbound line to use when placing a call provided the SPA400 has at least Firmware Revision 1.1.2.2
+只要SPA400的固件版本达到至少1.1.2.2，它就能够提供选择使用的呼出线路的机制。
 
-This code should go into the conf/dialplan/default.xml in a default Freeswitch Windows installation.
+这段代码应该放在默认的Freeswitch Windows安装中的`conf/dialplan/default.xml`文件中。
 
-This is done by preceeding the outgoing number with L1, L2, L3 or L4 as follows:
+具体的操作是在外拨号码之前加上L1、L2、L3或L4，如下所示：
 
-The example below assumes a 7 digit outbound call like 2345678 and that the SPA400 is located at IP address 1.2.3.4.
+下面的例子假设外拨号码为7位数（例如2345678），而SPA400的IP地址为1.2.3.4。
 
-You may substitute the profile designated as "internal" for whatever profile suits your configuration. In the example below we're using Line 1 which is designated as L1\. To use line 2 one would use L2, etc...
+您可以根据您的配置将`"internal"`所代表的配置文件替换为其他配置文件。在下面的例子中，我们使用的是L1线路。要使用L2线路，您可以使用L2，依此类推...
 
 ```xml
 <extension name="SPA400 Incoming">
@@ -192,7 +188,7 @@ You may substitute the profile designated as "internal" for whatever profile sui
 </extension>
 ```
 
-You can also add different conditions to call different type of numbers. An example would be,
+您还可以添加不同的条件来呼叫不同类型的号码。例如：
 
 ```xml
     <condition field="destination_number" expression="^([0][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9])$" break="never"> 
@@ -200,23 +196,21 @@ You can also add different conditions to call different type of numbers. An exam
     </condition>
 ```
 
-Adding the above code would allow you to call numbers that goes as 0-(XXX)-XXXXXXX. You should adjust this for the local phone system to be able to call numbers with an area code. Also very important is to add another condition to allow for the emergency numbers, which are usually 3 digits in most countries, such as 911.
+添加上面的代码将允许您拨打以0-(XXX)-XXXXXXX格式呈现的号码。您应根据当地电话系统调整这个方法，以便能够拨打带有区号的号码。另外非常重要的是要添加另一个条件，以允许拨打紧急号码，在大多数国家通常为3位数，如911。
 
-If you would like to make the outgoing call to use L1 first and if that is not available (busy) to use L2, you should change bridge line to something like;
+如果您希望对外拨打电话时首先使用L1，如果L1不可用（忙），则使用L2，您应将桥接线改为如下方式：
 
 &lt;action application="bridge" data="sofia/internal/L1$1@1.2.3.4|sofia/internal/L2$1@1.2.3.4"/>
 
-t text.
+文字内容。
 
-* 1 [SPA400 Quirks](#spa400-quirks)
-* 2 [SPA400 HowTo ASSUMPTIONS](#spa400-howto-assumptions)
-* 3 [SPA400 DEVICE LIMITATIONS](#spa400-device-limitations)
-* 4 [SPA400 DEVICE CONFIGURATION](#spa400-device-configuration)
-* 5 [SPA400 FreeSWITCH Connection](#spa400-freeswitch-connection)
-* 6 [SPA400 CODEC CONFIGURATION](#spa400-codec-configuration)
-* 7 [SPA400 FreeSWITCH Connectivity](#spa400-freeswitch-connectivity)
-* 8 [SPA400 FreeSWITCH XML DialPlan HowTo](#spa400-freeswitch-xml-dialplan-howto)
-* 9 [Directing SPA400 Incoming Calls Example](#directing-spa400-incoming-calls-example)
-* 10 [Directing SPA400 Outgoing Calls Example:](#directing-spa400-outgoing-calls-example)
-
-
+* 1 [SPA400 特殊情况](#spa400-quirks)
+* 2 [SPA400 假设条件](#spa400-howto-assumptions)
+* 3 [SPA400 设备限制](#spa400-device-limitations)
+* 4 [SPA400 设备配置](#spa400-device-configuration)
+* 5 [SPA400 FreeSWITCH 连接](#spa400-freeswitch-connection)
+* 6 [SPA400 CODEC 配置](#spa400-codec-configuration)
+* 7 [SPA400 FreeSWITCH 连通性](#spa400-freeswitch-connectivity)
+* 8 [SPA400 FreeSWITCH XML DialPlan 如何操作](#spa400-freeswitch-xml-dialplan-howto)
+* 9 [引导SPA400的呼入电话示例](#directing-spa400-incoming-calls-example)
+* 10 [引导SPA400的呼出电话示例：](#directing-spa400-outgoing-calls-example)

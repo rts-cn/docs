@@ -1,152 +1,147 @@
+# 抖动缓冲（JitterBuffer）
 
-# JitterBuffer 
+## 关于
 
- 
+抖动缓冲实现在 Sort Transportable Framed Utterances（STFU）库中。抖动缓冲不会默认启用。
 
-## About
+点击此处展开目录
 
-The jitter buffer is implemented in the Sort Transportable Framed Utterances (STFU) library. The jitter buffer is not enabled by default.
+* 1 [有趣信息](#interesting-information)
+* 2 [启用说明](#activation-instructions)
+   * 2.1 [拨号计划应用](#dialplan-app)
+   * 2.2 [Sofia配置文件参数](#sofia-profile-param)
+   * 2.3 [通道变量](#channel-variable)
+   * 2.4 [jitterbuffer_msec](#jitterbuffer_msec)
+* 3 [其他用途](#jitterbuffer_msec)
+   * 3.1 [rtp_jitter_buffer_plc](#jitterbuffer_msec)
+   * 3.2 [rtp_jitter_buffer_during_bridge](#jitterbuffer_msec)
+   * 3.3 [暂停](#jitterbuffer_msec)
+   * 3.4 [恢复](#jitterbuffer_msec)
+   * 3.5 [调试](#jitterbuffer_msec)
+   * 3.6 [前瞻](#jitterbuffer_msec)
 
-Click here to expand Table of Contents
+自 FreeSWITCH™ 1.6 版本开始，与媒体相关的所有变量都已经标准化，需要以字符串 "rtp_" 开头。
 
-* 1 [Interesting Information](#interesting-information)
-* 2 [Activation instructions](#activation-instructions)  
-   * 2.1 [Dialplan app](#dialplan-app)  
-   * 2.2 [Sofia profile param](#sofia-profile-param)  
-   * 2.3 [Channel Variable](#channel-variable)  
-   * 2.4 [jitterbuffer\_msec](#jitterbuffer_msec)
-* 3 [Other usage](#jitterbuffer_msec)  
-   * 3.1 [rtp\_jitter\_buffer\_plc](#jitterbuffer_msec)  
-   * 3.2 [rtp\_jitter\_buffer\_during\_bridge](#jitterbuffer_msec)  
-   * 3.3 [Pause](#jitterbuffer_msec)  
-   * 3.4 [Resume](#jitterbuffer_msec)  
-   * 3.5 [Debug](#jitterbuffer_msec)  
-   * 3.6 [Lookahead](#jitterbuffer_msec)
+如果您看到以 "sip_" 开头的变量，明显与媒体流相关，那意味着您正在阅读过时的文档。请通过打开 JIRA 工单或在受影响页面底部留下评论告知文档团队。谢谢！
 
-As of FreeSWITCH™ version 1.6 all variables relating to media have been normalized to begin with the string "rtp\_"
+## 有趣信息
 
-If you see variables beginning with sip\_ that clearly deal with media streams, you are reading outdated documentation. Please let the docs team know by opening a JIRA ticket or leave a comment at the bottom of the affected page. Thanks.
+以下信息来自 Anthony Minessale 在 freeswitch-users [帖子](http://lists.freeswitch.org/pipermail/freeswitch-users/2012-August/086987.html) 中：
 
-  
-## Interesting Information
+如果抖动缓冲已经启用，再次调用将只会重新调整大小，因此设置为相同的值是多余的，但是无害的。
 
-  
-The following information came from Anthony Minessale in a freeswitch-users [thread](http://lists.freeswitch.org/pipermail/freeswitch-users/2012-August/086987.html):
+如果您对于抖动缓冲在桥接期间暂停感到困惑：
 
-If the jitterbuffer is already on, calling it again will just resize it, so setting it to the same is redundant, but harmless.
+如果桥接的两端都是 RTP，并且两端都有抖动缓冲，那么它实际上是没有多大用处的。事实上，如果有什么，它可能会降低通话质量。
 
-If you are surprised by why the jitterbuffer is paused during bridge:
+你应该只在协议终端切换点运行抖动缓冲区。例如，如果FS托管了一个会议或IVR，你正在将通话桥接到电话上，那么你不应该使用抖动缓冲区，因为你希望保留原始时间戳，以便你的电话可以使用自己的抖动缓冲区。
 
-If both sides of a bridge are RTP and both sides have a jitter buffer, it's fairly useless. In fact if anything, it can worsen call quality.
+对于特殊应用，如果你在其他没有抖动缓冲区或其他特殊情况的前面使用了FS抖动缓冲区，则可以使用Chris提到的设置来保持其运行。
 
-You should only run jitter buffers at points of termination change of protocol. Examples, if FS was hosting a conference or IVR and you are bridging the call to a phone for instance, you don't want to use a jitter buffer because you want to preserve the original timestamps so that your phone can use its own jitter buffer.
+## 激活说明
 
-For special applications where you are using FS jitterbuffer in front of something else that does not have one or some other special circumstance you can use the setting that Chris mentioned to leave it running.
+可以通过通道变量、拨号计划应用或sofia参数来激活抖动缓冲区。
 
-## Activation instructions
+抖动缓冲区有三个参数来控制其行为：长度、最大长度和最大漂移值。长度是抖动缓冲区的初始大小，单位为毫秒。最大长度是抖动缓冲区可以增长的上限。最大漂移值控制抖动缓冲区在丢弃帧之前容忍多少延迟。
 
-The jitter buffer can be activated via channel variable, dialplan app, or sofia param.
+### 拨号计划应用
 
-The jitter buffer has three params that control its behavior: length, max length, and max drift. Length is the initial size of the jitter buffer in milliseconds. Max length is the upper bound for how big the jitter buffer can grow. Max drift controls how much delay the jitter buffer will tolerate before dropping frames to make up ground.
-
-### Dialplan app
-
-Enable 60 ms jitter buffer:
+启用60毫秒的抖动缓冲区：
 
 ```xml
 <action application="jitterbuffer" data="60"/>
 ```
 
-Enable 60 ms jitter buffer with 200ms max length and 20 ms max drift:
+启用60毫秒的抖动缓冲区，最大长度为200毫秒，最大漂移值为20毫秒：
 
 ```xml
 <action application="jitterbuffer" data="60:200:20"/>
 ```
 
-### Sofia profile param
+### Sofia配置参数
 
-This param is the initial size of the jitter buffer in milliseconds. The max length and max drift values can't be set with this param.
+此参数是抖动缓冲区的初始大小，单位为毫秒。最大长度和最大漂移值不能使用此参数进行设置。
 
 ```xml
 <param name="auto-jitterbuffer-msec" value="60"/>
 ```
 
-The parameter uses -hyphens- while the variable uses \_underscore\_
+这个参数使用了“-”连字符，而变量使用了“\_”下划线。
 
-### Channel Variable
+### 通道变量
 
 [jitterbuffer\_msec](../../Channel-Variables-Catalog/jitterbuffer_msec_16353845.mdx#jitterbuffer_msec)
 
-### jitterbuffer_msec
+### jitterbuffer\_msec
 
-string
+字符串
 
-Channel variable. Activates the jitter buffer. The jitter buffer has three params: length, max length, and max drift.
+通道变量。激活抖动缓冲区。抖动缓冲区有三个参数：长度、最大长度和最大漂移量。
 
-**Usage**
+**用法**
 
-jitterbuffer\_msec=buffer length:maximum buffer length:maximum drift
+jitterbuffer\_msec=缓冲区长度:最大缓冲区长度:最大漂移量
 
-The three arguments specify the size of the jitter buffer either in units of milliseconds when only numerals are used or in the count of packets when the suffix 'p' is appended to the number.
+这三个参数指定了抖动缓冲区的大小，可以用毫秒单位表示（仅使用数字），也可以用数据包数量表示（数字后面加上后缀'p'）。
 
-buffer length – beginning length of jitter buffer
+缓冲区长度 – 抖动缓冲区的初始长度
 
-max length – maximum size to which the jitter buffer is allowed to grow
+最大长度 – 抖动缓冲区允许增长到的最大大小
 
-max drift – maximum delay the jitter buffer will tolerate before dropping frames to make up ground
+最大漂移量 – 抖动缓冲区容忍的最大延迟，在丢弃帧以追赶上来之前
 
-**Examples**
+**示例**
 
-**Numeric time example**
+**根据时间的示例**
 
 ```xml
 <action application="set" data="jitterbuffer_msec=60:200:20"/>
 <action application="answer"/>
 ```
 
-**Packet count example**
+**根据数据包数量的示例**
 
 ```xml
 <action application="set" data="jitterbuffer_msec=2p:25p:4p"/>
 <action application="answer"/>
 ```
 
-Or to set it only on the subsequent outbound (Leg B) call: the [export](../Modules/mod_dptools_1970333.mdx#-c) dialplan app sets a variable on both the current channel and on any channels it creates, while the 'nolocal:' directive disables setting it on the current (Leg A) channel and only sets it on the subsequent outbound channels.
+或者仅在随后的呼出（Leg B）呼叫中设置它：[export](../Modules/mod_dptools_1970333.mdx#-c) 拨号计划应用在当前通道和任何它创建的通道上设置一个变量，而'nolocal:' 指令禁止在当前通道（Leg A）上设置它，只在随后的呼出通道上设置它。
 
-**Leg B only with nolocal:**
+**仅在 Leg B 上使用 nolocal:**
 
 ```xml
 <action application="export" data="nolocal:jitterbuffer_msec=60"/>
 <action application="bridge" data="sofia/default/888@conference.freeswitch.org"/>
 ```
 
-You can also activate the Jitter Buffer in the bridge as follows:
+您还可以在桥接中激活抖动缓冲区，如下所示：
 
-**jb in bridge app**
+**在桥接应用中使用 jb**
 
 ```xml
 <action application="bridge" data="{jitterbuffer_msec=60}sofia/gateway/$1@gateway.com"/>
 ```
 
-This will add a jitter buffer to packets flowing from a remote gateway towards a local freeswitch user. The network would look like this:
+这将在从远程网关流向本地 FreeSWITCH 用户的数据包上添加一个抖动缓冲区。网络将如下所示：
 
-(local sip user) -----> FreeSWITCH -----> (remote gateway)
+（本地SIP用户）---->FreeSWITCH---->（远程网关）
 
-Where the link between FreeSWITCH and the remote gateway has jitter, and say the local SIP user has no jitter buffering on their IP-phone. This will help the voice quality for the incoming audio.
+FreeSWITCH和远程网关之间的连接存在抖动，并且假设本地SIP用户的IP电话没有抖动缓冲。这将有助于提高传入音频的语音质量。
 
-## Other usage
+## 其他用途
 
 ### [rtp_jitter_buffer_plc](../../Channel-Variables-Catalog/sip_jitter_buffer_plc_16353926.mdx#sip_jitter_buffer_plc)
 
-Enables/disables packet loss concealment ([PLC](../Modules/mod-dptools/6586541.mdx#about)) when using the jitter buffer. PLC is enabled by default when the jitter buffer is enabled. Set this variable before enabling the jitter buffer for it to have an effect.
+在使用抖动缓冲区时启用/禁用丢包隐藏（[PLC](../Modules/mod-dptools/6586541.mdx#about)）。当启用抖动缓冲区时，默认情况下启用丢包隐藏。在启用抖动缓冲区之前设置此变量才能生效。
 
-Usage:
+使用方法：
 
 ```xml
 <action application="set" data="rtp_jitter_buffer_plc=true"/>
 ```
 
-or to disable PLC:
+或者禁用丢包隐藏：
 
 ```xml
 <action application="set" data="rtp_jitter_buffer_plc=false"/>
@@ -154,46 +149,46 @@ or to disable PLC:
 
 ### [rtp_jitter_buffer_during_bridge](../../Channel-Variables-Catalog/rtp_jitter_buffer_during_bridge_16352745.mdx#rtp_jitter_buffer_during_bridge)
 
-Enables/disables the jitter buffer during bridge.
+在桥接过程中启用/禁用抖动缓冲区。
 
-Usage:
+使用方法：
 
 ```xml
 <action application="set" data="rtp_jitter_buffer_during_bridge=true"/>
 ```
 
-or,
+或者
 
 ```xml
 <action application="set" data="rtp_jitter_buffer_during_bridge=false"/>
 ```
 
-To enable jitter buffer on only the B-leg of the call, issue commands based on these examples in this sequence:
+要仅在呼叫的B端启用抖动缓冲区，请根据以下示例顺序发出命令：
 
 &lt;action application="export" data="rtp_jitter_buffer_during_bridge=true"/>
 
 &lt;action application="export" data="nolocal:jitterbuffer_msec=60:120"/>
 
   
-### Pause
+### 暂停
 
-The jitter buffer can be paused mid-call
+抖动缓冲区可以在通话中暂停
 
 ```xml
 <action application="jitterbuffer" data="pause"/>
 ```
 
-### Resume
+### 恢复
 
-The jitter buffer can be resumed mid-call
+抖动缓冲区可以在通话中恢复
 
 ```xml
 <action application="jitterbuffer" data="resume"/>
 ```
 
-### Debug
+### 调试
 
-Jitter buffer debugging can be enabled/disabled.
+可以启用/禁用抖动缓冲区调试。
 
 ```xml
 <action application="jitterbuffer" data="debug:${uuid}"/>
@@ -201,9 +196,9 @@ Jitter buffer debugging can be enabled/disabled.
 ```
 
   
-### Lookahead
+### 预读
 
-If using the Opus codec (popular with WebRTC) and the far end is sending F.E.C. (Forward Error Correction) information, you can enable a look-ahead jitter buffer in the codec configuration:
+如果使用 Opus 编解码器（与 WebRTC 流行）并且对端发送了 F.E.C.（前向纠错）信息，则可以在编解码器配置中启用预读缓冲区：
 
 **autoload\_configs/opus.conf.xml**
 
@@ -211,12 +206,10 @@ If using the Opus codec (popular with WebRTC) and the far end is sending F.E.C. 
 <param name="use-jb-lookahead" value="1"/> 
 ```
 
-On FreeSWITCH version 1.6 and later this greatly improves the audio performance even with heavy packet loss.
+在 FreeSWITCH 版本 1.6 及更高版本上，即使在严重丢包情况下，这样做也极大地改善了音频性能。
 
   
-### Comments:
+### 注释：
 
-| to enable jitterbuffer on one leg of the call, usually between FS and remote gateway, the only way to make it not pause during bridge is to do it the below way, i tried the way by mentioned on this page without using rtp jitter buffer during dridge but it doesnt work and always pauses, key here is to export both of the below and then only it will not pause and enable on one leg of the call &lt;action application="export" data="rtp\_jitter\_buffer\_during\_bridge=true"/> &lt;action application="export" data="nolocal:jitterbuffer\_msec=60:120"/> ![](/images/icons/contenttypes/comment_16.png) Posted by xbipin at Nov 03, 2015 05:41 |
+| 启用通话的一个方向上的抖动缓冲区，通常是在FS和远程网关之间，唯一的方法是通过以下方式进行，我尝试了在这个页面上提到的方法，但在桥接期间不使用RTP抖动缓冲区是不起作用的，会一直出现暂停，关键是导出以下两个参数，然后只有这样才不会暂停并启用通话的一个方向。 &lt;action application="export" data="rtp\_jitter\_buffer\_during\_bridge=true"/> &lt;action application="export" data="nolocal:jitterbuffer\_msec=60:120"/> ![](/images/icons/contenttypes/comment_16.png) 发表人：xbipin 于 2015年11月3日 05:41 |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-
-

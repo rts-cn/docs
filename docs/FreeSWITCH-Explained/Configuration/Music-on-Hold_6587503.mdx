@@ -1,67 +1,58 @@
+# 持续音乐
 
-# Music on Hold 
+## 关于
 
- 
+持续音乐（MOH）不是一个核心组件，它依赖于支持它的终端设备。
 
-## About
+点击此处展开目录
 
-  
-Music on Hold (MOH) is not a central component, and it's dependent on endpoints supporting it.  
+* 1 [配置](#配置)
+* 2 [在电话上的工作原理](#在电话上的工作原理)
+* 3 [免版权音乐来源](#免版权音乐来源)
+* 4 [另请参阅](#另请参阅)
 
-Click here to expand Table of Contents
-
-* 1 [Configuration](#configuration)
-* 2 [How it works on the telephone](#how-it-works-on-the-telephone)
-* 3 [Royalty-free Music Sources](#royalty-free-music-sources)
-* 4 [See also](#see-also)
-
-To download the default FreeSWITCH Music on Hold files at all the sample rates (8000, 16000, 32000, 48000) you must run this command inside the FreeSWITCH source directory:
+要下载所有采样率（8000、16000、32000、48000）的默认FreeSWITCH持续音乐文件，请在FreeSWITCH源目录中运行以下命令：
 
 ```xml
 make cd-moh-install
 ```
+或者直接从<http://files.freeswitch.org/>下载文件 freeswitch-sounds-music-RESOLUTION-VERSION.tar.gz。
 
-Or just download the files freeswitch-sounds-music-RESOLUTION-VERSION.tar.gz directly from <http://files.freeswitch.org/>.
+## 配置
 
-## Configuration
-
-In conf/vars.xml the default is defined:
+在conf/vars.xml中，默认配置为：
 
 ```xml
 <X-PRE-PROCESS cmd="set" data="hold_music=local_stream://moh"/>
 ```
+它指向在conf/autoload_configs/local_stream.conf.xml中定义的声音文件。
 
-which points to sound files defined in conf/autoload\_configs/local\_stream.conf.xml
-
-You can also generate tones for music on hold using the tone\_stream app:
+您还可以使用tone_stream应用程序为持续音乐生成音调：
 
 ```xml
 <X-PRE-PROCESS cmd="set" data="hold_music={loops=-1}tone_stream://v=-30;%(250,0,350);%(250,0,440)"/>
 ```
+虽然不是很有趣，但可以说明重点。
 
-which is not very entertaining, but gets the point across.
+您还可以为每个SIP配置文件配置独特的持续音乐，这在多租户环境中非常有用。
 
-You may also configure a unique music on hold for each sip profile, which is useful in multi-tenant environments.
+## 在电话上的工作原理
 
-## How it works on the telephone
+对于连接到ATA的单线电话的呼叫等待情况，工作原理如下：
 
-In the case of call waiting on a single line phone connected to an ATA, it works like this:
+1. 第二个呼入呼叫到达。
+2. 电话播放呼叫等待的哔哔声。
+3. 用户按下闪断键。
+4. ATA向FreeSWITCH发送SIP INVITE消息，在SDP中指定“sendonly”。
+5. FreeSWITCH接收SIP INVITE并播放持续音乐（假设已正确配置）。
 
-1. Second incoming call comes in.
-2. Phone plays call waiting beep.
-3. User hits flash button.
-4. ATA sends a SIP INVITE message to FreeSWITCH, and in the SDP it says "sendonly"
-5. FreeSWITCH receives the SIP INVITE and plays the hold music (assuming correctly configured).
+## 免版权音乐来源
 
-## Royalty-free Music Sources
-
-* [incompetech Creative Commons](http://incompetech.com/m/c/royalty-free/)
+* [incompetech 创意共享](http://incompetech.com/m/c/royalty-free/)
 * [Ghostnotes](http://ghostnotes.blogspot.com/)
 * [ClassicCat](http://www.classiccat.net/)
 
-## See also
+## 另请参阅
 
-* [Sofia SIP Stack](./Sofia-SIP-Stack/index.mdx#faq) hold-music option
-* [Channel variable](../Dialplan/Variables-Archive/x__Channel-Variables_1048892.mdx#--) **hold\_music** option
-
-
+* [Sofia SIP Stack](./Sofia-SIP-Stack/index.mdx#faq) 持续音乐选项
+* [通道变量](../Dialplan/Variables-Archive/x__Channel-Variables_1048892.mdx#--) **hold_music** 选项

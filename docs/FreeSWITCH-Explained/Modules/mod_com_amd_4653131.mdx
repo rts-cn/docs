@@ -1,157 +1,153 @@
+# mod_com_amd
 
-# mod_com_amd 
+自动识别答录机（AMD）是任何电话系统中的一个重要功能。它用于筛选呼出电话，以确定是由人还是机器（如IVR或语音邮件系统）接听呼叫。如果接听的是人，呼叫可以转接给人工坐席。如果检测到是机器，则系统可能要结束呼叫或留下语音邮件。
 
-Answering Machine Detection (AMD) is an integral feature in any phone system. It is used to screen outbound calls to determine whether a human or machine (such as an IVR or voicemail system) answers the call. If a human answers, the call can be connected to a human agent. If a machine is detected, your system may want to end the call or leave a voicemail message.
+## 关于
 
-## About
+mod_com_amd是FreeSWITCH™商业模块，用于分析呼叫进展并确定是由人还是机器接听。
 
-mod\_com\_amd is a FreeSWITCH™ commercial module used to analyze call progress and identify if it was answered by a human or a machine.
+单击此处展开目录
 
-Click here to expand Table of Contents
+* 1 [介绍](#introduction)
+* 2 [获取许可证](#getting-licenses)
+* 3 [安装](#installing)  
+   * 3.1 [FreeSWITCH 1.8的更新说明](#updated-instructions-for-freeswitch-18)  
+   * 3.2 [FreeSWITCH 1.6的旧版说明](#older-instructions-for-freeswitch-16)
+* 4 [默认配置](#default-configuration)
+* 5 [通过拨号计划覆盖配置值](#overriding-config-values-via-dialplan)
+* 6 [示例](#examples)  
+   * 6.1 [XML拨号计划示例](#xml-dialplan-example)  
+   * 6.2 [Lua示例](#lua-example)
+* 7 [测试拨号计划](#testing-dialplan)
 
-* 1 [Introduction](#introduction)
-* 2 [Getting Licenses](#getting-licenses)
-* 3 [Installing](#installing)  
-   * 3.1 [Updated Instructions for FreeSWITCH 1.8](#updated-instructions-for-freeswitch-18)  
-   * 3.2 [Older Instructions for Freeswitch 1.6](#older-instructions-for-freeswitch-16)
-* 4 [Default Configuration](#default-configuration)
-* 5 [Overriding Config Values via Dialplan](#overriding-config-values-via-dialplan)
-* 6 [Examples](#examples)  
-   * 6.1 [XML Dialplan Example](#xml-dialplan-example)  
-   * 6.2 [Lua Example](#lua-example)
-* 7 [Testing Dialplan](#testing-dialplan)
+## 使用SignalWire进行AMD
 
-## AMD using SignalWire 
+您可以使用[兼容性API](https://developer.signalwire.com/compatibility-api/)访问AMD功能，该API旨在使从其他提供商迁移变得容易，同时让您访问我们的下一代API和终端节点。通过使用[创建呼叫终端节点](https://docs.signalwire.com/reference/compatibility-sdks/v3/#api-reference-calls-create-a-call)，您可以使用Machine Detection参数启用AMD，或者通过使用`DetectMessageEnd`值，甚至可以监听机器消息的结束。
 
-You can access the AMD feature with the [Compatibility API](https://developer.signalwire.com/compatibility-api/) which is designed to make migrating from other providers easy while giving you access to our next generation APIs and endpoints. Using the [create a call endpoint](https://docs.signalwire.com/reference/compatibility-sdks/v3/#api-reference-calls-create-a-call), you can use the Machine Detection parameter to enable AMD or, by using the `DetectMessageEnd` value, you can even listen for the end of a machine message.
+## 介绍
 
-## Introduction
+FreeSWITCH™提供了一款经许可的商业自动答录机检测模块。对于自动拨号器来说，能够检测到人工接听和答录机的能力是至关重要的。由于在电话被答录机或语音信箱接听时没有任何指示/硬件信号，自动拨号器系统必须分析传入的音频以进行预测。目前，还没有一种算法能够达到100%的准确率。
 
-FreeSWITCH™ provides a licensed commercial Answering Machine Detection module. A key technology for autodialers is the ability to detect live human pickup and answering machine. Since there is no indication/hardware signal when a call is answered by an answering machine or voicemail system, autodialer systems have to analyze incoming audio in order to make a prediction. Currently, there is no algorithm that can achieve 100% accuracy.
+## 获得许可证
 
-## Getting Licenses
+所有FreeSWITCH™的购买都必须通过我们的计费系统进行。请访问<https://endor.freeswitch.com/cart.php?gid=15>，点击右上角的"Account"菜单，然后选择"Register"。
 
-All FreeSWITCH™purchases must be done through our billing system. Go to <https://endor.freeswitch.com/cart.php?gid=15>, click on the top right menu called Account and then on Register. 
-
-  
 ![](/attachments/4653131/4980737.png)![](/attachments/4653131/4980738.png)
 
-After registering, go to login page at <https://endor.freeswitch.com/cart.php?gid=15> and provide your credentials. Once logged in the system, you'll see a menu on top of the page called Products, click and then click on Order New Products. Direct link is <https://endor.freeswitch.com/cart.php?a=confproduct&i=0>.
+注册完成后，前往登录页面<https://endor.freeswitch.com/cart.php?gid=15>，并提供您的凭据。登录系统后，您将在页面顶部看到一个名为"Products"的菜单，点击并选择"Order New Products"。直达链接：<https://endor.freeswitch.com/cart.php?a=confproduct&i=0>。
 
 ![](/attachments/4653131/4980740.png)
 
-On the cart page, scroll down your screen and you'll see AMD product description. Click on the Order Now button. Direct link is <https://endor.freeswitch.com/cart.php?a=confproduct&i=1>
+在购物车页面上，向下滚动屏幕，您将看到AMD产品描述。点击"Order Now"按钮。直达链接：<https://endor.freeswitch.com/cart.php?a=confproduct&i=1>。
 
 ![](/attachments/4653131/4980741.png)
 
-On the next screen you need to type how many licenses you need. A license is needed for each created channel that you need to activate the detection. If you have 5 simultaneous calls and want to detect who's answering you'll need 5 ports/channels. Click on Add to Cart after selecting the number of licenses.
+在下一个界面上，您需要输入所需的许可证数量。每创建一个需要激活检测的通道都需要一个许可证。如果您有5个同时通话，并且希望检测谁在接听，您将需要5个端口/通道。在选择许可证数量后，点击"Add to Cart"。
 
 ![](/attachments/4653131/4980742.png)
 
-If you need to activate licenses for different servers you need to buy them separately. For example, if you need 5 licenses to server A and more 10 to server B, add 5 licenses to the cart and then add 10 more again, you'll receive two activation codes, one for each server.
+如果您需要为不同的服务器激活许可证，您需要分别购买它们。例如，如果您需要5个许可证给服务器A，以及额外的10个许可证给服务器B，先将5个许可证添加到购物车，然后再次添加10个许可证，您将收到两个激活码，一个用于每个服务器。
 
-  
-Now you can proceed to payment, and the end of the page there's a Complete Order button. The payment method is PayPal, if you don't have paypal account please proceed to [PayPal's registration page](https://www.paypal.com/webapps/setup-paypal-account/onboarding?execution=e1s1) and follow the instructions.
+现在您可以继续付款，在页面底部有一个"完成订单"按钮。付款方式是PayPal，如果您没有PayPal账户，请前往[PayPal的注册页面](https://www.paypal.com/webapps/setup-paypal-account/onboarding?execution=e1s1)并按照提示进行操作。
 
 ![](/attachments/4653131/4980743.png)
 
-After the payment, PayPal will notify FreeSWITCH™ billing system about the new payment and the license(s) will be sent to your email. This process takes a few minutes, if you do not receive the email in a few minutes please contact us at [consulting@freewitch.org](mailto:consulting@freewitch.org) or at #freeswitch at irc.freenode.net. For more information on how to contact us please visit [IRC](../Community/IRC_1970341.mdx#pb) page.
+付款后，PayPal将通知FreeSWITCH™计费系统有关新付款的信息，许可证将通过电子邮件发送给您。此过程需要几分钟的时间，如果您在几分钟内未收到电子邮件，请通过[consulting@freewitch.org](mailto:consulting@freewitch.org)或在irc.freenode.net的#freeswitch联系我们。有关如何与我们联系的更多信息，请访问[IRC](../Community/IRC_1970341.mdx#pb)页面。
 
-## Installing
+## 安装
 
-  
-#### Updated Instructions for FreeSWITCH 1.8
+#### FreeSWITCH 1.8的更新指令
 
-Install the package
+安装软件包
 
 ```xml
 apt-get install freeswitch-mod-com-amd
 
 ```
 
-Uncomment or create in autoload_configs/modules.conf.xml
+取消注释或在autoload_configs/modules.conf.xml中创建以下内容
 
 ```xml
 <load module="mod_com_amd"/>
 ```
 
-Validate license
+验证许可证
 
 ```xml
 freeswitch-license-validator
 
  
-		freeswitch product licencing tool
-		You will require one or more sales codes to activate licences
+		FreeSWITCH产品许可工具
+		您将需要一个或多个销售代码来激活许可证
 
-		Enter a sales code, or a blank line to end: 0abd19753bf28fbb88a5d74
-		Enter a sales code, or a blank line to end:
+		输入销售代码，或留空结束: 0abd19753bf28fbb88a5d74
+		输入销售代码，或留空结束:
 
-		Sales codes to be activated:
+		要激活的销售代码:
 		0abd19753bf28fbb88a5d74
-		OK (Y/N)? y
+		确认（Y/N）？ y
 
-		Success. The file licences.zip contains valid licences.
-		Unzip this to /etc/freeswitch/
+		成功。licences.zip文件包含有效的许可证。
+		将其解压到/etc/freeswitch/
 
 
 ```
 
-  
-Unzip the key
+解压密钥
 
 ```xml
 unzip licences.zip
-
-		Archive:  licences.zip
-		inflating: 0abd19753bf28fbb88a5d74.conf
 ```
 
-Copy key to /etc/freeswitch (do not put the zip file in there)
+```
+归档：licences.zip
+解压缩中：0abd19753bf28fbb88a5d74.conf
+
+将密钥复制到 /etc/freeswitch（不要将zip文件放在那里）
 
 ```xml
 cp 0abd19753bf28fbb88a5d74.conf /etc/freeswitch
 ```
 
-Shutdown freeswitch
+关闭freeswitch
 
 ```xml
-systemctl stop freeswitch 
+systemctl stop freeswitch
 ```
 
-Start license server
+启动许可证服务器
 
 ```xml
 freeswitch-license-server
- 
-		Scanning /etc/freeswitch/0abd19753bf28fbb88a5d7.conf for licences
-		Purchase code 0abd19753bf28fbb88a5d74
-		10 channels of AMD
+
+扫描/etc/freeswitch/0abd19753bf28fbb88a5d7.conf以获取许可证
+购买代码0abd19753bf28fbb88a5d74
+10个AMD通道
 ```
 
-Start freeswitch again
+再次启动freeswitch
 
 ```xml
 systemctl start freeswitch
 ```
 
-Check that amd is communicating with license server
+检查amd是否与许可证服务器通信
 
 ```xml
 fs_cli -x amd_info
- 
-		Success checking AMD/0
-		AMD license available => 10
-		AMD license allocated => 0
+
+检查AMD/0成功
+可用的AMD许可证=>10
+已分配的AMD许可证=>0
 ```
 
-Do some testing in dialplan. Download test wav file [Answering\_Machine.wav](/attachments/4653131/17170499.wav).
+在拨号计划中进行一些测试。下载测试wav文件[Answering\_Machine.wav](/attachments/4653131/17170499.wav)。
 
 ```xml
     <extension name="amd_test" continue="false">
       <condition field="destination_number" expression="^(amd|263)$"/>
       <condition field="${amd_available()}" expression="true">
-      <!-- alternate way of checking channel availability -->
+      <!-- 检查通道可用性的替代方法 -->
       <!--<condition field="${regex ${amd_info}|available => 0}" expression="false">-->
         <!-- <action application="set" data="media_bug_answer_req=true"/> -->
         <action application="set" data="amd_execute_on_machine=transfer machine_found XML default"/>
@@ -162,91 +158,121 @@ Do some testing in dialplan. Download test wav file [Answering\_Machine.wav](/at
         <action application="voice_start"/>
         <action application="playback" data="silence_stream://100,1000"/>
         <action application="playback" data="tone_stream://(2000,4000,440,480)"/>
-
-        <!-- <action application="waitforresult" data="ivr/ivr-one_moment_please.wav"/> -->
-        <!-- <action application="waitforresult"/> -->
-        <!-- <action application="sleep" data="200"/> -->
-        <!-- <action application="playback" data="tone_stream://%(200,100,500,400,300,50,25);loops=2"/> -->
-        <action application="sleep" data="20000"/>
-        <!-- <action application="log" data="CRIT AMD Result is => ${amd_status} => ${amd_result}"/> -->
-        <action application="hangup"/>
-        <anti-action application="playback" data="${sounds_dir}/All_Circuits_Busy.mp3"/>
-        <anti-action application="hangup"/>
-      </condition>
-    </extension>
-    <extension name="Found Machine">
-      <condition field="destination_number" expression="^(machine_found)$">
-        <action application="playback" data="ivr/ivr-welcome_to_freeswitch.wav"/>
-        <action application="log" data="CRIT AMD result is => ${amd_status} and AMD Status is => ${amd_result}"/>
-        <action application="voice_stop"/>
-        <action application="hangup"/>
-      </condition>
-    </extension>
-    <extension name="Found Person">
-      <condition field="destination_number" expression="^(person_found)$">
-        <action application="playback" data="misc/if_you_are_this_person.wav"/>
-        <action application="log" data="CRIT AMD result is => ${amd_status} and AMD Status is => ${amd_result}"/>
-        <action application="voice_stop"/>
-        <action application="hangup"/>
-      </condition>
-    </extension>
-    <extension name="AMD Unsure">
-      <condition field="destination_number" expression="^(amd_unsure)$">
-        <action application="playback" data="misc/error.wav"/>
-        <action application="log" data="CRIT AMD result is => ${amd_status} and AMD Status is => ${amd_result}"/>
-        <action application="voice_stop"/>
-        <action application="hangup"/>
-      </condition>
-    </extension>
 ```
 
-Checking for available license
+```xml
+<action application="sleep" data="20000"/>
+<action application="hangup"/>
+<anti-action application="playback" data="${sounds_dir}/All_Circuits_Busy.mp3"/>
+<anti-action application="hangup"/>
+</condition>
+</extension>
+<extension name="Found Machine">
+<condition field="destination_number" expression="^(machine_found)$">
+<action application="playback" data="ivr/ivr-welcome_to_freeswitch.wav"/>
+<action application="log" data="CRIT AMD result is => ${amd_status} and AMD Status is => ${amd_result}"/>
+<action application="voice_stop"/>
+<action application="hangup"/>
+</condition>
+</extension>
+<extension name="Found Person">
+<condition field="destination_number" expression="^(person_found)$">
+<action application="playback" data="misc/if_you_are_this_person.wav"/>
+<action application="log" data="CRIT AMD result is => ${amd_status} and AMD Status is => ${amd_result}"/>
+<action application="voice_stop"/>
+<action application="hangup"/>
+</condition>
+</extension>
+<extension name="AMD Unsure">
+<condition field="destination_number" expression="^(amd_unsure)$">
+<action application="playback" data="misc/error.wav"/>
+<action application="log" data="CRIT AMD result is => ${amd_status} and AMD Status is => ${amd_result}"/>
+<action application="voice_stop"/>
+<action application="hangup"/>
+</condition>
+</extension>
+```
 
-This is the preferred method for checking channel availability
+```xml
+<action application="sleep" data="200 s"/>
+<action application="hangup"/>
+<anti-action application="playback" data="${sounds_dir}/All_Circuits_Busy.mp3"/>
+<anti-action application="hangup"/>
+</condition>
+</extension>
+<extension name="找到机器">
+<condition field="destination_number" expression="^(machine_found)$">
+<action application="playback" data="ivr/ivr-welcome_to_freeswitch.wav"/>
+<action application="log" data="CRIT AMD 结果为 => ${amd_status} 和 AMD 状态为 => ${amd_result}"/>
+<action application="voice_stop"/>
+<action application="hangup"/>
+</condition>
+</extension>
+<extension name="找到人">
+<condition field="destination_number" expression="^(person_found)$">
+<action application="playback" data="misc/if_you_are_this_person.wav"/>
+<action application="log" data="CRIT AMD 结果为 => ${amd_status} 和 AMD 状态为 => ${amd_result}"/>
+<action application="voice_stop"/>
+<action application="hangup"/>
+</condition>
+</extension>
+<extension name="AMD 不确定">
+<condition field="destination_number" expression="^(amd_unsure)$">
+<action application="playback" data="misc/error.wav"/>
+<action application="log" data="CRIT AMD 结果为 => ${amd_status} 和 AMD 状态为 => ${amd_result}"/>
+<action application="voice_stop"/>
+<action application="hangup"/>
+</condition>
+</extension>
+```
+
+检查可用许可证
+
+这是检查频道可用性的首选方法
 
 &lt;condition field="${amd\_available()}" expression="true">
 
-or you can see if license are available by checking a regex against zero using the amd\_info api
+或者您可以通过使用amd\_info api根据正则表达式来检查许可证是否可用
 
 &lt;condition field="${regex ${amd\_info}|available => 0}" expression="false">
 
-if regex is false, then proceed with amd usage, else if true, do anti actions to notify customer with a custom sound file
+如果正则表达式为false，那么继续使用amd，如果为true，则执行通知客户的反操作，并播放自定义音频文件
 
 &lt;anti-action application="playback" data="${sounds\_dir}/All\_Circuits\_Busy.mp3"/>  
 &lt;anti-action application="hangup"/>
 
   
-Notes on the parenthesis "()":
+关于圆括号"()":的注释
 
-example for "false" when channels are available for use:
+通道可供使用时的"false"示例：
 
-CORRECT USAGE DIALPLAN: without the parens, yields PASS:
+正确的拨号计划用法：不带括号，产生通过：
 
  &lt;condition field="${regex ${amd\_info}|available => 0}" expression="false">  
-Log:  
- Dialplan: sofia/internal/[1003@192.168.150.3:65062](http://1003@192.168.150.3:65062/) Regex (PASS) \[amd\_test\] ${expand regex ${amd\_info}|available => 0}(false) =\~ /false/ break=on-false  
+日志：  
+ 拨号计划：sofia/internal/[1003@192.168.150.3:65062](http://1003@192.168.150.3:65062/) Regex (PASS) \[amd\_test\] ${expand regex ${amd\_info}|available => 0}(false) =\~ /false/ break=on-false  
   
-INCORRECT USAGE: Dialplan with the parens, yields -ERR:  
+不正确的使用方法：带括号的拨号计划，产生-ERR：  
  &lt;condition field="${regex ${amd\_info()}|available => 0}" expression="false">  
-Log:  
- Dialplan: sofia/internal/[1003@192.168.150.3:65062](http://1003@192.168.150.3:65062/) Regex (FAIL) \[amd\_test\] ${regex ${amd\_info()}|available => 0}(-ERR) =\~ /false/ break=on-false  
+日志：  
+ 拨号计划：sofia/internal/[1003@192.168.150.3:65062](http://1003@192.168.150.3:65062/) Regex (FAIL) \[amd\_test\] ${regex ${amd\_info()}|available => 0}(-ERR) =\~ /false/ break=on-false  
   
-example for "true" when all channels are currently in use
+所有通道当前正在使用时的"true"示例
 
-CORRECT USAGE ESL: with the parens  
+正确的ESL用法：带括号  
 freeswitcha> expand regex ${amd\_info()}|available => 0  
 true  
   
-INCORRECT USAGE ESL: without the parens  
+不正确的ESL用法：不带括号  
 freeswitcha> expand regex ${amd\_info}|available => 0  
 false
   
   
-#### Older Instructions for Freeswitch 1.6
+#### 旧版Freeswitch 1.6的说明
 
-We have packaged our commercial modules into a single installer, All products currently offered (mod\_com\_amd, mod\_com\_g729, mod\_com\_g719, mod\_com\_g728) are all installed and take up very little space.
+我们已将我们的商业模块打包成一个单独的安装程序，目前提供的所有产品(mod\_com\_amd, mod\_com\_g729, mod\_com\_g719, mod\_com\_g728)都已安装，并且占用非常少的空间。
 
-**Downloading and Running Installer**
+**下载和运行安装程序**
 
 ```xml
 cd /tmp 
@@ -255,114 +281,115 @@ chmod +x fs-latest-installer 
 ./fs-latest-installer
 ```
 
-This will guide you thru some installation steps. We try to detect the most common places your FreeSWITCH™ installation may be located, If we can't detect it then we will prompt for information about where your FreeSWITCH™ is installed. You can optionally you can provide the data as arguments to the fs-latest-installer binary:
+这将引导你完成一些安装步骤。我们尝试检测你的FreeSWITCH™安装可能的常见位置。如果我们无法检测到它，那么我们将要求提供有关FreeSWITCH™安装位置的信息。你还可以选择将数据作为参数提供给fs-latest-installer二进制文件：
 
-**Installer arguments**
+**安装程序参数**
 
 ```xml
 ./fs-latest-installer <bin_path> <mods_path> <config_path>
 ```
 
-Once you accept the EULA, you'll see output similar to this:
+一旦你接受了最终用户许可协议（EULA），你将看到类似于以下内容的输出：
 
-**Installing**
+**安装中**
 
 ```xml
-Thank You!
-Running Installer
-Stopping license server
-Installing new license server
-Installing new FreeSWITCH module
-Installing activation utility
-Creating license directory
-Running ldconfig...
-Cleaning up... 
+谢谢！
+运行安装程序
+停止许可证服务器
+安装新的许可证服务器
+安装新的FreeSWITCH模块
+安装激活工具
+创建许可证目录
+运行ldconfig...
+清理中... 
 
-Now you can activate your product license(s) by running /usr/local/freeswitch/bin/validator
+现在，你可以通过运行/usr/local/freeswitch/bin/validator来激活你的产品许可证。
 
-Thank you
+谢谢
 
-Done.
+完成。
 ```
 
-Once complete you'll need to activate your licenses using the validator outlined in the installation completion/thank you message. You'll use the same validator application for any of our commercial products that are available from our online store.
+完成后，你需要使用安装完成/感谢消息中提到的验证程序激活你的许可证。对于我们在线商店提供的任何商业产品，都可以使用相同的验证程序应用程序。
 
-Once you start the validator you'll see output similar to this:
+启动验证程序后，你将看到类似于以下内容的输出：
 
   
-**Licencing tool - Installing new licence.**
+**许可工具 - 安装新的许可证。**
 
 ```xml
-freeswitch product licencing tool
+FreeSwitch产品许可工具
+```
 
-You will require one or more sales codes to activate licences
-Enter a sales code, or a blank line to end: 8c87ca579c46258a5e2ee9f98ca3f93ca4752d26
-Enter a sales code, or a blank line to end: 
+您将需要一个或多个销售代码来激活许可证。
+输入一个销售代码，或者留空以结束：8c87ca579c46258a5e2ee9f98ca3f93ca4752d26
+输入一个销售代码，或者留空以结束：
 
-Sales codes to be activated:
+将要激活的销售代码：
 8c87ca579c46258a5e2ee9f98ca3f93ca4752d26
 
-OK (Y/N)? Y
-Success. The file licences.zip contains valid licences.
-Unzip this to /etc/freeswitch/
+确定（Y/N）？Y
+成功。文件licences.zip包含有效的许可证。
+将其解压缩到/etc/freeswitch/中。
 
 ```
 
-The resulting licences.zip will be in the current working directory, Unzip and copy the .conf files into /etc/freeswitch:
+生成的licences.zip将位于当前工作目录中，解压并将.conf文件复制到/etc/freeswitch中：
 
-**Unzip Licenses**
+**解压许可证**
 
 ```xml
 unzip licences.zip 
-Archive:  licences.zip
-  inflating: 8c87ca579c46258a5e2ee9f98ca3f93ca4752d26.conf 
+归档：licences.zip
+  解压：8c87ca579c46258a5e2ee9f98ca3f93ca4752d26.conf 
 
 cp 8c87ca579c46258a5e2ee9f98ca3f93ca4752d26.conf  /etc/freeswitch
 ```
 
-Hardcode Path Here
+在此处硬编码路径
 
-**/etc/freeswitch** is a **hard coded path** the _freeswitch\_license\_server_ will auto-scan up restart... You MUST put your &lt;HEX>.conf file in /etc/freeswitch **regardless** of where you've installed FreeSWITCH.
+**/etc/freeswitch** 是 **硬编码路径**，_freeswitch\_license\_server_ 将自动扫描并重新启动... 无论您在哪里安装了FreeSWITCH，都必须将&lt;HEX>.conf文件放在 /etc/freeswitch 中。
 
   
-To make the license process aware of your new licenses please run:
+要让许可证处理程序知道您的新许可证，请运行：
 
-**Reloading licence server**
+**重新加载许可证服务器**
 
 ```xml
 pkill -HUP freeswitch_licence_server
 ```
 
-This will make the license server rescan the directory adding any additional licenses to your list of resources its capable of licensing. We just activated a license for mod\_com\_amd which when loading the module will look like this:
+这将使许可证服务器重新扫描目录，将任何其他许可证添加到您可进行许可的资源列表中。我们刚刚激活了一个mod\_com\_amd许可证，当加载该模块时，它将显示如下：
 
   
-**Loading mod\_com\_amd**
+**加载mod\_com\_amd**
 
 ```xml
-2014-05-28 09:51:52.344344 [INFO] mod_enum.c:880 ENUM Reloaded
-2014-05-28 09:51:52.344344 [INFO] switch_time.c:1369 Timezone reloaded 530 definitions
-2014-05-28 09:51:52.344344 [INFO] mod_com_amd.c:749 AMD license count => 20
-2014-05-28 09:51:52.344344 [CONSOLE] switch_loadable_module.c:1466 Successfully Loaded [mod_com_amd]
-2014-05-28 09:51:52.344344 [NOTICE] switch_loadable_module.c:269 Adding Application 'waitforresult'
-2014-05-28 09:51:52.344344 [NOTICE] switch_loadable_module.c:269 Adding Application 'voice_start'
-2014-05-28 09:51:52.344344 [NOTICE] switch_loadable_module.c:269 Adding Application 'voice_stop'
-2014-05-28 09:51:52.344344 [NOTICE] switch_loadable_module.c:315 Adding API Function 'amd_count'
-2014-05-28 09:51:52.344344 [NOTICE] switch_loadable_module.c:315 Adding API Function 'amd_available'
-2014-05-28 09:51:52.344344 [NOTICE] switch_loadable_module.c:315 Adding API Function 'amd_info'
+2014-05-28 09:51:52.344344 [INFO] mod_enum.c:880 ENUM重新加载
+2014-05-28 09:51:52.344344 [INFO] switch_time.c:1369 时区重新加载，共有530个定义
+2014-05-28 09:51:52.344344 [INFO] mod_com_amd.c:749 AMD许可数量 => 20
+2014-05-28 09:51:52.344344 [CONSOLE] switch_loadable_module.c:1466 模块[mod_com_amd]加载成功
+2014-05-28 09:51:52.344344 [NOTICE] switch_loadable_module.c:269 添加应用 'waitforresult'
+2014-05-28 09:51:52.344344 [NOTICE] switch_loadable_module.c:269 添加应用 'voice_start'
+2014-05-28 09:51:52.344344 [NOTICE] switch_loadable_module.c:269 添加应用 'voice_stop'
+2014-05-28 09:51:52.344344 [NOTICE] switch_loadable_module.c:315 添加API函数 'amd_count'
+2014-05-28 09:51:52.344344 [NOTICE] switch_loadable_module.c:315 添加API函数 'amd_available'
+2014-05-28 09:51:52.344344 [NOTICE] switch_loadable_module.c:315 添加API函数 'amd_info'
 freeswitch@internal> amd_info
-AMD license available => 20
-AMD license allocated => 0
+可用的AMD许可 => 20
+已分配的AMD许可 => 0
 freeswitch@internal> amd_available 
 true
 freeswitch@internal> amd_count
 20
 ```
 
-As you can see its seeing the licenses that were just installed, you can use the various api calls registered to manage your licenses.
+正如您所看到的，它能够看到刚刚安装的许可证，您可以使用注册的各种API调用来管理您的许可证。
 
-## Default Configuration
+## 默认配置
 
-The default mod\_com\_amd configuration will be suitable in most cases, but if you need to tweak the configuration go to /usr/local/freeswitch/conf/autoload\_configs and open amd.conf.xml:
+默认的mod\_com\_amd配置在大多数情况下都是适用的，但如果您需要调整配置，请转到 /usr/local/freeswitch/conf/autoload\_configs 并打开 amd.conf.xml 文件：
 
 **amd.conf.xml**
 
@@ -370,61 +397,61 @@ The default mod\_com\_amd configuration will be suitable in most cases, but if y
 <configuration name="amd.conf" description="AMD Configuration">
   <!-- AMD -->
   <settings>
-	<!-- silent_threshold: The level of volume to consider talking or not talking, same scale as used in mod_conference -->
+    <!-- silent_threshold（静音阈值）: 参考mod_conference使用的音量级别，决定是否开启AMD检测 -->
     <param name="silent_threshold" value="256"/>
-	<!-- silent_initial: Time in ms for there to be silence after answer in order to result in "silent-initial" with status of person -->
+    <!-- silent_initial（初始静音时间）: 以毫秒为单位，在接听电话后一段时间内保持静音，以便将状态设置为“初始静音” -->
     <param name="silent_initial" value="4500"/>
-	<!-- silent_after_intro: Time in ms after an initial non silent greeting in order to result in silent-after-intro with status of person -->
+    <!-- silent_after_intro（开场后静音时间）: 以毫秒为单位，在最初的非静音问候语之后的一段时间内保持静音，以便将状态设置为“开场后静音” -->
     <param name="silent_after_intro" value="1000"/>
-	<!-- silent_max_session: Time in ms of total silence before we allow detection to complete -->
+    <!-- silent_max_session（最大静音时间）: 以毫秒为单位，在允许检测完成之前的总静音时间 -->
     <param name="silent_max_session" value="200"/>
-	<!-- noise_max_intro: Time in ms length of initial intro over which in order to result in max-intro with status of person -->
+    <!-- noise_max_intro（开场最大噪音时间）: 以毫秒为单位，在初始问候语中超过该时间的长度，将其状态设置为“最大开场噪音” -->
     <param name="noise_max_intro" value="1250"/>
-	<!-- noise_min_length: Time in ms minimum to be considered a word  -->
+    <!-- noise_min_length（最小噪音时间）: 以毫秒为单位，作为判断一个单词的最小长度 -->
     <param name="noise_min_length" value="120"/>
-	<!-- noise_inter_silence: Time in ms of silence to be considered a word break -->
+    <!-- noise_inter_silence（噪音间隔时间）: 以毫秒为单位，作为判断一个单词的间隔时间 -->
     <param name="noise_inter_silence" value="30"/>
-	<!-- noise_max_count: If we have more than this many noise hits (words) result will be "max-count" with status of machine -->
+    <!-- noise_max_count（最大噪音数量）: 如果噪音（单词）的数量超过该值，结果将被设置为“最大噪音数量”，并将状态设置为“机器声音” -->
     <param name="noise_max_count" value="6"/>
-	<!-- total_analysis_time: total time in ms that we will try to analyze a call -->
+    <!-- total_analysis_time（总分析时间）: 以毫秒为单位，是我们尝试分析通话的总时间 -->
     <param name="total_analysis_time" value="5000"/>
-	<!-- debug: set to 1 to get more debug information -->
+    <!-- debug（调试标志）: 设置为1以获得更多调试信息 -->
     <param name="debug" value="1"/>
   </settings>
 </configuration>
 ```
 
-## Overriding Config Values via Dialplan
+## 通过呼叫计划覆盖配置参数值
 
 ```xml
-        <action application="voice_start" data="silent_threshold=96,
-                                                silent_initial=3500,
-                                                silent_after_intro=1500,
-                                                silent_max_session=200,
-                                                noise_max_intro=2250,
-                                                noise_min_length=175,
-                                                noise_inter_silence=50,
-                                                noise_max_count=10,
-                                                total_analysis_time=5000,
-                                                debug=1"/> 
+         <action application="voice_start" data="silent_threshold=96,
+                                                 silent_initial=3500,
+                                                 silent_after_intro=1500,
+                                                 silent_max_session=200,
+                                                 noise_max_intro=2250,
+                                                 noise_min_length=175,
+                                                 noise_inter_silence=50,
+                                                 noise_max_count=10,
+                                                 total_analysis_time=5000,
+                                                 debug=1"/> 
 ```
 
   
-## Examples
+## 实例
 
-Let's figure out how can we use the mod\_com\_amd.
+让我们来看看如何使用 mod\_com\_amd。
 
-### XML Dialplan Example
+### XML 拨号计划示例
 
-The first way you can use mod\_com\_amd is from the xml dialplan. When the module is loaded, three application are created:
+您可以通过 XML 拨号计划使用 mod\_com\_amd 的第一种方式。在加载该模块时，将创建三个应用程序：
 
 * voice\_start
 * voice\_stop
 * waitforresult
 
-Let's build a dialplan that when the call gets answered by a machine one message gets delivered to the voicemail:
+让我们构建一个拨号计划，当呼叫由机器接听时，会发送一条消息到语音信箱：
 
-**AMD Dialplan XML Example**
+**AMD 拨号计划 XML 示例**
 
 ```xml
 <extension name="amd_example" continue="false">
@@ -451,78 +478,79 @@ Let's build a dialplan that when the call gets answered by a machine one message
   </condition>
 </extension>
 ```
+注意**amd\_execute\_on\_machine**和**voice\_start**变量。
 
-Pay attention to the variable amd\_execute\_on\_machine and the application voice\_start.
+当电话接通时，FreeSWITCH™将将其路由到分机“amd_example”。该分机将设置变量amd_execute_on_machine，如果电话被机器接通，则将将通话转接到目标“machine_detected”，上下文为“default”，否则将执行播放动作（拨号计划行6、7、8和9）。
 
-When the call gets answered FreeSWITCH™ will route it to extension "amd\_example". This extension will set the variable amd\_execute\_on\_machine, which will transfer the call to destination "machine\_detected" at context "default" if the call gets answered by a machine, otherwise the playback actions will get executed (dialplan lines 6, 7, 8 and 9).
+如果机器接听了这个电话，它将被转接到我们的下一个分机machine_detected，这在您想要在客户的语音信箱中留言时非常有用，您可以使用wait_for_silence应用程序等待语音信箱的初始问候结束，然后留下您的留言。
 
-If a machine answers this call, it'll be transfered to our next extension, machine\_detected, which can be useful when you want to leave message in the customer voicemail, in this case you can use the application wait\_for\_silence to wait the end of voicemail initial greeting and then leave your message.
+mod_com_amd设置了一个名为“amd_status”的变量，其值可以是“human”或“machine”。您可以使用“info”应用程序查看该值（拨号计划行20）。
 
-mod\_com\_amd sets a variable called "amd\_status" and his value can be "human" or "machine". You can see the value with the "info" application (dialplan line 20).
+在这个第一个示例中，您可以使用以下方式发起一个到5551212的电话：
 
-In this first example, you can originate a call to 5551212 using:
-
-**Originating call**
+**发起呼叫**
 
 ```xml
 bgapi originate {ignore_early_media=true}sofia/profile/number 5551212
 ```
 
-This will make a call to sofia/profile/number and when answered FreeSWITCH™ will look for extension that matches 5551212 in your dialplan. 
+这将呼叫到sofia/profile/number，当被接通时，FreeSWITCH™将在拨号计划中查找与5551212匹配的分机。
 
-### Lua Example
+### Lua示例
 
-If you're building your routing logic with Lua, you can use the same application and variables used earlier in the xml dialplan. Example:
+如果您正在使用Lua构建路由逻辑，您可以使用先前在xml拨号计划中使用的相同的应用程序和变量。示例：
 
 **dialer.lua**
 
 ```py
 local dst_number = argv[1]
--- Connecting to the freeswitch API.
+-- 连接到freeswitch API。
 api = freeswitch.API()
 use_amd = api:executeString("amd_available")
 
 subscriber_session = freeswitch.Session("{ignore_early_media=true}sofia/gateway/mygw/" .. dst_number)
 
 while (subscriber_session:ready() and not subscriber_session:answered()) do
-  -- Waiting for answer.
+  -- 等待回答。
   freeswitch.msleep(500)
 end
+```
 
+```lua
 if subscriber_session:ready() and subscriber_session:answered() then
-  freeswitch.consoleLog("INFO", string.format("Number answered call %s.", dst_number))
-  freeswitch.consoleLog("INFO", string.format("AMD Enable on %s.", dst_number))
+  freeswitch.consoleLog("INFO", string.format("已接听的号码 %s.", dst_number))
+  freeswitch.consoleLog("INFO", string.format("%s 已启用AMD.", dst_number))
   if use_amd == "true" then
     subscriber_session:execute("voice_start")
-    -- Giving some time to AMD to work on the call.
+    -- 给AMD一些时间处理通话
     subscriber_session:sleep(3000)
     subscriber_session:execute("voice_stop")
     amd_detect = subscriber_session:getVariable("amd_status")
     if amd_detect == "machine" then
-      freeswitch.consoleLog("INFO", "amd_status: machine")
+      freeswitch.consoleLog("INFO", "amd_status: 机器")
       subscriber_session:execute("wait_for_silence", "300 30 5 25000")
-	  subscriber_session:execute("playback", "/usr/local/freeswitch/sounds/en/us/callie/ivr/8000/ivr-welcome_to_freeswitch.wav")
+      subscriber_session:execute("playback", "/usr/local/freeswitch/sounds/en/us/callie/ivr/8000/ivr-welcome_to_freeswitch.wav")
       subscriber_session:hangup()
       return
     end
-	-- Do your actions if human answered. Ex. Transfer to operator/user 100.
+    -- 有人接听时执行的操作。例如将通话转接至操作员/用户100。
     subscriber_session:execute("bridge", "user/100")
   end
 else
-  freeswitch.consoleLog("INFO", string.format("Cannot call %s", dst_number))
+  freeswitch.consoleLog("INFO", string.format("无法呼叫 %s", dst_number))
   return
 end
 ```
 
-Call this lua script using:
+使用以下 XML 调用此 Lua 脚本进行测试：
 
 ```xml
 luarun dialer.lua 55552222
 ```
 
-## Testing Dialplan
+## 测试拨号计划
 
-XML for self testing the config setting... be sure to download the [Answering\_Machine.wav](/attachments/4653131/17170499.wav) file and put in your sounds directory. With this setup, you should be able to tweak settings and get a feel for thier values beyond the default.
+用于自我测试配置设置的 XML... 确保下载 [Answering\_Machine.wav](/attachments/4653131/17170499.wav) 文件并放置在您的 sound 目录中。通过此设置，您应该能够调整设置并了解其值，超出默认值。
 
 ```xml
     <extension name="amd_test" continue="false">
@@ -554,110 +582,99 @@ XML for self testing the config setting... be sure to download the [Answering\_M
         <action application="hangup"/>
       </condition>
     </extension>
-
-    <extension name="Found Person">
-      <condition field="destination_number" expression="^(person_found)$">
-        <action application="playback" data="misc/if_you_are_this_person.wav"/>
-        <action application="log" data="CRIT AMD result Machine Found is => ${amd_status} => ${amd_result}"/>
-        <action application="voice_stop"/>
-        <action application="hangup"/>
-      </condition>
-    </extension>
-	
-    <extension name="AMD Unsure">
-      <condition field="destination_number" expression="^(amd_unsure)$">
-        <action application="playback" data="misc/error.wav"/>
-        <action application="log" data="CRIT AMD result Machine Found is => ${amd_status} => ${amd_result}"/>
-        <action application="voice_stop"/>
-        <action application="hangup"/>
-      </condition>
-    </extension>
 ```
 
-uuid\_displace have options \[m\]ux and \[r\]ead, so you can hear the ensuing found extension audio, and also induce the answering machine file onto the read channel so amd can operate on it.
+```markdown
+<extension name="找到人员">
+  <condition field="destination_number" expression="^(person_found)$">
+    <action application="playback" data="misc/if_you_are_this_person.wav"/>
+    <action application="log" data="CRIT AMD result Machine Found is => ${amd_status} => ${amd_result}"/>
+    <action application="voice_stop"/>
+    <action application="hangup"/>
+  </condition>
+</extension>
 
-more technical info about mod\_com\_amd
+<extension name="AMD 不确定">
+  <condition field="destination_number" expression="^(amd_unsure)$">
+    <action application="playback" data="misc/error.wav"/>
+    <action application="log" data="CRIT AMD result Machine Found is => ${amd_status} => ${amd_result}"/>
+    <action application="voice_stop"/>
+    <action application="hangup"/>
+  </condition>
+</extension>
+```
 
-Click here to expand...
+uuid\_displace 有 \[m\]ux 和 \[r\]ead 选项，这样您可以听到找到的分机的音频，并将答录机文件发送到读取通道上，以便 amd 可以对其进行操作。
 
-mod\_amd - Answering Machine Detection for FreeSWITCH  
-mod\_amd supplies three different dialplan apps and several channel variables.   
-It also fires events during the detection process. They are listed here for reference.  
-Apps:  
-voice\_start - starts the answering machine detection on a channel  
-voice\_stop - stops the answering machine detection on a channel  
-waitforresult \[&lt;file to play while while waiting>\] - waits for AMD to return a result, and optionally playback a file  
-Channel variables, results:  
-amd\_status - Contains whatever was detected:  
-'person', 'machine', 'unsure'  
-Basically, anything other than 'machine' should be assumed to be a human  
-amd\_result - Contains more information about what was detected:  
-'too-long' - detection process took longer than total\_analysis\_time (amd.conf.xml)  
-'max-count' - max noisy frames detected, probably a machine speaking  
-'max-intro' - max noisy frames detected during intro, probably a machine speaking  
-'silent-initial' - nothing heard on line, assume human  
-'silent-after-intro' - short burst of noisy frames followed by silence - probably human  
-Channel variables, control:  
-execute\_on\_machine\_app - application to execute if machine detected  
-execute\_on\_machine\_arg - argument to application to execute if machine detected  
-Events:  
-CUSTOM::AMD::EVENT - Action: Start Talking  
-CUSTOM::AMD::EVENT - Action: Stop Talking  
-SWITCH\_MEDIA\_BUG\_ADD - Fired at start of detection process  
-SWITCH\_MEDIA\_BUG\_REMOVE - Fired at stop of detection process  
-Look for variable\_amd\_status header  
-USAGE  
-mod\_amd can be used three ways:  
-via event socket, where an event-based script watches for AMD events and acts accordingly  
-via the supplied JavaScript file  
-via the dialplan by setting "execute\_on\_machine\_app" and "execute\_on\_machine\_arg"  
-See default.xml for simple examples
+有关 mod\_com\_amd 的更多技术信息
 
-### Attachments:
+点击此处展开...
 
-![](/images/icons/bullet_blue.gif) [Portal\_Home\_-\_FreeSWITCH.png](/attachments/4653131/4980737.png) (image/png)  
-![](/images/icons/bullet_blue.gif) [Register\_-\_FreeSWITCH.png](/attachments/4653131/4980738.png) (image/png)  
-![](/images/icons/bullet_blue.gif) [Client\_Area\_-\_FreeSWITCH.png](/attachments/4653131/4980739.png) (image/png)  
-![](/images/icons/bullet_blue.gif) [Client\_Area\_-\_FreeSWITCH\_and\_\_italorossi\_\_\_freeswitch\_\_234\_\_nt\_\_Welcome\_to\_FreeSWITCH\_\_\_H….png](/attachments/4653131/4980740.png) (image/png)  
-![](/images/icons/bullet_blue.gif) [Shopping\_Cart\_-\_FreeSWITCH\_and\_\_italorossi\_\_\_freeswitch\_\_234\_\_nt\_\_Welcome\_to\_FreeSWITCH\_\_\_H….png](/attachments/4653131/4980741.png) (image/png)  
-![](/images/icons/bullet_blue.gif) [Shopping\_Cart\_-\_FreeSWITCH\_-\_Ports.png](/attachments/4653131/4980742.png) (image/png)  
-![](/images/icons/bullet_blue.gif) [Shopping\_Cart\_-\_FreeSWITCH\_Review\_Checkout.png](/attachments/4653131/4980743.png) (image/png)  
-![](/images/icons/bullet_blue.gif) [Answering\_Machine.wav](/attachments/4653131/20709585.wav) (audio/x-wav)  
-![](/images/icons/bullet_blue.gif) [Answering\_Machine.wav](/attachments/4653131/17170499.wav) (audio/x-wav)  
+mod\_amd - 适用于FreeSWITCH的答录机检测模块
+mod\_amd提供了三种不同的拨号计划应用程序和多个通道变量。
+检测过程中还会触发事件，请参考以下列表。
+应用程序：
+voice\_start - 在通道上启动答录机检测
+voice\_stop - 停止通道上的答录机检测
+waitforresult \[\<播放等待期间要播放的文件>\] - 等待AMD返回结果，并可选择播放文件
+通道变量，结果：
+amd\_status - 包含检测到的内容：
+'person'（人）, 'machine'（机器）, 'unsure'（不确定）
+基本上，除了'machine'（机器）以外的任何内容都可以认为是人
+amd\_result - 包含有关检测到的更多信息：
+'too-long'（检测过程超过total\_analysis\_time（amd.conf.xml）所设定的时间），
+'max-count'（检测到最大噪音帧数，很可能是机器说话），
+'max-intro'（在介绍期间检测到最大噪音帧数，很可能是机器说话），
+'silent-initial'（线路上没有听到声音，认为是人），
+'silent-after-intro'（短时间的噪音帧后跟着寂静，很可能是人）
+通道变量，控制：
+execute\_on\_machine\_app - 如果检测到机器，则执行的应用程序
+execute\_on\_machine\_arg - 如果检测到机器，则执行的应用程序参数
+事件：
+CUSTOM::AMD::EVENT - 动作：开始交谈
+CUSTOM::AMD::EVENT - 动作：停止交谈
+SWITCH\_MEDIA\_BUG\_ADD - 在检测过程开始时触发
+SWITCH\_MEDIA\_BUG\_REMOVE - 在检测过程停止时触发
+查找variable\_amd\_status标头
+用法
+mod\_amd有三种使用方式：
+通过事件套接字，其中一个基于事件的脚本监听AMD事件并相应地进行操作
+通过提供的JavaScript文件
+通过拨号计划设置"execute\_on\_machine\_app"和"execute\_on\_machine\_arg"
+有关简单示例，请参阅default.xml
 
-## Creating a Call with AMD
+### 附件:
 
-The Compatibility API can create an outbound call with AMD by setting certain parameters of a call to the [create a call endpoint](https://docs.signalwire.com/reference/compatibility-sdks/v3/#api-reference-calls-create-a-call). There are six applicable AMD parameters to note.
+![](/images/icons/bullet_blue.gif) [Portal_Home_-_FreeSWITCH.png](/attachments/4653131/4980737.png) (image/png)  
+![](/images/icons/bullet_blue.gif) [Register_-_FreeSWITCH.png](/attachments/4653131/4980738.png) (image/png)  
+![](/images/icons/bullet_blue.gif) [Client_Area_-_FreeSWITCH.png](/attachments/4653131/4980739.png) (image/png)  
+![](/images/icons/bullet_blue.gif) [Client_Area_-_FreeSWITCH_and_italorossi_freeswitch_234_nt_Welcome_to_FreeSWITCH_H%E2%80%A6.png](/attachments/4653131/4980740.png) (image/png)  
+![](/images/icons/bullet_blue.gif) [Shopping_Cart_-_FreeSWITCH_and_italorossi_freeswitch_234_nt_Welcome_to_FreeSWITCH_H%E2%80%A6.png](/attachments/4653131/4980741.png) (image/png)  
+![](/images/icons/bullet_blue.gif) [Shopping_Cart_-_FreeSWITCH_-_Ports.png](/attachments/4653131/4980742.png) (image/png)  
+![](/images/icons/bullet_blue.gif) [Shopping_Cart_-_FreeSWITCH_Review_Checkout.png](/attachments/4653131/4980743.png) (image/png)  
+![](/images/icons/bullet_blue.gif) [Answering_Machine.wav](/attachments/4653131/20709585.wav) (audio/x-wav)  
+![](/images/icons/bullet_blue.gif) [Answering_Machine.wav](/attachments/4653131/17170499.wav) (audio/x-wav)  
 
-- `MachineDetection`: Possible values are `Enable`, `DetectMessageEnd` and `none`. The default value is `none`, and machine detection is disabled. An `Enable` value will turn on detection and the result will be returned as soon as a machine is detected. Use this setting if you plan to hang up if a machine is detected. Setting `DetectMessageEnd` will wait for the end of a machine's message. Use this setting to wait for a machine's message to end before playing a message for their voicemail.
+## 使用AMD创建通话
 
-- `MachineDetectionSilenceTimeout`: This is the time AMD will wait for an initial voice before returning `unknown`. The default is 5000 ms. Note that this uses a different unit than the `MachineDetectionTimeout`. Increasing the value may increase your chances of getting a detailed AMD result, but it may increase the determination time.
+Compatibility API可以通过设置呼叫的某些参数来创建带有AMD的外呼通话，详情请参考[创建通话端点](https://docs.signalwire.com/reference/compatibility-sdks/v3/#api-reference-calls-create-a-call)。有六个相关的AMD参数需要注意。
 
-- `MachineDetectionSpeechThreshold`: Set this time for how long SignalWire will detect speech before determining the speech is a machine. The default is 2400 ms. A human will generally have a short greeting like "Hello" or "Hello, Dr. Who's office. This is Rose." Machine greetings are generally longer. So, anything shorter than this setting will return a human determination and anything longer will return `machine`. Increasing the value may reduce the chances of returning `machine` when it was really a human speaking. Decreasing the value may reduce the chances of returning `human` when it was really a machine in the case of short machine greetings, but it is better to use the following parameter to address this case.
+- `MachineDetection`：可选值为`Enable`，`DetectMessageEnd`和`none`。默认值为`none`，表示禁用机器检测。当检测到机器时，选择`Enable`将开启检测，并立即返回结果。如果计划在检测到机器时挂断通话，可以使用此设置。选择`DetectMessageEnd`将等待机器消息结束后再播放语音信箱的消息。
 
-- `MachineDetectionSpeechEndThreshold`: After this many milliseconds of silence, the incoming speech is considered complete. This is an important parameter to use with `MachineDetectionSpeechThreshold`. Let's see why with an example. If a machine greeting starts with "Hi, you have reached Dr. Who's office," then pauses for 1500 ms before saying "We're currently traveling, so please leave a message," you want your `MachineDetectionSpeechEndThreshold` to be longer than 1500 to use the whole greeting speech time for your `MachineDetectionSpeechThreshold` measurement. The default is 1200 ms. Increasing this value does delay the time needed for detection and may result in false `machine` returns if a human answers, pauses, then speaks again.
+- `MachineDetectionSilenceTimeout`：这是AMD在返回`unknown`之前等待初始语音的时间。默认值为5000毫秒。请注意，此值使用的单位与`MachineDetectionTimeout`不同。增加此值可能增加获取详细AMD结果的机会，但也可能增加确定时间。
 
-- `MachineDetectionTimeout`: This is the time SignalWire will wait for machine detection to end before timing out. The default is 30 seconds, but you may wish to increase the value when using `DetectMessageEnd` to account for longer voicemail greetings. You may want to decrease the value when using `Enable` to limit the time for detection.
+- `MachineDetectionSpeechThreshold`：设定SignalWire在确定语音为机器之前检测语音的持续时间。默认值为2400毫秒。人类通常会有短暂的招呼词，如“你好”或“你好，Dr. Who的办公室。我是Rose。”而机器的招呼通常更长。因此，低于此设置的任何持续时间将返回人类决定，高于此设置的任何持续时间将返回`machine`表示机器。增加此值可能降低将实际为人类说话的情况错误判断为机器的概率。减小此值可能降低在短机器招呼的情况下将实际为机器说话的情况错误判断为人类的概率，但更好的解决方案是使用下面的参数来处理此情况。
 
-- `MachineWordsThreshold`: How many words are counted before returning a machine result, with a default value of 6 words. If more words than this value are counted, it is interpreted as a machine. Generally human greetings use fewer words than machine greetings. This setting works much like `MachineDetectionSpeechThreshold`. Increasing the value may reduce false `machine` returns in the case of a longer human greeting (such as at a business). Decreasing the value may reduce false `human` returns, because even short a machine message will usually be more words than a human would use.
+- `MachineDetectionSpeechEndThreshold`：在静 silence 等待的毫秒数之后，接收到的语音被认为是完整的。这是一个与 `MachineDetectionSpeechThreshold` 一起使用的重要参数。下面以一个示例来说明为什么。如果机器人问候语以 "嗨，你打到了 Who医生的办公室" 开始，然后在说 "我们目前在旅行中，请留言" 之前暂停了 1500 毫秒，你希望你的 `MachineDetectionSpeechEndThreshold` 的值大于 1500 ，以便将问候语的整个时间用于 `MachineDetectionSpeechThreshold` 的测量。默认值为 1200 毫秒。增加此值会延迟检测所需的时间，并可能导致在人工接听电话、暂停一下后再说话时出现误判为机器。
 
-The call may look something like the following:
+- `MachineDetectionTimeout`：这是 SignalWire 在机器检测结束之前等待的时间。默认值为 30 秒，但在使用 `DetectMessageEnd` 时，您可能需要增加该值以应对更长的语音信箱问候语。在使用 `Enable` 时，您可能需要减少该值以限制检测的时间。
+
+- `MachineWordsThreshold`：在返回机器结果之前，计算有多少个单词， 默认值为 6 个单词。如果计数的单词多于此值，就会被解释为机器。一般来说，人类问候语使用的单词比机器问候语少。此设置的工作方式与 `MachineDetectionSpeechThreshold` 非常相似。增加该值可以减少误判为机器的情况，尤其是在较长的人类问候语（如在商务场合）的情况下。减少该值可以减少误判为人类的情况，因为即使是短的机器消息通常也比人类使用的单词多。
+
+呼叫可能类似于以下内容：
 
 ### cURL
 
-```c. title="https://example.signalwire.com/api/laml/2010-04-01/Accounts/{AccountSid}/Calls.json \"
-  -X POST \
-  --data-urlencode "Url=http://your-application.com/docs/voice.xml" \
-  --data-urlencode "To=+12223334444" \
-  --data-urlencode "From=+17778889999" \
-  --data-urlencode "MachineDetection=DetectMessageEnd" \
-  --data-urlencode "MachineDetectionTimeout=45" \
-  --data-urlencode "MachineDetectionSilenceTimeout=3000" \
-  --data-urlencode "MachineDetectionSpeechThreshold=3000" \
-  --data-urlencode "MachineDetectionSpeechEndThreshold=2000" \
-  --data-urlencode "MachineWordsThreshold=9" \
-  -u "YourProjectID:YourAuthToken"
-```
 ### Node
 
 ```js
@@ -682,7 +699,7 @@ client.calls
   .done();
 ```
 
-The AMD results are returned to the URL you provided in the call request. They will look like the following:
+AMD 的结果将返回到您在呼叫请求中提供的 URL 上。结果类似于以下内容：
 
 ```CallSid=f82XXXXX-XXXX-XXXX-XXXX-XXXXXXXXc369
 AccountSid=28XXXXXX-XXXX-XXXX-XXXX-XXXXXXXX53b1
@@ -695,16 +712,16 @@ Direction=outbound-api
 AnsweredBy=human
 ```
 
-Notice that the AMD detection result is in the `AnsweredBy` parameter. So, you can access this value with `req.body.AnsweredBy.` Possible values of the `AnsweredBy` parameter depend on the AMD settings from your outbound call request.
+请注意，AMD检测结果存储在`AnsweredBy`参数中。因此，您可以使用`req.body.AnsweredBy`访问该值。`AnsweredBy`参数的可能值取决于您的拨出呼叫请求中的AMD设置。
 
-- If `Enable` was used, possible results are `machine_start`, `human`, `fax`, or `unknown`.
-- If `DetectMessageEnd` was used, possible results are `machine_end_beep`, `machine_end_silence`, `machine_end_other`, `human`, `fax`, or `unknown`.
+- 如果使用了`Enable`，可能的结果是`machine_start`、`human`、`fax`或`unknown`。
+- 如果使用了`DetectMessageEnd`，可能的结果是`machine_end_beep`、`machine_end_silence`、`machine_end_other`、`human`、`fax`或`unknown`。
 
-### Async AMD
+### 异步AMD
 
-AMD is also available asynchronously. The call can be connected immediately so that you can start other logic while AMD is executed in the background. To enable async, you need to include the `AsyncAmd` parameter set it as `true`, provide an `AsyncAmdStatusCallback` URL that will receive the detection result, and set the `AsyncAmdStatusCallbackMethod` as a GET or POST method. Only with all of these pieces can your application execute AMD in the background and send the result to your status callback URL. While your application is performing other logic, it also can listen for the status callback to react accordingly.
+AMD也可以以异步方式使用。呼叫可以立即连接，以便在后台执行AMD时您可以开始其他逻辑。要启用异步AMD，您需要包含`AsyncAmd`参数并将其设置为`true`，提供一个`AsyncAmdStatusCallback` URL来接收检测结果，并将`AsyncAmdStatusCallbackMethod`设置为GET或POST方法。只有在拥有所有这些部分的情况下，您的应用程序才能在后台执行AMD并将结果发送到状态回调URL。在应用程序执行其他逻辑的同时，还可以监听状态回调以做出相应的反应。
 
-###cURL
+### cURL
 
 ```c.
 curl https://example.signalwire.com/api/laml/2010-04-01/Accounts/{AccountSid}/Calls.json \
@@ -720,7 +737,7 @@ curl https://example.signalwire.com/api/laml/2010-04-01/Accounts/{AccountSid}/Ca
   -u "YourProjectID:YourAuthToken"
 ```
 
-### Node 
+### Node
 ```js
 const { RestClient } = require("@signalwire/compatibility-api");
 const client = RestClient("YourProjectID", "YourAuthToken", {
@@ -742,8 +759,6 @@ client.calls
   .done();
 ```
 
-## Wrap Up
+## 总结（Wrap Up）
 
-Answering Machine Detection can be a very useful tool for any phone system, especially for those with a high traffic volume. You can save agents time by only connecting calls when a human answers. You can see a full working example of an AMD-enabled call in our [Answering Machine Detection with Node.js guide](https://developer.signalwire.com/guides/Voice/amd-with-nodejs).
-
-
+自动答录机检测是任何电话系统的一种非常有用的工具，尤其是对于高流量的系统来说。通过只在有人接听的时候连接电话，您可以节省客服人员的时间。您可以在我们的[使用 Node.js 进行自动答录机检测指南](https://developer.signalwire.com/guides/Voice/amd-with-nodejs)中找到一个完整的工作示例。

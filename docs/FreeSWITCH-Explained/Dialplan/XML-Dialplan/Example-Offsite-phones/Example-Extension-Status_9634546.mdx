@@ -1,23 +1,19 @@
+# 示例扩展状态
 
-# Example Extension Status 
+## 关于
 
- 
+下面的拨号计划示例展示了如何实现对我来说常见的情况：
 
-## About
+如果某特定分机已注册到 SIP 服务器，则呼叫应立即转接到该分机，并在无应答时的30秒后发送到答录电话。如果某特定分机没有注册，则呼叫将直接转接到答录电话。这与条件性呼叫转移或 cfc 相同。
 
-The following dialplan example shows how to implement what is a common scenario for me:
+单击此处展开目录
 
-  
-If a particular extension is registered to the SIP server the call should be bridged to the extension immediately and sent to the answerphone after 30s if there is no answer. If the particular extension is not registered then the call should be bridged directly to the answerphone. This is the same as call forward conditional or cfc.
+* 1 [拨号计划项](#拨号计划项)
+* 2 [呼叫结果](#呼叫结果)
 
-Click here to expand Table of Contents
+### 拨号计划项
 
-* 1 [Dialplan Entry](#dialplan-entry)
-* 2 [Call Disposition](#call-disposition)
-
-### Dialplan Entry
-
-**dialplan to forward conditional**
+**有条件转接的拨号计划**
 
 ```xml
 <extension name="inbound-test">
@@ -28,13 +24,11 @@ Click here to expand Table of Contents
     <action application="bridge" data="sofia/${domain}/101%${domain}"/>
     <action application="javascript" data="/usr/local/freeswitch/scripts/answermachine.js ${originate_disposition}"/>
   </condition>
-</extension> 
+</extension> 
 ```
 
-The important line is the one which sets continue\_on\_fail to true. If we try to bridge the call to extension 101 when it is not registered then Freeswitch will generate a NO\_ROUTE\_DESTINATION message which would usually result in the call being hung up. With continue\_on\_fail set to true, the call instead drops through to the answermachine, likewise if there is no answer within 30 seconds. The hangup\_after\_bridge command is necessary to avoid freeswitch continuing on to the answer phone when a successful bridge connection has been made.
+重要的一行是将 continue\_on\_fail 设置为 true。如果我们尝试在分机101未注册时将呼叫转接，FreeSwitch将生成一个 NO\_ROUTE\_DESTINATION 消息，通常会导致呼叫被挂断。通过将 continue\_on\_fail 设置为 true，呼叫将直接转接到答录电话，同样，如果在30秒内没有应答，也是如此。hangup\_after\_bridge 命令是必需的，以避免 FreeSwitch 在成功建立桥接连接后继续转接到答录电话。
 
-### Call Disposition
+### 呼叫结果
 
-${originate\_disposition} will contain values such as "USER\_BUSY", "CALL\_REJECTED", "NO\_ANSWER". See [Hangup\_Causes](../../../Troubleshooting-Debugging/Hangup-Cause-Code-Table_3964945.mdx#about) for a complete list.
-
-
+`${originate_disposition}`将包含诸如"USER_BUSY"、"CALL_REJECTED"、"NO_ANSWER"之类的值。有关完整列表，请参阅[**挂断原因**](../../../Troubleshooting-Debugging/Hangup-Cause-Code-Table_3964945.mdx#about)。

@@ -1,11 +1,8 @@
+# RESTful Verto
 
-# RESTful Verto 
+mod_verto内置了一个HTTP服务器，因此可以构建restful API。
 
- 
-
-mod\_verto has a builtin HTTP server so it is possible to build restful APIs.
-
-To use the HTTP interface, put the following config in your verto profile
+要使用HTTP接口，请在您的verto配置文件中添加以下配置。
 
 ```xml
       <vhosts>
@@ -26,7 +23,7 @@ To use the HTTP interface, put the following config in your verto profile
         </vhost>
 ```
 
-so it looks like 
+看起来类似于
 
 ```xml
   <profiles>
@@ -39,15 +36,15 @@ so it looks like
   </profiles>
 ```
 
-Note: Only one vhost is currently supported.
+注意：目前只支持一个虚拟主机。
 
-Put rest.lua to your scripts dir: (demo only, edit for your needs)
+将rest.lua放在您的脚本目录中：（仅作示例，请根据您的需求进行编辑）
 
 **rest.lua**
 
 ```cpp
 --[[
-Restful by Seven Du.
+由Seven Du创建的Restful。
 
 GET    /channels
 GET    /channels/uuid
@@ -68,18 +65,18 @@ function headers()
 end
 
 -- print(env:serialize())
+```
 
-
+```lua
 api = freeswitch.API()
 method = env:getHeader("Request-Method")
 http_uri = env:getHeader("HTTP-Request-URI")
 http_query = env:getHeader("HTTP-QUERY")
 accept = env:getHeader("Accept")
-uuid = string.sub(http_uri, "11") -- remove /channels/ from uri
+uuid = string.sub(http_uri, "11") -- 从URI中删除/channels/
 freeswitch.consoleLog("ERR", "[" .. method .. "]\n")
 -- freeswitch.consoleLog("ERR", http_uri .. "\n")
 -- freeswitch.consoleLog("ERR", http_query .. "\n")
-
 
 if (method == "GET") then
 	if not (uuid == "") then
@@ -130,7 +127,7 @@ headers()
 stream:write(ret .. "\n")
 ```
 
-reload mod\_verto and try:
+重新加载mod_verto并尝试运行。
 
 ```bash
 curl -0 localhost:8081/channels
@@ -140,4 +137,10 @@ curl -0 -H "Accept: application/json" localhost:8081/channels/1f0802b7-3568-4eb6
 curl -0 -XDELETE localhost:8081/channels
 ```
 
-
+```bash
+curl -0 localhost:8081/channels
+curl -0 -XPOST -d "destNumber=1000" localhost:8081/channels
+curl -0 localhost:8081/channels/1f0802b7-3568-4eb6-b372-182861b56d9b
+curl -0 -H "Accept: application/json" localhost:8081/channels/1f0802b7-3568-4eb6-b372-182861b56d9b
+curl -0 -XDELETE localhost:8081/channels
+```

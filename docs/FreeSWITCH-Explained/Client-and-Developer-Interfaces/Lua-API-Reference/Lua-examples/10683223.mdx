@@ -1,37 +1,36 @@
+# Lua: 收到语音邮件时通过Flowroute发送短信
 
-# Lua: send SMS via Flowroute when voicemail is received 
+由Steven Schoch于2016年6月在FreeSwitch邮件列表上分享。
 
- 
+**假设您的系统上已经安装并配置了Lua和FreeSwitch。**
 
-Brought to you by Steven Schoch on the FreeSwitch mailing list in June 2016.
+如果您还没有flowroute.com的账户，请注册并启用所需的开发者账户。目前，这可以在首选项> API控制下找到。
 
-**Assuming Lua is already installed on your system and configured with FreeSwitch.** 
+您可能需要访问<https://developer.flowroute.com/>设置凭据。您还需要从Flowroute购买一个DID，以便您可以实际发送短信。
 
-If you don't have an account with flowroute.com, sign up and enable the developer account needed. At the current time, this can be found under Preferences > API control.
-
-You may need to visit <https://developer.flowroute.com/> to setup the credentials. You will also need to purchase a DID from Flowroute so you can actually send SMS messages.
-
-Here's the script that does the actual processing. As you may have guessed, load this to **/usr/local/freeswitch/scripts** and read below for the rest of the configuration needed. Add your user and password in the url section.
+以下是实际处理的脚本。如您所料，将其加载到**/usr/local/freeswitch/scripts**中，并阅读以下部分获取所需的其余配置信息。在URL部分添加您的用户名和密码。
 
 **voicemail-event.lua**
 
 ```bash
 --[[
-     This script is called by configuration in autoload_configs/lua.conf.xml.
-     It is called on a "vm:maintenance" event.
+     此脚本由autoload_configs/lua.conf.xml中的配置调用。
+     它在“vm:maintenance”事件上被调用。
 ]]
 
--- The following is specifc to the Flowroute SMS API,
--- documented at https://developer.flowroute.com/docs/messaging
+-- 以下内容特定于Flowroute SMS API，
+-- 文档可在https://developer.flowroute.com/docs/messaging中找到
 url = "https://user:password@api.flowroute.com/v2/messages"
+```
 
+```lua
 action = event:getHeader("VM-Action")
 if action ~= "leave-message" then return end
 user = event:getHeader("VM-User")
 domain = event:getHeader("VM-Domain")
 caller_id_name = event:getHeader("VM-Caller-ID-Name")
 caller_id_number = event:getHeader("VM-Caller-ID-Number")
---[[ We don't care about these:
+--[[ 我们不关心这些:
 file_path = event:getHeader("VM-File-Path")
 flags = event:getHeader("VM-Flags")
 folder = event:getHeader("VM-Folder")
@@ -43,34 +42,11 @@ api = freeswitch.API();
 from = api:execute("user_data", user .. "@" .. domain ..  " var outbound_caller_id_number")
 to = api:execute("user_data", user .. "@" .. domain .. " param vm-notify-sms")
 if to == "" then return end
-
-if caller_id_name == ''
-        or caller_id_name == 'UNKNOWN'
-        or caller_id_name == 'UNASSIGNED'
-        or caller_id_name == 'WIRELESS CALLER'
-        or caller_id_name == 'TOLL FREE CALL'
-        or caller_id_name == 'Anonymous'
-        or caller_id_name == 'Unavailable'
-        then caller_id_name = nil end
-if caller_id_number == ''
-        then caller_id_number = nil end
-message = "Voicemail "
-if caller_id_name
-        then message = message .. "from " .. caller_id_name .. " (" ..  caller_id_number .. ")"
-        elseif caller_id_number
-        then message = message .. "from " .. caller_id_number end
-message = message .. " at " .. os.date("%a %H:%M", timestamp)
-message = message .. " length " .. message_len .. " seconds"
-message = message .. " to box " .. user
-message = message .. "."
--- Add JSON string escapes to the message
-message = string.gsub(message, "([\\\"'])", "\\%1")
--- Send the text
-data = '{ "to": "' .. to .. '", "from": "' .. from .. '", "body": "' .. message .. '"}'
-api:execute("curl", url .. " content-type application/json post '" .. data .. "'")
 ```
 
-Edit **/usr/src/freeswitch/modules.conf** and enable applications/curl:
+如果`caller_id_name`等于''或者等于'UNKNOWN'或者等于'UNASSIGNED'，或者等于'WIRELESS CALLER'或者等于'TOLL FREE CALL'或者等于'Anonymous'或者等于'Unavailable'，那么将`caller_id_name`设为`nil`。如果`caller_id_number`等于''，那么将`caller_id_number`设为`nil`。消息为"Voicemail "。如果`caller_id_name`存在，那么消息为消息+" from "+`caller_id_name`+" ("+`caller_id_number`+")"；如果`caller_id_number`存在，那么消息为消息+" from "+`caller_id_number`。消息为消息+" at "+时间戳的星期和小时分钟，消息长度为`message_len`秒，发送给用户`user`的信箱。转义消息中的JSON字符串。发送文本。数据为'{ "to": "'+`to`+'", "from": "'+`from`+'", "body": "'+消息+'"}'。通过`api:execute`方法执行命令"curl"，其参数为url、content-type、application/json和post转义后的数据。
+
+编辑**/usr/src/freeswitch/modules.conf**文件，并启用applications/curl模块：
 
 **modules.conf**
 
@@ -78,28 +54,28 @@ Edit **/usr/src/freeswitch/modules.conf** and enable applications/curl:
 applications/mod_curl
 ```
 
-Compile FreeSwitch as usual:
+按照通常的方式编译FreeSwitch：
 
 **Build FreeSWITCH**
 
 ```bash
 make
 make install
-# Or if you're following master:
+# 或者如果你正在使用最新版本：
 make current
 ```
 
-Now you will need to have mod\_curl load when you start FreeSwitch. Edit **/usr/local/freeswitch/conf/autoload\_configs/modules.conf.xml:** 
+现在在启动FreeSwitch时需要加载mod_curl。编辑**/usr/local/freeswitch/conf/autoload_configs/modules.conf.xml**文件：
 
-**modules.conf.xml:**
+**modules.conf.xml**
 
 ```bash
 <load module="mod_curl"/>
 ```
 
-Uncomment mod\_curl and make it look like the above.
+取消mod_curl的注释，并让其与上面的代码相同。
 
-Add the line below to your extension, such as **/usr/local/freeswitch/conf/directory/default/1001.xml**:
+将下面的一行添加到你的分机配置中，例如**/usr/local/freeswitch/conf/directory/default/1001.xml**：
 
 **1001.xml**
 
@@ -107,21 +83,21 @@ Add the line below to your extension, such as **/usr/local/freeswitch/conf/direc
 <param name="vm-notify-sms" value="1202478xxxx"/>
 ```
 
-Be sure to add this within the &lt;params> tag and not &lt;variables>.
+请务必将以下内容添加到`<params>`标签中，而非`<variables>`标签中。
 
-This will be the telephone number where you want to receive the alert. Replace it with a legitimate phone number.
+将这里替换为您希望接收警报的电话号码。请填入合法的手机号码。
 
-In the same file, you will need to consider adding your Flowroute number that you purchased. You must send from a Flowroute phone number that's associated with your account.
+在同一文件中，您还需要将您购买的Flowroute号码添加进去。您必须发送来自与您帐户关联的Flowroute电话号码。
 
-**Caller ID**
+**呼叫者ID**
 
 ```bash
 <variable name="outbound_caller_id_number" value="1468856xxxx"/>
 ```
 
-You can also edit /usr/local/freeswitch/conf/vars.xml and have a global caller ID, if desired.
+如果需要，您也可以在`/usr/local/freeswitch/conf/vars.xml`中编辑并设置全局呼叫者ID。
 
-Add this line to **/usr/local/freeswitch/conf/autoload\_configs/lua.conf.xml**:
+将以下行添加到**`/usr/local/freeswitch/conf/autoload_configs/lua.conf.xml`**文件中：
 
 **lua.conf.xml**
 
@@ -129,16 +105,14 @@ Add this line to **/usr/local/freeswitch/conf/autoload\_configs/lua.conf.xml**:
 <hook event="CUSTOM" subclass="vm::maintenance" script="voicemail-event.lua"/>
 ```
 
-Ensure this is somewhere between the beginning and ending &lt;settings> tags.
+请确保将此行添加在&lt;settings>标签的开始和结束之间。
 
-**TEST:**
+**测试:**
 
-fs\_cli to the Freeswitch server, make a call and look for something like this after the voicemail is processed:
+使用`fs_cli`进入Freeswitch服务器，进行一次通话，然后查看语音邮件处理后的类似以下的信息：
 
-2016-07-01 04:48:02.930006 \[DEBUG\] mod\_lua.cpp:459 lua event hook: execute 'voicemail-event.lua'
+2016-07-01 04:48:02.930006 [DEBUG] mod_lua.cpp:459 lua event hook: execute 'voicemail-event.lua'
 
-Check the device the SMS was sent to and you'll see a message like the following:
+检查短信发送到的设备，您将看到类似以下的消息：
 
-Voicemail from Extension 1000 (1000) at Fri 04:48 length 6 seconds to box 1001.
-
-
+来自分机 1000 (1000) 的语音邮件于周五04:48时长6秒发送到邮箱1001。

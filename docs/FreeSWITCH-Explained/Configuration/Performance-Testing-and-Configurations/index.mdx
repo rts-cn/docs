@@ -1,222 +1,199 @@
+# 性能测试和配置
 
-# Performance Testing and Configurations 
+## 关于
 
- 
+讨论使用FreeSWITCH™进行性能测试的内容，附带测试场景的开源项目链接。
 
-## About
+点击这里展开目录
 
-Discussion of testing performance of FreeSWITCH™ with links to test scenario open source projects.
+* 1 [性能指标](#-freeswitch--%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95%E5%92%8C%E9%85%8D%E7%BD%AE-)  
+   * 1.1 [每秒呼叫数 (CPS)](#-freeswitch--%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95%E5%92%8C%E9%85%8D%E7%BD%AE-)  
+   * 1.2 [并发呼叫](#-freeswitch--%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95%E5%92%8C%E9%85%8D%E7%BD%AE-)  
+   * 1.3 [多线程](#-freeswitch--%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95%E5%92%8C%E9%85%8D%E7%BD%AE-)
+* 2 [配置](#-freeswitch--%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95%E5%92%8C%E9%85%8D%E7%BD%AE-)  
+   * 2.1 [推荐配置](#推荐配置)  
+   * 2.2 [推荐ULIMIT设置](#推荐ulimit设置)  
+   * 2.3 [Linux中以太网调优](#-freeswitch--%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95%E5%92%8C%E9%85%8D%E7%BD%AE-)  
+   * 2.4 [TCP/IP调优](#-freeswitch--%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95%E5%92%8C%E9%85%8D%E7%BD%AE-)  
+   * 2.5 [FreeSWITCH的core.db I/O瓶颈](#freeswitchs-coredb-io-%E7%93%B6%E9%A2%88)
+* 3 [压力测试](#-freeswitch--%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95%E5%92%8C%E9%85%8D%E7%BD%AE-)
+* 4 [参考链接](#-freeswitch--%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95%E5%92%8C%E9%85%8D%E7%BD%AE-)
 
-Click here to expand Table of Contents
+## 性能指标
 
-* 1 [Measures of Performance](#-freeswitch--performance-testing-and-configurations-)  
-   * 1.1 [Calls per Second (CPS)](#-freeswitch--performance-testing-and-configurations-)  
-   * 1.2 [Concurrent Calls](#-freeswitch--performance-testing-and-configurations-)  
-   * 1.3 [Multi-threaded](#-freeswitch--performance-testing-and-configurations-)
-* 2 [Configurations](#-freeswitch--performance-testing-and-configurations-)  
-   * 2.1 [Recommended Configurations](#recommended-configurations)  
-   * 2.2 [Recommended ULIMIT settings](#recommended-ulimit-settings)  
-   * 2.3 [Ethernet Tuning in linux](#-freeswitch--performance-testing-and-configurations-)  
-   * 2.4 [TCP/IP Tuning](#-freeswitch--performance-testing-and-configurations-)  
-   * 2.5 [FreeSWITCH's core.db I/O Bottleneck](#freeswitchs-coredb-io-bottleneck)
-* 3 [Stress Testing](#-freeswitch--performance-testing-and-configurations-)
-* 4 [See Also](#-freeswitch--performance-testing-and-configurations-)
+当人们谈论性能时，它可能涵盖了很多不同的方面。实际上，性能通常取决于两个瓶颈，即SIP和RTP。这些通常分别转化为每秒呼叫数和并发呼叫。此外，高负载系统可能会出现与数据库服务器的连接耗尽或查找帐户或配置数据时的带宽瓶颈。
 
-## Measures of Performance
+### 每秒呼叫数 (CPS)
 
-When people say performance it can mean a wide variety of things. In reality performance typically comes down to two bottle necks which are SIP, and RTP. These typically translate into calls per second and concurrent calls respectively. Additionally, high volume systems might experience bottlenecks with database servers running out of connections or even bandwidth when looking up account or configuration data.
+由于每秒呼叫数量仅仅是衡量每秒建立和关闭呼叫的指标，所以限制因素是处理SIP消息的能力。根据您所拥有的流量类型，这可能是个因素，也可能不是。有各种组件可以导致这个瓶颈，其中只有一部分是FreeSWITCH及其库。
 
-### Calls per Second (CPS)
+### 并发呼叫
 
-Since calls per second is simply a measure of how many calls are being setup and torn down per second the limiting factor is the ability to process the SIP messages. Depending on the type of traffic you have this may or may not be a factor. There are a variety of components that can contribute to this bottleneck, FreeSWITCH and it's libraries being only some of them.
+使用现代硬件，同时进行的呼叫数量不是SIP的限制，而是RTP媒体流的限制。这可以细分为可用带宽和每秒数据包数。通过千兆以太网端口，[理论上](http://www.bandcalc.com/)的并发呼叫限制大约为10,500个呼叫（不包含RTCP），假设使用G.711编解码器和链路层开销。理论很美好，但在现实中，内核网络层将成为限制因素，原因是RTP媒体流的每秒数据包数。
 
-### Concurrent Calls
+### 多线程
 
-Using modern hardware concurrent calls is less a limit of SIP but rather the RTP media streaming. This can further be broken down to available bandwidth and the packets per second. The [theoretical limit](http://www.bandcalc.com/) on concurrent calls through a gigabit Ethernet port would be around 10,500 calls without RTCP, assuming G.711 codec and the link-level overheads. Theory is great and all, but in reality the kernel networking layer will be your limiting factor due to the packets per second of the RTP media stream.
+FreeSWITCH使用线程。在现代Linux内核中，线程和进程分叉很相似。通常，“top”实用程序只显示一个FS进程，因为默认情况下，“top”将所有线程合并到一个条目中。命令“top -H”将显示各个线程。
 
-### Multi-threaded
+默认情况下，“htop”会显示各个线程。
 
-FreeSWITCH uses threading. In modern linux kernels threading and forking are very similar. Normally the 'top' utility only shows 1 FS process because top by default rolls up all the threads into one entry. The command 'top -H' will show individual threads.
+在FreeSWITCH中，有几个线程只在基本空闲的FreeSWITCH进程上运行。每个额外的呼叫通路至少需要一个线程。根据呼叫中激活的应用程序，每个呼叫通路可能有多个线程。
 
-'htop' by default shows you the individual threads.
+## 配置
 
-In FreeSWITCH there are several threads running on just a base idle FreeSWITCH process. Each additional call leg is at least 1 more thread. Depending on which applications are active on a call, there could be more than 1 thread per call leg.
+### 推荐配置
 
-## Configurations
+建议使用64位的CPU运行64位操作系统，并安装64位版本的FreeSWITCH。裸金属系统能提供一致可靠的性能，尤其对于实时应用程序而言，能提供可靠的内核时钟用于RTP数据包定时。虚拟机很难确定问题的源头，并且可能无法正确传递硬件时钟给客户操作系统，因此RTP测试的结果可能毫无意义。
 
-### Recommended Configurations
+推荐使用Debian Linux作为操作系统，因为核心开发者使用它并进行了最全面的测试。当然，FreeSWITCH也可以在其他操作系统上运行。
 
-A 64-bit CPU running a 64-bit operating system and a 64-bit version of FreeSWITCH is recommended. A bare metal system provides consistent, predictable performance and most importantly for real–time applications like this, a reliable kernel clock for RTP packet timing. With a virtual machine it is difficult to determine where any problems might originate and improper propagation of the hardware clock through the VM host to the guest operating system is not always available so the RTP tests will be rendered meaningless.
+### 推荐的ULIMIT设置
 
-Debian linux is the recommended OS, since that's the OS used by the core developers and therefore the best tested. It will work on some other operating systems though.
-
-### Recommended ULIMIT settings
-
-The following are recommended ulimit settings for FreeSWITCH when you want maximum performance. Ulimit settings you can add to initd script before do\_start().
+以下是FreeSWITCH的推荐ULIMIT设置，可用于最大化性能。您可以在do\_start()前的initd脚本中添加ulimit设置。
 
 ```bash
-ulimit -c unlimited # The maximum size of core files created.
-ulimit -d unlimited # The maximum size of a process's data segment.
-ulimit -f unlimited # The maximum size of files created by the shell (default option)
-ulimit -i unlimited # The maximum number of pending signals
-ulimit -n 999999    # The maximum number of open file descriptors.
-ulimit -q unlimited # The maximum POSIX message queue size
-ulimit -u unlimited # The maximum number of processes available to a single user.
-ulimit -v unlimited # The maximum amount of virtual memory available to the process.
+ulimit -c unlimited # 创建核心文件的最大大小。
+ulimit -d unlimited # 进程数据段的最大大小。
+ulimit -f unlimited # Shell创建文件的最大大小（默认选项）。
+ulimit -i unlimited # 挂起信号的最大数量。
+ulimit -n 999999    # 打开文件描述符的最大数量。
+ulimit -q unlimited # POSIX消息队列的最大大小。
+ulimit -u unlimited # 单个用户可用的进程最大数量。
+ulimit -v unlimited # 进程可用的虚拟内存的最大量。
 ulimit -x unlimited # ???
-ulimit -s 240         # The maximum stack size
-ulimit -l unlimited # The maximum size that may be locked into memory.
-ulimit -a           # All current limits are reported.
+ulimit -s 240         # 栈的最大大小。
+ulimit -l unlimited # 可锁定进程内存的最大大小。
+ulimit -a           # 报告所有当前限制。
 ```
 
-### Ethernet Tuning in linux
+### Linux中的以太网调优
 
-Beware buffer bloat
+注意缓冲区膨胀（buffer bloat）。
 
-Prior to the bufferbloat guys coming in and talking to us there was a note in here that one should "set the buffers to maximum." That advice is WRONG on so many levels. To make a long story short, when you're doing real-time media like VoIP you _absolutely do not want large buffers_. On an unsaturated network link you won't notice anything, but when you have a saturated network the larger buffers will cause your RTP packets to be buffered instead of discarded.
+在`bufferbloat`的专家来找我们之前，这里曾经有一条提示，建议将缓冲区设置为最大。这个建议在很多方面都是错误的。长话短说，在实时媒体（如VoIP）中，绝对不希望使用大缓冲区。在未饱和的网络链路上，您可能不会注意到任何问题，但当您的网络链路饱和时，较大的缓冲区将导致RTP数据包被缓冲而不是丢弃。
 
-So, what should your rx/tx queuelens be? Only you can know for sure, but it's good to experiment. Normally in linux it defaults to 1000\. IF you are using a good traffic shaping qdisc (pfifo\_fast or SFB or others) AND prioritizing udp/rtp traffic you can leave it alone, but it still is a good idea to lower it significantly for VoIP applications, depending on your workload and connectivity.
+那么，您的rx/tx queuelens应该是多少呢？只有您自己能够确定，但进行一些实验是一个好主意。通常在Linux中，它默认为1000。如果您使用良好的流量整形队列(qdisc)（如`pfifo_fast`或`SFB`等）并对UDP/RTP数据流进行优先处理，您可以将其保持不变，但对于VoIP应用程序来说，根据您的工作负载和互联性，降低它可能是一个好主意。
 
-Don't use the default pfifo qdisc, regardless. It outputs packets in strict fifo order.
+无论如何，请不要使用默认的FIFO队列（pfifo qdisc）。它按严格的FIFO顺序输出数据包。
 
-To see your current settings use ethtool:
+要查看当前的设置，请使用ethtool命令：
 
-**ethtool settings**
+**ethtool设置**
 
 ```bash
 [root@server:~]# ethtool -g eth0
-Ring parameters for eth0:
-Pre-set maxima:
+eth0的环参数：
+预设最大值：
 RX:             256
 RX Mini:        0
 RX Jumbo:       0
 TX:             256
-Current hardware settings:
+当前硬件设置：
 RX:             256
 RX Mini:        0
 RX Jumbo:       0
 TX:             128
 ```
 
-These were the defaults on my Lenny install. If you needed to change it you can do this:
+这是我在我的Lenny安装中使用的默认设置。如果您需要更改它，可以执行以下操作：
 
-**ethtool suggested changes**
+**ethtool建议的更改**
 
 ```bash
 [root@server:~]# ethtool -G eth0 rx 128
 [root@server:~]# ethtool -g eth0
-Ring parameters for eth0:
-Pre-set maxima:
+eth0的环参数：
+预设最大值：
 RX:             256
 RX Mini:        0
 RX Jumbo:       0
 TX:             256
-Current hardware settings:
+当前硬件设置：
 RX:             128
 RX Mini:        0
 RX Jumbo:       0
 TX:             128
 ```
 
-There is no one correct answer to what you should set the ring buffers to. It all depends on your traffic. Dave Taht from the Bufferbloat project reports that, based on his observations and experiences and papers such as [http://www.cs.clemson.edu/\~jmarty/papers/bittorrentBroadnets.pdf](http://www.cs.clemson.edu/%7Ejmarty/papers/bittorrentBroadnets.pdf) , that at present in home systems it is better to have no more than 32 unmanaged TX buffers on a 100Mbit network. It appears on my Lenny they are 32/64:
+[http://tcpipguide.com](http://tcpipguide.com)  is an excellent resource for understanding TCP/IP tuning. One aspect that can have a significant impact on performance is the size of the ring buffers. This refers to the buffers used by the network interface card (NIC) to store incoming and outgoing packets.
 
-**One man's buffer settings**
+There is no one-size-fits-all answer to what the ideal ring buffer size should be. It depends on the specific network traffic and the characteristics of the system. However, based on observations and experiences, it is generally recommended to limit the number of unmanaged TX (transmit) buffers to no more than 32 on a 100Mbit network. This recommendation is supported by research papers such as [http://www.cs.clemson.edu/\~jmarty/papers/bittorrentBroadnets.pdf](http://www.cs.clemson.edu/%7Ejmarty/papers/bittorrentBroadnets.pdf) and insights from Dave Taht from the Bufferbloat project.
 
-```bash
-[root@server:~]# ethtool -G eth0 rx 32 tx 32
-[root@server:~]# ethtool -g eth0
-Ring parameters for eth0:
-Pre-set maximums:
-RX:             256
-RX Mini:        0
-RX Jumbo:       0
-TX:             256
-Current hardware settings:
-RX:             32
-RX Mini:        0
-RX Jumbo:       0
-TX:             64
-```
+For example, on the Lenny system mentioned, the current TX buffer settings are 32/64. Unfortunately, it is not possible to reduce the TX buffer further with this particular driver. Consequently, there may be a latency of approximately 10ms in the driver itself for packets on a 100Mbit network.
 
-You'll note you can't with this driver reduce the TX buffer to a more optimum level!! This means that you will incur nearly a 10ms delay in the driver alone (at maximum packet size and load) on packets if you are on a 100Mbit network.
+It's worth noting that a large TXQUEUELEN (TX queue length) can also introduce significant delays. Therefore, it is advisable to keep the TX buffer size at an optimal level.
 
-(similarly, a large TXQUEUELEN translates to lots of delay too)
+On a gigabit network interface, the default TX queues and TXQUEUELEN are generally more appropriate but may still be excessively large.
 
-On a gigibit network interface, the default TX queues and TXQUEUELEN are closer to usable, but still too large.
+In terms of RX (receive) buffers, having larger buffers can be beneficial to handle bursts of incoming packets without packet loss. However, it is essential to monitor and fine-tune the RX buffer size based on actual packet loss on the receive channel.
 
-Having larger RX buffers is OK, to some extent. You need to be able to absorb bursts without packet loss. Tuning and observation of actual packet loss on the receive channel is a good idea.
+Lastly, it is important to consider that the optimal TX buffer size varies depending on the link speed. For example, on a 3Mbit uplink, the ideal buffer size is much lower than on a 100Mbit uplink. In fact, the debloat-testing kernel offers some Ethernet and wireless drivers that allow reducing the TX buffer size to as low as 1. This can help improve performance in specific scenarios.
 
-And lastly, the optimum for TX is much lower on a 3Mbit uplink than a 100Mbit uplink. The debloat-testing kernel contains some Ethernet and wireless drivers that allow reducing TX to 1.
+In conclusion, TCP/IP tuning involves finding the right balance for ring buffer sizes based on the specific network conditions and requirements. The information and recommendations provided here serve as a starting point to optimize network performance. For more in-depth discussions and guidance on TCP/IP tuning, [http://tcpipguide.com](http://tcpipguide.com) is a valuable resource.
 
-### TCP/IP Tuning
+对于主要用于VoIP的服务器来说，TCP Cubic（Linux的默认选项）可能会对网络子系统造成过大的压力。使用基于测得延迟进行递增的TCP Vegas被一些FreeSWITCH用户在生产中使用，作为“更友好、更温和”的用于命令和控制功能的TCP。
 
-For a server that is used primarily for VoIP, TCP Cubic (the default in Linux) can stress the network subsystem too much. Using TCP Vegas (which ramps up based on measured latency) is used by several FreeSWITCH users in production, as a "kinder, gentler" TCP for command and control functions.
-
-To enable Vegas rather than Cubic you can, at boot:
+要启用Vegas而不是Cubic，您可以在启动时执行以下操作：
 
 modprobe tcp_vegas
 
 echo vegas > /proc/sys/net/ipv4/tcp_congestion_control
 
-\--- Some interesting comments about tcp\_vegas at <http://tomatousb.org/forum/t-267882/>
+--- 关于tcp_vegas的一些有趣评论，请参考 <http://tomatousb.org/forum/t-267882/>
 
-### FreeSWITCH's core.db I/O Bottleneck
+### FreeSWITCH的core.db I/O瓶颈
 
-On a normal configuration, core.db is written to disk almost every second, generating hundreds of block-writes per second. To avoid this problem, turn /usr/local/freeswitch/db into an in-memory filesystem. If you use SSDs, it is CRITICAL that you move core.db to a RAM disk to prolong the life of the SSD.
+在正常配置下，core.db几乎每秒都会写入磁盘，每秒生成数百个块写入。为了避免这个问题，请将/usr/local/freeswitch/db转换为内存文件系统。如果您使用的是SSD，将core.db移到RAM磁盘以延长SSD的使用寿命至关重要。
 
-On current FreeSWITCH versions you should use the documented "core-db-name" parameter in switch.conf.xml (simply restart FreeSwitch to apply the changes):
+在当前的FreeSWITCH版本中，您应该使用switch.conf.xml中记录的"core-db-name"参数（只需重新启动FreeSwitch以应用更改）：
 
    &lt;param name="core-db-name" value="/dev/shm/core.db" />
 
-Otherwise you may create a dedicated in-memory filesystem, for example by adding the following to the end of /etc/fstab
+否则，您可以创建一个专用的内存文件系统，例如将以下内容添加到/etc/fstab的末尾
 
-**fstab Example**
+**fstab示例**
 
 ```bash
 #
-# Example of /etc/fstab entry (using default size)
+# /etc/fstab条目示例（使用默认大小）
 #
 tmpfs /usr/local/freeswitch/db tmpfs defaults 0 0
 #
-# To specify a size for the filesystem use the appropriate mount(1) option:
+# 若要为文件系统指定大小，请使用适当的mount(1)选项：
 #
 # tmpfs /usr/local/freeswitch/db tmpfs defaults,size=4g 0 0
 #
 ```
 
-To use the new filesystem run the following commands (or the equivalent commands for your OS):
+要使用新的文件系统，请运行以下命令（或根据您的操作系统运行等效的命令）：
 
 mount /usr/local/freeswitch/db
 /etc/init.d/freeswitch restart
 
-An alternative is to move the core DB into an ODBC database, which will move this processing to a DBMS which is capable of handling large numbers of requests far better and can even move this processing onto another server. Consider using [freeswitch.dbh](../../Databases/Lua-FreeSWITCH-Dbh_3965358.mdx#about) to take advantage of pooling.
+另一个方案是将核心数据库移入ODBC数据库，这将使这个处理过程转移到一个能更好地处理大量请求的DBMS，并且甚至可以将这个处理过程转移到另一台服务器上。考虑使用[freeswitch.dbh](../../Databases/Lua-FreeSWITCH-Dbh_3965358.mdx#about)来充分利用连接池。
 
-## Stress Testing
+## 压力测试
 
-KNOW
+知道如何正确进行压力测试非常重要，否则你的结果将毫无意义。
 
-IF YOU DO NOT UNDERSTAND HOW TO STRESS TEST PROPERLY THEN YOUR RESULTS WILL BE WORTHLESS.
+使用SIPp是黑魔法、巫术和Santeria的结合。你已经被警告了。
 
-Using SIPp is part dark art, part voodoo, part Santeria. YOU HAVE BEEN WARNED
+在使用SIPp的uas和uac测试FreeSWITCH时，需要确保有来回的媒体流动。如果你只是从一个sipp发送媒体到另一个sipp而没有回送RTP(-rtp\_echo)，FS会由于媒体超时而超时。这是为了防止当一方没有媒体超过一定时间时出现错误计费。
 
-When using SIPp's uas and uac to test FreeSWITCH, you need to make sure there is media back and forth. If you just send media from one sipp to another without echoing the RTP back (-rtp\_echo), FS will timeout due to MEDIA\_TIMEOUT. This is to avoid incorrect billing when one side has no media for more than certain period of time.
+## 参见
 
-## See Also
+[在PC Engines APU上测试FreeSWITCH性能](https://txlab.wordpress.com/2014/04/18/freeswitch-performance-test-on-pc-engines-apu/) — Stanislav Sinyagin使用一台测试机器测试了FreeSWITCH™的转码性能。
 
-[FreeSWITCH performance test on PC Engines APU](https://txlab.wordpress.com/2014/04/18/freeswitch-performance-test-on-pc-engines-apu/) — Stanislav Sinyagin tests FreeSWITCH™ transcoding performance with only one test machine
+[现实世界的观察结果](./Real-world-results_13173614.mdx#-freeswitch--real-world-results-) — 发布在使用FreeSWITCH™进行真实世界配置而不是压力测试时的测量结果。
 
-[Real-world observations](./Real-world-results_13173614.mdx#-freeswitch--real-world-results-) — Post measurements of your experience at using FreeSWITCH™ in a real-world configuration, not a stress test.
+[Linux的SSD调优](../SSD-Tuning-for-Linux_1966304.mdx#about) — 用于使用固态硬盘进行存储的系统的特殊考虑事项。
 
-[SSD Tuning for Linux](../SSD-Tuning-for-Linux_1966304.mdx#about) — special considerations for systems using Solid State Drives for storage
+[SIPp](http://sipp.sourceforge.net/) — 用于SIP的开源测试工具和流量生成器。
 
-[SIPp](http://sipp.sourceforge.net/) — Open source test toll and traffic generator for SIP
+[SIPpy Cup](https://github.com/mojolingo/sippy%5Fcup) — Ben Langfeld贡献了这个用于SIPp的场景生成器，以简化测试配置文件的创建，特别是兼容的媒体。
 
-[SIPpy Cup](https://github.com/mojolingo/sippy%5Fcup) — Ben Langfeld contributes this scenario generator for SIPp to simplify the creation of test profiles and especially compatible media
+[check\_voip\_call](https://github.com/bbhenry/check%5Fvoip%5Fcall) — Henry Huang为Nagios贡献了这个项目
 
-[check\_voip\_call](https://github.com/bbhenry/check%5Fvoip%5Fcall) — Henry Huang contributes this project to work with Nagios
+<http://www.bandcalc.com/> — 用于不同编解码器和使用情况的带宽计算器
 
-<http://www.bandcalc.com/> — Bandwidth calculator for different codecs and use cases
-
-<http://www.cs.clemson.edu/%7Ejmarty/papers/bittorrentBroadnets.pdf> — Paper on buffer sizing based on bittorrent usage
-
-
+<http://www.cs.clemson.edu/%7Ejmarty/papers/bittorrentBroadnets.pdf> — 基于BitTorrent使用的缓冲区大小论文

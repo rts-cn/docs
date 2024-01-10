@@ -1,52 +1,47 @@
+# 在开始之前
 
-# Before You Start 
+## 关于
 
- 
+在配置您的新FreeSWITCH安装之前，讨论一些需要考虑的主题。如果您打算设置FreeSWITCH，那么在开始之前进行规划是很有价值的。这可以让您更好地了解您想要配置的内容。然后，您可以逐步实现要求，直到拥有一个完全可工作的系统。
 
-## About
+单击此处展开目录
 
-A brief discussion of topics to consider before configuring your new FreeSWITCH installation.If you are going to setup FreeSWITCH it is worth planning ahead before you start. This gives you a better idea of what you want to configure. Later you can then go through and implement the requirements bit by bit until you have a fully working system.
+* 1 [规划新的FreeSWITCH配置](#规划新的freeswitch配置)
+   * 1.1 [规划您的拨号计划](#规划您的拨号计划)
+   * 1.2 [确定您将配置哪些网关来拨打电话](#确定您将配置哪些网关来拨打电话)
+   * 1.3 [确定人们将如何拨打FreeSWITCH服务器的电话](#确定人们将如何拨打freeswitch服务器的电话)
+   * 1.4 [确定您想要实现的额外功能](#确定您想要实现的额外功能)
+   * 1.5 [安全性](#安全性)
+   * 1.6 [初始配置](#初始配置)
 
-Click here to expand Table of Contents
+## 规划新的FreeSWITCH配置
 
-* 1 [Planning a new FreeSWITCH configuration](#planning-a-new-freeswitch-configuration)  
-   * 1.1 [Plan your dialplan](#plan-your-dialplan)  
-   * 1.2 [Determine which gateways you are going to configure to dial out](#determine-which-gateways-you-are-going-to-configure-to-dial-out)  
-   * 1.3 [Determine how will people dial into the FreeSWITCH server](#determine-how-will-people-dial-into-the-freeswitch-server)  
-   * 1.4 [Determine the extra functionality you want to implement](#determine-the-extra-functionality-you-want-to-implement)  
-   * 1.5 [Security](#security)  
-   * 1.6 [Initial Configuration](#initial-configuration)
+### 规划您的拨号计划
 
-## Planning a new FreeSWITCH configuration
+这可能因为是用于商业还是私人使用，以及所在国家的不同而大为不同，不同地方期望不同的拨号计划。因此，这个问题真的值得您首先考虑。您需要配置一些分机，并决定您想如何拨打电话，是否打出外线需要使用一个数字，或者您希望直接拨打普通号码而无需透明。在后一种情况下，您还需要使分机和其他“服务”号码适应，以免干扰普通电话号码。
 
-### Plan your dialplan
+### 确定您将配置哪些网关来拨打电话
 
-This can vary enormously depending on if this is for business or private use, and in which country you live as different dial plans are expected in different places. So it's really worth thinking about this first. You will need to configure some extensions, and then decide how you want to dial out, if you want to use a digit to get an outside line or if you want this to be transparent and dial the normal number directly. In the latter case you then have to make the extension and other "service" numbers fit in so they don't interfere with normal phone numbers.
+很可能你将需要配置一个或多个网关来进行外拨。你可能打算使用一个主网关和一个备用网关，或者为特定目的地使用特定的网关。有很多可能性。然而，你应该确定你想要做什么。
 
-### Determine which gateways you are going to configure to dial out
+### 确定人们如何拨打FreeSWITCH服务器
 
-It's likely that you are going to have one or more gateways you need to configure to dial out. You may be planning on using a main gateway with a backup, or perhaps to use a certain gateway for certain destinations. There are lots of possibilities. However you should determine what it is you want to do.
+你可能有一个或多个接口，每个接口都对谁可以使用它有不同的“限制”。来自网关的呼入呼叫可能只能从已知来源于该网关的地址中收到。你可能希望一些分机可以从外部访问，你可能只希望某些分机可以访问，或者你可能希望有一个全局的入口号码。
 
-### Determine how will people dial into the FreeSWITCH server
+### 确定你想要实现的额外功能
 
-You may have one or more interfaces, each with different "restrictions" on who will use it. Incoming calls from gateways should probably be limited to only work from addresses known to come from that gateway. You may want some extensions to be reachable from outside, you may want only certain extensions to be reachable, or you may want a single global incoming number.
+这涉及到语音信箱、电话会议、IVR系统等等，以及允许谁使用它们。
 
-### Determine the extra functionality you want to implement
+### 安全性
 
-This is for things like voicemail, conference calls, IVR systems and so on and who will be allowed to use them.
+不同的人可能对需要应用的安全措施有不同的想法。然而，考虑一下你的系统如何被访问以及你可能希望采取什么保护措施是值得的。其中一些可能是通过FreeSWITCH来实现的，其中一些可能是通过你的操作系统或外部防火墙来实现的。
 
-### Security
+* 你是否希望有一个防火墙。某种类型的防火墙可能是个不错的主意。然而，如果你在NAT连接的背后，请不要认为自己完全安全免受攻击。出站的UDP流量通常可以打开回到你系统的入站连接。
+* 限制来自分机的入口注册和/或呼叫的速率
+* 限制来自入站供应商的呼入呼叫速率
+* 限制特定分机的出站呼叫速率
+* 限制通过供应商的并发出站呼叫速率
 
-Different people may have different ideas of what needs to be applied. However, it's worth thinking how your system can be accessed and what protection you may want to apply. Some of this may be done with FreeSWITCH, some of it may be done by your operating system or by an external firewall.
+### 初始配置
 
-* Do you want to have a firewall. Some sort of firewall is probably a good idea. However, don't believe you are completely safe from attack if you're behind a NAT'd connection. Outgoing UDP traffic can often open up incoming connections back to your system.
-* Rate limiting incoming registrations and/or calls from extensions
-* Rate limiting incoming calls from inbound providers
-* Rate limiting outgoing calls from a specific extension
-* Rate limiting concurrent outgoing calls via a provider
-
-### Initial Configuration
-
-Right now there is no "empty configuration" with a system for implementing the different configuration requirements based on different recipes. That might be nice, so it's likely you may need to start from the default configuration and adjust it to meet the needs you outline above. Also it would be nice to have some test tools so you can see that certain behavior works as expected but also non-expected behavior does not. The former is easier to check while the latter is likely to be more difficult to do.
-
-
+目前还没有一个系统能够根据不同的配置需求来实现“空配置”。这样做可能会很不错，所以很可能您需要从默认配置开始，并根据您上面概述的需求进行调整。此外，还希望有一些测试工具，以便您可以查看特定行为是否按预期工作，同时也排除了非预期行为。前者比较容易检查，而后者可能会更难实现。

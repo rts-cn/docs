@@ -1,63 +1,58 @@
+# 企业部署 Xen
 
-# Enterprise deployment Xen 
+单击此处展开目录
 
- 
+* 1 [为什么要使用 Xen？](#为什么要使用-xen)
+* 2 [介绍](#介绍)
+* 3 [示例](#freeswitch-企业部署-xen)
+* 4 [范围](#freeswitch-企业部署-xen)
+* 5 [注意事项](#freeswitch-企业部署-xen)
+* 6 [保证](#freeswitch-企业部署-xen)
+* 7 [Xen提供商](#xen提供商)
+* 8 [链接](#freeswitch-企业部署-xen)
 
-Click here to expand Table of Contents
+## 为什么要使用 Xen？
 
-* 1 [Why should I use Xen?](#why-should-i-use-xen)
-* 2 [Introduction](#introduction)
-* 3 [Examples](#-freeswitch--enterprise-deployment-xen-)
-* 4 [Scope](#-freeswitch--enterprise-deployment-xen-)
-* 5 [Caveats](#-freeswitch--enterprise-deployment-xen-)
-* 6 [Warranty](#-freeswitch--enterprise-deployment-xen-)
-* 7 [Xen providers](#xen-providers)
-* 8 [Links](#-freeswitch--enterprise-deployment-xen-)
+* [负载管理](https://wiki.freeswitch.org/wiki/Load%5Fmanagement "负载管理")
+   * 将高负载进程迁移到空闲服务器
+   * 将空闲进程迁移到繁忙服务器
+* 降低成本
+   * 通过更好地利用空闲的CPU时间购买更少的服务器
+   * 由于大多数服务器大部分时间都处于空闲状态，因此不使用它几乎是对服务器的浪费
+* 增加正常运行时间
+   * 在不关闭运行中的应用程序进行维护或升级硬件的情况下，将其迁移到另一台服务器
+* CPU的QoS（Quality of Service）
+   * 确保您的虚拟机没有因CPU进程不足而受影响
+* CPU时钟不会在虚拟机内随意浮动。
+   * 如果要运行实时VoIP应用程序，则严格的定时非常重要。
 
-## Why should I use Xen?
-
-* [Load management](https://wiki.freeswitch.org/wiki/Load%5Fmanagement "Load management")  
-   * Move heavy use processes to idle servers  
-   * Move idle processes to busy servers
-* Reduce costs  
-   * Buy less servers by making better use of idle CPU time  
-   * This thing this is so good that is is almost a waste of a server not to use it considering that most servers run idle for most of the time
-* Increase uptime  
-   * Move your running applications to another server without shutting them down for maintenance or upgrades to the hardware
-* QoS on the CPU  
-   * Ensure that your virtual machine isn't starved for CPU processes
-* The CPU clock doesn't float around inside the virtual machine.  
-   * Strict timing is important if you want to run a realtime voip application.
-
-## Introduction
+## 介绍
 
 * dom0
 * domU
 
-## Examples
+## 示例
 
-You have Xen running on 5 physical systems creating 30 virtual systems on each Xen server. Each virtual system runs FreeSWITCH™ and a conference application. As usage begins, you notice that some virtual servers are experiencing a much larger call volume than the rest, so you move the live virtual systems to different physical systems to distribute the load and have them share the physical system with more idle CPU, all without dropping a call.
+您在5个物理系统上运行着 Xen，每个 Xen 服务器创建30个虚拟系统。每个虚拟系统都运行 FreeSWITCH™ 和一个会议应用程序。当开始使用时，您注意到一些虚拟服务器的通话量比其他服务器大得多，因此您将活动虚拟系统移动到不同的物理系统上以分担负载，并与拥有更多空闲CPU的物理系统共享，而无需中断通话。
 
-## Scope
+## 范围
 
-Certain aspects of a XEN deployment are outside the scope of this document. They include but are not limited to proper network planning, which can include multiple private networks (with multiple NICs) for intermachine communication; [Clustered File systems](https://wiki.freeswitch.org/wiki/Enterprise%5Fdeployment%5FClustered%5FFile%5FSystems "Enterprise deployment Clustered File Systems") and system tuning which varies depending on exactly what you are using your servers for.
+该文档并不涵盖XEN部署的所有方面，包括但不限于正确的网络规划，这可能涉及到多个私有网络（带有多个网卡）用于机器间的通信；[集群文件系统](https://wiki.freeswitch.org/wiki/Enterprise%5Fdeployment%5FClustered%5FFile%5FSystems "Enterprise deployment Clustered File Systems")和系统调优，这取决于您服务器的具体用途。
 
-## Caveats
+## 注意事项
 
-On certain 64-bit Xen DomUs, FreeSWITCH may have problems with memory management if run with the -hp (high priority) switch. This will result in random segfaults. It is recommended to disable the -hp parameter when running under Xens.
+在某些64位Xen DomUs上，如果使用-hp（高优先级）开关来运行FreeSWITCH，可能会导致内存管理问题。这会导致随机的故障。建议在Xens环境下运行时禁用-hp参数。
 
-## Warranty
+## 担保
 
-**No warranties are expressed or implied** this document is provided for informational and educational purposes only. If you use this method and your boxes crash and something bad happens, neither the author(s) of this page nor the FreeSWITCH™ community are liable. You should throughly test your environment for the level of fault tolerance you desire and ensure that it does work the way you want it to, but ultimately you are responsible for implementation of your servers and network.
+**本文档不提供任何明示或暗示的保证**，仅供信息和教育目的。如果您使用本方法导致服务器崩溃或出现问题，本页面的作者或者FreeSWITCH™社区概不负责。您应充分测试您的环境以获得所期望的容错水平，并确保它按照您的意愿正常运行，但最终您对服务器和网络的实施负有责任。
 
-## Xen providers
+## Xen提供商
 
 [Amazon Elastic Compute Cloud](http://aws.amazon.com/ec2)
 
-[List of Xen hosting providers](http://wiki.xensource.com/xenwiki/VirtualPrivateServerProviders)
+[Xen托管提供商列表](http://wiki.xensource.com/xenwiki/VirtualPrivateServerProviders)
 
-## Links
+## 链接
 
 [Xen](http://www.xensource.com/products/xen/)
-
-

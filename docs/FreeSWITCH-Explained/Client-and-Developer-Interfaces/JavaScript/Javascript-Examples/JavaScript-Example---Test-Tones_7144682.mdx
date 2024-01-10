@@ -1,23 +1,20 @@
+# JavaScript示例-测试音调
 
-# JavaScript Example - Test Tones 
+## 关于
 
- 
-
-## About
-
-Define some Teletone TGML sequences, collect digits, and generate corresponding tone sequences. A demonstration.
+定义一些Teletone TGML序列，收集数字，并生成相应的音调序列。演示。
 
 **testtones.js**
 
 ```js
-/** Original code by anthm, comments by pist, but it's mostly self explanatory :-) **/
-use("TeleTone");  // Load the TeleTone module
+/** 由anthm编写的原始代码，由pist注释，但它大多数时候都是自解释的 :-) **/
+use("TeleTone"); // 加载TeleTone模块
 
-session.answer();  // answer our session
-console_log("I got the call! \n");  // log to console
+session.answer(); // 接听我们的会话
+console_log("我接到了电话！\n"); // 记录到控制台
 var tts = new TeleTone(session);
 
-// define some tones
+// 定义一些音调
 tts.addTone("d", 350.0, 440.0, 0.0);
 tts.addTone("r", 440.0, 480.0, 0.0);
 tts.addTone("z", 1400.0, 2060.0, 2450.0, 2600.0, 0.0);
@@ -30,56 +27,54 @@ var UK_RING = RESET + "L=2;u(400,200);u(400,2200)";
 var US_RING = RESET + "r(2000,4000)";
 var US_DIAL = RESET + "d(4000,0)";
 
-// call back function that keeps check on length of digits
-function mycb (session, type, data, arg) {
-    if (type == "dtmf") {
-        arg.digits += data.digit;
-        if (arg.digits.length >= 3) {
-            return false;
-        }
+// 回调函数，用于检查数字的长度
+function mycb(session, type, data, arg) {
+  if (type == "dtmf") {
+    arg.digits += data.digit;
+    if (arg.digits.length >= 3) {
+      return false;
     }
+  }
 }
 var dtmf = new Object();
-while(session.ready()) {
-    dtmf.digits = "";
-    console_log("enter 3 digit code\n");
-    mycb(dtmf);
-    if (dtmf.digits.length < 3) {  // as long as caller has not entered enough digits, keep collecting (until timeout of 5000)
-        session.collectInput(mycb, dtmf, 5000);
-    }
-
-// once we have 3 digits, match and run appropriate section
-    if (dtmf.digits == "100") {
-        console_log("means ringing sound\n");
-        for (x = 0 ; x < 2 ; x++) {
-            tts.generate(US_RING);
-        }
-    } else if (dtmf.digits == "101") {
-        console_log("means dialtone\n");
-        tts.generate(US_DIAL);
-    } else if (dtmf.digits == "102") {
-        console_log("means bong\n");
-        tts.generate(BONG);
-    } else if (dtmf.digits == "103") {
-        console_log("means attention\n");
-        for (x = 0 ; x < 4 ; x++) {
-            tts.generate(ATTN);
-        }
-    } else if (dtmf.digits == "104") {
-        console_log("means SIT\n");
-        tts.generate(SIT);
-    } else if (dtmf.digits == "105") {
-        console_log("means UK Ring\n");
-        for (x = 0 ; x < 2 ; x++) {
-            tts.generate(UK_RING);
-        }
-    } else if (dtmf.digits == "200") {
-        console_log("means bye bye\n");
-        break;
-    } else {
-        console_log("invalid code, try again\n");
-    }
- }
+while (session.ready()) {
+  dtmf.digits = "";
+  console_log("输入3位数字代码\n");
+  mycb(dtmf);
+  if (dtmf.digits.length < 3) {
+    session.collectInput(mycb, dtmf, 5000); // 只要呼叫者没有输入足够的数字，就继续收集（直到超时时间为5000）
+  }
+}
 ```
 
-
+// 一旦我们有三个数字，匹配并运行相应的部分
+if (dtmf.digits == "100") {
+    console_log("表示响铃声\n");
+    for (x = 0; x < 2; x++) {
+        tts.generate(US_RING);
+    }
+} else if (dtmf.digits == "101") {
+    console_log("表示拨号音\n");
+    tts.generate(US_DIAL);
+} else if (dtmf.digits == "102") {
+    console_log("表示咚声\n");
+    tts.generate(BONG);
+} else if (dtmf.digits == "103") {
+    console_log("表示注意\n");
+    for (x = 0; x < 4; x++) {
+        tts.generate(ATTN);
+    }
+} else if (dtmf.digits == "104") {
+    console_log("表示SIT\n");
+    tts.generate(SIT);
+} else if (dtmf.digits == "105") {
+    console_log("表示英国响铃\n");
+    for (x = 0; x < 2; x++) {
+        tts.generate(UK_RING);
+    }
+} else if (dtmf.digits == "200") {
+    console_log("表示再见\n");
+    break;
+} else {
+    console_log("无效代码，请再试一次\n");
+}

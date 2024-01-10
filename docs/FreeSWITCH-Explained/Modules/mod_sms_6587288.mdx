@@ -1,55 +1,51 @@
-
 # mod_sms 
 
- 
+### 关于
 
-### About
+这个页面还在进行中....
 
-This page is working on progresss ....
+mod_sms 提供了一种**路由**freeswitch中的短信的方式，有可能让我们构建一个强大的聊天系统，就像在XMPP中使用SIP SIMPLE在SIP客户端上一样。
 
-mod\_sms provide a way to **route** messages in freeswitch, potentially allowing one to build a powerful chatting system like in XMPP using using SIP SIMPLE on SIP clients.
+就像[XML拨号计划](../Dialplan/XML-Dialplan/index.mdx#about)有拨号计划一样，mod_sms 有chatplan。
 
-Just like [XML Dialplan](../Dialplan/XML-Dialplan/index.mdx#about) has dialplan, mod\_sms has chatplan.
+mod_sms 在GLOBAL消息事件系统上绑定，所以它会捕获所有的MESSAGE事件，然后将它们路由到chatplan中。如果没有匹配的chatplan条目，它将按照默认方式工作 - 例如，两个客户端以点对点的方式发送消息。
 
-mod\_sms bind on GLOBAL message event system, so it catches all MESSAGE events and then route them to the chatplan. If no chatplan entry matches, it works as default - e.g. two clients sending message in a point-to-point manner.
+点击这里展开目录
 
-  
-Click here to expand Table of Contents
+* 1 [编译和加载](#-编译和加载-)
+* 2 [配置](#配置-)
+* 3 [基本用法与默认配置](#基本用法与默认配置)
+* 4 [Chatplan工具](#-Chatplan工具-)  
+   * 4.1 [回复](#回复)  
+   * 4.2 [触发](#触发)  
+   * 4.3 [发送](#发送)  
+   * 4.4 [设置](#设置)  
+   * 4.5 [停止](#停止)
+* 5 [编程](#编程)  
+   * 5.1 [接口](#接口-)  
+      * 5.1.1 [消息](#-消息-)  
+         * 5.1.2 [参数](#-参数-)  
+         * 5.1.3 [全局变量](#-全局变量-)  
+         * 5.1.4 [从脚本中发送消息](#-从脚本中发送消息-)
+* 6 [通过ESL发送消息](#-通过ESL发送消息-)
 
-* 1 [Compile and Load](#-compile-and-load-)
-* 2 [Config](#config-)
-* 3 [Basic Usage With Default Config](#basic-usage-with-default-config)
-* 4 [Chatplan Tools](#-chatplan-tools-)  
-   * 4.1 [reply](#reply)  
-   * 4.2 [fire](#fire)  
-   * 4.3 [send](#send)  
-   * 4.4 [set](#set)  
-   * 4.5 [stop](#stop)
-* 5 [Programming](#programming)  
-   * 5.1 [Interface](#interface-)  
-      * 5.1.1 [Message](#-message-)  
-         * 5.1.2 [Args](#-args-)  
-         * 5.1.3 [Global Vars](#-global-vars-)  
-         * 5.1.4 [Sending a Message from a script](#-sending-a-message-from-a-script-)
-* 6 [Sending a Message via ESL](#-sending-a-message-via-esl-)
+##  编译和加载 
 
-##  Compile and Load 
-
-In the source tree
+在源代码树中执行
 
 ```xml
 make mod_sms-install 
 ```
 
-In fs\_cli
+在fs_cli中执行
 
 ```xml
 load mod_sms
 ```
 
-## Config 
+## 配置 
 
-mod\_sms is a new module (in late Sept 2011), so users who upgrade from an older FreeSWITCH install need to copy freeswitch.xml from source or add the following section to the existing conf/freeswitch.xml.
+mod_sms 是一个新的模块（2011年9月末发布），所以从旧的FreeSWITCH安装升级的用户需要从源代码复制freeswitch.xml文件，或者添加以下部分到现有的conf/freeswitch.xml中。
 
 ```xml
 <section name="chatplan" description="Regex/XML Chatplan">
@@ -57,13 +53,13 @@ mod\_sms is a new module (in late Sept 2011), so users who upgrade from an older
 </section>
 ```
 
-You'll also need to add mod\_sms to the loadable modules in conf/autoload\_configs/modules.conf.xml
+你还需要将mod\_sms添加到conf/autoload\_configs/modules.conf.xml的可加载模块中。
 
 ```xml
 <load module="mod_sms"/>
 ```
 
-And then create the conf/chatplan dir. Create a default.xml like this:
+然后创建conf/chatplan目录。创建一个名为default.xml的默认文件，内容如下：
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -78,16 +74,15 @@ And then create the conf/chatplan dir. Create a default.xml like this:
 </include>
 ```
 
-  
-## Basic Usage With Default Config
+## 基本用法与默认配置
 
-I used Eyebeam for test, I believe Xlite should work. The following demo shows a message sent from 1004 to 1019.
+我使用Eyebeam进行测试，相信Xlite也可以。以下演示了从1004发送到1019的消息。
 
-Create new contact in Eyebeam and then right click the contact and click instant message then an instant message window will appear.
+在Eyebeam中创建新联系人，然后右键点击联系人，选择即时消息，即可打开即时消息窗口。
 
-Type hello and you should get a reply immediately "Hello, you said hello"
+输入hello，你应该立即收到回复“Hello, you said hello”。
 
-The log will like this:
+日志记录如下：
 
 ```xml
  2011-09-29 11:44:10.343077 [INFO] mod_sms.c:299 Processing text message 1004->1019 in context default
@@ -98,15 +93,15 @@ The log will like this:
  Chatplan: 1019@192.168.0.81 Action reply(Hello, you said: ${_body})
 ```
 
-From the log you could find out that the **message** was caught by mod\_sms and then hit the chatplan. The default chatplan just simply sent back a reply.
+从日志中你可以看到，**消息**被mod\_sms捕获，然后进入chatplan。默认的chatplan只是简单地回复了一条消息。
 
-##  Chatplan Tools 
+##  Chatplan工具 
 
-Just like dialplan tools there's a set of chatplan tools
+就像dialplan工具一样，chatplan也有一套工具。
 
 ### reply
 
-Reply to a message
+回复一条消息
 
 ```xml
 <action application="reply" data="unsolicited reply"/>
@@ -115,7 +110,7 @@ Reply to a message
 
 ### fire
 
-fire an event to the FS event system, here's a sample event:
+向FS事件系统触发一个事件，这里是一个示例事件：
 
 ```xml
 <action application="fire" data=""/>
@@ -155,66 +150,64 @@ fire an event to the FS event system, here's a sample event:
    Content-Length: 49
 ```
 
-### send
+### 发送
 
-Send the message as is.
+按原样发送消息。
 
 ```xml
 <action application="send"/>
 ```
 
-### set
+### 设置
 
-Set vars.
+设置变量。
 
 ```xml
 <action application="set" data="var=val"/>
 ```
 
-### stop
+### 停止
 
-Stop execution.
+停止执行。
 
 ```xml
 <action application="stop" data=""/>
 ```
 
-## Programming
+## 编程
 
-You can also directly call the various programming language modules from the chatplan:
+您还可以直接从聊天计划调用各种编程语言模块：
 
 ```xml
 <action application="lua" data="handle_chat.lua"/>
 <action application="python" data="handle_chat.py"/>
 ```
 
-To prevent the default behavior of sending the message directly even after a chatplan action has matched, set _final\_delivery_ to _true_.
+要防止在聊天计划动作匹配之后直接发送消息的默认行为，请将_final_delivery_设置为_true_。
 
 ```xml
 <action application="set" data="final_delivery=true"/>
 ```
 
-  
-### Interface 
+### 接口
 
-These scripts are run directly inside the chatplan. They have to define a function called "chat", which is then run. Here's an example from python:
-
+这些脚本直接在 chatplan 内运行。它们必须定义一个名为 "chat" 的函数，并在之后运行。以下是 Python 的一个示例：
 ```py
 def chat(message, args):
     sys.stderr.write(str(message.serialize()))
 ```
 
-This interface defines two objects: Message and Args.
+这个接口定义了两个对象：Message 和 Args。
 
 ####  Message 
 
-Like the **session** object in the event system, there's a **message** object in chatplan. The primary functions are:
+在 chatplan 中，像事件系统中的 session 对象一样，有一个 message 对象。其主要功能包括：
 
-getHeader — return one of the message headers
+getHeader – 返回消息的一个头部
 
-serialize — convert the entire message into a string
+serialize – 将整个消息转换为字符串
 
-Here's a sample of handle\_chat.lua
+以下是一个 handle_chat.lua 的示例代码：
 
 ```xml
 freeswitch.consoleLog("info", message:getHeader("from"));
@@ -223,7 +216,7 @@ freeswitch.consoleLog("info", message:serialize());
 ```
 
   
-**message** is a standard event so it's the same API as always with an extra method `chat_execute` to run the apps.
+**message** 是一个标准事件，因此与其他一样，使用相同的 API，另外还有一个额外的方法 `chat_execute` 用于运行应用程序。
 
 ```xml
 message:chat_execute("reply", "you said: " .. message:getBody());
@@ -231,48 +224,47 @@ message:chat_execute("reply", "you said: " .. message:getBody());
 
 ####  Args 
 
-Args is a string passed to the method containing whatever arguments were passed from the chatplan.
+Args 是传递给方法的字符串，包含了从 chatplan 传递的任何参数。
 
-####  Global Vars 
+####  全局变量 
 
-These scripts also have direct access to the variables present in the chatplan. This is done just as done elsewhere: [GetGlobalVariable](https://wiki.freeswitch.org/wiki/GetGlobalVariable "GetGlobalVariable").
+这些脚本还可以直接访问 chatplan 中存在的变量。方法与其他地方相同：[GetGlobalVariable](https://wiki.freeswitch.org/wiki/GetGlobalVariable "GetGlobalVariable")。
 
-####  Sending a Message from a script 
+####  从脚本中发送消息 
 
-Though the `send` and `reply` functions exist, you may want more direct control over the output of the message. Instead, you can directly create and fire off a message event. The following is an example from Lua:
+虽然存在 `send` 和 `reply` 函数，但您可能希望更直接地控制消息的输出。相反，您可以直接创建并发送一个消息事件。以下是 Lua 的示例：
 
 ```xml
-freeswitch.consoleLog("info", "chat console\n")
-   
-local event = freeswitch.Event("CUSTOM", "SMS::SEND_MESSAGE");
-   event:addHeader("proto", "sip");
-   event:addHeader("dest_proto", "sip");
-   event:addHeader("from", "1004@192.168.0.81");
-   event:addHeader("from_full", "sip:1004@192.168.0.81");
-   event:addHeader("to", "sip:1019@192.168.0.81");
-   event:addHeader("subject", "sip:1019@192.168.0.81");
-   event:addHeader("type", "text/html");
-   event:addHeader("hint", "the hint");
-   event:addHeader("replying", "true");
-   event:addHeader("sip_profile", "external");
-   event:addBody("Hello from Seven Du! Have fun!");
-   
-   -- freeswitch.consoleLog("info", event:serialize());
-   event:fire();
+freeswitch.consoleLog("info", "聊天控制台\n")
 
+local event = freeswitch.Event("CUSTOM", "SMS::SEND_MESSAGE")
+   event:addHeader("proto", "sip")
+   event:addHeader("dest_proto", "sip")
+   event:addHeader("from", "1004@192.168.0.81")
+   event:addHeader("from_full", "sip:1004@192.168.0.81")
+   event:addHeader("to", "sip:1019@192.168.0.81")
+   event:addHeader("subject", "sip:1019@192.168.0.81")
+   event:addHeader("type", "text/html")
+   event:addHeader("hint", "the hint")
+   event:addHeader("replying", "true")
+   event:addHeader("sip_profile", "external")
+   event:addBody("Hello from Seven Du! Have fun!")
+   
+   -- freeswitch.consoleLog("info", event:serialize())
+   event:fire()
 ```
 
-##  Sending a Message via ESL 
+## 通过ESL发送消息
 
-You can also send a message via ESL. mod\_sms **must** be loaded or this will not work.
+您也可以通过ESL发送消息。必须加载mod_sms，否则无法正常工作。
 
-Here is an example perl script utilizing ESL to send a message.
+下面是一个使用ESL发送消息的Perl脚本示例。
 
 ```perl
 require ESL;
- 
+
 my $con = new ESL::ESLconnection("localhost", "8021", "ClueCon");
- 
+
 my $e = new ESL::ESLevent("custom", "SMS::SEND_MESSAGE");
 $e->addHeader("to", "1019\@www.freeswitch.org");
 $e->addHeader("from", "testing\@foobar.com");
@@ -282,11 +274,11 @@ $e->addBody(shift);
 $con->sendEvent($e);
 ```
 
-And the same script in Python.
+同样的脚本也可以用Python实现。
 
 ```py
 from ESL import *
-   
+
 con = ESLconnection("127.0.0.1", "8021", "ClueCon")
 
 event = ESLevent("CUSTOM", "SMS::SEND_MESSAGE")
@@ -297,4 +289,4 @@ event.addBody("message contents")
 con.sendEvent(event)
 ```
 
-    Document generated by Confluence on Dec 27, 2022 04:52
+ 文档生成时间：Dec 27, 2022 04:52

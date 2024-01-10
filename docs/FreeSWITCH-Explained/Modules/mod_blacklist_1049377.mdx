@@ -1,15 +1,12 @@
+# mod_blacklist  
 
-# mod_blacklist 
+## 关于
 
- 
+黑名单模块是一个工具，旨在从拨号计划或脚本中调用，返回布尔值'true'或'false'。本维基内容的大部分是从[ mazilo的帖子 ](http://www.dslreports.com/forum/r26341351-FreeSWITCH-vs.-mod-blacklist)摘录而来。
 
-## About
-
-The blacklist module is a tool designed to be called from a dialplan or script which returns a boolean value of 'true' or 'false'. The bulk of this wiki content is paraphrased from [mazilo's post](http://www.dslreports.com/forum/r26341351-FreeSWITCH-vs.-mod-blacklist) on DSLreports.
-
-* [Configuration](#configuration)  
-   * [Dialplan Example](#dialplan-example)
-* [API Commands](#-api-commands)  
+* [配置](#configuration)  
+   * [拨号计划示例](#dialplan-example)
+* [API命令](#-api-commands)  
    * [add](#add)  
    * [check](#check)  
    * [del](#del)  
@@ -17,43 +14,43 @@ The blacklist module is a tool designed to be called from a dialplan or script w
    * [save](#save)  
    * [help](#help)
 
-## Configuration
+## 配置
 
-1\. Edit **autoload\_configs/modules.conf.xml** and uncomment the line below to enable the load of **mod\_blacklist** or add the line to it if the entry is nonexistent.
+1\. 编辑 **autoload\_configs/modules.conf.xml** 文件，并取消下面的一行的注释，以启用**mod\_blacklist**加载，如果条目不存在，则添加该行。
 
 ```xml
 <load module="mod_blacklist"/>
 ```
 
-2\. Edit the **autoload\_configs/blacklist.conf.xml** file to un-comment the list and make the necessary changes to the list as shown below. You **cannot** use an include-like statement with a wildcard to include all files in a directory. Each list must be defined individually.
+2\. 编辑 **autoload\_configs/blacklist.conf.xml** 文件，取消注释列表并根据下面的示例对列表进行必要的更改。**不能**使用类似include语句，并使用通配符来包含目录中的所有文件。每个列表必须单独定义。
 
 ```xml
-<configuration name="mod_blacklist.conf" description="Blacklist module">
+<configuration name="mod_blacklist.conf" description="黑名单模块">
   <lists>
     <list name="blocked" filename="/usr/local/freeswitch/blacklists/blocked.list"/>
   </lists>
 </configuration>
 ```
 
-3\. Create a directory accordingly, i.e. **mkdir -p /usr/local/freeswitch/blacklists**
+3\. 相应地创建一个目录，例如 **mkdir -p /usr/local/freeswitch/blacklists**
 
-4\. Make sure freeswitch has permissions to read and write to the files, without which freeswitch will be unable to read numbers from the list nor will it be able to write to it in the event you need to add a number to the block list. Assuming the user and group "freeswitch" both exist, the easiest way to do this is.
+4\. 确保freeswitch具有读写文件的权限，否则freeswitch将无法从列表中读取号码，也无法在需要将号码添加到阻止列表时写入该文件。假设用户和组"freeswitch"都存在，最简单的方法是执行以下命令：
 
 ```bash
 chown -R freeswitch:freeswitch /usr/local/freeswitch/blacklists
 ```
 
-(or choose the user:group under which your freeswitch user runs)
+（或选择您的FreeSWITCH用户运行的用户：组）
 
-5\. Edit the list by editing the file or using the API. Number entries are delimited by new lines.
+5. 通过编辑文件或使用API编辑列表。数字条目由换行符分隔。
 
-The "Calling from the Dialplan" example archived below does not work. Use "Working Dialplan" instead!
+下面存档的“来自拨号计划”示例不起作用。请改用“工作拨号计划”！
 
-### Dialplan Example
+### 拨号计划示例
 
-When \*98 is dialed along with the subsequent number you'd like to blacklist (\*9818135551212) the \*98 is stripped and the remaining digits are added to the blacklist "blocked". Follow the instructions on this page for adding the file to store blacklisted numbers. The API is then called with the application "set". Fake is just a fake variable. In the prev example below a 1 was prepended. In my example I choose to only add exactly what was dialed. You could do it either way and is your preference. Note the file being played back is a custom wav file. You'll need to create this or use a default message of some sort. Finally the list is saved.
+当与希望列入黑名单的后续号码一起拨打\*98（\*9818135551212），\*98将被剥离，并将剩余的数字添加到黑名单“blocked”中。请按照本页上的说明添加用于存储黑名单号码的文件。然后调用API，使用应用程序“set”。Fake只是一个虚拟变量。在下面的示例中，前面添加了1。在我的示例中，我选择只添加被拨打的内容。您可以任意选择。请注意，正在播放的文件是自定义的wav文件。您需要创建这个文件或使用某种默认消息。最后保存列表。
 
-**Adding to Blacklist** Expand source 
+**添加到黑名单** 展开源代码
 
 ```xml
 <extension name="blacklist_add" >
@@ -66,7 +63,7 @@ When \*98 is dialed along with the subsequent number you'd like to blacklist (\*
 </extension>
 ```
 
-**Checking the Blacklist** Expand source 
+**检查黑名单** 展开源代码
 
 ```xml
 <extension name="blacklist_check" >
@@ -81,7 +78,7 @@ When \*98 is dialed along with the subsequent number you'd like to blacklist (\*
 </extension>
 ```
 
-**Delete Blacklist Item** Expand source 
+**删除黑名单项** 展开源码 
 
 ```xml
 <extension name="blacklist_delete" >
@@ -94,44 +91,47 @@ When \*98 is dialed along with the subsequent number you'd like to blacklist (\*
 </extension>
 ```
 
-The below uses regex to remove the "+" from the caller id. You may already do this somewhere else in your dialplan. Or you may need to translate the inbound caller id in some other fashion. However this will give you the idea and point you in the correct direction. You could also stack conditions if you only want it to apply to a specific trunk or something. Note that "monkeys.wav" doesn't exist, it is there just as a placeholder sound filename.
+下面的代码使用正则表达式从呼叫方 ID 中删除"+"号。您可能已经在拨号计划的其他地方进行了类似的操作。或者您可能需要以其他方式翻译传入呼叫方 ID。但是，此代码将帮助您了解并正确使用相关方法。如果您只想将其应用于特定的中继线路或其他条件，您还可以堆叠条件。请注意，"monkeys.wav" 不存在，只是作为占位符音频文件名。
 
-**Blacklist Inbound Call By CallerID** Expand source 
+**根据呼叫方ID将呼入呼叫加入黑名单** 展开源码
 
 ```xml
-<extension name="blacklisted" >
-  <condition field="${blacklist(check blocked ${regex(${caller_id_number}|^\+([0-9]+)$|%1)})}" expression="^true$" >
+<extension name="blacklisted">
+  <condition field="${blacklist(check blocked ${regex(${caller_id_number}|^\+([0-9]+)$|%1)})}" expression="^true$">
       <action application="playback" data="misc/monkeys.wav" />
       <action application="hangup" />
   </condition>
 </extension>
 ```
 
-Archived In Place
+保留在原处
 
-(This is archived here to show a little history however it did not working properly. In fact in the log I was getting "Invalid Application Blacklist". This is because Blacklist is an API. To correct this use the above dialplan instead. Left it also in case there is something I'm missing. If not please remove.)
+（此处进行归档以展示一些历史信息，然而它没有正常工作。实际上，在日志中我得到了“无效的应用程序黑名单”错误。这是因为黑名单是一个API。要纠正此问题，请使用上述拨号计划。保留它以免遗漏任何信息。如果不需要，请删除。）
 
-The following can be used to add a number to a specific blacklist named 'blocked'.
+下面的内容可用于将号码添加到名为“blocked”的特定黑名单中。
 
-&lt;extension name="blacklist_add"> &lt;condition field="destination_number" expression="^\*25625(\d{10})$">
-  &lt;action application="blacklist" data="add blocked 1$1"/>
-  &lt;action application="sleep" data="1000"/>
-  &lt;action application="blacklist" data="save blocked"/>
-&lt;/extension>
+<extension name="blacklist_add">
+  <condition field="destination_number" expression="^\*25625(\d{10})$">
+    <action application="blacklist" data="add blocked 1$1" />
+    <action application="sleep" data="1000" />
+    <action application="blacklist" data="save blocked" />
+  </condition>
+</extension>
 
-Line by line, the first defines the 'feature code' used to call it, you can call \*25625 plus ten digits. The next, calls the blacklist application and adds a one to the ten digit number saved to $1 then adds it to the blocked list. The third line is a sleep, not sure if this is necessary but I want to make sure there's ample time to the application to respond. The fourth line is optional, and will write any added numbers via API calls to the actual file.
+逐行说明：第一行定义了用于调用的“特征码”，您可以拨打\*25625加上十位数。接下来的行，调用了黑名单应用程序，并将一个添加到保存在$1中的十位数之后，然后将其添加到阻止列表。第三行是一个延迟，不确定是否必要，但我想确保有足够的时间让应用程序响应。第四行是可选的，将通过API调用将添加的号码写入实际文件中。
 
-The following is intended to be put near the top of the dialplan for a given profile. Checks for blacklisted number from list 'blocked' then sends it to our friendly spam averter, Lenny!
+下面的内容旨在放置在给定配置文件的拨号计划的顶部。它检查名为“blocked”的黑名单中是否存在被列入黑名单的号码，然后将其发送给我们友好的垃圾邮件避免者Lenny！
 
-&lt;extension name="blacklist_check">
-  &lt;condition field="${blacklist(check blocked ${destination_number})}" expression="^true$">
+```xml
+&lt;extension name="黑名单检查">
+  &lt;condition field="${黑名单(检查已阻止 ${目标号码})}" expression="^true$">
     &lt;action application="bridge" data="sofia/external/sip:lenny@sip.itslenny.com:5060"/>
- &lt;/condition>
+  &lt;/condition>
 &lt;/extension>
 
-##  API Commands
+## API命令
 
-**Console Output**
+**控制台输出**
 
 ```xml
  freeswitch@internal> blacklist help
@@ -146,51 +146,48 @@ The following is intended to be put near the top of the dialplan for a given pro
 
 ### add
 
-Adds a number to a specified list.
+将一个号码添加到指定的黑名单列表中。
 
 blacklist add blocked 1234567890
 
 ### check
 
-Queries a list for an item. Returns 'true', 'false', or 'Wrong syntax'.
+查询列表中的项。返回'true'、'false'或'语法错误'。
 
 blacklist check blocked 2024561000
 
-Bad syntax returns:
+语法错误返回：
 
-[DEBUG] mod_blacklist.c:190 Wrong syntax
+[DEBUG] mod_blacklist.c:190 语法错误
 
-Unknown list returns:
+未知列表返回：
 
-[ERR] mod_blacklist.c:199 Unknown blacklist [listname]
+[ERR] mod_blacklist.c:199 未知黑名单 [listname]
 
-To fix this you need to check your configuration in `blacklist.conf.xml` (see above).
+您需要检查`blacklist.conf.xml`中的配置以解决此问题（参见上文）。
 
 ### del
 
-Deletes a number from the specified list. Does not delete the list itself, you'll have to manually delete the file and reload the lists to purge a list.
+从指定的列表中删除一个号码。不会删除列表本身，您需要手动删除文件并重新加载列表来清除一个列表。
 
 blacklist del blocked 7035911635
 
 ### reload
 
-Reloads current lists. This will **not** load new lists if you have changed blacklist.conf.xml. This will also not reload anything you've not written to the list by using 'blacklist save'.
+重新加载当前列表。如果您更改了`blacklist.conf.xml`，这**不会**载入新列表。如果您未将任何内容写入列表（使用'blacklist save'），它也不会重新加载。
 
 blacklist reload
 
 ### save
 
-Writes data entered to corresponding lists via API commands to the file.
+将通过API命令输入的数据写入对应的列表文件。
 
 blacklist save blocked
 
 ### help
 
-Displays the help message defined in [API Commands](#-api-commands) 
+显示在[API命令](#-api-commands)中定义的帮助消息。
 
 ### Comments:
 
-| I'm a "edit while reading" wiki user type, please allow me to edit things like the reference to monkeys.wav away ![](/images/icons/contenttypes/comment_16.png) Posted by yellow at May 25, 2016 16:29 |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-
-
+我是一位“边阅读边编辑”的维基用户类型，请允许我编辑关于monkeys.wav的引用等内容！ Posted by yellow 于2016年5月25日16:29

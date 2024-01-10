@@ -1,84 +1,76 @@
+# 自动配置和动态目录
 
-# AutoProvisioning and Dynamic Directories 
+## 关于
 
- 
+这是一个关于Snom和Polycom的快速和糟糕的自动配置、动态目录和队列的示例。
 
-## About
+最后更新于2013.05.18，由Wikimedia用户Alexcrow提供。
 
-Example of quick and nasty auto-provisioning, dynamic directories, and queues for Snom and Polycom.
+单击此处展开目录
 
-Last updated 2013.05.18 by wikimedia user Alexcrow
+* 1 [](#-freeswitch--自动配置和动态目录-)
+* 2 [介绍](#-freeswitch--自动配置和动态目录-)
+* 3 [前提条件](#-freeswitch--自动配置和动态目录-)
+* 4 [拨号计划](#-freeswitch--自动配置和动态目录-)  
+   * 4.1 [Hotdesk自动配置](#-freeswitch--自动配置和动态目录-)  
+   * 4.2 [注销](#-freeswitch--自动配置和动态目录-)  
+   * 4.3 [语音邮件身份验证](#语音邮件身份验证)
+* 5 [DHCP设置](#-freeswitch--自动配置和动态目录-)
+* 6 [Apache重写规则设置](#-freeswitch--自动配置和动态目录-)
+* 7 [mod\_xml\_curl设置](#-freeswitch--自动配置和动态目录-)
+* 8 [PHP示例](#-freeswitch--自动配置和动态目录-)  
+   * 8.1 [队列](#-freeswitch--自动配置和动态目录-)  
+   * 8.2 [LDAP功能](#-freeswitch--自动配置和动态目录-)  
+   * 8.3 [自动配置](#-freeswitch--自动配置和动态目录-)  
+   * 8.4 [目录功能](#-freeswitch--自动配置和动态目录-)  
+   * 8.5 [队列路由](#-freeswitch--自动配置和动态目录-)
 
-Click here to expand Table of Contents
+我们有一个用于组织级目录服务的LDAP服务器。我们将用户的分机号存储为telephoneNumber，将团队标识符存储在departmentNumber中。我们将此团队ID与客户数据库中每个客户的电话号码对应的团队ID进行匹配（在示例中为Interbase/Firebird，但当然可以更改）。
 
-* 1 [](#-freeswitch--autoprovisioning-and-dynamic-directories-)
-* 2 [Introduction](#-freeswitch--autoprovisioning-and-dynamic-directories-)
-* 3 [Prerequisites](#-freeswitch--autoprovisioning-and-dynamic-directories-)
-* 4 [Dialplan](#-freeswitch--autoprovisioning-and-dynamic-directories-)  
-   * 4.1 [Hotdesk Provisioning](#-freeswitch--autoprovisioning-and-dynamic-directories-)  
-   * 4.2 [Logout](#-freeswitch--autoprovisioning-and-dynamic-directories-)  
-   * 4.3 [Voicemail Authentication](#voicemail-authentication)
-* 5 [DHCP settings](#-freeswitch--autoprovisioning-and-dynamic-directories-)
-* 6 [Apache rewrite rules Setup](#-freeswitch--autoprovisioning-and-dynamic-directories-)
-* 7 [mod\_xml\_curl Setup](#-freeswitch--autoprovisioning-and-dynamic-directories-)
-* 8 [PHP Examples](#-freeswitch--autoprovisioning-and-dynamic-directories-)  
-   * 8.1 [Queues](#-freeswitch--autoprovisioning-and-dynamic-directories-)  
-   * 8.2 [LDAP Functions](#-freeswitch--autoprovisioning-and-dynamic-directories-)  
-   * 8.3 [Provisioning](#-freeswitch--autoprovisioning-and-dynamic-directories-)  
-   * 8.4 [Directory Functions](#-freeswitch--autoprovisioning-and-dynamic-directories-)  
-   * 8.5 [Queue Routing](#-freeswitch--autoprovisioning-and-dynamic-directories-)
+我们希望提供以下服务：
 
-##   
+* Snom和Polycom电话的热座位服务
+* 电话设备配置
+* 根据来电者的来电显示将其定向到适当的团队的客户服务号码。
 
-## Introduction 
+请注意，PHP代码很丑陋而恶劣，尤其是它拒绝使用XML库而选择使用"echo"。浏览时请自行承担风险！
 
-We have an LDAP server which we use for organisation-wide directory services. It stores extension numbers for users as telephoneNumber and we store a team identifier in departmentNumber. We match this team id against one stored against every customer's phone number in the customer database (Interbase/Firebird in the examples but of course this can be changed).
+## 先决条件
 
-We wanted to provide the following services:
+`mod_curl、mod_xml_curl、mod_httapi` 应该都已启用。
 
-* Hot–desking for Snom and Polycom phones
-* Provisioning phones
-* Customer Service number to direct callers by Caller ID to appropriate team.
+## 拨号计划
 
-Beware, the PHP code is ugly and nasty, especially its eschewing the use of the XML libraries in preference to "echo". View it at your own risk!
+### 热座位服务配置
 
-## Prerequisites 
+我们的热座位服务拨号计划需要两个元素。首先是为尚未登录的电话设置一个"受限制"的拨号计划。用户可以在一个电话上登录，也可以在多个电话上登录，还可以拨打999并重新启动他们的电话。
 
-`mod_curl, mod_xml_curl, mod_httapi` should all be enabled.
+请注意，这是一个新的上下文，名为"restricted"：
 
-## Dialplan 
-
-### Hotdesk Provisioning
-
-We need two elements to our hotdesking dialplan. The first is to set up a "restricted" dialplan for phones that are not yet logged in. Users can log in at one phone, multiple phones, dial 999 and reboot their phone.
-
-Note that this is in a new context, "restricted":
-
-**Restricted Context Examples**
+**受限制上下文示例**
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    NOTICE:
+    注意：
 
-    This context is usually accessed via authenticated callers on the sip profile on port 5060
-    or transfered callers from the public context which arrived via the sip profile on port 5080.
+    此上下文通常通过位于5060端口的SIP配置文件中的经过身份验证的呼叫者或通过通过位于5080端口的SIP配置文件到达的公共上下文的中转呼叫者进行访问。
 
-    Authenticated users will use the user_context variable on the user to determine what context
-    they can access.  You can also add a user in the directory with the cidr= attribute acl.conf.xml
-    will build the domains ACL using this value.
+    经过身份验证的用户将使用用户上的user_context变量来确定他们可以访问什么上下文。您还可以在目录中添加一个具有cidr=属性acl.conf.xml的用户，以使用该值构建域的ACL。
 -->
 <!-- http://wiki.freeswitch.org/wiki/Dialplan_XML -->
 <include>
   <context name="restricted">
+```
 
-<extension name="Emergency">
+```xml
+<extension name="紧急情况">
           <condition field="destination_number" expression="(^999$)">
                 <action application="bridge" data="sofia/gateway/myemergencygateway/$1" />
           </condition>
 </extension>
 
-<extension name="Login">
+<extension name="登录">
         <condition field="destination_number" expression="^\*{3}(\d{4})$">
                 <action application="answer"/>
                 <action application="sleep" data="1000"/>
@@ -90,7 +82,7 @@ Note that this is in a new context, "restricted":
         </condition>
 </extension>
 
-<extension name="Login-mult">
+<extension name="多用户登录">
         <condition field="destination_number" expression="^667(\d{4})$">
                 <action application="answer"/>
                 <action application="sleep" data="1000"/>
@@ -100,7 +92,9 @@ Note that this is in a new context, "restricted":
                 <action application="hangup" data="NORMAL_CLEARING"/>
         </condition>
 </extension>
+```
 
+```xml
 <extension name="reboot phone" continue="false">
       <condition field="destination_number" expression="^668$">
         <action application="answer"/>
@@ -125,14 +119,14 @@ Note that this is in a new context, "restricted":
 </include>
 ```
 
-### Logout
+### 注销
 
-In the default context, we need to add another dialplan to allow logout (either from the user's extension or from another extension)
+在默认的上下文中，我们需要添加另外一个拨号计划来允许注销（可以是从用户分机或其他分机注销）。
 
-**Logout Dialplan Examples**
+**注销拨号计划示例**
 
 ```xml
-<extension name="Logout">
+<extension name="注销">
         <condition field="destination_number" expression="^\*{3}$">
                 <action application="answer"/>
                 <action application="sleep" data="1000"/>
@@ -145,7 +139,7 @@ In the default context, we need to add another dialplan to allow logout (either 
         </condition>
 </extension>
 
-<extension name="Logout_directed">
+<extension name="指定注销">
         <condition field="destination_number" expression="^\*{3}911(\d{4})$">
                 <action application="answer"/>
                 <action application="sleep" data="1000"/>
@@ -159,13 +153,13 @@ In the default context, we need to add another dialplan to allow logout (either 
 </extension>
 ```
 
-### Voicemail Authentication
+### 语音邮件验证
 
-Note in both diaplans we check the user's voicemail PIN for auth.
+请注意，在这两个拨号计划中，我们会检查用户的语音邮件 PIN 码进行身份验证。
 
-Customer Service number
+客服电话号码
 
-**Customer Service Number**
+**客服电话号码**
 
 ```xml
 <extension name="teams" >
@@ -175,21 +169,21 @@ Customer Service number
 </extension>
 ```
 
-## DHCP settings 
+## DHCP 设置
 
-For Snom, add a DHCP directive like:
+对于 Snom，添加一个 DHCP 指令，如下：
 
 option tftp-server-name "http://webserver/provision/index.php?mac={mac}&manuf=snom";
 
-For Polycom:
+对于 Polycom：
 
 option tftp-server-name "http://webserver/provision/";
 
-## Apache rewrite rules Setup 
+## Apache rewrite rules 设置 
 
-We need to add a rewrite rule for the Polycom phones so we can generate a valid URL for the &lt;mac>.cfg and &lt;mac>-settings.cfg files.
+我们需要为 Polycom 电话添加一个重写规则，以便我们可以生成一个有效的 &lt;mac>.cfg 和 &lt;mac>-settings.cfg 文件的 URL。
 
-**Apache Rewrite Rules for Polycoms**
+**Polycom的 Apache 重写规则**
 
 ```bash
         <Directory /var/www/>
@@ -202,11 +196,11 @@ We need to add a rewrite rule for the Polycom phones so we can generate a valid 
         </Directory>
 ```
 
-## mod_xml_curl Setup 
+## mod_xml_curl 设置 
 
-Set up the bindings for directory and configuration:
+设置目录和配置的绑定：
 
-**mod\_xml\_curl Configuration**
+**mod\_xml\_curl 的配置**
 
 ```xml
 <configuration name="xml_curl.conf" description="cURL XML Gateway">
@@ -221,17 +215,19 @@ Set up the bindings for directory and configuration:
 </configuration>
 ```
 
-## PHP Examples
+## PHP 示例
 
-### Queues
+### 队列
 
-Configuration for Queues (/var/www/config/index.php):
+队列的配置文件（/var/www/config/index.php）：
 
-**PHP Queue Configuration Example** Expand source 
+**PHP 队列配置示例** 展开来源 
 
 ```php
 <?php
+```
 
+```php
 require_once ('../ldapstuff/ldapfuncs.php');
 
 function writeQueueEntry($name) {
@@ -298,125 +294,136 @@ echo FS_FOOTER;
 ?>
 ```
 
-### LDAP Functions
+### LDAP函数
 
-LDAP functions (/var/www/ldapstuff/ldapfuncs.php):
+LDAP函数 (/var/www/ldapstuff/ldapfuncs.php):
 
-**PHP LDAP Example** Expand source 
+**PHP LDAP 示例** 展开源代码
 
 ```php
 <?php
 
-        function ldapEscape($s, $d = FALSE, $i = NULL)
-        {
-                                        /****************************\
-                 *      |   str $s - Subject string  |
-                 *      |  bool $d - DN mode         |
-                 *      | mixed $i - Chars to ignore |
-                 *      \****************************/
-                $m = ($d) ? array(
-                        1 => '\\',
-                        ',',
-                        '=',
-                        '+',
-                        '<',
-                        '>',
-                        ';',
-                        '"',
-                        '#'
-                ) : array(
-                        1 => '\\',
-                        '*',
-                        '(',
-                        ')',
-                        chr(0)
-                );
-                if (is_string($i) && ($l = strlen($s))) {
-                        for ($n = 0; $n < $l; $n++) {
-                                if ($k = array_search(substr($s, $n, 1), $m)) {
-                                        unset($m[$k]);
-                                }
-                        }
-                } else if (is_array($i)) {
-                        foreach ($i as $c) {
-                                if ($k = array_search($c, $m)) {
-                                        unset($m[$k]);
-                                }
-                        }
-                }
-                $q = array();
-                foreach ($m as $k => $c) {
-                        $q[$k] = '\\' . str_pad(dechex(ord($c)), 2, '0', STR_PAD_LEFT);
-                }
-                return str_replace($m, $q, $s);
+function ldapEscape($s, $d = FALSE, $i = NULL)
+{
+    /****************************\
+     *      |   str $s - 主题字符串     |
+     *      |  bool $d - DN 模式        |
+     *      | mixed $i - 要忽略的字符    |
+     *      \****************************/
+    $m = ($d) ? array(
+        1 => '\\',
+        ',',
+        '=',
+        '+',
+        '<',
+        '>',
+        ';',
+        '"',
+        '#'
+    ) : array(
+        1 => '\\',
+        '*',
+        '(',
+        ')',
+        chr(0)
+    );
+    if (is_string($i) && ($l = strlen($s))) {
+        for ($n = 0; $n < $l; $n++) {
+            if ($k = array_search(substr($s, $n, 1), $m)) {
+                unset($m[$k]);
+            }
         }
-
-        function getFromLDAP($sExtension)
-        {
-                $sEMail           = null;
-                $sTelephoneNumber = null;
-                $sCN              = null;
-                $callGroup        = null;
-                $sLDAPBase        = 'ou=People,ou=Accounts,dc=example,dc=net';
-                // connecting to ldap
-                $conn             = ldap_connect('ldap://ldapserver.example.net', 389);
-                if ($conn) {
-                        // binding to ldap
-                        //$lOldError = error_reporting(E_ERROR ^ E_WARNING);
-                        $lOldError = error_reporting(E_ERROR);
-                        $bind      = ldap_bind($conn);
-                        error_reporting($lOldError);
-                        if ($bind) {
-                                // we've successfully logged in!
-                                $asAttrs    = array(
-                                        'mail',
-                                        'telephoneNumber',
-                                        'cn',
-                                        'departmentNumber'
-                                );
-                                $sLDAPQuery = 'telephoneNumber=' . ldapEscape($sExtension, false);
-                                $r          = @ldap_search($conn, $sLDAPBase, $sLDAPQuery, $asAttrs);
-                                if ($r) {
-                                        $aResult = @ldap_first_entry($conn, $r);
-                                        if ($aResult != false) {
-                                                $aTelephoneNumber = @ldap_get_values($conn, $aResult, 'telephoneNumber');
-                                                if ($aTelephoneNumber["count"]) {
-                                                        $aCN    = @ldap_get_values($conn, $aResult, 'cn');
-                                                        $sCN    = $aCN[0];
-                                                        $aEMail = @ldap_get_values($conn, $aResult, 'mail');
-                                                        $aCallGroup = @ldap_get_values($conn, $aResult, 'departmentNumber');
-                                                        $callGroup = $aCallGroup[0];
-                                                        if ($aEMail["count"]) {
-                                                                $sEMail = $aEMail[0];
-                                                        } else {
-                                                                $sEMail = '';
-                                                        }
-                                                }
-                                        }
-                                }
-                         }
-                }
-                ldap_close($conn);
-                return array(
-                        $sEMail,
-                        $sCN,
-                        $callGroup
-                );
+    } else if (is_array($i)) {
+        foreach ($i as $c) {
+            if ($k = array_search($c, $m)) {
+                unset($m[$k]);
+            }
         }
+    }
+    $q = array();
+    foreach ($m as $k => $c) {
+        $q[$k] = '\\' . str_pad(dechex(ord($c)), 2, '0', STR_PAD_LEFT);
+    }
+    return str_replace($m, $q, $s);
+}
+```
 
-        function getGroups()
+```php
+function getFromLDAP($sExtension)
+{
+    $sEMail           = null;
+    $sTelephoneNumber = null;
+    $sCN              = null;
+    $callGroup        = null;
+    $sLDAPBase        = 'ou=People,ou=Accounts,dc=example,dc=net';
+    
+    // 连接到LDAP
+    $conn             = ldap_connect('ldap://ldapserver.example.net', 389);
+    if ($conn) {
+        // 绑定到LDAP
+        //$lOldError = error_reporting(E_ERROR ^ E_WARNING);
+        $lOldError = error_reporting(E_ERROR);
+        $bind      = ldap_bind($conn);
+        error_reporting($lOldError);
+        
+        if ($bind) {
+            // 成功登录！
+            $asAttrs    = array(
+                'mail',
+                'telephoneNumber',
+                'cn',
+                'departmentNumber'
+            );
+            $sLDAPQuery = 'telephoneNumber=' . ldapEscape($sExtension, false);
+            $r          = @ldap_search($conn, $sLDAPBase, $sLDAPQuery, $asAttrs);
+            
+            if ($r) {
+                $aResult = @ldap_first_entry($conn, $r);
+                
+                if ($aResult != false) {
+                    $aTelephoneNumber = @ldap_get_values($conn, $aResult, 'telephoneNumber');
+                    
+                    if ($aTelephoneNumber["count"]) {
+                        $aCN    = @ldap_get_values($conn, $aResult, 'cn');
+                        $sCN    = $aCN[0];
+                        $aEMail = @ldap_get_values($conn, $aResult, 'mail');
+                        $aCallGroup = @ldap_get_values($conn, $aResult, 'departmentNumber');
+                        $callGroup = $aCallGroup[0];
+                        
+                        if ($aEMail["count"]) {
+                            $sEMail = $aEMail[0];
+                        } else {
+                            $sEMail = '';
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    ldap_close($conn);
+    
+    return array(
+        $sEMail,
+        $sCN,
+        $callGroup
+    );
+}
+```
+
+function getGroups()
         {
                 $teams           = array();
                 $sLDAPBase        = 'ou=People,ou=Accounts,dc=example,dc=net';
-                // connecting to ldap
+                // 连接到LDAP服务器
                 $conn             = ldap_connect('ldap://ldapserver.example.net', 389);
                 if ($conn) {
-                        // binding to ldap
+                        // 绑定到LDAP
                         $lOldError = error_reporting(E_ERROR);
                         $bind      = ldap_bind($conn);
                         error_reporting($lOldError);
                         if ($bind) {
-                                // we've successfully logged in!
+                                // 登录成功！
                                 $asAttrs    = array(
                                         'departmentNumber'
                                 );
@@ -440,11 +447,11 @@ LDAP functions (/var/www/ldapstuff/ldapfuncs.php):
 ?>
 ```
 
-### Provisioning
+### 配置
 
-Provisioning script (/var/www/provision/index.php):
+配置脚本(/var/www/provision/index.php):
 
-**PHP Provisioning Example** Expand source 
+**PHP配置示例** 展开源代码
 
 ```php
 <?php
@@ -456,74 +463,76 @@ define('OURFSDOMAIN', '192.168.0.1');
 
 function rebootPhone($ext, $domain) {
 
-$sock = new ESLconnection('localhost','8021','ClueCon');
+    $sock = new ESLconnection('localhost','8021','ClueCon');
 
-$res = $sock->sendRecv("api sofia profile internal flush_inbound_reg $ext@$domain reboot");
+    $res = $sock->sendRecv("api sofia profile internal flush_inbound_reg $ext@$domain reboot");
 
-$ret = $res->getBody();
+    $ret = $res->getBody();
 
-$sock->disconnect();
+    $sock->disconnect();
 
-return ($ret);
+    return ($ret);
 
 }
 
 
 function addToQueue($caller,$team,$domain) {
-	$sock = new ESLconnection('localhost','8021','ClueCon');
-	res= $sock->sendRecv("api callcenter_config agent add $caller@$domain callback");
-	res= $sock->sendRecv("api callcenter_config tier add $team@default $caller@$domain 1 1");
-	$sock->disconnect();
+    $sock = new ESLconnection('localhost','8021','ClueCon');
+    $res= $sock->sendRecv("api callcenter_config agent add $caller@$domain callback");
+    $res= $sock->sendRecv("api callcenter_config tier add $team@default $caller@$domain 1 1");
+    $sock->disconnect();
 }
 
 function delFromQueue($caller,$team,$domain) {
-	$sock = new ESLconnection('localhost','8021','ClueCon');
-	res= $sock->sendRecv("api callcenter_config tier del $team@default $caller@$domain");
-        res= $sock->sendRecv("api callcenter_config agent del $caller@domain");
-	$sock->disconnect();
+    $sock = new ESLconnection('localhost','8021','ClueCon');
+    $res= $sock->sendRecv("api callcenter_config tier del $team@default $caller@$domain");
+    $res= $sock->sendRecv("api callcenter_config agent del $caller@domain");
+    $sock->disconnect();
 }
 
 
 function provSnom ($mac, $ext, $name) {
+```
 
+```xml
 echo '<?xml version="1.0" encoding="utf-8"?>
 <settings>
 <phone-settings e="2">
-<language perm="">English</language>
+<language perm="">英语</language>
 <redirect_event perm="">none</redirect_event>
-<dhcp perm="">on</dhcp>
+<dhcp perm="">开</dhcp>
 <vlan_id perm="">0</vlan_id>
-<ip_frag_enable perm="">on</ip_frag_enable> 
+<ip_frag_enable perm="">开</ip_frag_enable> 
 <utc_offset perm="">0</utc_offset>
 <ntp_server perm="">192.168.0.2</ntp_server>
 <http_user perm="">admin</http_user>
 <http_pass perm="">password</http_pass>
 <dst perm="">3600 03.05.07 02:00:00 10.05.07 03:00:00</dst>
 <timezone perm="">GBR-0</timezone>
-<user_phone perm="">off</user_phone>
+<user_phone perm="">关</user_phone>
 <admin_mode_password perm="">4567</admin_mode_password>
 <tone_scheme perm="">GBR</tone_scheme>
-<logon_wizard perm="">on</logon_wizard>
-<publish_presence perm="">on</publish_presence>
-<call_waiting perm="">visual</call_waiting>
-<callpickup_dialoginfo perm="">on</callpickup_dialoginfo>
-<date_us_format perm="">off</date_us_format>
-<time_24_format perm="">on</time_24_format>
+<logon_wizard perm="">开</logon_wizard>
+<publish_presence perm="">开</publish_presence>
+<call_waiting perm="">显示</call_waiting>
+<callpickup_dialoginfo perm="">开</callpickup_dialoginfo>
+<date_us_format perm="">关</date_us_format>
+<time_24_format perm="">开</time_24_format>
 <ldap_server perm="">ldapserver.example.net</ldap_server>
 <ldap_base perm="">ou=People,ou=Accounts,dc=ifa,dc=net</ldap_base>
-<peer_to_peer_cc perm="">off</peer_to_peer_cc>
+<peer_to_peer_cc perm="">关</peer_to_peer_cc>
 <dkey_snom perm="">keyevent F_DIRECTORY_SEARCH</dkey_snom>
 <dkey_retrieve perm="">speed *98</dkey_retrieve>
-<show_xml_pickup perm="">off</show_xml_pickup>
+<show_xml_pickup perm="">关</show_xml_pickup>
 <firmware_version perm="">snom370-SIP 7.3.30</firmware_version>
-<ldap_lookup_ringing perm="">off</ldap_lookup_ringing>
+<ldap_lookup_ringing perm="">关</ldap_lookup_ringing>
 <ldap_search_filter perm="">(&(telephoneNumber=*)(sn=%))</ldap_search_filter>
 <ldap_number_filter perm="">(&(telephoneNumber=%)(sn=*))</ldap_number_filter>
 <ldap_name_attributes perm="">cn sn</ldap_name_attributes>
 <ldap_number_attributes perm="">telephoneNumber</ldap_number_attributes>
 <ldap_display_name perm="">%cn</ldap_display_name>
-<use_hidden_tags perm="">off</use_hidden_tags>
-<show_name_dialog perm="">on</show_name_dialog>
+<use_hidden_tags perm="">关</use_hidden_tags>
+<show_name_dialog perm="">开</show_name_dialog>
 <uboot_version perm="">1.1.3-u</uboot_version>
 <user_realname idx="1" perm="">' . $name . '</user_realname>
 <user_name idx="1" perm="">' . $ext . '</user_name>
@@ -531,7 +540,7 @@ echo '<?xml version="1.0" encoding="utf-8"?>
 <user_pname idx="1" perm="">' . $ext . '</user_pname>
 <user_pass idx="1" perm="">password</user_pass>
 <user_mailbox idx="1" perm="">' . $ext . '</user_mailbox>
-<user_srtp idx="1" perm="">off</user_srtp>
+<user_srtp idx="1" perm="">关</user_srtp>
 <user_xml_screen_url idx="1" perm="">http://webserver/idle.xml</user_xml_screen_url>
 <user_ringer idx="1" perm="">Ringer6</user_ringer>
 <codec1_name idx="1" perm="">9</codec1_name>
@@ -542,7 +551,7 @@ echo '<?xml version="1.0" encoding="utf-8"?>
 <codec6_name idx="1" perm="">3</codec6_name>
 <codec7_name idx="1" perm="">3</codec7_name>
 <user_savp idx="1" perm="">optional</user_savp>
-<user_publish_presence_bootup idx="1" perm="">on</user_publish_presence_bootup>
+<user_publish_presence_bootup idx="1" perm="">开</user_publish_presence_bootup>
 </phone-settings>
 <functionKeys e="2">
 <fkey idx="0" context="active" perm="">none</fkey>
@@ -563,38 +572,39 @@ echo '<?xml version="1.0" encoding="utf-8"?>
 </settings>
 ';
 }
+```
 
+```php
+function provPolycom($mac, $ext, $name, $filename) {
 
-function provPolycom ($mac, $ext, $name, $filename) {
+    if ($filename == '.') {
 
-if ($filename == '.') {
-
-echo '<?xml version="1.0" standalone="yes"?>
+        echo '<?xml version="1.0" standalone="yes"?>
 <APPLICATION APP_FILE_PATH="sip.ld" CONFIG_FILES="' . $mac . '-settings.cfg, local-phone1.cfg, local-sip.cfg, phone1.cfg, sip.cfg" MISC_FILES="" LOG_FILE_DIRECTORY="" OVERRIDES_DIRECTORY="" CONTACTS_DIRECTORY="" LICENSE_DIRECTORY="">
 </APPLICATION>
 ';
-}
+    }
 
-else if ($filename == '-settings.') {
+    else if ($filename == '-settings.') {
 
-echo '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        echo '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
   <reginfo>
     <reg reg.1.displayName="' . $name . '" reg.1.address="' . $ext .'" reg.1.label="' . $name . '" reg.1.type="private" reg.1.auth.userId="' . $ext . '" reg.1.auth.password="password"/>
   </reginfo>
 ';
 
-}
+    }
 
 }
 
 
-function provPolycomSettings ($mac, $ext) {
-#TBI, implement BLF
+function provPolycomSettings($mac, $ext) {
+    #TBI, implement BLF
 }
 
 
-function provSnomSettings ($mac, $ext) {
-#TBI, implement BLF
+function provSnomSettings($mac, $ext) {
+    #TBI, implement BLF
 }
 
 
@@ -614,106 +624,98 @@ $db = new MyDB();
 //if action is defined this is from the FS dialplan
 
 if (array_key_exists('action', $_REQUEST)) {
-	$action = $_REQUEST['action'];
-	$exten = $_REQUEST['exten'];
+    $action = $_REQUEST['action'];
+    $exten = $_REQUEST['exten'];
         $aLDAPres = getFromLDAP($exten);
-	if ($aLDAPres[1] != NULL) {
+    if ($aLDAPres[1] != NULL) {
 
-		$team = $aLDAPres[2];
+        $team = $aLDAPres[2];
 
-		if ($action == 'logout') {
-			//delete all entries for the exten
-			$query = "DELETE FROM provision WHERE exten='$exten'";
-			$db->exec($query);
-			rebootPhone($exten, OURFSDOMAIN);
-			if ( preg_match("/^CSM/", $team) {
-                                delFromQueue($exten,$team,OURFSDOMAIN);
-                        )
-		
-		}
+        if ($action == 'logout') {
+            //delete all entries for the exten
+            $query = "DELETE FROM provision WHERE exten='$exten'";
+            $db->exec($query);
+            rebootPhone($exten, OURFSDOMAIN);
+            if ( preg_match("/^CSM/", $team) {
+                delFromQueue($exten,$team,OURFSDOMAIN);
+            )
 
-		if ($action == 'login') { 
-			$mac = $_REQUEST['mac'];
-			//is this phone logged in elsewhere?
-			$query = "SELECT exten FROM provision WHERE exten='$exten'";
-			$res = $db->querySingle($query);
-			if ($res) {
-				$query = "DELETE FROM provision WHERE exten='$exten'";
-				$db->exec($query);
-				rebootPhone($exten, OURFSDOMAIN);
-			}
-			
-		        if ( preg_match("/^CSM/", $team) {
-				addToQueue($exten,$team,OURFSDOMAIN);
-			)
+        }
+```
 
-			//now insert new ext of the request var "$exten", as long as it matches a valid extension (initially from regex, later from LDAP)
-			$query = "DELETE FROM provision WHERE mac='$mac'";
-			$db->exec($query);
-			$query = "INSERT INTO provision VALUES ('$mac','$exten')";
-			$db->exec($query);
-			rebootPhone($mac, OURFSDOMAIN);
-	
-		}
-
-		if ($action == 'login-mult') {
-	                $mac = $_REQUEST['mac'];
-	                //now insert new ext of the request var "$exten", as long as it matches a valid extension (initially from regex, later from LDAP)
-	                $query = "DELETE FROM provision WHERE mac='$mac'";
-	                $db->exec($query);
-	                $query = "INSERT INTO provision VALUES ('$mac','$exten')";
-	                $db->exec($query);
-	                rebootPhone($mac, OURFSDOMAIN);
-
-	        }
-
-	}	
-
-//endif
-} else {
-
-
-//else this is from the phone
-
-//so far this only will work with Snom
-
-	$name = 'Dial *** then number to login';
+如果（$action == 'login'）{
 	$mac = $_REQUEST['mac'];
-	$manuf = $_REQUEST['manuf'];
-	//if (mac is in in the db)
-	$query = "SELECT exten FROM provision WHERE mac='$mac'";
+	//这个手机是否在其他地方登录？
+	$query = "SELECT exten FROM provision WHERE exten='$exten'";
 	$res = $db->querySingle($query);
-	if ( $res ) {
-		//look up extension no
-		$exten=$res;
-		if ($exten != $mac) {
-			$aLDAPres = getFromLDAP($exten);
-			$name = $aLDAPres[1];
-		}
-		//call provision mac=mac, exten=from sql
-		switch($manuf) {
-			case "snom":
-				provSnom($mac,$exten,$name);
-			case "polycom":
-				$filename = $_REQUEST['filename'];
-				provPolycom($mac,$exten,$name,$filename);
-			}
-	} else {
-		//if (mac is not in the db)
-		//insert mac=mac addr, ext=mac addr
-		$query = "INSERT INTO provision VALUES ('$mac','$mac')";
+	if ($res) {
+		$query = "DELETE FROM provision WHERE exten='$exten'";
 		$db->exec($query);
-		//provision
-		switch($manuf) {
-                        case "snom":
-                                provSnom($mac,$mac,$name);
-                        case "polycom":
-                                $filename = $_REQUEST['filename'];
-                                provPolycom($mac,$mac,$name,$filename);
-                        }
-	//endif
+		rebootPhone($exten, OURFSDOMAIN);
 	}
 
+	if (preg_match("/^CSM/", $team)) {
+		addToQueue($exten, $team, OURFSDOMAIN);
+	}
+
+	//现在插入请求变量"$exten"的新扩展号码，只要它匹配有效的分机号码（最初从正则表达式，稍后从LDAP）
+	$query = "DELETE FROM provision WHERE mac='$mac'";
+	$db->exec($query);
+	$query = "INSERT INTO provision VALUES ('$mac','$exten')";
+	$db->exec($query);
+	rebootPhone($mac, OURFSDOMAIN);
+}
+
+if ($action == 'login-mult') {
+	$mac = $_REQUEST['mac'];
+	//现在插入请求变量"$exten"的新扩展号码，只要它匹配有效的分机号码（最初从正则表达式，稍后从LDAP）
+	$query = "DELETE FROM provision WHERE mac='$mac'";
+	$db->exec($query);
+	$query = "INSERT INTO provision VALUES ('$mac','$exten')";
+	$db->exec($query);
+	rebootPhone($mac, OURFSDOMAIN);
+}
+//结束
+} else {
+//否则这是来自电话机
+//到目前为止，只能与Snom配合使用
+
+```php
+$name = '拨号***然后输入数字进行登录';
+$mac = $_REQUEST['mac'];
+$manuf = $_REQUEST['manuf'];
+//如果（mac地址在数据库中）
+$query = "SELECT exten FROM provision WHERE mac='$mac'";
+$res = $db->querySingle($query);
+if ($res) {
+    //查找分机号码
+    $exten = $res;
+    if ($exten != $mac) {
+        $aLDAPres = getFromLDAP($exten);
+        $name = $aLDAPres[1];
+    }
+    //呼叫拨号 mac=mac地址, exten=从sql查询结果获取
+    switch ($manuf) {
+        case "snom":
+            provSnom($mac, $exten, $name);
+        case "polycom":
+            $filename = $_REQUEST['filename'];
+            provPolycom($mac, $exten, $name, $filename);
+        }
+} else {
+    //如果（mac地址在数据库中没有找到）
+    //插入 mac=mac地址, ext=mac地址
+    $query = "INSERT INTO provision VALUES ('$mac','$mac')";
+    $db->exec($query);
+    //provision
+    switch ($manuf) {
+        case "snom":
+            provSnom($mac, $mac, $name);
+        case "polycom":
+            $filename = $_REQUEST['filename'];
+            provPolycom($mac, $mac, $name, $filename);
+        }
+//结束 如果语句
 }
 
 
@@ -723,11 +725,11 @@ $db->close();
 ?>
 ```
 
-### Directory Functions
+### 查找功能
 
-Directory stuff (/var/www/xmlcurldir/index.php):
+目录查询(/var/www/xmlcurldir/index.php):
 
-**PHP Directory Examples** Expand source 
+**PHP 目录查询示例** Expand source 
 
 ```php
 <?php
@@ -735,29 +737,29 @@ Directory stuff (/var/www/xmlcurldir/index.php):
 require_once ('../ldapstuff/ldapfuncs.php');
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+```
 
-	define('OURFSDOMAIN', '192.168.0.1');
-	
-	
-	define('NOT_FOUND_RESPONSE', '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+```php
+define('OURFSDOMAIN', '192.168.0.1');
+
+define('NOT_FOUND_RESPONSE', '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <document type="freeswitch/xml">
 <section name="result">
 <result status="not found" />
 </section>
 </document>
 ');
-	define('DIALSTRING', '<param name="dial-string" value="{sip_invite_domain=${domain_name},presence_id=${dialed_user}@${dialed_domain}}${sofia_contact(${dialed_user}@${dialed_domain})}"/>');
-	
-	
-	function writeNotFoundResponse()
-	{
-		echo NOT_FOUND_RESPONSE;
-	}
-	
-	
-	function writeStartupResponse()
-	{
-		echo '<document type="freeswitch/xml">
+
+define('DIALSTRING', '<param name="dial-string" value="{sip_invite_domain=${domain_name},presence_id=${dialed_user}@${dialed_domain}}${sofia_contact(${dialed_user}@${dialed_domain})}"/>');
+
+function writeNotFoundResponse()
+{
+    echo NOT_FOUND_RESPONSE;
+}
+
+function writeStartupResponse()
+{
+    echo '<document type="freeswitch/xml">
 <section name="directory" description="Dynamic User Directory">
 <domain name="' . OURFSDOMAIN . '">
 <params>
@@ -767,47 +769,119 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 </section>
 </document>
 ';
-	}
-	
-	
-	function writeACLResponse()
-	{
-		writeNotFoundResponse();
-	}
-	
-	
-	function writeAuthorizationResponse($sUser, $sContext, $sEMail, $sCN, $callGroup)
-	{
-		$sEMailString = NULL;
-		$sContextString = NULL;
-		$callGroupString = NULL;
-		$vmPass = NULL;
-		
-		if ((is_null($sEMail) == false) && (is_string($sEMail)) && (strlen($sEMail) > 0)) {
-			$sEMailString = '<param name="vm-mailto" value="' . $sEMail . '"/>';
-			
-		}
-		
-		if ((is_null($sContext) == false) && (is_string($sContext)) && (strlen($sContext) > 0)) {
-                        $sContextString = '<variable name="user_context" value="' . $sContext . '"/>';
+}
 
-                }
-		
-		if ((is_null($callGroup) == false) && (is_string($callGroup)) && (strlen($callGroup) > 0)) {
-                        $callGroupString = '<variable name="callgroup" value="' . $callGroup . '"/>';
+function writeACLResponse()
+{
+    writeNotFoundResponse();
+}
 
-                }
+function writeAuthorizationResponse($sUser, $sContext, $sEMail, $sCN, $callGroup)
+{
+    $sEMailString = NULL;
+    $sContextString = NULL;
+    $callGroupString = NULL;
+    $vmPass = NULL;
+    
+    if ((is_null($sEMail) == false) && (is_string($sEMail)) && (strlen($sEMail) > 0)) {
+        $sEMailString = '<param name="vm-mailto" value="' . $sEMail . '"/>';
+        
+    }
+    
+    if ((is_null($sContext) == false) && (is_string($sContext)) && (strlen($sContext) > 0)) {
+        $sContextString = '<variable name="user_context" value="' . $sContext . '"/>';
 
-		class MyDB extends SQLite3
-		{
-    			function __construct()
-    			{
-        		$this->open('/var/lib/freeswitch/db/voicemail_default.db');
-    			}
-		}
+    }
+    
+    if ((is_null($callGroup) == false) && (is_string($callGroup)) && (strlen($callGroup) > 0)) {
+        $callGroupString = '<variable name="callgroup" value="' . $callGroup . '"/>';
 
-		$db = new MyDB();
+    }
 
+    class MyDB extends SQLite3
+    {
+        function __construct()
+        {
+            $this->open('/var/lib/freeswitch/db/voicemail_default.db');
+        }
+    }
+
+    $db = new MyDB();
+}
+```
+
+```php
+define('OURFSDOMAIN', '192.168.0.1');
+
+define('NOT_FOUND_RESPONSE', '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="freeswitch/xml">
+<section name="result">
+<result status="not found" />
+</section>
+</document>
+');
+
+define('DIALSTRING', '<param name="dial-string" value="{sip_invite_domain=${domain_name},presence_id=${dialed_user}@${dialed_domain}}${sofia_contact(${dialed_user}@${dialed_domain})}"/>');
+
+function writeNotFoundResponse()
+{
+    echo NOT_FOUND_RESPONSE;
+}
+
+function writeStartupResponse()
+{
+    echo '<document type="freeswitch/xml">
+<section name="directory" description="Dynamic User Directory">
+<domain name="' . OURFSDOMAIN . '">
+<params>
+' . DIALSTRING . '
+</params>
+</domain>
+</section>
+</document>
+';
+}
+
+function writeACLResponse()
+{
+    writeNotFoundResponse();
+}
+
+function writeAuthorizationResponse($sUser, $sContext, $sEMail, $sCN, $callGroup)
+{
+    $sEMailString = NULL;
+    $sContextString = NULL;
+    $callGroupString = NULL;
+    $vmPass = NULL;
+    
+    if ((is_null($sEMail) == false) && (is_string($sEMail)) && (strlen($sEMail) > 0)) {
+        $sEMailString = '<param name="vm-mailto" value="' . $sEMail . '"/>';
+        
+    }
+    
+    if ((is_null($sContext) == false) && (is_string($sContext)) && (strlen($sContext) > 0)) {
+        $sContextString = '<variable name="user_context" value="' . $sContext . '"/>';
+
+    }
+    
+    if ((is_null($callGroup) == false) && (is_string($callGroup)) && (strlen($callGroup) > 0)) {
+        $callGroupString = '<variable name="callgroup" value="' . $callGroup . '"/>';
+
+    }
+
+    class MyDB extends SQLite3
+    {
+        function __construct()
+        {
+            $this->open('/var/lib/freeswitch/db/voicemail_default.db');
+        }
+    }
+
+    $db = new MyDB();
+}
+```
+
+```php
 		$query = "SELECT password FROM voicemail_prefs WHERE username='$sUser'";
 
 		$res = $db->querySingle($query);
@@ -869,9 +943,77 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 		$callGroupString = NULL;
                 if ((is_null($callGroup) == false) && (is_string($callGroup)) && (strlen($callGroup) > 0)) {
                         $callGroupString = '<variable name="callgroup" value="' . $callGroup . '"/>';
-
                 }
+```
+
+
+```php
+		$query = "SELECT password FROM voicemail_prefs WHERE username='$sUser'";
+
+		$res = $db->querySingle($query);
+
+		if ($res) {
+			$vmPass = 'user-choose';
+			} else {
+			$vmPass = $sUser;
+		}
+
+		$db->close();
+		
 		echo '<document type="freeswitch/xml">
+<section name="directory" description="Dynamic User Directory"> 
+<domain name="' . OURFSDOMAIN . '">
+<params>
+' . DIALSTRING . '
+</params>
+<groups>
+<group name="default">
+<users>
+<user id="' . $sUser . '">
+<params>
+<param name="password" value="jopasdfimjajpadfkog"/>
+<param name="vm-password" value="' . $vmPass . '"/>
+<param name="vm-enabled" value="true"/>
+<param name="vm-email-all-messages" value="true"/>
+<param name="vm-attach-file" value="true"/>
+<param name="vm-keep-local-after-email" value="true"/>
+<param name="MWI-Account" value="' . $sUser . '@' . OURFSDOMAIN . '"/>
+' . $sEMailString . '
+</params>
+<variables>
+<variable name="toll_allow" value=""/>
+<variable name="accountcode" value="' . $sUser . '"/>
+' . $sContextString . '
+<variable name="outbound_caller_id_name" value="' . $sCN . '"/>
+<variable name="outbound_caller_id_number" value="' . $sUser . '"/>
+<variable name="limit_max" value="1"/>
+<variable name="limit_destination" value="voicemail:' . $sUser . '"/>
+<!--<variable name="sip-force-contact" value="NDLB-tls-connectile-dysfunction"/>-->
+' . $callGroupString . '
+</variables>
+</user>
+</users>
+</group>
+</groups>
+</domain>
+</section>
+</document>
+';
+		
+		
+	}
+	
+	
+	function writeDialByUserResponse($sUser,$callGroup)
+	{
+		$callGroupString = NULL;
+                if ((is_null($callGroup) == false) && (is_string($callGroup)) && (strlen($callGroup) > 0)) {
+                        $callGroupString = '<variable name="callgroup" value="' . $callGroup . '"/>';
+                }
+```
+
+}
+echo '<document type="freeswitch/xml">
 <section name="directory" description="Dynamic User Directory">
 <domain name="' . OURFSDOMAIN . '">
 <params>
@@ -892,82 +1034,81 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 </section>
 </document>
 ';
-		
-		
-	}
-	
-	
-	if (array_key_exists('section', $_REQUEST) && ($_REQUEST['section'] == 'directory')) {
-		//Now We have a valid XML CURL req for directory
-		
-		//Check for startup, ie tag_name does not exist, pass startup and exit
-		if (array_key_exists('tag_name', $_REQUEST)) {
-			$sTagName = $_REQUEST['tag_name'];
-			if ((is_null($sTagName)) || (strlen($sTagName) == 0) || (is_string($sTagName) == false)) {
-				//this is Startup
-				writeStartupResponse();
-			} else {
-				//Initially call getFromLDAP and if return is null call not_found
-				$sUser  = $_REQUEST['user'];
-				$aEmail = getFromLDAP($sUser);
-				$sEmail = $aEmail[0];
-				$sCN    = $aEmail[1];
-				$callGroup = $aEmail[2];
-				
-				if (is_null($sCN)) {
-					if (preg_match("/[A-Fa-f0-9]{12}/", "$sUser")) {
-						writeAuthorizationResponse($sUser, "restricted", "", "Enter Extension", "");
-					} else {
-						writeNotFoundResponse();
-					}
+
+
+}
+
+
+if (array_key_exists('section', $_REQUEST) && ($_REQUEST['section'] == 'directory')) {
+	//现在我们有一个有效的XML CURL目录请求
+
+	//检查是否为启动，即tag_name不存在，通过启动并退出
+	if (array_key_exists('tag_name', $_REQUEST)) {
+		$sTagName = $_REQUEST['tag_name'];
+		if ((is_null($sTagName)) || (strlen($sTagName) == 0) || (is_string($sTagName) == false)) {
+			//这是启动
+			writeStartupResponse();
+		} else {
+			//最初调用getFromLDAP，如果返回为空调用not_found
+			$sUser  = $_REQUEST['user'];
+			$aEmail = getFromLDAP($sUser);
+			$sEmail = $aEmail[0];
+			$sCN    = $aEmail[1];
+			$callGroup = $aEmail[2];
+			
+			if (is_null($sCN)) {
+				if (preg_match("/[A-Fa-f0-9]{12}/", "$sUser")) {
+					writeAuthorizationResponse($sUser, "restricted", "", "Enter Extension", "");
 				} else {
-					$sKeyName              = $_REQUEST['key_name'];
-					$sKeyValue             = $_REQUEST['key_value'];
-					$sEventName            = $_REQUEST['Event-Name'];
-					$sEventCallingFunction = $_REQUEST['Event-Calling-Function'];
-					
-					//Then differentiate between auth, vm and user_call.
-					if (($sTagName == 'domain') && ($sKeyName == 'name') && ($sKeyValue == OURFSDOMAIN)) {
-						//check if user_call or registration
-						if ($sEventName == "REQUEST_PARAMS") {
-							$sAction = '';
-							if (array_key_exists('action', $_REQUEST)) {
-								$sAction = $_REQUEST['action'];
-							}
-							if (($sAction == "user_call") && ($sEventCallingFunction == 'user_outgoing_channel')) {
-								writeDialByUserResponse($sUser, $callGroup);
-							} else {
-								writeAuthorizationResponse($sUser, "default", $sEmail, $sCN, $callGroup);
-							}
-							
-						} else if (($sEventName == 'GENERAL') && (($sEventCallingFunction == 'resolve_id') || ($sEventCallingFunction == 'voicemail_check_main'))) {
-							//Voicemail
-							writeAuthorizationResponse($sUser, "default", $sEmail, $sCN, $callGroup);
+					writeNotFoundResponse();
+				}
+			} else {
+				$sKeyName              = $_REQUEST['key_name'];
+				$sKeyValue             = $_REQUEST['key_value'];
+				$sEventName            = $_REQUEST['Event-Name'];
+				$sEventCallingFunction = $_REQUEST['Event-Calling-Function'];
+				
+				//然后区分认证，语音信箱和用户呼叫。
+				if (($sTagName == 'domain') && ($sKeyName == 'name') && ($sKeyValue == OURFSDOMAIN)) {
+					//检查是否为用户呼叫或注册
+					if ($sEventName == "REQUEST_PARAMS") {
+						$sAction = '';
+						if (array_key_exists('action', $_REQUEST)) {
+							$sAction = $_REQUEST['action'];
+						}
+						if (($sAction == "user_call") && ($sEventCallingFunction == 'user_outgoing_channel')) {
+							writeDialByUserResponse($sUser, $callGroup);
 						} else {
-							writeNotFoundResponse();
+							writeAuthorizationResponse($sUser, "default", $sEmail, $sCN, $callGroup);
 						}
 						
+					} else if (($sEventName == 'GENERAL') && (($sEventCallingFunction == 'resolve_id') || ($sEventCallingFunction == 'voicemail_check_main'))) {
+						//语音信箱
+						writeAuthorizationResponse($sUser, "default", $sEmail, $sCN, $callGroup);
 					} else {
 						writeNotFoundResponse();
 					}
 					
+				} else {
+					writeNotFoundResponse();
 				}
 				
-				//endif for "is directory request"
 			}
+			
+			//结束"是否为目录请求"的if语句块
 		}
-		
-		
 	}
-	//endif for POST check
+	
+	
 }
-```
+//结束POST检查的if语句块
+}
 
-### Queue Routing
+### 队列路由
 
-Direct incoming calls to the right queue - please note I've had to remove the query data from the query\_ib function. The query should return just the department as stored in your customer database and a Caller Name (/var/www/teamdial/teamdial.php):
+将来电直接路由到正确的队列 - 请注意，我已经从query\_ib函数中删除了查询数据。查询应该只返回存储在客户数据库中的部门和呼叫者名称(/var/www/teamdial/teamdial.php)：
 
-**PHP Script writeDialResponse** Expand source 
+**PHP脚本writeDialResponse** 扩展源代码
 
 ```php
 <?php
@@ -1009,9 +1150,9 @@ function interbase_sql_exec($host, $username, $password, $sql) {
 }
 
 function query_ib($caller_id) {
-	$query="INSERT YOUR QUERY HERE";
+	$query="请在这里插入您的查询";
 
-	$result=interbase_sql_exec("dbserver.example.net:/data/customerdata.gdb","username","password",$query);
+	$result=interbase_sql_exec("dbserver.example.net:/data/customerdata.gdb","username"，"password",$query);
 	return $result[0];
 	$op=var_dump($result);
 	
@@ -1021,50 +1162,50 @@ function query_ib($caller_id) {
 if (array_key_exists('callerid', $_REQUEST)) {
 	
 	$cid = $_REQUEST['callerid'];
-	$cid = preg_replace("/\ 44/","0",$cid,1); #on UK numbers, remove 44 with leading space.
+	$cid = preg_replace("/\ 44/","0",$cid,1); #在英国号码上，删除带有前导空格的44。
 
 	$res=query_ib($cid);
 
-	//array of the teams we are interested in, with numbers if you want to call number instead of queue.
-	//could remove this and the check against it below if your data is perfect.
-	$numIndex = array(
-		"TEAMA" => 8710,
-		"TEAMB" => 8711,
-		"TEAMC" => 8712,
-		"TEAMD" => 8714,
-		"TEAME" => 8710,
-		"TEAMF" => 8711,
-		"TEAMG" => 8712,
-		"TEAMH" => 8714,
-		"TEAMI" => 8710,
-		"TEAMJ" => 8711,
-		"TEAMK" => 8712,
-		"TEAML" => 8714,
-		"TEAMO" => 8710,
-		"TEAMP" => 8710,
-		);
+```php
+//我们感兴趣的团队数组，如果您想用号码而不是队列来进行呼叫的话，可以加上号码。
+//如果您的数据是完美的，可以删除以下代码及其对应的检查。
+$numIndex = array(
+	"TEAMA" => 8710,
+	"TEAMB" => 8711,
+	"TEAMC" => 8712,
+	"TEAMD" => 8714,
+	"TEAME" => 8710,
+	"TEAMF" => 8711,
+	"TEAMG" => 8712,
+	"TEAMH" => 8714,
+	"TEAMI" => 8710,
+	"TEAMJ" => 8711,
+	"TEAMK" => 8712,
+	"TEAML" => 8714,
+	"TEAMO" => 8710,
+	"TEAMP" => 8710,
+);
 
-	if ($res) {
-		$team = trim($res[0]);
-		$cidname = trim($res[1]);
-		$num = "1000"; //reception no as fallback.
-		if ($num = $numindex[$team]) {
-			writeQueueResponse($team,$cidname);
-			#writeDialResponse($num,$cidname);
-		} else {
-			writeDialResponse("1000",$cid);
-		}
-		
-       	} else {
-	        writeDialResponse("1000",$cid);
+if ($res) {
+	$team = trim($res[0]);
+	$cidname = trim($res[1]);
+	$num = "1000"; //如果没有其他号码，默认使用接待号码。
+	if ($num = $numindex[$team]) {
+		writeQueueResponse($team,$cidname);
+		#writeDialResponse($num,$cidname);
+	} else {
+		writeDialResponse("1000",$cid);
 	}
+	
+} else {
+	writeDialResponse("1000",$cid);
+}
 
 #	$db->close();
 
 
 } else {
-
-        writeDialResponse("1000",$cid);
+	writeDialResponse("1000",$cid);
 }
 
 ?>
@@ -1072,10 +1213,8 @@ if (array_key_exists('callerid', $_REQUEST)) {
 
 \--[Alexcrow](https://wiki.freeswitch.org/wiki/User:Alexcrow "User:Alexcrow") 13:01, 18 May 2013 (UTC)
 
-### Comments:
+### 评论：
 
-| "export to PDF" is terrible! Please checkto word - is even worse! ![](/images/icons/contenttypes/comment_16.png) Posted by denis at Mar 06, 2015 05:41 |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| I checked. You are correct, it is terrible. ![](/images/icons/contenttypes/comment_16.png) Posted by boteman at Mar 06, 2015 12:41                     |
-
-
+| "导出为 PDF" 糟糕透了！请检查转成word - 更糟糕！ ![](/images/icons/contenttypes/comment_16.png) 由denis于 2015年3月6日 05:41 提交 |
+| -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 我已经检查过了，你是正确的，真的很糟糕。![](/images/icons/contenttypes/comment_16.png) 由 boteman 于 2015年3月6日 12:41 发表                      |

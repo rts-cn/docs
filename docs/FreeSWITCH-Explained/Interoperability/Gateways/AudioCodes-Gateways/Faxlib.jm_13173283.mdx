@@ -1,149 +1,141 @@
-
 # Faxlib.jm 
 
- 
+单击此处展开目录
 
-Click here to expand Table of Contents
-
-* 1 [See Also](#see-also)
+* 1 [参见](#see-also)
 
 ```xml
 //  -*- mode:c; tab-width:4; c-basic-offset:4; c-indent-level:4; indent-tabs-mode:nil;  -*-
 /*
  * Version: MPL 1.1
  *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- * http://www.mozilla.org/MPL/
+ * 本文件的内容受Mozilla Public License Version 1.1 (称为“许可证”)的约束;您仅在符合许可证的情况下才能使用本文件。
+ * 您可以在以下位置获取许可证的副本 http://www.mozilla.org/MPL/
  *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
+ * 根据许可证以“原样”方式分发的软件，没有任何形式的担保，无论是明示的还是隐含的。参见许可证以获取具体的权限和限制。
  *
- * The Original Code is FreeSWITCH[tm] Spidermonkey Fax Manipulation Library
+ * 原始代码是FreeSWITCH[tm] Spidermonkey Fax Manipulation Library
  *
- * The Initial Developer of the Original Code is
+ * 原始代码的初始开发者是
  *
  * Bret McDanel <bret AT 0xdecafbad dot com>
  *
- * Portions created by the Initial Developer are Copyright (C) 2007
- * the Initial Developer. All Rights Reserved.
+ * 初始开发者创建的部分版权归初始开发者所有。版权归初始开发者所有的内容受版权保护。
  *
- * Contributor(s):
+ * 贡献者:
  *
  *
  * faxlib.jm
  *
- * This is a library to do fax manipulation from within Javascript in FreeSWITCH[tm]
- * The goal of this library is to make it easier to send and receive faxes
+ * 这是一个在FreeSWITCH[tm]中从JavaScript中进行传真操作的库
+ * 该库的目标是使发送和接收传真更加容易
  *
  *
- * REQUIREMENTS:
+ * 要求:
  *
- * - A working install of socket2me from the FreeSWITCH[tm] src
- * - tiff2pdf from libtiff tools, in your PATH [optional]
+ * - 一个能够正常工作的socket2me自FreeSWITCH[tm]src安装
+ * - 在您的PATH中找到libtiff工具中的tiff2pdf [可选]
  */
 
 
-function fax(session,socketaddr,faxFilePrefix,faxFile) {
-    this.socketaddr=socketaddr;
-    this.session=session;
-    this.faxDetect=false;
-    this.faxFilePrefix="/tmp";
-    this.faxFile=session.uuid+".tiff";
-    this.gotFax=false;
+function fax(session, socketaddr, faxFilePrefix, faxFile) {
+    this.socketaddr = socketaddr;
+    this.session = session;
+    this.faxDetect = false;
+    this.faxFilePrefix = "/tmp";
+    this.faxFile = session.uuid + ".tiff";
+    this.gotFax = false;
 
-    if(typeof faxFilePrefix != 'undefined') {
+    if (typeof faxFilePrefix != 'undefined') {
         this.faxFilePrefix = faxFilePrefix;
     }
 
-    if(typeof faxFile != 'undefined') {
+    if (typeof faxFile != 'undefined') {
         this.faxFile = faxFile;
     }
 
-
-    // disable fax cng detection
-    this.stopFaxDetect = function () {
-        if(this.faxDetect == true) {
-            this.session.execute("stop_fax_detect","");
-            this.faxDetect=false;
-        }
+```javascript
+// 禁用传真CNG检测
+this.stopFaxDetect = function () {
+    if(this.faxDetect == true) {
+        this.session.execute("stop_fax_detect","");
+        this.faxDetect=false;
     }
+}
 
 
-    // enable fax cng detection
-    this.startFaxDetect = function () {
-        if(this.faxDetect == false) {
-            this.session.execute("fax_detect","");
-            this.faxDetect=true;
-        }
+// 启用传真CNG检测
+this.startFaxDetect = function () {
+    if(this.faxDetect == false) {
+        this.session.execute("fax_detect","");
+        this.faxDetect=true;
     }
+}
 
 
-    this.getFaxFile = function () {
-        return this.faxFilePrefix + "/" + this.faxFile;
-    }
+this.getFaxFile = function () {
+    return this.faxFilePrefix + "/" + this.faxFile;
+}
 
 
-    // receive a fax
-    this.rxFax = function() {
-        if(typeof this.socketaddr != 'undefined') {
-            this.stopFaxDetect();
-            this.session.execute("set","fax_mode=recv"); // not needed at this time, future proofing
-            this.session.execute("set","fax_file_name=" + this.getFaxFile());
-            this.session.execute("socket",this.socketAddr);
-            fd = new File(this.getFaxFile());
-            if(fd.exists) {
-                this.gotFax=true;
-            }
-        } else {
-            console_log("SocketAddr is not set, unable to receive a fax\n");
-        }
-    }
-
-
-    // send a fax
-    this.txFax = function() {
-        if(typeof this.socketaddr != 'undefined') {
-            this.session.execute("set","fax_mode=send");
-            this.session.execute("set","fax_file_name=" + this.getFaxFile());
-            this.session.execute("socket",this.socketAddr);
-        } else {
-            console_log("SocketAddr is not set, unable to transmit a fax\n");
-        }
-    }
-
-
-    this.fax2pdf = function() {
+// 接收传真
+this.rxFax = function() {
+    if(typeof this.socketaddr != 'undefined') {
+        this.stopFaxDetect();
+        this.session.execute("set","fax_mode=recv"); // 目前不需要，为未来版本预留
+        this.session.execute("set","fax_file_name=" + this.getFaxFile());
+        this.session.execute("socket",this.socketAddr);
         fd = new File(this.getFaxFile());
         if(fd.exists) {
-            outfile = this.faxFile.replace(/tiff$/i,"pdf");
-
-            if(outfile == this.faxFile) {
-                outfile = this.faxFile + ".pdf";
-            }
-            system("tiff2pdf -z -p letter -t 'FreeSWITCH FAX' -s 'Fax from " + this.session.caller_id_num + "' " +
-                   "-c FreeSWITCH -a FreeSWITCH -f -o " + this.faxFilePrefix + "/" + outfile + " " + 
-                   this.getFaxFile());
-            var pdf = new File(this.faxFilePrefix + "/" + outfile);
-            if(pdf.exists) {
-                fd.remove(); // remove the tiff file
-                this.faxFile = outfile;
-                return true;
-            }
+            this.gotFax=true;
         }
-        return false;
+    } else {
+        console_log("SocketAddr未设置，无法接收传真\n");
     }
+}
+
+
+// 发送传真
+this.txFax = function() {
+    if(typeof this.socketaddr != 'undefined') {
+        this.session.execute("set","fax_mode=send");
+        this.session.execute("set","fax_file_name=" + this.getFaxFile());
+        this.session.execute("socket",this.socketAddr);
+    } else {
+        console_log("SocketAddr未设置，无法发送传真\n");
+    }
+}
+
+
+this.fax2pdf = function() {
+    fd = new File(this.getFaxFile());
+    if(fd.exists) {
+        outfile = this.faxFile.replace(/tiff$/i,"pdf");
+```
+
+```javascript
+if (outfile == this.faxFile) {
+    outfile = this.faxFile + ".pdf";
+}
+system("tiff2pdf -z -p letter -t 'FreeSWITCH FAX' -s 'Fax from " + this.session.caller_id_num + "' " +
+       "-c FreeSWITCH -a FreeSWITCH -f -o " + this.faxFilePrefix + "/" + outfile + " " + 
+       this.getFaxFile());
+var pdf = new File(this.faxFilePrefix + "/" + outfile);
+if (pdf.exists) {
+    fd.remove(); // remove the tiff file
+    this.faxFile = outfile;
+    return true;
+}
+}
+return false;
+}
 
 
 }
 ```
 
-## See Also
+## 参考
 
 * [Javascript](../../../Client-and-Developer-Interfaces/JavaScript/JavaScript-API-Reference/index.mdx#file)
 
-  
-
+```

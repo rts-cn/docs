@@ -1,294 +1,325 @@
+# 概述
 
-# Overview 
+## 关于
 
- 
+总体概述
 
-## About
+点击此处展开目录
 
-General Overview
-
-Click here to expand Table of Contents
-
-* 1 [Overview](#overview)  
+* 1 [概述](#overview)
    * 1.1 [\=](#overview)
 
-## Overview
+## 概述
 
-Adapted, largely from \[[fredshack.com](http://www.fredshack.com/docs/freeswitch.html)\]
+主要改编自\[fredshack.com](http://www.fredshack.com/docs/freeswitch.html)\]
 
-Building a telephony server with FreeSwitch Introduction Freeswitch is an alternative to Asterisk to build a telephony server. It is also open-source, was launched by a member of the Asterisk development teamp who wanted to rewrite the whole thing from scratch to cleanly separate the switching part from the PBX part (Asterisk mixes the two due to its monolithic architecture). Unlike Asterisk, Freeswitch was meant to be cross-platform from the the start, and is available for Windows in addition to \*nix.
+使用FreeSwitch构建电话服务器 简介 FreeSwitch是构建电话服务器的替代方案。它也是开源的，由Asterisk开发团队的成员发起，该团队希望从头开始重写整个项目，将交换部分和PBX部分彻底分离开来（Asterisk由于其单块架构将这两部分混合在一起）。与Asterisk不同的是，FreeSwitch从一开始就旨在跨平台，并且除了\*nix之外，还提供了适用于Windows的版本。
 
-OpenZAP supports direct access to Sangoma cards through the wanpipe interface, and indirect access to Digium-compatible cards through the Zaptel interface; Because of this, as of April 2009, Windows users can only use Sangoma cards, or rely on an external VoIP gateway. Edit March 2010: OpenZap has been replaced with FreeTDM.
+OpenZAP通过wanpipe接口支持对Sangoma卡的直接访问，并通过Zaptel接口支持对与Digium兼容的卡的间接访问。因此，截至2009年4月，Windows用户只能使用Sangoma卡，或者依赖于外部VoIP网关。 2010年3月修改：OpenZap 已被 FreeTDM取而代之。
 
-Here's a list of hardware that have been tested with Freeswitch. What can you do with Freeswitch? Here's a list. A web-based interface to the FS users mailing list is available here.
+这是一份已经在Freeswitch上进行过测试的硬件列表。你可以用Freeswitch做什么？这是一个列表。这里提供了一个基于Web的界面，用于访问FS用户邮件列表。
 
-And here's the reason why Freeswitch authors chose XML over eg. INI files.
+这就是为什么Freeswitch作者选择XML而不是INI文件的原因。
 
-The big picture Freeswitch is configured through different XML files loaded through the main freeswitch.xml. At runtime when FreeSwitch parses all the files, the resultant file is located as log/freeswitch.xml.fsxml.
+整体架构 Freeswitch通过不同的XML文件进行配置，这些文件通过主要的freeswitch.xml加载。运行时，当FreeSwitch解析所有文件时，生成的文件将位于log/freeswitch.xml.fsxml中。
 
-Contexts are a set of extensions located in conf/dialplan/ (eg. Default, Public, etc.), and effectively define the dialplan. A call can go through different contexts over the length of the call, eg. an unauthenticated call from a VoIP provider first go through the Public context before before forwarded to an IVR context, and end up being connected to an internal extension.
+上下文是位于\conf\dialplan\目录中的一组扩展（例如Default、Public等），它们有效地定义了拨号计划。一通电话在通话期间可以经历不同的上下文，例如从VoIP提供商发起的未经过身份验证的呼叫首先经过Public上下文，然后转发到IVR上下文，最后将其连接到内部分机。
 
-Profiles define User Agents ("end points of a phone call", says Wikipedia), and handles connections on a given IP and port number. This enables Freeswitch to support multiple companies on the same host while providing enhanced security. By default, Freeswitch comes with two profiles: Internal (private LAN), and External (Internet-accessible, public LAN.)
+配置文件定义了用户代理（即“电话呼叫的终端”，如维基百科所述），并处理给定IP和端口号上的连接。这样一来，Freeswitch可以在同一主机上支持多个公司，并提供增强的安全性。默认情况下，Freeswitch带有两个配置文件：Internal（私有LAN）和External（可通过Internet访问的公共LAN）。
 
-In a dialplan, profiles make use of contexts (eg. &lt;param name="context" value="public"/>). What users can do depends on whether they authenticated (eg. local users making internal and outgoing calls) or not (eg. incoming calls from remote VoIP provider.) For security reason, it's a good idea to have the Internal and External profiles use their own dialplan.
+在拨号计划中，配置文件使用上下文（例如`<param name="context" value="public"/>`）。用户可以做什么取决于他们是否经过身份验证（例如本地用户进行内部和外拨电话）或未经身份验证（例如来自远程VoIP提供商的呼入电话）。出于安全原因，最好让Internal和External配置文件使用它们自己的拨号计划。
 
-Users (extensions) are configured through files in conf/directory/. Each extension maps to a context (&lt;variable name="user\_context" value="default"/>). If you need to perform more complex actions, use the dialplan to call external scripts.
+用户（分机）通过conf/directory/中的文件进行配置。每个分机对应一个上下文（`<variable name="user\_context" value="default"/>`）。如果需要执行更复杂的操作，请使用拨号计划来调用外部脚本。
 
-  
-Gateways, a.k.a. trunks, don't need to authenticate with Freeswitch, and are configured in conf/directory/default/
+网关，也称为中继，无需向Freeswitch进行身份验证，并在conf/directory/default/中进行配置。
 
-conf/autoload\_configs contains a lot of XML files, but only those listed in modules.conf.xml will actually be loaded automatically by Freeswitch.
+conf/autoload_configs包含许多XML文件，但只有modules.conf.xml中列出的才会被Freeswitch自动加载。
 
-IVR sound files in English are located under sounds/en/us/callie/ivr/8000/
+英语IVR语音文件位于sounds/en/us/callie/ivr/8000/目录下。
 
-Voice mail is saved under storage
+语音邮件保存在存储目录下。
 
-### \=
+=
 
-Using Freeswitch with a Digium FXO PCI card
+使用Digium FXO PCI卡与Freeswitch一起使用
 
-If you use a PCI telephony card, you must first install Asterisk's Dahdi/Zaptel interface, followed by Freeswitch's OpenZap which relies on Dahdi.
+如果您使用的是PCI电话卡，您必须首先安装Asterisk的Dahdi/Zaptel接口，以及依赖于Dahdi的Freeswitch的OpenZap。
 
-Setting up Dahdi lspci -vv (Check that the hardware is detected) adduser asterisk; mkdir /etc/asterisk (to avoid errors during compile/install) cd /usr/src Download and unzip the latest Dahdi driver + tools from Asterisk make make install make config If you need to set options, eg. set the wctdm driver to work in France, vi /etc/modprobe.d/dahdi.conf:
+设置Dahdi lspci -vv（检查硬件是否被检测到） adduser asterisk; mkdir /etc/asterisk（以避免在编译/安装过程中出现错误） cd /usr/src 下载并解压最新的Asterisk Dahdi驱动程序+工具 使用命令make、make install和make config设置 如果您需要设置选项，例如将wctdm驱动程序设置为法国模式，使用vi /etc/modprobe.d/dahdi.conf编辑：
 
 options wctdm opermode=FRANCE
 
-If you need to set eg. tones for France, vi /etc/dahdi/genconf\_parameters: "lc\_country fr" vi /etc/modprobe.d/dahdi.blacklist.conf: Comment out modules you do NOT want to blacklist Add "blacklist netjet" Reboot to get rid of the NetJet module that is loaded instead of the Wctdm module, and run "lsmod" to check that netjet/ISDN are gone Either run "dahdi\_genconf modules", or edit /etc/dahdi/system.conf manually /etc/init.d/dahdi start, and check /var/log/messages For Freeswitch to be able to access the Dahdi devices, edit /etc/udev/rules.d/dahdi.rules, followed by "/etc/init.d/dahdi restart" In case of trouble, take a look at OpenVox's Troubleshooting of Analog cards
+如果您需要为法国设置音调，使用vi /etc/dahdi/genconf\_parameters编辑："lc\_country fr" 使用vi /etc/modprobe.d/dahdi.blacklist.conf编辑：注释掉您不想列入黑名单的模块 添加"blacklist netjet" 重新启动以删除加载NetJet模块而非Wctdm模块，并运行"lsmod"检查netjet/ISDN是否已经消失 要么运行"dahdi\_genconf modules"，要么手动编辑/etc/dahdi/system.conf /etc/init.d/dahdi start，并检查/var/log/messages 查看OpenVox的模拟卡故障排除指南以解决问题
 
-Dahdi Configuration /etc/dahdi/
+Dahdi配置 /etc/dahdi/
 
-genconf\_parameters: Parameters that affect the dahdi\_genconf configuration generator, eg. "lc\_country fr" so that dahdi\_genconf uses France for tone generation init.conf: Settings for Dahdi initialization scripts. Replaces /etc/sysconfig/zaptel, /etc/defaults/zaptel modules: 
-
-Used to disable loading modules causing trouble for Dahdi, eg. netjet
+genconf\_parameters：影响dahdi\_genconf配置生成器的参数，例如"lc\_country fr"，使得dahdi\_genconf使用法国进行音调生成 init.conf：用于Dahdi初始化脚本的设置。替换/etc/sysconfig/zaptel、/etc/defaults/zaptel modules：用于禁用对Dahdi造成问题的模块加载，例如netjet
 
 /etc/modprobe.d/dahdi.conf
 
-This file sets module options. Dahdi tools in /usr/sbin/ To check hardware installed: dahdi\_hardware To check hardware installed: dahdi\_scan dahdi\_genconf: Reads /etc/dahdi/genconf\_parameters to generate /etc/dahdi/system.conf and/etc/asterisk/dahdi\_channels.conf After editing /etc/dahdi/system.conf, run "dahdi\_cfg -vv" To check timer: dahdi\_test dahdi\_speed dahdi\_tool: Equivalent of zttool Setting up OpenZap cd /usr/src/freeswitch Edit modules.conf: Uncomment "../../libs/openzap/mod\_openzap" Follow the instructions on how to compile Freeswitch vi /usr/local/freeswitch/conf/openzap.conf
+该文件设置模块选项。/usr/sbin/目录下的Dahdi工具用于检查已安装的硬件：dahdi_hardware。使用dahdi_scan命令检查已安装的硬件。dahdi_genconf命令会读取/etc/dahdi/genconf_parameters文件并生成/etc/dahdi/system.conf和/etc/asterisk/dahdi_channels.conf配置文件。编辑/etc/dahdi/system.conf后，请运行"dahdi_cfg -vv"命令。使用dahdi_test和dahdi_speed命令检查定时器。dahdi_tool命令相当于zttool命令。设置OpenZap，请进入/usr/src/freeswitch目录，编辑modules.conf文件并取消注释"../../libs/openzap/mod_openzap"部分。按照编译Freeswitch的说明进行操作：vi /usr/local/freeswitch/conf/openzap.conf。
 
-\[span zt FXO\] name => OpenZAP fxo-channel => 1
+\[\span zt FXO\]
+name => OpenZAP
+fxo-channel => 1
 
-vi /usr/local/freeswitch/conf/autoload\_configs/openzap.conf.xml
+编辑/usr/local/freeswitch/conf/autoload_configs/openzap.conf.xml文件：
+&lt;analog_spans&gt;
 
-&lt;analog\_spans>
+运行Freeswitch控制台命令fs_cli，输入"load mod_openzap"，然后输入"oz list"。为了在Freeswitch启动时自动加载OpenZap模块，请编辑/usr/local/freeswitch/conf/autoload_configs/modules.conf.xml文件，并取消注释&lt;load module="mod_openzap"/&gt;语句。由于OpenZap忽略Dahdi中的音调信息并使用自己的信息，请确保/usr/local/freeswitch/conf/tones.conf（示例）中提供了您国家的音调信息。测试如果遇到回声问题，可以尝试使用开源线路回声抵消器（OSLEC）。
 
-Run the Freeswitch console fs\_cli, type "load mod\_openzap", followed by "oz list" To have OpenZap be loaded automatically when Freeswitch starts, edit /usr/local/freeswitch/conf/autoload\_configs/modules.conf.xml, and uncomment &lt;load module ="mod\_openzap"/> As OpenZap ignores the tones information from Dahdi and uses its own information, check that the tones information for your country are available in /usr/local/freeswitch/conf/tones.conf (examples) Testing If you experience echo, one thing to try is using the Open-source Line Echo Canceller (OSLEC).
+将FXO端口连接到拨号计划和分机：<http://wiki.freeswitch.org/wiki/Zaptel_Tutorial#Simple_Dialplan>
 
-Connecting FXO port to dialplan to extensions <http://wiki.freeswitch.org/wiki/Zaptel%5FTutorial#Simple%5FDialplan>
+<http://wiki.freeswitch.org/wiki/OpenZAP#Dialplan_Configuration>
 
-<http://wiki.freeswitch.org/wiki/OpenZAP#Dialplan%5FConfiguration>
+删除Dahdi如果您想要删除Dahdi以降级至Zaptel，请按如下操作：
 
-Removing Dahdi In case you wish to remove Dahdi so you can downgrade to Zaptel:
+/etc/init.d/dahdi stop rm -f /etc/init.d/dahdi rm -Rf /etc/dahdi/ rm -f /etc/modprobe.d/dahdi.\* rm -Rf /usr/share/dahdi/ rm -f /usr/sbin/dahdi\_\* cd /usr/src/dahdi-linux/linux ; make uninstall reboot to check 安装Zaptel 注意：Zaptel似乎不与较新版本的Linux兼容。而且由于Dadhi已经取代了Zaptel... 
 
-/etc/init.d/dahdi stop rm -f /etc/init.d/dahdi rm -Rf /etc/dahdi/ rm -f /etc/modprobe.d/dahdi.\* rm -Rf /usr/share/dahdi/ rm -f /usr/sbin/dahdi\_\* cd /usr/src/dahdi-linux/linux ; make uninstall reboot to check Installing Zaptel NOTE: Seems like Zaptel isn't compatible with more recent version of Linux. And since Zaptel has been replaced with Dadhi...
+yum install kernel-devel kernel-headers yum install gcc newt-devel libusb-devel cd /usr/src wget <http://downloads.asterisk.org/pub/telephony/zaptel/zaptel-1.4-current.tar.gz> cd /usr/src/zaptel-1.4.12.1 ./install\_prereq test ./configure make menuselect make make install make config 连接到PSTN Freeswitch服务器可以通过ADSL连接到Internet上的VoIP提供商，或者通过SIP/PSTN网关将服务器连接到现场的电话线路，从而在模拟电话网络上处理通话。
 
-yum install kernel-devel kernel-headers yum install gcc newt-devel libusb-devel cd /usr/src wget <http://downloads.asterisk.org/pub/telephony/zaptel/zaptel-1.4-current.tar.gz> cd /usr/src/zaptel-1.4.12.1 ./install\_prereq test ./configure make menuselect make make install make config Connecting to the PSTN A Freeswitch server can handle conversations over the analog phone network either by connecting out through ADSL to a VoIP provider on the Internet, or by connecting the server to a phone line on the premises through an SIP/PSTN gateway.
+在后者的情况下，有两个选择：要么使用Linksys SPA-3102等外部设备，要么使用来自Digium、Sangoma、OpenVox、Atcom等的PCI卡。Sangoma还提供一个双FXO的USB设备。
 
-In this latter case, there are two options: Either an external device like the Linksys SPA-3102, or a PCI card from Digium, Sangoma, OpenVox, Atcom, etc. Sangoma also offers a two-FXO USB device.
+优点
 
-Advantages
+缺点
 
-Disadvantages
+外部设备
 
-External device
+不受操作系统限制，因此Freeswitch可以在任何计算机上运行比PCI卡更便宜 提供FXS端口以连接模拟电话机 比PCI卡多更多的电缆（电源、以太网、PSTN）SIP/PSTN连接可能存在回声问题 PCI卡
 
-OS-independent, so Freeswitch can run on any computer Cheaper than PCI cards Provides an FXS port to connect an analog handset More cables than a PCI card (power, Ethernet, PSTN) Possible echo issue with SIP/PSTN connections PCI card
+更紧凑（只需一根电缆：从卡到PSTN电源插座） 比初级外部SIP/PSTN网关更可靠 需要桌面计算机 除一种例外，仅在Linux下运行可能与某些主板不兼容 通过Linksys 3102将Freeswitch连接到PSTN线路的注意事项:
 
-More compact (onlye one cable: From card to PSTN wall plug) More reliable than entry-level, external SIP/PSTN gateways Requires a desktop computer With one exception, only run under Linux Possible incompatibility with some motherboards Connecting Freeswitch to a PSTN line through the Linksys 3102
+context = diaplans SIP配置文件 = 为了增强安全性，分机必须属于特定的配置文件扩展 = 属于SIP配置文件并设置为使用特定的拨号计划在autoload\_configs / \ * .xml下的XML文件中，即使相关模块未通过modules.conf.xml（模块列表）加载，也会加载\ * .xml文件（参见<http://www.aoakley.com/articles/2008-01-08.php>）独立使用3102，而不使用Freeswitch 
 
-Here are few things to keep in mind:
+使用FreeSwitch和Linksys 3102语音网关的家庭VOIP系统（英国指南）
 
-contexts = diaplans SIP profiles = for enhanced security, an extension must belong to a given profile extensions = belongs to an SIP profile and is set to use a given dialplan settings in XML files under autoload\_configs/\*.xml are loaded even if the relevant module is not loaded through modules.conf.xml (list of modules) <http://www.aoakley.com/articles/2008-01-08.php> (uses the 3102 independantly, without Freeswitch)
+SPA3102 FreeSwitch使用说明
 
-Home VOIP system using FreeSwitch and a Linksys 3102 voice gateway (UK Guide)
+通过将电话机插入电话插孔并拨打\*\*\*\*，然后拨打73738＃并确认为1来重置该设备。由于我们将不使用3102作为连接两个以太网网络的路由器，所以将3102通过其“Internet”连接器连接到局域网中，拨打\*\*\*进入语音菜单，然后拨打110＃获取其IP地址，然后拨打7932＃后面跟着1＃，并输入1以启用嵌入式Web服务器 将您的浏览器定向到<linksys-ip/admin/advanced>（其中linksys-ip是3102的IP地址） 路由器Wan设置
 
-SPA3102 FreeSwitch HowTo
+连接类型=静态IP
 
-Reset the unit by plugging a handset in the Phone plug, and dialing \*\*\*\* followed by 73738#, and confirm with 1 Since we won't use the 3102 as a router to connect two Ethernet networks, plug the 3102 to the LAN through its "Internet" connector, dial \*\*\* to enter the voice menu, followed by 110# to get its IP address, and 7932# followed by 1#, and 1 to enable the embedded web server Aim your browser at <http://linksys-ip/admin/advanced> (where linksys-ip is the 3102 IP address) Router Wan Setup
+静态IP=192.168.0.253
 
-Connection Type = Static IP
+子网掩码=255.255.255.0
 
-Static IP = 192.168.0.253
+网关=192.168.0.254
 
-Netmask = 255.255.255.0
+主DNS=212.27.54.252
 
-Gateway = 192.168.0.254
+次DNS=208.67.220.220
 
-Primary DNS = 212.27.54.252
+主NTP服务器=0.fr.pool.ntp.org
 
-Secondary DNS = 208.67.220.220
+次NTP服务器=1.fr.pool.ntp.org
 
-Primary NTP Server = 0.fr.pool.ntp.org
+启用WAN Web服务器=是的
 
-Secondary NTP Server = 1.fr.pool.ntp.org
+LAN设置
 
-Enable WAN Web Server = yes
+网络服务=桥接（以便我们可以通过其Internet或以太网端口连接到3102; LAN IP地址被忽略）
 
-Lan Setup
+语音系统
 
-Networking service = Bridge (so we can connect to the 3102 through either its Internet or Ethernet port; The LAN IP address is ignored)
+启用Web管理访问=是的
 
-Voice System
-
-Enable Web Admin Access = yes
-
-Syslog/debug server = 192.168.0.1
+Syslog / debug服务器=192.168.0.1
 
 SIP
 
-SIP TCP Port Min/Max = 5060
+SIP TCP端口最小/最大=5060
 
-RTP Port Min/Max (Must be port-mapped on NAT router, or can 3102 punch holes itself?)
+RTP端口最小/最大（必须在NAT路由器上进行端口映射，或者3102可以自己打洞吗？
 
-"RTP Packet Size" should be changed from 0.030 to 0.020 to avoid problems ("When you make outbound call using analog phone attached to the FXS port and the person you call hears choppy voice")
+**"RTP Packet Size"** 的值应从0.030更改为0.020，以避免问题（"当您通过FXS端口连接的模拟电话进行呼出时，被叫听到声音中断"）
 
-NAT Support Parameters : what is VIA?
+NAT支持参数：什么是VIA？
 
-STUN Enable = yes
+STUN启用 = 是
 
-STUN Test Enable = ?
+STUN测试启用 = ？
 
-STUN Server = stun.ekiga.net
+STUN服务器 = stun.ekiga.net
 
-EXT IP?
+EXT IP是什么？
 
-EXT RTP Port Min
+EXT RTP端口最小值
 
-Regional (France)
+地区（法国）
 
-Dial Tone = 440@-10; 10(\*/0/1)
+拨号音 = 440@-10; 10(\*/0/1)
 
-Second Dial Tone = 420@-19,520@-19;10(\*/0/1+2)
+第二拨号音 = 420@-19,520@-19;10(\*/0/1+2)
 
-Busy Tone = 440@-10; 10(0.5/0.5/1)
+忙音 = 440@-10; 10(0.5/0.5/1)
 
-Ring Back Tone = 440@-10; 10(1.5/3.5/1)
+回铃音 = 440@-10; 10(1.5/3.5/1)
 
-Time Zone = GTM +1
+时区 = GTM +1
 
-DST Rule = start=3/-1/7/2;end=10/-1/7/3;save=1
+夏令时规则 = start=3/-1/7/2;end=10/-1/7/3;save=1
 
-FXS Port Impedance = 600
+FXS端口阻抗 = 600
 
-Caller ID Method = ETSI FSK
+呼叫方ID方法 = ETSI FSK
 
-Caller ID FSK Standard = bell 202
+呼叫方ID FSK标准 = bell 202
 
-Line 1
+线路1
 
-Line Enable = yes
+线路启用 = 是
 
-NAT Mapping Enable = no
+NAT映射启用 = 否
 
-SIP Port = 5062
+SIP端口 = 5062
 
-Proxy = FS server
+代理 = FS服务器
 
-User ID + Password = SIP account on FS server
+用户ID + 密码 = FS服务器上的SIP帐户
 
-Register = ?
+注册 = ？
 
-Make/Ans Call Without Reg = ?
+无注册进行呼叫/应答 = ？
 
-Dial Plan = ?
+拨号计划 = ？
 
-PSTN Line
+PSTN线路
 
-Line Enable = yes
+线路启用 = 是
 
-NAT Mapping Enable = no
+NAT映射启用 = 否
 
-SIP Port = 5061
+SIP端口 = 5061
 
-Proxy = FS server
+代理 = FS服务器
 
-User ID + Password
+用户ID + 密码
 
-Preferred Codec = G711U
+首选编解码器 = G711U
 
-Dial Plan 1 = (S0&lt;:9999>) //Incoming calls from POTS sent to extension 9999 on FS server
+拨号计划1 = (S0&lt;:9999>) //从POTS呼入的呼叫发送到FS服务器上的分机9999
 
-VoIP-To-PSTN Gateway Enable = ?
+启用VoIP到PSTN网关 = ？
 
-Line 1 VoIP Caller DP = 1
+线路1 VoIP呼叫方拨号计划 = 1
 
-PSTN-To-VoIP Gateway Enable = ?
+启用PSTN到VoIP网关 = ？
 
-PSTN Ring Thru Line 1 = no
+通过线路1传递PSTN铃声 = 否
 
-PSTN CID For VoIP CID = yes
+PSTN CID用于VoIP CID = 是
 
-PSTN Caller Default DP = 1
+PSTN来电默认拨号计划 = 1
 
-VoIP Answer Delay = 0
+VoIP应答延迟 = 0
 
-PSTN Answer Delay = 0
+PSTN应答延迟 = 0
 
-PSTN Ring Thru Delay = 1
+PSTN振铃传递延迟 = 1
 
-PSTN Ring Timeout = 5
+PSTN振铃超时 = 5
 
-Detect CPC = yes
+检测CPC = 是
 
-Detect Polarity Reversal = yes
+检测极性反转 = 是
 
-Detect Disconnect Tone = yes
+检测拆线音 = 是
 
-Disconnect Tone = 480@-30,620@-30;4(.25/.25/1+2)
+拆线音 = 480@-30,620@-30;4(.25/.25/1+2)
 
-FXO Port Impedance = 370+620||310nF
+FXO端口阻抗 = 370+620||310nF
 
-User 1
+用户1
 
-PSTN User
+PSTN用户
 
-Installing an X100P card from www.x100p.com cd /usr/src wget <http://downloads.asterisk.org/pub/telephony/zaptel/zaptel-1.4.12.1.tar.gz> tar xzvf ./zaptel-1.4.12.1.tar.gz cd zaptel-1.4.12.1/ ./configure make make install make config vim /etc/sysconfig/zaptel, and comment out modules you don't need (keep $MODULES wcfxo) cd /etc ; mv zaptel.conf zaptel.conf.orig vim /etc/zaptel.conf (for France): loadzone=fr defaultzone=fr fxsks=1 modprobe wctdm OR modprobe wcfxo? modprobe zaptel lsmod, and check that wcfxo, zaptel, and crc\_ccitt are loaded ztcfg -vv (if it says "ZT\_CHANCONFIG failed on channel 1: No such device or address (6)", it's a false alarm)
+安装来自 www.x100p.com 的 X100P 卡
 
-  
-Tried:
+```shell
+cd /usr/src
+wget <http://downloads.asterisk.org/pub/telephony/zaptel/zaptel-1.4.12.1.tar.gz>
+tar xzvf ./zaptel-1.4.12.1.tar.gz
+cd zaptel-1.4.12.1/
+./configure
+make
+make install
+make config
+vim /etc/sysconfig/zaptel
+# 注释掉你不需要的模块（保留$MODULES wcfxo）
+cd /etc
+mv zaptel.conf zaptel.conf.orig
+vim /etc/zaptel.conf
+# 对于法国设置：loadzone=fr defaultzone=fr fxsks=1
+modprobe wctdm 或者 modprobe wcfxo
+lsmod
+# 检查 wcfxo、zaptel 和 crc_ccitt 是否加载
+ztcfg -vv
+# 如果显示 "ZT_CHANCONFIG failed on channel 1: No such device or address (6)"，它是一个误报
+```
 
-/etc/zaptel.conf: fxsks=1 is last statement in file In BIOS, set PCI slot to use IRQ7 Booted grub with acpi=no Booted grub with noapic (Linux gets stuck) Flashed BIOS with F2 version Removed Zaptel 1.4.12.1, rebooted, downloaded and compiled Dahdi 2.2.0.2 (no config/configure -> make all; make install; make config; dahdi\_genconf modules) Rebooted: FXO PCI Master abort... Shutdown: Replaced with a SCSI card which worked fine, retried the X100P... which now shows up in demsg :-/ But... while lspci does return "Communication controller: Motorola SM56 PCI Modem", it's not listed in "cat /proc/interrupts" Also, when using the following for /etc/dahdi/system.conf...
+我尝试过以下方法：
 
-loadzone=fr defaultzone=fr fxsks=1
+- /etc/zaptel.conf 中的 fxsks=1 是文件中的最后一条语句。
+- 在 BIOS 中，将 PCI 插槽设置为使用 IRQ7。
+- 使用 acpi=no 启动 grub。
+- 使用 noapic 启动 grub（Linux 卡住了）。
+- 更新 BIOS 至 F2 版本。
+- 移除 Zaptel 1.4.12.1，重启，下载并编译 Dahdi 2.2.0.2 （无 config/configure -> make all; make install; make config; dahdi_genconf modules）。
+- 重启：FXO PCI Master abort...
+- 关机：替换为一张可正常工作的 SCSI 卡，再次尝试 X100P... 它现在在 demsg 中显示出来 :-/
+- 但是...尽管 lspci 返回 "Communication controller: Motorola SM56 PCI Modem"，但它在 "cat /proc/interrupts" 中没有列出。
+- 当在 /etc/dahdi/system.conf 中使用以下配置时...
 
-... and running "/etc/init.d/dahdi restart": "Running dahdi\_cfg: DAHDI\_CHANCONFIG failed on channel 1: No such device or address (6)"
+```shell
+loadzone=fr
+defaultzone=fr
+fxsks=1
+```
 
-dahdi\_cfg -vv : "DAHDI\_CHANCONFIG failed on channel 1: No such device or address (6)"
+...并运行 "/etc/init.d/dahdi restart"：
 
-The problem is with high-speed USB ports. I kept getting Unknown DAA errors. Soon as I disabled the USB ports everything worked as it should. It was the same case with EVERY motherboard I tried.
+```shell
+Running dahdi_cfg: DAHDI_CHANCONFIG failed on channel 1: No such device or address (6)
+```
 
-It was frustrating because everything worked fine in my old computer, but when I upgraded it was not.
+dahdi_cfg -vv ： "DAHDI_CHANCONFIG failed on channel 1: No such device or address (6)"
 
-Zaptel Version: 1.4.12.1
+问题出在高速 USB 端口上。我一直遇到 Unknown DAA 错误。一旦禁用了 USB 端口，一切都正常工作。对于我尝试过的每块主板都是如此。
 
-Echo Canceller: MG2
+这真让人沮丧，因为我在旧电脑上一切都正常，但是当我升级后却不行了。
 
-Configuration
+Zaptel版本：1.4.12.1
+
+回音消除器：MG2
+
+配置
 
 ###### \==========
 
-Channel map:
+通道映射：
 
-Channel 01: FXS Kewlstart (Default) (Slaves: 01)
+通道01：FXS Kewlstart（默认）（从属：01）
 
-1 channels to configure.
+需要配置1个通道。
 
-ZT\_CHANCONFIG failed on channel 1: No such device or address (6)
+通道1的ZT\_CHANCONFIG失败：没有此设备或地址（6）
 
-If you have any zaptel hardware it is now recommended to edit /etc/sysconfig/zaptel and set there an optimal value for the variable MODULES .
+如果您有任何zaptel硬件，现在建议您编辑/etc/sysconfig/zaptel并在变量MODULES中设置最佳值。
 
-I think that the zaptel hardware you have on your system is:
+我认为您系统上的zaptel硬件是：
 
 pci:0000:03:00.0 wcfxo- 1057:5608 Wildcard X100P
 
 /sbin/ztcfg
 
-Need to first install Zaptel/Dahdi?
+首先需要安装Zaptel/Dahdi吗？
 
-lspci -v to check that the card is recognized cat /proc/interrupts to check that the card was assigned an IRQ. If not listed here, If still NOK, "remove any unneeded peripheral from the PCi bus, toggle the plug-n-play option in your bios. If you have a "Reset Hardware Configuration" or something like that turn it on. Also try a different PCI slot.
+lspci -v以检查是否识别到该卡 cat /proc/interrupts以检查是否为该卡分配了IRQ。 如果此处未列出，如果仍然不行，"从PCi总线中删除任何不需要的外围设备，在BIOS中切换即插即用选项。 如果有“重置硬件配置”或类似选项，请打开。 还可以尝试不同的PCI插槽。
 
-Systems running chipsets from SIS, nvidia and some VIA (so pretty much all AMD) dont handle those cards very well at all.
+使用SIS、nvidia和一些VIA芯片组的系统（几乎包括所有AMD）对这些卡的兼容性都不太好。
 
-acpi noaicp nosmp etc..etc
+acpi noaicp nosmp等等
 
 echotraining =x
 
@@ -302,160 +333,173 @@ echotraining =x
 
 <http://downloads.asterisk.org/pub/telephony/zaptel/>
 
-Does OpenZap work with Dadhi 2.x?
+OpenZap可以与Dadhi 2.x一起使用吗？
 
 <http://downloads.asterisk.org/pub/telephony/zaptel/zaptel-1.4.12.1.tar.gz>
 
-Playing with Freeswitch Important commands
+使用Freeswitch的一些重要命令
 
-Some important commands that you send through the bin/fs\_cli command-line interface:
+通过bin/fs\_cli命令行界面发送的一些重要命令：
 
-To check the different profiles: sofia status To check who is connected: sofia status profile internal To only watch SIP packets: "console loglevel 0", followed by "sofia profile internal siptrace on" To reload the whole set of XML files: reloadxml GUI for FreeSwitch
+要查看不同的配置文件：sofia status
+要查看谁已连接：sofia status profile internal
+仅查看SIP数据包：“console loglevel 0”，然后“sofia profile internal siptrace on”
+重新加载全部XML文件：reloadxml GUI for FreeSwitch
 
-wikiPBX (instructions) Fusionpbx Configuring a Siemens 580IP
+wikiPBX（说明）Fusionpbx配置Siemens 580IP
 
-Leave the handset on its cradle long enough to fully charge the battery, then connect the base station to the router so it gets an IP configuration through DHCP. To check what IP address was assigned and configure the handset from a web browser, open the Menu and navigate to "IP Address".
+将手机放在底座上充电足够长时间，然后将基站连接到路由器，使其通过DHCP获得IP配置。要检查分配的IP地址并通过Web浏览器配置手机，打开菜单并导航到“IP地址”。
 
-By default, System PIN = 0000
+默认情况下，系统PIN = 0000
 
-Settings > Telephony > Connections > Configure "IP1" to connect the 580IP to Freeswitch
+设置>电话>连接>配置“IP1”以将580IP连接到Freeswitch
 
-Domain = IP address of Freeswitch server
+域名= Freeswitch服务器的IP地址
 
-Registrar = IP address of Freeswitch server
+注册服务器= Freeswitch服务器的IP地址
 
-In case the 580IP is used to register with another SIP server besides Freeswitch, here's how to configure things so that the handset if you prefer to have it handle the dialplan instead of Freeswitch:
+如果580IP用于与Freeswitch以外的另一个SIP服务器注册，请按照以下方式配置事物，以便手机可处理拨号计划而不是Freeswitch：
 
-If I want to use a different line manually, specify its number (eg. 5551234#2 to use line #2) as listed in "Telephony > Connections".
+如果我想手动使用另一条线路，请指定其号码（例如，5551234＃2表示使用#2线）在“电话>连接”中列出。
 
-In case you want all outgoing calls to be handled by the Freeswitch server, ie. not make use of the 580IP dialplan feature, add the VoIP gateways to the Freeswitch server, and just create a single connection in the Siemens in "Telephony > Number Assignment".
+如果您希望所有呼出电话都由Freeswitch服务器处理，即不使用580IP的拨号计划功能，请在Freeswitch服务器中添加VoIP网关，并在Siemens中创建一个单独的连接在“电话>号码分配”中。
 
-Issues What is the use of the "Telephony > Dialling Plans > Dialling Plans" section?
+问题：“电话>拨号计划>拨号计划”部分有什么用？
 
-When should I use "Telephony > Number Assignment > Call Manager"?
+何时使用“电话>号码分配>通话管理器”？
 
-What to try
+尝试以下内容
 
-Common extensions for testing:
+用于测试的常见分机：
 
-1000, 1001, ..., 1019 - Generic SIP extensions 5000 - demo IVR (requires sounds and music files to be installed) 9995 - five second delay echo test 9996 - standard echo test 9999 - music on hold (requires music files to be installed) Enable mod\_python, and have Python scripts be called by the dialplan
+1000, 1001, ..., 1019 - 通用SIP扩展
+5000 - 演示IVR（需要安装声音和音乐文件）
+9995 - 五秒延迟回声测试
+9996 - 标准回声测试
+9999 - 持续音乐（需要安装音乐文件）
+启用mod_python，并使Python脚本在拨号计划中被调用
 
-Configure SIP accounts, including voicemail and sending e-mail.
+配置SIP帐户，包括语音信箱和发送电子邮件。
 
-IVR
+IVR（交互式语音应答）
 
-Connect a PSTN/VoIP gateway
+连接PSTN/VoIP网关
 
-Investigating issues
+调查问题
 
-fs\_cli> console loglevel \[0-7\] (where 1=EMERG and 7=DEBUG)
+fs_cli> console loglevel \[0-7\] （其中1=EMERG，7=DEBUG）
 
-fs\_cli> sofia loglevel &lt;all|default|tport|iptsec|nea|nta|nth\_client|nth\_server|nua|soa|sresolv|stun> \[0-9\]
+fs_cli> sofia loglevel &lt;all|default|tport|iptsec|nea|nta|nth\_client|nth\_server|nua|soa|sresolv|stun> \[0-9\]
 
-fs\_cli> sofia loglevel all 0
+fs_cli> sofia loglevel all 0
 
-fs\_cli > sofia profile &lt;profilename> siptrace on|off
+fs_cli > sofia profile &lt;profilename> siptrace on|off
 
-fs\_cli > sofia tracelevel info #details in log/freeswitch.log file
+fs_cli > sofia tracelevel info #详细信息在log/freeswitch.log文件中
 
 <http://wiki.freeswitch.org/wiki/Sofia#Debugging%5FSofia-SIP>
 
-Configuration files
+配置文件
 
-Here's a diagram to get the big picture.
+这里有一个图表，以了解整体情况。
 
-By default, configuration files live in /usr/local/freeswitch/conf/. The XML files are either stand-alone or include references to other XML files.
+默认情况下，配置文件位于/usr/local/freeswitch/conf/。XML文件可以是独立的，也可以包含对其他XML文件的引用。
 
-Note that an X-PRE-PROCESS line cannot be commented out, and must be removed entirely if not needed.
+注意，X-PRE-PROCESS行不能被注释掉，如果不需要，必须将其完全删除。
 
-Information is available in the Getting Started Guide, and the Freeswitch default configuration layout.
+有关详细信息，请参阅入门指南和Freeswitch的默认配置布局。
 
-Configuration data is stored in XML files under /usr/local/freeswitch/conf/ . This layout is in no way required, you can minimize the configuration to just one file if needed. The main config file is called freeswitch.xml, you don't need to change it in any way, it just loads all other config files.
+配置数据存储在/usr/local/freeswitch/conf/下的XML文件中。这种布局并非必需，如果需要，可以将配置最小化为一个文件。主配置文件名为freeswitch.xml，您无需对其进行任何更改，它只是加载所有其他配置文件。
 
-freeswitch.xml FS doesn't need more than the hard-coded conf/freeswitch.xml, but it's a much better idea to have it load different XML files from sub-directories to handle SIP accounts, dialplans, etc. At runtime when FreeSwitch parses all the files, the resultant file is located as log/freeswitch.xml.fsxml. freeswitch.xml contains multiple sections, each used by a different component in FreeSwitch: "configuration", "diaplan", "directory", and "phrases" (to locate sound files).
+```xml
+freeswitch.xml
+FS不需要更多的硬编码conf/freeswitch.xml，但最好的做法是从子目录中加载不同的XML文件来处理SIP账户、拨号计划等。运行时，当FreeSwitch解析所有文件时，结果文件位于log/freeswitch.xml.fsxml。freeswitch.xml包含多个部分，每个部分由FreeSwitch中的不同组件使用："configuration"、"diaplan"、"directory"和"phrases"（用于定位声音文件）。
 
-vars.xml Used to define global variables
+vars.xml
+用于定义全局变量。
 
-conf/dialplan/ This is the directory where you'll customize your dialplan; Equivalent to Asterisk's extensions.conf
+conf/dialplan/
+这是您自定义拨号计划的目录，相当于Asterisk的extensions.conf。
 
-Diaplans are located in conf/dialplan/ . Everything in the public context is available to everyone, while everything in "default" context are only available to users that have registered with FreeSWITCH. Logically, this should be "internal", but I guess "default" is a legacy.
+拨号计划位于conf/dialplan/目录中。公共上下文中的所有内容对所有人都可用，而"default"上下文中的内容仅对已在FreeSWITCH注册的用户可用。从逻辑上讲，这应该是"internal"，但我猜"default"是由于遗留原因。
 
-You can define in the user profiles (in the directory) which context they belong to, and you can define the public context in the sofia configuration. Contexts are a logical grouping of extensions. You may have multiple extensions contained within a single context.
+您可以在目录中的用户配置文件中定义他们属于的上下文，并可以在sofia配置中定义公共上下文。上下文是一组逻辑扩展。您可以在单个上下文中包含多个扩展。
 
-dialplan: This is the place where you setup your dialplan. There are some examples of how to configure your dialplan included. (recipes); put your custom diaplan entries into the extensions subdirectory under conf/dialplan. You may create one or more XML files in this subdirectory, all of which will be included in the dialplan thanks to an "include" directive in the default.xml file. By keeping your customized extensions separate from default.xml you will be able to update default.xml without having to re-enter your custom extensions.
+拨号计划：
+这是您设置拨号计划的地方。其中包含一些配置拨号计划的示例（recipes）；将您自定义的拨号计划条目放在conf/dialplan的extensions子目录下。您可以在此子目录中创建一个或多个XML文件，所有这些文件都将通过default.xml文件中的"include"指令包含在拨号计划中。通过将自定义扩展与default.xml分开，您将能够更新default.xml而无需重新输入自定义扩展。
+```
 
-conf/autoload\_configs/ A list of modules that are automatically loaded when Freeswitch starts; modules.conf.xml tells Freeswitch which modules to load. There are certain modules required for operation so you should not edit this file unless you know that you wish to add or remove a specific module.
+conf/autoload_configs/ 是一个当Freeswitch启动时自动加载的模块列表；modules.conf.xml文件告诉Freeswitch要加载哪些模块。有一些操作所必需的模块，因此在不了解想要添加或删除特定模块的情况下，不应编辑此文件。 
 
-The sofia.conf.xml file includes other xml files (conf/sip\_profiles/\*.xml) to define multiple "profiles" (ie. contexts; See below).
+sofia.conf.xml文件包含其他xml文件（conf/sip_profiles/\*.xml），用于定义多个“配置文件”（即上下文；见下文）。
 
-Note that by default, all XML configuration files under autoload\_configs/ are parsed, even if a module is commented out in modules.conf.xml, but Freeswitch will only actually use settings for modules that are explicitely listed in modules.conf.xml
+请注意，默认情况下，autoload_configs/下的所有XML配置文件都会被解析，即使在modules.conf.xml中注释掉了某个模块，但Freeswitch只会实际使用在modules.conf.xml中明确列出的模块的设置。
 
-conf/directory/ A list of SIP extensions, one XML file per extensions. User authentication is available under conf/directory/ . For instance, a connection to a remote VoIP gateway can be done through either the external profile or through information in directory/.
+conf/directory/ 是一个SIP分机的列表，每个分机一个XML文件。用户认证位于conf/directory/下。例如，可以通过外部配置文件或directory/中的信息来连接到远程VoIP网关。
 
-directory: The directory contains all users that may register and use freeswitch as their pbx.; holds authentication credentials for other sip endpoints that will register to freeswitch (most commonly users). The directory configuration default is configured to process the glob $PREFIX/conf/directory/default/\*.xml by the configuration included in freeswitch.xml $PREFIX/conf/directory/\*.xml.
+directory: 目录包含了所有可以注册并使用freeswitch作为他们的PBX的用户；保存了其他将注册到freeswitch的sip终端（通常是用户）的认证凭据。目录的默认配置通过freeswitch.xml中包含的配置文件 $PREFIX/conf/directory/\*.xml 来处理glob $PREFIX/conf/directory/default/\*.xml。
 
-conf/sip\_profiles/ Tells FS how to talk sip. Each profile has its own port. Unlike other softswitches (like Asterisk), FreeSWITCH allows you to handle media (calls, video, etc.) differently based on where the equipment is attached to your network. This assists with security as well as providing added functionality. SIP Profiles allow you to define paths to devices or carriers that may live inside or outside your network. These paths can be of many different types, but must consist of a unique combination of port and IP pairs.
+conf/sip_profiles/ 告诉FreeSWITCH如何使用SIP通信。每个配置文件都有自己的端口。与其他软交换（如Asterisk）不同，FreeSWITCH允许您根据设备连接到您的网络的位置不同而对媒体（呼叫、视频等）进行不同处理。这有助于安全性，同时也提供了附加功能。SIP配置文件允许您定义指向可能位于网络内或网络外的设备或运营商的路径。这些路径可以是许多不同类型，但必须由端口和IP地址配对的唯一组合组成。
 
-  
-You could have SIP profiles for your internal network, or multiple profiles for each subnet of your internal network, or even completely different protocols like IPv6 as profile definitions. This helps FreeSWITCH identify how to route different types of calls when necessary, and also gives you the flexibility to tailor your dialplans based on what path a call originates to/from. The default profiles are located in: $PREFIX/conf/sip\_profiles/PROFILE\_NAME.xml -- where PROFILE\_NAME is the name of the profile.
+您可以为内部网络配置SIP配置文件，或为每个内部网络子网配置多个配置文件，甚至可以定义完全不同的协议，例如IPv6。这有助于FreeSWITCH确定如何在必要时路由不同类型的呼叫，并且还可以根据呼叫来源/目标路径的不同定制您的拨号计划。默认配置文件位于：$PREFIX/conf/sip_profiles/PROFILE_NAME.xml -- 其中PROFILE_NAME是配置文件的名称。
 
-A list of contexts, eg. Internal, External, etc. This adds security and lets Freeswitch handle media that take different forms (voice, video, etc.). A profil consists in an IP address + Port number, and contains information that will be inherited by devices using this profile
+上下文列表，例如Internal、External等。这增加了安全性，并使得Freeswitch可以处理以不同形式存在的媒体（语音、视频等）。配置文件由一个IP地址和端口号组成，包含将被使用该配置文件的设备继承的信息。
 
-A profile is a SIP UA (an endpoint), which communicates with other SIP endpoints. An obvious reason for multiple profiles is to tell Sofia how to handle calls meant for remote SIP users behind the NAT router, and calls meant for local SIP users located on the same LAN as the originating caller.
+配置文件是一个SIP UA（终端），用于与其他SIP终端进行通信。多个配置文件的一个显而易见的原因是告诉Sofia如何处理为位于NAT路由器后面的远程SIP用户和位于与发起呼叫者处于同一局域网的本地SIP用户的呼叫。
 
-Each profile contains a complete description of a SIP UA. When FreeSWITCH starts, it reads sofia.conf.xml and starts up a separate UA for each profile in the configuration file.
+每个配置文件包含一个SIP UA的完整描述。当FreeSWITCH启动时，它会读取sofia.conf.xml，并为配置文件中的每个配置文件启动一个单独的UA。
 
-In FS, SIP equipments can have different profiles, and are located under SIP\_Profiles/. By default, there is an internal profile (register by connecting to FS on UDP5060) and an external profile (Connect to FS on UDP5080; nat.xml is deprecated.)
+在FS中，SIP设备可以拥有不同的配置文件，并且位于SIP_Profiles/下。默认情况下，有一个内部配置文件（通过UDP5060连接到FS并注册），以及一个外部配置文件（通过UDP5080连接到FS；nat.xml已经过时）。
 
-The default profiles are located in: $PREFIX/conf/sip\_profiles/PROFILE\_NAME.xml -- where PROFILE\_NAME is the name of the profile.In order to secure your FreeSwitch it is wise to link your outbound (external) profile to a dialplan context other than 'default', which in the default configuration is the where authenticated users are placed.
+默认配置文件位于：$PREFIX/conf/sip_profiles/PROFILE_NAME.xml —— 其中PROFILE_NAME是配置文件的名称。为了保护您的FreeSwitch，将出站（外部）配置文件链接到与'default'不同的呼叫计划上是明智的，在默认配置中，'default'是已认证用户所在的位置。
 
-The default port for external connections is 5080\. This also means if you are trying to connect a phone remotely to your FreeSWITCH box, you must set it to connect on port 5080, or change your ports around.
+外部连接的默认端口为5080。这也意味着，如果您想要远程连接电话到您的FreeSWITCH设备，您必须将其设置为在5080端口上连接，或者更改端口设置。
 
-Working with the XML files
+在与XML文件一起工作
 
-Type "reloadxml" in the FS console to apply changes made to XML files.
+在FS控制台中键入“reloadxml”以应用对XML文件的更改。
 
-Creating a new SIP account, and adding it to the Internal SIP profile/context
+创建新的SIP帐户，并将其添加到内部SIP配置文件/上下文
 
-cd conf/directory/default/ ; cp 1000.xml 1234.xml; vi 1234.xml
+cd conf/directory/default/; cp 1000.xml 1234.xml; vi 1234.xml
 
-Adding a new VoIP gateway
+添加新的VoIP网关
 
 <http://wiki.freeswitch.org/wiki/SIP%5FProvider%5FExamples> conf/directory/default/
 
-There are two ways to define VoIP gateways, depending if they're common to all SIP users, or user-specific. More information in Clarification: Gateways. A list of examples to connect to SIP providers is available here.
+有两种定义VoIP网关的方式，具体取决于它们是对所有SIP用户通用，还是针对特定用户。更多信息请参阅解释：Gateways。 提供与SIP供应商连接的示例列表可在此处找到。
 
-Create a new XML file in conf/sip\_profiles/external
+在conf/sip_profiles/external/中创建新的XML文件。
 
-For outbound calls, add a new file in conf/dialplan/default/. Important: Freeswitch uses the files in their alphanumerical order, so 00\_ is called before 01\_
+对于出站呼叫，在conf/dialplan/default/中添加一个新的文件。重要提示：Freeswitch会按照字母数字顺序使用这些文件，所以00_会在01_之前被调用。
 
-For inbound calls, add a new files in conf/dialplan/public/
+对于呼入呼叫，在conf/dialplan/public/目录下添加一个新的文件。
 
-A fuller example:
+一个更详细的例子：
 
 cd conf/sip\_profiles/external; cp example.xml mygw.xml; vi mygw.xml: &lt;include>
 
 ```xml
  <gateway name="outbound.mygw">
-   <param name="username" value="****yourusername"/>
-   <param name="password" value="****yourpassword"/>
-   <param name="proxy" value="****outboundurl"/>
+   <param name="username" value="****你的用户名"/>
+   <param name="password" value="****你的密码"/>
+   <param name="proxy" value="****外呼URL"/>
    <param name="register" value="false"/>
  </gateway>
  <gateway name="inbound.mygw">
-   <param name="username" value="****yourusername"/>
-   <param name="password" value="****yourpassword"/>
+   <param name="username" value="****你的用户名"/>
+   <param name="password" value="****你的密码"/>
    <param name="extension" value="1000"/>
-   <param name="proxy" value="****inboundurl"/>
-   <param name="register-proxy" value="****inboundurl"/>
+   <param name="proxy" value="****呼入URL"/>
+   <param name="register-proxy" value="****呼入URL"/>
  </gateway>
 ```
 
-&lt;/include> Creating a new dialplan (including an IVR), and linking it to the new SIP account
+&lt;/include> 创建一个新的拨号计划（包括一个自动语音应答系统），并将其与新的SIP账户关联。
 
-Note: Since filenames determine the order in which Freeswitch loads XML files depends on their filename, make sure existing files in the same folder aren't loaded before yours.
+注意：由于文件名决定了Freeswitch加载XML文件的顺序取决于它们的文件名，请确保在同一文件夹中的现有文件不会在您的文件之前加载。
 
-Here's how to create an outbound dialplan:
+以下是如何创建一个外呼拨号计划：
 
 cd conf/dialplan/default; vi 00\_outbound\_mygw.xml &lt;include>
 
@@ -469,44 +513,44 @@ cd conf/dialplan/default; vi 00\_outbound\_mygw.xml &lt;include>
   </extension>
 ```
 
-&lt;/include> Here's how to create an inbound dialplan:
+&lt;/include> 以下是如何创建一个呼入拨号计划：
 
 cd conf/dialplan/public; vi 00\_inbound\_mygw.xml &lt;include>
 
 ```xml
- <extension name="public_did">
-   <condition field="destination_number" expression="^(.*)$">
-     <action application="set" data="domain_name=$${domain}"/>
-     <action application="transfer" data="1000 XML default"/>
-   </condition>
- </extension>
+<extension name="public_did">
+  <condition field="destination_number" expression="^(.*)$">
+    <action application="set" data="domain_name=$${domain}"/>
+    <action application="transfer" data="1000 XML default"/>
+  </condition>
+</extension>
 ```
 
-&lt;/include> In order to secure your FreeSwitch it is wise to link your outbound profile to a dialplan context other than 'default', which in the default configuration is the where authenticated users are placed.
+&lt;/include> 为了保护您的FreeSwitch，把您的出站配置与除了“default”的其他拨号计划上下文相关联是明智的选择，在默认配置中，已经有了一个放置经过身份验证的用户的地方。
 
-Note: The nat.xml file (and profile) have been deprecated. Use the external profile and port 5080\. Scripts can access Freeswitch through its Even Socket Library.
+注意：nat.xml文件（和配置文件）已经被弃用。请使用外部配置文件和端口5080。脚本可以通过Even Socket Library访问FreeSwitch。
 
 [http://wiki.freeswitch.org/wiki/Javascript\_Examples](../Client-and-Developer-Interfaces/JavaScript/Javascript-Examples/index.mdx#about)
 
-Diaplans For security reason, it is recommended to link the outbound profile ("External") to its own dialplan, different from the one used for internal calls ("Internal", previously known as "Default").
+拨号计划为安全起见，建议将出站配置（"External"）链接到自己的拨号计划中，而不是用于内部呼叫的拨号计划（之前称为"Default"）。
 
-By default, note that the Internal profile listens for incoming connections on UDP5060 while the External profile listens on UDP5080.
+默认情况下，在内部配置文件上监听UDP5060上的传入连接，而在外部配置文件上监听UDP5080上的传入连接。
 
 [http://wiki.freeswitch.org/wiki/Dialplan\_XML](../Dialplan/XML-Dialplan/index.mdx#about)
 
-Freeswitch and NAT firewalls Here are some ports that Freeswitch uses and will have to go through firewalls:
+FreeSwitch和NAT防火墙以下是FreeSwitch使用并需要通过防火墙的端口：
 
-UDP 3478: STUN service; Used for NAT traversal UDP 3479: STUN service; Used for NAT traversal UDP/TCP 5060: SIP UAS; Used for SIP signalling (Standard SIP Port, for default Internal Profile) UDP/TCP 5070: SIP UAS; Used for SIP signalling (For default "NAT" Profile) UDP/TCP 5080: SIP UAS; Used for SIP signalling (For default "External" Profile) UDP 16384-32768: RTP/ RTCP multimedia streaming; Used for audio/video data in SIP and other protocols General NAT example scenarios
+UDP 3478：STUN服务，用于NAT穿越 UDP 3479：STUN服务，用于NAT穿越 UDP/TCP 5060：SIP UAS，用于SIP信令（标准SIP端口，默认内部配置文件） UDP/TCP 5070：SIP UAS，用于SIP信令（默认"NAT"配置文件） UDP/TCP 5080：SIP UAS，用于SIP信令（默认外部配置文件） UDP 16384-32768：RTP/RTCP多媒体流，用于SIP和其他协议中的音频/视频数据 一般NAT示例场景
 
-Securing Freeswitch This is especially important if the Freeswitch box is open to the Internet to let remote SIP users connect to FS, or access a web server running on the same box.
+保护Freeswitch 安全设置是非常重要的，特别是当Freeswitch服务器对外开放，让远程SIP用户连接到FS，或者访问运行在同一台服务器上的Web服务器。
 
-Remove any unneeded applications Disable unneeded services Use a NAT firewall, especially one that can capture illegitimate login requests and block those IP addresses from getting into your system Configure SSH and Apache to listen to non-standard ports Create a user account specifically to be used with SSH, and configure SSH to only allow connections from this user (eg. useradd mysshuser; passwd mysshuser; vi /etc/ssh/sshd\_config : AllowUsers mysshusers AND PermitRootLogin no AND Port 196; restart SSHd) SIP: Choose secure passwords for accounts, and double-check the SIP profiles that allow dialing out through the POTS
+删除任何不必要的应用程序 禁用不必要的服务 使用NAT防火墙，尤其是那些能够捕获非法登录请求并阻止这些IP地址进入系统的防火墙 配置SSH和Apache监听非标准端口 创建一个专门用于SSH的用户账户，并配置SSH只允许这个用户的连接（例如：useradd mysshuser; passwd mysshuser; vi /etc/ssh/sshd\_config ：AllowUsers mysshusers AND PermitRootLogin no AND Port 196; restart SSHd） SIP：为账户选择安全密码，并仔细检查允许通过POTS进行外拨的SIP配置文件
 
-Q&A In vars.xml, what is default\_password used for?
+Q&A 在vars.xml中，default\_password用于什么？
 
 &lt;X-PRE-PROCESS cmd="set" data="default\_password=1234"/>
 
-It's the SIP default password if none given in user files under conf/directory/default/:
+如果user files目录下的conf/directory/default/文件中没有给出密码，默认情况下，它是SIP的默认密码：
 
 1. cat 1000.xml
 
@@ -520,49 +564,50 @@ It's the SIP default password if none given in user files under conf/directory/d
    </params>
 ```
 
-What are the options to connect a FS server to a POTS line?
+连接FS服务器到POTS线路的选项有哪些？
 
-To act as a VoIP gateway, you can use external solutions like Sangoma's USB device, or Ethernet-based solutions like Linksys' SPA-3102 or GrandStream's HT503.
+要充当VoIP网关，可以使用外部解决方案，如Sangoma的USB设备，或基于以太网的解决方案，如Linksys的SPA-3102或GrandStream的HT503。
 
-If you'd rather use a PCI card: As of April 2009, FS' OpenZAP interface can talk to hardware either directly (only Sangoma cards are supported), or indirectly through the Zaptel interface (which isn't available for Windows).
+如果您宁愿使用PCI卡：截至2009年4月，FS的OpenZAP接口可以直接与硬件通信（仅支持Sangoma卡），或者通过Zaptel接口（不适用于Windows）间接与硬件通信。
 
-How to configure routers to allow remote IP clients to connect to Freeswitch and/or POTS VoIP gateway?
+如何配置路由器允许远程IP客户端连接到Freeswitch和/或POTS VoIP网关？
 
-SIP TCP/UDP 5060 - 5090
+SIP TCP/UDP 5060 - 5090端口要打开。
 
 RTP UDP 16384 - 32768
 
-? What about the connection between VoIP gateway and a remote SIP client?
+? VoIP网关和远程SIP客户端之间的连接如何？
 
-How to install FS as a service in Windows?
+如何在Windows上将FS安装为一个服务？
 
-[http://wiki.freeswitch.org/wiki/FreeSwitch\_FAQ](./FAQ/index.mdx#sip)
+[http://wiki.freeswitch.org/wiki/FreeSwitch_FAQ](./FAQ/index.mdx#sip)
 
-What is mod\_spidermonkey?
+什么是mod_spidermonkey？
 
-The Mozilla SpiderMonkey Javascript (ECMA Script) engine
+Mozilla SpiderMonkey Javascript（ECMA Script）引擎
 
-What is mod\_sofia?
+什么是mod_sofia？
 
-"This module wraps the sofia SIP library from Nokia."
+"该模块封装了来自诺基亚的sofia SIP库。"
 
-How to check my voicemail?
+如何检查我的语音邮件？
 
-Dial 4000, followed by the extension # and password (with the test accounts, password=extension) Articles to read in the Freeswitch wiki DONE Docs/MainPage [http://wiki.freeswitch.org/](../Index_1048632.mdx#space-index) DONE Download <http://wiki.freeswitch.org/wiki/Download%5FFreeSWITCH> DONE Install guide [Installation](../Installation/index.mdx#about) DONE Configuring FreeSWITCH [Getting Started](https://freeswitch.org/confluence/display/FSSI/Getting+started) DONE [Default Configuration](../Configuration/Default-Configuration_6587388.mdx#mod_vp8) Admin documentation <http://wiki.freeswitch.org/wiki/Documentation> (Includes examples, debugging, JavaScript examples, etc.) User documentation <http://wiki.freeswitch.org/wiki/Documentation/User%5FDocumentation> conf/freeswitch.xml conf/Vars.xml conf/autoload_configs/modules.conf.xml conf/autoload_configs/sofia.conf.xml conf/directory/ (user configuration) conf/sip_profiles/ (internal, external) conf/dialplan/ (Dialplan_XML, recipes) From Asterisk to Freeswitch Freeswitch FAQ [SPA3102 How-To](../Interoperability/Phones/Linksys/SPA3102-HowTo_1966971.mdx#security) Home VOIP system using FreeSwitch and a Linksys 3102 voice gateway (UK Guide) by Rob Smart How To Set Up a Linksys SPA3102 VOIP Router/ATA for BT UK Other stuff to read SIP and NAT firewalls
+拨打4000，然后输入分机号和密码（测试帐户中，密码=分机号）。
+阅读Freeswitch Wiki中的文章 [主页](../Index_1048632.mdx#space-index) DONE [下载](../Download/index.mdx#about) DONE [安装指南](../Installation/index.mdx#about) DONE [配置FreeSWITCH](https://freeswitch.org/confluence/display/FSSI/Getting+started) DONE 管理员文档 <http://wiki.freeswitch.org/wiki/Documentation>（包括示例、调试、JavaScript示例等） 用户文档 <http://wiki.freeswitch.org/wiki/Documentation/User%5FDocumentation> conf/freeswitch.xml conf/Vars.xml conf/autoload_configs/modules.conf.xml conf/autoload_configs/sofia.conf.xml conf/directory/（用户配置） conf/sip_profiles/（内部、外部） conf/dialplan/（Dialplan_XML、recipes） 从Asterisk到FreeSwitch FreeSwitch常见问题解答 [SPA3102使用指南](../Interoperability/Phones/Linksys/SPA3102-HowTo_1966971.mdx#security) 使用FreeSwitch和Linksys 3102语音网关的家庭VoIP系统（英国指南） - Rob Smart 如何设置Linksys SPA3102 VOIP路由器/ATA供BT UK使用  其他阅读内容：SIP和NAT防火墙
 
-local setup (FreeSwitch and SIP phones) remote setup (SIP phone + possible utility to check that the firewall is SIP-friendly) Options: STUN + port maping, UPnP or nat-pmp (to automate port mapping), IAX
+本地设置（FreeSwitch和SIP电话）远程设置（SIP电话+可能用于检查防火墙是否对SIP友好的实用工具）选项：STUN +端口映射、UPnP或NAT-PMP（自动进行端口映射）、IAX
 
-ATCOM IAX Hard phones (530P?)
+ATCOM IAX硬电话（530P？）
 
-DIAX softphone (looks ugly)
+DIAX软电话（看起来丑陋）
 
-I've used both AT530 and AT530P ip phones, they have good voice quality and somehow resistent to harsh environment like offices ;) , except the keypad which after a year or more just sometimes types two digits with one push on a button. The AG188N ATA is also a good choise and we have some installation which work without any problem yet.
+我曾经使用过AT530和AT530P IP电话，它们声音质量很好，并且在像办公室这样的恶劣环境中有一定的抵抗力；除了键盘，经过一年或更长时间后，有时只要按一下按钮，就会输入两个数字。AG188N ATA也是一个很好的选择，我们有一些安装可以正常工作而没有任何问题。
 
 <http://www.snomindia.com/snomsoftphone.htm>
 
 [http://www.zoiper.com](http://www.zoiper.com/)
 
-Pika Warp: their support and development enviroment sucks
+Pika Warp：他们的支持和开发环境很差劲
 
 [http://www.pikatechnologies.com](http://www.pikatechnologies.com/)
 
@@ -590,12 +635,10 @@ Pika Warp: their support and development enviroment sucks
 
 <http://www.amazon.com/IEEE802-11N-Wireless-Broadband-MZK-W04NU-Designed/dp/B000YDS0YG>
 
-What to Do With a $99 Wall Wart Linux Server
+如何使用99美元的壁挂式Linux服务器
 
-GSM gateways: EdgePBX, PORTech MV-370, OpenVox G400P (+ at least one GSM module + SIM card)
+GSM网关：EdgePBX，PORTech MV-370，OpenVox G400P（+至少一个GSM模块+SIM卡）
 
 <http://blogs.zdnet.com/Greenfield/?p=233> <http://robsmart.co.uk/2009/06/02/freeswitch%5Flinksys3102/>
 
 <http://www.aoakley.com/articles/2008-01-08.php>
-
-

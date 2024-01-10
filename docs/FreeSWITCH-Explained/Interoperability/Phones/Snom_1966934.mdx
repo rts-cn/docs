@@ -1,71 +1,66 @@
+# Snom
 
-# Snom 
-
- 
-
-* 1 [Snom TLS Setup](#snom-tls-setup)
-* 2 [SNOM 190, snom300 series, snom800 series, snomMP, snomM9, snomPA1](#snom-190-snom300-series-snom800-series-snommp-snomm9-snompa1)
-* 3 [Snom370 Configuration Example](#snom370-configuration-example)
+* 1 [Snom TLS 配置](#snom-tls-setup)
+* 2 [SNOM 190, snom300 系列, snom800 系列, snomMP, snomM9, snomPA1](#snom-190-snom300-series-snom800-series-snommp-snomm9-snompa1)
+* 3 [Snom370 配置示例](#snom370-configuration-example)
 * 4 [SNOM m3](#snom-m3)
 
-## Snom TLS Setup
+## Snom TLS 配置
 
-(Tested with Snom 320)
+（在 Snom 320 上进行测试）
 
-* Update Snom 320 to Firmware-Version: snom320-SIP 7.1.33 14322 (7.1.33 has some important bug fixes). Instructions are here:<http://wiki.snom.com/Snom320/Firmware>
-* On Web page of the Snom phone (IP is shown on the display when you power up) In Identity X/Login/ Outbound Proxy: add ;transport=tls after the proxy. e.g.: 192.168.0.1;transport=tls (do not need to add port 5061). If you need to use a different port, use 192.168.0.1:5081;transport=tls Right way is to use NAPTR and SRV. But bkw says specifying the port number should be fine, and it works
-* Don't forget to enter 192.168.0.1:5081;transport=tls as "Outbound Proxy" or you will experience hangup issues.
-* On Web page of the Snom phone In Identity X/RTP/RTP Encryption: Set to on
-* On Web page of the Snom phone In Identity X/RTP/ RTP/SAVP: Set to Optional
+1. 将 Snom 320 更新至以下固件版本：snom320-SIP 7.1.33 14322（7.1.33 版本有一些重要的 bug 修复）。具体说明请参见：<http://wiki.snom.com/Snom320/Firmware>
+2. 在 Snom 电话的 Web 页面上（启动时显示的 IP 地址），在“Identity X/Login/Outbound Proxy”字段中加入 `;transport=tls`。例如：192.168.0.1;transport=tls（不需要添加端口 5061）。如果需要使用其他端口，可以使用 `192.168.0.1:5081;transport=tls`。尽管正常方式是利用 NAPTR 和 SRV，但 bkw 说指定端口号也可以，而且能正常工作。
+3. 不要忘记将 `192.168.0.1:5081;transport=tls` 输入到“Outbound Proxy”字段，否则会遇到挂断问题。
+4. 在 Snom 电话的 Web 页面上的“Identity X/RTP/RTP Encryption”字段中，将其设置为开启。
+5. 在 Snom 电话的 Web 页面上的“Identity X/RTP/ RTP/SAVP”字段中，将其设置为可选。
 
-You're done.
+完成。
 
-Note : Contrary to what I heard, I found the Snom TLS to be a bit unreliable. UDP works, but with TLS I have seen more than one Snom 320, see (from SIP trace) only part of the SIP message 401 sent to them, while SIP trace on FreeSWITCH and Wireshark the same network show differently. With one Snom with above settings, I found it actually sends UDP sometimes (from its own SIP trace!) despite above settings. Reboot did not fix it either, had to reload firmware and then it worked for sometime.
+注意：与我所听说的相反，我发现 Snom TLS 有点不稳定。UDP 可以正常工作，但是使用 TLS 时，我曾经发现有一些 Snom 320 只能看到 SIPv2 401 部分信息，而在 FreeSWITCH 和 Wireshark 的 SIP 跟踪记录中则显示不同。使用以上设置后，我发现某个设置好的 Snom 有时候实际上会发送 UDP（从它自己的 SIP 跟踪记录中看到！）。重启并不能解决问题，必须重新加载固件，然后才能正常工作。
 
-## SNOM 190, snom300 series, snom800 series, snomMP, snomM9, snomPA1
+## SNOM 190, snom300 系列, snom800 系列, snomMP, snomM9, snomPA1
 
-Works fine. Multiple line appearances, call waiting, transfer, etc.
+正常工作。支持多路通话、呼叫等待、转接等功能。
 
-* Attended Transfers
-* Blind Transfers
-* CMC Code
-* Record Button (Set record template on sip profile)
-* TLS and SRTP
+* 传递转接
+* 盲转接
+* CMC代码
+* 录音按钮（在SIP配置文件中设置录音模板）
+* TLS和SRTP
 
-Configuration
+配置
 
-If calls are not properly ended by freeswitch after the phone has hung up, check if the BYE messages sent by the phone are authenticated. (containing a proxy-authentication line) If not, you can work around this by adding &lt;param name="auth-all-packets" value="false"/> to the sip-profile.
+如果电话挂断后，FreeSWITCH未能正确结束呼叫，请检查电话发送的BYE消息是否经过身份验证（是否包含代理验证行）。如果没有，您可以通过将&lt;param name="auth-all-packets" value="false"/>添加到SIP配置文件中来绕过此问题。
 
-This is required on the user to force TLS to work proper with the SNOM with version 7 firmware.
+这对于用户来说是必需的，以便强制TLS与使用7固件的SNOM正常工作。
 
 &lt;variable name="sip-force-contact" value="NDLB-tls-connectile-dysfunction"/>
 
-Update : as per Brian (June 2009) - this is no longer required 
+更新：根据Brian（2009年6月）的说法，这不再需要了。
 
-## Snom370 Configuration Example
+## Snom370配置示例
 
-Setup of the Snom 370 is really easy in FreeSWITCH.
+在FreeSWITCH中设置Snom 370非常简单。
 
-1. Connect to your snom 370 device via your favorite web browser. [http://](https://confluence.freeswitch.org/http:/)&lt;your snom ip address>  
-   * You may have press the "help" button on the phone to figure out what your phone's ip address is.
-2. Next click on the "Identity1". You may be forced to login with the administrator password. The default password for snom 370 phones is "0000". That is 4 zeros.  
-   * For a default hello world you can simply use the extension 1000 account with a password of 1234\. The registrar is the ip address of your FreeSWITCH server.
+1. 通过您喜欢的Web浏览器连接到snom 370设备。[http://](https://confluence.freeswitch.org/http:/)&lt;your snom ip address>  
+   * 您可能需要按下电话上的"help"按钮才能找出电话的IP地址。
+2. 接下来，单击"Identity1"。您可能需要使用管理员密码进行登录。Snom 370电话的默认密码是"0000"，即四个零。  
+   * 对于默认的hello world，您可以简单地使用扩展号1000和密码1234的帐户。注册服务器是您的FreeSWITCH服务器的IP地址。
 
 ![](/attachments/1966934/9634329.png)
 
-* As of firmware version 7.1.30 you will need to toggle the RTP encryption to an off state.
+* 在固件版本7.1.30中，您需要将RTP加密切换为关闭状态。
 
 ![](/attachments/1966934/9634330.png)
 
-That is it! In order to test you can try calling a default extension of "9196" which should create an "echo".
+就是这样！为了测试，您可以尝试呼叫默认分机号"9196"，这应该会创建一个"echo"。
 
 ## SNOM m3
 
-Works with the setting "Registrar Config" "Force Domain" in the "Configuration Identity" Menu. You must reboot the Phone! Tested with Firmware-Version: snom-m3-SIP/02.09//11-Jun-10 10:06
+在“配置身份”菜单中，使用“注册器配置”和“强制域名”设置。您必须重新启动电话！固件版本测试：snom-m3-SIP/02.09//11-Jun-10 10:06
 
-## Attachments:
+附件：
 
-![](/images/icons/bullet_blue.gif) [Snom370\_config.png](/attachments/1966934/9634329.png) (image/png)  
-![](/images/icons/bullet_blue.gif) [Snom370\_config\_rtp.png](/attachments/1966934/9634330.png) (image/png)  
-
-
+![](/images/icons/bullet_blue.gif) [Snom370_config.png](/attachments/1966934/9634329.png) (image/png)
+![](/images/icons/bullet_blue.gif) [Snom370_config_rtp.png](/attachments/1966934/9634330.png) (image/png)

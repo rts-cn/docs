@@ -1,76 +1,76 @@
-# mod_json_cdr 
+# mod_json_cdr
 
- 
+```xml
+<configuration name="json_cdr.conf" description="JSON CDR">
+  <settings>
 
-    <configuration name="json_cdr.conf" description="JSON CDR">
-      <settings>
+    <!-- 全局参数 -->
+    <param name="log-b-leg" value="true"/>
+    <param name="prefix-a-leg" value="false"/>
 
-        <!-- Global parameters -->
-        <param name="log-b-leg" value="true"/>
-        <param name="prefix-a-leg" value="false"/>
+    <!-- 是否对各个JSON值进行URL编码。默认为true，设置为false即为标准JSON。 -->
+    <param name="encode-values" value="true"/>
 
-        <!-- Whether to URL encode the individual JSON values. Defaults to true, set to false for standard JSON. -->
-        <param name="encode-values" value="true"/>
+    <!-- 通常情况下，如果同时出现url和log-dir，则首先尝试url，然后尝试log-dir。此选项允许系统性地同时进行两者。 -->
+    <param name="log-http-and-disk" value="false"/>
 
-        <!-- Normally if url and log-dir are present, url is attempted first and log-dir second. This options allows to do both systematically. -->
-        <param name="log-http-and-disk" value="false"/>
+    <!-- 文件日志 -->
+    <!-- 用于存储JSON CDR的"json_cdr"目录创建的目录的位置。如果不需要文件日志，则保持为空。 -->
+    <!-- 可能会被通道变量"json_cdr_base"覆盖。 -->
+    <param name="log-dir" value=""/>
+    <!-- 是否进行文件CDR的轮转。 -->
+    <param name="rotate" value="false"/>
+```
 
-        <!-- File logging -->
-        <!-- Directory where to create the "json_cdr" directory used to store JSON CDRs. Leave empty for no file logging. -->
-        <!-- Might be overriden by a channel variable "json_cdr_base". -->
-        <param name="log-dir" value=""/>
-        <!-- Whether to rotate file CDRs. -->
-        <param name="rotate" value="false"/>
-
-        <!-- HTTP(S) logging -->
-        <!-- URL where to POST JSON CDRs. Leave empty for no URL logging. Up to 20 URLs may be specified. -->
-        <param name="url" value=""/>
-        <!-- Authentication scheme for the above URL. May be one of basic|digest|NTLM|GSS-NEGOTIATE|any-->
-        <param name="auth-scheme" value="basic"/>
-        <!-- Credentials in the form  username:password  if auth-scheme is used. Leave empty for no authentication. -->
-        <param name="cred" value="string"/>
-        <!-- Whether to base64 encode the entire JSON document before POSTing it. -->
-        <param name="encode" value="base64|true|false"/>
-        <!-- Number of retries in case of failure. Each specified URL is tried in turn. -->
-        <param name="retries" value="0"/>
-        <!-- Delay between retries (ms). -->
-        <param name="delay" value="5000"/>
-        <!-- Disable streaming if the server doesn't support it. -->
-        <param name="disable-100-continue" value="false"/>
-        <!-- If web posting failed, the CDR is written to a file. -->
-        <!-- Error log dir ("json_cdr" is appended). Up to 20 may be specified. Default to log-dir if none is specified. -->
-        <param name="err-log-dir" value=""/>
-
-
-        <!-- SSL options -->
-        <param name="ssl-key-path" value=""/>
-        <param name="ssl-key-password" value=""/>
-        <!-- SSL version. If specified, must be either "SSLv3" or "TLSv1". -->
-        <param name="ssl-version" value=""/>
-        <param name="enable-ssl-verifyhost" value="false"/>
-        <param name="ssl-cert-path" value=""/>
-        <param name="enable-cacert-check" value="false"/>
-        <param name="ssl-cacert-file" value=""/>
-      </settings>
-    </configuration>
-
-At least one of **log-dir** or **url** is required for logging to happen.
-
-In **log-dir** (file) mode, one file is created per call in the target directory.
-
-In **url** mode, one POST is submitted per CDR. (The socket is currently not re-used between CDRs.) The **cred** field should contain "login:password" for authentication.
-
-For CouchDB insertion (with FS-3721 fix) use for example an CouchDB URL like **<http://127.0.0.1:5984/cdr>** where **cdr** is the database that will store your Call Detail Records. Make sure to set **encode-values** to false if you'd like plain JSON content.
-
-If submission of the CDR using **url** fails, the module will fallback to file mode using each **err-log-dir**.
-
-##  Output (example CDRs) 
-
-The JSON layout contains four sections:
-
-* app\_log: contains "application" data
-* callflow: contains "extension", "caller\_profile"
-* channel\_data: FreeSwitch channel data
-* variables: all channel variables, including "billsec"
+```xml
+<!-- HTTP(S) logging -->
+<!--将JSON CDRs POST到的URL。如果不需要URL日志记录，则留空。最多可以指定20个URL。-->
+<param name="url" value=""/>
+<!--上述URL的身份验证方案。可以是basic|digest|NTLM|GSS-NEGOTIATE|any中的一个-->
+<param name="auth-scheme" value="basic"/>
+<!--如果使用auth-scheme，请在此处输入用户名和密码。如果不需要身份验证，则留空。-->
+<param name="cred" value="string"/>
+<!--是否在POST之前对整个JSON文档进行base64编码。-->
+<param name="encode" value="base64|true|false"/>
+<!--如果失败，重试的次数。每个指定的URL顺序尝试。-->
+<param name="retries" value="0"/>
+<!--重试之间的延迟时间（毫秒）。-->
+<param name="delay" value="5000"/>
+<!--如果服务器不支持，则禁用流式传输。-->
+<param name="disable-100-continue" value="false"/>
+<!--如果网页发布失败，则将CDR写入文件。-->
+<!--错误日志目录（后缀为"json_cdr"）。最多可以指定20个。如果未指定目录，则默认为log-dir。-->
+<param name="err-log-dir" value=""/>
 
 
+<!-- SSL选项 -->
+<param name="ssl-key-path" value=""/>
+<param name="ssl-key-password" value=""/>
+<!--SSL版本。如果指定，必须是"SSLv3"或"TLSv1"之一。-->
+<param name="ssl-version" value=""/>
+<param name="enable-ssl-verifyhost" value="false"/>
+<param name="ssl-cert-path" value=""/>
+<param name="enable-cacert-check" value="false"/>
+<param name="ssl-cacert-file" value=""/>
+  </settings>
+</configuration>
+```
+
+至少需要**log-dir**或**url**之一才能进行日志记录。
+
+在**log-dir**（文件）模式下，每次调用都会在目标目录中创建一个文件。
+
+在**url**模式下，每个CDR都会提交一个POST请求。（目前CDR之间的套接字不会被重复使用。）**cred**字段应包含用于身份验证的“登录：密码”。
+
+对于CouchDB插入（使用FS-3721修复），例如使用CouchDB URL **<http://127.0.0.1:5984/cdr>**，其中**cdr**是将存储呼叫详单记录的数据库。如果希望使用普通JSON内容，请确保将**encode-values**设置为false。
+
+如果使用**url**提交CDR失败，模块将退回到使用各个**err-log-dir**的文件模式。
+
+## 输出（示例CDR）
+
+JSON布局包含四个部分：
+
+- app_log：包含“应用程序”数据
+- callflow：包含“分机号”，“呼叫者配置”
+- channel_data：FreeSwitch通道数据
+- variables：所有通道变量，包括“billsec”

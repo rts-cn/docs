@@ -1,48 +1,45 @@
+＃示例电子邮件会议控制
 
-# Example Email Conference Control 
+## 关于
 
- 
+由excelsio 2010.04.20（古老版本）
 
-## About
+目前，我们有一个很好的脚本[Examples_JavaScript_Conference_IVR](JavaScript-Conference-IVR_7144056.mdx#about)，用于建立一个公开可用的会议系统。
 
-by excelsio 2010.04.20 (ancient)
+不幸的是，我还没有看到用户创建自己的会议的可能性。接下来，我将展示如何设置一种基于电子邮件的远程控制方式，用于上述基于IVR的会议。您所指定域名的用户将编写一个主题为ADD的电子邮件，正文由以下三个部分构成：conf_room mod_password conf_name。这将最终向您的MySQL数据库中添加一个条目。
 
-Currently we have a nice script [Examples\_JavaScript\_Conference\_IVR](JavaScript-Conference-IVR_7144056.mdx#about) for setting up a publicly available conferencing system.
+单击此处展开目录
 
-Unfortunatelay I haven´t seen any possibility for my users to create their own conferences. In the following I´ll show some hints for setting up a kind of basic email based remote control for the IVR based conference mentioned above. Users from your given domain will write an email with subject ADD and a body consisting of the triplet: conf\_room mod\_password conf\_name This will finally add an entry to your MySQL database.
-
-Click here to expand Table of Contents
-
-* 1 [Features](#-freeswitch--example-email-conference-control-)
-* 2 [Issues](#-freeswitch--example-email-conference-control-)
-* 3 [Email Example](#-freeswitch--example-email-conference-control-)  
-   * 3.1 [Procmail Configuration](#procmail-configuration)  
-   * 3.2 [Insert script](#-freeswitch--example-email-conference-control-)  
-   * 3.3 [Fetchmail configuration](#fetchmail-configuration)  
+* 1 [功能](#-freeswitch--example-email-conference-control-)
+* 2 [问题](#-freeswitch--example-email-conference-control-)
+* 3 [电子邮件示例](#-freeswitch--example-email-conference-control-)  
+   * 3.1 [Procmail配置](#procmail-configuration)  
+   * 3.2 [插入脚本](#-freeswitch--example-email-conference-control-)  
+   * 3.3 [Fetchmail配置](#fetchmail-configuration)  
    * 3.4 [Crontab](#-freeswitch--example-email-conference-control-)
 
-## Features
+## 功能
 
-ADDing a conference room entry
+添加会议室条目
 
-## Issues
+## 问题
 
-* no checking whether there´s already a conference room with the given number. So the entries in you database will be overwritten by the next email with the same conf\_room name
-* no EDIT of conference rooms
-* no DELETE of conference rooms
+* 没有检查是否已经存在具有给定编号的会议室。因此，下一个带有相同conf_room名称的电子邮件将覆盖您数据库中的条目
+* 无法编辑会议室
+* 无法删除会议室
 
-## Email Example
+## 电子邮件示例
 
-If you want to set up a conference room with number 10000, moderator password of 123456 and name Conference, your users will have to write an email with:
+如果您想要设置一个编号为10000的会议室，主持人密码为123456，名称是Conference，您的用户将需要编写以下电子邮件：
 
 ```text
-Subject: ADD
-Body: 10000 123456 Conference
+主题：ADD
+正文：10000 123456 Conference
 ```
 
-### Procmail Configuration
+### Procmail配置
 
-Everything that comes from my mail server, having an email address ending within [mydomain.com](http://mydomain.com) and subject ADD will be parsed to the insert script which will itself make some modifications on the database called freeswitch. Look at the "b" of :0b\*. This will forward only the body of the email. The rest, i.e. :0: will be thrown away. This will be your .procmail.rc
+我的邮件服务器上的所有邮件，只要其邮箱地址以[mydomain.com](http://mydomain.com)结尾并且主题为ADD，都将被解析至插入脚本，该脚本会对名为freeswitch的数据库进行一些修改操作。请注意":0b\*"中的"b"，它将仅转发邮件的正文内容，而其余部分，即":0:"，将被丢弃。这就是您的.procmail.rc配置文件。
 
 ```text
 PATH=$HOME/bin:/usr/bin:/bin:/usr/local/bin:.
@@ -61,9 +58,9 @@ LOGFILE=$MAILDIR/procmail.log
 /dev/null
 ```
 
-### Insert script
+### 插入脚本
 
-This is written with the help of awk.
+此脚本使用awk编写。
 
 ```cpp
 #!/bin/awk -f
@@ -85,9 +82,9 @@ FS=" "
 }
 ```
 
-### Fetchmail configuration
+### Fetchmail配置
 
-This will download the emails with POP3 protocol from your provider. So this will be your .fetchmail.rc Change owner from .fetchmailrc with chown fetchmail ./fetchmailrc
+此配置将使用POP3协议从您的提供商下载电子邮件。因此，这将是您的.fetchmail.rc文件。请使用chown fetchmail ./fetchmailrc命令更改文件所有者。
 
 ```xml
 poll pop.mydomain.com with proto POP3
@@ -95,14 +92,10 @@ poll pop.mydomain.com with proto POP3
 mda "/usr/bin/procmail -d %s"
 ```
 
-  
 ### Crontab
 
-Finally crontab will automatically run fetchmail every minute:
+最后，crontab将自动每分钟运行fetchmail：
 
 ```xml
 0-59/1 * * * * /usr/bin/fetchmail -av
 ```
-
-  
-

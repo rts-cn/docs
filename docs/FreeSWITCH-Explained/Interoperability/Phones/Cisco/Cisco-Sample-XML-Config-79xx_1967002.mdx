@@ -1,30 +1,27 @@
+# Cisco 79xx示例XML配置
 
-# Cisco Sample XML Config 79xx 
+- 1 [介绍](#introduction)
+- 2 [XML配置](#xml-configuration)
 
- 
+## 介绍
 
-* 1 [Introduction](#introduction)
-* 2 [XML Configuration](#xml-configuration)
+本页面包含适用于基于XML的电话（如7945、7965、7970型号）的Cisco示例XML配置。
 
-## Introduction
+请使用自己的设置替换 `Freeswitch_IP_Address`、`Freeswitch_Extension`、`Freeswitch_Password` 和 `Freeswitch_Voicemail`。
 
-This page includes a Cisco Sample XML Configuration for XML-based phones, such as the 7945, 7965, 7970 models.
+此配置已在基于XML的Cisco电话上的SIP45.8-5-2S版本中经过测试。G.722宽带支持应无需额外设置，并在配置中包含了一个示例速拨条目。
 
-Replace Freeswitch\_IP\_Address, Freeswitch\_Extension, Freeswitch\_Password and Freeswitch\_Voicemail with your own settings.
+基于SIP的Cisco IP电话将使用DHCP选项66来确定其呼叫控制服务器。基于Cisco SCCP的IP电话将使用DHCP选项150来确定其呼叫控制服务器。如果要将现有的Cisco Unified CallManager电话转换为SIP，或者它们是作为SCCP购买的，您可能会发现将这两个选项都编程到DHCP服务器中是很有价值的，用于自动化TFTP软件升级和配置。
 
-This configuration is tested to work as of SIP45.8-5-2S on XML based Cisco phones. G.722 wideband support should work out of the box and a sample speed dial entry is included in the configuration.
+若要重新启动IP电话，请按下“Settings”按钮，然后快速输入以下按键：\*\*#\*\*
 
-Cisco SIP-based IP phones will use DHCP option 66 to determine their call control server. Cisco [SCCP](https://wiki.freeswitch.org/wiki/SCCP "SCCP")\-based IP phones will use DHCP option 150 to determine their call control server. If you are converting existing Cisco Unified CallManager phones to SIP, or they were purchased as [SCCP](https://wiki.freeswitch.org/wiki/SCCP "SCCP"), you may find it valuable to program both options into your DHCP server for automated TFTP software upgrading and configuration.
+若要解锁IP电话，请按下“Settings”按钮，然后输入\*\*#和输入您的电话密码。默认密码为Cisco，且区分大小写。自从发布了8.0系列版本后，Cisco已经锁定了绝大多数SIP设置，使其无法由用户修改 - 解锁您的电话对于进行恢复出厂设置或更改电话IP地址非常有用。
 
-To reboot your IP phone, press the Settings button and then enter the following keys rapidly: \*\*#\*\*
+若要擦除电话配置，请按照上述解锁电话的步骤，然后按下“More”软键，最后点击“Erase”。
 
-To unlock your IP phone, press the Settings button and then enter \*\*# and enter your phone's password. The default is Cisco and it is case sensitive. Since 8.0 series builds were released, Cisco has locked out a majority of the SIP settings from user modification - unlocking your phone is useful to do a factory reset or change your phone's IP address.
+要获取有关通话的详细统计信息，请快速按两次蓝色的帮助按钮（在全局设置-即7945G上有一个蓝色问号图标）。
 
-To erase your phone's configuration, unlock the phone as shown above, then press the More softkey and click Erase.
-
-To get detailed call statistics on a call, press the blue Help button twice rapidly. (It has a blue Question mark icon on Global sets - i.e. 7945G)
-
-## XML Configuration
+## XML配置
 
 ```xml
 <fullConfig>true</fullConfig> 
@@ -68,173 +65,234 @@ To get detailed call statistics on a call, press the blue Help button twice rapi
 <outboundProxyPort></outboundProxyPort> 
 <registerWithProxy>true</registerWithProxy> 
 </sipProxies> 
+```
 
-<sipCallFeatures> 
-<cnfJoinEnabled>true</cnfJoinEnabled> 
-<callForwardURI>x-cisco-serviceuri-cfwdall</callForwardURI> 
-<callPickupURI>x-cisco-serviceuri-pickup</callPickupURI> 
-<callPickupListURI>x-cisco-serviceuri-opickup</callPickupListURI> 
-<callPickupGroupURI>x-cisco-serviceuri-gpickup</callPickupGroupURI> 
-<meetMeServiceURI>x-cisco-serviceuri-meetme</meetMeServiceURI> 
-<abbreviatedDialURI>x-cisco-serviceuri-abbrdial</abbreviatedDialURI> 
-<rfc2543Hold>false</rfc2543Hold> 
-<callHoldRingback>2</callHoldRingback> 
-<localCfwdEnable>true</localCfwdEnable> 
-<semiAttendedTransfer>true</semiAttendedTransfer> 
-<anonymousCallBlock>2</anonymousCallBlock> 
-<callerIdBlocking>2</callerIdBlocking> 
-<dndControl>0</dndControl> 
-<remoteCcEnable>true</remoteCcEnable> 
-</sipCallFeatures> 
+```xml
+<sipCallFeatures>
+<cnfJoinEnabled>true</cnfJoinEnabled>
+<callForwardURI>x-cisco-serviceuri-cfwdall</callForwardURI>
+<callPickupURI>x-cisco-serviceuri-pickup</callPickupURI>
+<callPickupListURI>x-cisco-serviceuri-opickup</callPickupListURI>
+<callPickupGroupURI>x-cisco-serviceuri-gpickup</callPickupGroupURI>
+<meetMeServiceURI>x-cisco-serviceuri-meetme</meetMeServiceURI>
+<abbreviatedDialURI>x-cisco-serviceuri-abbrdial</abbreviatedDialURI>
+<rfc2543Hold>false</rfc2543Hold>
+<callHoldRingback>2</callHoldRingback>
+<localCfwdEnable>true</localCfwdEnable>
+<semiAttendedTransfer>true</semiAttendedTransfer>
+<anonymousCallBlock>2</anonymousCallBlock>
+<callerIdBlocking>2</callerIdBlocking>
+<dndControl>0</dndControl>
+<remoteCcEnable>true</remoteCcEnable>
+</sipCallFeatures>
 
-<sipStack> 
-<sipInviteRetx>6</sipInviteRetx> 
-<sipRetx>10</sipRetx> 
-<timerInviteExpires>180</timerInviteExpires> 
-<timerRegisterExpires>3600</timerRegisterExpires> 
-<timerRegisterDelta>5</timerRegisterDelta> 
-<timerKeepAliveExpires>120</timerKeepAliveExpires> 
-<timerSubscribeExpires>120</timerSubscribeExpires> 
-<timerSubscribeDelta>5</timerSubscribeDelta> 
-<timerT1>500</timerT1> 
-<timerT2>4000</timerT2> 
-<maxRedirects>70</maxRedirects> 
-<remotePartyID>true</remotePartyID> 
-<userInfo>None</userInfo> 
-</sipStack> 
+<sipStack>
+<sipInviteRetx>6</sipInviteRetx>
+<sipRetx>10</sipRetx>
+<timerInviteExpires>180</timerInviteExpires>
+<timerRegisterExpires>3600</timerRegisterExpires>
+<timerRegisterDelta>5</timerRegisterDelta>
+<timerKeepAliveExpires>120</timerKeepAliveExpires>
+<timerSubscribeExpires>120</timerSubscribeExpires>
+<timerSubscribeDelta>5</timerSubscribeDelta>
+<timerT1>500</timerT1>
+<timerT2>4000</timerT2>
+<maxRedirects>70</maxRedirects>
+<remotePartyID>true</remotePartyID>
+<userInfo>None</userInfo>
+</sipStack>
+```
+```xml
+<sipCallFeatures>
+<cnfJoinEnabled>true</cnfJoinEnabled>
+<callForwardURI>x-cisco-serviceuri-cfwdall</callForwardURI>
+<callPickupURI>x-cisco-serviceuri-pickup</callPickupURI>
+<callPickupListURI>x-cisco-serviceuri-opickup</callPickupListURI>
+<callPickupGroupURI>x-cisco-serviceuri-gpickup</callPickupGroupURI>
+<meetMeServiceURI>x-cisco-serviceuri-meetme</meetMeServiceURI>
+<abbreviatedDialURI>x-cisco-serviceuri-abbrdial</abbreviatedDialURI>
+<rfc2543Hold>false</rfc2543Hold>
+<callHoldRingback>2</callHoldRingback>
+<localCfwdEnable>true</localCfwdEnable>
+<semiAttendedTransfer>true</semiAttendedTransfer>
+<anonymousCallBlock>2</anonymousCallBlock>
+<callerIdBlocking>2</callerIdBlocking>
+<dndControl>0</dndControl>
+<remoteCcEnable>true</remoteCcEnable>
+</sipCallFeatures>
 
-<autoAnswerTimer>1</autoAnswerTimer> 
-<autoAnswerAltBehavior>false</autoAnswerAltBehavior> 
-<autoAnswerOverride>true</autoAnswerOverride> 
-<transferOnhookEnabled>false</transferOnhookEnabled> 
-<enableVad>false</enableVad> 
+<sipStack>
+<sipInviteRetx>6</sipInviteRetx>
+<sipRetx>10</sipRetx>
+<timerInviteExpires>180</timerInviteExpires>
+<timerRegisterExpires>3600</timerRegisterExpires>
+<timerRegisterDelta>5</timerRegisterDelta>
+<timerKeepAliveExpires>120</timerKeepAliveExpires>
+<timerSubscribeExpires>120</timerSubscribeExpires>
+<timerSubscribeDelta>5</timerSubscribeDelta>
+<timerT1>500</timerT1>
+<timerT2>4000</timerT2>
+<maxRedirects>70</maxRedirects>
+<remotePartyID>true</remotePartyID>
+<userInfo>None</userInfo>
+</sipStack>
+```
+
+```xml
+<autoAnswerTimer>1</autoAnswerTimer>
+<autoAnswerAltBehavior>false</autoAnswerAltBehavior>
+<autoAnswerOverride>true</autoAnswerOverride>
+<transferOnhookEnabled>false</transferOnhookEnabled>
+<enableVad>false</enableVad>
 <preferredCodec>none</preferredCodec>
-<dtmfAvtPayload>101</dtmfAvtPayload> 
-<dtmfDbLevel>3</dtmfDbLevel> 
-<dtmfOutofBand>avt</dtmfOutofBand> 
-<alwaysUsePrimeLine>false</alwaysUsePrimeLine> 
-<alwaysUsePrimeLineVoiceMail>false</alwaysUsePrimeLineVoiceMail> 
-<kpml>3</kpml> 
-<phoneLabel>Freeswitch_Extension</phoneLabel> 
-<stutterMsgWaiting>2</stutterMsgWaiting> 
-<callStats>false</callStats> 
-<offhookToFirstDigitTimer>15000</offhookToFirstDigitTimer> 
-<silentPeriodBetweenCallWaitingBursts>10</silentPeriodBetweenCallWaitingBursts> 
-<disableLocalSpeedDialConfig>true</disableLocalSpeedDialConfig> 
-<startMediaPort>16384</startMediaPort> 
-<stopMediaPort>32766</stopMediaPort> 
+<dtmfAvtPayload>101</dtmfAvtPayload>
+<dtmfDbLevel>3</dtmfDbLevel>
+<dtmfOutofBand>avt</dtmfOutofBand>
+<alwaysUsePrimeLine>false</alwaysUsePrimeLine>
+<alwaysUsePrimeLineVoiceMail>false</alwaysUsePrimeLineVoiceMail>
+<kpml>3</kpml>
+<phoneLabel>Freeswitch_Extension</phoneLabel>
+<stutterMsgWaiting>2</stutterMsgWaiting>
+<callStats>false</callStats>
+<offhookToFirstDigitTimer>15000</offhookToFirstDigitTimer>
+<silentPeriodBetweenCallWaitingBursts>10</silentPeriodBetweenCallWaitingBursts>
+<disableLocalSpeedDialConfig>true</disableLocalSpeedDialConfig>
+<startMediaPort>16384</startMediaPort>
+<stopMediaPort>32766</stopMediaPort>
+```
 
-<sipLines> 
-<line button="1"> 
-<featureID>9</featureID> 
-<featureLabel>Freeswitch_Extension</featureLabel> 
-<proxy>Freeswitch_IP</proxy> 
-<port>5060</port> 
-<name>Freeswitch_Username</name> 
-<displayName>Freeswitch_Extension</displayName> 
-<autoAnswer> 
-<autoAnswerEnabled>2</autoAnswerEnabled> 
-</autoAnswer> 
-<callWaiting>3</callWaiting> 
-<authName>Freeswitch_Extension</authName> 
-<authPassword>Freeswitch_Password</authPassword> 
-<sharedLine>false</sharedLine> 
-<messageWaitingLampPolicy>3</messageWaitingLampPolicy> 
-<messagesNumber>Freeswitch_Voicemail_Number</messagesNumber> 
-<ringSettingIdle>4</ringSettingIdle> 
-<ringSettingActive>5</ringSettingActive> 
-<contact>Freeswitch_Extension</contact> 
-<forwardCallInfoDisplay> 
-<callerName>true</callerName> 
-<callerNumber>false</callerNumber> 
-<redirectedNumber>false</redirectedNumber> 
-<dialedNumber>true</dialedNumber> 
-</forwardCallInfoDisplay> 
-</line> 
+```xml
+<autoAnswerTimer>1</autoAnswerTimer>
+<autoAnswerAltBehavior>false</autoAnswerAltBehavior>
+<autoAnswerOverride>true</autoAnswerOverride>
+<transferOnhookEnabled>false</transferOnhookEnabled>
+<enableVad>false</enableVad>
+<preferredCodec>none</preferredCodec>
+<dtmfAvtPayload>101</dtmfAvtPayload>
+<dtmfDbLevel>3</dtmfDbLevel>
+<dtmfOutofBand>avt</dtmfOutofBand>
+<alwaysUsePrimeLine>false</alwaysUsePrimeLine>
+<alwaysUsePrimeLineVoiceMail>false</alwaysUsePrimeLineVoiceMail>
+<kpml>3</kpml>
+<phoneLabel>Freeswitch_Extension</phoneLabel>
+<stutterMsgWaiting>2</stutterMsgWaiting>
+<callStats>false</callStats>
+<offhookToFirstDigitTimer>15000</offhookToFirstDigitTimer>
+<silentPeriodBetweenCallWaitingBursts>10</silentPeriodBetweenCallWaitingBursts>
+<disableLocalSpeedDialConfig>true</disableLocalSpeedDialConfig>
+<startMediaPort>16384</startMediaPort>
+<stopMediaPort>32766</stopMediaPort>
+```
 
-<line button="2"> 
-<featureID></featureID> 
-<featureLabel>Speed Dial</featureLabel> 
-<speedDialNumber>1234</speedDialNumber> 
-</line> 
-</sipLines> 
+<sipLines>
+<line button="1">
+<featureID>9</featureID>
+<featureLabel>Freeswitch_Extension</featureLabel>
+<proxy>Freeswitch_IP</proxy>
+<port>5060</port>
+<name>Freeswitch_Username</name>
+<displayName>Freeswitch_Extension</displayName>
+<autoAnswer>
+<autoAnswerEnabled>2</autoAnswerEnabled>
+</autoAnswer>
+<callWaiting>3</callWaiting>
+<authName>Freeswitch_Extension</authName>
+<authPassword>Freeswitch_Password</authPassword>
+<sharedLine>false</sharedLine>
+<messageWaitingLampPolicy>3</messageWaitingLampPolicy>
+<messagesNumber>Freeswitch_Voicemail_Number</messagesNumber>
+<ringSettingIdle>4</ringSettingIdle>
+<ringSettingActive>5</ringSettingActive>
+<contact>Freeswitch_Extension</contact>
+<forwardCallInfoDisplay>
+<callerName>true</callerName>
+<callerNumber>false</callerNumber>
+<redirectedNumber>false</redirectedNumber>
+<dialedNumber>true</dialedNumber>
+</forwardCallInfoDisplay>
+</line>
 
-<voipControlPort>5060</voipControlPort> 
-<dscpForAudio>184</dscpForAudio> 
-<ringSettingBusyStationPolicy>0</ringSettingBusyStationPolicy> 
-<dialTemplate>dialplan.xml</dialTemplate> 
-<softKeyFile>softkeyDefault.xml</softKeyFile> 
-</sipProfile> 
+<line button="2">
+<featureID></featureID>
+<featureLabel>Speed Dial</featureLabel>
+<speedDialNumber>1234</speedDialNumber>
+</line>
+</sipLines>
 
-<commonProfile> 
-<phonePassword>Cisco</phonePassword> 
-<backgroundImageAccess>true</backgroundImageAccess> 
-<callLogBlfEnabled>1</callLogBlfEnabled> 
-</commonProfile> 
+<voipControlPort>5060</voipControlPort>
+<dscpForAudio>184</dscpForAudio>
+<ringSettingBusyStationPolicy>0</ringSettingBusyStationPolicy>
+<dialTemplate>dialplan.xml</dialTemplate>
+<softKeyFile>softkeyDefault.xml</softKeyFile>
+</sipProfile>
 
-<loadInformation>SIP45.8-5-2S</loadInformation> 
+<commonProfile>
+<phonePassword>Cisco</phonePassword>
+<backgroundImageAccess>true</backgroundImageAccess>
+<callLogBlfEnabled>1</callLogBlfEnabled>
+</commonProfile>
 
-<vendorConfig> 
+<loadInformation>SIP45.8-5-2S</loadInformation>
+
+```xml
+<vendorConfig>
 <g722CodecSupport>2</g722CodecSupport>
-<disableSpeaker>false</disableSpeaker> 
-<disableSpeakerAndHeadset>false</disableSpeakerAndHeadset> 
-<pcPort>0</pcPort> 
-<settingsAccess>1</settingsAccess> 
-<garp>0</garp> 
-<voiceVlanAccess>0</voiceVlanAccess> 
-<videoCapability>0</videoCapability> 
-<autoSelectLineEnable>0</autoSelectLineEnable> 
-<webAccess>1</webAccess> 
-<daysDisplayNotActive>1,7</daysDisplayNotActive> 
-<displayOnTime>08:00</displayOnTime> 
-<displayOnDuration>10:30</displayOnDuration> 
-<displayIdleTimeout>01:00</displayIdleTimeout> 
-<spanToPCPort>1</spanToPCPort> 
-</vendorConfig> 
+<disableSpeaker>false</disableSpeaker>
+<disableSpeakerAndHeadset>false</disableSpeakerAndHeadset>
+<pcPort>0</pcPort>
+<settingsAccess>1</settingsAccess>
+<garp>0</garp>
+<voiceVlanAccess>0</voiceVlanAccess>
+<videoCapability>0</videoCapability>
+<autoSelectLineEnable>0</autoSelectLineEnable>
+<webAccess>1</webAccess>
+<daysDisplayNotActive>1,7</daysDisplayNotActive>
+<displayOnTime>08:00</displayOnTime>
+<displayOnDuration>10:30</displayOnDuration>
+<displayIdleTimeout>01:00</displayIdleTimeout>
+<spanToPCPort>1</spanToPCPort>
+</vendorConfig>
 
-<versionStamp>1136931633-57191cee-5ffc-4342-b286-4246b4991890</versionStamp> 
+<versionStamp>1136931633-57191cee-5ffc-4342-b286-4246b4991890</versionStamp>
 
-<userLocale> 
-<name>English_United_States</name> 
-<uid>1</uid> 
-<langCode>en_US</langCode> 
-<version>1.0.0.0-1</version> 
-<winCharSet>iso-8859-1</winCharSet> 
-</userLocale> 
+<userLocale>
+<name>English_United_States</name>
+<uid>1</uid>
+<langCode>en_US</langCode>
+<version>1.0.0.0-1</version>
+<winCharSet>iso-8859-1</winCharSet>
+</userLocale>
 
-<networkLocale>United_States</networkLocale> 
-<networkLocaleInfo> 
-<name>United_States</name> 
-<uid>64</uid> 
-<version>1.0.0.0-1</version> 
-</networkLocaleInfo> 
+<networkLocale>United_States</networkLocale>
+<networkLocaleInfo>
+<name>United_States</name>
+<uid>64</uid>
+<version>1.0.0.0-1</version>
+</networkLocaleInfo>
 
-<deviceSecurityMode>1</deviceSecurityMode> 
-<idleTimeout>0</idleTimeout> 
-<authenticationURL></authenticationURL> 
-<directoryURL></directoryURL> 
-<idleURL></idleURL> 
-<informationURL></informationURL> 
-<messagesURL></messagesURL> 
-<proxyServerURL></proxyServerURL> 
-<servicesURL></servicesURL> 
-<dscpForSCCPPhoneConfig>96</dscpForSCCPPhoneConfig> 
-<dscpForSCCPPhoneServices>0</dscpForSCCPPhoneServices> 
-<dscpForCm2Dvce>96</dscpForCm2Dvce> 
-<transportLayerProtocol>4</transportLayerProtocol> 
-<capfAuthMode>0</capfAuthMode> 
+<deviceSecurityMode>1</deviceSecurityMode>
+<idleTimeout>0</idleTimeout>
+<authenticationURL></authenticationURL>
+<directoryURL></directoryURL>
+<idleURL></idleURL>
+<informationURL></informationURL>
+<messagesURL></messagesURL>
+<proxyServerURL></proxyServerURL>
+<servicesURL></servicesURL>
+<dscpForSCCPPhoneConfig>96</dscpForSCCPPhoneConfig>
+<dscpForSCCPPhoneServices>0</dscpForSCCPPhoneServices>
+<dscpForCm2Dvce>96</dscpForCm2Dvce>
+<transportLayerProtocol>4</transportLayerProtocol>
+<capfAuthMode>0</capfAuthMode>
 
-<capfList> 
-<capf> 
-<phonePort>3804</phonePort> 
-</capf> 
-</capfList> 
+<capfList>
+<capf>
+<phonePort>3804</phonePort>
+</capf>
+</capfList>
 
-<certHash></certHash> 
-<encrConfig>false</encrConfig> 
+<certHash></certHash>
+<encrConfig>false</encrConfig>
 <advertiseG722Codec>1</advertiseG722Codec>
 </device>
 ```
-
-  
-

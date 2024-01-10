@@ -1,106 +1,103 @@
+# 创建RPM软件包仓库
 
-# Creating RPM repository 
+## 1 前提条件
+   * 1.1 安装mock工具
+   * 1.2 创建特定发行版的配置文件
 
- 
+## 2 创建仓库
+   * 2.1 创建SRPM软件包
+   * 2.2 创建RPM软件包
 
-* 1 [Pre Requirements](#pre-requirements)  
-   * 1.1 [Installing mock utility](#installing-mock-utility)  
-   * 1.2 [Creating distribution specific config files](#creating-distribution-specific-config-files)
-* 2 [Creating repo](#creating-repo)  
-   * 2.1 [Creating SRPM packages](#creating-srpm-packages)  
-   * 2.2 [Creating RPM packages](#creating-rpm-packages)
-* 3 [Literature](#creating-repo)
+## 3 参考资料
 
-## About
+## 关于
+本文介绍如何创建FreeSwitch模块和FreeSwitch依赖库的RPM软件包仓库。
 
-This article explain how to create RPM repository of FreeSwitch modules and of FreeSwitch dependency libs.
+## 前提条件
+在开始之前，请确保您用于编译RPM软件包的主机具备以下条件：
 
-## Pre Requirements
+1. 运行RHEL 7、CentOS 7、Fedora 21或更高版本的操作系统；
+2. 已安装git、curl、rpmbuild和createrepo工具；
+3. 从操作系统仓库或EPEL仓库安装"mock"软件包；
+4. 至少8GB的可用空间。
 
-Before you start you need to make sure that the host on which you are compiling RPM packages have:
+您可以通过执行命令"cat /etc/redhat-release"来获取操作系统的相关信息，例如：
 
-1. operating system RHEL 7, CentOS 7, Fedor 21 or newer;
-2. installed git, curl, rpmbuild and createrepo utilities;
-3. installed "mock" package from operation system repository or from EPEL repository;
-4. about 8Gb free space.
+**检查使用的操作系统**
 
-To get information about used operation system execute command "cat /etc/redhat-release". Example below
-
-**Checking used operation system**
-
-\[root@buildhost \~\]# cat /etc/redhat-release   
+\[root@buildhost ~]# cat /etc/redhat-release
 CentOS Linux release 7.1.1503 (Core)
 
-To install git, curl, rpmbuild and createrepo utilities execute command "yum install git curl rpm-build". Example below
+要安装git、curl和rpmbuild工具，请执行命令"yum install git curl rpm-build"，例如：
 
-**Installing git, curl and rpm-build utilities**
+**安装git、curl和rpmbuild工具**
 
-\[root@buildhost \~\]# yum -y install git curl rpm-build createrepo
+\[root@buildhost ~]# yum -y install git curl rpm-build createrepo
 
-### Installing mock utility
+### 安装mock工具
 
-Fedora disro contain mock utility in system repo. Some other distro require install mock utility from external repo. On RHEL and CentOS before installing mock utility required install EPEL repo. Example below.
+Fedora发行版的系统仓库中已包含mock工具。其他一些发行版需要从外部仓库安装mock工具。在RHEL和CentOS上安装mock工具之前，需要先安装EPEL仓库。例如：
 
-**installing EPEL repository on CentOS and RHEL**
+**在CentOS和RHEL上安装EPEL仓库**
 
-\[root@buildhost \~\]# curl -O <http://dl.fedoraproject.org/pub/epel/7/x86%5F64/e/epel-release-7-5.noarch.rpm>
+\[root@buildhost ~]# curl -O <http://dl.fedoraproject.org/pub/epel/7/x86%5F64/e/epel-release-7-5.noarch.rpm>
 
 \[root@buildhost \~\]# rpm -Uvh epel-release-7\*.rpm
 
-Mock utility can be installed via executing command "yum install mock python-ctypes". Example below
+Mock工具可以通过执行命令"yum install mock python-ctypes"进行安装。示例如下：
 
-**installing mock utility**
+**安装Mock工具**
 
 \[root@buildhost \~\]# yum -y install mock python-ctypes
 
-Next, you need to create a user under the rights of which RPM packages will be made 
+接下来，您需要创建一个用户，该用户具有制作RPM软件包的权限。
 
-**Creating build user and affiliation him to mock group** 
+**创建构建用户并将其分配给Mock组**
 
-\[root@buildhost \~\]# useradd build  
+\[root@buildhost \~\]# useradd build
 \[root@buildhost \~\]# usermod -G mock build
 
-### Creating distribution specific config files
+### 创建特定发行版的配置文件
 
-For CentOS, RHEL operation system mock config files must be created. For Fedora distros mock config files has been installed with mock utility.
+对于CentOS、RHEL操作系统，需要创建Mock配置文件。对于Fedora发行版，Mock工具已经安装了配置文件。
 
-**installing mock config file for CentOS**
+**为CentOS安装Mock配置文件**
 
 \[root@buildhost \~\]# curl -o /etc/mock/centos-7-x86_64.cfg <https://freeswitch.org/confluence/download/attachments/7766200/centos-7-x86%5F64.cfg>
 
-## Creating repo
+## 创建仓库
 
-### Creating SRPM packages
+### 创建SRPM软件包
 
-First, you must get the scripts that perform repository assembly
+首先，您需要获取执行仓库生成的脚本。
 
-**Downloading repo creation scripts**
+**下载仓库生成脚本**
 
-\[root@buildhost \~\]# su - build  
-Last login: Mon Jun 15 10:11:36 GMT 2015 on pts/0  
-\[build@buildhost \~\]$ mkdir WORKDIR  
-\[build@buildhost \~\]$  cd WORKDIR/  
+\[root@buildhost \~\]# su - build
+上次登录：2021年8月12日 星期四 15时35分41秒 CST
+\[build@buildhost \~\]$ mkdir WORKDIR
+\[build@buildhost \~\]$  cd WORKDIR/
 \[build@buildhost WORKDIR\]$ echo git clone <https://freeswitch.org/stash/scm/sd/freeswitch-video-deps.git>  
-\[build@buildhost WORKDIR\]$ git clone <https://freeswitch.org/stash/scm/~safarov/freeswitch-video-deps.git>[ ](https://freeswitch.org/stash/scm/sd/freeswitch-video-deps.git)Cloning into 'freeswitch-video-deps'...  
-remote: Counting objects: 82, done.  
-remote: Compressing objects: 100% (75/75), done.  
-remote: Total 82 (delta 29), reused 0 (delta 0)  
-Unpacking objects: 100% (82/82), done.
+\[build@buildhost WORKDIR\]$ git clone <https://freeswitch.org/stash/scm/~safarov/freeswitch-video-deps.git> Cloning into 'freeswitch-video-deps'...
+remote: 正在计数对象：82，完成。
+remote: 压缩对象：100%（75/75），完成。
+remote: 总共 82 （差异 29），复用 0 （差异 0）
+正在展开对象：100%（82/82），完成。
 
-Next, you need to prepare SRPM packages via executing "stage1.sh" command. Example below.
+接下来，您需要通过执行"stage1.sh"命令来准备SRPM软件包。示例如下。
 
-**Creating SRPM packages**
+**创建SRPM软件包**
 
 \[build@buildhost WORKDIR\]$ ./freeswitch-video-deps/rpm-systemd/stage1.sh && ls -1 rpmbuild/\*src.rpm  
-Trying clone repo "openh264"  
-Cloning into 'openh264'...
+尝试克隆仓库 "openh264"  
+正在克隆至 'openh264'...
 
-**\--- strings has been cutted ---**
+**\--- 字符串已被剪切 ---**
 
-Compressing "libg7221"  
-Creating SRPM of "libg7221"  
-warning: Could not canonicalize hostname: [fs2.voip.rcsnet.ru](http://fs2.voip.rcsnet.ru)   
-Wrote: /home/build/WORKDIR/rpmbuild/g722\_1-0.2.0-1.el7.centos.src.rpm  
+正在压缩 "libg7221"  
+创建 "libg7221" 的 SRPM  
+警告：无法规范化主机名：[fs2.voip.rcsnet.ru](http://fs2.voip.rcsnet.ru)   
+已写入：/home/build/WORKDIR/rpmbuild/g722\_1-0.2.0-1.el7.centos.src.rpm  
 rpmbuild/broadvoice-0.1.0-1.el7.centos.src.rpm  
 rpmbuild/flite-2.0.0-0.el7.centos.src.rpm  
 rpmbuild/g722\_1-0.2.0-1.el7.centos.src.rpm  
@@ -117,48 +114,46 @@ rpmbuild/sngtc-1.3.6-1.el7.centos.src.rpm
 rpmbuild/soundtouch-1.7.1-1.el7.centos.src.rpm  
 rpmbuild/vlc-2.2.0-1.el7.centos.src.rpm
 
-### Creating RPM packages
+### 创建 RPM 包
 
-Next, you need to prepare RPM packages via executing " stage2.sh " command with appropriate distro config file as argument. Example below.
+接下来，您需要通过以适当的发行版配置文件作为参数执行 " stage2.sh " 命令来准备 RPM 包。下面是一个示例。
 
-**Creating RPM packages**
+**创建 RPM 包**
 
 \[build@buildhost WORKDIR\]$ ./freeswitch-video-deps/rpm-systemd/stage2.sh centos-7-x86\_64  
 \[build@buildhost WORKDIR\]$ ./WORKDIR/freeswitch-video-deps/rpm-systemd/stage2.sh  
-INFO: mock.py version 1.2.7 starting (python version = 2.7.5)...  
-Start: init plugins  
-INFO: selinux enabled  
-Finish: init plugins  
-Start: run
+INFO: mock.py 版本 1.2.7 正在启动（Python 版本 = 2.7.5）...  
+开始：初始化插件  
+INFO：启用 SELinux  
+完成：初始化插件  
+开始：运行
 
-**\--- strings has been cutted ---**
+**\--- 字符串已被剪切 ---**
 
-Saving Primary metadata  
-Saving file lists metadata  
-Saving other metadata  
-Generating sqlite DBs  
-Sqlite DBs complete
+正在保存主要元数据  
+正在保存文件列表元数据  
+正在保存其他元数据  
+正在生成 SQLite 数据库  
+SQLite 数据库已完成
 
-Resulted RPM packages will be located at "\~/WORKDIR/MOCKED" subfolders.
+生成的RPM软件包将位于"\~/WORKDIR/MOCKED"子文件夹中。
 
-## Literature
+## 参考资料
 
-[Install EPEL and additional repositories on CentOS and Red Hat](http://www.rackspace.com/knowledge%5Fcenter/article/install-epel-and-additional-repositories-on-centos-and-red-hat)
+[在CentOS和Red Hat上安装EPEL和其他软件库](http://www.rackspace.com/knowledge%5Fcenter/article/install-epel-and-additional-repositories-on-centos-and-red-hat)
 
-[Using Mock to test package builds](https://fedoraproject.org/wiki/Using%5FMock%5Fto%5Ftest%5Fpackage%5Fbuilds)
+[使用Mock测试软件包构建](https://fedoraproject.org/wiki/Using%5FMock%5Fto%5Ftest%5Fpackage%5Fbuilds)
 
-[Mocking RPMs on CentOS](http://www.openfusion.net/linux/mocking%5Frpms)
+[在CentOS上模拟RPM软件包](http://www.openfusion.net/linux/mocking%5Frpms)
 
-## Attachments
+## 附件
 
 [centos-7-x86\_64.cfg](/attachments/7766200/8290307.cfg)
 
-### Attachments:
+### 附件:
 
 ![](/images/icons/bullet_blue.gif) [centos-7-x86\_64.cfg](/attachments/7766200/8290308.cfg) (application/octet-stream)  
 ![](/images/icons/bullet_blue.gif) [centos-7-x86\_64.cfg](/attachments/7766200/8290309.cfg) (application/octet-stream)  
 ![](/images/icons/bullet_blue.gif) [centos-7-x86\_64.cfg](/attachments/7766200/8290310.cfg) (application/octet-stream)  
 ![](/images/icons/bullet_blue.gif) [centos-7-x86\_64.cfg](/attachments/7766200/8290311.cfg) (application/octet-stream)  
-![](/images/icons/bullet_blue.gif) [centos-7-x86\_64.cfg](/attachments/7766200/8290307.cfg) (application/octet-stream)  
-
-
+![](/images/icons/bullet_blue.gif) [centos-7-x86\_64.cfg](/attachments/7766200/8290307.cfg) (application/octet-stream)

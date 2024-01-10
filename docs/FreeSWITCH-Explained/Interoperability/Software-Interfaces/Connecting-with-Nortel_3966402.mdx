@@ -1,28 +1,25 @@
+# 与 Nortel 连接
 
-# Connecting with Nortel 
+## 关于
 
- 
+本文将展示如何将 Nortel 类型的盒子连接为网关/系统之间可以进行通话。我们对 FreeSWITCH 和 Nortel 都不太熟悉，所以可能并不完全理解，但这是一个开始，因为系统之间的基本通话已经在运作。
 
-## About
+点击此处展开目录
 
-This is to show how the Nortel type boxes can be connected as gateways/calling can occur between the systems. We are new to FreeSWITCH and Nortel so this may not all make perfect sense but is a start, this was started because basic calls are working between the systems.
-
-Click here to expand Table of Contents
-
-* 1 [Typical Architecture and Call Control](#typical-architecture-and-call-control)  
-   * 1.1 [Nortel Setup](#nortel-setup)
-* 2 [FreeSWITCH Setup](#freeswitch-setup)  
-   * 2.1 [SIP Profile](#sip-profile)  
+* 1 [典型架构和呼叫控制](#典型架构和呼叫控制)  
+   * 1.1 [Nortel 设置](#Nortel-设置)
+* 2 [FreeSWITCH 设置](#FreeSWITCH-设置)  
+   * 2.1 [SIP 配置](#SIP-配置)  
    * 2.2 [ACLs](#-freeswitch--connecting-with-nortel-)  
-   * 2.3 [Dialplan](#dialplan)
-* 3 [Features Tested](#features-tested)
-* 4 [Issues](#nortel-setup)
-* 5 [Simpler Integration](#simpler-integration)  
-   * 5.1 [Inbound Calls](#inbound-calls)
+   * 2.3 [拨号计划](#拨号计划)
+* 3 [已测试功能](#已测试功能)
+* 4 [问题](#Nortel-设置)
+* 5 [更简单的集成](#更简单的集成)  
+   * 5.1 [进入呼叫](#进入呼叫)
 
-## Typical Architecture and Call Control
+## 典型架构和呼叫控制
 
-This is the typical architecture for a Nortel CS system.
+这是 Nortel CS 系统的典型架构。
 
 ```xml
                     +-------+   1. REG/INVITE
@@ -34,7 +31,7 @@ This is the typical architecture for a Nortel CS system.
   +-------+         +-------+               +-------+
    |  |DSP|                                     |
   R|  +---+            3a. RTP                  |
-  E|  |DSP|-------------------------------------+ OR (directly to the phone or to media on the CS)
+  E|  |DSP|-------------------------------------+ 或 (直接连接电话或连接到 CS 上的媒体)
   G|  +---+                                     |
    |                                            |
   +-----+              3b. RTP                  |
@@ -42,84 +39,82 @@ This is the typical architecture for a Nortel CS system.
   +-----+
 ```
 
-The CS is sitting behind a SIP gateway called a Signaling Server. The Network Routing Service (NRS) is simply a lookup for location of endpoints in the system-a redirect server. This will only be used to REGISTER and send INVITEs to as seen with the connection marked 1\. Upon an INVITE the NRS will respond with a 302 which will send FreeSWITCH to one of the Signaling Servers which will translate the SIP call control into something the CS can understand marked with 2\. Then, typical RTP will go from the CS or from the specific endpoint as marked in 3a/b.
+CS坐在一个称为信令服务器的SIP网关后面。网络路由服务（NRS）只是系统中用于查找端点位置的重定向服务器。这仅用于在连接标记为1时进行注册和发送INVITEs。在收到INVITE后，NRS将响应一个302，将FreeSWITCH发送到一个信令服务器之一，该服务器将将SIP呼叫控制转换为CS可以理解的内容（标记为2）。然后，常规的RTP将从CS或特定的端点（标记为3a/b）传输。
 
-### Nortel Setup
+### Nortel设置
 
-Sorry for the limited details, but we didn't setup this side-will get more info but was told it was a simple gateway setup with name/password and transport configured. Not very much configurable on the Nortel side.
+很抱歉详细信息有限，但我们没有设置这一侧--会收集更多信息，但被告知这是一个简单的网关设置，有名称/密码和传输配置。Nortel那一侧的可配置性不是很大。
 
-## FreeSWITCH Setup
+## FreeSWITCH设置
 
-Since this is the most flexible side, all the configuration was done on the FreeSWITCH side to convert it to a method that the Nortel side liked.
+由于这是最灵活的一侧，所有的配置都是在FreeSWITCH一侧完成的，以将其转换为Nortel一侧喜欢的方法。
 
-### SIP Profile
+### SIP配置文件
 
-Add a gateway profile for the NRS, just a typical gateway with actual registration, but you will need to supply the **realm** to be as configured with the Nortel box. The keep-alives will be REGISTERs from the NRS typically with an expiry of 30s, which FreeSWITCH will respond successfully with OKs.
+为NRS添加一个网关配置文件，只是一个典型的网关实际注册，但您需要提供与Nortel盒配置一致的**realm**。保持活动的是来自NRS的REGISTER，通常会以30秒的超时进行，FreeSWITCH将成功地用OK进行响应。
 
 ```xml
 <include>
  <gateway name="fs_cs">
-  <!--/// account username *required* ///-->
+  <!--/// 账户用户名 *必填* ///-->
   <param name="username" value="interop"/>
-  <!--/// auth realm: *optional* same as gateway name, if blank ///-->
+  <!--/// 验证域：*可选* 如果留空，则与网关名称相同 ///-->
   <param name="realm" value="cs_domain.com"/>
-  <!--/// account password *required* ///-->
+  <!--/// 账户密码 *必填* ///-->
   <param name="password" value="interop"/>
-  <!--/// proxy host: *optional* same as realm, if blank ///-->
+  <!--/// 代理主机：*可选* 如果留空，则与验证域相同 ///-->
   <param name="proxy" value="192.168.15.8"/>
-  <!--/// do not register ///-->
+  <!--/// 不要注册 ///-->
   <param name="register" value="true"/>
-  <!-- which transport to use for register -->
+  <!-- 哪种传输方式用于注册 -->
   <param name="register-transport" value="tcp"/>
   </gateway>
 </include>
 ```
 
-In the SIP profile the auth-calls should be turned off to allow this to work.
+在SIP配置中，应关闭鉴权呼叫以使其正常工作。
 
-### ACLs
+### 访问控制列表（ACLs）
 
-Add the NRS ip and the cs\_domain to the ACL domain list.
+将NRS IP和cs_domain添加到ACL域列表中。
 
-### Dialplan
+### 拨号计划
 
-The dialplan is the tricky part to allow the NRS redirection to work properly. Basically, the URI has cannot have a domain in, so we cannot use a gateway profile to bridge the calls because this will automatically be added in the INVITE. Use the following:
+拨号计划是使NRS重定向正常工作的难点。基本上，URI中不能包含域名，所以我们不能使用网关配置文件来桥接呼叫，因为这会自动添加在INVITE中。使用以下配置：
 
 &lt;action application="bridge" data="sofia/internal/sip:$1;phone-context=cdp.udp@cs_domain.com;maddr=&lt;NRS IP>;user=phone"/>
 
-IMPORTANT: The order of phone-context/maddr/user is very important for this to work properly.
+重要提示：phone-context/maddr/user 的顺序非常重要，才能使其正常工作。
 
-## Features Tested
+## 测试功能
 
-There were some features that have been tested to far listed here:
+已经测试了一些功能，列在下面：
 
-* Calls in/out work.
-* DTMF works with default settings.
+* 呼入/呼出正常工作。
+* 使用默认设置，DTMF功能正常。
 
-## Issues
+## 问题
 
-Not completely finished yet is how the Nortel box handles different phone-contexts, which is of concern to dialing to the correct location on the Nortel box, but simple internal calls to the cdp.udp context will work. This will be added as it solved.
+尚未完全解决的是Nortel设备如何处理不同的phone-contexts，这对于拨号到Nortel设备上的正确位置是有关的，但是简单的内部呼叫到cdp.udp的上下文将正常工作。我们将在解决此问题后进行添加。
 
-Second, there was an instance in our testing that the NRS sent a 300 Multiple Choices message that is not handled in Sofia-SIP (<http://sourceforge.net/tracker/index.php?func=detail&aid=1676445&group%5Fid=143636&atid=756076>) which claims the application should handle this. A FreeSWITCH enhancement ticket should be opened for this.
+其次，在我们的测试中，NRS发送了一个未在Sofia-SIP中处理的300 Multiple Choices消息（<http://sourceforge.net/tracker/index.php?func=detail&aid=1676445&group%5Fid=143636&atid=756076>），该消息声称应用程序应该处理此消息。我们应该为此打开一个FreeSWITCH增强票务。
 
-## Simpler Integration
+## 更简单的集成
 
-Alternatively, FreeSWITCH can point directly to the Signaling Server OR Nortel BCM works the same way without registrations. Calls will be sent in and out like basic UAs calling, just setup the ACLs appropriately.
+另外，FreeSWITCH可以直接指向信令服务器，或者Nortel BCM也可以以相同的方式工作，无需进行注册。呼叫将像基本用户代理一样进出，只需适当设置ACL。
 
-### Inbound Calls
+### 呼入呼叫
 
-Some Nortel BCMs (System Software Version 4.0) send a SIP dialstring that looks something similar to this:
+某些Nortel BCM（系统软件版本4.0）发送的SIP拨号字符串看起来类似于：
 
 ```xml
 1000;phone-context=suscriber.private
 ```
 
-To have FreeSWITCH handling this properly, you can use the following regex:
+为了使FreeSWITCH能够正确处理此字符串，您可以使用以下正则表达式：
 
 ```xml
 ^(10\d{2});(.*)$
 ```
 
-And use $1 in your bridge/transfer action.
-
-
+并在您的桥接/转接操作中使用$1。

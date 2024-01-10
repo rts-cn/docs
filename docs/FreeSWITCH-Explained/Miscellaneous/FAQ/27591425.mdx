@@ -1,18 +1,13 @@
+# XML 并非完全糟糕。
 
-# XML it's not all bad. 
+由 Anthony Minessale II 于2008年5月30日星期五-13:13提交
 
- 
+我只是想花点时间来为我们使用的XML进行辩护。=D
 
-Submitted by Anthony Minessale II on Fri, 05/30/2008 - 13:13
+最初，FreeSWITCH在所有配置中使用与Asterisk相同的.ini格式。实际上，解析.ini的接口仍然存在，如果模块编写者愿意，他可以使用它。当您开始扩展系统时，选择将哪些内容转换为XML的原因变得更加明确。FreeSWITCH在首次启动时解析其XML注册表并将其保存在内存中。这是一个可以类似于文件系统进行导航的大实体。有一些顶级主要部分：配置、拨号计划、目录和短语。所有这些部分的各个组成部分都按默认排列方式展开到磁盘上，这样您可以编辑您需要的文档部分，同时也允许您插入单个实体（如SIP UA、系统上的用户、要加载的模块的配置）的小型XML表示。最终，所有这些文件将被连接在一起形成一个大的XML文档，整个核心及其模块可以使用一个共同的API访问该文档，它以具体的对象形式提供实体，并可以通过额外的代码进行扩展。
 
-I just wanted to take the time to defend our use of XML if I can. =D
+现在进入有趣的部分。我们可以将回调函数与XML注册表的特定部分绑定起来，这样当代码尝试访问特定部分时，您的处理程序可以按需要生成XML，并将其传递回来替代默认文档中的内容。例如，您可以将拨号计划和用户目录部分绑定到mod\_xml\_curl，这是一个将XML查找转换为HTTP服务器的回调函数。当呼叫到达XML拨号计划时，cURL处理程序会触发，并向自定义CGI发出请求。CGI接收到与通过Web表单进行的POST请求相同的数据，其中包含有关通道的几十个事实，您可以使用这些信息确定呼叫的目的地和呼叫者等。然后，CGI会创建一个满足请求的小片段XML，并将其返回给FreeSWITCH，FreeSWITCH会将其解析为静态配置的一部分。在加载期间调用配置时，也可以进行类似的操作，例如当有人注册SIP或尝试检查语音邮件。
 
-Originally, FreeSWITCH used the same .ini format that Asterisk uses in all of it's config. Actually the interface to parse .ini still exists and a module writer is able to use it if he pleases. The reasoning for XMLizing what we chose to XMLize becomes more clear when you begin to scale the system. FreeSWITCH parses it's XML registry when it first starts and keeps it in memory. This is one big entity that can be navigated similar to a file system. There are top level major sections: configuration, dialplan, directory and phrases. All of the bits and pieces of these sections are exploded out onto the disk in the default arrangement so you can edit the portion of the document you need and it also allows you to insert small XML representations of a single entity such as a SIP UA, a user on the system, the configuration for what modules you want to load. All of these files will be concatenated in the end into 1 big XML document that the entire core and its modules can access with a common API that gives you the entities as a tangible object that can be extended without more code.
+相信我，我并不是XML的忠实拥趸，但我确实感觉它的实际用途在编造的强制解决方案中被淹没了，给它蒙上了恶名。将复杂对象序列化为文本格式，以及创建易于解析和生成的标记，才是XML真正的优势。最好的使用XML的方法是让人们甚至都不知道它存在。当然，在当前的FreeSWITCH中，这个情况并不完全适用，但随着我们的扩展以及GUI和配置应用程序的增加，形势将对我们有利，除了真正高级的用户外，大多数人将不再需要看到XML。
 
-Now for the interesting part. It's possible to bind callback functions to certain sections of the XML registry so that when code tries to access a particular section your handler can conjure the XML on-demand any way it wants and deliver it back in place of whatever is in the default document. For instance, you can bind your dialplan and user directory sections to mod\_xml\_curl, A callback that translates XML lookups to and from a nearby HTTP server. When the call hits the XML dialplan the cURL handler kicks in and posts a request to a custom CGI. The CGI gets post data that is identical to a web form being posted with a few dozen facts about the channel that you can use to determine where the call was intended to go and who's calling etc. The CGI then creates a small snippet of XML that will satisfy the request and returns it to FreeSWITCH who will parse it as if it was part of the static config. The same can be done when someone registers to SIP or tries to check their voicemail or when the config is called up during load.
-
-Trust me. I am far from XML's biggest fan, but I do feel it's actual uses are lost in a sea of contrived forced solutions that give it a bad name. To serialize complex objects to and from a text format and to make markup that is easily parsed and generated are the real strengths of XML. The best used XML is XML nobody ever realizes is even there. Certainly that is not true completely with FreeSWITCH today but as we scale and more GUI's and config apps are made, the curve will be in our favor and most people besides only the truly advanced users will ever have to see the XML again.
-
-Caveat: We do have mod\_dialplan\_asterisk in tree that will allow your dialplan to look and feel more like the asterisk extensions.conf (using .ini) for a sort of cross-over feel.
-
-
+注意事项：我们确实在树中有mod_dialplan_asterisk，它可以让您的拨号计划看起来更像Asterisk的extensions.conf（使用.ini文件），给人一种混合感觉。

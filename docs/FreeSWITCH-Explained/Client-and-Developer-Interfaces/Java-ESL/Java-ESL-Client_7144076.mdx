@@ -1,62 +1,59 @@
+# Java ESL 客户端
 
-# Java ESL Client 
+## 关于
 
- 
+本页面记录了在freeswitch-contrib git存储库中维护的org.freeswitch.esl.client库。请参见[Java ESL](./index.mdx#about)页面，了解使用Java与FreeSWITCH Event Socket的其他选项。
 
-## About
+点击此处展开目录
 
-This page documents the org.freeswitch.esl.client library maintained in the freeswitch-contrib git repository. See [Java ESL](./index.mdx#about) page for overview of other options for using Java with the FreeSWITCH Event Socket.
+* 1 [功能](#功能)
+* 2 [获取Java ESL库](#获取java-esl库)
+   * 2.1 [二进制jar文件](#二进制jar文件)
+   * 2.2 [从contrib git中构建](#从contrib-git中构建)
+* 3 [用法](#用法)
+   * 3.1 [入站客户端用法](#入站客户端用法)
+   * 3.2 [出站套接字客户端用法](#出站套接字客户端用法)
+* 4 [问题](#问题)
+* 5 [路线图](#路线图)
+* 6 [捐赠](#捐赠)
+* 7 [参见](#参见)
 
-Click here to expand Table of Contents
+### 功能
 
-* 1 [Features](#features)
-* 2 [Getting Java ESL library](#getting-java-esl-library)  
-   * 2.1 [Binary jar files](#binary-jar-files)  
-   * 2.2 [Building from source in contrib git](#building-from-source-in-contrib-git)
-* 3 [Usage](#usage)  
-   * 3.1 [Inbound client usage](#inbound-client-usage)  
-   * 3.2 [Outbound socket client usage](#outbound-socket-client-usage)
-* 4 [Issues](#issues)
-* 5 [Roadmap](#roadmap)
-* 6 [Donations](#donations)
-* 7 [See Also](#see-also)
+* 根据Apache许可证版本2授权 <http://www.apache.org/licenses/LICENSE-2.0>
+* 运行时依赖于[Netty](http://www.jboss.org/netty)(Apache 许可证)和[SLF4j](http://www.slf4j.org)(MIT许可证)库
+* 没有本地库运行时依赖
+* 支持ESL入站和出站，请参见[Event Socket](../../Modules/mod_event_socket_1048924.mdx#11-acl)和[Event Socket Outbound](../Event-Socket-Library/Event-Socket-Outbound_3375460.mdx#faq).
+* 支持OSGi
+* 使用maven构建
 
-### Features
+### 获取Java ESL库
 
-* Licensed under Apache License version 2 <http://www.apache.org/licenses/LICENSE-2.0>
-* Runtime dependency on [Netty](http://www.jboss.org/netty) (Apache License) and [SLF4j](http://www.slf4j.org) (MIT License) libraries
-* No native library runtime dependencies
-* ESL Inbound and Outbound support, see [Event Socket](../../Modules/mod_event_socket_1048924.mdx#11-acl) and [Event Socket Outbound](../Event-Socket-Library/Event-Socket-Outbound_3375460.mdx#faq).
-* OSGi ready
-* Built using maven
+#### 二进制jar文件
 
-### Getting Java ESL library
-
-#### Binary jar files
-
-Current released version
+当前发布版本
 
 * org.freeswitch.esl.client-0.9.2.jar
 * org.freeswitch.esl.client-0.9.2-sources.jar
 * org.freeswitch.esl.client-0.9.2-javadoc.jar
 
-Each of these artifacts is signed with GPG key 1024D/74B7C72A (david.varnes \[at\] gmail \[dot\] com), which allows you to verify that the binary files you download are the same as those originally uploaded.
+这些构件都使用GPG密钥1024D/74B7C72A (david.varnes \[at\] gmail \[dot\] com)签名，可以验证您下载的二进制文件与最初上传的文件是否相同。
 
-##### Download manually
+##### 手动下载
 
-Download the artifacts directly from:
+可直接从以下地址下载构件：
 
 <https://oss.sonatype.org/content/repositories/releases/org/freeswitch/esl/client/org.freeswitch.esl.client/>
 
-Now it is available and update on github, welcome you to join us. ^\_^
+现在它在Github上可用并更新了，欢迎您加入我们。^\_^
 
 <https://github.com/esl-client/>
 
-This is the hosted repository maintained by Sonatype for OSS projects. The files are automatically synced from there to the maven central repository
+这是由Sonatype维护的托管存储库，用于OSS项目。文件会自动从那里同步到Maven中央存储库。
 
-##### From maven central repository
+##### 从Maven中央存储库获取
 
-Assuming you are using a build tool that can resolve dependencies from the maven 2 central repository, add the following to your project pom.xml
+假设您使用的构建工具可以从Maven 2中央存储库解析依赖项，请将以下内容添加到您的项目pom.xml中：
 
 ```xml
 <dependencies>
@@ -70,81 +67,81 @@ Assuming you are using a build tool that can resolve dependencies from the maven
  </dependencies>
 ```
 
-Note: The netty dependency is not available from the maven 2 central repository. Either:
+注意：netty依赖项在Maven 2中央存储库中不可用。您可以选择：
 
-* Follow the instructions in the [netty](http://www.jboss.org/netty) website, or
-* In your maven build activate the profile 'jboss-public-repository' which is in the org.freeswitch.esl.client pom, and will add the appropriate jboss repository to your build. ie: run
+* 遵循[netty](http://www.jboss.org/netty)网站上的说明，或者
+* 在您的Maven构建中启用'jboss-public-repository'配置文件，该配置文件包含在org.freeswitch.esl.client pom中，并将合适的jboss存储库添加到您的构建中。 例如：运行
 
  mvn install -Pjboss-public-repository
 
-##### Runtime dependencies
+##### 运行时依赖项
 
-If you download and install the jar(s) manually, you must also supply the following jars on your Java classpath
+如果您手动下载并安装了jar文件，则还必须在Java类路径上提供以下jar文件
 
-* [netty-3.2.1.Final.jar](http://www.jboss.org/netty) for async socket comms
-* [slf4j-api-1.6.1.jar](http://www.slf4j.org) for logging
-* An [slf4j](http://www.slf4j.org) implementation, use slf4j-nop.jar if no logging required.
+* [netty-3.2.1.Final.jar](http://www.jboss.org/netty) 用于异步套接字通信
+* [slf4j-api-1.6.1.jar](http://www.slf4j.org) 用于日志记录
+* 使用slf4j-nop.jar作为日志记录的实现，如果不需要日志记录。
 
-#### Building from source in contrib git
+#### 从contrib git源代码构建
 
-The binary artifacts described above can of course be built from latest git HEAD (or TAG) using the following steps.
+当然，可以使用以下步骤从最新的git HEAD（或TAG）构建上述的二进制文件。
 
-##### Build dependency on maven tool
+##### 在构建工具上依赖maven工具
 
-A Java build tool analogous in some ways to 'autotools' and 'make' for the main FreeSWITCH code, this library is built using the [maven](http://maven.apache.org) build tool.
+一个类似于“autotools”和“make”的Java构建工具，用于主要的FreeSWITCH代码，该库使用[maven](http://maven.apache.org)构建工具构建。
 
-Installing maven is beyond the scope of this page, just use the latest available from the link, and it is also packaged for some of the major Linux distributions.
+在本页面的范围之外安装maven，只需使用链接中提供的最新版本即可，maven也已为一些主要的Linux发行版打包。
 
-Maven will download the two compile dependencies (netty and slf4j-api) and the test dependency (logback) for you, as well as compile the java classes, run unit tests and assemble the 'jar' archive file.
+Maven会为您下载两个编译依赖项（netty和slf4j-api）和测试依赖项（logback），以及编译Java类，运行单元测试并组装“jar”归档文件。
 
-##### Checkout from git
+##### 从git中检出
 
-Must first [install git](https://wiki.freeswitch.org/wiki/Git%5FInstall "Git Install"). The code can be obtained from the freeswitch-contrib git repository. This command gets that repository (you get all the other good stuff in freeswitch-contrib too).
+必须首先[安装git](https://wiki.freeswitch.org/wiki/Git%5FInstall "Git Install")。代码可以从freeswitch-contrib git存储库获取。以下命令获取该存储库（您还可以获取freeswitch-contrib中的其他好东西）。
 
 $ git clone git://git.freeswitch.org/freeswitch-contrib.git
 
-##### Compiling, running tests and making jar
+##### 编译、运行测试和生成jar
 
-Assuming 'mvn' is on path.
+假设'mvn'在路径上。
 
 $ cd freeswitch-contrib/dvarnes/java/esl-client
 $ mvn install
 
-If this is the first time you have run the maven tool, it will take some time as it downloads a seemingly endless set of jars from the central maven repository. This will only happen the first time, subsequent builds will be much faster.
+如果这是您首次运行maven工具，由于它要从中央maven存储库下载一组看似无穷无尽的jar，所以需要一些时间。首次下载之后，后续构建将会快得多。
 
-Note: some tests will try to connect to a running FreeSWITCH installation on the default port 8021 and password. See Configuration section of [Event\_Socket](https://wiki.freeswitch.org/wiki/Event%5FSocket "Event Socket"). These tests will **not** be run in a normal maven build, you will need to run them however you usually invoke junit test cases (IDE etc).
+注意：某些测试将尝试连接到默认端口8021和密码上正在运行的FreeSWITCH安装。请参阅[Event\_Socket](https://wiki.freeswitch.org/wiki/Event%5FSocket "Event Socket")的配置部分。这些测试将**不会**在正常的maven构建中运行，您需要以通常的方式运行它们，如调用junit测试用例（IDE等）。
 
-These tests try to connect to a host called 'freeswitch-test', so add an entry to your hosts file that points 'freeswitch-test' to a host that with a listening ESL socket, can be localhost.
+这些测试试图连接到一个名为'freeswitch-test'的主机，因此请将一个条目添加到您的主机文件中，将'freeswitch-test'指向一个具有监听ESL套接字的主机，可以是本地主机。
 
-### Usage
+### 用法
 
-For general usage of the ESL, browse the wiki, some [links](https://wiki.freeswitch.org/wiki/Java%5FESL%5FClient#See%5FAlso) below. Each of the different wiki pages for various language bindings and clients have useful snippets and clues.
+有关ESL的通用用法，请浏览维基页面，下面是一些[链接](https://wiki.freeswitch.org/wiki/Java%5FESL%5FClient#See%5FAlso)。各种语言绑定和客户端的维基页面都提供了有用的代码段和线索。
 
-Chapter 9 of the [FreeSWITCH Book](https://www.packtpub.com/freeswitch-1-0-6-build-robust-high-performance-telephony-systems/book) also introduces events and the ESL.
+[FreeSWITCH技术手册](https://www.packtpub.com/freeswitch-1-0-6-build-robust-high-performance-telephony-systems/book)的第9章还介绍了事件和ESL。
 
-#### Inbound client usage
+#### 入站客户端用法
 
-A simple unit test is included in the src/test/java directory of the source:
+源代码的src/test/java目录中包括一个简单的单元测试：
 
 ```java
  org.freeswitch.esl.client.inbound.ClientTest
 ```
 
-This test assumes that it can connect to a FreeSWITCH with the default socket port and password at a host called 'freeswitch-test' in your hosts file.
+此测试假定它可以连接到一个名为'freeswitch-test'的主机上的默认套接字端口和密码的FreeSWITCH。
 
-Note that the test source is not included in the packaged jar, it is available from the git repository.
+请注意，测试源代码不包含在打包的JAR文件中，它可以从Git存储库中获取。
 
-#### Outbound socket client usage
+#### 出站套接字客户端用法
 
-A **very** simple example is implemented as an example included in the main client jar: See the class ``
+一个**非常**简单的示例在主客户端jar中作为示例实现：请参考以下类
 
 ```java
  org.freeswitch.esl.client.outbound.example.SimpleHangupOutboundHandler
 ```
 
-with an example of how to run it in the Outbound 'unit' test (really an application example) in the the src/test/java source directory.
+其中提供了如何在src/test/java源代码目录中的出站'unit'测试（实际上是一个应用示例）中运行它的示例。
 
-In order to make the test work, configure an extension in a running FreeSWITCH similar to
+为了使测试工作正常，请配置一个与运行中的FreeSWITCH类似的扩展，如下所示：
 
 ```xml
  <extension>
@@ -154,57 +151,39 @@ In order to make the test work, configure an extension in a running FreeSWITCH s
  </extension>
 ```
 
-where the IP address needs to be the address that the FreeSWITCH will connect to your running test. Then run the test, which gives you 45 seconds to make a call to extension 444 and watch the information logged to the console, before the call is hung up, and then the test will end (thus closing the outbound socket client).
+在测试运行期间，IP地址需要是FreeSWITCH将连接你正在运行的测试的地址。然后运行测试，它将给你45秒的时间来拨打分机444并观察信息是否记录到控制台，之后呼叫将被挂断，然后测试将结束（关闭出站套接字客户端）。
 
-Note that the unit test source described above is not included in the packaged jar, it is available from the git repository.
+注意上述描述的单元测试源代码未包含在打包的jar文件中，它可以从git仓库获取。
 
-**Outbound application**
+**出站应用程序**
 
-An application developer would need to extend (most importantly) the 
+应用程序开发者需要扩展（最重要的是）`org.freeswitch.esl.client.outbound.AbstractOutboundClientHandler`和（非常简单）`org.freeswitch.esl.client.outbound.AbstractOutboundPipelineFactory`类并根据自己的逻辑来调用`org.freeswitch.esl.client.outbound.SocketClient`。
 
-```java
-org.freeswitch.esl.client.outbound.AbstractOutboundClientHandler
-```
+### 已知问题
 
-and (trivially) the 
+待办事项 - 在FreeSWITCH Jira下设置模块。
 
-```java
-org.freeswitch.esl.client.outbound.AbstractOutboundPipelineFactory
-```
+对于反馈、问题、bug修复，可以直接发送到下面的电子邮件地址，或通过[freeswitch-users](http://lists.freeswitch.org/mailman/listinfo/freeswitch-users)邮件列表提出。作者通常在[IRC](https://wiki.freeswitch.org/wiki/IRC "IRC")上使用昵称'dvarnes'。
 
-classes with their own logic, and invoke the 
+### 路线图
 
-```java
-org.freeswitch.esl.client.outbound.SocketClient
-```
+截至2010年8月30日
 
-### Issues
+* 在Jira中添加本节内容
+* 填写本文档页中的待办事项
+* 完成更多示例
+* 完成项目源代码根目录中的TODO.txt项目
 
-TODO - set up module under FreeSWITCH Jira
+### 捐赠
 
-Feedback, questions, issues, patches are very welcome either directly to the email address below, or via the [freeswitch-users](http://lists.freeswitch.org/mailman/listinfo/freeswitch-users) mailing list. The author is generally in [IRC](https://wiki.freeswitch.org/wiki/IRC "IRC") using nick 'dvarnes'.
+这个Java库是作者利用空闲时间创建和维护的。
 
-### Roadmap
+你可以通过Paypal向作者捐赠，捐赠地址为david.varnes \[at\] gmail \[dot\] com。
 
-As of 30 August 2010
+### 参见
 
-* Add the content of this section to Jira
-* Fill in the TODO items in this doco page
-* Complete some more examples
-* Complete the items in TODO.txt in root of project source
-
-### Donations
-
-This java library was created and is maintained as a spare time effort.
-
-You can donate to the author via paypal to david.varnes \[at\] gmail \[dot\] com
-
-### See Also
-
-* [Event Socket](../../Modules/mod_event_socket_1048924.mdx#11-acl)
-* [Event Socket Library](../Event-Socket-Library/index.mdx#-new-)
-* [Event Socket Outbound](../Event-Socket-Library/Event-Socket-Outbound_3375460.mdx#faq)
-* [Debugging Event Socket Message](../../Introduction/Event-System/Debugging-Event-Socket-Message_9634071.mdx#using-netcat-as-middleman)
-* [Event List](../../Introduction/Event-System/Event-List_7143557.mdx#nat)
-
-
+* [事件套接字](../../Modules/mod_event_socket_1048924.mdx#11-acl)
+* [事件套接字库](../Event-Socket-Library/index.mdx#-new-)
+* [事件套接字出站](../Event-Socket-Library/Event-Socket-Outbound_3375460.mdx#faq)
+* [调试事件套接字消息](../../Introduction/Event-System/Debugging-Event-Socket-Message_9634071.mdx#using-netcat-as-middleman)
+* [事件列表](../../Introduction/Event-System/Event-List_7143557.mdx#nat)

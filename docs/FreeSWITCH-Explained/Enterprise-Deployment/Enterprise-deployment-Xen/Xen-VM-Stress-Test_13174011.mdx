@@ -1,124 +1,119 @@
+# Xen VM压力测试
 
-# Xen VM Stress Test 
+单击此处展开目录
 
- 
+* 1 [测试环境](#test-conditions)  
+   * 1.1 [硬件](#hardware)  
+   * 1.2 [操作系统](#os)  
+   * 1.3 [工具](#tools)
+* 2 [无转码的G711a测试](#g711a-tests-without-transcoding)  
+   * 2.1 [使用SRTP](#with-srtp)  
+   * 2.2 [将录音保存到ramfs](#with-recording-to-ramfs)
+* 3 [G711a - Speex转码](#g711a---speex-transcoding)  
+   * 3.1 [复杂度: 5, 质量: 5 (默认为FS)](#complexity-5-quality-5-default-to-fs)  
+   * 3.2 [复杂度: 2, 质量: 8 (使用 -ffast-math, --enable-sse)](#complexity-2-quality-8-with--ffast-math---enable-sse)  
+   * 3.3 [复杂度: 1, 质量: 8 (使用 -ffast-math, --enable-sse)](#complexity-2-quality-8-with--ffast-math---enable-sse)  
+   * 3.4 [复杂度: 1, 质量: 8 (使用 -ffast-math, --enable-sse) with SRTP](#complexity-1-quality-8-with--ffast-math---enable-sse-with-srtp)  
+   * 3.5 [复杂度: 1, 质量: 8 (使用 -ffast-math, --enable-sse) with 将录音保存到ramfs](#complexity-1-quality-8-with--ffast-math---enable-sse-with-recording-to-ramfs)
+* 4 [无音频测试 (使用g711a编解码器)](#no-media-tests-g711a-codec)
+* 5 [体验](#experience)
 
-Click here to expand Table of Contents
+## 测试环境
 
-* 1 [Test Conditions](#test-conditions)  
-   * 1.1 [Hardware](#hardware)  
-   * 1.2 [OS](#os)  
-   * 1.3 [Tools](#tools)
-* 2 [G711a tests without transcoding](#g711a-tests-without-transcoding)  
-   * 2.1 [With SRTP](#with-srtp)  
-   * 2.2 [With recording to ramfs](#with-recording-to-ramfs)
-* 3 [G711a - Speex transcoding](#g711a---speex-transcoding)  
-   * 3.1 [Complexity: 5, Quality: 5 (default to FS)](#complexity-5-quality-5-default-to-fs)  
-   * 3.2 [Complexity: 2, Quality: 8 (with -ffast-math, --enable-sse)](#complexity-2-quality-8-with--ffast-math---enable-sse)  
-   * 3.3 [Complexity: 1, Quality: 8 (with -ffast-math, --enable-sse)](#complexity-2-quality-8-with--ffast-math---enable-sse)  
-   * 3.4 [Complexity: 1, Quality: 8 (with -ffast-math, --enable-sse) with SRTP](#complexity-1-quality-8-with--ffast-math---enable-sse-with-srtp)  
-   * 3.5 [Complexity: 1, Quality: 8 (with -ffast-math, --enable-sse) with recording to ramfs](#complexity-1-quality-8-with--ffast-math---enable-sse-with-recording-to-ramfs)
-* 4 [No Media Tests (g711a codec)](#no-media-tests-g711a-codec)
-* 5 [Experience](#experience)
+### 硬件
 
-## Test Conditions
+**主机:** Xen VM AMD Opteron 双核 (2x1.7GHz) 64位机器，首先(O): 256 MB RAM，然后 1.5 GB RAM 
 
-### Hardware
+## 操作系统
 
-**Box:** Xen VM AMD Opteron Dual Core (2x1.7GHz) 64-bit machine, first (O): 256 MB RAM, then 1,5 GB RAM 
+**操作系统:** Ubuntu Linux 6.06 dapper x64，当需要时，1GB ramfs，**FreeSWITCH 版本 1.0.pre3 (7750M)** 
 
-### OS
+## 工具
 
-**OS:** Ubuntu Linux 6.06 dapper x64, 1GB ramfs when needed, **FreeSWITCH Version 1.0.pre3 (7750M)** 
+**测试工具:** SIPp v3.0-TLS-PCAP，版本 svn424 (<http://sipp.sourceforge.net/>) 在另一台装有1分钟预录的pcap流的计算机上，使用被稍微修改过\*的标准uas和uac\_pcap场景
 
-### Tools
+* 仅修改了pcap文件的路径
 
-**Testing tool:** SIPp v3.0-TLS-PCAP, version svn424 (<http://sipp.sourceforge.net/>) with slightly modified\* standard uas & uac\_pcap scenerios on another box with 1 min. pre-recorded pcap streams
+## 无转码的G711a测试
 
-* the only modification was the path of the pcap file
-
-## G711a tests without transcoding
-
-| CPS | Send/Received INVITE's | Send/Received ACK's | Maximum concurrent calls | MEM(%)  | CPU(%) |
-| --- | ---------------------- | ------------------- | ------------------------ | ------- | ------ |
-| 1   | 1000                   | 979/981             | 60 (cons)                | 42(O)   | 15     |
-| 2   | 0/952                  | 943                 | 120(\~113)               | 41.5(O) | 23     |
-| 5   | 1000/779               | 730/725             | 220                      | 43(O)   | 68     |
-| 10  | 1000/879               | 588/824             | 330                      | 48(O)   | 100    |
-| 30  | 1000/499               | 461/480             | 300                      | 52(O)   | 136    |
-| 50  | 1000/720               | 483/706             | 320                      | 53(O)   | 120    |
-
-### With SRTP
-
-| CPS | Send/Received INVITE's | Send/Received ACK's | Maximum concurrent calls | MEM(%) | CPU(%) |
+| CPS | 发送/接收 INVITE | 发送/接收 ACK | 最大并发通话数 | MEM(%) | CPU(%) |
 | --- | ---------------------- | ------------------- | ------------------------ | ------ | ------ |
-| 10  | 1000/890               | 673/854             | 320                      | 9,6    | 118    |
+| 1   | 1000                   | 979/981             | 60 (持续时间)              | 42(O)  | 15     |
+| 2   | 0/952                  | 943                 | 120(\~113)               | 41.5(O) | 23    |
+| 5   | 1000/779               | 730/725             | 220                      | 43(O)  | 68     |
+| 10  | 1000/879               | 588/824             | 330                      | 48(O)  | 100    |
+| 30  | 1000/499               | 461/480             | 300                      | 52(O) | 136    |
+| 50  | 1000/720               | 483/706             | 320                      | 53(O) | 120    |
+
+### 含SRTP
+
+| CPS | 发送/接收 INVITE | 发送/接收 ACK | 最大并发通话数 | MEM(%) | CPU(%) |
+| --- | ---------------------- | ------------------- | ------------------------ | ------ | ------ |
+| 10  | 1000/890               | 673/854             | 320                      | 9.6    | 118    |
 | 30  | 1000/688               | 492/677             | 280                      | 10.9   | 126    |
 | 50  | 1000/729               | 452/725             | 280                      | 11.7   | 118    |
 
-### With recording to ramfs
+### 含录音到ramfs
 
-| CPS | Send/Received INVITE's | Send/Received ACK's | Maximum concurrent calls | MEM(%) | CPU(%) |
-| --- | ---------------------- | ------------------- | ------------------------ | ------ | ------ |
-| 1   | 500                    | 494                 | 60                       | 3.2    | 8.4    |
-| 5   | 500                    | 460/461             | 260                      | 8.8    | 77,4   |
-| 10  | 500/460                | 308/447             | 270(\~150-170)           | 11     | 94,3   |
-| 30  | 500/468                | 314/424             | 267(\~150-170)           | 12.3   | 112.1  |
+| CPS | 发送/接收 INVITE | 发送/接收 ACK | 最大并发呼叫 | 内存占用(%) | CPU占用(%) |
+| --- | -------------- | ------------- | -------------- | ----------- | ----------- |
+| 1   | 500            | 494           | 60             | 3.2         | 8.4         |
+| 5   | 500            | 460/461       | 260            | 8.8         | 77.4        |
+| 10  | 500/460        | 308/447       | 270(\~150-170) | 11          | 94.3        |
+| 30  | 500/468        | 314/424       | 267(\~150-170) | 12.3        | 112.1       |
 
-## G711a - Speex transcoding
+## G711a - Speex 转码
 
-### Complexity: 5, Quality: 5 (default to FS)
+### 复杂度: 5, 质量: 5 (默认为FS)
 
-| CPS | Send/Received INVITE's | Send/Received ACK's | Maximum concurrent calls | MEM(%) | CPU(%) |
-| --- | ---------------------- | ------------------- | ------------------------ | ------ | ------ |
-| 1   | 1000                   | 868/1000            | 50                       | 15(O)  | 167    |
-| 5   | 1000                   | 273/1000            | 50                       | 27(O)  | 167    |
-| 10  | 1000/712               | 169/712             | 50                       | 40(O)  | 167    |
+| CPS | 发送/接收 INVITE | 发送/接收 ACK | 最大并发呼叫 | 内存占用(%) | CPU占用(%) |
+| --- | -------------- | ------------- | -------------- | ----------- | ----------- |
+| 1   | 1000           | 868/1000      | 50             | 15(O)       | 167         |
+| 5   | 1000           | 273/1000      | 50             | 27(O)       | 167         |
+| 10  | 1000/712       | 169/712       | 50             | 40(O)       | 167         |
 
-### Complexity: 2, Quality: 8 (with -ffast-math, --enable-sse)
+### 复杂度: 2, 质量: 8 (with -ffast-math, --enable-sse)
 
-| CPS | Send/Received INVITE's | Send/Received ACK's | Maximum concurrent calls | MEM(%)  | CPU(%) |
-| --- | ---------------------- | ------------------- | ------------------------ | ------- | ------ |
-| 1   | 1000/1000              | 1000/1000           | 60                       | 10(O)   | 49     |
-| 5   | 1000/1000              | 340/999             | 91(\~70)                 | 37.4(O) | 157    |
-| 10  | 1000/884               | 250/884             | 100(\~60-80)             | 7.18    | 154    |
+| CPS | 发送/接收 INVITE | 发送/接收 ACK | 最大并发呼叫 | 内存占用(%) | CPU占用(%) |
+| --- | -------------- | ------------- | -------------- | ----------- | ----------- |
+| 1   | 1000/1000      | 1000/1000     | 60             | 10(O)       | 49          |
+| 5   | 1000/1000      | 340/999       | 91(\~70)       | 37.4(O)     | 157         |
+| 10  | 1000/884       | 250/884       | 100(\~60-80)   | 7.18        | 154         |
 
-### Complexity: 1, Quality: 8 (with -ffast-math, --enable-sse)
+### 复杂度：1，质量：8（使用-ffast-math，--enable-sse）
 
-| CPS | Send/Received INVITE's | Send/Received ACK's | Maximum concurrent calls | MEM(%) | CPU(%) |
-| --- | ---------------------- | ------------------- | ------------------------ | ------ | ------ |
-| 1   | 1000                   | 994                 | 60                       | 3.5    | 33.2   |
-| 5   | 1000/999               | 273/998             | 98(\~75-80)              | 10,8   | 147.5  |
-| 10  | 1000/888               | 239/886             | 99(\~60-70-80)           | 14,5   | 117.6  |
+| CPS | 发送/接收INVITE    | 发送/接收ACK   | 最大并发呼叫数   | 内存（%） | CPU（%） |
+| ---- | --------------- | ------------- | ----------------- | -------- | ------ |
+| 1     | 1000             | 994            | 60                      | 3.5        | 33.2     |
+| 5     | 1000/999       | 273/998      | 98（约75-80）   | 10.8      | 147.5  |
+| 10   | 1000/888       | 239/886      |99（约60-70-80） | 14.5      | 117.6  |
 
-### Complexity: 1, Quality: 8 (with -ffast-math, --enable-sse) with SRTP
+### 复杂度：1，质量：8（使用-ffast-math，--enable-sse）和SRTP
 
-| CPS | Send/Received INVITE's | Send/Received ACK's | Maximum concurrent calls | MEM(%) | CPU(%) |
-| --- | ---------------------- | ------------------- | ------------------------ | ------ | ------ |
-| 5   | 1000/999               | 349/998             | 93(\~50-60)              | 10,7   | 141    |
-| 10  | 1000/885               | 227/884             | 93(\~50-60)              | 11.2   | 153    |
+| CPS | 发送/接收INVITE    | 发送/接收ACK   | 最大并发呼叫数   | 内存（%） | CPU（%） |
+| ---- | --------------- | ------------- | ----------------- | -------- | ------ |
+| 5     | 1000/999       | 349/998      | 93（约50-60）    | 10.7      | 141    |
+| 10   | 1000/885       | 227/884      | 93（约50-60）    | 11.2      | 153    |
 
-### Complexity: 1, Quality: 8 (with -ffast-math, --enable-sse) with recording to ramfs
+### 复杂度：1，质量：8（使用-ffast-math，--enable-sse）并记录到ramfs
 
-| CPS | Send/Received INVITE's | Send/Received ACK's | Maximum concurrent calls | MEM(%) | CPU(%) |
-| --- | ---------------------- | ------------------- | ------------------------ | ------ | ------ |
-| 1   | 500                    | 498                 | 60                       | 3.4    | 54.8   |
-| 2   | 500/465                | 355/464             | 85(\~70-75)              | 5.8    | 140.6  |
-| 5   | 500                    | 238/500             | 85(\~60)                 | 6.9    | 154.2  |
-| 10  | 500                    | 170/500             | 85(\~40-60)              | 10.3   | 157    |
+| CPS | 发送/接收INVITE    | 发送/接收ACK   | 最大并发呼叫数   | 内存（%） | CPU（%） |
+| ---- | --------------- | ------------- | ----------------- | -------- | ------ |
+| 1     | 500               | 498            | 60                      | 3.4        | 54.8     |
+| 2     | 500/465       | 355/464      | 85（约70-75）     | 5.8        | 140.6  |
+| 5     | 500               | 238/500      | 85（约60）        | 6.9        | 154.2  |
+| 10   | 500               | 170/500      | 85（约40-60）     | 10.3      | 157    |
 
-## No Media Tests (g711a codec)
+## 无媒体测试（g711a编解码器）
 
-| CPS | Send/Received INVITE's | Send/Received ACK's | Maximum concurrent calls | MEM(%) | CPU(%) |
-| --- | ---------------------- | ------------------- | ------------------------ | ------ | ------ |
-| 50  | 1032/347               | 269/347             | 240                      | 6.7    | 47     |
-| 100 | 1007/246               | 223/246             | 223                      | 7.7    | 54     |
-| 150 | 1003/168               | 168                 | 168                      | 7.9    | 61     |
+| CPS | 发送/接收INVITE | 发送/接收ACK | 最大并发呼叫数 | MEM(%) | CPU(%) |
+| --- | ------------- | ------------ | -------------- | ------ | ------ |
+| 50  | 1032/347      | 269/347      | 240            | 6.7    | 47     |
+| 100 | 1007/246      | 223/246      | 223            | 7.7    | 54     |
+| 150 | 1003/168      | 168          | 168            | 7.9    | 61     |
 
-## Experience
+## 经验
 
-* With high CPS and concurrent calls there was 1 sec. delay in live conversation sometimes
-* Tried recording to hard disk but it was very slow, the system usually hanged eventually
-* On a 32bit box we couldn't get more then 350 threads out of it. Shrinking the thread stack size did not help either. With a 64-bit OS, that problem never occurred. (exact same hardware)
-
-
+* 高CPS和并发呼叫时，有时会出现1秒的实时对话延迟问题
+* 尝试将录音保存到硬盘，但速度很慢，系统通常最终会挂起
+* 在32位系统上，我们无法超过350个线程。缩小线程堆栈大小也没有起到帮助作用。使用64位操作系统从未遇到这个问题。（完全相同的硬件）

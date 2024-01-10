@@ -1,87 +1,82 @@
-
-# mod_dptools: bind_meta_app 
+# mod_dptools：bind_meta_app 
 
  
 
-## About
+## 关于
 
-Execute a dialplan application on DTMF command on specified call legs during a bridge.
+在桥接期间，在指定的呼叫路由上执行一个拨号计划应用程序的DTMF命令。
 
-Click here to expand Table of Contents
+单击此处展开目录
 
-* 1 [Description](#description)
-* 2 [Usage](#-freeswitch--mod_dptools-bind_meta_app-)  
-   * 2.1 [Inline Execution](#inline-execution)
-* 3 [Examples](#-freeswitch--mod_dptools-bind_meta_app-)
-* 4 [bind\_meta\_key variable](#bind_meta_key-variable)
-* 5 [See Also](#-freeswitch--mod_dptools-bind_meta_app-)
+* 1 [描述](#描述)
+* 2 [用法](#-freeswitch--mod_dptools-bind_meta_app-)  
+   * 2.1 [行内执行](#行内执行)
+* 3 [示例](#-freeswitch--mod_dptools-bind_meta_app-)
+* 4 [bind\_meta\_key 变量](#bind_meta_key变量)
+* 5 [参见](#-freeswitch--mod_dptools-bind_meta_app-)
 
-## Description
+## 描述
 
-  
-bind\_meta\_app binds an application to the specified call leg(s). During a bridged call, the DTMF sequence on the bound call leg will trigger the execution of the application. The call leg that is '''not''' bound will '''not''' hear the DTMF sequence being dialed. Once bound to a call leg, the application binding will survive for the lifetime of the call leg.
+bind\_meta\_app将应用程序绑定到指定的呼叫路由上。在桥接呼叫期间，绑定呼叫路由上的DTMF序列将触发应用程序的执行。未绑定的呼叫路由将无法听到拨号的DTMF序列。一旦绑定到呼叫路由上，应用程序绑定将在呼叫路由的生命周期内持续存在。
 
-Important: This feature will not work when bypass\_media=true, because the endpoints will be communicating directly with each other, and the key presses will not be sent to FreeSWITCH.
+重要提示：当bypass\_media=true时，此功能将无法工作，因为端点将直接进行通信，按键将无法发送给FreeSWITCH。
 
-For a more advanced digit binding, see the [mod\_dptools: bind\_digit\_action](./6586414.mdx#0-about) application.
+有关更高级的数字绑定，请参见[mod\_dptools：bind\_digit\_action](./6586414.mdx#0-about)应用程序。
 
-## Usage
+## 用法
 
 ```xml
 <action application="bind_meta_app" data="KEY LISTEN_TO FLAGS APPLICATION[::PARAMETERS]"/>
 ```
 
-Explanation of parameters
+参数解释
 
-* KEY is the button you want to respond to after the \* button is pressed. If you wanted to respond to \*1, you would put 1 in place of KEY. You are limited to a single digit in the range 0-9 while \* or # will be translated to 0.
-* LISTEN\_TO specifies which call leg(s) to listen for digits. Acceptable parameters are '''a''', '''b''' or '''ab'''.
-* FLAGS modifies the behavior. The following flags are available:  
-   * a - Respond on A leg  
-   * b - Respond on B leg  
-   * o - Respond on opposite leg  
-   * s - Respond on same leg  
-   * i - Execute inline (see below)  
-   * 1 - Unbind this meta\_app after it is used one time
-* APPLICATION specifies the application to execute.
-* PARAMETERS specify the arguments to provide to the APPLICATION. You must put :: after the APPLICATION for these arguments to be parsed properly.
+* KEY 是在按下 \* 按钮后要响应的按钮。如果要响应 \*1，您应该在 KEY 的位置上放入 1。您只能使用 0-9 的一位数字，而 \* 或 # 会被转换为 0。
+* LISTEN\_TO 指定要监听哪个呼叫方向的按键。可接受的参数有 ```a```, ```b``` 或 ```ab```。
+* FLAGS 修改行为方式。下面是可用的标记：
+   * a - 在 A 呼叫方向上响应
+   * b - 在 B 呼叫方向上响应
+   * o - 在相反的呼叫方向上响应
+   * s - 在同一呼叫方向上响应
+   * i - 在内联中执行（见下文）
+   * 1 - 在使用一次后取消绑定这个 meta_app
+* APPLICATION 指定要执行的应用程序。
+* PARAMETERS 指定要提供给 APPLICATION 的参数。在 APPLICATION 后必须放置双冒号::，以便正确解析这些参数。
 
-After the \* button is pressed, the KEY event is expected within 5 seconds. In case of timeout, the KEY is passed further to the B leg.
+在按下 \* 按钮后，期望在5秒内输入 KEY 按键。如果超时，KEY 会传递给 B 呼叫方向。
 
-### Inline Execution
+### 内联执行
 
-The '''i''' flag means to execute the application inline, that is, immediately. Normally the application is queued up to be executed in the session's thread synchronously, similar to how ESL queues up an application.
+标记 ```i``` 表示在内联中执行应用程序，即立即执行。通常，应用程序会排队等待在会话的线程中同步执行，类似于ESL将应用程序排队等待执行。
 
-## Examples
+## 示例
 
 ```xml
 <action application="bind_meta_app" data="1 a s execute_extension::dx XML features"/>
 ```
 
-When \*1 is pressed on the A call leg, the execute\_extension application is executed upon the A call leg. The extension that is executed is the dx extension in the XML dialplan under the context named "features".
+当在 A 呼叫方向上按下 \*1 时，将在 A 呼叫方向上执行 execute_extension 应用程序。要执行的分机是位于名为 "features" 的上下文中的 XML 拨号计划中的 dx 分机号。
 
 ```xml
 <action application="bind_meta_app" data="2 a s record_session::$${base_dir}/recordings/${caller_id_number}.${strftime(%Y-%m-%d-%H-%M-%S)}.wav"/>
 ```
 
-When \*2 is pressed on the A call leg, the session audio starts recording on the A call leg. It saves the audio to the $$(base\_dir)/recordings/${caller\_id\_number}.$(strftime(%Y-%m-%d-%H-%M-%S)}.wav file. (i.e. /usr/local/freeswitch/recordings/1234.2008-04-09-10-11-12.wav).
+当在A呼叫通道上按下\*2时，会开始在A呼叫通道上录制会话音频。它将音频保存到$$(base\_dir)/recordings/${caller\_id\_number}.$(strftime(%Y-%m-%d-%H-%M-%S)}.wav文件中（例如：/usr/local/freeswitch/recordings/1234.2008-04-09-10-11-12.wav）。
 
-In default dialplan example record\_session is listening for DTMF on the B leg, so only the callee can activate the recording.
+在默认拨号计划示例中，record\_session会监听B通道上的DTMF信号，因此只有被呼叫方才能启动录音。
 
-## bind_meta_key variable
+## bind_meta_key变量
 
-  
-You may also customise the meta key. It will default to '\*' but you can use the \[\[Variable\_bind\_meta\_key|bind\_meta\_key\]\] channel variable to select a different meta key:
+您还可以自定义元键。默认为'\*'，但您可以使用\[\[Variable\_bind\_meta\_key|bind\_meta\_key\]\]通道变量来选择其他元键：
 
 ```xml
-<!-- The following uses # as the meta key -->
+<!-- 以下示例使用#作为元键 -->
 <action application="set" data="bind_meta_key=#"/>
 <action application="bind_meta_app" data="2 a s foo"/>
 ```
 
-## See Also
+## 另请参阅
 
 [mod\_dptools: bind\_digit\_action](./6586414.mdx#0-about)
 
 [mod\_dptools: unbind\_meta\_app](./6586930.mdx#about)
-
-

@@ -1,58 +1,57 @@
-
 # Ubuntu 16 Xenial 
 
  
 
-**DEPRECATED** \- FreeSWITCH has not provided binary packages for Ubuntu since 2018, so the PPA's below are severely out of date. DO NOT USE.
+**已废弃** - 自2018年起，FreeSWITCH就不再提供Ubuntu的二进制软件包，所以下面的PPA已经严重过时。请勿使用。
 
   
-## About
+## 关于
 
-Ubuntu 16.04 packages are provided by FreeSWITCH™ in a deb repository as of version 1.6\. It is strongly recommended to use this repo as additional system libraries are updated as required. 
+从1.6版本开始，FreeSWITCH™在deb仓库中提供了Ubuntu 16.04软件包。强烈建议使用此仓库，因为它会根据需要更新系统的附加库。 
 
-WARNING Please Note only the 16.04 LTS is supported!
+警告请注意，仅支持16.04 LTS版本！
 
-WARNING Please Note all Ubuntu installs are experimental at best.  
+警告请注意，所有的Ubuntu安装都只是试验性的。
 
   
-Click here to expand Table of Contents
+点击这里展开目录
 
 * 1 [](#about)
 * 2 [](#about)
-* 3 [Installing From Ubuntu Packages](#installing-from-ubuntu-packages-)  
-   * 3.1 [Latest Release Branch:](#latest-release-branch)
+* 3 [从Ubuntu软件包安装](#installing-from-ubuntu-packages-)  
+   * 3.1 [最新发布分支：](#latest-release-branch)
 * 4 [](#about)  
-   * 4.1 [Master Branch ("git"):](#master-branch-git)
+   * 4.1 [主干分支（“git”）：](#master-branch-git)
 * 5 [](#about)
 * 6 [](#about)
 * 7 [](#about)  
-   * 7.1 [Building Ubuntu packages from master branch](#building-ubuntu-packages-from-master-branch)
+   * 7.1 [从主干分支构建Ubuntu软件包](#building-ubuntu-packages-from-master-branch)
 
 ## 
 
   
 ## 
 
-**Easy Way**
+**简便方法**
 
-## Installing From Ubuntu Packages 
+## 从Ubuntu软件包安装 
 
-### Latest Release Branch:
+### 最新发布分支：
 
-**Release package**
+**发布软件包**
 
 ```bash
 wget -O - https://files.freeswitch.org/repo/ubuntu-1604/freeswitch-1.6/freeswitch_archive_g0.pub | apt-key add -
 
 echo "deb http://files.freeswitch.org/repo/ubuntu-1604/freeswitch-1.6/ xenial main" > /etc/apt/sources.list.d/freeswitch.list
 
-# you may want to populate /etc/freeswitch at this point.
-# if /etc/freeswitch does not exist, the standard vanilla configuration is deployed
+# 在此时您可能希望填充/etc/freeswitch目录。
+# 如果/etc/freeswitch目录不存在，则使用标准的原始配置。
 apt-get update && apt-get install -y freeswitch-meta-all
 
 ```
 
-FreeSWITCH™ is now installed and can be accessed with
+已安装FreeSWITCH™，现在可以使用以下方式进行访问
 
 **FreeSwitch CLI**
 
@@ -62,29 +61,29 @@ fs_cli -rRS
 
 ## 
 
-### Master Branch ("git"):
+### 主干分支（“git”）：
 
 ## 
 
-WARNING not suitable for production
+警告，不适用于生产环境
 
 ## 
 
-**Master Test Package**
+**主干测试软件包**
 
 ```bash
 wget -O - https://files.freeswitch.org/repo/ubuntu-1604/freeswitch-unstable/freeswitch_archive_g0.pub | apt-key add -
 
 echo "deb http://files.freeswitch.org/repo/ubuntu-1604/freeswitch-unstable/ xenial main" > /etc/apt/sources.list.d/freeswitch.list
-# you may want to populate /etc/freeswitch at this point.
-# if /etc/freeswitch does not exist, the standard vanilla configuration is deployed
+# 在这一步，你可能需要填充/etc/freeswitch目录。
+# 如果/etc/freeswitch目录不存在，将部署标准原始的配置。
 apt-get update && apt-get install -y freeswitch-meta-all 
 
 ```
 
 ## 
 
-FreeSWITCH™ is now installed and can be accessed with
+FreeSWITCH™已经安装完成，并且可以通过以下方式访问:
 
 **FreeSwitch CLI**
 
@@ -93,39 +92,35 @@ fs_cli -rRS
 ```
 
   
-### Building Ubuntu packages from master branch
+### 从主分支构建Ubuntu软件包
 
-WARNING not suitable for production
+警告：这不适用于生产环境
 
-The master branch depends on video libraries which are not available as packages in Debian distribution, but are available from FreeSWITCH repository. Thus, you will need internet access to the FreeSWITCH DEB repository.  
-This build process requires the use of the devscripts and cowbuilder packages. The cowbuilder package allows for creating the packages in a clean chrooted environment.
+主分支依赖于视频库，而这些库在Debian发行版中不可用，但可以从FreeSWITCH的软件库中获取到。因此，您需要通过网络访问FreeSWITCH的DEB软件库。  
+该构建过程需要使用devscripts和cowbuilder软件包。cowbuilder软件包用于在一个干净的chroot环境中创建软件包。
 
 ```bash
 echo "deb http://files.freeswitch.org/repo/ubuntu-1604/freeswitch-unstable/ xenial main" > /etc/apt/sources.list.d/freeswitch.list
 
 apt-get update 
-# we need some prepackaged libraries for video support from this repo
+# 我们需要从此软件库获取一些预打包的视频支持库
 wget -O - https://files.freeswitch.org/repo/ubuntu/ubuntu-1604/freeswitch_archive_g0.pub | apt-key add -
 
-#if you have not already installed git, devscripts, and cowbuilder packages please install those now
+#如果您尚未安装git，devscripts和cowbuilder软件包，请现在安装它们
 apt-get install git devscripts cowbuilder
 
-# get the latest master. Use the -b flag to get a specific branch
+# 获取最新主分支。使用-b标志获取特定的分支
 mkdir /usr/src/freeswitch-debs
 cd /usr/src/freeswitch-debs
 git clone https://github.com/signalwire/freeswitch.git freeswitch
 
 cd freeswitch
 ./debian/util.sh build-all -aamd64 -cxenial
-
-# The build may last about an hour, depending on your CPU speed.
-# If the build is successful, you will have a bunch of .deb files in /usr/src/freeswitch-debs
-# Please see the log files in /usr/src/freeswitch-debs/log/ folder to monitor the build in progress or trouble shoot build issues once the util.sh script has been completed.
- 
 ```
 
-  
-Note that when installed from packages FreeSWITCH Packages use an FHS complaint directory layout. Binaries are installed in "/usr/bin/freeswitch", configs in "/etc/freeswitch", etc.
-
-  
-
+＃根据您的CPU速度不同，构建可能需要大约一小时的时间。
+＃如果构建成功，您将在/usr/src/freeswitch-debs目录中拥有一堆.deb文件
+＃请在/util.sh脚本完成后查看/usr/src/freeswitch-debs/log/文件夹中的日志文件，以监控构建进程或排除构建问题。
+ 
+```
+请注意，从软件包安装时，FreeSWITCH软件包使用符合FHS（File Hierarchy Standard）的目录布局。可执行文件安装在“/usr/bin/freeswitch”目录下，配置文件安装在“/etc/freeswitch”目录下，等等。

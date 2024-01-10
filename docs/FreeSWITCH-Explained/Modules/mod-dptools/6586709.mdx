@@ -1,57 +1,54 @@
+# mod_dptools: pickup
 
-# mod_dptools: pickup 
+## 关于
 
- 
+允许正确应答同一个拾音组的多个同时呼叫。
 
-## About
+基本上，拾音终端是一个永远不会应答的虚拟通道，你可以从任何地方发起呼叫。可以单独呼叫它，也可以将它放入列表中以进行分叉呼叫。
 
-Permits proper answering of multiple simultaneous calls to the same pickup group.
+点击这里展开目录
 
-Basically the pickup endpoint is a dummy channel that never answers to which you can originate from anywhere you can place calls. Call it alone or place it in a list for a forked dial.
+* 1 [使用方法](#使用方法)
+* 2 [示例](#示例)
 
-Click here to expand Table of Contents
-
-* 1 [Usage](#usage)
-* 2 [Example](#example)
-
-### Usage
+### 使用方法
 
 ```xml
-pickup/keyname
-pickup+keyname
+pickup/按键名称
+pickup+按键名称
 ```
 
-### Example
+### 示例
 
 ```xml
-originate sofia/internal/100@test.com,pickup/mygroup
+originate sofia/internal/100@test.com,pickup/我的组
 ```
 
-OR for multiple groups:
+或者针对多个组：
 
 ```xml
-<action application="bridge" data="${sofia_contact(100@test.com)},pickup/mygroup,pickup/mygroup2"/>
+<action application="bridge" data="${sofia_contact(100@test.com)},pickup/我的组,pickup/我的组2"/>
 ```
 
-Now the pickup channel will be created alongside the sip channel.
+现在拾音通道将会与 SIP 通道一同创建。
 
-From another call route the call to the application pickup with data "mygroup" to have your channel return from originate
+从另一个呼叫路由将呼叫路由到应用程序`pickup`，数据为"我的组"，就可以使你的通道从发起中返回。
 
 ```xml
-<action application="pickup" data="mygroup"/>
+<action application="pickup" data="我的组"/>
 ```
 
-When you place that call, your session will be returned from the originate in place of the pickup/mygroup call being placed.
+当你发起该呼叫时，你的会话将取代拾音/我的组的呼叫被放置在该位置。
 
-It also works with presence so you could assign blf buttons to it.
+它还支持使用 Presence，所以你可以给它分配 BLF 按钮。
 
 ```xml
-pickup+mygroup
+pickup+我的组
 ```
 
-The group names can also have an @domain.com for multihoming etc.
+拾音组的名称也可以包含 @domain.com 用于多宿主等。
 
-Note that whilst the name of the pickup group can be alphanumeric, it may make more sense to use numeric groups so that they can be picked up from an extensions such as follows:
+请注意，虽然拾音组的名称可以是字母数字混合的，但使用纯数字组可能更合理，以便可以通过扩展号来接听，如下所示：
 
 ```xml
 <extension name="group_pickup">
@@ -61,6 +58,4 @@ Note that whilst the name of the pickup group can be alphanumeric, it may make m
 </extension>
 ```
 
-When a user dials \*57nnn, a call belonging to pickup group &lt;nnn> will be picked up.
-
-
+当用户拨打 \*57nnn 时，将会接听属于拾音组 <nnn> 的呼叫。

@@ -1,21 +1,18 @@
-
-# Provider ippi (France) 
-
- 
+# 供应商 ippi（法国）
 
 ## [ippi.com](http://ippi.com)
 
-Last update: 20 July 2010
+最近更新日期：2010年7月20日
 
-Incoming and outgoing works
+传入和传出工作
 
-SIP gateway: _conf/sip\_profiles/external/ippi.xml_
+SIP 网关: _conf/sip\_profiles/external/ippi.xml_
 
 ```xml
  <include>
        <gateway name="ippi.fr">
-               <param name="username" value="**Login**"/>
-               <param name="password" value="**Password**"/>
+               <param name="username" value="**登录**"/>
+               <param name="password" value="**密码**"/>
                <param name="realm" value="ippi.fr"/>
                <param name="proxy" value="ippi.fr"/>
                <param name="register-proxy" value="ippi.fr"/>
@@ -24,36 +21,33 @@ SIP gateway: _conf/sip\_profiles/external/ippi.xml_
  </include> 
 ```
 
-Outgoing calls: _conf/dialplan/default/00\_ippi.xml_
+外拨电话：_conf/dialplan/default/00\_ippi.xml_
 
-Note: 0 = outgoing prefix
+注意：0 = 外拨前缀
 
 ```xml
 <include>
      <extension name="ippi" continue="false">
            <condition field="destination_number" expression = "^0(.*)$">
-               <action application="set" data="effective_caller_id_name=**Your Name**"/>
-               <action application="set" data="effective_caller_id_number=**Your main number**"/>
+               <action application="set" data="effective_caller_id_name=**您的姓名**"/>
+               <action application="set" data="effective_caller_id_number=**您的主要号码**"/>
                <action application="bridge" data="sofia/gateway/ippi.fr/$1"/>
        </condition>
    </extension>
  </include> 
 ```
 
-Incoming calls: _conf/dialplan/public/10\_inbound\_ippi.xml_
+传入电话：_conf/dialplan/public/10\_inbound\_ippi.xml_
 
-Transfer incoming calls to device 1000
+将传入电话转接至设备1000
 
 ```xml
  <include>
    <extension name="public_ippi">
-     <condition field="destination_number" expression="^(**Your main number**)$">
+     <condition field="destination_number" expression="^(**您的主要号码**)$">
        <action application="set" data="domain_name=$${domain}"/>
        <action application="transfer" data="1000 XML default"/>
      </condition>
    </extension>
  </include> 
 ```
-
-  
-

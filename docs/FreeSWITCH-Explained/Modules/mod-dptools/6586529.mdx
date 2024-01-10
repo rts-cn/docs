@@ -1,64 +1,61 @@
+# mod_dptools: eavesdrop
 
-# mod_dptools: eavesdrop 
+## 关于
 
- 
+eavesdrop 提供了对频道进行监听的功能。它通常被称为呼叫监控。如果要对用户进行持续监听，请参见 [mod_spy](../mod_spy_6586547.mdx#about)。
 
-## About
+点击此处展开目录
 
-eavesdrop provides the ability to spy on a channel. It often referred to as call barge. For persistent spying on a user see [mod\_spy](../mod_spy_6586547.mdx#about).
+* 1 [使用方法](#-freeswitch--mod_dptools-eavesdrop-)
+* 2 [变量](#variables)
+* 3 [模拟 DTMF](#simulating-dtmf)
+   * 3.1 [DTMF 对被叫说话的示例](#dtmf-speak-to-callee-example)
+   * 3.2 [DTMF 对主叫说话的示例](#dtmf-speak-to-caller-example)
+* 4 [示例](#examples)
+   * 4.1 [来自拨号计划](#-freeswitch--mod_dptools-eavesdrop-)
+   * 4.2 [来自 mod_event_socket](#from-the-mod_event_socket-)
+   * 4.3 [指定一个组](#specifying-a-group)
+* 5 [参见](#see-also)
 
-Click here to expand Table of Contents
-
-* 1 [Usage](#-freeswitch--mod_dptools-eavesdrop-)
-* 2 [Variables](#variables)
-* 3 [Simulating DTMF](#simulating-dtmf)  
-   * 3.1 [DTMF Speak to callee Example](#dtmf-speak-to-callee-example)  
-   * 3.2 [DTMF Speak to caller Example](#dtmf-speak-to-caller-example)
-* 4 [Examples](#examples)  
-   * 4.1 [From the Dialplan](#-freeswitch--mod_dptools-eavesdrop-)  
-   * 4.2 [From the mod\_event\_socket](#from-the-mod_event_socket-)  
-   * 4.3 [Specifying a group](#specifying-a-group)
-* 5 [See Also](#see-also)
-
-### Usage
+### 使用方法
 
 ```xml
 eavesdrop [<uuid>|all]
 ```
 
-### Variables
+### 变量
 
 ```xml
 <action application="set" data="eavesdrop_require_group=<groupID>"/>
-<action application="set" data="eavesdrop_indicate_failed=/sounds/failed.wav"/>         <!-- used in 'eavesdrop all' case -->
-<action application="set" data="eavesdrop_indicate_new=/sounds/new_chan_announce.wav"/> <!-- used in 'eavesdrop all' case -->
-<action application="set" data="eavesdrop_indicate_idle=/sounds/idle.wav"/>             <!-- used in 'eavesdrop all' case -->
-<action application="set" data="eavesdrop_enable_dtmf=true"/> <!-- false means no commands during eavesdrop -->
-<action application="set" data="eavesdrop_bridge_aleg=true"/> <!-- enables listen to aleg -->
-<action application="set" data="eavesdrop_bridge_bleg=true"/> <!-- enables listen to bleg -->
-<action application="set" data="eavesdrop_whisper_aleg=true"/> <!-- enables whisper mode in aleg -->
-<action application="set" data="eavesdrop_whisper_bleg=true"/> <!-- enables whisper mode in bleg -->
+<action application="set" data="eavesdrop_indicate_failed=/sounds/failed.wav"/>         <!-- 在 'eavesdrop all' 情况下使用 -->
+<action application="set" data="eavesdrop_indicate_new=/sounds/new_chan_announce.wav"/> <!-- 在 'eavesdrop all' 情况下使用 -->
+<action application="set" data="eavesdrop_indicate_idle=/sounds/idle.wav"/>             <!-- 在 'eavesdrop all' 情况下使用 -->
+<action application="set" data="eavesdrop_enable_dtmf=true"/> <!-- false 表示监听期间不允许命令 -->
+<action application="set" data="eavesdrop_bridge_aleg=true"/> <!-- 启用对 Aleg 的监听 -->
+<action application="set" data="eavesdrop_bridge_bleg=true"/> <!-- 启用对 Bleg 的监听 -->
+<action application="set" data="eavesdrop_whisper_aleg=true"/> <!-- 启用 Aleg 的私语模式 -->
+<action application="set" data="eavesdrop_whisper_bleg=true"/> <!-- 启用 Bleg 的私语模式 -->
 ```
 
-DTMF signals during eavesdrop
+窃听过程中的 DTMF 信号
 
-* 2 to speak with the uuid
-* 1 to speak with the other half
-* 3 to engage a three way
-* 0 to restore eavesdrop.
-* \* to next channel.
+* 按 2 与 UUID 进行通话
+* 按 1 与另一方进行通话
+* 按 3 进行三方通话
+* 按 0 恢复窃听
+* 按 \* 切换到下一个信道
 
-If "eavesdrop\_require\_group" is specified, eavesdrop only works with channels that have an "eavesdrop\_group" channel variable set to the same name.
+如果指定了 "eavesdrop_require_group"，窃听只在具有设置为相同名称的 "eavesdrop_group" 通道变量的通道上起作用。
 
-If '\*' is used on an eavesdrop with out the data = all parameter set, the eavesdrop will be terminated.
+如果在没有设置 data = all 参数的窃听上使用了 '\*'，窃听将被终止。
 
-If neither eavesdrop\_bridge\_aleg nor eavesdrop\_bridge\_bleg are set to true, eaves will be dropped on both legs.
+如果既没有设置 eavesdrop_bridge_aleg 也没有设置 eavesdrop_bridge_bleg 为 true，窃听将被同时终止。
 
-### Simulating DTMF
+### 模拟 DTMF
 
-You can send DTMF using [uuid\_recv\_dtmf](../mod_commands_1966741.mdx#uuid_recv_dtmf)
+您可以使用 [uuid_recv_dtmf](../mod_commands_1966741.mdx#uuid_recv_dtmf) 发送 DTMF。
 
-#### DTMF Speak to callee Example
+#### DTMF 对被叫方说话示例
 
 ```xml
 <extension name="eavesdrop_speak_to_callee" continue="true">
@@ -71,7 +68,7 @@ You can send DTMF using [uuid\_recv\_dtmf](../mod_commands_1966741.mdx#uuid_recv
 </extension>
 ```
 
-#### DTMF Speak to caller Example
+#### DTMF 对主叫方说话示例
 
 ```xml
 <extension name="eavesdrop_speak_to_caller" continue="true">
@@ -84,12 +81,11 @@ You can send DTMF using [uuid\_recv\_dtmf](../mod_commands_1966741.mdx#uuid_recv
 </extension>
 ```
 
-### Examples
+### 示例
 
-####   
-From the Dialplan
+#### 从拨号计划中
 
-This is available in the default.xml dialplan. To use it from your phone dial 88\[extension number\]. For example to eavesdrop on extension 1001 dial 881001.
+此功能在 default.xml 的拨号计划中可用。要从您的手机上使用它，请拨打 88\[分机号\]。例如，要窃听分机号为 1001 的通话，请拨打 881001。
 
 ```xml
 <extension name="global" continue="true">
@@ -108,37 +104,37 @@ This is available in the default.xml dialplan. To use it from your phone dial 88
 </extension>
 ```
 
-#### From the mod_event_socket 
+#### 从mod_event_socket中得到的内容
 
-In this example you originate a call to extension 2001 and start spying the channel with UUID c7709e9c-1517-11dc-842a-d3a3942d3d63
+在这个例子中，你将呼叫转接到分机2001，并开始监听具有UUID c7709e9c-1517-11dc-842a-d3a3942d3d63的通道。
 
 ```xml
 api originate sofia/default/2001@yourvsp.com &eavesdrop(c7709e9c-1517-11dc-842a-d3a3942d3d63)
 ```
 
-or another example with SRTP
+或者另一个带有SRTP的例子
 
 ```xml
 originate {sip_secure_media=true}user/1000 &eavesdrop(52d87034-4173-11de-99ef-f1acc19bfdf1)
 ```
 
-In this example an eavesdrop is made of UUID a28739d0-00f0-4a59-8c82-7a5a74ab6861 to extension 1001, however the eavesdrop is started with DTMF option 2 (w2@500) to allow speaking directly to the UUID with out the other party hearing (whisper).
+在这个例子中，我们监听UUID为a28739d0-00f0-4a59-8c82-7a5a74ab6861的通道到分机1001，然而监听是使用DTMF选项2（w2@500）开始的，以允许直接与UUID进行对话，而不被对方听到（whisper）。
 
 ```xml
 originate user/1001 'queue_dtmf:w2@500,eavesdrop:a28739d0-00f0-4a59-8c82-7a5a74ab6861' inline
 ```
 
-#### Specifying a group
+#### 指定一个组
 
-You can specify a "group" to limit the channels that an eavesdrop applies to. This may be useful for privacy reasons.
+您可以指定一个“组”来限制被监听的通道，这对于保护隐私非常有用。
 
-For example, if you only want to eavesdrop on incoming sales calls, you could set the "eavesdrop\_group" variable on the original incoming channel:
+例如，如果您只想监听呼入的销售电话，您可以在原始呼入通道上设置“eavesdrop_group”变量：
 
 ```xml
 <action application="set" data="eavesdrop_group=sales_call_eavesdrop"/>
 ```
 
-Then create an eavesdrop command that only affects that "sales\_call\_eavesdrop" group:
+然后创建一个仅影响"sales\_call\_eavesdrop"组的窃听命令：
 
 ```xml
 <extension name="eavesdrop">
@@ -150,11 +146,9 @@ Then create an eavesdrop command that only affects that "sales\_call\_eavesdrop"
 </extension>
 ```
 
-You should set the var eavesdrop\_require\_group=foo before you run the app and on all calls that are not using G729, set the var eavesdrop\_group=foo in the dialplan in order to avoid call drops on G.729, if you don't have the codec licenses since they require transcoding.
+在运行应用程序之前，您应该设置变量eavesdrop\_require\_group=foo，并在不使用G729的所有呼叫中，在拨号计划中设置变量eavesdrop\_group=foo，以避免在G.729上发生呼叫中断，如果您没有编解码许可证，因为它们需要进行转码。
 
-### See Also
+### 另请参阅
 
-* [Dialplan](../../Dialplan/index.mdx#0-about)
+* [拨号计划](../../Dialplan/index.mdx#0-about)
 * [mod\_dptools: three\_way](./6587079.mdx#about)
-
-

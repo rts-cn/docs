@@ -1,42 +1,38 @@
+# Ubuntu 11 快速入门
 
-# Ubuntu 11 Quick Start 
+**已经过时** - 自 2018 年起，FreeSWITCH 就没有提供适用于 Ubuntu 的二进制包了，因此下面的 PPA 都已严重过时。请勿使用。
 
- 
+## 关于
 
-  
-**DEPRECATED** \- FreeSWITCH has not provided binary packages for Ubuntu since 2018, so the PPA's below are severely out of date. DO NOT USE.
+已经过时
 
-## About
+Ubuntu 11 **已经过时**。请使用[Ubuntu 16 Xenial](./Ubuntu-16-Xenial_10683647.mdx)
 
-DEPRECATED
+单击此处展开目录
 
-Ubuntu 11 is **deprecated**. Please use [Ubuntu 16 Xenial](./Ubuntu-16-Xenial_10683647.mdx)
-
-Click here to expand Table of Contents
-
-**Error rendering macro 'toc'**
+**渲染宏`toc`时出错**
 
 null
 
-### Introduction to Ubuntu and FreeSWITCH
+### Ubuntu 和 FreeSWITCH 简介
 
-This page was intended to help those who want to install FreeSWITCH, and not start learning how FreeSWITCH actually works. This will give you the basic setup so that you can at least start making calls.
+本页旨在帮助安装 FreeSWITCH 的人，而不是开始学习 FreeSWITCH 的工作原理。这样您至少可以开始打电话。
 
-Please also review the entries for Debian and Ubuntu under <https://freeswitch.org/confluence/display/FREESWITCH/Installation#Debian> for some more information before proceeding.
+在继续之前，请查看<https://freeswitch.org/confluence/display/FREESWITCH/Installation#Debian>上有关 Debian 和 Ubuntu 的条目，以获取更多信息。
 
-### Initial Setup
+### 初始设置
 
-The instructions below have been updated for 11.04+.
+以下指南已针对 11.04+ 进行了更新。
 
-Note that in the command line examples, the editors Nano (command name "nano") or Vim (Vi Improved, command name "vim") are mentioned. Any text editor (gedit, emacs, etc.) should be able to be substituted. Often this command is in the EDITOR environment variable (referenced with $EDITOR).
+请注意，命令行示例中提到的编辑器 Nano（命令名称为“nano”）或 Vim（Vi Improved，命令名称为“vim”）。可以替换为任何文本编辑器（gedit、emacs 等）。通常，此命令位于 EDITOR 环境变量中（使用 $EDITOR 引用）。
 
-Install the standard Ubuntu server system.
+安装标准的 Ubuntu 服务器系统。
 
-### Install from Repo
+### 从软件源安装
 
-There are packages in the repo for distributions up to Maverick. If you're running a later version (which you probably are...), you should build freeswitch manually or create deb packages and install them (see next section).
+软件源中有适用于 Maverick 及更早版本的软件包。如果您运行的是较新版本（很可能是...），则应手动构建 FreeSWITCH 或创建 deb 软件包并安装它们（请参阅下一节）。
 
-Open a terminal window (if necessary) and then type these commands:
+打开终端窗口（如果需要），然后输入以下命令：
 
 ```xml
 apt-get install python-software-properties
@@ -45,19 +41,19 @@ apt-get update
 apt-get install freeswitch freeswitch-lang-en freeswitch-sounds-en-us-callie-8000
 ```
 
-Following the above will get you a basic installation of FreeSWITCH installed in /opt/freeswitch.
+按照上述步骤，您将在/opt/freeswitch目录下获得一个基本的FreeSWITCH安装。
 
-#### Create Ubuntu packages and install them
+#### 创建Ubuntu软件包并进行安装
 
-This script will download everything required, build packages and installs them. It works on a basic installation. Save it as freeswitch\_build.sh in your home directory and start it with
+这个脚本将下载所需的所有内容，构建软件包并安装它们。它适用于基本安装。将其保存为freeswitch_build.sh并放在您的主目录中，然后使用以下命令启动：
 
 ```xml
 sh -x freeswitch_build.sh
 ```
 
-It's (always) recommended to build as a regular user, NOT root. Tested on Ubuntu 12.04 LTS, with Freeswitch 1.2.9 (which means seperate music and sounds package). Partly based on the Debian installer script.
+建议以普通用户身份构建，而不是root用户。在Ubuntu 12.04 LTS系统上经过测试，使用Freeswitch 1.2.9（这意味着包括独立的音乐和声音包）。在Debian安装程序脚本的基础上进行了部分修改。
 
-It will give a permission error when starting freeswitch, disable spandsp in /etc/freeswitch/autoload\_configs/modules.conf to avoid this, didn't look into the problem as of yet. You can run Freeswitch as root also.
+启动freeswitch时可能会出现权限错误，在/etc/freeswitch/autoload_configs/modules.conf文件中禁用spandsp以避免出错，目前尚未对该问题进行深入研究。您也可以以root用户身份运行Freeswitch。
 
 ```xml
 #!/bin/bash
@@ -71,11 +67,13 @@ sudo update-alternatives --set awk /usr/bin/gawk
 mkdir $BUILDDIR
 cd $BUILDDIR
 git clone -b $BRANCH https://github.com/signalwire/freeswitch.git
-DISTRO=`lsb_release -cs`
+DISTRO= `lsb_release -cs`
 FS_VERSION="$(cat freeswitch/build/next-release.txt | sed -e 's/-/~/g')~n$(date +%Y%m%dT%H%M%SZ)-1~${DISTRO}+1"
+```
 
+```
 (cd freeswitch && build/set-fs-version.sh "$FS_VERSION")
-(cd freeswitch && dch -b -m -v "$FS_VERSION" --force-distribution -D "$DCH_DISTRO" "Custom build.")
+(cd freeswitch && dch -b -m -v "$FS_VERSION" --force-distribution -D "$DCH_DISTRO" "自定义构建。")
 if [ -f modules.conf ]; then cp modules.conf freeswitch/debian; fi
 (cd freeswitch/debian && ./bootstrap.sh -c ${DISTRO})
 sudo mk-build-deps -i freeswitch/debian/control
@@ -100,7 +98,9 @@ cd freeswitch-sounds
 ./debian/rules get-orig-source
 tar -xv --strip-components=1 -f *_*.orig.tar.xz && mv *_*.orig.tar.xz ../
 dpkg-buildpackage -uc -us -Zxz -z9
+```
 
+```shell
 sudo sed -i "$ a\deb file:${BUILDDIR} ./" /etc/apt/sources.list
 cd $BUILDDIR
 sudo dpkg-scanpackages . /dev/null | gzip -9c > Packages.gz
@@ -111,92 +111,92 @@ sudo cp -r /usr/share/freeswitch/conf/vanilla/* /etc/freeswitch/
 sudo adduser --disabled-password  --quiet --system --home /usr/share/freeswitch --gecos "FreeSwitch Voice Platform" --ingroup daemon freeswitch
 sudo sh -c 'chown -R freeswitch:daemon /etc/freeswitch/'
 sudo sh -c 'chown -R freeswitch:daemon /usr/share/freeswitch/'
-#fix music paths
+#修复音乐路径
 cd /usr/share/freeswitch/sounds/music
 sudo ln -s default/8000 8000
 sudo ln -s default/16000 16000
 sudo ln -s default/32000 32000
-#done!!
+#完成!!
 cd $BUILDDIR
 sudo /etc/init.d/freeswitch start
 ```
 
 ####   
-Old method for building packages
+之前构建包的老方法
 
 ```xml
-#Make sure you installed all dependencies above, and that you checked out the freeswitch code in /usr/src
+# 确保您上面安装了所有的依赖项，并且已经在 /usr/src 中检出了freeswitch代码
 #
-#To select which modules you want to create packages for (there will be a deb for each module at the end of this process),
-#create a modules.conf in the freeswitch debian directory.  If you want a copy of modules.conf to work off of, run the 
-#bootstrap script in the debian directory, then copy the generated modules_.conf to modules.conf and edit away.  
-#Run the bootstrap script again afterwards.
+# 要选择要为其创建包的模块（此过程结束时将为每个模块获取一个deb文件）
+# 在freeswitch的debin目录中创建一个modules.conf文件。如果需要从已有的modules_.conf文件开始，请运行
+# debian目录下的bootstrap脚本，然后将生成的modules_.conf文件复制为modules.conf，并进行编辑。之后再次运行bootstrap脚本。
 
 cd /usr/src/freeswitch/debian
 ./bootstrap.sh
 
-#CHECK FOR BUILD DEPENDENCIES
+# 检查编译依赖关系
 cd ..
 
-# method 1)
+# 方法一)
 dpkg-checkbuilddeps
-# if the above comes back with anything, install the packages with apt-get.
+# 如果上面的有输出内容，请使用apt-get命令安装相应的软件包。
+```
 
-# method 2)
-# (first make sure that you've installed devscripts and equivs with apt-get)
-# this has the benefit of making it easier to uninstall all the build dependencies:
+# 方法2)
+# （首先确保你已经通过apt-get安装了devscripts和equivs）
+# 这样做的好处是更容易卸载所有的构建依赖关系：
 mk-build-deps -i  
 
 
-#then:
+#然后：
 dpkg-buildpackage -b
 
 
-#This will take quite some time.  Once it is done, lets see all the debs that got created:
+#这将需要相当长的时间。一旦完成，让我们看看创建的所有的deb文件：
 cd /usr/src
 ls freeswitch*.deb
 
-#There most likely will be a crap load of files there.  Lets move the dbg packages to another directory (you can install them later if necessary).
+#那里很可能有很多文件。让我们将dbg包移动到另一个目录（如果需要，稍后可以安装它们）。
 mkdir dbg
 mv *dbg_*.deb dbg
 
-#Then install the freeswitch lib package first
+#然后首先安装freeswitch lib包
 dpkg -i libfreeswitch1_*.deb
 
-#Then install the rest of the deb packages
+#然后安装其他的deb包
 dpkg -i freeswitch*.deb
 
-#If the above command gives you problems about packages not being configured, this is most likely because you have to install certain packages before others (namely freeswitch-music and freeswitch-sounds).  Install the general packages first, then install the more specific onces (freeswitch-sounds-en, etc.)
+#如果上述命令提示有关包未配置的问题，这很可能是因为您必须先安装某些包（即freeswitch-music和freeswitch-sounds）。首先安装通用包，然后安装更特定的包（如freeswitch-sounds-en等）。
 
-#You will then need to create your own configuration directory in /etc/freeswitch. 
+#然后，您需要在/etc/freeswitch中创建自己的配置目录。
 cp /usr/src/freeswitch/conf/vanilla /etc/freeswitch
 
-#That's it!
+#就是这样！
 /etc/init.d/freeswitch start
 
-#wait for freeswitch to start and then connect to it:
+#等待freeswitch启动，然后连接到它：
 fs_cli
 ```
 
-Also, make sure to check out debian/README.source and debian/README.Debian as those are updated when significant changes are made to the debian build or setup process.
+同时，确保查看debian/README.source和debian/README.Debian，因为在对debian的构建或设置过程进行重大更改时会进行更新。
 
-### Build from source
+### 从源代码构建
 
-It's recommended to build Ubuntu packages..
+建议构建Ubuntu软件包。
 
-#### Install dependencies
+#### 安装依赖项
 
-Open a terminal window (if necessary) and then type these commands:
+打开一个终端窗口（如果需要），然后输入以下命令：
 
 ```xml
 cd /usr/src
 sudo apt-get install git-core subversion build-essential autoconf automake libtool libncurses5 libncurses5-dev make libjpeg-dev
-# optional packages
+# 可选软件包
 # sudo apt-get install libcurl4-openssl-dev libexpat1-dev libgnutls-dev libtiff4-dev libx11-dev unixodbc-dev libssl-dev python2.6-dev \
                        zlib1g-dev libzrtpcpp-dev libasound2-dev libogg-dev libvorbis-dev libperl-dev libgdbm-dev libdb-dev python-dev \
                        uuid-dev
 
-#for ubuntu 11.04+
+# 对于Ubuntu 11.04+
 sudo apt-get install gawk
 update-alternatives --set awk /usr/bin/gawk
 
@@ -205,9 +205,9 @@ cd freeswitch
 ```
 
 ###   
-Build and install with makefiles
+使用makefile构建和安装
 
-Run the following in the freeswitch directory:
+在freeswitch目录中运行以下命令：
 
 ```xml
 ./bootstrap.sh
@@ -218,16 +218,16 @@ sudo make uhd-sounds-install
 sudo make uhd-moh-install
 sudo make samples
 
-#Following the above resulted in a default install in /usr/local/ not /opt, so you must do the following
+#按照上述步骤会在/usr/local/而不是/opt/中进行默认安装，所以您需要执行以下操作
 sed /usr/src/freeswitch.git/debian/freeswitch-sysvinit.freeswitch.init -e s,opt,usr/local, >/etc/init.d/freeswitch
 chmod 755 /etc/init.d/freeswitch 
 
-#make the init.d/freeswitch script start at boot
+#使init.d/freeswitch脚本在启动时自动启动
 update-rc.d -f freeswitch defaults
 
-cp debian/freeswitch-sysvinit.freeswitch.default /etc/default/freeswitch # (** change to "true" **)
+cp debian/freeswitch-sysvinit.freeswitch.default /etc/default/freeswitch # (** 把 "false" 改为 "true" **)
 
-#Add the freeswitch user:  
+#添加freeswitch用户：  
 adduser --disabled-password  --quiet --system \
   --home /opt/freeswitch \
   --gecos "FreeSwitch Voice Platform" --ingroup daemon \
@@ -235,93 +235,90 @@ adduser --disabled-password  --quiet --system \
  
 adduser freeswitch audio
 
-#Change freeswitch installation ownership (from root)
+#更改freeswitch安装的所有权（从root更改）
 chown -R freeswitch:daemon /opt/freeswitch/
 
-#Remove permissions for other
+#删除其他用户的权限
 chmod -R o-rwx /opt/freeswitch/
 
-#Add the fs_cli to your default path
+#将fs_cli添加到默认路径
 ln -s /opt/freeswitch/bin/fs_cli /usr/local/bin/
 
-#Then either:
+#然后，要么：
 sudo shutdown -r now 
+```
 
-#or
+```markdown
+# 或者
 /etc/init.d/freeswitch start
 
-# test its startup
+# 测试其启动情况
 fs_cli
 ```
 
-###   
-Problem info from the quick and dirty page
+从快速而肮脏的页面中获取的问题信息
 
-The quick and dirty page is now generic and this info was recent and for Ubuntu:
+快速而肮脏的页面现在是通用的，这些信息是最近的，适用于Ubuntu:
 
 ```xml
-  # for Ubuntu 10.04/10.10, to get Dingaling working, you need to use the trick
-  # mentioned here: http://lists.freeswitch.org/pipermail/freeswitch-users/2010-July/060357.html .
-  # not sure whether this is FreeSWITCH configure issue or Ubuntu issue.**)
+# 对于Ubuntu 10.04/10.10，在使用Dingaling时，你需要使用这个什么trick，详情请参考：http://lists.freeswitch.org/pipermail/freeswitch-users/2010-July/060357.html 。
+# 不确定这是FreeSWITCH的配置问题还是Ubuntu的问题。
 ```
 
-###   
-Using FreeTDM with the 'direct from git' method above
+使用上述的'direct from git'方法与FreeTDM一起使用
 
-earthspike, 2011-06-05
+earthspike，2011-06-05
 
-The /dev/wan\* are owned by root.root, so this needs to change for mod\_freetdm to work correctly.
+/dev/wan* 的所有者是 root.root，因此必须更改为 mod_freetdm 正确工作。
 
-I got mine to work (on 10.04.2 LTS) by:
+我成功地解决了这个问题（在10.04.2 LTS上）：
 
-* Create user and group freeswitch as described above. Command for adding the group is  
+* 创建用户和组 freeswitch，如上所述。添加组的命令是：  
 ```xml  
 addgroup --system freeswitch  
 ```
-* Change the group ownership on the devices:  
+* 更改设备的群组所有权：  
 ```xml  
 chgrp freeswitch /dev/wan*  
 ```
 
   
-* Restart freeswitch if already running:  
+* 如果已经运行，则重新启动 freeswitch：  
 ```xml  
 /etc/init.d/freeswitch restart  
 ```
 
   
-* Use fs\_cli to check that your TDM spans are showing:  
+* 使用 fs_cli 检查你的 TDM 跨度是否显示：  
 ```xml  
 ftdm list  
 ```
 
   
-## Issues with specific Ubuntu releases
+## 特定Ubuntu版本的问题
 
-### Ubuntu 10.04 LTS 64bit
+### Ubuntu 10.04 LTS 64位
 
-**Tested Dec 23, 2010 with Ubuntu**  
-There were no issues during installation and testing.
+**已于2010年12月23日测试过Ubuntu**  
+在安装和测试过程中没有出现问题。
 
-### Ubuntu 11.10 64bit
+### Ubuntu 11.10 64位
 
-**Tested Oct 14, 2011 with Ubuntu**  
-**Tested Oct 26, 2011 with Ubuntu**  
-The default awk is now mawk and not gawk. Gawk must be installed to compile successfully. [Changes in the default GCC toolchain behavior](https://wiki.ubuntu.com/NattyNarwhal/ToolchainTransition) may require other [tweaks like the ones described here.](http://jira.freeswitch.org/browse/FS-2873)
-
-For the latest git head (2011/10/26), libz and pkg-config, are dependencies that were required to build properly. libjpeg-dev is required for spandsp
-
-```xml
- apt-get install git-core build-essential autoconf automake libtool libncurses5 libncurses5-dev gawk libjpeg-dev libz-dev pkg-config
+**已于2011年10月14日在Ubuntu上测试过**  
+**已于2011年10月26日在Ubuntu上测试过**  
+默认的 awk 现在是 mawk 而不是 gawk。要成功编译，必须安装 gawk。默认 GCC 工具链行为的更改可能需要其他[调整，例如在这里描述的调整。](http://jira.freeswitch.org/browse/FS-2873)
 ```
 
-Note: If you receive errors in libs/iksemel complaining of an expected ")" this may point to the pkg-config package not being installed. After installing pkg-config you will need to bootstrap the environment again to expand the proper aclocal macros.
+对于最新的git head（2011/10/26），`libz`和`pkg-config`是构建所需的依赖项。 为了使用`spandsp`，需要安装`libjpeg-dev`。
 
-  
-To resolve the dependency on gawk, the system awk link was updated to point to gawk using the following command
+```
+apt-get install git-core build-essential autoconf automake libtool libncurses5 libncurses5-dev gawk libjpeg-dev libz-dev pkg-config
+```
 
-```xml
+注意：如果你在`libs/iksemel`中收到错误信息，指示缺少一个“）”，这可能意味着未安装`pkg-config`软件包。 安装`pkg-config`后，您需要重新启动环境以扩展正确的`aclocal`宏。
+
+为了解决对`gawk`的依赖关系，使用以下命令将系统中的`awk`链接更新为指向`gawk`。
+
+```
 update-alternatives --set awk /usr/bin/gawk
 ```
-
-

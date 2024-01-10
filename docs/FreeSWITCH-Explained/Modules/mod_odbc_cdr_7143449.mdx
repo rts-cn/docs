@@ -1,39 +1,36 @@
+# mod_odbc_cdr
 
-# mod_odbc_cdr 
+## 关于
 
- 
+呼叫结束后，直接将通道变量插入到数据库中。
 
-## About
+点击这里展开目录
 
-Insert channel variables directly into database after call ends.
+* 1 [配置](#配置)
+* 2 [配置详情](#配置详情)
 
-Click here to expand Table of Contents
+## 配置
 
-* 1 [Configuration](#configuration)
-* 2 [Details of configuration](#details-of-configuration)
-
-## Configuration
-
-Default values are shown.
+默认值已显示。
 
 ```xml
 <configuration name="odbc_cdr.conf" description="ODBC CDR Configuration">
   <settings>
     <!-- <param name="odbc-dsn" value="database:username:password"/> -->
     <param name="odbc-dsn" value="pgsql://hostaddr=192.168.0.100 dbname=freeswitch user=freeswitch password='freeswitch' options='-c client_min_messages=NOTICE'"/>
-	<!-- global value can be "a-leg", "b-leg", "both" (default is "both") -->
+	<!-- 全局设置可以是 "a-leg", "b-leg", "both"（默认是 "both"） -->
 	<param name="log-leg" value="both"/>
-    <!-- value can be "always", "never", "on-db-fail" -->
+    <!-- 值可以是 "always", "never", "on-db-fail" -->
     <param name="write-csv" value="on-db-fail"/>
-	<!-- location to store csv copy of CDR -->
+	<!-- 存储 CDR 的 CSV 文件位置 -->
     <param name="csv-path" value="/usr/local/freeswitch/log/odbc_cdr"/>
-    <!-- if "csv-path-on-fail" is set, failed INSERTs will be placed here as CSV files otherwise they will be placed in "csv-path" -->
+    <!-- 如果设置了 "csv-path-on-fail"，失败的 INSERT 将被放在此处作为 CSV 文件，否则将放在 "csv-path" 中 -->
     <param name="csv-path-on-fail" value="/usr/local/freeswitch/log/odbc_cdr/failed"/>
-    <!-- dump SQL statement after leg ends -->
+    <!-- 在呼叫结束时转储 SQL 语句 -->
 	<param name="debug-sql" value="false"/>
   </settings>
   <tables>
-	<!-- only a-legs will be inserted into this table -->
+	<!-- 只有 a-leg 会插入到此表中 -->
     <table name="cdr_table_a_leg" log-leg="a-leg">
       <field name="CallId" chan-var-name="call_uuid"/>
       <field name="orig_id" chan-var-name="uuid"/>
@@ -50,7 +47,7 @@ Default values are shown.
       <field name="sip_endpoint_disposition" chan-var-name="endpoint_disposition"/>
       <field name="sip_current_application" chan-var-name="current_application"/>
     </table>
-	<!-- only b-legs will be inserted into this table -->
+	<!-- 只有 b-leg 会插入到此表中 -->
     <table name="cdr_table_b_leg" log-leg="b-leg">
       <field name="CallId" chan-var-name="call_uuid"/>
       <field name="orig_id" chan-var-name="uuid"/>
@@ -67,7 +64,7 @@ Default values are shown.
       <field name="sip_endpoint_disposition" chan-var-name="endpoint_disposition"/>
       <field name="sip_current_application" chan-var-name="current_application"/>
     </table>
-	<!-- both legs will be inserted into this table -->
+	<!-- 两个腿都会被插入到此表中 -->
     <table name="cdr_table_both">
       <field name="CallId" chan-var-name="uuid"/>
       <field name="orig_id" chan-var-name="Caller-Unique-ID"/>
@@ -75,23 +72,19 @@ Default values are shown.
     </table>
   </tables>
 </configuration>
-
 ```
 
-## Details of configuration
+## 配置细节
 
-The CDR data will be inserted into each &lt;table> defined in configuration.  
-The module also checks for the channel variable "odbc-cdr-ignore-leg". If "odbc-cdr-ignore-leg=true", the CDR data is ignored by mod\_odbc\_cdr. This allows you to selectively ignore channels.
+CDR数据将被插入到配置中定义的每个&lt;table>中。  
+该模块还会检查通道变量"odbc-cdr-ignore-leg"。如果"odbc-cdr-ignore-leg=true"，则CDR数据将被mod\_odbc\_cdr忽略。这样可以选择性地忽略通道。
 
 ```xml
-<!-- XML Dialplan Example usage of odbc-cdr-ignore-leg -->
+<!-- odbc-cdr-ignore-leg的XML拨号计划示例用法 -->
 <action application="set" data="odbc-cdr-ignore-leg=true"/>
-
 ```
 
-### Comments:
+### 评论:
 
-| Caller-Unique-IDIn the example the chan-var-name should be variable names, Caller-Unique-ID isn't a variable name. I think it should say call\_uuid. ![](/images/icons/contenttypes/comment_16.png) Posted by SMart at Jan 22, 2021 10:12 |
+| Caller-Unique-ID在示例中，chan-var-name应该是变量名，Caller-Unique-ID不是变量名。我认为应该是call\_uuid。![](/images/icons/contenttypes/comment_16.png) 由SMart于2021年1月22日10:12发布|
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-
-

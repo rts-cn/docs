@@ -1,70 +1,63 @@
+# mod_janus
 
-# mod_janus 
+## 关于
 
- 
+**mod_janus 可通过 github 仓库<https://github.com/freeswitch/mod%5Fjanus> 获取**
 
-## About
+**请参阅该仓库中的 README，以获取最新的文档。**
 
-  
-**mod\_janus is available from the github repo <https://github.com/freeswitch/mod%5Fjanus>**
+mod_janus 端点提供了与 Janus 音频桥接（<https://janus.conf.meetecho.com/docs/audiobridge.html>）的接口。
 
-**See the README in that repo for up to date documentation.**
-  
-  
-The mod\_janus endpoint provides an interface to the Janus audiobridge (<https://janus.conf.meetecho.com/docs/audiobridge.html>).
+这允许传统的 POTS 用户加入与已由 Janus 支持的 WebRTC 用户相同的房间。
 
-This allows legacy POTS to join the same room as the WebRTC users that are already supported by Janus.
+该模块仅支持音频呼叫，视频呼叫将被拒绝。使用长轮询的 HTTP 接口与 Janus 进行通信。不提供 WebSocket 接口。
 
-The module will only support audio calls - video calls will be rejected. The long polling HTTP interface is used in communication with Janus. No provision is given to the Websocket interface.
+点击此处展开目录
 
-Click here to expand Table of Contents
+* 1 [构建模块](#build-module)
+* 2 [启用模块](#enable-module)
+* 3 [示例配置文件](#sample-configuration-file)
+* 4 [通道变量](#channel-variables)
+* 5 [配置](#configuration)
+* 6 [控制台 API](#console-api)
+* 7 [拨号字符串](#dialstring)
 
-* 1 [Build Module](#build-module)
-* 2 [Enable Module](#enable-module)
-* 3 [Sample Configuration File](#sample-configuration-file)
-* 4 [Channel Variables](#channel-variables)
-* 5 [Configuration](#configuration)
-* 6 [Console API](#console-api)
-* 7 [Dialstring](#dialstring)
+## 构建模块
 
-## Build Module
-
-Make sure the following line is present and uncommented in /usr/src/freeswitch/modules.conf:
+确保在 /usr/src/freeswitch/modules.conf 文件中存在并取消注释以下行：
 
 ```xml
 endpoints/mod_janus
 ```
 
-Then build and install mod\_janus:
+然后构建并安装 mod_janus：
 
 ```xml
 make mod_janus-install
 ```
 
-For freeBSD, use gmake. 
+对于 freeBSD，请使用 gmake。
 
-If you have installed SSL after building the janus module, you will need to re-bootstrap, re-configure and re-build freeswitch.
+如果在构建 janus 模块后安装了 SSL，您需要重新引导、重新配置和重新构建 freeswitch。
 
-Run 'fs\_cli'.
+运行 'fs_cli'。
 
 ```xml
 load mod_janus
 ```
 
-## Enable Module
+## 启用模块
 
-Uncomment the following in [modules.conf.xml](index.mdx#about):
+取消 [modules.conf.xml](index.mdx#about) 中以下部分的注释：
 
 ```xml
 <load module="mod_janus"/>
 ```
 
-  
-## Sample Configuration File
+## 示例配置文件
 
-If called with the following dialstring ("{janus-use-existing-room=true}janus/demo/MyName@1234) this configuration file should allow you to test using the Janus audiobridge demo (<https://janus.conf.meetecho.com/audiobridgetest.html>)
+如果使用以下拨号字符串（"{janus-use-existing-room=true}janus/demo/MyName@1234"）调用，则此配置文件应允许您使用 Janus 音频桥接演示进行测试（<https://janus.conf.meetecho.com/audiobridgetest.html>）
 
-  
 ```xml
 <configuration name="janus.conf" description="Janus Endpoint">
   <settings>
@@ -84,54 +77,50 @@ If called with the following dialstring ("{janus-use-existing-room=true}janus/de
 </configuration>
 ```
 
-## Channel Variables
+## 通道变量
 
-The following channel variables are defined:
+定义了以下通道变量：
 
-* janus-use-existing-room - By default the module will create the room, if this flag is set then the caller is joined to an existing room.
-* janus-room-description - This is a textual description of the room specified in the \*create\* request to Janus (only applicable if janus-use-existing-room is false)
-* janus-room-record - The value is specified in the \*create\* request to Janus and indicates that the room mix should be recorded (only applicable if janus-use-existing-room is false). The default value is not to record.
-* janus-room-record-file - This value specifies the file name to which the recording should be written. It is passed in the \*create\* request to Janus (only applicable if janus-use-existing-room is false and janus-room-record is true). If omitted the default filename will be used.
-* janus-user-record - Janus should generate a file containing the audio from the user only. It is specified in the \*configure\* request. The default value is not to record.
-* janus-user-record-file - This specifies the base of the filename used when recording the user audio stream. If omitted the default filename will be used.
-* janus-start-muted - Included in the \*confifigure\* request to indicate that the user should enter the room muted (no mechanism exists in the module to modify the mute status later). The default value is that the user should not be muted.
+* janus-use-existing-room - 默认情况下，如果设置了该标志，模块将创建房间，否则调用者将加入现有的房间。
+* janus-room-description - 这是在向Janus发送\*create\*请求时指定的房间的文字描述（仅在janus-use-existing-room为false时适用）。
+* janus-room-record - 这个值是在向Janus发送\*create\*请求时指定的，表示房间的混音应该被录制（仅在janus-use-existing-room为false时适用）。默认值是不录制。
+* janus-room-record-file - 此值指定要将录制写入的文件名。它在向Janus发送\*create\*请求中传递（仅在janus-use-existing-room为false和janus-room-record为true时适用）。如果省略，则使用默认文件名。
+* janus-user-record - Janus应该生成一个包含用户音频的文件。它在\*configure\*请求中指定。默认值是不录制。
+* janus-user-record-file - 这个值指定在记录用户音频流时使用的文件名的基础部分。如果省略，则使用默认文件名。
+* janus-start-muted - 在\*configure\*请求中包含此项，以指示用户进入房间时静音（模块中不存在修改静音状态的机制）。默认值是用户不应该被静音。
 
-  
-## Configuration
+## 配置
 
- The configuration file consists of two sections:
+配置文件包括两个部分：
 
-1. A settings section that currently only contains the debug flag, and
-2. A list of Janus servers to connect to. Multiple servers may be defined the module can route calls to any of them.
+1. 一个设置部分，目前只包含调试标志，
+2. 一个要连接的Janus服务器列表。可以定义多个服务器，模块可以将呼叫路由到任何一个服务器。
 
- Each server contains the following fields:
+每个服务器包含以下字段：
 
-* name - is the internal name given to the server that must be specified in the dial string.
-* url - is the address of the server
-* secret - is the API secret required by Janus (if it has been enabled on the Janus end)
-* enabled - defines if the server should be brought into service when the module starts. This state may be modified by the console API. The default is false.
-* rtp-ip - see [mod\_sofia](./mod_sofia_1048707.mdx#about)
-* ext-rtp-ip - see [mod\_sofia](./mod_sofia_1048707.mdx#about)
-* apply-candidate-acl - see [mod\_sofia](./mod_sofia_1048707.mdx#about) (default is none)
-* local-network-acl - see [mod\_sofia](./mod_sofia_1048707.mdx#about) (default is "localnet.auto")
-* codec-string - the list of codecs that should be offered to Janus. Should always be Opus which is the default.
+- name - 是给服务器设置的内部名称，必须在拨号字符串中指定。
+- url - 是服务器的地址。
+- secret - 是 Janus 所需的 API 密钥（如果已在 Janus 端启用）。
+- enabled - 定义模块启动时是否应启用服务器。此状态可以通过控制台 API 进行修改。默认值为 false。
+- rtp-ip - 参见 [mod_sofia](./mod_sofia_1048707.mdx#about)。
+- ext-rtp-ip - 参见 [mod_sofia](./mod_sofia_1048707.mdx#about)。
+- apply-candidate-acl - 参见 [mod_sofia](./mod_sofia_1048707.mdx#about)（默认值为无）。
+- local-network-acl - 参见 [mod_sofia](./mod_sofia_1048707.mdx#about)（默认值为"localnet.auto"）。
+- codec-string - 应提供给 Janus 的编解码器列表。默认值应为 Opus。
 
-## Console API
+## 控制台 API
 
-The following commands are available on the console API:
+控制台 API 提供以下命令：
 
-* janus debug \[true|false\] - enables debug on/off
-* janus list - lists all the servers with the following values: name, enabled, total calls, calls in progress, start timestamp (usec) and the internal server id
-* janus server &lt;name> \[enable|disable\] - set the server active or inactive. NB because we have to wait for the long poll to complete this may take around 30 seconds.
-* janus status - totalled for all servers the following are reported: total calls, calls in progress, start timestamp (usec)
+- janus debug \[true|false\] - 开启/关闭调试模式。
+- janus list - 列出所有服务器，包括以下值：名称、是否启用、总呼叫数、进行中呼叫数、启动时间戳（使用微秒）和内部服务器 ID。
+- janus server &lt;name> \[enable|disable\] - 设置服务器的活动状态。注意，由于我们必须等待长轮询完成，此操作可能需要大约30秒。
+- janus status - 汇总所有服务器的以下信息：总呼叫数、进行中呼叫数、启动时间戳（使用微秒）。
 
-## Dialstring
+## 拨号字符串
 
- The dial string is composed of the following parts:
+拨号字符串由以下部分组成：
 
 ```xml
 /janus/<server>/<display name>@<room>
 ```
-  
-  
-

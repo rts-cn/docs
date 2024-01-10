@@ -1,34 +1,31 @@
+# 网络配置
 
-# Networking 
+## 关于
 
- 
+讨论配置FreeSWITCH™安装时需要考虑的各种问题。
 
-## About
+点击展开目录
 
-A discussion of various issues to consider when configuring a FreeSWITCH™ installation.
-
-Click to expand Table of Contents
-
-* 1 [Bandwidth](#bandwidth)
-* 2 [Network Address Translation (NAT)](#network-address-translation-nat)
-* 3 [Privileged Ports](#privileged-ports)  
+* 1 [带宽](#bandwidth)
+* 2 [网络地址转换（NAT）](#network-address-translation-nat)
+* 3 [特权端口](#privileged-ports)  
    * 3.1 [IPtables](#iptables)  
-      * 3.1.1 [IPTables Additional Info](#iptables-additional-info)  
-   * 3.2 [Linux Capabilities](#linux-capabilities)  
-      * 3.2.1 [Capabilities Additional Info](#capabilities-additional-info)
-* 4 [SonicWall Port Remapping](#sonicwall-port-remapping)
+      * 3.1.1 [IPTables附加信息](#iptables-additional-info)  
+   * 3.2 [Linux权限](#linux-capabilities)  
+      * 3.2.1 [权限附加信息](#capabilities-additional-info)
+* 4 [SonicWall端口重映射](#sonicwall-port-remapping)
 
-## Bandwidth
+## 带宽
 
-The bandwidth required by a FreeSWITCH installation depends on the codecs used to transport the RTP voice streams and the maximum simultaneous number of calls expected.
+FreeSWITCH安装所需的带宽取决于用于传输RTP语音流的编解码器以及预计的最大并发呼叫数。
 
-## Network Address Translation (NAT)
+## 网络地址转换（NAT）
 
-NAT is a pox upon the house of SIP, but there are techniques to solve some of the problems on the [NAT Traversal page](./NAT-Traversal_3375417.mdx#about).
+NAT对SIP来说是个麻烦，但有一些技术可以解决[NAT穿越页面](./NAT-Traversal_3375417.mdx#about)上的一些问题。
 
-## Privileged Ports
+## 特权端口
 
-In the unlikely event that your FreeSWITCH™ installation requires access to privileged ports (numbered below 1024), the portable method is to map the lower port number to a higher port number to which FreeSWITCH™ already has common access. An alternate method is to use the setcap command to change the effective and permitted capabilities of the freeswitch binary to allow it to access privileged ports. You must have root privileges on the machine that runs FreeSWITCH™ in order to use these commands.
+如果您的FreeSWITCH™安装需要访问特权端口（编号低于1024），则可采用以下便携式方法：将较低的端口号映射到已有通用访问权限的较高端口号。另一种方法是使用setcap命令更改freeswitch二进制文件的有效和允许的权限，以允许其访问特权端口。您必须在运行FreeSWITCH™的计算机上具有root权限才能使用这些命令。
 
 ### IPtables
 
@@ -36,42 +33,39 @@ In the unlikely event that your FreeSWITCH™ installation requires access to pr
 iptables -t nat -I PREROUTING --src 0/0 --dst 127.0.0.1 -p tcp --dport 443 -j REDIRECT --to-ports 5061 
 ```
 
-This will redirect incoming tcp packets arriving for privileged port 443 to common port 5061 on which FS is listening.
+这将把进入的TCP数据包重定向到特权端口443，转发到FreeSWITCH™正在侦听的通用端口5061。
 
-Some examples omit the `--src` and `--dst` arguments; presumably this applies the rule to all interfaces. Also, different firewall frontends require different formatting of the command and install rules in different files, so this is only a guide to direct you in the correct direction. There is MUCH more information in the links below.
+一些示例省略了 `--src` 和 `--dst` 参数；可以假设这将规则应用于所有接口。此外，不同的防火墙前端需要在不同的格式和文件中安装规则，因此本指南仅是为了指导您正确的方向。以下链接提供了更多信息。
 
-#### IPTables Additional Info
+#### IPTables附加信息
 
 [Debian wiki](https://wiki.debian.org/Firewalls-local-port-redirection)
 
-[Frozen Tux](https://www.frozentux.net/iptables-tutorial/iptables-tutorial.html#REDIRECTTARGET) tutorial
+[Frozen Tux](https://www.frozentux.net/iptables-tutorial/iptables-tutorial.html#REDIRECTTARGET)教程
 
-[Debian Administration](http://www.debian-administration.org/articles/386) article
+[Debian Administration](http://www.debian-administration.org/articles/386)文章
 
-[Stack Overflow](http://stackoverflow.com/questions/413807/is-there-a-way-for-non-root-processes-to-bind-to-privileged-ports-1024-on-l) discussion
+[Stack Overflow](http://stackoverflow.com/questions/413807/is-there-a-way-for-non-root-processes-to-bind-to-privileged-ports-1024-on-l)讨论
 
-### Linux Capabilities
+### Linux能力
 
 ```xml
-# install the capabilities package
+# 安装能力包
 apt-get install libcap2-bin
-# allow FreeSWITCH binary to access privileged ports
+# 允许FreeSWITCH二进制文件访问特权端口
 setcap 'cap_net_bind_service+ep' /usr/local/freeswitch/bin/freeswitch
 ```
 
-Capabilities are only available on newer linux kernels, so this is not a preferred solution.
+能力只在较新的Linux内核上可用，因此这不是首选解决方案。
 
-The documentation and articles do not indicate whether this is a persistent change or must be done before each invocation of the target binary. If you know, please let us know in the comments below or by opening a ticket on the [Docs JIRA](https://jira.freeswitch.org/browse/DOCS) system. Thanks.
+这份文档和文章并未说明这是否是一次性更改，还是需要在每次调用目标二进制文件之前执行。如果您知道，请在下方的评论中或通过在 [Docs JIRA](https://jira.freeswitch.org/browse/DOCS) 系统上开票告诉我们。谢谢。
 
-#### Capabilities Additional Info
+#### 能力额外信息
 
-[Stack Overflow](http://stackoverflow.com/questions/413807/is-there-a-way-for-non-root-processes-to-bind-to-privileged-ports-1024-on-l) discussion
+[Stack Overflow](http://stackoverflow.com/questions/413807/is-there-a-way-for-non-root-processes-to-bind-to-privileged-ports-1024-on-l)讨论
 
-## SonicWall Port Remapping
+## SonicWall端口重映射
 
-Some FS users have discovered that SonicWall firewalls can munge the results of a STUN lookup by remapping the candidate port to something other than what FS expects.
+一些FS用户发现SonicWall防火墙可能会通过将候选端口重新映射为FS所期望的其他值来篡改STUN查询的结果。
 
-Solve this problem by disabling "Source Port Remap" in the SonicWall Network → NAT Policies → Advanced page.
-
-  
-
+通过在SonicWall网络→ NAT策略→高级页面禁用"源端口重新映射"来解决这个问题。

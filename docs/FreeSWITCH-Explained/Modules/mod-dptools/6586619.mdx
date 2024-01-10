@@ -1,25 +1,22 @@
+# mod_dptools: media_reset
 
-# mod_dptools: media_reset 
+## 关于
 
- 
+重置所有绕过/代理媒体标志位。
 
-## About
+点击此处展开目录
 
-Reset all bypass/proxy media flags.
+* 1 [用法](#-freeswitch--mod_dptools-media_reset-)
+* 2 [示例](#示例)
+* 3 [参见](#参见)
 
-Click here to expand Table of Contents
+### 用法
 
-* 1 [Usage](#-freeswitch--mod_dptools-media_reset-)
-* 2 [Examples](#examples)
-* 3 [See Also](#see-also)
+如果在桥接后的后续呼叫中需要重置会话的媒体标志位，请使用此应用程序。
 
-### Usage
+考虑以下用例：
 
-Use this application if you need to reset the media flags of a session before bridging a subsequent call.
-
-Consider this use case:
-
-Initially, A-Leg is bridged with:
+最初，A-Leg 通过以下方式进行桥接：
 
 ```xml
 <action application="set" data="continue_on_fail=true"/>
@@ -27,36 +24,34 @@ Initially, A-Leg is bridged with:
 <action application="set" data="inherit_codec=true"/>
 ```
 
-Our first attempt is to leave FS out of the media path and let A-Leg and B-Leg to exchange media. This is good for performance.
+我们首先尝试将 FS 排除在媒体路径之外，让 A-Leg 和 B-Leg 进行媒体交换。这对性能来说是不错的。
 
-What if the call is rejected with Status 488? This normally means that negotiation between A-leg and B-leg has not been successful. In that case we can either relay 488 to the A-leg, or we can try to resend the call with a new set of codecs.
+但是，如果呼叫以状态码 488 被拒绝呢？这通常意味着 A-leg 和 B-leg 之间的协商不成功。这种情况下，我们可以将 488 转发给 A-Leg，或者尝试使用新的一组音频编解码器重新发送呼叫。
 
-Before media\_reset existed we tried:
+在 media_reset 存在之前，我们尝试过：
 
 ```xml
 <action application="set" data="bypass_media=false"/>
 <action application="set" data="inherit_codec=false"/>
-<action application="export" data="nolocal:absolute_codec_string=(...)"/> //the new set of codecs
-<action application="bridge" data="(...)"/> //bridge dialstring
+<action application="export" data="nolocal:absolute_codec_string=(...)"/> // 新的一组音频编解码器
+<action application="bridge" data="(...)"/> // 桥接号码
 ```
 
-This approach failed. If this second call was successful the provisional responses (180, 183) failed to be relayed to the A-leg. Once the call connected the audio session was correctly established, but there was no ringback tone (or any other early media).
+但是这种方法失败了。如果第二次呼叫成功，临时响应 (180, 183) 无法传递到 A-Leg。呼叫连接后，音频会话被正确建立，但是没有回铃音（或任何其他早期媒体）。
 
-The application media\_reset fixes this. The dialplan xml chunk of this second call becomes simply this:
+应用程序 media_reset 修复了这个问题。第二次呼叫的拨号计划 xml 块变得简单：
 
 ```xml
 <action application="media_reset"/>
-<action application="export" data="nolocal:absolute_codec_string=(...)"/> //the new set of codecs
-<action application="bridge" data="(...)"/> //bridge dialstring
+<action application="export" data="nolocal:absolute_codec_string=(...)"/> //新的编解码器集合
+<action application="bridge" data="(...)"/> //桥接拨号串
 ```
 
-### Examples
+### 示例
 
-* Examples needed
+* 需要示例
 
-### See Also
+### 另请参阅
 
-* [Dialplan](../../Dialplan/index.mdx#0-about)
-* [Dialplan XML](../../Dialplan/XML-Dialplan/index.mdx#about)
-
-
+* [拨号计划](../../Dialplan/index.mdx#0-about)
+* [XML拨号计划](../../Dialplan/XML-Dialplan/index.mdx#about)

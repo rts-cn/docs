@@ -1,63 +1,60 @@
-
 # mod_memcache 
 
- 
+## 关于
 
-## About
+mod_memcache为[memcached](http://www.danga.com/memcached/)实现了一个API接口，memcached是一种“高性能的、分布式内存对象缓存系统，具有通用性，但旨在通过减轻数据库负载来加快动态web应用程序的速度”。
 
-mod\_memcache implements an API interface to [memcached](http://www.danga.com/memcached/) which is a "high-performance, distributed memory object caching system, generic in nature, but intended for use in speeding up dynamic web applications by alleviating database load."
+该模块可用于分发键值对，无需使用ODBC和数据库。
 
-This module can be used to distribute key/value pairs without having to resort to using ODBC and a database.
+点击此处展开目录
 
-Click here to expand Table of Contents
-
-* 1 [Requirements](#requirements)
-* 2 [Installing](#installing)
+* 1 [要求](#requirements)
+* 2 [安装](#installing)
 * 3 [CLI](#cli)
-* 4 [Dialplan Application](#dialplan-application)
+* 4 [拨号计划应用](#dialplan-application)
 * 5 [API](#api)
-* 6 [Sharing Data With Other Applications](#sharing-data-with-other-applications)
+* 6 [与其他应用程序共享数据](#sharing-data-with-other-applications)
 
-## Requirements
+## 要求
 
-mod\_memcache requires one to have at least one [memcached](http://www.danga.com/memcached/) server running to be useful.
+mod_memcache需要至少运行一个[memcached](http://www.danga.com/memcached/)服务器才能发挥作用。
 
-## Installing
+## 安装
 
-To use mod\_memcache:
+要使用mod_memcache:
 
-Tell FreeSWITCH to compile in this module by editing modules.conf in the root of your freeswitch source tree and uncomment:
+通过编辑freeswitch源代码树中的modules.conf文件，告诉FreeSWITCH编译此模块，并取消注释：
 
 ```xml
 #applications/mod_memcache 
 ```
 
-Now go recompile FreeSWITCH.
+现在重新编译FreeSWITCH。
 
 ```xml
 make
 make install
 ```
 
-Tell FreeSWITCH to actually use the memcache module when running by adding the module to modules.conf.xml in /usr/local/freeswitch/conf/autoload\_configs:
+通过将模块添加到/usr/local/freeswitch/conf/autoload_configs目录下的modules.conf.xml文件中，告诉FreeSWITCH在运行时实际使用memcache模块：
 
 ```xml
  <load module="mod_memcache"/>
 ```
 
-Finally, edit the default config in the autoload\_configs directory to hold your memcache connection information.
+最后，编辑autoload_configs目录中的默认配置文件，以保存您的memcache连接信息。
 
-Now load up FreeSWITCH!
+现在加载FreeSWITCH！
 
 ## CLI
 
-From the commandline issue something similar to:
+从命令行输入类似以下内容的命令：
 
 ```xml
 memcache status verbose 
 ```
 
-which would respond with something like:
+它会返回类似以下内容的响应：
 
 ```xml
 Lib version: 0.27
@@ -68,11 +65,11 @@ Servers: 1
 [...]
 ```
 
-This verifies that you are actually communicating with your memcache servers.
+这证实您正在与memcache服务器进行通信。
 
-## Dialplan Application
+## 拨号计划应用
 
-The memcache API can be called from the dialplan using the ${api(args)} method. Some examples:
+memcache API可以通过`${api(args)}`方法从拨号计划中调用。以下是一些示例：
 
 ```xml
 <action application="set" data="foo=${memcache(get key)}"/>
@@ -82,46 +79,44 @@ The memcache API can be called from the dialplan using the ${api(args)} method. 
 
 ## API
 
-The API can be called via ESL or used directly from fs\_cli. There is pretty much a 1-1 relationship between the api below and the api exposed via [libmemcached](http://tangent.org/552/libmemcached.html).
+可以通过ESL调用API或直接从fs_cli中使用。下面的API和通过[libmemcached](http://tangent.org/552/libmemcached.html)暴露的API之间基本上是一对一的关系。
 
 ```xml
 memcache <set|replace|add> <key> <value> [expiration [flags]]
-  expiration is in seconds
-  flags is a 64bit (preferably hex) value
+  expiration是以秒为单位的
+  flags是一个64位（最好是十六进制）的值
 memcache <get|getflags> <key>
-  gets values or flags
+  获取值或标志
 memcache <delete> <key>
 memcache <increment|decrement> <key> [offset [expires [flags]]]
-  offset = how much to increase/decrease by
-  expires = expiration in seconds -- subsequent inc/dec operations DO NOT extend lifetime of object
-  flags = 64bit (preferably hex) value
+  offset = 增加/减少的数量
+  expires = 以秒为单位的过期时间，后续的inc/dec操作不会延长对象的生命周期
+  flags = 64位（最好是十六进制）的值
 memcache <flush>
-  remove all keys (careful if this is a shared memcache server)
+  删除所有键（如果是共享的memcache服务器，请小心）
 memcache <status> [verbose]
-  retrieve server information
+  检索服务器信息
 ```
 
-## Sharing Data With Other Applications
+## 与其他应用程序共享数据
 
-This is also very useful to share data across applications. Here an example how to share data between FreeSWITCH and a ruby memcache-client:
+这也非常有用，可以在应用程序之间共享数据。以下是如何在FreeSWITCH和Ruby memcache-client之间共享数据的示例：
 
-On Ruby/Rails set the namespace e.g. to "freeswitch" for the same memcached server in environment.rb
+在Ruby / Rails中，在environment.rb中将命名空间设置为"freeswitch"，以便为同一个memcached服务器设置相同的命名空间。
 
-In FreeSWITCH add the following line to the dialplan:
+在FreeSWITCH中，在拨号计划中添加以下行：
 
 ```xml
- <action application="set" data="ignore=${memcache(set freeswitch:test 'This is a test')}"/> 
+ <action application="set" data="ignore=${memcache(set freeswitch:test 'This is a test')}"/> 
 ```
 
-Take care to prefix your key (here "test") with the Ruby namespace "freeswitch:".
+请注意，将键（此处为"test"）使用Ruby命名空间"freeswitch:"作为前缀。
 
-Now you can receive the data in Ruby in raw mode:
+现在，你可以在Ruby中以原始模式接收数据：
 
 ```xml
  >> CACHE.get("test",0)
  => 'This is a test"
 ```
 
-The 0 as second parameter is important for the raw mode, otherwise ruby will try to marshall the result from memcached and fails.
-
-
+在原始模式下，第二个参数的0是很重要的，否则Ruby会试图对来自memcached的结果进行序列化，从而导致失败。

@@ -1,68 +1,63 @@
+# 自动 NAT
 
-# Auto Nat 
+## 关于
 
- 
+FreeSWITCH 的 "auto-nat" 功能允许 FreeSWITCH 使用 NAT-PMP 或 UPnP 发现外部 IP 地址，无需进行 STUN 查询。执行 NAT 的设备必须支持 UPnP 或 NAT-PMP 才能使用 auto-nat 功能。当 auto-nat 功能完全工作时，只需要一个 SIP 配置文件。
 
-## About
+**注意：** 仍然建议为 SIP 提供商使用第二个配置文件。默认的 conf/sip_profiles/external.xml 配置文件是专门用于与提供商配合使用的。
 
-The FreeSWITCH "auto-nat" feature allows FreeSWITCH to use NAT-PMP or UPnP to discover the external IP address. No STUN lookup is needed. The device performing the NAT _must_ support UPnP or NAT-PMP for the auto-nat feature to work. When the auto-nat feature is fully functioning, only a single SIP profile is needed.
+auto-nat 功能仅执行 NAT-PMP 和 UPnP 请求，不会退回到 STUN 等机制。如果要使用 STUN，请保持外部 RTP 和外部 SIP 选项。
 
-**NOTE:** It is still recommended that you use a second profile for your SIP providers. The default conf/sip\_profiles/external.xml is set up specifically for use with providers.
+这对那些 NAT-PMP 或 UPnP 不可靠的路由器很有用。
 
-The auto-nat feature will only perform NAT-PMP and UPnP requests and will NOT fall back in mechanisms like STUN. If you want to use STUN keep the option external rtp, external sip.
+点击此处展开目录
 
-This is useful for those routers whose NAT-PMP or UPnP are not working reliably.
+* 1 [开始之前的警告](#开始之前的警告)
+* 2 [设置](#设置)
+* 3 [进行测试通话](#进行测试通话)
+* 4 [进行测试通话并桥接到 SIP 电话](#进行测试通话并桥接到 SIP 电话)
+* 5 [autonat 和外部 IP](#autonat-和外部-ip)
+* 6 [双重 NAT](#双重-nat)
+* 7 [禁用 NAT 检测](#禁用-nat-检测)
+* 8 [故障排除](#故障排除)
+* 9 [已知与 FS UPNP 兼容的设备](#已知与-fs-upnp-兼容的设备)
+* 10 [已知与 auto-nat 兼容的 NAT-PMP 设备](#已知与-auto-nat-兼容的-nat-pmp-设备)
+* 11 [参见](#参见--)
 
-Click here to expand Table of Contents
+UPnP的一个“特点”是它会在防火墙/ NAT设备中打开一个空隙，从而允许外部主机访问您的FreeSWITCH服务器。除非您绝对有必要，否则不要使用UPnP。如果使用了UPnP，则务必采取保护措施，如更改默认密码。如果您具有1对1的NAT或具有固定的公共IP地址并且可以将其放入您的ext-sip-ip和ext-rtp-ip个人资料参数中，则不需要UPnP。
 
-* 1 [Warning Before You Get Started](#warning-before-you-get-started)
-* 2 [Setup](#setup)
-* 3 [Making A Test Call](#making-a-test-call)
-* 4 [Making A Test Call and bridging to a SIP phone](#making-a-test-call-and-bridging-to-a-sip-phone)
-* 5 [autonat and external ip](#autonat-and-external-ip)
-* 6 [Double NAT](#double-nat)
-* 7 [Disabling NAT detection](#disabling-nat-detection)
-* 8 [Troubleshooting](#troubleshooting)
-* 9 [Devices known to work with FS UPNP](#devices-known-to-work-with-fs-upnp)
-* 10 [NAT-PMP Devices known to work with auto-nat](#nat-pmp-devices-known-to-work-with-auto-nat)
-* 11 [See Also](#see-also--)
+## 设置
 
-## Warning Before You Get Started
+从一个全新的默认配置开始：
 
-One "feature" of UPnP is that it opens a hole in the firewall/NAT device that can (and often does) allow outside hosts to access your FreeSWITCH server. Do not use UPnP unless you absolutely have to. If you do use it, be sure to take protective measures like changing default passwords. You do not need UPnP if you have 1-to-1 NAT or if you have a static public IP address and can put it in your ext-sip-ip and ext-rtp-ip profile parameters. 
-
-## Setup
-
-Starting with a fresh default configuration:
-
-* Edit lines in your SIP conf files and change [them](../Configuration/Sofia-SIP-Stack/Sofia-Configuration-Files_7144453.mdx#-default-configuration-file-) as follows:  
+* 在您的SIP配置文件中编辑行，并将[这些](../Configuration/Sofia-SIP-Stack/Sofia-Configuration-Files_7144453.mdx#-default-configuration-file-)更改如下：
 ```xml  
 <param name="ext-rtp-ip" value="auto-nat"/>  
 <param name="ext-sip-ip" value="auto-nat"/>  
 ```
-* Start (or restart) FreeSWITCH. Issue the command **sofia status** and receive output like this:
-* API CALL \[sofia(status)\] output:  
+* 启动（或重新启动）FreeSWITCH。输入命令 **sofia status** 并接收以下输出：
+* API CALL \[sofia(status)\] 输出：  
 ```xml  
-                     Name          Type                               Data      State  
+                         名称          类型                               数据      状态  
 =================================================================================================  
-                 internal       profile   sip:mod_sofia@192.168.1.103:5060      RUNNING (1)  
-            192.168.1.103         alias                           internal      ALIASED  
-                  default         alias                           internal      ALIASED  
-            internal-ipv6       profile           sip:mod_sofia@[::1]:5060      RUNNING (0)  
+                     internal       profile   sip:mod_sofia@192.168.1.103:5060      运行中 (1)  
+                192.168.1.103         别名                           internal      已别名  
+                      默认         别名                           internal      已别名  
+                internal-ipv6       profile           sip:mod_sofia@[::1]:5060      运行中 (0)  
 =================================================================================================  
-2 profiles 2 aliases  
+2 个配置文件，2 个别名  
 ```
-* Issue the command **sofia status profile internal** and receive output like this:
-* API CALL [sofia(status profile internal)] output:  
+* 输入命令 **sofia status profile internal** 并接收以下输出：
+* API CALL [sofia(status profile internal)] 输出：  
 ```xml  
 =================================================================================================  
-Name                    internal  
-Domain Name             N/A  
-DBName                  sofia_reg_internal  
-Pres Hosts  
-Dialplan                XML  
-Context                 public  
-Challenge Realm         auto_from  
+名称                    internal  
+域名                 N/A  
+DB名称                  sofia_reg_internal  
+注册服务器  
+拨号计划                XML  
+上下文                 public  
+挑战领域                auto_from  
 RTP-IP                  192.168.1.103  
 Ext-RTP-IP              67.182.63.90  
 SIP-IP                  192.168.1.103  
@@ -70,56 +65,56 @@ Ext-SIP-IP              67.182.63.90
 URL                     sip:mod_sofia@192.168.1.103:5060  
 BIND-URL                sip:mod_sofia@192.168.1.103:5060  
 HOLD-MUSIC              local_stream://moh  
-OUTBOUND-PROXY          N/A  
-CODECS                  G7221@32000h,G7221@16000h,G722,PCMU,PCMA,GSM  
-TEL-EVENT               101  
-DTMF-MODE               rfc2833  
+出站代理              N/A  
+编解码器                  G7221@32000h,G7221@16000h,G722,PCMU,PCMA,GSM  
+电子事件               101  
+DTMF模式               rfc2833  
 CNG                     13  
-SESSION-TO              0  
-MAX-DIALOG              0  
+会话超时              0  
+最大对话框              0  
 NOMEDIA                 false  
 LATE-NEG                false  
 PROXY-MEDIA             false  
-AGGRESSIVENAT           false  
-STUN-ENABLED            true  
-STUN-AUTO-DISABLE       false  
-CALLS-IN                0  
-FAILED-CALLS-IN         0  
-CALLS-OUT               1  
-FAILED-CALLS-OUT        0  
+AGGRESSIVENAT          false  
+STUN-启用            true  
+STUN-自动禁用       false  
+呼叫接入              0  
+接入失败呼叫            0  
+呼叫传出              1  
+传出失败呼叫            0  
 ```
-* Note the two lines with Ext-RTP-IP and Ext-SIP-IP:  
+* 请注意Ext-RTP-IP和Ext-SIP-IP这两行：
 ```xml  
 Ext-RTP-IP              67.182.63.90  
 Ext-SIP-IP              67.182.63.90  
 ```
-* If these have public IP addresses then the auto-nat feature is working. You may wish to check the NAT device to confirm that the public IP address supplied via UPnP/NAT-PMP is the actual IP address that the Internet-facing side of the device is using.
+* 如果这些行具有公共IP地址，则auto-nat功能正常工作。您可能希望检查NAT设备，以确认通过UPnP/NAT-PMP提供的公共IP地址是否确实是设备面向Internet的实际IP地址。
 
-You can also verify nat\_map is working by issuing **nat\_map status** which will give you output like:
-
-```xml
-Nat Type: UPNP, ExtIP: 76.237.11.11
-NAT port mapping enabled.
-port,proto,proto_num,sticky
-5060,udp,0,0
-5060,tcp,1,0
-5080,udp,0,0
-5080,tcp,1,0
-
-4 total.
-```
-
-During startup process you can look for a debug line to see what external IP is detected
+您还可以通过输入**nat_map status**来验证nat_map是否工作，它将给您输出如下内容：
 
 ```xml
-2009-09-11 09:42:55.962276 [INFO] switch_nat.c:406 NAT detected type: upnp, ExtIP: '83.59.46.46'
+Nat类型：UPNP，外部IP：76.237.11.11
+启用了NAT端口映射。
+端口，协议，协议号，粘性
+5060，udp，0，0
+5060，tcp，1，0
+5080，udp，0，0
+5080，tcp，1，0
+
+总计4个。
 ```
 
-NOTE : NAT detection happens irrespective of the above settings. To turn it off use "-nonat" to start freeswitch. If you still prefer to have NAT detection, but avoiding the port mapping using UPnP/NAT-PMP you can use "-nonatmap".
+在启动过程中，您可以查看调试行以查看检测到的外部IP是什么
 
-## Making A Test Call
+```xml
+2009-09-11 09:42:55.962276 [INFO] switch_nat.c:406 NAT检测到类型：upnp，外部IP：'83.59.46.46'
+```
 
-For this test I will use [portaudio](../Modules/mod_portaudio_9634724.mdx#about), but you can also register a SIP phone to make a test call - see below. We'll use the public FreeSWITCH conference echo test so that we can verify audio in both directions. If you make a call and can hear your voice echoed back to you then everything is working properly. Here's a sample console session:
+注意：无论上述设置如何，都会进行NAT检测。要关闭它，请使用“-nonat”启动freeswitch。如果您仍然希望进行NAT检测，但避免使用UPnP/NAT-PMP进行端口映射，您可以使用“-nonatmap”。
+
+## 进行测试呼叫
+
+对于此测试，我将使用[portaudio](../Modules/mod_portaudio_9634724.mdx#about)，但您也可以注册SIP电话来进行测试呼叫-请参见下文。我们将使用公共的FreeSWITCH会议回声测试，以便我们可以验证双向音频。如果您进行呼叫并能听到自己的声音回音，则一切正常工作。以下是示例控制台会话：
 
 ```xml
 freeswitch> pa call sip:9196@conference.freeswitch.org
@@ -128,146 +123,140 @@ freeswitch> pa call sip:9196@conference.freeswitch.org
 Pa_StartStream: waveInStart returned = 0x0.
 2009-06-04 13:24:58 [NOTICE] mod_PortAudio.c:1773 place_call() Channel [portaudio/sip:9196@conference.freeswitch.org] has been answered
 API CALL [pa(call sip:9196@conference.freeswitch.org)] output:
-SUCCESS:4:77d54b4c-d395-af49-8950-2fe99635a0be
+成功：4：77d54b4c-d395-af49-8950-2fe99635a0be
 
 2009-06-04 13:24:58 [INFO] mod_dialplan_xml.c:252 dialplan_hunt() Processing FreeSWITCH->sip:9196@conference.freeswitch.org in context default
-
-2009-06-04 13:24:58 [NOTICE] switch_channel.c:602 switch_channel_set_name() New Channel sofia/internal/9196@conference.freeswitch.org [b34bd3c1-11ba-c54c-a518-4ca11f756726]
-2009-06-04 13:24:58 [NOTICE] sofia.c:3605 sofia_handle_sip_i_state() Channel [sofia/internal/9196@conference.freeswitch.org] has been answered
 ```
 
-At this point you should be able to hear yourself echo. If not then you'll need to start doing network troubleshooting. See [Reporting\_Bugs](../Troubleshooting-Debugging/Reporting-Issues-to-GitHub_5046304.mdx#about) for guidelines on collecting information and interacting with the mailing list and IRC channel.
+2009-06-04 13:24:58 [NOTICE] switch_channel.c:602 switch_channel_set_name() 新通道 sofia/internal/9196@conference.freeswitch.org [b34bd3c1-11ba-c54c-a518-4ca11f756726]
+2009-06-04 13:24:58 [NOTICE] sofia.c:3605 sofia_handle_sip_i_state() 通道 [sofia/internal/9196@conference.freeswitch.org] 已接通
 
-Now hang up the call:
+此时应该能够听到自己的回音。如果不能，则需要开始进行网络故障排除。请参阅[报告错误](../Troubleshooting-Debugging/Reporting-Issues-to-GitHub_5046304.mdx#about)以获取关于收集信息和与邮件列表和IRC频道互动的指南。
+
+现在挂断通话：
 
 ```xml
 freeswitch> pa hangup
 
-2009-06-04 13:25:07 [NOTICE] mod_PortAudio.c:1549 hangup_call() Hangup portaudio/sip:9196@conference.freeswitch.org [CS_EXECUTE] [NORMAL_CLEARING]
-API CALL [pa(hangup)] output:
+2009-06-04 13:25:07 [NOTICE] mod_PortAudio.c:1549 hangup_call() 挂断 portaudio/sip:9196@conference.freeswitch.org [CS_EXECUTE] [NORMAL_CLEARING]
+API 调用 [pa(hangup)] 输出:
 OK
 
-2009-06-04 13:25:07 [NOTICE] switch_ivr_bridge.c:505 audio_bridge_on_exchange_media() Hangup sofia/internal/9196@conference.freeswitch.org [CS_EXCHANGE_MEDIA] [
-NORMAL_CLEARING]
+2009-06-04 13:25:07 [NOTICE] switch_ivr_bridge.c:505 audio_bridge_on_exchange_media() 挂断 sofia/internal/9196@conference.freeswitch.org [CS_EXCHANGE_MEDIA] [NORMAL_CLEARING]
 
-2009-06-04 13:25:07 [NOTICE] switch_core_session.c:1085 switch_core_session_thread() Session 7 (sofia/internal/9196@conference.freeswitch.org) Ended
-2009-06-04 13:25:07 [NOTICE] switch_core_session.c:1087 switch_core_session_thread() Close Channel sofia/internal/9196@conference.freeswitch.org [CS_DESTROY]
-WinMME StopStream: waiting for background thread.
-2009-06-04 13:25:08 [NOTICE] switch_core_session.c:1085 switch_core_session_thread() Session 6 (portaudio/sip:9196@conference.freeswitch.org) Ended
-2009-06-04 13:25:08 [NOTICE] switch_core_session.c:1087 switch_core_session_thread() Close Channel portaudio/sip:9196@conference.freeswitch.org [CS_DESTROY]
-```
+2009-06-04 13:25:07 [NOTICE] switch_core_session.c:1085 switch_core_session_thread() 会话 7 (sofia/internal/9196@conference.freeswitch.org) 结束
+2009-06-04 13:25:07 [NOTICE] switch_core_session.c:1087 switch_core_session_thread() 关闭通道 sofia/internal/9196@conference.freeswitch.org [CS_DESTROY]
+WinMME StopStream: 等待后台线程。
+2009-06-04 13:25:08 [NOTICE] switch_core_session.c:1085 switch_core_session_thread() 会话 6 (portaudio/sip:9196@conference.freeswitch.org) 结束
+2009-06-04 13:25:08 [NOTICE] switch_core_session.c:1087 switch_core_session_thread() 关闭通道 portaudio/sip:9196@conference.freeswitch.org [CS_DESTROY]
 
-Congratulations! If you've gotten this far then you have been spared the brunt of the NAT horrors that others have endured.
+恭喜！如果你能够走到这一步，那么你已经避免了其他人所经历的网络地址转换（NAT）的困境。
 
-## Making A Test Call and bridging to a SIP phone
+## 进行测试通话并连接到SIP电话
 
-This will call the conference and ring the sip phone for user 105 in the default domain.
+这将呼叫会议并为默认域中的用户105的SIP电话响铃。
 
 ```xml
 originate sofia/internal/9996@conference.freeswitch.org &bridge(user/105@default)
 ```
 
   
-## autonat and external ip
+## autonat和外部IP
 
-If you know your external ip, you can set it on your sofia profile and also instruct FreeSWITCH™ to set it when building the SDP:
+如果你知道自己的外部IP，你可以在sofia配置文件中设置它，同时指示FreeSWITCH™在构建SDP时也设置它：
 
 ```xml
 <param name="ext-sip-ip" value="autonat:$${external_sip_ip}"/>
 ```
 
-If you want to use the same profile to talk with things inside and outside your network you need to instruct FreeSWITCH™ when it should use the local IP and the external IP. The autonat: prefix toggles on the usage of the local-network-acl, if you prefix the IP like that it will activate the dynamic ability to tell when it should use ext-rtp-ip vs rtp-ip based on the acl match. 
+如果你想使用同一个配置文件在你的网络内外进行通信，你需要在FreeSWITCH™中指示何时使用本地IP和外部IP。autonat:前缀可以启用本地网络访问控制列表（acl）的使用，如果你像这样加上IP前缀，它将根据acl匹配来动态决定何时使用ext-rtp-ip和rtp-ip。
 
-## Double NAT
+## 双重NAT
 
-Double NAT is a scenario where two endpoints are each behind their own respective NAT devices. In the case where two FreeSWITCH servers each are behind UPnP/NAT-PMP like this:
+双重NAT是一种情况，其中两个终端分别位于各自的NAT设备之后。在两个像这样的FreeSWITCH服务器后面都有UPnP/NAT-PMP的情况下：
 
 ```xml
 FS1 <> NAT <> Internet <> NAT <> FS2
 ```
 
-... then FreeSWITCH's auto-nat can help. Set up each FreeSWITCH server like described above, then have one FreeSWITCH server register to the other.
+... 在这种情况下，FreeSWITCH的自动NAT功能可以提供帮助。按照上述描述的方式设置每个FreeSWITCH服务器，然后让一个FreeSWITCH服务器向另一个FreeSWITCH服务器注册。
 
-**SAMPLE SETUP FILES COMING SOON!!!**
+**样例设置文件即将推出！**
 
-Doublenat with eyebeam/snom :
+使用eyebeam/snom的双重NAT：
 
 Eyebeam/snom1 &lt;> NAT &lt;> Internet &lt;> NAT &lt;> FS
 
-Also
+同时
 
 Eyebeam/snom2 &lt;> Internet &lt;> NAT &lt;> FS
 
-Both "work" with audio both ways. snom1 could call snom2 and vice versa and also other phones on the LAN. Found that call is hung up with a "BYE" from FS stating reason is "ACK timeout" although "ACK" was being received at FS (and there was still audio, so shouldn't be due to RTP timeouts). Not sure if this is due to some wrong setup etc. Will update once it is clear. Eyebeam had stun enabled. FS had stun disabled and autonat enabled. Router was netgear FVS318 wireless. Same issue with snom 320 as well.
+**两者之间都可以"双向通信音频"。snom1可以呼叫snom2，反之亦然，还可以与局域网上的其他电话进行通信。发现呼叫在FS发送的"BYE"命令中挂断，原因是"ACK超时"，尽管FS收到了"ACK"（而且仍然有音频，所以不应该是RTP超时导致的）。不确定是否由于某些错误的设置等原因造成的。等弄清楚后会更新。Eyebeam已启用STUN。FS已禁用STUN并启用自动NAT。路由器是Netgear FVS318无线路由器。snom 320也存在相同问题。**
 
-## Disabling NAT detection
+# 禁用NAT检测
 
-To turn it off use "-nonat" to start FreeSWITCH. If you still prefer to have NAT detection, but want to avoid the port mapping using UPnP/NAT-PMP you can use "-nonatmap".
+要关闭这个功能，请在启动FreeSWITCH时添加"-nonat"。如果您仍然喜欢具有NAT检测功能，但希望避免使用UPnP/NAT-PMP进行端口映射，可以使用"-nonatmap"选项。
 
-## Troubleshooting
+# 故障排除
 
-&lt;stub>
+<stub>
 
-Upnp part :
+UPnP部分：
 
-* FS with autonat opens SIP ports at startup and RTP ports dynamically
-* Router must support upnp. Some routers like netgear FVS318 wireless, shows a table of upnp port mappings whey they are created by upnp devices like FS. Use this to check if ports are being opened properly.
-* On FS side, you can do "nat\_map add 1234 udp" on the console and check if the ports are getting opened in the router. If router has a feature of showing a table of mappings, use it. Otherwise perhaps you can use "nat\_map add 1234 tcp", and then try to telnet from wan side of the router (if you can) and check if the port is open.
+* autonat的FS在启动时会打开SIP端口，并动态打开RTP端口
+* 路由器必须支持UPnP。某些路由器（如Netgear FVS318无线路由器）在由FS等UPnP设备创建端口映射时会显示一个upnp端口映射列表。您可以使用此列表检查端口是否被正确打开。
+* 在FS端，您可以在控制台上执行"nat_map add 1234 udp"命令，并检查端口是否在路由器中打开。如果路由器支持显示映射列表的功能，请使用它。否则，您可以尝试执行"nat_map add 1234 tcp"，然后从路由器的WAN侧（如果可以的话）使用telnet检查端口是否打开。
 
-(You have to delete this mapping manually after issuing above command. To remove the mapping, use "delete" instead of "add").
+（在执行上述命令后，您必须手动删除此映射。要删除映射，请使用"add"之外的"delete"命令）。
 
-* On FS logs, you can check in the console log (DEBUG) if when a call is placed and in progress it shows switch\_nat\_add\_mapping\_upnp() for adding, and switch\_nat\_del\_mapping\_upnp() for deleting ports.
-* miniupnpc comes with a test program. cd into libs/miniupnpc and type "make". This will produce a file "upnpc-static". Use the "-l" option to list existing maps. You can also create/delete maps and get other information from the gateway device.
-* Get the tool call "UPnP port works" (from [download.com](http://download.com)) Using this you can check the list of ports and even add/remove them. You can use this to test if the UPnP on the router works. (I have found this to not work sometimes, but if I run BaUPnP ([download.com](http://download.com)) first and then this it always worked.) Even if you forward the SIP ports, note that ultimately you want FS to be able to add / remove ports or it can't do this for RTP ports and you may not have audio.
-* You can capture the UPnP or NAT-PMP traffic using tcpdump or wireshark. For UPnP, capture using a filter of 'host 239.255.255.250' and for NAT-PMP use a filter of 'host 224.0.0.1'.
+* 在FS日志中，您可以在控制台日志（DEBUG）中检查是否在拨打和进行中的通话中显示switch_nat_add_mapping_upnp()以添加，以及switch_nat_del_mapping_upnp()以删除端口。
+* miniupnpc附带了一个测试程序。进入libs/miniupnpc目录，并键入"make"。这将生成一个名为"upnpc-static"的文件。使用"-l"选项列出现有的映射。您还可以从网关设备中创建/删除映射并获取其他信息。
+* 获取名为"UPnP端口工作"的工具（从[download.com](http://download.com)）。使用此工具，您可以检查端口列表，甚至添加/删除它们。您可以使用此工具测试路由器上的UPnP功能是否正常工作。（我发现有时候这种方法不起作用，但如果我首先运行BaUPnP（从[download.com](http://download.com)）然后运行该工具，它总是可以正常工作。）即使您将SIP端口转发，也请注意最终您希望FS能够添加/删除端口，否则它无法针对RTP端口执行此操作，您可能无法听到声音。
+* 您可以使用tcpdump或wireshark捕获UPnP或NAT-PMP流量。对于UPnP，请使用过滤器'host 239.255.255.250'进行捕获，对于NAT-PMP，请使用过滤器'host 224.0.0.1'进行捕获。
 
-Overall :
+总的来说：
 
-* Always try echo test first before trying phone to phone. If echo test fails, then try to fix that first.
+* 在尝试打电话之前，始终首先尝试回声测试。如果回声测试失败，请首先尝试修复它。
 
-  
-Issues with FS UPnP
+与FS UPnP有关的问题
 
-* I have found that "UPnP port works" s/w was able to add / remove ports to the FS ip, but the nat\_map command in the console did not. Please post similar experiences here and report to have them fixed.
+* 我发现“UPnP端口工作”软件能够向FS ip添加/删除端口，但是控制台中的nat_map命令却无法执行此操作。请在这里发布类似的经验，并报告以修复它们。
 
-## Devices known to work with FS UPNP
+已知与FS UPnP兼容的设备
 
-* Linksys WRTxxx with dd-wrt or tomato firmware. dd-wrt version v24sp1 works functionally, but the UPNP UI page is always empty.
-* Linksys WRT54GL with dd-wrt v24-sp2 10/10/09 std -or- v24 preSP2\[Beta\] Build 13064 (recommended) drops 5060 and 5080 tcp/upd mappings. The connections will be up for a minute or so, and then gone. (10/7/2010)  
-   * above is also true for DD-WRT v24-sp2 (08/07/10) std. Tried adjusting timeouts in Administration->Management->IP Filter Settings (adjust these for P2P) with no joy.
-* Tomato Version 1.28 on a wrt54gl works well (working for several weeks so far...).
-* Linksys WRT54g2 with linksys firmware works with FS, but unreliable. FS can't open the ports sometimes. Please add your own experience.
-* AT&T Uverse Residential gateway (by 2Wire) supports NAT-PMP. I am unable to find a status page that shows current mappings.
-* Netgear FVS318 wireless supports upnp and shows a table of portmappings. Worked with FS autonat.
-* Dlink DIR 655 wireless supports upnp, its "status"->"Internet sessions" shows "Local-NAT-Internet" port mappings. Please disable its "SIP ALG" feature under "Advanced"->"Firewall Settings"->"Application Level Gateway (ALG) Configuration", otherwise the SIP gateway registrations are not stable.
+* Linksys WRTxxx带有dd-wrt或tomato固件。dd-wrt版本v24sp1在功能上运行良好，但UPNP UI页面始终为空白。
+* Linksys WRT54GL带有dd-wrt v24-sp2 10/10/09 std -or- v24 preSP2\[Beta\]构建13064（推荐）会丢失5060和5080的tcp/upd映射。连接会持续一分钟左右，然后消失。（10/7/2010）
+  * 对于DD-WRT v24-sp2（08/07/10）std也是如此。尝试在Administration->Management->IP Filter Settings（适用于P2P网络请调整这些）中调整超时时间，但没有成功。
+* Tomato版本1.28在wrt54gl上运行良好（已经运行几周了...）。
+* Linksys WRT54g2带有linksys固件与FS兼容，但不可靠。FS有时无法打开端口。请添加您自己的经验。
+* AT&T Uverse住宅网关（由2Wire提供）支持NAT-PMP。我无法找到显示当前映射的状态页面。
+* Netgear FVS318 Wireless支持UPnP，并显示一个端口映射表。与FS的自动NAT兼容。
+* Dlink DIR 655 Wireless支持UPnP，其"status"->"Internet sessions"显示"Local-NAT-Internet"的端口映射。请在"Advanced"->"Firewall Settings"->"Application Level Gateway (ALG) Configuration"下禁用其"SIP ALG"功能，否则SIP网关注册将不稳定。
 
-**Note** firmware 1.2.1 has UPNP bug, its UPNP function working for a while until after a couple of hours stopping work properly. new firmware 1.3.2NA seems to have corrected the UPNP bug per its claim, still keeping watching it on my DIR655.
+**注意**，固件版本1.2.1存在UPnP错误，其UPnP功能在一段时间后停止正常工作。新固件1.3.2NA似乎根据其声明已经修复了UPnP错误，我将继续关注我的DIR655。
 
-DLINK DIR 655's UPNP is not stable even with firmware 1.3.2NA, not recommended for production use.
+即使固件版本为1.3.2NA，DLINK DIR 655的UPnP也不稳定，不推荐用于生产环境。
 
-* Blanc Wireless G router BW54R11 Firmware 1.4.1 UPNP feature worked with FS auto-nat.
-* Netgear wgt624 is a really bad router. Please stay away from it !
-* Mikrotik routers: PC-based and RouterBoards with RouterOS v.3.25\. Previous versions not tested (maybe working all 3.xx branch)
-* Digicom wave 64 with firmware version: 2.11.62.2(RE0.C2D)3.10.16.0
-* Asus WL-520GU with dd-wrt firmware v24sp2
+* Blanc无线G路由器BW54R11固件版本1.4.1支持自动UPNP功能。
+* Netgear wgt624是一款非常糟糕的路由器，请远离它！
+* Mikrotik路由器：基于PC的和使用RouterOS v.3.25的RouterBoards。之前的版本未经测试（也许在所有3.xx分支上都能工作）。
+* Digicom wave 64固件版本：2.11.62.2(RE0.C2D)3.10.16.0
+* Asus WL-520GU使用dd-wrt固件v24sp2
 
-## NAT-PMP Devices known to work with auto-nat
+## 已知与自动NAT兼容的NAT-PMP设备
 
-* Apple Airport Extreme with Firmware 7.4.2
+* Apple Airport Extreme固件版本7.4.2
 
-Please update this wiki with list of routers as you test them
+请在测试后更新此Wiki路由器列表。
 
-## See Also  
+## 参见  
 
-[Access Control List (ACL)](./General-NAT-example-scenarios_13173280.mdx#scenario-1) (Modifying NAT behavior when matching a certain access list)
+[访问控制列表（ACL）](./General-NAT-example-scenarios_13173280.mdx#scenario-1)（修改与特定访问列表匹配时的NAT行为）
 
-[General NAT example scenarios](./General-NAT-example-scenarios_13173280.mdx#scenario-1) \- real-world examples
+[常见NAT示例场景](./General-NAT-example-scenarios_13173280.mdx#scenario-1) - 真实世界的例子
 
-[NAT](./NAT_6587473.mdx#about) \- Network Address Translation
+[NAT](./NAT_6587473.mdx#about) - 网络地址转换
 
-[NAT traversal](./NAT-Traversal_3375417.mdx#about) \- user NAT traversal
+[NAT穿越](./NAT-Traversal_3375417.mdx#about) - 用户NAT穿越
 
-[sofia ext-rtp-ip settings](https://freeswitch.org/confluence/display/~boteman/sofia.conf.xml#sofia.conf.xml-Settings)
-  
-  
-
+[sofia ext-rtp-ip设置](https://freeswitch.org/confluence/display/~boteman/sofia.conf.xml#sofia.conf.xml-Settings)

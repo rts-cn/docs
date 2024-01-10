@@ -1,22 +1,19 @@
+# JavaScript示例 - 说IVR工作时间
 
-# Javascript Example - Say IVR OfficeHours 
+## 关于
 
- 
+包含节假日、办公时间以及工作日检测的IVR
 
-## About
-
-IVR with holiday, after-hours and weekday detection
-
-Click here to expand Table of Contents
+点击此处展开目录
 
 **ivrmenuofficehours.js**
 
 ```js
- //IVR with Holiday, AfterHours, and Weekday detection
+ //具有假期、非工作时间和工作日检测的IVR
   
   var dtmftimeout = 4000;
-  var domain = "192.168.1.7"; //by default this is the ipv4 address of FreeSWITCH used for transfer to voicemail
-  var OpenforBusiness = 1; //default to open
+  var domain = "192.168.1.7"; //默认为FreeSWITCH的IPv4地址，用于转移到语音邮箱
+  var OpenforBusiness = 1; //默认为营业中
   var digitmaxlength = 0;
   objdate = new Date();
   var Hours = objdate.getHours();
@@ -41,18 +38,18 @@ Click here to expand Table of Contents
        }
      }
      return( false );
-  } //end function mycb
+  } //结束mycb函数
   
   function isholiday( Month, Date ) {
-      var Holiday = 0; //default false
+      var Holiday = 0; //默认为假
       if (Month == "12" && Date == "25") {
-        Holiday = 1; //true
+        Holiday = 1; //为真
       }
       if (Month == "7" && Date == "4") {
-        Holiday = 1; //true
+        Holiday = 1; //为真
       }
       if (Month == "1" && Date == "1") {
-        Holiday = 1; //true
+        Holiday = 1; //为真
       }
       if (Holiday == 1) {
         return true;    
@@ -99,32 +96,32 @@ Click here to expand Table of Contents
   }
   
       
-  //Holiday?
+  //是否为假期？
   if (isholiday( Month, Date )) {
-      console_log( "info", "holiday\n" );
-      OpenforBusiness = 0; //closed
+      console_log( "info", "假期\n" );
+      OpenforBusiness = 0; //关闭
   }
   
-  //Weekend?
+  //是否为周末？
   if (isweekend( Day )) {
-      console_log( "info", "weekend\n" );
-      OpenforBusiness = 0; //closed
+      console_log( "info", "周末\n" );
+      OpenforBusiness = 0; //关闭
   }
   
-  // After Hours?
+  //是否为非工作时间？
   if (isafterhours( Hours )) {
-      console_log( "info", "after hours\n" );
-      OpenforBusiness = 0; //closed
+      console_log( "info", "非工作时间\n" );
+      OpenforBusiness = 0; //关闭
   }
   
   
   if (OpenforBusiness == 1) {
-      //console_log( "info", "office hours\n" );
-      session.execute("transfer", "500 XML default"); //transfer to any extension, phone number, IVR, and more during office hours
+      //console_log( "info", "工作时间\n" );
+      session.execute("transfer", "500 XML default"); //在工作时间转移到任意分机、电话号码、IVR等
   }
   else {
       
-      //console_log( "info", "After hours\n" );
+      //console_log( "info", "非工作时间\n" );
   
       var dtmf = new Object( );
       dtmf.digits = "";
@@ -134,36 +131,36 @@ Click here to expand Table of Contents
           digitmaxlength = 1;
           session.streamFile( "/usr/local/freeswitch/sounds/custom/afterhours.wav", mycb, "dtmf 2000" );
           session.collectInput( mycb, dtmf, dtmftimeout );
-          //console_log( "info", "IVR Digit Pressed: " + dtmf.digits + "\n" );
+          //console_log( "info", "IVR按键：" + dtmf.digits + "\n" );
           
           if ( dtmf.digits == "1" ) {
-              session.execute("transfer", "501 XML default"); //transfer to extension 501
+              session.execute("transfer", "501 XML default"); //转移到分机501
           } else if ( dtmf.digits == "2" ) {
-              session.execute("transfer", "5551234 XML default"); //transfer to external number
+              session.execute("transfer", "5551234 XML default"); //转移到外部号码
           } else if ( dtmf.digits == "3" ) {
-              session.execute("transfer", "9999 XML default"); //transfer to 9999 music on hold
+              session.execute("transfer", "9999 XML default"); //转移到9999保持音乐
           } else if ( dtmf.digits == "4" ) {
-              session.execute("transfer", "5000 XML default"); //transfer to example IVR extension
+              session.execute("transfer", "5000 XML default"); //转移到示例IVR分机
           } else {
-              //transfer to voicemail
-              session.execute("voicemail", "default "+domain+" 500"); //transfer to extension 500's voicemail
+              //转移到语音邮箱
+              session.execute("voicemail", "default "+domain+" 500"); //转移到分机500的语音邮箱
           }
           
-      } //end if session.ready   
+      } //结束if session.ready   
       
-  } //end if OpenforBusiness
+  } //结束if OpenforBusiness
 ```
 
-Added Holidays through the year 2020
+添加了2020年的节假日
 
 **alternate ivrmenuofficehours.js**
 
 ```js
-//IVR with Holiday, AfterHours, and Weekday detection
+//具有假日、非工作时间和工作日检测的IVR
  
  var dtmftimeout = 4000;
- var domain = "192.168.2.1"; //by default this is the ipv4 address of FreeSWITCH used for transfer to voicemail
- var OpenforBusiness = 1; //default to open
+ var domain = "192.168.2.1"; //默认为FreeSWITCH的IPv4地址，用于转接到语音信箱
+ var OpenforBusiness = 1; //默认为开放
  var digitmaxlength = 0;
  objdate = new Date();
  var Hours = objdate.getHours();
@@ -190,16 +187,16 @@ Added Holidays through the year 2020
     return( false );
  } //end function mycb
  
- function isholiday( Month, Date ) {                  // recurring holidays on same day regardless of year
-     var Holiday = 0; //default false
+ function isholiday( Month, Date ) {                  // 每年同一天重复的节假日
+     var Holiday = 0; //默认为false
      if (Month == "12" && Date == "25") {
-       Holiday = 1; //true
+       Holiday = 1; //为true
      }
      if (Month == "7" && Date == "4") {
-       Holiday = 1; //true
+       Holiday = 1; //为true
      }
      if (Month == "1" && Date == "1") {
-       Holiday = 1; //true
+       Holiday = 1; //为true
      }
      if (Holiday == 1) {
        return true;    
@@ -207,78 +204,77 @@ Added Holidays through the year 2020
      else {
        return false;
      }
- }      
- 
+ }
 
-function isholiday( Year, Month, Date) {                             // holidays that change dates by year
-     var Holiday = 0; //default false
-     if (Year == 2008 && Month == "9" && Date == "1") {              // 2008
-       Holiday = 1; //true
+function isholiday(Year, Month, Date) {                             // 可变日期的节假日
+     var Holiday = 0; // 默认为假
+     if (Year == 2008 && Month == "9" && Date == "1") {              // 2008年
+       Holiday = 1; // 真
      }
      if (Year == 2008 && Month == "11" && Date == "27") {
-       Holiday = 1; //true
+       Holiday = 1; // 真
      }
 
 
-     if (Year == 2009 && Month == "5" && Date == "25") {              //2009
-       Holiday = 1; //true
+     if (Year == 2009 && Month == "5" && Date == "25") {              //2009年
+       Holiday = 1; // 真
      }
      if (Year == 2009 && Month == "7" && Date == "3") {
-       Holiday = 1; //true
+       Holiday = 1; // 真
      }
      if (Year == 2009 && Month == "9" && Date == "7") {
-       Holiday = 1; //true
+       Holiday = 1; // 真
      }
 
     if (Year == 2009 && Month == "11" && Date == "26") {
-       Holiday = 1; //true
+       Holiday = 1; // 真
      }
 
 
-    if (Year == 2010 && Month == "5" && Date == "31") {             //2010
-       Holiday = 1; //true
+    if (Year == 2010 && Month == "5" && Date == "31") {             //2010年
+       Holiday = 1; // 真
      }
 
 
     if (Year == 2010 && Month == "7" && Date == "5") {
-       Holiday = 1; //true
+       Holiday = 1; // 真
      }
  
 
     if (Year == 2010 && Month == "9" && Date == "6") {
-       Holiday = 1; //true
+       Holiday = 1; // 真
      }
 
     if (Year == 2010 && Month == "11" && Date == "25") {
-       Holiday = 1; //true
+       Holiday = 1; // 真
      }
 
     if (Year == 2010 && Month == "12" && Date == "24") {
-       Holiday = 1; //true
+       Holiday = 1; // 真
      }
 
-    if (Year == 2010 && Month == "12" && Date == "31") {            //New Years Day observed
-       Holiday = 1; //true
+    if (Year == 2010 && Month == "12" && Date == "31") {            // 新年假期
+       Holiday = 1; // 真
      }
 
 
-   if (Year == 2011 && Month == "5" && Date == "30") {               //2011
-       Holiday = 1; //true
+   if (Year == 2011 && Month == "5" && Date == "30") {               //2011年
+       Holiday = 1; // 真
      }
 
    if (Year == 2011 && Month == "9" && Date == "5") {               
-       Holiday = 1; //true
+       Holiday = 1; // 真
      }
 
    if (Year == 2011 && Month == "11" && Date == "24") {               
-       Holiday = 1; //true
+       Holiday = 1; // 真
      }
 
    if (Year == 2011 && Month == "12" && Date == "26") {               
-       Holiday = 1; //true
+       Holiday = 1; // 真
      }
 
-
+```python
    if (Year == 2012 && Month == "1" && Date == "2") {              //2012 
        Holiday = 1; //true
      }
@@ -358,173 +354,395 @@ function isholiday( Year, Month, Date) {                             // holidays
    if (Year == 2016 && Month == "12" && Date == "26") {               
        Holiday = 1; //true
      }
-
-
-   if (Year == 2012 && Month == "1" && Date == "2") {              //2017 
-       Holiday = 1; //true
-     }
-
-
-   if (Year == 2012 && Month == "5" && Date == "29") {              
-     }
-
-
-   if (Year == 2012 && Month == "9" && Date == "4") {              
-       Holiday = 1; //true
-     }
-
-
-   if (Year == 2012 && Month == "11" && Date == "23") {              
-       Holiday = 1; //true
-     }
-
-
-  if (Year == 2018 && Month == "5" && Date == "28") {              //2018 
-       Holiday = 1; //true
-     }
-
-
-  if (Year == 2018 && Month == "9" && Date == "3") {              
-       Holiday = 1; //true
-     }
-
-
-  if (Year == 2018 && Month == "11" && Date == "22") {              
-       Holiday = 1; //true
-     }
-
-
-  if (Year == 2019 && Month == "5" && Date == "27") {              //2019 
-       Holiday = 1; //true
-     }
-
-
-  if (Year == 2019 && Month == "9" && Date == "2") {              
-       Holiday = 1; //true
-     }
-
-
-  if (Year == 2019 && Month == "11" && Date == "28") {              
-       Holiday = 1; //true
-     }
-
-
-  if (Year == 2020 && Month == "5" && Date == "25") {              //2020
-       Holiday = 1; //true
-     }
-
- if (Year == 2020 && Month == "7" && Date == "3") {              
-       Holiday = 1; //true
-     }
-
-  if (Year == 2020 && Month == "9" && Date == "7") {              
-       Holiday = 1; //true
-     }
-
- if (Year == 2020 && Month == "11" && Date == "26") {              
-       Holiday = 1; //true
-     }
-
-
-    if (Holiday == 1) {
-       return true;    
-     }
-     else {
-       return false;
-     }
- }      
-
- function isweekday( Day ) {
-     if (Day > 1 && Day < 7) {
-         return true;
-     }
-     else {
-         return false;
-     }
- }
- 
- function isweekend( Day ) {
-     if (Day > 1 && Day < 7) {
-         return false;
-     }
-     else {
-         return true;
-     }
- }
- 
- function isofficehours( Hours ) {
-     if (Hours >= 9 && Hours < 17) {
-         return true;
-     }
-     else {
-         return false;
-     }
- }
- 
- function isafterhours( Hours ) {
-     if (Hours >= 9 && Hours < 17) {
-         return false;
-     }
-     else {
-         return true;
-     }
- }
- 
-     
- //Holiday?
- if (isholiday( Month, Date )) {
-     console_log( "info", "holiday\n" );
-     OpenforBusiness = 0; //closed
- }
- 
- //Weekend?
- if (isweekend( Day )) {
-     console_log( "info", "weekend\n" );
-     OpenforBusiness = 0; //closed
- }
- 
- // After Hours?
- if (isafterhours( Hours )) {
-     console_log( "info", "after hours\n" );
-     OpenforBusiness = 0; //closed
- }
- 
- 
- if (OpenforBusiness == 1) {
-     //console_log( "info", "office hours\n" );
-     session.execute("transfer", "500 XML default"); //transfer to any extension, phone number, IVR, and more during office hours
- }
- else {
-     
-     //console_log( "info", "After hours\n" );
- 
-     var dtmf = new Object( );
-     dtmf.digits = "";
-     if ( session.ready( ) ) {
-         session.answer( );
-         
-         digitmaxlength = 1;
-         session.streamFile( "/usr/local/freeswitch/sounds/custom/afterhours.wav", mycb, "dtmf 2000" );
-         session.collectInput( mycb, dtmf, dtmftimeout );
-         //console_log( "info", "IVR Digit Pressed: " + dtmf.digits + "\n" );
-         
-         if ( dtmf.digits == "1" ) {
-             session.execute("transfer", "501 XML default"); //transfer to extension 501
-         } else if ( dtmf.digits == "2" ) {
-             session.execute("transfer", "5551234 XML default"); //transfer to external number
-         } else if ( dtmf.digits == "3" ) {
-             session.execute("transfer", "9999 XML default"); //transfer to 9999 music on hold
-         } else if ( dtmf.digits == "4" ) {
-             session.execute("transfer", "5000 XML default"); //transfer to example IVR extension
-         } else {
-             //transfer to voicemail
-             session.execute("voicemail", "default "+domain+" 500"); //transfer to extension 500's voicemail
-         }
-         
-     } //end if session.ready   
-     
- } //end if OpenforBusiness
 ```
 
-  
+```python
+   如果 (Year == 2012 && Month == "1" && Date == "2") {              //2012
+       Holiday = 1; //true
+     }
 
+
+   如果 (Year == 2012 && Month == "5" && Date == "28") {              
+     }
+
+
+   如果 (Year == 2012 && Month == "9" && Date == "2") {              
+       Holiday = 1; //true
+     }
+
+
+   如果 (Year == 2012 && Month == "11" && Date == "22") {              
+       Holiday = 1; //true
+     }
+
+
+  如果 (Year == 2013 && Month == "5" && Date == "27") {              //2013 
+       Holiday = 1; //true
+     }
+
+
+  如果 (Year == 2013 && Month == "9" && Date == "2") {              
+       Holiday = 1; //true
+     }
+
+
+  如果 (Year == 2013 && Month == "11" && Date == "28") {              
+       Holiday = 1; //true
+     }
+
+
+ 如果 (Year == 2014 && Month == "5" && Date == "28") {              //2014 
+       Holiday = 1; //true
+     }
+
+
+  如果 (Year == 2014 && Month == "9" && Date == "1") {              
+       Holiday = 1; //true
+     }
+
+
+  如果 (Year == 2014 && Month == "11" && Date == "27") {              
+       Holiday = 1; //true
+     }
+
+
+ 如果 (Year == 2015 && Month == "5" && Date == "25") {              //2015 
+       Holiday = 1; //true
+     }
+
+
+  如果 (Year == 2015 && Month == "9" && Date == "7") {              
+       Holiday = 1; //true
+     }
+
+
+  如果 (Year == 2015 && Month == "11" && Date == "26") {              
+       Holiday = 1; //true
+     }
+
+
+   如果 (Year == 2016 && Month == "5" && Date == "30") {               //2016
+       Holiday = 1; //true
+     }
+
+   如果 (Year == 2016 && Month == "9" && Date == "5") {               
+       Holiday = 1; //true
+     }
+
+   如果 (Year == 2016 && Month == "11" && Date == "24") {               
+       Holiday = 1; //true
+     }
+
+   如果 (Year == 2016 && Month == "12" && Date == "26") {               
+       Holiday = 1; //true
+     }
+```
+
+```javascript
+if (Year == 2012 && Month == "1" && Date == "2") {              //2017 
+    Holiday = 1; //true
+}
+
+
+if (Year == 2012 && Month == "5" && Date == "29") {              
+}
+
+
+if (Year == 2012 && Month == "9" && Date == "4") {              
+    Holiday = 1; //true
+}
+
+
+if (Year == 2012 && Month == "11" && Date == "23") {              
+    Holiday = 1; //true
+}
+
+
+if (Year == 2018 && Month == "5" && Date == "28") {              //2018 
+    Holiday = 1; //true
+}
+
+
+if (Year == 2018 && Month == "9" && Date == "3") {              
+    Holiday = 1; //true
+}
+
+
+if (Year == 2018 && Month == "11" && Date == "22") {              
+    Holiday = 1; //true
+}
+
+
+if (Year == 2019 && Month == "5" && Date == "27") {              //2019 
+    Holiday = 1; //true
+}
+
+
+if (Year == 2019 && Month == "9" && Date == "2") {              
+    Holiday = 1; //true
+}
+
+
+if (Year == 2019 && Month == "11" && Date == "28") {              
+    Holiday = 1; //true
+}
+
+
+if (Year == 2020 && Month == "5" && Date == "25") {              //2020
+    Holiday = 1; //true
+}
+
+if (Year == 2020 && Month == "7" && Date == "3") {              
+    Holiday = 1; //true
+}
+
+if (Year == 2020 && Month == "9" && Date == "7") {              
+    Holiday = 1; //true
+}
+
+if (Year == 2020 && Month == "11" && Date == "26") {              
+    Holiday = 1; //true
+}
+
+
+if (Holiday == 1) {
+    return true;    
+}
+else {
+    return false;
+}
+}
+```
+
+```javascript
+如果 (Year == 2012 && Month == "1" && Date == "2") {              //2017 
+    Holiday = 1; //true
+}
+
+
+如果 (Year == 2012 && Month == "5" && Date == "29") {              
+}
+
+
+如果 (Year == 2012 && Month == "9" && Date == "4") {              
+    Holiday = 1; //true
+}
+
+
+如果 (Year == 2012 && Month == "11" && Date == "23") {              
+    Holiday = 1; //true
+}
+
+
+如果 (Year == 2018 && Month == "5" && Date == "28") {              //2018 
+    Holiday = 1; //true
+}
+
+
+如果 (Year == 2018 && Month == "9" && Date == "3") {              
+    Holiday = 1; //true
+}
+
+
+如果 (Year == 2018 && Month == "11" && Date == "22") {              
+    Holiday = 1; //true
+}
+
+
+如果 (Year == 2019 && Month == "5" && Date == "27") {              //2019 
+    Holiday = 1; //true
+}
+
+
+如果 (Year == 2019 && Month == "9" && Date == "2") {              
+    Holiday = 1; //true
+}
+
+
+如果 (Year == 2019 && Month == "11" && Date == "28") {              
+    Holiday = 1; //true
+}
+
+
+如果 (Year == 2020 && Month == "5" && Date == "25") {              //2020
+    Holiday = 1; //true
+}
+
+如果 (Year == 2020 && Month == "7" && Date == "3") {              
+    Holiday = 1; //true
+}
+
+如果 (Year == 2020 && Month == "9" && Date == "7") {              
+    Holiday = 1; //true
+}
+
+如果 (Year == 2020 && Month == "11" && Date == "26") {              
+    Holiday = 1; //true
+}
+
+
+如果 (Holiday == 1) {
+    return true;    
+}
+否则 {
+    return false;
+}
+}
+```
+
+```
+
+function isweekday( Day ) {
+    if (Day > 1 && Day < 7) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+function isweekend( Day ) {
+    if (Day > 1 && Day < 7) {
+        return false;
+    }
+    else {
+        return true;
+    }
+}
+
+function isofficehours( Hours ) {
+    if (Hours >= 9 && Hours < 17) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+function isafterhours( Hours ) {
+    if (Hours >= 9 && Hours < 17) {
+        return false;
+    }
+    else {
+        return true;
+    }
+}
+
+
+//是否放假?
+if (isholiday( Month, Date )) {
+    console_log( "info", "放假\n" );
+    OpenforBusiness = 0; //闭店
+}
+
+//是否周末?
+if (isweekend( Day )) {
+    console_log( "info", "周末\n" );
+    OpenforBusiness = 0; //闭店
+}
+
+//是否非工作时间?
+if (isafterhours( Hours )) {
+    console_log( "info", "非工作时间\n" );
+    OpenforBusiness = 0; //闭店
+}
+
+
+if (OpenforBusiness == 1) {
+    //console_log( "info", "工作时间\n" );
+    session.execute("transfer", "500 XML default"); //在工作时间转接到任何分机、电话号码、交互式语音响应等
+}
+else {
+
+    //console_log( "info", "非工作时间\n" );
+
+    var dtmf = new Object( );
+    dtmf.digits = "";
+    if ( session.ready( ) ) {
+        session.answer( );
+
+        digitmaxlength = 1;
+        session.streamFile( "/usr/local/freeswitch/sounds/custom/afterhours.wav", mycb, "dtmf 2000" );
+        session.collectInput( mycb, dtmf, dtmftimeout );
+        //console_log( "info", "用户交互式语音响应按键: " + dtmf.digits + "\n" );
+
+        if ( dtmf.digits == "1" ) {
+            session.execute("transfer", "501 XML default"); //转接到分机501
+        } else if ( dtmf.digits == "2" ) {
+            session.execute("transfer", "5551234 XML default"); //转接到外部号码
+        } else if ( dtmf.digits == "3" ) {
+            session.execute("transfer", "9999 XML default"); //转接到9999音乐保持
+        } else if ( dtmf.digits == "4" ) {
+            session.execute("transfer", "5000 XML default"); //转接到示例交互语音响应分机
+        } else {
+            //转接到语音信箱
+            session.execute("voicemail", "default "+domain+" 500"); //转接到分机500的语音信箱
+        }
+
+    } //结束 if session.ready   
+
+} //结束 if OpenforBusiness
+```
+
+（这是一个标题）
+
+
+
+![图片描述](https://example.com/image.jpg)
+
+
+
+这是一段示例文本，用于演示如何使用多行文本的翻译。
+
+以下是一个单行文本的示例：`[to_be_replaced1]`。
+
+以下是一个有序列表的示例：
+
+1. 第一项
+2. 第二项
+3. 第三项
+
+
+
+以下是一个无序列表的示例：
+
+- 第一项
+- 第二项
+- 第三项
+
+
+
+以下是一个表格的示例：
+
+| 名称       | 数量 | 价格  |
+| ---------- | ---- | ----- |
+| 商品1       | 10   | ¥100 |
+| 商品2       | 5    | ¥200 |
+| 商品3       | 3    | ¥300 |
+
+
+
+以下是一个块引用的示例：
+
+> 这是一个块引用的示例文本。
+
+
+
+以下是一个代码块的示例：
+
+```python
+def hello_world():
+    print("Hello, world!")
+```
+
+
+
+这是一段示例文本的链接：[点击这里查看](https://example.com)。
+
+这是一个强调文本的示例：*这是一段强调文本。*
+
+这是一个加粗文本的示例：**这是一段加粗文本。**
+
+
+
+希望这些示例对您的工作有所帮助！

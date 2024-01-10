@@ -1,98 +1,97 @@
-
-# Core Outline 
+# 核心轮廓 
 
  
 
-## About
+## 关于
 
-A discussion of the architecture and interfaces of FreeSWITCH.
+讨论FreeSWITCH的架构和接口。
 
-* [History](#history)
-* [Fundamentals](#fundamentals)  
-   * [Threaded Model (Parallel Operations)](#threaded-model-parallel-operations)  
-   * [Stable Protected Core](#stable-protected-core)  
-   * [Dynamic Modules](#dynamic-modules)  
-   * [Detailed Event and Logger System](#detailed-event-and-logger-system)  
-   * [Hooks into Everything](#hooks-into-everything)
-* [API Comparison](#api-comparison)  
-   * [Lua Version](#lua-version)  
-   * [C Version](#c-version)
-* [How It All Fits Together](#how-it-all-fits-together)  
-   * [Real-Time](#real-time)  
+* [历史](#历史)
+* [基础知识](#基础知识)  
+   * [线程模型（并行操作）](#线程模型并行操作)  
+   * [稳定受保护的核心](#稳定受保护的核心)  
+   * [动态模块](#动态模块)  
+   * [详细的事件和日志系统](#详细的事件和日志系统)  
+   * [与所有内容的钩子功能](#与所有内容的钩子功能)
+* [API比较](#api比较)  
+   * [Lua版本](#lua版本)  
+   * [C版本](#c版本)
+* [如何一切协同工作](#如何一切协同工作)  
+   * [实时](#实时)  
    * [FreeTDM](#freetdm)
-* [Future Plans](#future-plans)
-* [Credit](#credit)
-* [Learn More](#learn-more)
+* [未来计划](#未来计划)
+* [致谢](#致谢)
+* [了解更多](#了解更多)
 
-![Documentation](https://wiki.freeswitch.org/images/8/84/Diag1.1-small.jpg)
+![文档](https://wiki.freeswitch.org/images/8/84/Diag1.1-small.jpg)
 
-## History
+## 历史
 
-* 1999 Start of Asterisk and OpenH323
-* 2003 anthm and bkw Join Asterisk
-* 2005 First ClueCon, Asterisk 1.2 Released
-* 2006 Start of FreeSWITCH / OpenPBX
-* 2007 OpenZAP Introduced
-* 2008 FreeSWITCH 1.0 “Phoenix" Released
-* 2010 FreeTDM Supersedes OpenZAP
-* 2014 WebRTC supported, Verto RTC signaling protocol introduced
+* 1999年 Asterisk和OpenH323的开始
+* 2003年anthm和bkw加入Asterisk
+* 2005年首次举办ClueCon，发布Asterisk 1.2
+* 2006年开始FreeSWITCH / OpenPBX
+* 2007年引入OpenZAP
+* 2008年发布FreeSWITCH 1.0 “Phoenix"
+* 2010年FreeTDM代替OpenZAP
+* 2014年支持WebRTC，引入Verto RTC信令协议
 
-## Fundamentals
+## 基础知识
 
-* Threaded Model (Parallel Operations)
-* Stable Protected Core
-* Dynamic Modules to Extend Functionality
-* Detailed Event and Logger System
-* Hooks into Everything
+* 线程模型（并行操作）
+* 稳定受保护的核心
+* 动态模块扩展功能
+* 详细的事件和日志系统
+* 与所有内容的钩子功能
 
-### Threaded Model (Parallel Operations)
+### 线程模型（并行操作）
 
-* Every connection has its own thread.
-* Sub-systems run in background threads.
-* Event handlers push events into threads.
+* 每个连接都有自己的线程。
+* 子系统在后台线程中运行。
+* 事件处理程序将事件推送到线程中。
 
-### Stable Protected Core
+### 稳定受保护的核心
 
-* Critical data structures are opaque.
-* Complicated code is all in one place.
-* Complicated routines get maximum reuse.
-* Higher level code cannot be misused.
-* With each new level of API the power increases as the complexity decreases.
+* 关键数据结构是不透明的。
+* 复杂的代码集中在一处。
+* 复杂的例程最大限度地重用。
+* 高级代码不能被滥用。
+* 随着每个新的API层级的引入，功能增强，复杂性降低。
 
-### Dynamic Modules
+### 动态模块
 
-* FSAPI interface allows the addition of commands that can be accessed remotely.
-* Application interface allows creation of custom IVRs and call routing apps.
-* XML interface allows real-time dynamic access for user directory and configuration.
-* Endpoint interface connects IM and phones.
-* Formats, Automated Speech Recognition (ASR) & Text-to-Speech (TTS), and Say & Phrase Macros extend input and output capabilities.
+* FSAPI接口允许添加可以远程访问的命令。
+* 应用程序接口允许创建自定义IVR和呼叫路由应用。
+* XML接口允许实时动态访问用户目录和配置。
+* 终端接口连接即时通讯和电话。
+* 格式、自动语音识别（ASR）和文本转语音（TTS）以及说法和短语宏扩展了输入和输出能力。
 
-### Detailed Event and Logger System
+### 详细事件和日志系统
 
-* Events are fired whenever something significant happens.
-* Detailed logging makes debugging easier.
-* External applications can bind to events and track the status of the entire system.
+* 当发生重要事件时会触发事件。
+* 详细的日志记录使调试更加容易。
+* 外部应用程序可以绑定到事件并跟踪整个系统的状态。
 
-### Hooks into Everything
+### 无处不在的钩子
 
-* Learn to think 4th dimensionally!
-* Embedded languages simplify the API even more.
-* Same principle as the CGI / Web server.
+* 学会以第四维度思考！
+* 嵌入式语言更简化API。
+* 与CGI/网页服务器的原理相同。
 
-## API Comparison
+## API比较
 
-### Lua Version
+### Lua版本
 
--- answer the call
+-- 接听电话
 session:answer();
 
--- play a file
+-- 播放文件
 session:streamFile("hello.wav");
 
--- hangup
+-- 挂断
 session:hangup();
 
-### C Version
+### C版本
 
 SWITCH_STANDARD_APP(demo_function)
 {
@@ -107,49 +106,47 @@ SWITCH_STANDARD_APP(demo_function)
     switch_channel_hangup(channel, SWITCH_CAUSE_NORMAL_CLEARING);
 }
 
-## How It All Fits Together
+## 模块之间的整合
 
-* Low level C code
-* Core API
-* High level API (Module and IVR API)
-* Inter-module communication with events and API calls
-* Support for [many programming languages](https://wiki.freeswitch.org/wiki/Supported%5FProgramming%5FLanguages "Supported Programming Languages")
+* 低级C代码
+* 核心API
+* 高级API（模块和IVR API）
+* 使用事件和API调用进行模块间通信
+* 支持[多种编程语言](https://wiki.freeswitch.org/wiki/Supported%5FProgramming%5FLanguages "支持的编程语言")
 
-### Real-Time
+### 实时功能
 
-* The XML registry (dialplan, user directory, configuration, phrase macros)
-* Binding to the sections ([mod\_xml\_curl](https://wiki.freeswitch.org/wiki/Mod%5Fxml%5Fcurl "Mod xml curl"))
-* Poll based info from FSAPI (XML-RPC)
-* Push based info from events ([mod\_event\_socket](https://wiki.freeswitch.org/wiki/Mod%5Fevent%5Fsocket "Mod event socket"))
+* XML 注册表（拨号计划、用户目录、配置、短语宏）
+* 绑定到各个部分([mod\_xml\_curl](https://wiki.freeswitch.org/wiki/Mod%5Fxml%5Fcurl))
+* 从 FSAPI获取基于轮询的信息（XML-RPC)
+* 从事件获取基于推送的信息([mod\_event\_socket](https://wiki.freeswitch.org/wiki/Mod%5Fevent%5Fsocket))
 
 ### FreeTDM
 
-[FreeTDM](https://wiki.freeswitch.org/wiki/FreeTDM "FreeTDM") supports
+[FreeTDM](https://wiki.freeswitch.org/wiki/FreeTDM "FreeTDM") 支持
 
-* multiple telephony boards such as Digium and Sangoma.
-* PRI, BRI, SS7, MFC-R2 and Analog signaling.
+* 多个电信板卡，比如Digium和Sangoma。
+* PRI、BRI、SS7、MFC-R2和模拟信令。
 
-## Future Plans
+## 未来计划
 
-* Provide G.729 Licensing.
-* G.729 licenses are [now available](http://www.freeswitch.org/node/235) for Linux systems.
-* The Windows version is [in testing](http://lists.freeswitch.org/pipermail/freeswitch-dev/2010-June/003880.html).
-* Add [OPAL](https://wiki.freeswitch.org/wiki/Mod%5Fopal "Mod opal") support for improved [H.323](https://wiki.freeswitch.org/wiki/Mod%5Fh323 "Mod h323").
-* Stabilize and branch FreeSWITCH 1.0 “Phoenix".
-* Complete and release FreeSWITCH 1.2 “Dragon".
-* Release FreeSWITCH 1.4 "Gandalf"
+* 提供G.729许可证。
+* G.729许可证可以在Linux系统上[获取](http://www.freeswitch.org/node/235)。
+* Windows版本[正在测试中](http://lists.freeswitch.org/pipermail/freeswitch-dev/2010-June/003880.html)。
+* 添加[OPAL](https://wiki.freeswitch.org/wiki/Mod%5Fopal "Mod opal")支持以改进[H.323](https://wiki.freeswitch.org/wiki/Mod%5Fh323 "Mod h323")。
+* 稳定和分支FreeSWITCH 1.0 “Phoenix"。
+* 完善并发布FreeSWITCH 1.2 “Dragon"。
+* 发布FreeSWITCH 1.4 "Gandalf"。
 
-## Credit
+## 感谢
 
-* Mike Jerris (Building, Maintaining, Improving)
-* Brian West (Q/A, Community, Features)
-* Everyone who has reported a bug or submitted a patch
-* All the testers and community members
-* Fellow open source projects
-* Everyone who supports Open Source VoIP
+* Mike Jerris（构建、维护、改进）
+* Brian West（质量保证、社区、功能）
+* 所有报告漏洞或提交补丁的人
+* 所有测试者和社区成员
+* 其他开源项目
+* 所有支持开源VoIP的人
 
-## Learn More
+## 了解更多
 
-You can learn more from the [Join the Community](/confluence/pages/createpage.action?spaceKey=FREESWITCH&title=Join+the+Community&linkCreation=true&fromPageId=1048880) and the [Documentation](https://freeswitch.org/confluence)
-
-
+您可以从[加入社区](/confluence/pages/createpage.action?spaceKey=FREESWITCH&title=Join+the+Community&linkCreation=true&fromPageId=1048880)和[文档](https://freeswitch.org/confluence)了解更多信息。

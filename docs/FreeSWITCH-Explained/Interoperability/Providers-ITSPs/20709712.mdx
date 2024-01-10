@@ -1,24 +1,18 @@
-
-# Provider SignalWire (US) 
-
- 
+# 供应商 SignalWire (美国)
 
 <https://signalwire.com/blogs/product/programmable-sip-connectivity-and-routing>
 
-Inbound and outbound works globally. Config files also available at: <https://www.twilio.com/docs/sip-trunking/sample-configuration#freeswitch>.
+国际入站和出站功能可用。配置文件也可以在此处获得： <https://www.twilio.com/docs/sip-trunking/sample-configuration#freeswitch>.
 
-  
-Add the SignalWire IP addresses into the domain section under `autoload_configs/acl.conf.xml you can nslookup sip.signalwire.com`
+请将 SignalWire IP 地址添加到 `autoload_configs/acl.conf.xml` 文件的域部分，您可以使用 `nslookup sip.signalwire.com` 进行查询。
 
-  
 ```xml
 <configuration name="acl.conf" description="Network Lists">
     
 ```
 
-Registration: /usr/local/freeswitch/conf/sip\_profiles/external/
+注册：/usr/local/freeswitch/conf/sip\_profiles/external/
 
-  
 ```erl
 <include>
         <gateway name="signalwire-outbound">
@@ -38,8 +32,7 @@ Registration: /usr/local/freeswitch/conf/sip\_profiles/external/
 </include>
 ```
 
-  
-Inbound calling: /usr/local/freeswitch/conf/dialplan/public/
+入站呼叫：/usr/local/freeswitch/conf/dialplan/public/
 
 ```xml
 <include>
@@ -53,8 +46,7 @@ Inbound calling: /usr/local/freeswitch/conf/dialplan/public/
 </include>
 ```
 
-  
-Outbound calling: /usr/local/freeswitch/conf/dialplan/default/
+出站呼叫：/usr/local/freeswitch/conf/dialplan/default/
 
 ```xml
 <include>
@@ -67,41 +59,39 @@ Outbound calling: /usr/local/freeswitch/conf/dialplan/default/
    </extension>
 </include>
 ```
-
-  
-Send any SMS from Dialplan to your smartphone, notifying you of various things that happening.
+将任何来自Dialplan的短信发送到您的智能手机，通知您发生的各种事件。
 
 ```xml
     <extension name="signalwire sms curl">
       <condition field="destination_number" expression="^767$">
 
-        <!-- setup bleg uuid of this call so we we know it before hand -->
+        <!-- 设置此通话的BLEG UUID以便我们提前知道 -->
         <action application="set" inline="true" data="bleg_uuid=${create_uuid()}"/>
 
-        <!-- setup signalwire credentials -->
+        <!-- 设置SignalWire凭据 -->
         <action application="set" inline="true" data="space_name=XXXXXX"/>
         <action application="set" inline="true" data="project_key=XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"/>
         <action application="set" inline="true" data="api_token=PTXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"/>
 
-        <!-- not using '+' here, just the 11 digit number itself, see curl line below -->
+        <!-- 这里不使用"+"，只使用11位数字本身，参见下面的curl命令行 -->
         <action application="set" inline="true" data="signalwire_number=18005551212"/>
         <action application="set" inline="true" data="cellphone=18885559999"/>
 
-        <!-- urlencode your 'spaces' to '%20' so the text body will work in the url, may need to consider other untested punctuation -->
+        <!-- 将您的“空间”进行URL编码，使用“%20”以使文本正文在URL中有效，可能需要考虑其他未经测试的标点符号 -->
         <action application="set" inline="true" data="sms_body=${system(printf 'aleg ${uuid} is calling bleg ${bleg_uuid}' | sed -r 's/ /%20/g')}"/>
-
-        <!-- We need to base64 encode the basic authorization for curl request-->
-        <action application="set" inline="true" data="auth=${system(printf '${project_key}:${api_token}' | base64 --wrap 0)}"/>
-
-        <!-- notice for E.164 formatting we encode the '+' to '%2B' for the 'From' and 'To' params on the URL, and must send as post -->
-        <action application="curl" data="https://${space_name}.signalwire.com/api/laml/2010-04-01/Accounts/${project_key}/Messages.json?From=%2B${signalwire_number}&To=%2B${cellphone}&Body=${sms_body} append_headers Authorization:'basic ${auth}' post"/>
-
-        <action application="answer"/>
-        <action application="bridge" data="{origination_uuid=${bleg_uuid}}user/1004"/>
-      </condition>
-    </extension>
 ```
 
-For a more comprehensive walk through of provisioning SignalWire trunks, configuring FreeSWITCH, and best practices please see our signalwire.com docs <https://signalwire.com/blogs/product/programmable-sip-connectivity-and-routing>[.](https://www.twilio.com/blog/2014/12/getting-started-placing-outbound-calls-with-twilio-elastic-sip-trunking-and-freeswitch.html)
+```xml
+<!-- 我们需要对Curl请求的基本授权进行base64编码 -->
+<action application="set" inline="true" data="auth=${system(printf '${project_key}:${api_token}' | base64 --wrap 0)}"/>
 
+<!-- 注意：为了符合E.164格式，我们需要将'+'编码为'%2B'，并以post方式发送到URL的'From'和'To'参数 -->
+<action application="curl" data="https://${space_name}.signalwire.com/api/laml/2010-04-01/Accounts/${project_key}/Messages.json?From=%2B${signalwire_number}&To=%2B${cellphone}&Body=${sms_body} append_headers Authorization:'basic ${auth}' post"/>
 
+<action application="answer"/>
+<action application="bridge" data="{origination_uuid=${bleg_uuid}}user/1004"/>
+</condition>
+</extension>
+```
+
+有关SignalWire线路配置、FreeSWITCH配置和最佳实践的更全面步骤，请参阅signalwire.com文档<https://signalwire.com/blogs/product/programmable-sip-connectivity-and-routing>[.](https://www.twilio.com/blog/2014/12/getting-started-placing-outbound-calls-with-twilio-elastic-sip-trunking-and-freeswitch.html)

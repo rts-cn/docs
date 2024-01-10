@@ -1,111 +1,108 @@
-
 # mod_soundtouch 
 
  
 
-## About
+## 关于
 
-It's a module that uses the soundtouch library, which can do pitch shifting and other audio effects, so you can pipe the audio of a call(or any other channel audio) through this module and achieve those effects. You can specifically adjust pitch, rate, and tempo. Please note this documentation is only accurate for versions >= 1.0.2 or r9820 and greater.
+这是一个使用soundtouch库的模块，可以进行音调变换和其他音频效果，因此您可以通过此模块将通话音频（或任何其他通道音频）导入，并实现这些效果。您可以具体调整音调、速率和节奏。请注意，本文档仅适用于版本>=1.0.2或r9820及更高版本的情况。
 
-Click here to expand Table of Contents
+单击此处展开目录
 
-* 1 [Configuring](#configuring)
-* 2 [Usage](#usage)  
-   * 2.1 [Dialplan Usage](#dialplan-usage)  
-   * 2.2 [Api Usage](#api-usage)
-* 3 [DTMF Interaction](#dtmf-interaction)
-* 4 [Use in Lua](#use-in-lua)
-* 5 [See Also](#see-also)
+* 1 [配置](#configuring)
+* 2 [使用方法](#usage)  
+   * 2.1 [Dialplan使用方法](#dialplan-usage)  
+   * 2.2 [Api使用方法](#api-usage)
+* 3 [DTMF交互](#dtmf-interaction)
+* 4 [在Lua中使用](#use-in-lua)
+* 5 [参见](#see-also)
 
-## Configuring
+## 配置
 
-* Uncomment the build line in modules.conf for applications/mod\_soundtouch and (re)compile/install
-* Add a line to your conf/modules.conf.xml to load the modules: &lt;load module="mod\_soundtouch"/>
-* Note: Under GCC >= 4.3, if your compile fails, in 'source/example/SoundStretch/WavFile.cpp' add '#include &lt;cstdlib>' and '#include &lt;cstring>' and try again.
+* 在modules.conf中取消注释applications/mod\_soundtouch的构建行，然后重新编译/安装
+* 在conf/modules.conf.xml中添加一行以加载模块：&lt;load module="mod\_soundtouch"/>
+* 注意：在GCC >= 4.3的情况下，如果编译失败，则在'source/example/SoundStretch/WavFile.cpp'中添加'#include &lt;cstdlib>'和'#include &lt;cstring>'，然后重试。
 
-## Usage
+## 使用方法
 
-Initial values and what leg to hook are specified in your dialplan, afterwards if you enable the DTMF hooking you will be able to interact with it through the keypad. The soundtouch module can only interact on one leg of a session at a time. By default it hooks the recv leg, which means that if you call someone else it will hook your side and modify your voice that they hear. It is important to keep in mind that during the initial specification you can specify the pitch either absolutely or by octaves or semitones. Each will override the other, so setting more than one is pointless.
+在您的dialplan中指定初始化值和挂接位置，然后如果启用了DTMF挂接，您将能够通过键盘与其交互。soundtouch模块一次只能与会话的一个端口进行交互。默认情况下，它挂钩recv端口，这意味着如果您打电话给别人，它将挂接在您这一端并修改他们听到的声音。重要的是要记住，在初始指定过程中，您可以绝对指定音调，也可以按八度或半音进行指定。每个都会覆盖其他设置，因此设置多个是没有意义的。
 
-You are now able to use mod\_soundtouch. The API spec is:
+您现在可以使用mod\_soundtouch了。API规范如下：
 
 ```xml
 [send_leg] [hook_dtmf] [-]<X>s [-]<X>o <X>p <X>r <X>t
 ```
 
-* send\_leg - apply the filter to the send leg instead of the outgoing leg
-* hook\_dtmf - If specified it will hook the DTMF tones and modify the pitch/rate/tempo per the DTMF codes at the bottom
-* s - Adjust the pitch in semitones, values should be between -14 and 14, default 0
-* o - Adjust the pitch in octaves, values should be between -1 and 1, default 0
-* p - Set the pitch directly, value should be > 0, default 1 (lower = lower tone)
-* r - Set the rate, value should be > 0, default 1 (lower = slower)
-* t - Set the tempo, value should be > 0, default 1 (lower = slower)
+* send\_leg - 将过滤器应用于发送侧而不是呼出侧
+* hook\_dtmf - 如果指定了此选项，则会挂接DTMF音调，并根据底部的DTMF代码修改音高/速率/节奏
+* s - 在半音上调整音高，值应在-14和14之间，默认为0
+* o - 在八度上调整音高，值应在-1和1之间，默认为0
+* p - 直接设置音高，值应大于0，默认为1（更低=更低的音调）
+* r - 设置速率，值应大于0，默认为1（更低=更慢）
+* t - 设置节奏，值应大于0，默认为1（更低=更慢）
 
-### Dialplan Usage
+### 拨号计划用法
 
-One can use this in a dialplan before a bridge/etc by:
+可以在桥接之前的拨号计划中使用这个功能:
 
 ```xml
  <action application="soundtouch" data="hook_dtmf -0.3o 0.8r"/>
 ```
 
-### Api Usage
+### API用法
 
 ```xml
 soundtouch <uuid> [start|stop] [send_leg] [hook_dtmf] [-]<X>s [-]<X>o <X>p <X>r <X>t
 ```
 
-## DTMF Interaction
+## DTMF交互
 
-Once the module has been activated on a session if you specify the hook\_dtmf option it will also hook the DTMF's for whatever direction it applies to (ie if applies to send\_leg it hooks the send's dtmf's.  
-The dtmf binds can then be used to interact with the application:
+一旦在会话上激活了该模块，如果指定了 hook\_dtmf 选项，它还会挂接 DTMF，不管它适用于哪个方向（即如果适用于 send\_leg，则挂接 send 的 dtmf）。
+然后可以使用 dtmf 绑定与应用程序进行交互:
 
-* \* - Do not intercept the next dtmf
-* 1 - pitch down 0.05
-* 2 - ptich = 1
-* 3 - ptich up 0.05
-* 4 - rate down 0.05
-* 5 rate = 1
-* 6 rate up 0.05
-* 7 temp down 0.05
-* 8 temp = 1
-* 9 tempo up 0.05
-* 0 log pitch,rate,temp at level INFO
+* \* - 不拦截下一个 dtmf
+* 1 - 音高降低 0.05
+* 2 - 音高 = 1
+* 3 - 音高提高 0.05
+* 4 - 速率降低 0.05
+* 5 - 速率 = 1
+* 6 - 速率提高 0.05
+* 7 - 节奏降低 0.05
+* 8 - 节奏 = 1
+* 9 - 节奏提高 0.05
+* 0 - 在 INFO 级别上记录音高、速率、节奏
 
-## Use in Lua
+## 在Lua中使用
 
-To start soundtouch in Lua use for example (this will lower the voice pitch by 0.2 octaves):
+在Lua中启动 soundtouch，例如（这将使音调降低0.2个八度）:
 
 ```xml
 session:execute("soundtouch", "-0.2o") 
 ```
 
-To reset the pitch to normal, this method will NOT work:
+要将音调重置为正常，以下方法将不起作用:
 
 ```xml
 session:execute("soundtouch", "+0.2o") 
 ```
 
-Even this will NOT work
+甚至这样也不起作用
 
 ```xml
 session:execute("soundtouch", "0o") 
 ```
 
-You will need to explicitly "stop" soundtouch by the following command
+你需要通过下面的命令明确地 "stop" soundtouch
 
 ```xml
 session:execute("soundtouch","stop")
 ```
 
-You can subsequently do pitch/rate shifting again by issuing a fresh command e.g.
+之后您可以通过发送新的命令来进行音调/速率的重新调整，例如：
 
 ```xml
 session:execute("soundtouch","0.8r") 
 ```
 
-## See Also
+## 另请参阅
 
-* [mod\_ladspa](./mod_ladspa_6587118.mdx#about) for autotune
-
-
+* [mod\_ladspa](./mod_ladspa_6587118.mdx#about) 用于自动调音效果

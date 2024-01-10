@@ -1,67 +1,59 @@
+# Debian安装后的任务
 
-# Debian Post-Install Tasks 
+## 关于
 
- 
+通过最后一条“make”命令从源代码构建FreeSWITCH™后，您可能希望执行以下任务来设置文件和目录的权限和所有权。
 
-## About
+点击这里展开目录
 
-After the final "make" command to build FreeSWITCH™ from source, you might want to perform these tasks to set permissions and ownership of files and directories.
-
-Click here to expand Table of Contents
-
-* 1 [Starting FreeSWITCH](#starting-freeswitch)  
-   * 1.1 [Set Owner and Permissions](#set-owner-and-permissions)  
+* 1 [启动FreeSWITCH](#starting-freeswitch)  
+   * 1.1 [设置所有者和权限](#set-owner-and-permissions)  
    * 1.2 [systemd](#systemd)  
-   * 1.3 [Scheduler Priority](#scheduler-priority)
-* 2 [Is FreeSWITCH Running?](#is-freeswitch-running)
-* 3 [DNS caching](#dns-caching)
-* 4 [Proper entropy source](#proper-entropy-source)
-* 5 [Automatic time synchronization](#automatic-time-synchronization)
+   * 1.3 [调度器优先级](#scheduler-priority)
+* 2 [FreeSWITCH是否运行？](#is-freeswitch-running)
+* 3 [DNS缓存](#dns-caching)
+* 4 [合适的熵源](#proper-entropy-source)
+* 5 [自动时间同步](#automatic-time-synchronization)
 
-## Starting FreeSWITCH
+## 启动FreeSWITCH
 
-If you start FreeSWITCH for the first time without setting permissions and file ownership, the FS databases and log files will be created as user "root". Then when you change owner later FS will no longer have permission to write to these files and will fail.
+如果您在没有设置权限和文件所有权的情况下首次启动FreeSWITCH，FS数据库和日志文件将会以用户“root”创建。然后，当您稍后更改所有者时，FS将不再具有写入这些文件的权限，并且将失败。
 
-The default and preferred init system on Debian 8 (and CentOS 7) is Systemd. If you didn't revert to System V init and you're compiling Freeswitch from source code, the systemd unit file will help you get close to a working FreeSWITCH system.
+在Debian 8（和CentOS 7）上，默认且首选的初始化系统是Systemd。如果您没有切换回System V init，并且您正在编译来自源代码的FreeSWITCH，那么systemd单位文件将帮助您接近一个正常工作的FreeSWITCH系统。
 
-### Set Owner and Permissions
+### 设置所有者和权限
 
-Because you most likely built FreeSWITCH™ as root you must now create the user 'freeswitch' in group 'freeswitch' and change the FS files to owner = freeswitch and group = freeswitch and set the file mode appropriately. Execute the following commands as user root:
-
+因为您很可能以root身份构建了FreeSWITCH™，所以您现在必须以freeswitch用户创建freeswitch组，并将FS文件更改为owner = freeswitch和group = freeswitch，然后适当地设置文件模式。以root用户身份执行以下命令：  
   
-**Set owner and permissions**
+**设置所有者和权限**
 
 ```bash
-# create user 'freeswitch'
-# add it to group 'freeswitch'
-# change owner and group of the freeswitch installation
+# 创建用户 'freeswitch'
+# 将其加入 'freeswitch' 组
+# 更改 freeswitch 安装目录的所有者和组
 cd /usr/local
 groupadd freeswitch
-adduser --quiet --system --home /usr/local/freeswitch --gecos "FreeSWITCH open source softswitch" --ingroup freeswitch freeswitch --disabled-password
+adduser --quiet --system --home /usr/local/freeswitch --gecos "FreeSWITCH 开源软交换" --ingroup freeswitch freeswitch --disabled-password
 chown -R freeswitch:freeswitch /usr/local/freeswitch/ 
 chmod -R ug=rwX,o= /usr/local/freeswitch/
 chmod -R u=rwx,g=rx /usr/local/freeswitch/bin/*
 ```
 
-  
 ### systemd
 
-systemd is the service management system that replaces System V init. It is quite thorough and requires much simpler configuration scripts called **Unit Files**. systemd can start FreeSWITCH™ at boot time, monitor the application, restart it if it fails, and take other useful actions.
+systemd 是取代 System V init 的服务管理系统。它非常全面，需要更简单的配置脚本，称为 **Unit Files**。systemd 可以在启动时启动 FreeSWITCH™，监控应用程序，如果它失败了就重新启动，并执行其他有用的操作。
 
-At the time of this writing (August 2015) the optimum systemd unit file is not certain, but the following have been proven to work on Debian 8.1 systems. If you have discovered a better approach, please update this section or submit a JIRA ticket for the DOCS project so that we can capture this knowledge for the community. If you prefer to use the old sysvinit system, then use the instructions on the Debian 7 page.
+截至撰写本文（2015 年 8 月），最佳的 systemd 单元文件尚不确定，但以下方法在 Debian 8.1 系统上已被证明可行。如果您发现了更好的方法，请更新该部分或为 DOCS 项目提交一个 JIRA 票据，以便我们可以将这些知识分享给社区。如果您愿意使用旧的 sysvinit 系统，则请参考 Debian 7 页面上的说明。
 
-The systemd unit file you're going to use should be something similar to this. The pre-compiled packages come with their own systemd files and scripts to install them, although you may certainly use this as a guide if you have trouble; but be sure to observe the correct file locations as they differ between FreeSWITCH™ compiled installations and package installations.
+您将使用的 systemd 单元文件应类似于以下内容。预编译的软件包附带了自己的 systemd 文件和安装脚本，如果您遇到问题，可以使用本文作为指南；但请确保观察正确的文件位置，因为 FreeSWITCH™ 编译安装和软件包安装之间有所不同。
 
-When troubleshooting systemd difficulties look for messages in `/var/log/syslog` and `/var/log/daemon.log` and grep for freeswitch messages.
+当解决 systemd 困难时，请查看 `/var/log/syslog` 和 `/var/log/daemon.log` 中的消息，并使用 grep 查找 freeswitch 的消息。
 
-The unit file starts Freeswitch as root, so Freeswitch can set its priority, create some directories if needed, etc. Then it will drop privileges to continue running as user and group Freeswitch.
-
-**systemd unit file FreeSWITCH built from MASTER**
+**来自MASTER的systemd单元文件FreeSWITCH**
 
 ```bash
-; This file in installations built from Master can be found in 
-; /usr/src/freeswitch/debian
-; edit as needed to match your needs
+; 这个文件位于由Master构建的安装中
+; 根据需要进行编辑，以满足您的需求
 
 [Unit]
 Description=freeswitch
@@ -70,23 +62,23 @@ Requires=network.target local-fs.target
 After=network.target network-online.target local-fs.target
 
 [Service]
-; service
+; 服务
 Type=forking
 PIDFile=/usr/local/freeswitch/run/freeswitch.pid
-; PermissionsStartOnly has been deprecated in favor of the ExecStart= and similar series, see:
+; PermissionsStartOnly 已被废弃，推荐使用 ExecStart= 和类似的系列，参见:
 ; https://github.com/NixOS/nixpkgs/issues/53852
 ; PermissionsStartOnly=true
-; -nonat disables Network Address Translation probing at FreeSWITCH start, which might not be what you want!
-; blank ExecStart= line flushes the list
+; -nonat在FreeSWITCH启动时禁用网络地址转换探测，这可能不是您想要的！
+; 空白的 ExecStart= 行清空列表
 ExecStart=
 ExecStart=/usr/local/freeswitch/bin/freeswitch -u freeswitch -g freeswitch -ncwait -rp
 TimeoutStartSec=45
 TimeoutStopSec=45
-; Restart=always will ALWAYS restart FreeSWITCH even when you wish to stop it to debug and configure it
+; Restart=always 将始终重新启动 FreeSWITCH，即使您希望停止它以进行调试和配置
 Restart=on-failure
 UMask=0007
 
-; exec
+; 执行
 WorkingDirectory=/usr/local/freeswitch/bin
 User=root
 Group=daemon
@@ -98,116 +90,103 @@ LimitRTPRIO=infinity
 LimitRTTIME=7000000
 IOSchedulingClass=realtime
 IOSchedulingPriority=2
-; See https://man7.org/linux/man-pages/man7/sched.7.html for scheduler settings that vary by O/S distribution
-; the following 2 lines are recommended for bare-metal machines
+; 有关根据操作系统分发变化的调度设置，请参见 https://man7.org/linux/man-pages/man7/sched.7.html
+; 对于裸金属机器，推荐使用下面两行配置
 CPUSchedulingPolicy=rr
 CPUSchedulingPriority=89
-; the following 3 lines were found by a user to work on a MacOS VM
+; 以下三行由用户在MacOS虚拟机上测试通过
 CPUSchedulingPolicy=fifo
 CPUSchedulingPriority=1
 Nice=-19
+```
 
-[Install]
+【安装】
 WantedBy=multi-user.target
 
 ```
-
-  
-Now that the systemd unit file has been set up, you can **copy it** (do not link it) to the /etc/systemd/system directory where systemd looks for local customized files that won't be overwritten by systemd updates.
+现在，系统单位文件已经设置好，你可以**复制它**（不要链接）到/etc/systemd/system目录中，systemd会在该目录下寻找本地自定义文件，这些文件不会被systemd更新覆盖。
 
 cp /usr/src/freeswitch/debian/freeswitch-systemd.freeswitch.service /etc/systemd/system/freeswitch.service
 
-Next, notify systemd to look for changes in its configuration:
+接下来，通知systemd查看其配置中的更改：
 
 systemctl daemon-reload
 
-Now you are ready to start FreeSWITCH for the first time. Because FS is owned by user freeswitch it should create its databases and log files under that user (instead of root) so that those files will still be accessible to it under future runs.
+现在，你可以准备好第一次启动FreeSWITCH了。由于FreeSWITCH的所有者是freeswitch用户，它应该在该用户下创建其数据库和日志文件（而不是root用户），以便在以后运行中仍然可以访问这些文件。
 
 systemctl start freeswitch
 
-To stop FreeSWITCH:
+停止FreeSWITCH：
 
 systemctl stop freeswitch
 
-To configure FreeSWITCH to start automatically at boot time:
+配置FreeSWITCH在启动时自动启动：
 
 systemctl enable freeswitch
 
-  
-### Scheduler Priority
+### 调度器优先级
 
-if your filesystem supports extended attributes, execute
+如果你的文件系统支持扩展属性，请执行以下操作：
 
 setcap 'cap_net_bind_service,cap_sys_nice=+ep' /usr/local/freeswitch/bin/freeswitch
 
-to allow FreeSWITCH to increase its nice level and also to allow socket binding on low ports.
+允许FreeSWITCH提高其优先级，并允许绑定低端口。
 
-  
-If setcap is not available, remove the -rp option from ExecStart and add these lines to the unit file above to give real-time priority to the process:
+如果setcap不可用，从ExecStart中移除-rp选项，并在上面的单位文件中添加以下行以为进程提供实时优先级：
 
 ; PermissionsStartOnly=true 
 
 ExecStartPost=/usr/bin/chrt -f -p 1 $MAINPID
 
-  
-PermissionsStartOnly has been deprecated in favor of the ExecStart= and similar series, see:  
+PermissionsStartOnly已被弃用，以支持ExecStart=和类似的系列，请参阅：
 <https://github.com/NixOS/nixpkgs/issues/53852>
 
-  
-Now you can start FreeSWITCH™ for the first time to test.
+现在，你可以首次启动FreeSWITCH™进行测试。
 
-## Is FreeSWITCH Running?
+## FreeSWITCH是否正在运行？
 
-To determine if FreeSWITCH is actually running, use one of these commands:
+要确定FreeSWITCH是否实际上在运行，请使用以下命令之一：
 
   ps aux | grep freeswitch
 
   ps -e | grep freeswitch
 
-Either of the above should display a line beginning with the pid (process id) of freeswitch if it is indeed running. Ignore the line that matches the grep command since it also contains the string "freeswitch".
+要检查`freeswitch`是否正在运行，可以执行上述任意一条命令，它们会显示以pid（进程id）开头的行。忽略与`grep`命令匹配的行，因为它也包含字符串"freeswitch"。
 
-  pidof freeswitch
+`pidof`命令返回指定进程的进程id。在这种情况下，如果FreeSWITCH正在运行，你将只会看到它的pid；如果不输出任何内容，则表示FreeSWITCH没有运行。
 
-pidof returns the process id of the named process. In this case, if FreeSWITCH is running you will see only its pid; if it prints nothing at all, then FreeSWITCH is not running.
+## DNS缓存
 
-  
-## DNS caching
+默认情况下，Debian没有DNS缓存，每次查找都会从`/etc/resolv.conf`文件中的服务器中进行。**Unbound**是一个轻巧、安全且易于使用的DNS缓存服务器。
 
-By default Debian has no DNS caching and every lookup goes to server from /etc/resolv.conf. **Unbound** is light, secure and easy to use DNS caching server.
-
-apt -y install unbound   # installation  
-systemctl start unbound  # start  
-systemctl enable unbound # auto start
+```bash
+apt -y install unbound   # 安装  
+systemctl start unbound  # 启动  
+systemctl enable unbound # 开启自启动
+```
 
 ```bash
 prepend domain-name-servers 127.0.0.1;
 ```
 
-  
-line of
+应该**取消注释**`/etc/dhcp/dhclient.conf`文件中的这行，以保留`/etc/resolv.conf`的更改。
+
+## 正确的熵源
+
+在Debian系统中，如果内核版本低于5.6，可能会因为熵不足而导致加密操作出现问题。**Haveged**是一个用户空间熵守护程序，不依赖于系统熵池的标准机制来收集随机数。关于[haveged](https://tracker.debian.org/pkg/haveged)软件包的更多信息，请参阅Debian漏洞[#999811](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=999811)和[#1034361](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1034361#12)。
 
 ```bash
-/etc/dhcp/dhclient.conf
+apt -y install haveged   # 安装  
+systemctl start haveged  # 启动  
+systemctl enable haveged # 开启自启动
 ```
 
-should be **uncommented** to preserve changes of /etc/resolv.conf.
+## 自动时间同步
 
-## Proper entropy source
-
-Debian systems running kernel versions prior to 5.6 may not have sufficient entropy for proper cryptography operations. **Haveged** is a userspace entropy daemon which is not dependent upon the standard mechanisms for harvesting randomness for the system entropy pool.  See Debian bugs [#999811](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=999811) and [#1034361](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1034361#12) for more information about the [haveged](https://tracker.debian.org/pkg/haveged) package.
+**Chrony**是一个快速、安全且易于使用的时间同步守护程序。
 
 ```bash
-apt -y install haveged   # installation  
-systemctl start haveged  # start  
-systemctl enable haveged # auto start
-```
-
-## Automatic time synchronization
-
-**Chrony** is fast, secure and easy to use time synchronization daemon.
-
-```bash
-apt -y install chrony   # installation  
-systemctl start chrony  # start  
-systemctl enable chrony # auto start
+apt -y install chrony   # 安装  
+systemctl start chrony  # 启动  
+systemctl enable chrony # 开启自启动
 ```

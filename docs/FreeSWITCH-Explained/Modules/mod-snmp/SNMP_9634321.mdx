@@ -1,33 +1,29 @@
+# SNMP
 
-# SNMP 
+## 关于
 
- 
+_还在进行将FreeSWITCH集成到SNMP服务器（如snmpd）中的工作，通过[Agent X](http://en.wikipedia.org/wiki/Agent%5FExtensibility%5FProtocol)和[mod\_snmp](../mod_snmp_6586926.mdx#about)来实现_
 
-## About
+点击这里展开目录
 
-_There is also work in progress to integrate FreeSWITCH into SNMP servers (such as snmpd) using [Agent X](http://en.wikipedia.org/wiki/Agent%5FExtensibility%5FProtocol) through [mod\_snmp](../mod_snmp_6586926.mdx#about)_
+* 1 [将SNMP与FreeSWITCH集成](#snmp-integration-with-freeswitch)  
+   * 1.1 [准备数据](#-preparing-the-data-)  
+   * 1.2 [SNMP配置](#-snmp-config-)
+* 2 [如何使用Cacti配置Net-SNMP来监控FreeSWITCH](#how-to-setup-net-snmp-with-cacti-to-monitor-freeswitch)
 
-Click here to expand Table of Contents
+## 将SNMP与FreeSWITCH集成
 
-* 1 [SNMP Integration with FreeSWITCH](#snmp-integration-with-freeswitch)  
-   * 1.1 [Preparing the data](#-preparing-the-data-)  
-   * 1.2 [SNMP config](#-snmp-config-)
-* 2 [How to setup Net-SNMP with Cacti to monitor FreeSWITCH](#how-to-setup-net-snmp-with-cacti-to-monitor-freeswitch)
+这是一个正在进行中的工作。一旦我真正运行了脚本，我将提交给 Freeswitch-Contrib
 
-## SNMP Integration with FreeSWITCH
+snmpd是一个在Linux服务器上运行的进程，允许运行任意的可执行文件/脚本将数据发布到snmp OID。 snmpd是Linux本身向SNMP客户端发布统计数据的方法。
 
-This is a work in progress. Once I actually get a script running, I'll commit it to Freeswitch-Contrib
+###  准备数据 
 
-snmpd is a Linux server process that allows the running of arbitrary executables/scripts to publish data to an snmp OID. snmpd is how Linux itself publishes stats to SNMP Clients.
+在通过SNMP查询信息之前，您需要将其可用。这是通过准备几个您喜欢的脚本并让它们由SNMP守护程序执行来完成的。
 
-###  Preparing the data 
+下面是我系统上正在使用的一些脚本：
 
-Before you can query the information via SNMP you need to make it available. This is done by preparing several scripts of your liking and make them execute by SNMP daemon.
-
-  
- The following are some of scripts being used on my system:
-
-activeChannels.sh - a script that extracts the number of active channels on the system
+activeChannels.sh - 一个从系统中提取活动通道数的脚本
 
 ```xml
 #!/bin/sh
@@ -38,7 +34,7 @@ exit $CHANNELS
 
 ```
 
-currentCallsPerSec.sh - a script that extracts calls per second value on the system
+currentCallsPerSec.sh - 一个从系统中提取每秒通话数的脚本
 
 ```xml
 #!/bin/sh
@@ -49,19 +45,19 @@ exit $CALLS
 
 ```
 
-_**NOTE:**_ In recent versions of FS output of 'status' has changed and old command work no more, suggested variants:
+_**注意：**_ 在最新的FS版本中，“status”的输出已经改变，旧命令不再起作用，建议使用以下变体：
 
 ```xml
 fs_cli -x "status" | grep -o -P "(?<=\(s\) )[0-9]+(?=/)"
 ```
 
-OR
+或者
 
 ```xml
 fs_cli -x "status" | grep -o -E "[0-9]+/[0-9]+$"|awk -F/ {'print $1'}
 ```
 
-simCalls.sh - a script that extracts the number of ongoing calls on the system
+simCalls.sh - 一个提取系统上正在进行的呼叫数量的脚本
 
 ```xml
 #!/bin/sh
@@ -71,7 +67,7 @@ echo $CALLS
 exit $CALLS
 ```
 
-sipgen.sh - a script that triggers a call generator(sipp) and performs an end-to-end callon your FS system.
+sipgen.sh - 一个触发呼叫生成器(sipp)并在您的FS系统上执行端到端呼叫的脚本。
 
 ```xml
 #!/bin/bash
@@ -106,52 +102,50 @@ CMD=`$SIPP $TARGET_IP -sf $TEMPLATE_FILE -s $TARGET_SERVICE$TARGET_PHONE -r $TIC
 echo $?
 ```
 
-###  SNMP config 
+### SNMP配置
 
-Im not going to explain how to install and configure SNMP daemon as there is plenty of reference on the internet regarding this topic. One of them is here(<http://www.it-slav.net/blogs/2008/11/11/install-and-configure-snmp-on-rhel-or-centos/>) so have a look.
+我不会解释如何安装和配置SNMP守护程序，因为互联网上有很多关于这个主题的参考资料。其中之一是这里(<http://www.it-slav.net/blogs/2008/11/11/install-and-configure-snmp-on-rhel-or-centos/>)，请查阅。
 
-Anyhow, we assume SNMP daemon is installed and working on the system.
+无论如何，我们假设SNMP守护程序已安装并在系统上正常工作。
 
-Now, using your preferred text editor, open snmpd.conf and add the reference to the shell scripts mentioned above.
+现在，使用您喜欢的文本编辑器打开snmpd.conf文件，并添加对上述shell脚本的引用。
 
 ```xml
 # -----------------------------------------------------------------------------
 
 
 ########################################################## #####################
-# Executables/scripts
+# 可执行程序/脚本
 #
 
 #
-#  You can also have programs run by the agent that return a single
-#  line of output and an exit code.  Here are two examples.
+# 代理程序也可以运行返回单行输出和退出代码的程序。以下是两个例子。
 #
-#  exec NAME PROGRAM [ARGS ...]
+# exec NAME PROGRAM [ARGS ...]
 #
-#  NAME:     A generic name.
-#  PROGRAM:  The program to run. Include the path!
-#  ARGS:     optional arguments to be passed to the program
+# NAME:     通用名称。
+# PROGRAM:  要运行的程序。包括路径!
+# ARGS:     要传递给程序的可选参数
 
-# a simple hello world
+# 简单的Hello World
 exec activeChannels /usr/local/bin/activeChannels.sh
 exec currentCallsPerSec /usr/local/bin/currentCallsPerSec.sh
 exec simCalls /usr/local/bin/simCalls.sh
 exec checkCallFlowCPS /usr/local/bin/sipgen/sipgen.sh 1234 1 10
 
-# Run a shell script containing:
+# 运行一个包含以下内容的shell脚本：
 #
 # #!/bin/sh
 # echo hello world
 # echo hi there
 # exit 35
 #
-# Note:  this has been specifically commented out to prevent
-# accidental security holes due to someone else on your system writing
-# a /tmp/shtest before you do. Uncomment to use it.
+# 注意：已经将其注释掉，以防止由于系统上其他人在您之前编写了/tmp/shtest而导致意外的安全漏洞。取消注释以使用它。
 #
-#exec shelltest /bin/sh /tmp/shtest
+# exec shelltest /bin/sh /tmp/shtest
+```
 
-# Then,
+# 然后，
 # % snmpwalk -v 1 localhost public .1.3.6.1.4.1.2021.8
 # enterprises.ucdavis.extTable.extEntry.extIndex.1 = 1
 # enterprises.ucdavis.extTable.extEntry.extIndex.2 = 2
@@ -166,15 +160,15 @@ exec checkCallFlowCPS /usr/local/bin/sipgen/sipgen.sh 1234 1 10
 # enterprises.ucdavis.extTable.extEntry.extErrFix.1 = 0
 # enterprises.ucdavis.extTable.extEntry.extErrFix.2 = 0
 
-# Note that the second line of the /tmp/shtest shell script is cut
-# off. Also note that the exit status of 35 was returned.
+# 注意/tmp/shtest shell脚本的第二行被截断了。还要注意到返回了退出状态为35。
 
 # -----------------------------------------------------------------------------
+
 ```
 
-After you updated the snmp.conf file, you can try to get the values from the SNMP daemon.
+在您更新了snmp.conf文件之后，您可以尝试从SNMP守护进程获取值。
 
-Here is an example how to get your values:
+以下是一个示例，演示如何获取您的值：
 
 ```xml
 ~$ snmpwalk -v 1 myHost -c myCommunityString .1.3.6.1.4.1.2021.8    
@@ -206,10 +200,13 @@ UCD-SNMP-MIB::extErrFixCmd.1 = STRING:
 UCD-SNMP-MIB::extErrFixCmd.2 = STRING: 
 UCD-SNMP-MIB::extErrFixCmd.3 = STRING: 
 UCD-SNMP-MIB::extErrFixCmd.4 = STRING: 
-
 ```
 
-You can also query a specific value directly. Perform snmpwalk with "-On" to list it numerically:
+你还可以直接查询特定的值。使用"-On"参数以数字形式列出：
+
+```xml
+~$ snmpwalk -v 1 myHost -c myCommunityString -On .1.3.6.1.4.1.2021.8 
+```
 
 ```xml
 ~$ snmpwalk -v 1 -On myHost -c myCommunityString .1.3.6.1.4.1.2021.8 
@@ -243,7 +240,7 @@ You can also query a specific value directly. Perform snmpwalk with "-On" to lis
 .1.3.6.1.4.1.2021.8.1.103.4 = STRING:
 ```
 
-Than pick the OID of your liking and get the value of your interest.
+然后选择您喜欢的OID并获取您感兴趣的值。
 
 ```xml
 ~$ snmpwalk -v 1 -On myHost -c myCommunityString .1.3.6.1.4.1.2021.8.1.100.2
@@ -254,39 +251,37 @@ Than pick the OID of your liking and get the value of your interest.
 .1.3.6.1.4.1.2021.8.1.100.4 = INTEGER: 0
 ```
 
-## How to setup Net-SNMP with Cacti to monitor FreeSWITCH
+## 如何设置Net-SNMP和Cacti来监视FreeSWITCH
 
-**Step 1:** Follow the link below to install SNMP, Cacti, and other dependencies.
+**步骤1：** 点击下方链接安装SNMP、Cacti和其他依赖项。
 
 <http://www.cyberciti.biz/faq/fedora-rhel-install-cacti-monitoring-rrd-software/>
 
-**Step 2:** Add a script to be executed in SNMP process. Let's say that I want to monitor concurrent calls, I would create a script; for instance, I called it "curcalls" as shown below:
+**步骤2：** 添加一个脚本以在SNMP进程中执行。假设我想要监控并发呼叫，我可以创建一个脚本，例如，我将其命名为"curcalls"，如下所示：
 
 ```xml
 #!/bin/bash
 /usr/local/freeswitch/bin/fs_cli -x 'show calls count' | grep total | awk '{print $1}'
 ```
 
-**Step 3:** Add the following line in your snmpd.conf file.
+**步骤3：** 在snmpd.conf文件中添加以下行。
 
 ```xml
 exec curcalls /usr/local/bin/curcalls
 ```
 
-**Step 4:** Check to see whether you can retrieve the information from SNMP. For example,
+**步骤4：** 检查是否可以通过SNMP检索信息。例如，
 
 ```xml
 #snmpwalk -v 1 localhost -c public .1.3.6.1.4.1.2021.8.1.101
 ```
 
-You should see the response with the result similar to below.
+您应该会看到与以下类似的结果的响应。
 
 ```xml
 UCD-SNMP-MIB::extOutput.1 = STRING: 123
 ```
 
-**Step 5:** Adjust the configuration on Cacti based on your need by using the “SNMP - Generic OID Template"
+**步骤5：** 根据需要使用“SNMP - Generic OID Template”调整Cacti的配置。
 
-* Note: If you experienced an error like this: UCD-SNMP-MIB::extOutput.1 = STRING: \[ERROR\] libs/esl/fs\_cli.c:1206 main() Error Connecting \[Socket Connection Error\], check your SELINUX settings.
-
-
+* 注意：如果遇到如下错误：UCD-SNMP-MIB::extOutput.1 = STRING: \[ERROR\] libs/esl/fs\_cli.c:1206 main() Error Connecting \[Socket Connection Error\]，请检查您的SELINUX设置。

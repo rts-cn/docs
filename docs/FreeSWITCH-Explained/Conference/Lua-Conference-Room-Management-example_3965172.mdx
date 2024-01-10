@@ -1,28 +1,26 @@
+# Lua 会议室管理示例
 
-# Lua Conference Room Management example 
 
- 
+## 关于
 
-## About
+这个 Lua 示例添加了简单的会议室管理功能。呼叫者将被提示输入会议号和 PIN 码以访问会议室。
 
-This Lua example adds simple conference room management. The caller will be prompted to enter a conference number and a PIN to access the conference room. 
+单击展开目录
 
-Click to expand Table of Contents
-
-* 1 [DB Schema](#-freeswitch--lua-conference-room-management-example-)
-* 2 [Lua Script for Conferencing](#lua-script-for-conferencing)
+* 1 [数据库模式](#-freeswitch--lua-conference-room-management-example-)
+* 2 [用于会议的 Lua 脚本](#lua-script-for-conferencing)
 
   
-## DB Schema
+## 数据库模式
 
-Description of the database table "conferences":
+关于数据库表 "conferences" 的描述：
 
-**Table Conferences**
+**表 Conferences**
 
 ```xml
 conferencing=> \d+ conferences
-                                  Table "public.conferences"
-   Column   |  Type   |                        Modifiers                         | Description
+                                  表格 "public.conferences"
+   列名    |  类型  |                        修改器                         | 描述
 ------------+---------+----------------------------------------------------------+-------------
  id         | integer | not null default nextval('conferences_id_seq'::regclass) |
  conf_num   | integer | not null                                                 |
@@ -32,9 +30,9 @@ conferencing=> \d+ conferences
 ```
 
   
-SQL Schema of conferences table:
+conferences 表的 SQL 架构：
 
-**Conferences Schema**
+**Conferences 架构**
 
 ```xml
 CREATE TABLE conferences(
@@ -46,9 +44,9 @@ CREATE TABLE conferences(
 );
 ```
 
-## Lua Script for Conferencing
+## 用于会议的 Lua 脚本
 
-**Lua Conference Manager** Expand source 
+**Lua 会议管理器**（源代码）
 
 ```php
 require "luasql.postgres"
@@ -61,10 +59,12 @@ function session_hangup_hook(status)
   db_connection:close()
   error()
 end
+```
 
+```lua
 function get_conference_num(min, max, attempts, timeout)
   local conference_num
-  freeswitch.consoleLog("NOTICE", "Awaiting caller to enter a conference number phrase:conference_num\n")
+  freeswitch.consoleLog("NOTICE", "等待呼叫者输入会议号码短语: conference_num\n")
   conference_num = session:playAndGetDigits(min, max, attempts, timeout, '#', 'phrase:conference_num', '', '\\d+')
   return(conference_num)
 end
@@ -94,7 +94,7 @@ session:answer();
 session:setHangupHook("session_hangup_hook")
 
 if session:ready() then
-  freeswitch.consoleLog("NOTICE", string.format("Caller has called conferencing server, Playing welcome message phrase:conference_welcome\n"))
+  freeswitch.consoleLog("NOTICE", string.format("呼叫者已呼叫会议服务器，播放欢迎消息短语: conference_welcome\n"))
   session:execute("phrase", "conference_welcome")
 end
 
@@ -104,28 +104,29 @@ while attempt <= max_attempts do
   db_cursor = assert(db_connection:execute(string.format("select conf_pin from conferences where conf_num = %d", tonumber(conf_num))))
   row = db_cursor:fetch({}, "a")
 
-  --[[ do conference authentication ]]--
+  --[[ 进行会议验证 ]]--
   if row == nil then
 
-    --[[ if the conference number does not exist, playback message saying it is
-         and invalid conference number ]]--
+    --[[ 如果会议号码不存在，播放消息提示无效的会议号码 ]]--
     session:execute("phrase", "conference_bad_num")
+```
 
+```lua
   elseif row["conf_pin"] == nil or row["conf_pin"] == "" then
-    freeswitch.consoleLog("NOTICE", string.format("Conference %d has no PIN, Sending caller into conference\n", tonumber(conf_num)))
+    freeswitch.consoleLog("NOTICE", string.format("会议 %d 没有PIN码，将呼叫者放入会议中\n", tonumber(conf_num)))
 
-    --[[ join the conference ]]--
+    --[[ 加入会议 ]]--
     session:execute("conference", string.format("%s@default", conf_num))
   else
-    freeswitch.consoleLog("NOTICE", string.format("Conference %d has a PIN %d, Authenticating user\n", tonumber(conf_num), tonumber(row["conf_pin"])))
+    freeswitch.consoleLog("NOTICE", string.format("会议 %d 设置了PIN码 %d，正在验证用户\n", tonumber(conf_num), tonumber(row["conf_pin"])))
 
-    --[[ get the conference pin number ]]--
+    --[[ 获取会议的PIN码 ]]--
     if ((get_conference_pin(1, 4, 3, 4000, row["conf_pin"])) == true) then
-      freeswitch.consoleLog("NOTICE", string.format("Conference %d correct PIN entered, Sending caller into conference\n", tonumber(conf_num)))
-      --[[ join the conference, if the correct pin was entered ]]--
+      freeswitch.consoleLog("NOTICE", string.format("会议 %d 输入正确的PIN码，将呼叫者放入会议中\n", tonumber(conf_num)))
+      --[[ 如果输入了正确的PIN码，则加入会议 ]]--
       session:execute("conference", string.format("%s@default", conf_num))
     else
-      freeswitch.consoleLog("NOTICE", string.format("Conference %d invalid PIN entered, Looping again\n", tonumber(conf_num)))
+      freeswitch.consoleLog("NOTICE", string.format("会议 %d 输入无效的PIN码，重新循环\n", tonumber(conf_num)))
     end
   end
 
@@ -136,5 +137,3 @@ session:execute("phrase", "conference_too_many_failures")
 
 session:hangup()
 ```
-
-

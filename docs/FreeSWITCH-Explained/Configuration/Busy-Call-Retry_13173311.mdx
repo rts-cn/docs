@@ -1,57 +1,52 @@
+# 忙音重试
 
-# Busy Call Retry 
+单击此处展开目录
 
- 
+* 1 [参见：](#--)
 
-Click here to expand Table of Contents
-
-* 1 [See Also:](#--)
-
-All the text below was last edited in 2009, it is therefore likely out-of-date, inaccurate and in dire need of a refresh
+下面的所有文本最后一次编辑是在2009年，因此可能已过时、不准确且 dring 需要进行更新。
 
 ```xml
-console_log("notice", "*********** STARTING TO DIAL NUMBER! ***********\n");
+console_log("notice", "*********** 开始拨号！ ***********\n");
 
 //session.answer();
 
 while (callTry()){};
 
 function callTry(){
-	// Create new_session 
+	// 创建 new_session 
 	new_session = new Session();
 	
-	console_log("notice", "*********** DIALING NUMBER! ***********\n");
+	console_log("notice", "*********** 正在拨号！ ***********\n");
 	
 	new_session.originate(session, "sofia/gateway/<gateway-name>/<number>");
 	
-	console_log("notice", "*********** CAUSE: " + new_session.cause + " ***********\n"); 
+	console_log("notice", "*********** 原因：" + new_session.cause + " ***********\n"); 
 	
 	if(new_session.cause == "USER_BUSY"){
-		console_log("notice", "*********** HANGING UP ***********\n"); 
+		console_log("notice", "*********** 挂断 ***********\n"); 
 		//new_session.hangup();
-		console_log("notice", "*********** TRYING AGAIN ***********\n"); 
+		console_log("notice", "*********** 重试 ***********\n"); 
 		return true;
 	}
 	
-	// wait for it ... answer
+	// 等待回答
 	new_session.waitForAnswer(10000);
 	
-	// IF everybody is ready, then bridge our current session & the new_session
+	// 如果所有人都准备好了，那么就连接我们当前的 session 和 new_session
 	if (new_session.ready()) {
 	   bridge(session, new_session);
 	}
 	return false;
 }
-// log to the console
-console_log("notice", "*********** CALL CONNECTED! ***********\n");
+// 记录到控制台
+console_log("notice", "*********** 通话已连接！ ***********\n");
 
-// hangup when done
+// 拨号完成后挂断
 new_session.hangup();
 ```
 
- ##   
-See Also: 
+##   
+参见：
 
 [Javascript](../Client-and-Developer-Interfaces/JavaScript/index.mdx#api)
-
-

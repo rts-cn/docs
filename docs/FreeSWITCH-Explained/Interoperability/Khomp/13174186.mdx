@@ -1,29 +1,26 @@
+# Khomp/变量说明
 
-# Khomp/Description of Variables 
-
- 
-
-Click here to expand Table of Contents
+单击此处展开目录
 
 * 1 [KDropCollectCall](#kdropcollectcall)
 * 2 [KR2SendCondition](#kr2sendcondition)
 * 3 [KR2GotCategory](#kr2gotcategory)
 * 4 [KR2GotCondition](#kr2gotcondition)
 * 5 [KUserInfoDescriptor](#kuserinfodescriptor)
-* 6 [KUserInfoData](#-freeswitch--khompdescription-of-variables-)
+* 6 [KUserInfoData](#-freeswitch--khomp描述变量-)
 * 7 [KCallAnswerInfo](#kcallanswerinfo)
 
 ## KDropCollectCall
 
-When activated, causes the Endpoint to drop Khomp collect calls through dual service (available for signaling 'R2 Digital' and FXO), through information available on the ISDN protocol and R2/MFC, or by detecting the audio call collect (available for any digital signage for E1, and GSM signaling).
+当激活时，会导致终端通过双服务（适用于信令'R2数字'和FXO）丢弃Khomp的代收呼叫，通过ISDN协议和R2/MFC上的信息，或者通过检测音频呼叫代收（适用于任何数字标识对于E1和GSM信令）。
 
-This variable is useful to filter collect calls to certain extensions, and **must** be set before making any type of answer - applications such as **playback** and **bridge** should always be executed after setting this variable, for example.
+此变量对于过滤特定分机的代收呼叫非常有用，**必须**在进行任何类型的应答前设置 - 诸如**播放**和**桥接**之类的应用程序应始终在设置此变量之后执行，例如。
 
-For better functionality, is also recommended that no call status (_ringback_) is sent before this variable is set, so applications should be performed only after the correct setting of this variable.
+为了更好的功能性，建议在设置此变量之前不要发送呼叫状态（_回铃音_），因此应用程序应该仅在正确设置此变量之后执行。
 
-This variable can be set locally and globally, both to **yes** or **no**. The adjustment of global variable to **yes** will drop all the collect calls, unless the particular call is set to **no** \- this allows the creation of a global filter of collect calls, with few exceptions.
+此变量可在本地和全局上设置，可以设置为**是**或**否**。将全局变量调整为**是**将丢弃所有的代收呼叫，除非将特定呼叫设置为**否** - 这允许创建一个全局的代收呼叫过滤器，可以有少数例外。
 
-Enabling the variable in context **default**:
+在**default**上下文中启用变量：
 
 ```xml
 <context name="default">
@@ -40,7 +37,7 @@ Enabling the variable in context **default**:
 </context>
 ```
 
-Enabling the variable in the global context, remembering that it must be configured in the file **vars.xml**:
+在全局上下文中启用变量，注意必须在文件**vars.xml**中配置：
 
 ```xml
 <X-PRE-PROCESS cmd="set" data="KDropCollectCall=yes"/>
@@ -48,20 +45,22 @@ Enabling the variable in the global context, remembering that it must be configu
 
 ## KR2SendCondition
 
-When you receive a call, can be set before sending ringback by FreeSWITCH (ie, before the run FreeSWITCH applications **answer**, **bridge**). When used in signaling R2/MFC, this variable sets the condition for B to the numeric value desired.
+当您接收到来电时，可以在FreeSWITCH发送回铃之前进行设置（即在运行FreeSWITCH应用程序**answer**、**bridge**之前）。
+在信令R2/MFC中使用时，此变量将设置为所需的B的数字值条件。
 
-Exemplo:
+示例：
 
 ```xml
-<!-- Condition "NUMBER CHANGED" warns the caller that the number of B has changed. -->
+<!-- CONDITION "NUMBER CHANGED"通知呼叫方收到的B的号码已更改-->
 <action application="KR2SendCondition" data="3"/>
 ```
 
 ## KR2GotCategory
 
-When you receive a call, is set by the Endpoint with the category received from the number that originated the call. It is set in signaling R2/MFC, and can be found anywhere in the dialplan.
+当您接收到来电时，该变量由终端根据来电源号码接收到的类别设置。
+它在信令R2/MFC中设置，并且可以在拨号计划中的任何位置找到。
 
-Example:
+示例：
 
 ```xml
 <action application="log" data="DEBUG KR2GotCategory [${KR2GotCategory}]"/>
@@ -69,9 +68,10 @@ Example:
 
 ## KR2GotCondition
 
-Variable adjusted by the Endpoint, and available after returning from a call made by FreeSWITCH. Has the condition of B received when making the call. Available only for signaling R2/MFC.
+由终端调整的变量，在从FreeSWITCH发出的呼叫返回后可用。在进行呼叫时，它包含了B的条件。
+仅适用于信令R2/MFC。
 
-Example:
+示例：
 
 ```xml
 <action application="log" data="DEBUG KR2GotCondition [${KR2GotCondition}]"/>
@@ -79,11 +79,11 @@ Example:
 
 ## KUserInfoDescriptor
 
-Variable adjusted by the Endpoint in the context of entry, from information received by the ISDN network functionality through user-to-User Information. Contains the descriptor number of the protocol used by the other end, and usually contains the value '0 ', but this is dependent on application.
+由终端在输入环境中调整的变量，通过用户到用户信息从ISDN网络功能接收到的信息。包含了被对端使用的协议的描述符号码，通常包含值'0'，但这取决于应用程序。
 
-For further information, consult the specification ITU-T Q931 (more precisely, the specification table 4-26).
+有关详细信息，请参阅ITU-T Q931规范（更详细地说，参考规范表4-26）。
 
-Example (working with the descriptor number of the protocol):
+示例（使用协议的描述符号码）：
 
 ```xml
 <action application="log" data="DEBUG KUserInfoDescriptor [${KUserInfoDescriptor}]"/>
@@ -91,26 +91,24 @@ Example (working with the descriptor number of the protocol):
 
 ## KUserInfoData
 
-Variable adjusted by the channel in the context of entry, from information received by the ISDN network functionality through user-to-User Information. Contains the actual data, which were received in the form of a string of text.
+在入口上下文中被通道调整的变量，通过ISDN网络功能通过用户对用户信息接收到的信息。包含作为文本字符串接收到的实际数据。
 
-More information about this feature, see the specification ITU-T Q931.
+有关此功能的更多信息，请参阅ITU-T Q931规范。
 
-Example (working with the data received):
+示例（处理接收到的数据）：
 
 ```xml
 <action application="log" data="DEBUG KUserInfoData [${KUserInfoData}]"/>
 ```
 
-It is important to note that the variables are sensitive to the capitalization of letters (case sensitive).
+重要的是要注意，变量对字母的大小写具有敏感性（区分大小写）。
 
 ## KCallAnswerInfo
 
-Variable adjusted by the Endpoint. It is set in outbound connections, representing the type of answer performed by the other end. May contain the following values:
+由终端调整的变量。它在出站连接中设置，表示由对方执行的应答类型。可能包含以下值：
 
-"MessageBox" (\*): detected mailbox of a cell phone;"CarrierMessage": message sent before the service provider;"AnsweringMachine" (\*\*): answering answering machine;"HumanAnswer" (\*\*): human service;"Fax": reported when a fax tone is detected."Unknown": unknown type of care;
+"MessageBox"（\*）：检测到手机的邮箱；"CarrierMessage"：服务提供商在服务之前发送的消息；"AnsweringMachine"（\*\*）：回答电话的自动答录机；"HumanAnswer"（\*\*）：人工服务；"Fax"：检测到传真信号时报告的类型。"Unknown"：未知类型的服务；
 
-(\*) This type of service is detected by signals at certain frequencies that are sent before the call comes into a mailbox, and vary by operator. The algorithm captures most of the mailboxes, but can fail if there is not a clear signal, or if it is not within the standards most commonly used;
+（\*）这种服务类型是通过在信号之前发送的特定频率来检测的，其变化取决于运营商。该算法可以捕捉到大多数的邮箱，但如果没有明确的信号或不符合常用标准，则可能失败；
 
-(\*\*) The difference between these two types of care depends on the specific configuration using the program **k3lanswerinfoconfig**, with the detection only based on heuristics and **never** with an accuracy of 100%. 
-
-
+（\*\*）这两种类型的区别取决于使用程序 **k3lanswerinfoconfig** 配置的特定配置，仅基于启发式检测，**绝不会**100％准确。

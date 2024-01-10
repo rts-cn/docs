@@ -1,42 +1,39 @@
+# mod\_dptools：att\_xfer
 
-# mod_dptools: att_xfer 
+## 关于
 
- 
+进行有人接听的转接。
 
-## About
+单击展开目录
 
-Make an attended transfer. 
+* 1 [使用方法](#usage)
+* 2 [示例](#examples)
+   * 2.1 [示例1](#example-1)
+   * 2.2 [示例2](#example-1)
+   * 2.3 [示例 - 使用API呼叫](#example---using-api-call)
+   * 2.4 [观察](#observations)
 
-Click to expand Table of Contents
+## 使用方法
 
-* 1 [Usage](#usage)
-* 2 [Examples](#examples)  
-   * 2.1 [Example 1](#example-1)  
-   * 2.2 [Example 2](#example-1)  
-   * 2.3 [Example - Using API Call](#example---using-api-call)  
-   * 2.4 [Observations](#observations)
+att\_xfer&lt;channel\_url>
 
-## Usage
+将第三方通过channel\_url指定的通道与呼叫进行连接，进行私聊，然后将原始呼叫者与att\_xfer的目标channel\_url进行连接。
 
-att\_xfer &lt;channel\_url>
+从修订版本'''14650'''开始，增加了一个新参数，名为''origination\_cancel\_key''。当您想要取消转接并返回到第一个呼叫者时使用此功能。
 
-Bridge a third party specified by channel\_url onto the call, speak privately, then bridge original caller to target channel\_url of att\_xfer.
+在功能请求#FS-9734后，增加了三个新的通道变量，允许用户配置功能码：
 
-From revision '''14650''', there is new parameter that can be set - ''origination\_cancel\_key''. This feature is used when you want to cancel a transfer and return to the first caller.
+"attxfer\_cancel\_key" - 可以像origination\_cancel\_key一样用于取消转接，但是可直接从att\_xfer代码中进行操作（默认为'#'）
 
-after feature request #FS-9734 three new channel variables are added which will allow the feature codes to be configured by a user -
+"attxfer\_hangup\_key" - 可用于在用户想要结束通话后挂断呼叫（默认为'\*'）
 
-"attxfer\_cancel\_key" - can be used to cancel a tranfer just like origination\_cancel\_key, but straight from the att\_xfer code (deafault '#')
+"attxfer\_conf\_key" - 可用于启动三方转接（默认为'0'）
 
-"attxfer\_hangup\_key" - can be used to hangup the call after user wants to end his or her call  (deafault '\*')
+## 示例
 
-"attxfer\_conf\_key" - can be used to initiate a three way transfer (deafault '0')
+### 示例1
 
-## Examples
-
-### Example 1
-
-Make a dialplan feature which read the number to make an attended transfer.
+制作一个拨号计划功能，读取号码以进行有人接听的转接。
 
 ```xml
 <extension name="att_xfer">
@@ -47,24 +44,24 @@ Make a dialplan feature which read the number to make an attended transfer.
 </extension>
 ```
 
-Then bind this feature to DTMF 3.
+然后将此功能绑定到DTMF 3上。
 
 ```xml
 <action application="bind_meta_app" data="3 a a execute_extension::86 XML features"/>
 ```
 
-During call press \*3 to activate the feature. Feed it the number then it will make the call.
+在通话中按\*3来激活该功能。输入号码后，它将开始拨号。
 
-1. If you hang up (after the other leg answered and you decided what to do), then it will transfer the call and bridge them together.
-2. If the other leg hang up thus indicating it doesn't want the transfer then you get it back.
-3. If the other leg is a voicemail or doesn't answered you can hangup that leg by pressing DTMF # (fixed in r14438)
-4. If you press DTMF 0 then it will convert it to a three-way, hangup and complete the transfer.
+1. 如果你挂断电话（在另一方接听并决定做什么后），它将转接通话并将它们连接在一起。
+2. 如果另一方挂断电话，表示它不想转接，则你将重新接回来。
+3. 如果另一方是语音信箱或者没有接听，你可以按下DTMF #来挂断该通话腿（从r14438版开始修复）。
+4. 如果你按下DTMF 0，则它会将通话转为三方通话、挂断并完成转接。
 
-### Example 2
+### 示例 2
 
-In your dialplan add bind\_meta\_app key that will transfer the call to the extensions that will execute the att\_xfer application.
+在拨号计划中添加“bind_meta_app”关键字，它将把通话转接给执行“att_xfer”应用程序的分机。
 
-Example:
+示例：
 
 ```xml
 <extension name="local_number">
@@ -80,9 +77,9 @@ Example:
 </extension>
 ```
 
-In the features.xml add the extensions attended\_xfer. The extensions below first waits for input from the user (30sec) and then makes attended transfer to the entered extension.
+在features.xml中添加分机attended_xfer。以下分机首先等待用户的输入（30秒），然后进行主动转接到输入的分机。
 
-Example:
+示例：
 
 ```xml
 <extension name="attended_xfer">
@@ -97,23 +94,21 @@ Example:
 </extension>
 ```
 
-### Example - Using API Call
+### 例子 - 使用 API 调用
 
-You can also set channel variables on the command issued via XML-RPC or Event Socket by adding {myvar=myval,myvar1=myval1} e.g
+您也可以通过在 XML-RPC 或事件套接字上添加{myvar=myval,myvar1=myval1}来设置通道变量，例如：
 
 ```xml
 att_xfer {attxfer_conf_key=3,attxfer_hangup_key=2,attxfer_cancel_key=1}loopback/1000/context
 ```
 
-| Feature Code | Channel Variable Name | Purpose                                                            | When to use                                     |
-| ------------ | --------------------- | ------------------------------------------------------------------ | ----------------------------------------------- |
-| 0            | attxfer\_conf\_key    | it will convert the call to three-way conference                   | After the last party answers the call           |
-| #            | attxfer_cancel_key  | to hangup the B leg and return you to the caller                   | After the last party answers the call           |
-| \*           | attxfer\_hangup\_key  | it will hangup the B leg and bridge A to C (fixed in '''r15013''') | After the last party answers the call           |
-| #            | attxfer_cancel_key  | it will cancel the B leg and will return you the caller            | Before the answer of the call by the last party |
+| 功能代码 | 通道变量名称    | 用途                         | 使用时机                                   |
+| -------- | ---------------- | ---------------------------- | ------------------------------------------ |
+| 0        | attxfer_conf_key | 将呼叫转为三方会议           | 最后一个接通方接通后                        |
+| #        | attxfer_cancel_key | 挂断 B 腿并返回主叫方      | 最后一个接通方接通后                        |
+| *        | attxfer_hangup_key | 挂断 B 腿并将 A 接入 C (在'''r15013'''版本中修复) | 最后一个接通方接通后                        |
+| #        | attxfer_cancel_key | 取消 B 腿并将返回主叫方      | 在最后一个接通方回答呼叫之前                |
 
-### Observations
+### 观察结果
 
-att\_xfer will not work with loopback channels because the application blocks when bridged to the C leg. If the C leg hangs up, it will bridge back to A. Since loopback hangs up to replace the legs to the correct legs, att\_xfer will detect that and bridge it back to the A leg automatically.
-
-
+`att_xfer`在回环通道上不起作用，因为当它连接到C leg时，应用程序会阻塞。如果C leg挂断，它会重新桥接到A leg。由于回环会挂断并替换到正确的 legs，`att_xfer` 将自动检测并将其重新桥接到A leg。

@@ -1,380 +1,374 @@
-
-# Event Socket Library 
-
- 
+## 事件套接字库
 
 ---
 
-Table of Contents (click to expand)
+目录（点击展开）：
 
-* [0\. About](#0-about)
-* [1\. Prerequisites](#1-prerequisites)
-* [Installation](#installation)
-* [Reference](#-reference-)  
-* [Quoting and Escaping](#quoting-and-escaping-)
-* [ESL Object](#-esl-object-)  
-* [eslSetLogLevel](#eslsetloglevel-)  
-* [ESLevent Object](#-eslevent-object-)  
-   * [new](#-events-)  
-   * [serialize](#-serialize-)  
-   * [setPriority](#-setpriority-)  
-   * [getHeader](#-getheader-)  
-   * [getBody](#-getbody-)  
-   * [getType](#-gettype-)  
-   * [addBody](#-addbody-)  
-   * [addHeader](#-addheader-)  
-   * [delHeader](#-delheader-)  
-   * [firstHeader](#-firstheader-)  
-   * [nextHeader](#-nextheader-)  
-* [ESLconnection Object](#-eslconnection-object-)  
-   * [new](#-events-)  
-   * [socketDescriptor](#-socketdescriptor-)  
-   * [connected](#-connected-)  
-   * [getInfo](#-getinfo-)  
-   * [send](#-events-)  
-   * [sendRecv](#-sendrecv-)  
-   * [api](#-events-)  
-   * [bgapi](#-events-)  
-   * [sendEvent](#-sendevent-)  
-   * [recvEvent](#-recvevent-)  
-   * [recvEventTimed](#-recveventtimed-)  
-   * [filter](#-filter-)  
-   * [events](#-events-)  
-   * [execute](#-execute-)  
-   * [executeAsync](#-executeasync-)  
-   * [setAsyncExecute](#-setasyncexecute-)  
-   * [setEventLock](#-seteventlock-)  
-   * [disconnect](#-disconnect-)
-* [Examples](#c-example)  
-* [Getting a uuid](#-getting-a-uuid-)  
-* [Simple Perl Example](#-simple-perl-example-)  
-* [Ruby Example](#-ruby-example-)  
-* [Java Example](#-java-example-)  
-* [C Example](#c-example)  
-* [See Also](#-events-)
+* [0\. 关于](#0-关于)
+* [1\. 准备工作](#1-准备工作)
+* [安装](#安装)
+* [参考](#参考)  
+* [引用和转义](#引用和转义)  
+* [ESL 对象](#esl-对象)  
+* [eslSetLogLevel](#eslsetloglevel)  
+* [ESLevent 对象](#eslevent-对象)  
+   * [new](#new)  
+   * [serialize](#serialize)  
+   * [setPriority](#setpriority)  
+   * [getHeader](#getheader)  
+   * [getBody](#getbody)  
+   * [getType](#gettype)  
+   * [addBody](#addbody)  
+   * [addHeader](#addheader)  
+   * [delHeader](#delheader)  
+   * [firstHeader](#firstheader)  
+   * [nextHeader](#nextheader)  
+* [ESLconnection 对象](#eslconnection-对象)  
+   * [new](#new-1)  
+   * [socketDescriptor](#socketdescriptor)  
+   * [connected](#connected)  
+   * [getInfo](#getinfo)  
+   * [send](#send)  
+   * [sendRecv](#sendrecv)  
+   * [api](#api)  
+   * [bgapi](#bgapi)  
+   * [sendEvent](#sendevent)  
+   * [recvEvent](#recvevent)  
+   * [recvEventTimed](#recveventtimed)  
+   * [filter](#filter)  
+   * [events](#events)  
+   * [execute](#execute)  
+   * [executeAsync](#executeasync)  
+   * [setAsyncExecute](#setasyncexecute)  
+   * [setEventLock](#seteventlock)  
+   * [disconnect](#disconnect)
+* [示例](#示例)  
+* [获取uuid](#获取uuid)  
+* [简单Perl示例](#简单perl示例)  
+* [Ruby示例](#ruby示例)  
+* [Java示例](#java示例)  
+* [C示例](#c示例)  
+* [另请参阅](#另请参阅)
 
 ---
 
-### 0\. About
+### 0\. 关于
 
-This page describes how to use the Event Socket Library (ESL) to talk to FreeSWITCH's [event system](../../Introduction/Event-System/index.mdx#0-about) using an application, and not via the C primitives. These applications can be
+本页面描述了如何使用事件套接字库（ESL）通过应用程序而非 C 原语与 FreeSWITCH 的[event system](../../Introduction/Event-System/index.mdx#0-about) 进行通信。这些应用程序可以是：
 
-* **internal** to FreeSWITCH (such as [fs\_cli](../1048948.mdx#or) , communicating with FreeSWITCH via [mod\_event\_socket](../../Modules/mod_event_socket_1048924.mdx#11-acl) )
-* **external** and possibly
-* **remote** (that is, residing on a different host).
+* **内部**应用程序，用于与 FreeSWITCH 进行通信（例如 [fs\_cli](../1048948.mdx#or) ，通过[mod\_event\_socket](../../Modules/mod_event_socket_1048924.mdx#11-acl) 进行通信）
+* **外部**应用程序，也可能是
+* **远程**应用程序（即，驻留在不同主机上）。
 
-ESL ([libesl](https://github.com/signalwire/freeswitch/blob/master/libs/esl/src/esl.c)) is a C library that has no dependencies on FreeSWITCH, and it can be built, and moved to client/remote machines. It just encapsulates all the necessary socket stuff to allow talking to FreeSWITCH from an application (i.e., provides an external API to interact with the [Event System](../../Introduction/Event-System/index.mdx#0-about).
+ESL（[libesl](https://github.com/signalwire/freeswitch/blob/master/libs/esl/src/esl.c)）是一个与 FreeSWITCH 无关的 C 库，可以构建并移动到客户端/远程机器上。它只封装了与应用程序通信所需的所有必要套接字操作（即，提供了与[Event System](../../Introduction/Event-System/index.mdx#0-about)进行交互的外部 API）。
 
   
-TODO What is the relation between mod\_event\_socket ( moderlangevent, modkazoo, etc) and ESL?
+还没完成确认`mod_event_socket`(moderlangevent, modkazoo等)和ESL之间的关系。
 
-in the source, mod\_esl uses libesl, modeventsocket doesn't even touches it (same goes to the other related mods as well)
+在源代码中，`mod_esl`使用`libesl`，而`modeventsocket`之类的模块甚至都没碰到它（与其他相关模块一样）。
 
-Click here to expand...
+单击此处展开...
 
-Saving my comments here.
+将我的评论保存在这里。
 
-This page should be the main source describing modes of operation (inbound, outbound).
+此页面应该是描述操作模式（入站、出站）的主要来源。
 
-Right now, it is described on individual module pages ([mod\_event\_socket](../../Modules/mod_event_socket_1048924.mdx#11-acl), [mod\_erlang\_event](../../Modules/mod_erlang_event_1048926.mdx#api-)) but they are just redundant.
+目前，它是在各个模块页面中进行描述（[mod\_event\_socket](../../Modules/mod_event_socket_1048924.mdx#11-acl)，[mod\_erlang\_event](../../Modules/mod_erlang_event_1048926.mdx#api-)），但这是多余的。
 
-Also, there is a subpage beneath [Event Socket Library](index.mdx#-new-) describing outbound mode ([Event Socket Outbound](Event-Socket-Outbound_3375460.mdx#faq)) that kind of proves this point.
+此外，在[Event Socket Library](index.mdx#-new-)下方有一个子页面描述出站模式（[Event Socket Outbound](Event-Socket-Outbound_3375460.mdx#faq)），这也证明了这一点。
 
 * [2019.11.06](index.mdx#-send-)
 
-  
 [![](/attachments/27590699/27590872)](https://freeswitch.org/confluence/display/~toraritte)[Attila Gulyas](https://freeswitch.org/confluence/display/~toraritte)
 
-Going further, there should be a top level page telling about the **event system** in FreeSWITCH (that's where the [Event List](../../Introduction/Event-System/Event-List_7143557.mdx#nat), [Event Types (Classes, or Names, of Events)](https://freeswitch.org/confluence/pages/viewpage.action?pageId=15139379), [CUSTOM Event SUBCLASSES (Event-Subclass)](https://freeswitch.org/confluence/pages/viewpage.action?pageId=15139388) would go, and only then start introducing [Event Socket Library](index.mdx#-new-), with its modes of operation, libraries, modules, etc.
+再进一步，应该有一个顶级页面来介绍FreeSWITCH中的**事件系统**（这就是[事件列表](../../Introduction/Event-System/Event-List_7143557.mdx#nat)、[事件类型（事件的类别或名称）](https://freeswitch.org/confluence/pages/viewpage.action?pageId=15139379)、[自定义事件子类（事件子类）](https://freeswitch.org/confluence/pages/viewpage.action?pageId=15139388)的地方），然后才开始介绍[事件套接字库](index.mdx#-new-)，包括其操作模式、库、模块等等。
 
 * [2019.11.06](index.mdx#-send-)
   
   
-### 1\. Prerequisites
+### 1. 先决条件
 
-TODO this should be under installation divided up into section such as Dependencies, and the thing under Installation should be called build (the config part should go there too).
+首先要在安装部分内划分出"依赖项"这一部分，并且将"安装"下的内容改名为"构建"（配置部分也应该放在那里）。
 
-Dependencies MUST be installed before the initial "configure" of the source directory (i.e.: before compiling FS).
+在进行首次"配置"源代码目录（即编译FS之前）之前，必须先安装依赖项。
 
-If you add the DEPENDENCIES AFTER the first "configure", then after adding the dependencies you must do:  
+如果在首次"配置"之后添加了依赖项，则在添加依赖项后必须执行以下操作：  
   
-**recheck configuration**
+**重新检查配置**
 
 ```xml
-# connect to the source code directory
+# 连接到源代码目录
 cd /usr/src/freeswitch
 rm config.cache
 ./config.status --recheck && ./config.status
 ```
 
   
-**CentOS 5.x** you will need to install the following packages:
+**CentOS 5.x** 需要安装以下软件包：
 
 yum install libxml2-devel pcre-devel bzip2-devel curl-devel gmp-devel aspell-devel libtermcap-devel gdbm-devel db4-devel 
 
-**CentOS 6.x** you will also need to install **libedit-devel** in addition to the above packages.
+**CentOS 6.x** 还需要安装 **libedit-devel** 以及上述软件包。
 
-and per language the respective dependencies:
+对于每种语言，都需要安装相应的依赖项：
 
-for PHP:
+对于PHP：
 
 yum install php-devel
 
-for RUBY:
+对于RUBY：
 
 yum install ruby-devel ruby
 
-for LUA:
+对于LUA：
 
 yum install lua-devel
 
-for JAVA:
+对于JAVA：
 
 yum install java-1.6.0-openjdk-devel
 
-for PERL:
+对于PERL：
 
 yum install perl-devel perl-ExtUtils-Embed
 
-for PYTHON:
+对于PYTHON：
 
 yum install python-devel
 
-**Debian 4.x/5.x (Ubuntu as well)** you will need to install the following packages:
+对于**Debian 4.x/5.x（也适用于Ubuntu）**，您需要安装以下软件包：
 
 sudo apt-get install libxml2-dev libpcre3-dev libcurl4-openssl-dev libgmp3-dev libaspell-dev python-dev php5-dev libonig-dev libqdbm-dev libedit-dev
 
-Python: You need to edit your Python version number in libs/esl/python/Makefile (replace 2.4 with 2.5 or 2.6...)
+Python：您需要在libs/esl/python/Makefile中编辑您的Python版本号（将2.4替换为2.5或2.6...）
 
-php: For PHP you must also install libdb-dev.
+php：对于PHP，您还必须安装libdb-dev。
 
-lua: Lua has been moved out of tree so you must now install liblua5.2-dev
+lua：Lua已移出树结构，因此您现在必须安装liblua5.2-dev。
 
-  
-## Installation
+## 安装
 
-There are several options to configure mod\_esl to add support for multiple languages.
+有几种配置mod\_esl以支持多种语言的选项。
 
-First, in libs/esl, type make
+首先，在libs/esl中，键入make
 
 ```xml
-# Under the FreeSWITCH source top-level directory
+# 在FreeSWITCH源代码顶级目录下
 cd /usr/src/freeswitch/libs/esl
 make
 ```
 
-Then, to enable specific languages type ` make `\+ one of:
+然后，为了启用特定的语言，键入 `make `+其中之一：
 
-* `perlmod-install` to add Perl support
-* `phpmod` to add PHP support
-* `luamod` to add Lua support
-* `pymod` to add Python support
-* `rubymod` to add Ruby support
-* `javamod` to add Java support
-* `managedmod` to add mono support
-* `phpmod-install` installs phpmod
-* `everymod` builds perlmod phpmod luamod pymod rubymod managedmod javamod
+* `perlmod-install`以添加Perl支持
+* `phpmod`以添加PHP支持
+* `luamod`以添加Lua支持
+* `pymod`以添加Python支持
+* `rubymod`以添加Ruby支持
+* `javamod`以添加Java支持
+* `managedmod`以添加mono支持
+* `phpmod-install`安装phpmod
+* `everymod`构建perlmod phpmod luamod pymod rubymod managedmod javamod
 
-Example:
+示例：
 
 ```xml
 make perlmod-install
 ```
 
-  
-##  Reference 
+## 参考资料
 
-The following objects/methods should apply to any language that can build ESL extensions. Optional arguments are listed in brackets in the function signature. This section is a work in progress -- if you find any of the documentation to be in error, please correct!
+以下对象/方法适用于可以构建ESL扩展的任何语言。函数签名中用方括号括起来的是可选参数。这一部分仍在完善中--如果您发现任何文档错误，请纠正！
+### 引用和转义
 
-### Quoting and Escaping 
+当向originate等函数传递参数时，如果参数包含影响解析的任何字符（空格、引号），则应该用单引号括起来。数据中的单引号应该用反斜杠进行转义。
 
-When passing arguments to functions such as originate, if they contain any characters that affect parsing (spaces, quotes), they should be enclosed in single quotes. Single quotes within the data should be escaped with a backslash.
+示例：
 
-Example:
+ originate {origination_caller_id_name='fred\'s tire shop'}sofia/internal/100@mydomain.com 3000
 
- originate {origination_caller_id_name='fred\'s tire shop'}sofia/internal/100@mydomain.com 3000 
+## ESL对象
 
-##  ESL Object 
+### eslSetLogLevel
 
-### eslSetLogLevel 
+eslSetLogLevel(\$loglevel)
 
-eslSetLogLevel($loglevel)
+在程序中调用此函数会导致程序在STDOUT上发出与事件套接字库相关的信息。\$loglevel是一个介于0和7之间的整数。\$loglevel的值意思如下：
 
-Calling this function within your program causes your program to issue informative messages related to the Event Socket Library on STDOUT. $loglevel is an integer between 0 and 7\. The values for $loglevel mean:
+0 表示 EMERG
 
-0 is EMERG
+1 表示 ALERT
 
-1 is ALERT
+2 表示 CRIT
 
-2 is CRIT
+3 表示 ERROR
 
-3 is ERROR
+4 表示 WARNING
 
-4 is WARNING
+5 表示 NOTICE
 
-5 is NOTICE
+6 表示 INFO
 
-6 is INFO
+7 表示 DEBUG
 
-7 is DEBUG
+低于\$loglevel值的消息将在STDOUT上输出，所以\$loglevel的值越高，库将记录更多的信息。调用此函数后，您可以通过使用\$loglevel为0再次调用此函数来减少日志消息的数量，但不能完全关闭。
 
-Messages that have a lower value than $loglevel will be output on STDOUT, so higher values of $loglevel will cause the Library to log more information. Once this function is called, you can reduce the amount of log messages by calling this function again with a $loglevel of 0, but it cannot be completely turned off.
-
-eslSetLogLevel is implemented as class-level method, as opposed to an instance-level method, so you do not need to create a new instance of the class to call this method. In Perl, for example:
+eslSetLogLevel是类级方法，而不是实例级方法，因此您无需创建一个类的新实例来调用此方法。例如，在Perl中：
 
 use ESL;
 ESL::eslSetLogLevel(7);
 
-###  ESLevent Object 
+### ESLevent对象
 
-#####  new 
+##### new
 
-new($event_type [, $event_subclass])
+new(\$event_type [, \$event_subclass])
 
-Instantiates a new event object that can use the methods below.
+实例化一个新的事件对象，可以使用以下方法。
 
-#####  serialize 
+##### serialize
 
-serialize([$format])
+serialize([\$format])
 
-Turns an event into colon-separated 'name: value' pairs similar to a sip/email packet (the way it looks on '/events plain all'). $format can be:
+将事件转换为类似于sip/email数据包的冒号分隔的“name: value”对（在‘/events plain all’上呈现的方式）。\$format可以是：
 
 * "xml"
 * "json"
-* "plain" (default)
+* "plain"（默认）
 
-#####  setPriority 
+##### setPriority
 
-setPriority([$number])
+setPriority([\$number])
 
-Sets the priority of an event to $number in case it's fired.
+设置事件的优先级为\$number（如果触发）。
 
-#####  getHeader 
+##### getHeader
 
-getHeader($header_name)
+getHeader(\$header_name)
 
-Gets the header with the key of $header\_name from an event object.
+从事件对象中获取键为`$header_name`的头部信息。
 
 #####  getBody 
 
 getBody()
 
-Gets the body of an event object.
+获取事件对象的正文信息。
 
 #####  getType 
 
 getType()
 
-Gets the event type of an event object.
+获取事件对象的事件类型。
 
 #####  addBody 
 
 addBody($value)
 
-Add $value to the body of an event object. This can be called multiple times for the same event object.
+将`$value`添加到事件对象的正文中。可以多次调用以添加相同的事件对象。
 
 #####  addHeader 
 
 addHeader($header_name, $value)
 
-Add a header with key = $header\_name and value = $value to an event object. This can be called multiple times for the same event object.
+向事件对象添加键为`$header_name`，值为`$value`的头部信息。可以多次调用以添加相同的事件对象。
 
 #####  delHeader 
 
 delHeader($header_name)
 
-Delete the header with key $header\_name from an event object.
+从事件对象中删除键为`$header_name`的头部信息。
 
 #####  firstHeader 
 
 firstHeader()
 
-Sets the pointer to the first header in an event object, and returns it's key name. This must be called before [nextHeader](https://wiki.freeswitch.org/wiki/Event%5FSocket%5FLibrary#nextHeader "Event Socket Library") is called.
+将指针设置为事件对象中的第一个头部，并返回其键名。在调用 [nextHeader](https://wiki.freeswitch.org/wiki/Event%5FSocket%5FLibrary#nextHeader "Event Socket Library")方法之前必须调用此方法。
 
 #####  nextHeader 
 
 nextHeader()
 
-Moves the pointer to the next header in an event object, and returns it's key name. [firstHeader](https://wiki.freeswitch.org/wiki/Event%5FSocket%5FLibrary#firstHeader "Event Socket Library") must be called before this method to set the pointer. If you're already on the last header when this method is called, then it will return NULL.
+将指针移动到事件对象中的下一个头部，并返回其键名。在调用此方法之前必须先调用 [firstHeader](https://wiki.freeswitch.org/wiki/Event%5FSocket%5FLibrary#firstHeader "Event Socket Library") 方法来设置指针。如果在调用此方法时已经位于最后一个头部上，则会返回NULL。
 
-###  ESLconnection Object 
+###  ESLconnection 对象 
 
 #####  new 
 
 new($host, $port, $password)
 
-Initializes a new instance of ESLconnection, and connects to the host $host on the port $port, and supplies $password to FreeSWITCH.
+初始化一个新的ESLconnection实例，并连接到主机`$host`的端口`$port`，并向FreeSWITCH提供`$password`。
 
-Intended only for an event socket in "Inbound" mode. In other words, this is only intended for the purpose of creating a connection to FreeSWITCH that is not initially bound to any particular call or channel.
+仅适用于“入站”模式的事件套接字。换句话说，这仅用于创建与不特定呼叫或通道相关的FreeSWITCH连接的目的。
 
-Does not initialize channel information (since inbound connections are not bound to a particular channel). In plain language, this means that calls to getInfo() will always return NULL.
+对于不初始化通道信息（因为入站连接不绑定到特定的通道），以普通语言来说，这意味着对getInfo()的调用将始终返回NULL。
 
 new($fd)
 
-Initializes a new instance of ESLconnection, using the existing file number contained in $fd.
+使用$fd中包含的现有文件编号初始化一个新的ESLconnection实例。
 
-Intended only for Event Socket Outbound connections. It will fail on Inbound connections, even if passed a valid inbound socket.
+仅用于事件套接字出站连接。即使传递了有效的入站套接字，该方法也会在入站连接上失败。
 
-The standard method for using this function is to listen for an incoming connection on a socket, accept the incoming connection from FreeSWITCH, fork a new copy of your process if you want to listen for more connections, and then pass the file number of the socket to new($fd).
+使用此函数的标准方法是在套接字上侦听传入连接，接受来自FreeSWITCH的传入连接，如果要监听更多的连接，则复制您的进程，并将套接字的文件编号传递给new($fd)。
 
 #####  socketDescriptor 
 
 socketDescriptor()
 
-Returns the UNIX file descriptor for the connection object, if the connection object is connected. This is the same file descriptor that was passed to new($fd) when used in outbound mode.
+如果连接对象已连接，则返回连接对象的UNIX文件描述符。在出站模式下使用new($fd)时，这是传递的相同文件描述符。
 
 #####  connected 
 
 connected()
 
-Test if the connection object is connected. Returns 1 if connected, 0 otherwise.
+检测连接对象是否已连接。如果已连接，则返回1；否则返回0。
 
 #####  getInfo 
 
 getInfo()
 
-When FS connects to an "Event Socket Outbound" handler, it sends a "CHANNEL\_DATA" event as the first event after the initial connection. getInfo() returns an ESLevent that contains this Channel Data.
+当FS连接到“事件套接字出站”处理程序时，它会在初始连接后发送一个“CHANNEL_DATA”事件。getInfo()返回的ESLevent包含此通道数据。
 
-getInfo() returns NULL when used on an "Event Socket Inbound" connection.
+当在“事件套接字入站”连接上使用时，getInfo()返回NULL。
 
 #####  send 
 
 send($command)
 
-Sends a command to FreeSWITCH.
+将命令发送给FreeSWITCH。
 
-Does not wait for a reply. You should immediately call recvEvent or recvEventTimed in a loop until you get the reply. The reply event will have a header named "content-type" that has a value of "api/response" or "command/reply".
+不会等待回复。您应立即调用recvEvent或recvEventTimed并使用循环直到收到回复。回复事件的头部名称为“content-type”，值为“api/response”或“command/reply”。
 
-To automatically wait for the reply event, use sendRecv() instead of send().
+要自动等待回复事件，请使用sendRecv()而不是send()。
 
 #####  sendRecv 
 
 sendRecv($command)
 
-Internally sendRecv($command) calls send($command) then recvEvent(), and returns an instance of ESLevent.
+### 内部调用sendRecv($command)函数，该函数先调用send($command)函数然后调用recvEvent()函数，并返回一个ESLevent实例。
 
-recvEvent() is called in a loop until it receives an event with a header named "content-type" that has a value of "api/response" or "command/reply", and then returns it as an instance of ESLevent.
+### 直到收到一个名为"content-type"的头部值为"api/response"或"command/reply"的事件为止，recvEvent()函数会在循环中被调用，并将其作为ESLevent实例返回。
 
-Any events that are received by recvEvent() prior to the reply event are queued up, and will get returned on subsequent calls to recvEvent() in your program.
+### 在回复事件之前通过recvEvent()函数接收到的所有事件都会被排队，然后在程序中的后续调用recvEvent()函数时返回。
 
 #####  api 
 
 api($command[, $arguments])
 
-Send an [API command](https://wiki.freeswitch.org/wiki/Mod%5Fcommands#Core%5FCommands "Mod commands") to the FreeSWITCH server. This method blocks further execution until the command has been executed.
+向FreeSWITCH服务器发送一个[API命令](https://wiki.freeswitch.org/wiki/Mod%5Fcommands#Core%5FCommands "Mod commands")。此方法会阻塞进一步的执行，直到命令被执行完成。
 
-api($command, $args) is identical to sendRecv("api $command $args").
+api($command, $args)与sendRecv("api $command $args")相同。
 
 ##### bgapi 
 
 bgapi($command[, $arguments][,$custom_job_uuid])
 
-Send a [background API command](https://wiki.freeswitch.org/wiki/Mod%5Fcommands#bgapi "Mod commands") to the FreeSWITCH server to be executed in it's own thread. This will be executed in its own thread, and is non-blocking.
+向FreeSWITCH服务器发送一个[后台API命令](https://wiki.freeswitch.org/wiki/Mod%5Fcommands#bgapi "Mod commands")，以在自己的线程中执行。此命令将在自己的线程中执行，且非阻塞。
 
-bgapi($command, $args) is identical to sendRecv("bgapi $command $args")
+bgapi($command, $args)与sendRecv("bgapi $command $args")相同。
 
-Here is a Perl snippet that demonstrates the custom Job-UUID setting. (Works for all swigged languages)
+这是一个Perl代码片段，演示了自定义Job-UUID设置方式。（适用于所有经过swig处理的编程语言）
 
+```
 my $command = shift;
 my $args = join(" ", @ARGV);
 
@@ -382,15 +376,18 @@ my $con = new ESL::ESLconnection("127.0.0.1", "8021", "ClueCon");
 
 my $e = $con->bgapi($command, $args, "my-job-id");
 print $e->serialize("json");
+```
 
-This code returns:
+这段代码返回：
 
+```
 {
        "Event-Name":   "SOCKET_DATA",
        "Content-Type": "command/reply",
        "Reply-Text":   "+OK Job-UUID: my-job-id",
        "Job-UUID":     "my-job-id"
 }
+```
 
 #####  sendEvent 
 
@@ -400,99 +397,99 @@ sendEvent($send_me)
 
 recvEvent()
 
-Returns the next event from FreeSWITCH. If no events are waiting, this call will block until an event arrives.
+从FreeSWITCH中返回下一个事件。如果没有等待的事件，这个调用将一直阻塞，直到有事件到达。
 
-If any events were queued during a call to sendRecv(), then the first one will be returned, and removed from the queue, then the next event will be read from the connection in sequence.
+如果在调用sendRecv()时有任何事件排队，那么将返回第一个事件，并从队列中删除，然后下一个事件将按顺序从连接中读取。
 
 #####  recvEventTimed 
 
 recvEventTimed($milliseconds)
 
-Similar to recvEvent(), except that it will block for at most $milliseconds.
+与recvEvent()类似，只是它最多阻塞$milliseconds毫秒。
 
-A call to recvEventTimed(0) will return immediately. This is useful for polling for events.
+调用recvEventTimed(0)将立即返回。这对于轮询事件非常有用。
 
 #####  filter 
 
 filter($header, $value)
 
-See the [event socket filter command](../../Modules/mod_event_socket_1048924.mdx#36-filter).
+参见[event socket筛选命令](../../Modules/mod_event_socket_1048924.mdx#36-filter)。
 
 #####  events 
 
 events($event_type,$value)
 
-$event\_type can have the value "plain" or "xml". Any other value specified for $event\_type gets replaced with "plain".
+$event\_type可以取值"plain"或"xml"。对于$event\_type指定的任何其他值，将被替换为"plain"。
 
-don't use this call if you want only myevents; you must use sendRecv("myevents") instead
+如果只想使用myevents，请不要使用这个调用；而应该使用sendRecv("myevents")。
 
-See the [event socket event command](https://wiki.freeswitch.org/wiki/Event%5FSocket#event "Event Socket") for more info.
+有关更多信息，请参阅[event socket事件命令](https://wiki.freeswitch.org/wiki/Event%5FSocket#event "Event Socket")。
 
-if you want to use noevents; you must use sendRecv("noevents") instead
+如果要使用noevents，请使用sendRecv("noevents")。
 
 #####  execute 
 
 execute($app[, $arg][, $uuid])
 
-Execute a [dialplan application](https://wiki.freeswitch.org/wiki/Mod%5Fdptools#Applications "Mod dptools"), and wait for a response from the server. On socket connections not anchored to a channel (most of the time inbound), all three arguments are required -- $uuid specifies the channel to execute the application on.
+执行[dialplan应用程序](https://wiki.freeswitch.org/wiki/Mod%5Fdptools#Applications "Mod dptools")，并等待服务器的响应。对于没有绑定到通道的套接字连接（大多数情况下为入站连接），需要三个参数 -- $uuid指定要在其上执行应用程序的通道。
 
-Returns an ESLevent object containing the response from the server. The getHeader("Reply-Text") method of this ESLevent object returns the server's response. The server's response will contain "+OK \[Success Message\]" on success or "-ERR \[Error Message\]" on failure.
+返回一个包含来自服务器响应的ESLevent对象。该ESLevent对象的getHeader("Reply-Text")方法返回服务器的响应。服务器的响应将包含成功时的"+OK \[Success Message\]"，或失败时的"-ERR \[Error Message\]"。
 
-See the examples below for information on how to [get a uuid](https://wiki.freeswitch.org/wiki/Event%5FSocket%5FLibrary#Getting%5Fa%5Fuuid "Event Socket Library") to use when calling execute().
+请参考下面的示例获取有关如何[获取UUID](https://wiki.freeswitch.org/wiki/Event%5FSocket%5FLibrary#Getting%5Fa%5Fuuid "Event Socket Library")的信息，在调用execute()时使用。
 
 #####  executeAsync 
 
 executeAsync($app[, $arg][, $uuid])
 
-Same as [execute](https://wiki.freeswitch.org/wiki/Event%5FSocket%5FLibrary#execute "Event Socket Library"), but doesn't wait for a response from the server.
+与[execute](https://wiki.freeswitch.org/wiki/Event%5FSocket%5FLibrary#execute "Event Socket Library")相同，但不会等待服务器的响应。
 
-This works by causing the underlying call to execute() to append "async: true" header in the message sent to the channel.
+这通过在发送到通道的消息中追加"async: true"头部来实现。
 
 #####  setAsyncExecute 
 
 setAsyncExecute($value)
 
-Force async mode on for a socket connection. This command has no effect on outbound socket connections that are set to "async" in the dialplan and inbound socket connections, since these connections are already set to async mode on.
+在套接字连接上强制启用异步模式。此命令对于在拨号计划中设置为"async"的出站套接字连接和入站套接字连接无效，因为这些连接已经设置为异步模式。
 
-$value should be 1 to force async mode, and 0 not to force it.
+$value应为1以强制启用异步模式，为0则不强制启用。
 
-Specifically, calling setAsyncExecute(1) operates by causing future calls to execute() to include the "async: true" header in the message sent to the channel. Other event socket library routines are not affected by this call.
+具体而言，调用setAsyncExecute(1)会导致将来对execute()的调用中包含"async: true"头部的消息发送到通道。其他的事件套接字库例程不受此调用的影响。
 
 #####  setEventLock 
 
 setEventLock($value)
 
-Force sync mode on for a socket connection. This command has no effect on outbound socket connections that are not set to "async" in the dialplan, since these connections are already set to sync mode.
+在套接字连接上强制启用同步模式。此命令对于未在拨号计划中设置为"async"的出站套接字连接无效，因为这些连接已经设置为同步模式。
 
-$value should be 1 to force sync mode, and 0 not to force it.
+$value应为1以强制启用同步模式，为0则不强制启用。
 
-Specifically, calling setEventLock(1) operates by causing future calls to execute() to include the "event-lock: true" header in the message sent to the channel. Other event socket library routines are not affected by this call.
+具体而言，调用setEventLock(1)会导致将来对execute()的调用中包含"event-lock: true"头部的消息发送到通道。其他的事件套接字库例程不受此调用的影响。
 
-See Also:
+参见:
 
 [Q: Ordering and async keyword](Event-Socket-Outbound_3375460.mdx#q-ordering-and-async-keyword-)
 
-[Q: Can I bridge a call with an Outbound Socket?](Event-Socket-Outbound_3375460.mdx#q-can-i-bridge-a-call-with-an-outbound-socket-)
+[Q: 我可以使用Outbound Socket来接入电话吗？](Event-Socket-Outbound_3375460.mdx#q-can-i-bridge-a-call-with-an-outbound-socket-)
 
-#####  disconnect 
+#####  断开连接 
 
 disconnect()
 
-Close the socket connection to the FreeSWITCH server.
+关闭与FreeSWITCH服务器的socket连接。
 
-##  Examples 
+##  示例 
 
-###  Getting a uuid 
+###  获取uuid 
 
-On inbound connections, you get a new $uuid to supply to execute() using:
+对于入站连接，您可以使用以下方法获取一个新的$uuid并将其提供给execute()：
 
 $uuid = $esl->api("create_uuid")->getBody();
 
-On outbound connections, the $uuid to use can be acquired using:
+对于出站连接，可以使用以下方法获取要使用的$uuid：
 
 $uuid = $esl->getInfo()->getHeader("unique-id")
 
-###  Simple Perl Example 
+###  Perl简单示例 
 
 #!/usr/bin/perl                                                                                
 use strict;
@@ -503,7 +500,7 @@ my $host = "127.0.0.1";
 my $port = "8021";
 my $pass = "ClueCon";
 my $con  = new ESL::ESLconnection($host, $port, $pass);
-if (! $con) { die "Unable to establish connection to $host:$port\n"; }
+if (! $con) { die "无法建立与$host:$port的连接\n"; }
 $con->events("plain","all");
 
 my $target = shift;
@@ -511,48 +508,48 @@ my $uuid = $con->api("create_uuid")->getBody();
 my $res =
     $con->bgapi("originate","{origination_uuid=$uuid}$target 9664");
 my $job_uuid = $res->getHeader("Job-UUID");
-print "Call to $target has Job-UUID of $job_uuid and call uuid of $uuid \n";
+print "致电目标$target的Job-UUID为$job_uuid，通话的uuid为$uuid \n";
 
+```perl
 my $stay_connected = 1;
-while ( $stay_connected ) {
+while ($stay_connected) {
     my $e = $con->recvEventTimed(20);
-    if ( $e ) {
+    if ($e) {
         my $ev_name = $e->getHeader("Event-Name");
-        # Should we check for the $job_uuid to match the background job ?                      
-        if ( $ev_name eq 'BACKGROUND_JOB' ) {
-            if ( $e->getHeader("Job-UUID") eq $job_uuid ) {
+        # 是否应该检查 $job_uuid 以匹配后台作业？
+        if ($ev_name eq 'BACKGROUND_JOB') {
+            if ($e->getHeader("Job-UUID") eq $job_uuid) {
                 my $call_result = $e->getBody();
-                print "Result of call to $target was $call_result\n\n";
+                print "调用 $target 的结果是 $call_result\n\n";
             }
-        } elsif ( $ev_name eq 'DTMF' ) {
+        } elsif ($ev_name eq 'DTMF') {
             my $digit = $e->getHeader("DTMF-Digit");
-            print "Received DTMF digit: $digit\n";
-            if ( $digit =~ m/\D/ ) {
-                print "Exiting...\n";
+            print "收到DTMF数字：$digit\n";
+            if ($digit =~ m/\D/) {
+                print "退出...\n";
                 $stay_connected = 0;
             }
         } else {
-      # Some other event                                                                       
+            # 其他事件
         }
     } else {
-    # do other things while waiting for events...                                              
+        # 在等待事件的同时做其他事情...
     }
 }
 $con->api("uuid_kill",$uuid);
+```
 
-###  Ruby Example 
+```ruby
+# Ruby实例
 
-ESL in Inbound mode.
-
+# ESF入站模式
 require 'ESL'
 
 con = ESL::ESLconnection.new('127.0.0.1', '8021', 'ClueCon')
 esl = con.sendRecv('api sofia status')
 puts esl.getBody
 
-  
-ESL in Outbound mode in sync operation (be aware that in sync operation many things will not work as expected. e.g. no DTMFs. Prefer async).
-
+# ESF出站模式下的同步操作
 require 'socket'
 require 'ESL'
 
@@ -565,9 +562,11 @@ loop do
   esl.execute('playback', '/usr/local/freeswitch/sounds/music/8000/suite-espanola-op-47-leyenda.wav')
   esl.execute('hangup')
 end
+```
 
-ESL in Outbound async full mode (&lt;action application="socket" data="[localhost:8086](http://localhost:8086) async full"/>). It forks a process for every connection in order to support simultaneous sessions.
+在Outbound异步完整模式（'`<action application="socket" data="[localhost:8086](http://localhost:8086) async full"/>`'）中，ESL会为每个连接创建一个进程，以支持同时会话。
 
+```ruby
 #!/usr/bin/ruby
 
 require "ESL"
@@ -577,14 +576,14 @@ bind_address = "127.0.0.1"
 bind_port = 8086
 
 def time_now
-  Time.now.strftime("%Y-%m-%d %H:%M:%S")
+  Time.now.strftime("%Y-%m-%d %H:%M:%S")
 end
 
 socket = Socket.new(AF_INET, SOCK_STREAM, 0)
 sockaddr = Socket.sockaddr_in(bind_port, bind_address)
 socket.bind(sockaddr)
 socket.listen(5)
-puts "Listening for connections on #{bind_address}:#{bind_port}"
+puts "正在监听来自 #{bind_address}:#{bind_port} 的连接"
 loop do
   client_socket, client_sockaddr = socket.accept #_nonblock
   pid = fork do
@@ -594,7 +593,7 @@ loop do
     @con.sendRecv("myevents")
     @con.sendRecv("divert_events on")
 
-    puts "#{time_now} [#{uuid}] Call to [#{info.getHeader("Caller-Destination-Number")}]"
+    puts "#{time_now} [#{uuid}] 呼叫至 [#{info.getHeader("Caller-Destination-Number")}]"
     @con.execute("log", "1, Wee-wa-wee-wa")
     @con.execute("info", "")
     @con.execute("answer", "")
@@ -602,35 +601,37 @@ loop do
 
     while @con.connected
       e = @con.recvEvent
+```
 
-      if e
-        name = e.getHeader("Event-Name")
-        puts "EVENT: #{name}"
-        break if name == "SERVER_DISCONNECTED"
-        if name == "DTMF"
-          digit = e.getHeader("DTMF-DIGIT")
-          duration = e.getHeader("DTMF-DURATION")
-          puts "DTMF DIGIT #{digit} (#{duration})"
-          if digit == "5"
-            @con.execute("log", "1, WHA HA HA. User pressed 5")
-          elsif digit == "8"
-           # TODO: close connection without hangup in order to proceed in dialplan. How?
-          elsif digit == "9"
-            @con.execute("transfer", "99355151")
-          end
-        end
-
+if e
+    name = e.getHeader("Event-Name")
+    puts "事件：#{name}"
+    break if name == "SERVER_DISCONNECTED"
+    if name == "DTMF"
+      digit = e.getHeader("DTMF-DIGIT")
+      duration = e.getHeader("DTMF-DURATION")
+      puts "DTMF数字：#{digit}（#{duration}）"
+      if digit == "5"
+        @con.execute("log", "1, 哈哈哈。用户按了5")
+      elsif digit == "8"
+        # TODO: 不挂断关闭连接，以便在拨号计划中继续进行。怎么做？
+      elsif digit == "9"
+        @con.execute("transfer", "99355151")
       end
     end
-    puts "Connection closed"
-  end
 
-  Process.detach(pid)
+  end
+end
+puts "连接已关闭"
+ 
 end
 
-###  Java Example 
+Process.detach(pid)
+end
 
-Java inbound example that turns on events and prints them serialized to stdout.
+### Java示例
+
+Java入口示例，显示打开事件并将其序列化输出到stdout。
 
 ```java
 /*
@@ -661,66 +662,23 @@ public class MyESLTest {
 		 *
 		 */
 
-		System.load("/lib64/fs/libesljni.so");
-		
-		/*
-		 *
-		 * Trying to keep this simple (and I'm no java expert) I am instantiating the ESLconnection and
-		 * ESLevent object in a static reference here so remember if you don't plan on doing everything in main
-		 * you will need to instantiate your class first or you will get compile-time errors.
-		 *
-		 */
-
-		ESLconnection con = new ESLconnection("127.0.0.1","8021","ClueCon");
-
-		ESLevent evt;
-
-		if (con.connected() == 1) System.out.println("connected");
-		con.events("plain","all");
-
-		// Loop while connected to the socket -- not sure if this method is constantly updated so may not be a good test
-		while (con.connected() == 1) {
-			
-			// Get an event - recvEvent will block if nothing is queued
-			evt = con.recvEvent();
-
-			// Print the entire event in key : value format. serialize() according to the wiki usually takes no arguments
-			// but if you do not put in something you will not get any output so I just stuck plain in.
-			System.out.println(evt.serialize("plain"));
-
-		}
-		
-	}
-}
-```
-
-This and my attempt at a Java console GUI are in freeswitch-contrib.
-
-  
-### C Example
-
-There are C examples for both inbound and outbound in the source code libs/esl dir. Check testclient.c and testserver.c for example.
-
-Note: There's a difference in testserver.c of v1.2.stable and master(1.4).
-
-Basically, the esl\_listen\_threaded takes a callback function that, when a new connection comes in, runs the callback - mycallback in this case.
-
 ```cpp
 int main(void)
 {
 	esl_global_set_default_logger(7);
-	esl_listen_threaded("localhost", 8040, mycallback, 100000);
+	char* user_data = "some_user_data";
+	esl_listen_threaded("localhost", 8040, mycallback, 100000, user_data);
 	
 	return 0;
 }
 ```
 
-the 1.4 vesion (master from 2014-02-16) added a private user\_data param that allows you pass user\_data to the callback, e.g.
+If you want to change testclient to connect to localhost and authenticate with EventSocket in order to issue sofia commands, set your ESLCONF at the top of testclient.c according to the instructions there and run it.
 
 ```cpp
 int main(void)
 {
-	char *private_data = "some private string or struct ...";
+	char *private_data = "一些私有的字符串或结构体 ...";
 
 	esl_global_set_default_logger(7);
 	esl_listen_threaded("localhost", 8040, mycallback, private_data, 100000);
@@ -729,12 +687,10 @@ int main(void)
 }
 ```
 
-### See Also
+### 另请参阅
 
 * [mod\_event\_socket](../../Modules/mod_event_socket_1048924.mdx#11-acl)
 * [Perl ESL](../Perl-ESL/index.mdx#about)
 * [PHP ESL](../PHP-ESL/index.mdx#-ivrd-)
 * [Python ESL](../Python-ESL/index.mdx#about)
 * [Ruby ESL](../Ruby-ESL_13173554.mdx#ruby-examples)
-
-

@@ -1,55 +1,52 @@
+# 回放中止符
 
-# playback_terminators 
+由Ryan Harris创建，最后由Attila Gulyas于2020.06.01修改
 
- Created by  Ryan Harris, last modified by  Attila Gulyas on 2020.06.01
+## 回放中止符
 
-## playback_terminators
+DTMF数字
 
-dtmf digit
+## 0\. 关于
 
-## 0\. About
+允许您设置哪些[DTMF](../FreeSWITCH-Explained/Introduction/Glossary_13173966.mdx#dtmf)音调将终止
 
-Allows you to set which [DTMF](../FreeSWITCH-Explained/Introduction/Glossary_13173966.mdx#dtmf) tones will terminate
+* 回放（参见[mod\_dptools:playback](../FreeSWITCH-Explained/Modules/mod-dptools/6586776.mdx#0-about)或[mod\_dptools:play\_and\_detect\_speech](../FreeSWITCH-Explained/Modules/mod_dptools_1970333.mdx#-c)示例），或
+* 录音（请参见`uuid_record`在[mod\_commands](../FreeSWITCH-Explained/Modules/mod_commands_1966741.mdx#--)（即，FreeSWITCH API命令中），[mod\_dptools:record](../FreeSWITCH-Explained/Modules/mod-dptools/6587041.mdx#0-about)和[mod\_dptools:record\_session](../FreeSWITCH-Explained/Modules/mod-dptools/6587110.mdx#about)）。
 
-* playback (see [mod\_dptools:playback](../FreeSWITCH-Explained/Modules/mod-dptools/6586776.mdx#0-about) or [mod\_dptools:play\_and\_detect\_speech](../FreeSWITCH-Explained/Modules/mod_dptools_1970333.mdx#-c) for example), or
-* recording (see `uuid_record` in [mod\_commands](../FreeSWITCH-Explained/Modules/mod_commands_1966741.mdx#--) (i.e., the FreeSWITCH API commands), [mod\_dptools:record](../FreeSWITCH-Explained/Modules/mod-dptools/6587041.mdx#0-about), and [mod\_dptools:record\_session](../FreeSWITCH-Explained/Modules/mod-dptools/6587110.mdx#about)).
+默认中止符是`*`（星号）。
 
-The default terminator is `*` (star).
+## 1\. 语法
 
-## 1\. Syntax
-
-**Syntax**
+**语法**
 
 ```text
 playback_terminators=123456789*0# | any | none
 ```
 
-* `none` \- undefines the terminator digit, meaning no [DTMF](../FreeSWITCH-Explained/Introduction/Glossary_13173966.mdx#dtmf) tone will interrupt playback
-* `any` \- any [DTMF](../FreeSWITCH-Explained/Introduction/Glossary_13173966.mdx#dtmf) will interrupt playback
+* `none` \- 未定义的终止符数字，意味着没有[DTMF](../FreeSWITCH-Explained/Introduction/Glossary_13173966.mdx#dtmf)音调会中断回放
+* `any` \- 任何[DTMF](../FreeSWITCH-Explained/Introduction/Glossary_13173966.mdx#dtmf)都会中断回放
 
-Digits not specified as terminators will be collected, but won't interrupt playback.
+未指定为终止符的数字将被收集，但不会中断播放。
 
-## 2\. Modifiers
+## 2\. 修饰符
 
-* `+` (plus) - includes the following terminator digit along with the other [DTMF](../FreeSWITCH-Explained/Introduction/Glossary_13173966.mdx#dtmf) digits in the returned string
-* `x` (letter ex) - includes the following terminator digit in the returned string and also returns `SWITCH_STATUS_RESTART`
+* `+`（加号）- 将以下终止符数字与返回字符串中的其他[DTMF](../FreeSWITCH-Explained/Introduction/Glossary_13173966.mdx#dtmf)数字一起包含
+* `x`（字母“ex”）- 将以下终止符数字包含在返回字符串中，并返回`SWITCH_STATUS_RESTART`
 
-See last example below on what these modifiers do.
+请参见下面的最后一个示例，了解这些修饰符的作用。
 
-TODO Add use cases.
+待办事项 添加使用案例。
 
-## 3\. Examples
+## 3\. 示例
 
-Make either `*` (star) or `#` (bar/pound/square) interrupt the subsequent playback, [tone\_stream](../FreeSWITCH-Explained/Modules/mod-dptools/mod-dptools:-gentones/Tone_stream_6586599.mdx#about), [say](../FreeSWITCH-Explained/Modules/mod-dptools/6586961.mdx#0-about), recording, etc. operation:
+让`*`（星号）或`#`（井号/棒/方括号）中断后续的播放，[tone_stream](../FreeSWITCH-Explained/Modules/mod-dptools/mod-dptools:-gentones/Tone_stream_6586599.mdx#about)，[say](../FreeSWITCH-Explained/Modules/mod-dptools/6586961.mdx#0-about)，录音等操作：
 
 ```xml
 <action application="set" data="playback_terminators=#*"/>
 ```
 
-If [DTMF](../FreeSWITCH-Explained/Introduction/Glossary_13173966.mdx#dtmf) 9 is dialed during playback, it will interrupt playback and return the digit 9 along with any other dialed digits; if `*` is dialed it will only interrupt playback without being included in the [DTMF](../FreeSWITCH-Explained/Introduction/Glossary_13173966.mdx#dtmf) string returned:
+如果在播放过程中按下[DTMF](../FreeSWITCH-Explained/Introduction/Glossary_13173966.mdx#dtmf) 9，它将中断播放并返回数字9以及其他被按下的数字；如果按下`*`，它将仅中断播放而不包含在返回的[DTMF](../FreeSWITCH-Explained/Introduction/Glossary_13173966.mdx#dtmf)字符串中：
 
 ```xml
 <action application="set" data="playback_terminators=*+9"/>
 ```
-
-

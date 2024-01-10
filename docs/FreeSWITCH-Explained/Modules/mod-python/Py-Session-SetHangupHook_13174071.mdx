@@ -1,25 +1,21 @@
+# Py Session SetHangupHook
 
-# Py Session SetHangupHook 
+## 介绍
 
- 
+与[JS对应项](https://wiki.freeswitch.org/wiki/Javascript%5FSession%5FSetHangupHook "Javascript Session SetHangupHook")稍有不同，它使用uuid而不是会话实例进行回调。
 
-## About
+点击此处展开目录
 
-Slightly different than the [JS counterpart](https://wiki.freeswitch.org/wiki/Javascript%5FSession%5FSetHangupHook "Javascript Session SetHangupHook") in that it calls back with a uuid rather than a session instance.
+* 1 [示例1](#-freeswitch--py-session-sethanguphook-)
+* 2 [示例2](#-freeswitch--py-session-sethanguphook-)
+* 3 [呼叫挂断问题](#hanging-call-problem)
 
-Click here to expand Table of Contents
-
-* 1 [Example 1](#-freeswitch--py-session-sethanguphook-)
-* 2 [Example 2](#-freeswitch--py-session-sethanguphook-)
-* 3 [Hanging call problem](#hanging-call-problem)
-
-##   
-Example 1
+## 示例1
 
 ```xml
 def hangup_hook(uuid):
-    console_log("INFO","\n\nhangup hook, uuid: %s!!\n\n" % uuid)
-    return "Result"
+    console_log("INFO", "\n\n挂断钩子，uuid：%s!!\n\n" % uuid)
+    return "结果"
 
 def handler(uuid):
     session = PySession(uuid)
@@ -27,10 +23,9 @@ def handler(uuid):
     session.hangup("1")
 ```
 
-##   
-Example 2
+## 示例2
 
-Use a nested method in order to have the PySession object in scope.
+使用嵌套方法以便在作用域中拥有PySession对象。
 
 ```xml
 class TestSuite1:
@@ -39,8 +34,8 @@ class TestSuite1:
         self.session = session
         self.session.answer()
         def hangup_hook(uuid):
-            console_log("INFO","\n\nhangup hook, session: %s!!\n\n" % self.session)
-            return "Result"
+            console_log("INFO", "\n\n挂断钩子，会话：%s!!\n\n" % self.session)
+            return "结果"
         self.session.setHangupHook(hangup_hook)
 
 def handler(uuid):
@@ -49,14 +44,14 @@ def handler(uuid):
     testsuite1.run_test()
 ```
 
-## Hanging call problem
+## 呼叫挂断问题
 
-In the FreeSWITCH-1.4.7\~64bit, some call case(python script) makes hanging call. But, it's not the matter of call scenario. Some call cases are fired wrong python exception handler. It might be fixed in the newest version of FreeSWITCH, but, it would be helpful for older version users.
+在FreeSWITCH-1.4.7~64bit中，某些呼叫用例（Python脚本）导致呼叫挂断。但是，这与呼叫场景无关。某些呼叫用例会触发错误的Python异常处理程序。这可能已经在最新版本的FreeSWITCH中修复，但对于旧版本的用户来说，这将非常有帮助。
 
-In the freeswitch python script, we can set the hangup hook function. But after sets the hook, return or finish the script without destroy() function call, it makes hanging call.
+在freeswitch的Python脚本中，我们可以设置挂断钩子函数。但是在设置了钩子之后，如果没有调用destroy()函数来返回或完成脚本，会导致呼叫挂断。
 
-**Problem case :**  
-Just finished the script without calling the destroy() function.
+**问题案例：**  
+刚刚完成了脚本，但没有调用destroy()函数。
 
 ```xml
     ...
@@ -64,8 +59,8 @@ Just finished the script without calling the destroy() function.
     return
 ```
 
-**Fixed case :**  
-Finished the script with calling the destroy() function.
+**修复案例：**  
+完成脚本时调用了destroy()函数。
 
 ```xml
     ...
@@ -74,6 +69,3 @@ Finished the script with calling the destroy() function.
     return
 
 ```
-
-  
-

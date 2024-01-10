@@ -1,61 +1,58 @@
+# 共享线路外观
 
-# Shared Line Appearance 
+## 关于
 
- 
+在各种型号的手机上设置SLA/SCA。SCA允许您将多个电话注册到同一个分机，并使用手机上的线路键随时加入正在进行的通话。对于小公司和工作组来说，这是一个非常重要的功能，他们可以在附近工作并喜欢说"Bob，你有一通Call on line 1"。SCA还具有更熟悉的功能（对于按键式电话系统用户），即当另一个手机摘机时，线路键会亮起（或闪烁，具体取决于手机供应商），而不仅仅是在您有通话时。正如在公告中提到的[【1】](http://www.freeswitch.org/node/227)，FreeSWITCH开发人员已经实现了Broadsoft处理方法，因此支持多供应商是可能的！
 
-## About
+点击此处展开目录
 
-Setting up SLA/SCA on various model handsets. SCA allows you to have multiple phones register to the same extension and then use the line key on the handset to barge into a live call at any point. This is a huge feature for small companies and workgroups who work within earshot and like to say "Call on line 1 for you Bob". SCA also has the more familiar feature (for key phone system users) of the line key lighting up (or flashing depending on the handset vendor) when the hook is lifted on another handset rather than just when you have a call up. As mentioned in the announcement [\[1\]](http://www.freeswitch.org/node/227) the FreeSWITCH developers have implemented the Broadsoft method of handling so multi-vendor support is possible!
-
-Click here to expand Table of Contents
-
-* 1 [FreeSWITCH Configuration](#freeswitch-configuration)
-* 2 [Handset Configuration](#handset-configuration)  
+* 1 [FreeSWITCH配置](#freeswitch-configuration)
+* 2 [手机配置](#handset-configuration)  
    * 2.1 [Snom](#-freeswitch--shared-line-appearance-)  
    * 2.2 [Linksys/SPA](#linksysspa)  
    * 2.3 [Polycom](#polycom)  
    * 2.4 [Aastra](#aastra)  
    * 2.5 [Grandstream](#grandstream)  
    * 2.6 [Yealink](#yealink)  
-   * 2.7 [Troubleshooting](#troubleshooting)
+   * 2.7 [故障排除](#troubleshooting)
 
-## FreeSWITCH Configuration
+## FreeSWITCH配置
 
-In the SIP profile you wish to run SCA on enable this option:
+在您希望运行SCA的SIP配置文件中启用此选项：
 
 ```xml
 <param name="manage-shared-appearance" value="true"/>
 ```
 
-And rescan your profile.
+然后重新扫描您的配置文件。
 
-## Handset Configuration
+## 手机配置
 
-**Note that currently SCA works reliably only on Polycom and Linksys** per a [2010-06-18 mailing list post](http://lists.freeswitch.org/pipermail/freeswitch-users/2010-June/059382.html).
+**请注意，目前只有Polycom和Linksys上的SCA能够可靠地工作**，这是根据[2010年6月18日的邮件列表帖子](http://lists.freeswitch.org/pipermail/freeswitch-users/2010-June/059382.html)。
 
 ### Snom
 
-**NOTE:** that support for SCA/SLA is broken in all Snom firmware releases[\[2\]](http://lists.freeswitch.org/pipermail/freeswitch-users/2010-June/059382.html). This appears to be due to "the latest Snom firmware that causes this, Its missing the appearance-index on the call-info header on just about every packet involved in the dialog." This is tracked in Snom **internal** reference **SCPP-1633**[\[3\]](http://forum.snom.com/index.php?showtopic=4585). Please note, that this ticket has been resolved according to Snom (reference contained in the snom forum thread mentioned here), and using the new Beta series (8.7.x) appears to resolve the issues from my admittedly minor testing. Note that the changelogs throughout the 8.7.x series have a large number of resolved issues around the Broadsoft SCA/SLA support.
+**注意：**所有 Snom 固件版本中的 SCA/SLA 支持存在问题[\[2\]](http://lists.freeswitch.org/pipermail/freeswitch-users/2010-June/059382.html)。这似乎是因为“最新的 Snom 固件在与对话相关的几乎每个数据包的呼叫信息头中缺少外观索引。”这在 Snom 的**内部**参考 SCPP-1633 中有记录[\[3\]](http://forum.snom.com/index.php?showtopic=4585)。请注意，根据 Snom 的说法，这个问题已经得到解决（参考在这里提到的 snom 论坛主题中），并且使用新的 Beta 系列（8.7.x）似乎可以解决问题，我进行了初步测试。请注意，在整个 8.7.x 系列的变更日志中有大量关于 Broadsoft SCA/SLA 支持的问题得到解决。
 
-* Set an identity up to register as you would normally and then under the same identity do the following:  
-   * Set Shared Line to 'On'  
-   * Set Server Type Support to 'Broadsoft'
-* Then under Function Keys set up a line to work as your line appearance by selecting the identity you are sharing, setting the type to 'Shared Line' and entering a SIP URI e.g. 1008@x.x.x.x where x.x.x.x would be the IP of your FreeSWITCH server and 1008 the extension you are sharing.
+* 设置一个身份以正常注册，并在同一身份下进行以下操作：
+   * 将共享线路设置为“打开”
+   * 将服务器类型支持设置为“Broadsoft”
+* 然后在功能按键下设置一条线路，用作您的线路显示，选择您要共享的身份，将类型设置为“共享线路”，并输入一个 SIP URI，例如 1008@x.x.x.x，其中 x.x.x.x 是您的 FreeSWITCH 服务器的 IP 地址，1008 是您要共享的分机号。
 
 ### Linksys/SPA
 
-**Tested on SPA-942 firmware 6.1.5(a)**
+**在 SPA-942 固件 6.1.5(a) 上测试通过**
 
-* Setup the handset as per normal to register to the extension you are going to share.
-* In addition under 'Share Line Appearance' in Ext 1 (or which ever line you are using) set 'Share Ext:' to 'Shared'
-* Under Phone, Line Key 1 (Or whichever you are using), set 'Share Call Appearance:' to Shared
+* 正常设置电话机以注册到要共享的分机。
+* 另外，在“扩展 1”（或者您使用的任何线路）的“共享线路显示”下，将“共享扩展”设置为“共享”。
+* 在“电话”中，选择线路键 1（或者您使用的任何键），将“共享呼叫显示”设置为“共享”。
 
 ### Polycom
 
-**Tested on firmware 3.1.3.0439**
+**在固件 3.1.3.0439 上测试通过**
 
-* Setup the handset as per normal to register to the extension you are going to share, in addition under the line you need to set Type to Shared rather than Private.
-* To enable 'Barge In' to work you need setup provisioning and enable this option under your registration:
+* 正常设置手机以注册共享分机，此外，在您需要设置的线路下，您需要将类型设置为共享而不是私有。
+* 要使“闯入”功能正常工作，您需要进行配置，并在注册中启用此选项：
 
 ```xml
 reg.1.bargeInEnabled="1"
@@ -63,40 +60,40 @@ reg.1.bargeInEnabled="1"
 
 ### Aastra
 
-Only the latest 2.6 firmware with 675Xi phones can support SCA partially(The other party can barge in calls initiated from Aastra phone, but Aastra phone will drop any existing SCA calls when picking up), any older firmware SCA just not working. The setup for SCA is simple
+只有最新的2.6固件与675Xi手机部分支持SCA（使用Aastra手机发起的通话，对方可以闯入，但是Aastra手机在接听时会断开任何现有的SCA通话），任何旧版本的固件都不支持SCA。关于SCA的设置非常简单：
 
-Under "Global SIP Settings" or any Line 1/2/3/4 you want to setup as SCA line, set "BLA Number" to the shared line number, say 101, set "Line Mode" to "Broadsoft SCA"
+在“全局SIP设置”或任何要设置为SCA线路的1/2/3/4线路下，将“BLA号码”设置为共享线路号码，例如101，将“线路模式”设置为“Broadsoft SCA”。
 
 ### Grandstream
 
-**Can someone with a Grandscream handset please fill in what you need to do**
+**请带有Grandscream手机的人填写需要执行的操作**
 
 ### Yealink
 
-**Tested on a Yealink T28 Firmware 2.43.0.50**
+**在Yealink T28固件2.43.0.50上测试通过**
 
-* Configure an account as normal on the phone. This will be the account or line you want to be shared
-* Click Advanced at the bottom of the page
-* Then change Shared Line to be Broadsoft SCA, and click confirm
-* Click Phone, then DSS Key
-* Set the type to be Shared Line and the Line to be the Account you configured. In the expansion field enter extension@ip or extension@sipdomain. Click confirm to save changes.
-* * This isn't working at all. If you get it working see NormT on the IRC.
+* 在手机上正常配置一个帐号。这将是您想要共享的帐号或线路
+* 在页面底部点击“高级”
+* 然后将共享线路更改为Broadsoft SCA，并点击确认
+* 点击“电话”，然后点击“DSS 键”
+* 将类型设置为“共享线路”，将线路设置为您配置的帐号。在扩展字段中输入extension@ip 或 extension@sipdomain。点击确认以保存更改。
+* * 这根本不起作用。如果您成功使其正常工作，请在 IRC 上与 NormT 联系。
 
-### Troubleshooting
+### 故障排除
 
-If SLA works for outgoing calls and SLA does not work for inbound calls to the SLA phones, you may have some presence problem related to mixed IP and domain names. When using ODBC you may issue the following SQL statement
+如果共享线路适用于呼出，但对于呼入的共享线路电话不起作用，则可能与混合的IP和域名有关的存在问题。当使用ODBC时，您可以执行以下SQL语句：
 
 ```xml
-select sip_to_host,sip_from_user,sip_from_host,hostname,presence_id,call_info from sip_dialogs;
+select sip_to_host, sip_from_user, sip_from_host,hostname,presence_id,call_info from sip_dialogs;
 ```
 
-and see your server's IP address in sip\_to\_host and sip\_from\_host. If this is the case: Try to modify the dialstring when calling a phone. Example
+并且在`sip_to_host`和`sip_from_host`中查看服务器的IP地址。 如果是这种情况：尝试在拨打电话时修改拨号字符串。示例
 
 ```xml
 application="bridge" data="{sip_invite_domain=${domain_name}}user/200@mydomain.org"
 ```
 
-Also take care about similar settings in the sofia profiles. You may try to add one or some of the following settings in the sofia profiles to force the needed behaviour:
+还要注意在sofia配置文件中的类似设置。您可以尝试在sofia配置文件中添加以下设置中的一个或多个来强制实现所需的行为：
 
 ```xml
 <param name="manage-shared-appearance" value="true"/>
@@ -107,21 +104,19 @@ Also take care about similar settings in the sofia profiles. You may try to add 
 <param name="force-register-db-domain" value="mydomain.org"/>
 ```
 
-In the internal profile you should add the following parameter
+在内部配置文件中，您应该添加以下参数
 
 ```xml
 <param name="manage-presence" value="true"/>
 ```
 
-In all other profiles you may add
+在所有其他配置文件中，您可以添加
 
 ```xml
 <param name="manage-presence" value="passive"/>
 ```
 
-### Comments:
+### 评论：
 
-| Are there any SIP Soft Phones that are known to support Broadsoft SCA? ![](/images/icons/contenttypes/comment_16.png) Posted by tom@tomlynn.com at May 28, 2017 16:36 |
+| 是否有已知支持Broadsoft SCA的SIP软电话？！[](/images/icons/contenttypes/comment_16.png) 由tom@tomlynn.com于2017年5月28日16:36发布 |
 | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-
-

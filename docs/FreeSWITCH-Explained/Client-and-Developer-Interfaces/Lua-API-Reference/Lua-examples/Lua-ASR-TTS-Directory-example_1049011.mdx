@@ -1,39 +1,36 @@
+# Lua ASR TTS Directory 示例
 
-# Lua ASR TTS Directory example 
+## 关于
 
- 
+本指南将帮助您安装FreeSWITCH并配置自动语音识别以查找公司目录中的用户。
 
-## About
+_由Matt Williams（在#freeswitch中的Hmmhesays）和Brian West（bkw_）撰写_
 
-This guide should allow you to install FreeSWITCH and configure automatic speech recognition to look up users in a company directory. 
+由于这个指南已经很久没有更新了，请_按照这个指南进行操作，并让我们知道是否有任何遗漏的内容。
 
-_By Matt Williams (Hmmhesays in #freeswitch) and Brian West (bkw\_)_
+## 要求
 
-This guide hasn't been updated in a long time, so please _run through this and let us know if there is anything missing._
+在本指南中，我们将使用一些常量。
 
-## Requirement
+**网络地址：**
 
-There are a few things we are going to use for constants in this guide.
+* FreeSWITCH盒子 192.168.1.100
 
-**Network Addresses:** 
+**电话：**
 
-* FreeSWITCH box 192.168.1.100
+* 电话1 分机号 1000
+* 电话2 分机号 1001
 
-**Phones:**
+**目录：**
 
-* Phone 1 extension 1000
-* Phone 2 extension 1001
+* FreeSWITCH源目录 /usr/src/freeswitch
+* FreeSWITCH安装目录 /usr/local/freeswitch
 
-**Directories:**
+## 从源代码构建FreeSWITCH
 
-* FreeSWITCH source directory /usr/src/freeswitch
-* FreeSWITCH installation diretory /usr/local/freeswitch
+请参考[安装](../../../Installation/index.mdx#about)文档，从源代码安装FreeSWITCH。
 
-## Build FreeSWITCH from Source Code
-
-Install FreeSWITCH from source, please refer to the [Installation](../../../Installation/index.mdx#about) documentation. 
-
-You must tell FreeSWITCH which modules to build before installation. Open up **modules.conf** with your favorite text editor and uncomment the following lines if they are commented. They should look like the following.
+在安装之前，您必须告诉FreeSWITCH在安装之前要构建哪些模块。使用您喜欢的文本编辑器打开**modules.conf**文件，并取消注释以下行。它们应该如下所示：
 
 ```xml
 ...
@@ -46,29 +43,28 @@ languages/mod_lua
 #languages/mod_perl
 ```
 
-##   
-Configure Directory
+## 配置目录
 
-The next step is to set up directory entries for our users on the local network. We need to create a new directory and copy a couple files into it.
+下一步是为本地网络上的用户设置目录条目。我们需要创建一个新目录并将一些文件复制到其中。
 
 ```bash
 #!/bin/bash
-#Change your directory to the freeswitch directory
+#将当前目录更改为freeswitch目录
 cd /usr/local/freeswitch/conf/directory
-#Make a new file were we are going to keep our user settings for our local network
+#创建一个新文件夹，用于存储本地网络的用户设置
 mkdir 192.168.1.100
-#Copy default.xml to 192.168.1.100.xml for for our domain settings
+#将default.xml复制到192.168.1.100.xml，用于域设置
 cp default.xml 192.168.1.100.xml
-#copy over a directory files. These hold the phone registration info, voicemail, nat. These are similar to a peer/user entry in asterisks sip.conf or users.conf
+#复制目录文件，这些文件保存电话注册信息、语音邮件和NAT设置，类似于Asterisk sip.conf或users.conf中对等/用户条目
 cp default/brian.xml 192.168.1.100/1000.xml
 cp default/brian.xml 192.168.1.100/1001.xml
 ```
 
-Now we need to edit our domain info. Open up 192.168.1.100.xml and edit it so it looks like the following
+现在我们需要编辑我们的域信息。打开192.168.1.100.xml并进行以下编辑：
 
 ```xml
 <include>
-  <!--the domain or ip (the right hand side of the @ in the addr-->
+  <!--域名或IP（addr中@右侧的内容）-->
   <domain name="192.168.1.100">
     <params>
       <param name="dial-string" value="{presence_id=${dialed_user}@${dialed_domain},transfer_fallback_extension=${dialed_user}}${sofia_contact(${dialed_domain}/${dialed_user}@${dialed_domain})}"/>
@@ -83,7 +79,7 @@ Now we need to edit our domain info. Open up 192.168.1.100.xml and edit it so it
 </include>
 ```
 
-Next we need to edit the directory entries for each phone. Change directories into 192.168.1.100 and open up 1000.xml in your favorite text editor. The following are the lines we should be concerned with. These are pretty self explanatory. Username, password, context. Do this for 1001.xml entry also.
+接下来，我们需要编辑每个电话的目录条目。进入192.168.1.100目录，使用您喜欢的文本编辑器打开1000.xml。我们应该关注以下内容。这些内容都很简单明了。用户名、密码、上下文。对于1001.xml条目，也要进行相同操作。
 
 ```xml
 <user id="1000" mailbox="1000">
@@ -91,7 +87,7 @@ Next we need to edit the directory entries for each phone. Change directories in
 <variable name="user_context" value="internal"/>
 ```
 
-Now we set up our internal sip profile. Change directories to our sip\_profiles directory and open up **internal.xml** in your favorite editor modify the following lines.
+现在我们来设置内部SIP配置文件。切换到sip\_profiles目录，用您喜欢的编辑器打开**internal.xml**并修改以下行。
 
 ```bash
 cd /usr/local/freeswitch/conf/sip_profiles
@@ -107,7 +103,7 @@ cd /usr/local/freeswitch/conf/sip_profiles
 ...
 ```
 
-Next, we need to set up a our dial plan to call between our phones.
+接下来，我们需要设置拨号计划以在电话之间进行通话。
 
 ```bash
 #!/bin/bash
@@ -115,7 +111,7 @@ cd /usr/local/freeswitch/conf/dialplan
 touch internal.xml
 ```
 
-Now open up internal.xml in your favorite text editor and make it look like the following
+现在，用你喜欢的文本编辑器打开internal.xml，并使其看起来如下所示
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -136,7 +132,7 @@ Now open up internal.xml in your favorite text editor and make it look like the 
 </include>
 ```
 
-Next we need to tell FreeSWITCH to load mod\_pocketsphinx and mod\_lua on start up. Open up **/usr/local/freeswitch/conf/autoload\_configs/modules.conf.xml** in your favorite editor and change the following lines.
+接下来，我们需要告诉FreeSWITCH在启动时加载mod_pocketsphinx和mod_lua。打开**/usr/local/freeswitch/conf/autoload_configs/modules.conf.xml**并更改以下行。
 
 **modules.conf.xml**
 
@@ -150,44 +146,36 @@ Next we need to tell FreeSWITCH to load mod\_pocketsphinx and mod\_lua on start 
 <load module="mod_lua"/>
 ```
 
-At this point you should be able to restart FreeSWITCH, register your phones and call between them.
+此时，您应该能够重启FreeSWITCH，注册您的电话并在它们之间进行通话。
 
-Create **/usr/local/freeswitch/scripts/directory.lua**:
+创建 **/usr/local/freeswitch/scripts/directory.lua**:
 
 **directory.lua** Expand source 
 
 ```xml
  --[[
-FreeSWITCH Modular Media Switching Software Library / Soft-Switch Application
-Copyright (C) 2005/2006, Anthony Minessale II <anthm@freeswitch.org>
+FreeSWITCH模块化媒体切换软件库/软交换应用程序
+版权所有 (C) 2005/2006, Anthony Minessale II <anthm@freeswitch.org>
 
-Version: MPL 1.1
+版本：MPL 1.1
+```
 
-The contents of this file are subject to the Mozilla Public License Version
-1.1 (the "License"); you may not use this file except in compliance with
-the License. You may obtain a copy of the License at
-http://www.mozilla.org/MPL/
+该文件的内容受Mozilla Public License Version 1.1（“许可证”）的约束；除非符合许可证的规定，否则您不得使用该文件。您可以在http://www.mozilla.org/MPL/获取许可证的副本。
 
-   Software distributed under the License is distributed on an "AS IS" basis,
-WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
-for the specific language governing rights and limitations under the
-License.
+根据许可证，以“按原样”方式分发的软件没有任何形式的保证，无论是明示还是暗示。请参阅许可证以获取有关许可权和限制的具体规定。
 
-The Original Code is FreeSWITCH Modular Media Switching Software Library / Soft-Switch Application
+源代码是FreeSWITCH Modular Media Switching Software Library / Soft-Switch Application。
 
-The Initial Developer of the Original Code is
-Anthony Minessale II <anthm@freeswitch.org>
-   Portions created by the Initial Developer are Copyright (C)
-the Initial Developer. All Rights Reserved.
+最初的开发者是Anthony Minessale II <anthm@freeswitch.org>。
+最初开发的部分是版权归最初的开发者所有。
 
-Contributor(s):
+贡献者：
 
 Brian West <brian@freeswitch.org>
 
-   Example for Speech Enabled LUA Applications.
-]]
+用于启用语音的LUA应用程序的示例。
 
--- Used in parse_xml
+-- 用于解析XML的函数
 function parseargs_xml(s)
    local arg = {}
    string.gsub(s, "(%w+)=([\"'])(.-)%2", function (w, _, a)
@@ -196,7 +184,8 @@ function parseargs_xml(s)
    return arg
 end
 
--- Turns XML into a lua table.
+```lua
+-- 将XML转换为lua表格。
 function parse_xml(s)
    local stack = {};
    local top = {};
@@ -240,7 +229,7 @@ function parse_xml(s)
    return stack[1];
 end
 
--- Used to parse the XML results.
+-- 用于解析XML结果。
 function getResults(s) 
    local xml = parse_xml(s);
    local stack = {}
@@ -250,86 +239,116 @@ function getResults(s)
    table.insert(stack, top)
    return top;
 end
+```
 
--- This is the input callback used by dtmf or any other events on this session such as ASR.
+这是用于处理此会话上任何DTMF或其他事件（如ASR）的输入回调。
+
+```lua
 function onInput(s, type, obj)
    freeswitch.consoleLog("info", "Callback with type " .. type .. "\n");
    if (type == "dtmf") then
       freeswitch.consoleLog("info", "DTMF Digit: " .. obj.digit .. "\n");
    else if (type == "event") then
-	 local event = obj:getHeader("Speech-Type");
-	 if (event == "begin-speaking") then
-	    freeswitch.consoleLog("info", "\n" .. obj:serialize() .. "\n");
-	    -- Return break on begin-speaking events to stop playback of the fire or tts.
-	    return "break";
-	 end
-	 if (event == "detected-speech") then
-	    freeswitch.consoleLog("info", "\n" .. obj:serialize() .. "\n");
-	    if (obj:getBody()) then
-	       -- Pause speech detection (this is on auto but pausing it just in case)
-	       session:execute("detect_speech", "pause");
-	       -- Parse the results from the event into the results table for later use.
-	       results = getResults(obj:getBody());
-	    end
-	    return "break";
-	 end
+        local event = obj:getHeader("Speech-Type");
+        if (event == "begin-speaking") then
+            freeswitch.consoleLog("info", "\n" .. obj:serialize() .. "\n");
+            -- 在begin-speaking事件上返回“break”以停止播放声音或TTS。
+            return "break";
+        end
+        if (event == "detected-speech") then
+            freeswitch.consoleLog("info", "\n" .. obj:serialize() .. "\n");
+            if (obj:getBody()) then
+                -- 暂停语音检测（已自动处理，但为了安全起见，进行暂停处理）
+                session:execute("detect_speech", "pause");
+                -- 将事件的结果解析到结果表中以备后用。
+                results = getResults(obj:getBody());
+            end
+            return "break";
+        end
       end
    end
 end
+```
 
---Used to map returned names to extension numbers
+用于将返回的名称映射到分机号的扩展。
+
+```lua
 extensions = {
    ["MATTHEW_WILLIAMS"] = 1000,
    ["MATT_WILLIAMS"] = 1000,
    ["JOSEPH_SMITH"] = 1001,
    ["JOE_SMITH"] = 1000
    }
+```
 
--- Create the empty results table.
+创建空的结果表。
+
+```lua
 results = {};
+```
 
--- Answer the call.
+应答来电。
+
+```lua
 session:answer();
--- Register the input callback 
-session:setInputCallback("onInput");
--- Sleep a little bit to give media time to be fully up.
-session:sleep(200);
-session:streamFile("/usr/local/freeswitch/sounds/en/us/directory/directory-welcome.wav");
--- Start the detect_speech app.  This attaches the bug to fire events
-session:execute("detect_speech", "pocketsphinx directory directory");   
+```
 
--- Magic happens here.
--- It would be ok to loop like 3 times and error to the operator if this doesn't work or revert to reading names off with TTS.
+注册输入回调函数。
+
+```lua
+session:setInputCallback("onInput");
+```
+
+稍微延迟一段时间以确保媒体完全准备好。
+
+```lua
+session:sleep(200);
+```
+
+播放欢迎词。
+
+```lua
+session:streamFile("/usr/local/freeswitch/sounds/en/us/directory/directory-welcome.wav");
+```
+
+启动detect_speech应用程序。这将启用fire事件的触发。
+
+```lua
+session:execute("detect_speech", "pocketsphinx directory directory");
+```
+
+- Magic happens here.
+- 如果这个操作不能正常工作，或者无法读取的话，循环3次并将错误传递给操作员，这样也可以使用TTS（文本转语音）读取名字。
+```lua
 while (session:ready() == true) do 
    session:sleep(100);
-   -- Who are they looking for?
+   -- 这些人在找谁？
    session:streamFile("/usr/local/freeswitch/sounds/en/us/directory/directory-speak_name.wav");
-   -- This sleep is what blocks till the detected-speech event.  This has to give you enough time to speak plus get the results.
+   -- 这个延时块住，直到检测到语音事件。必须给你足够的时间来讲话并获取结果。
    session:sleep(3000);
    session:sleep(3000);
-   -- If the results aren't null and we have an extension in the table.
+   -- 如果结果不为空并且我们在表格中有一个分机号。
    if (results.text ~= nil) then
-      -- Letting the caller know we are trying.
+      -- 让主叫方知道我们正在尝试。
       session:streamFile("/usr/local/freeswitch/sounds/en/us/directory/directory-please_hold.wav");
-      -- It's critical to stop the detect_detect otherwise it will continue to fire speech events and waste resources.
+      -- 停止检测语音，否则它将继续触发语音事件并浪费资源。
       session:execute("detect_speech", "stop"); 
-      -- Transfer the call to the extension out of the lua table.
+      -- 将通话转移到lua表之外的分机号。
       session:execute("transfer", extensions[results.text] .. " XML home");
    end
-   -- We didn't have them in our directory table.
+   -- 我们的地址簿中没有这些人。
    session:streamFile("/usr/local/freeswitch/sounds/en/us/directory/directory-not_found.wav");
-   -- Clear any results we have just in case.
+   -- 清除任何结果，以防万一。
    results = {};
-   -- Resume detect_speech.
+   -- 恢复检测语音。
    session:execute("detect_speech", "resume");
 end
 ```
+请注意，这里的`extensions`数组。这是将名字映射到分机号的地方。
 
-Please note the extensions array. This is where you map the names to extension numbers.
+然后我们创建我们的字典和语言模型文件。将您的目录更改为`/usr/local/freeswitch/grammar`并创建一个名为**directory.sent**的文件。
 
-Next we create our dictionary and language model file. Change your directory to /usr/local/freeswitch/grammar and create a file called **directory.sent**
-
-We are using Matthew Williams and Joe Smith as our examples.
+我们以Matthew Williams和Joe Smith为例。
 
 ```xml
 <s> MATTHEW_WILLIAMS </s>
@@ -338,9 +357,9 @@ We are using Matthew Williams and Joe Smith as our examples.
 <s> JOE_SMITH </s>
 ```
 
-Type **make** in the **/usr/local/freeswitch/grammar** directory.
+在**/usr/local/freeswitch/grammar**目录中键入**make**。
 
-This should give you the following files.
+这应该会生成以下文件。
 
 ```xml
 ls -la directory
@@ -348,7 +367,7 @@ ls -la directory
 -rw-r--r--  1 root root  727 2008-08-13 10:59 directory.lm
 ```
 
-**directory.dic** currently looks like this.
+**directory.dic**目前看起来是这样的。
 
 ```xml
 JOE     JH OW
@@ -360,7 +379,7 @@ SMITH   S M IH TH
 WILLIAMS        W IH L Y AH M Z
 ```
 
-You will need to make it look like the following. Note this file is tab delimited.
+您需要将其修改为以下内容。请注意，此文件是以制表符分隔的。
 
 ```xml
 JOE_SMITH       JH OW S M IH TH
@@ -370,7 +389,7 @@ MATT_WILLIAMS   M AE T W IH L Y AH M Z
 MATTHEW_WILLIAMS        M AE TH Y UW W IH L Y AH M Z
 ```
 
-Now we have to create the directory for the sound files. In this example we have US EN prompts
+现在我们需要为声音文件创建目录。在本例中，我们使用的是US EN的提示音。
 
 ```bash
 #!/bin/bash
@@ -381,6 +400,4 @@ wget www.freeswitch.org/eg/directory.tar.gz
 tar -xvzf directory.tar.gz
 ```
 
-You should now be able to dial 411 and access the directory.
-
-
+现在您应该能够拨打 411 并访问目录。

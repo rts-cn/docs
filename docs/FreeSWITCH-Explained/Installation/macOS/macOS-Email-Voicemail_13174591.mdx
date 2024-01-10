@@ -1,58 +1,55 @@
+# macOS邮件语音信箱
 
-# macOS Email Voicemail 
+## 关于
 
- 
+本节介绍如何自定义macOS和FreeSWITCH™，以便自动将语音信箱文件发送为电子邮件。这是FreeSWITCH™[macOS](./index.mdx#about)文档的一部分。
 
-## About
+* 1 [将语音信箱发送至iPhone](#email-voicemail-to-an-iphone)
+* 2 [工作原理](#how-this-works)
+* 3 [所需信息](#required-information)
+* 4 [配置Postfix](#configuring-postfix)  
+   * 4.1 [编辑main.cf文件](#editing-the-maincf-file)  
+   * 4.2 [编辑Postfix main.cf](#edit-postfix-maincf)  
+   * 4.3 [替换Postfix main.cf](#replace-postfix-maincf)  
+   * 4.4 [创建smtp_sasl_passwords文件](#create-smtp_sasl_passwords-file)  
+   * 4.5 [创建smtp_tls_sites文件](#create-smtp_tls_sites-file)  
+   * 4.6 [创建Postfix数据库](#create-the-postfix-databases)  
+   * 4.7 [测试和诊断POSTFIX](#test-and-diagnose-postfix)
+* 5 [配置FreeSWITCH™电子邮件](#configure-freeswitch-email)  
+   * 5.1 [设置用户参数](#setting-user-parameters)  
+   * 5.2 [常用电子邮件地址的设置](#settings-for-common-email-address)
 
-This section describes how to customize macOS and FreeSWITCH™ to send voicemail files as emails automatically. It is part of the FreeSWITCH™ [macOS](./index.mdx#about) documentation.
+## 将语音信箱发送至iPhone
 
-* 1 [Email Voicemail to an iPhone](#email-voicemail-to-an-iphone)
-* 2 [How This Works](#how-this-works)
-* 3 [Required Information](#required-information)
-* 4 [Configuring Postfix](#configuring-postfix)  
-   * 4.1 [Editing the main.cf File](#editing-the-maincf-file)  
-   * 4.2 [Edit Postfix main.cf](#edit-postfix-maincf)  
-   * 4.3 [Replace Postfix main.cf](#replace-postfix-maincf)  
-   * 4.4 [Create smtp\_sasl\_passwords File](#create-smtp_sasl_passwords-file)  
-   * 4.5 [Create smtp\_tls\_sites File](#create-smtp_tls_sites-file)  
-   * 4.6 [Create the Postfix Databases](#create-the-postfix-databases)  
-   * 4.7 [Test and Diagnose POSTFIX](#test-and-diagnose-postfix)
-* 5 [Configure FreeSWITCH™ Email](#configure-freeswitch-email)  
-   * 5.1 [Setting User Parameters](#setting-user-parameters)  
-   * 5.2 [Settings for Common Email address](#settings-for-common-email-address)
+当在FreeSWITCH™留下语音信箱时，可以将语音信箱文件作为附件打包发送到任何电子邮件地址。接收者可以是笔记本电脑、iPhone、iPad或任何其他可接收电子邮件并播放音频文件附件的便携设备。这样做的好处是，位于不同位置的多个人可以接收在FreeSWITCH™上留下的任何语音信箱。下面的示例在iPhone上完美运行。我们的Mac在几秒钟内将语音邮件发送到多个iPhone上。现在不需要等待或错过语音信箱了！
 
-## Email Voicemail to an iPhone
+## 工作原理
 
-When a voicemail is left with FreeSWITCH™ the voicemail file can be packaged as an attachment to an email and sent to any email address. The receiver could be a laptop, iPhone, iPad or any other portable device that can obtain emails and play audio file attachments. This has the advantage of multiple people at different locations able to receive any voicemails left on FreeSWITCH™. The example below works on perfect on iPhones. Our Mac sends voice emails to multiple iPhones within a few seconds. No need to wait for or miss a voicemail now!
+FreeSWITCH™调用SENDMAIL程序将语音邮件作为电子邮件附件发送。幸运的是，macOS已经安装了一个名为[POSTFIX](http://www.postfix.org/)的SENDMAIL替代程序。以下步骤说明如何设置POSTFIX以从macOS发送电子邮件。发送电子邮件不需要POSTFIX一直运行，它会在需要时自动启动，并在发送完电子邮件后关闭。接收电子邮件需要POSTFIX随时运行，并且不适用于本文档。
 
-## How This Works
+## 需要的信息
 
-FreeSWITCH™ calls the SENDMAIL program to send voicemail as an email attachment. Fortunately, macOS comes with [POSTFIX](http://www.postfix.org/), a SENDMAIL replacement, already installed. These steps illustrate how to setup POSTFIX to send emails from macOS. Sending email does not require POSTFIX to be running, it will automatically start when required and shut down after sending email. Receiving emails require POSTFIX to be running all the time and does not apply to this document.
+在编辑文件之前，必须确定正确的参数。这个过程并不复杂，但为您的ISP设置正确的参数可能需要一些试错。下面的示例适用于拥有自己域名的情况。您可以在网络上搜索“setup email macOS postfix”或“setup outgoing email macOS postfix”。在编辑配置文件之前，请记录以下信息：
 
-## Required Information
+smtpdomain - SMTP电子邮件服务器的域名，通常是ISP或您要用于发送电子邮件的域名。示例使用mail.abc.com。
 
-Before editing files the correct parameters must be determined. The process is not complicated but getting the settings right for your ISP may take some trial and error. The sample below works if you have your own domain name. You can search the web for "setup email macOS postfix" or "setup outgoing email macOS postfix". Record the following information before editing the configuration files:
+smtp端口 - SMTP电子邮件服务器的端口号。常见端口：25、26、465、587，请查看ISP。示例使用465。
 
-smtpdomain - The domain name for the SMTP email server, typically the ISP or your domain name that Freeswitch will use to send email. The example uses mail.abc.com.
+myhostname - 运行FreeSWITCH的计算机的完全限定域名。示例使用imac1.abc.com。
 
-smtp port - The port number of the SMTP email server. Common ports: 25, 26, 465, 587, check the ISP. The example uses 465.
+fromdomain - 发送电子邮件地址的域名。示例使用“abc”。
 
-myhostname - The qualified domain name of the computer running FreeSWITCH. The example uses imac1.abc.com.
+fromname - 发送电子邮件的电子邮件帐户名称。示例使用“freeswitch”。
 
-fromdomain - The domain name of the send email address. The example uses "abc".
+frompw - fromname电子邮件帐户的密码。示例使用“SECRET”。
 
-fromname - The email account name of fromdomain the email is sent from. The example uses "freeswitch".
+toemail - 要发送电子邮件的目标完整电子邮件地址。示例使用voicemail@xyz.com。
 
-frompw - The password for the fromname email account. The example uses "SECRET".
+## 配置Postfix
 
-toemail - The target complete email address the email to be sent to. The example uses voicemail@xyz.com.
+### 编辑main.cf文件
 
-## Configuring Postfix
-
-### Editing the main.cf File
-
-Issue the following commands to backup the original postfix configuration file, copy it to the desktop and change the owner so it can be edited, sudo is required:
+执行以下命令备份原始的Postfix配置文件，将其复制到桌面，并更改所有者以便进行编辑（需要sudo权限）：
 
 ```xml
 sudo cp /etc/postfix/main.cf /etc/postfix/main.cforig
@@ -60,9 +57,9 @@ sudo cp /etc/postfix/main.cf ~/Desktop
 sudo chown -R `id -u`:`id -g` ~/Desktop/main.cf
 ```
 
-### Edit Postfix main.cf
+### 编辑Postfix main.cf
 
-The simplest way to edit the main.cf file is to drop it on top of the Textedit application or open the file from Textedit. Copy the lines below after the end of main.cf then change "mail.abc.com", "imac1.abc.com" and port 465 to the your information. Save the file with the completed changes.
+编辑main.cf文件的最简单方法是将其拖放到TextEdit应用程序的顶部，或者从TextEdit中打开文件。将以下行复制到main.cf的末尾，然后将"mail.abc.com"、"imac1.abc.com"和端口465更改为您的信息。保存文件以完成更改。
 
 ```xml
 myorigin = $mydomain
@@ -81,48 +78,48 @@ tls_random_source = dev:/dev/urandom
 smtp_generic_maps = hash:/etc/postfix/generic
 ```
 
-### Replace Postfix main.cf
+### 替换Postfix main.cf
 
-Place the edited main.cf back into the proper directory using the following commands to change the owner, then move the file:
+使用以下命令将编辑过的main.cf放回正确的目录中，并更改所有者，然后移动该文件：
 
 ```xml
-sudo chown -R root:wheel ~/Desktop/main.cf
+sudo chown -R root:wheel ~/Desktop/main.cf 
 sudo mv ~/Desktop/main.cf /etc/postfix
 ```
 
-### Create smtp_sasl_passwords File
+### 创建smtp_sasl_passwords文件
 
-Use Textedit to create a file named smtp\_sasl\_passwords, it contains the SMTP URL, a valid email address and password that FreeSWITCH sends mail from. Make sure to save as text and _do not save with the .txt extension!_
+使用TextEdit创建一个名为smtp_sasl_passwords的文件，其中应包含SMTP网址，一个有效的电子邮件地址和FreeSWITCH发送邮件的密码。确保保存为纯文本格式，并**不要**使用.txt扩展名保存！
 
 ```xml
 mail.abc.com    freeswitch@abc.com:SECRET
 ```
 
-Change the owner and move the file to the correct location:
+更改所有者并将文件移至正确的位置：
 
 ```xml
 sudo chown -R root:wheel ~/Desktop/smtp_sasl_passwords
 sudo mv ~/Desktop/smtp_sasl_passwords /etc/postfix
 ```
 
-### Create smtp_tls_sites File
+### 创建smtp_tls_sites文件
 
-Use Textedit to create a file named smtp\_tls\_sites with the following line, replace the domain with your SMTP domain:
+使用TextEdit创建一个名为smtp_tls_sites的文件，并将以下行用您的SMTP域名进行替换：
 
 ```xml
 mail.abc.com MUST_NOPEERMATCH
 ```
 
-Change the owner and move it to the correct location:
+更改所有者并将其移动到正确的位置：
 
 ```xml
 sudo chown -R root:wheel ~/Desktop/smtp_tls_sites
 sudo mv ~/Desktop/smtp_tls_sites /etc/postfix
 ```
 
-### Create the Postfix Databases
+### 创建Postfix数据库
 
-Execute the commands below in Terminal to create the required postfix databases from the source files. If the source files are changed the databases must be recreated.
+在终端中执行以下命令，从源文件创建所需的Postfix数据库。如果源文件发生更改，必须重新创建数据库。
 
 ```xml
    cd /etc/postfix
@@ -134,25 +131,26 @@ Execute the commands below in Terminal to create the required postfix databases 
    sudo postfix start
 ```
 
-### Test and Diagnose POSTFIX
+### 测试和诊断POSTFIX
 
-Before configuring FreeSWITCH™ to send email POSTFIX _must_ be working. Execute the following command in Terminal have a test email sent, use the correct email addresses.
+在配置FreeSWITCH™发送电子邮件之前，必须确保POSTFIX正常工作。在终端中执行以下命令发送测试电子邮件，确保使用正确的电子邮件地址。
 
 ```xml
-  printf "Subject: TestnHello" | sendmail -f freeswitch@abc.com voicemail@xyz.com
+  printf "Subject: 测试\nHello" | sendmail -f freeswitch@abc.com voicemail@xyz.com
 ```
 
-View /var/log/mail.log to determine if there were problems by double clicking on it to launch Console or use Textedit. If there are no problems you should receive an email. Do not proceed with FreeSWITCH™ configuration until POSTFIX testing is successful.
+使用双击打开/var/log/mail.log来启动Console或使用TextEdit查看是否有问题。如果没有问题，您应该会收到一封电子邮件。在POSTFIX测试成功之前，请勿继续进行FreeSWITCH™配置。
 
-You can perform all editing using Textedit, however, you should become familiar with the Xcode editor. Its advantage is that it displays [XML](http://en.wikipedia.org/wiki/XML) code colorized so you can find syntax errors quickly. This is ideal for editing FreeSWITCH™ XML configuration files such as those below.
+您可以使用TextEdit进行所有编辑工作，但是建议您熟悉Xcode编辑器。它的优点是可以对[XML](http://en.wikipedia.org/wiki/XML)代码进行颜色标记，从而快速找到语法错误。这非常适合编辑FreeSWITCH™的XML配置文件，如下所示。
 
-## Configure FreeSWITCH™ Email
+## 配置FreeSWITCH™电子邮件
+```
 
-### Setting User Parameters
+### 设置用户参数
 
-If postfix is working the information below will get email to work, the aiff format is used since it does not require additional modules. You should also read the FreeSWITCH™ [voicemail documentation](../../Modules/mod_voicemail_6587070.mdx#--).
+如果 postfix 正常工作，下面的信息将能使电子邮件工作，aiff 格式被使用是因为它不需要额外的模块。您还应该阅读 FreeSWITCH™ 的[语音信箱文档](../../Modules/mod_voicemail_6587070.mdx#--)。
 
-The parameters below were added to a userid in the conf/directory. This allows voicemails to be emailed to separate persons based on their extension number.
+下面的参数已添加到 conf/directory 中的一个用户标识符。这样可以根据用户的分机号将语音邮件发送给不同的人。
 
 ```xml
    <param name="vm-mailto" value="voicemail@xyz.com"/>
@@ -164,18 +162,16 @@ The parameters below were added to a userid in the conf/directory. This allows v
    <variable name="voicemail_account" value="freeswitch"/>
 ```
 
-### Settings for Common Email address
+### 设置常见的电子邮件地址
 
-If everyones voicemail are to go to a single common email, you can optionally make the changes below and not change user definitions.
+如果所有人的语音邮件都要发送到一个共用的电子邮件地址，您可以选择进行下面的更改，而不必更改用户定义。
 
-Edit voicemail.xml and change the line below, make sure to use the valid email account used in the passwords file above:
+编辑 voicemail.xml 文件并更改以下行，确保使用上述密码文件中使用的有效电子邮件帐户：
 
-   Original:      &lt;param name="email-from" value="${voicemail_account}@${voicemail_domain}"/>
-   Replacement:   &lt;param name="email-from" value="phones@yourowndomain.com"/>
+   原始内容：   &lt;param name="email-from" value="${voicemail_account}@${voicemail_domain}"/>
+   更改内容：   &lt;param name="email-from" value="phones@yourowndomain.com"/>
 
-This voicemail templates also required editing. Change the first line in the conf/voicemail.tpl and notify-voicemail.tpl templates:
+还必须编辑 voicemail.tpl 和 notify-voicemail.tpl 模板，更改这两个模板中的第一行：
 
-   Original:      From: "${voicemail_caller_id_name}" &lt;${voicemail_caller_id_number}@${voicemail_domain}>
-   Replacement:   From: "${voicemail_caller_id_name}" &lt;phones@yourowndomain.com>
-
-
+   原始内容：   From: "${voicemail_caller_id_name}" &lt;${voicemail_caller_id_number}@${voicemail_domain}>
+   更改内容：   From: "${voicemail_caller_id_name}" &lt;phones@yourowndomain.com>

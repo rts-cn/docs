@@ -1,19 +1,16 @@
+# Lua组拾取示例
 
-# Lua Group Pickup example 
+## 关于
 
- 
+在这个示例中，我们将尝试模拟类似于Asterisk中的组拾取功能。
 
-## About
+## 工作原理
 
-We will try in this example to simulate group pickup as in Asterisk.
+理论是将用户放入groups表中，指定他们所属的组ID。然后，有人可以拨打\*4来拾取呼叫组中的第一个正在振铃的电话，该组是呼叫者所属的组。
 
-## How it works
+active_uuid表是一个FIFO队列。
 
-The theory is that you put users in the groups table specifying the group\_id they belongs. Then somebody can dial \*4 and pickup the first call ringing in the group to which the caller belongs
-
-The active\_uuid table is a FIFO queue.
-
-**First: Create a sqlite3 DB as:**
+**首先：创建一个sqlite3数据库：**
 
 ```xml
 sqlite3 /opt/freeswitch/db/group_pickup.db
@@ -22,7 +19,7 @@ sqlite3> create table groups(user varchar(32) primary key, group_id varchar(32))
 sqlite3> .exit
 ```
 
-**Then add this extension to default.xml before extension global:**
+**然后在default.xml的extension global之前添加以下扩展：**
 
 ```xml
 <extension name="intercept-group">
@@ -35,7 +32,7 @@ sqlite3> .exit
 </extension>
 ```
 
-**Inside '&lt;extension name="global" continue="true">' add:**
+**在`<extension name="global" continue="true">`内添加以下内容：**
 
 ```xml
 	<condition>
@@ -45,106 +42,108 @@ sqlite3> .exit
 	</condition>
 ```
 
-**Then create these scripts a** **nd put then in scripts folder.**
+**然后创建这些脚本并将它们放在scripts文件夹中。**
 
-**Script: add\_group\_uuid.lua**
+**脚本：add_group_uuid.lua**
 
 ```xml
 --
 -- add_group_uuid.lua
--- This script insert uuid into a FIFO queue to be retrieved on pickup
+-- 这个脚本将uuid插入到一个FIFO队列中，以在拾取时检索
 --
 
 require "luasql.sqlite3";
 
 env = assert (luasql.sqlite3());
 con = assert (env:connect("/opt/freeswitch/db/group_pickup.db"));
+```
 
+```lua
 local uuid = argv[1];
 local called = argv[2];
 
--- retrieve called's group
-cur = assert (con:execute(string.format("SELECT group_id from groups where user='%s'", called)));
+-- 获取被呼叫方所在的组
+cur = assert(con:execute(string.format("SELECT group_id from groups where user='%s'", called)));
 row = cur:fetch({}, "a");
 
 local group_id = row.group_id;
 
 if (group_id ~= nil) then
-	freeswitch.consoleLog("info", "\n--- CALLED PARTY => " .. called .. " , GROUP = " .. group_id .. ", UUID = " .. uuid .. " ---\n")
+    freeswitch.consoleLog("info", "\n--- CALLED PARTY => " .. called .. " , GROUP = " .. group_id .. ", UUID = " .. uuid .. " ---\n")
 
-	-- insert data
-	res = assert (con:execute(string.format("INSERT INTO active_uuid VALUES(julianday('now'),'%s','%s')", group_id, uuid)));
+    -- 插入数据
+    res = assert(con:execute(string.format("INSERT INTO active_uuid VALUES(julianday('now'),'%s','%s')", group_id, uuid)));
 end
 
--- close all
+-- 关闭连接
 cur:close();
 con:close();
 env:close();
 ```
 
-**Script: del\_group\_uuid.lua**
+**脚本文件：del\_group\_uuid.lua**
 
 ```xml
 -- del_group_uuid.lua
--- Delete the uuid from the FIFO when the call is answered or abandoned
+-- 当呼叫被接通或放弃时，从队列中删除uuid
 --
 
 require "luasql.sqlite3";
 
-env = assert (luasql.sqlite3());
-con = assert (env:connect("/opt/freeswitch/db/group_pickup.db"));
+env = assert(luasql.sqlite3());
+con = assert(env:connect("/opt/freeswitch/db/group_pickup.db"));
 
 local uuid = argv[1];
 
--- delete uuid from table
-res = assert (con:execute(string.format("DELETE FROM active_uuid where uuid='%s'", uuid)));
+-- 从表中删除uuid
+res = assert(con:execute(string.format("DELETE FROM active_uuid where uuid='%s'", uuid)));
 
 freeswitch.consoleLog("info", "\n--- GROUP PIKCUP UUID: " .. uuid .. " DELETED ---\n")
 
--- close all
+-- 关闭连接
 con:close();
 env:close();
 ```
 
-**Script: pickup\_group\_uuid.lua**
+**脚本文件：pickup\_group\_uuid.lua**
 
 ```xml
 -- 
 -- pickup_group_uuid.lua
 --
--- This script get the first call ringing in the queue db for the group
+-- 此脚本从组的队列数据库中获取第一个正在振铃的呼叫
 --
 
 require "luasql.sqlite3";
 
-env = assert (luasql.sqlite3());
-con = assert (env:connect("/opt/freeswitch/db/group_pickup.db"));
+env = assert(luasql.sqlite3());
+con = assert(env:connect("/opt/freeswitch/db/group_pickup.db"));
 
 local caller = session:getVariable("effective_caller_id_number")
 
--- retrieve called's group
-cur = assert (con:execute(string.format("SELECT group_id from groups where user='%s'", caller)));
+-- 获取呼叫者所在的组
+cur = assert(con:execute(string.format("SELECT group_id from groups where user='%s'", caller)));
 row = cur:fetch({}, "a");
 
 local group_id = row.group_id;
 cur:close();
+```
 
+```lua
 if (group_id ~= nil) then
 	freeswitch.consoleLog("info", "\n--- CALLER PARTY => " .. caller .. " , GROUP = " .. group_id .. " ---\n")
-	-- retrieve first waiting uuid from active_uuid for this group_id
-	cur = assert (con:execute(string.format("SELECT uuid from active_uuid where group_id = '%s' order by time_id desc limit 1", group_id)));
-	row = cur:fetch ({}, "a");
+	-- 从active_uuid获取当前group_id的第一个等待uuid
+	cur = assert(con:execute(string.format("SELECT uuid FROM active_uuid WHERE group_id = '%s' ORDER BY time_id DESC LIMIT 1", group_id)));
+	row = cur:fetch({}, "a");
 	if (row ~= nil) then
 		local uuid = row.uuid;
 		session:setVariable("g_uuid", uuid);
-		res = assert (con:execute(string.format("DELETE FROM active_uuid where uuid = '%s'", uuid)));
+		res = assert(con:execute(string.format("DELETE FROM active_uuid WHERE uuid = '%s'", uuid)));
 	end
 end
 
--- close all
+-- 关闭所有连接
 cur:close();
 con:close();
 env:close();
 ```
-
-

@@ -1,65 +1,62 @@
+# 会议 CDR
 
-# Conference CDR 
+## 关于
 
- 
+本页描述了如何启用会议 CDR 和其内容。
 
-## About
+点击此处展开目录
 
-This page describes how to enable conference CDRs and his contents. 
+* 1 [介绍](#introduction)
+* 2 [配置](#configuration)
+* 3 [呼叫](#conference)
+* 4 [查找 CDR](#locating-the-cdr)
+* 5 [解读 CDR](#interpreting-the-cdr)  
+   * 5.1 [会议](#end_conference)  
+   * 5.2 [成员](#conference)  
+      * 5.2.1 [加入时间](#conference)  
+         * 5.2.2 [离开时间](#conference)  
+         * 5.2.3 [标志](#conference)  
+         * 5.2.4 [呼叫者配置](#caller_profile)  
+   * 5.3 [被拒绝](#conference)
+* 6 [示例解析脚本](#example-parse-script)
 
-Click here to expand Table of Contents
+## 介绍
 
-* 1 [Introduction](#introduction)
-* 2 [Configuration](#configuration)
-* 3 [Calling](#conference)
-* 4 [Locating the CDR](#locating-the-cdr)
-* 5 [Interpreting the CDR](#interpreting-the-cdr)  
-   * 5.1 [conference](#end_conference)  
-   * 5.2 [members](#conference)  
-      * 5.2.1 [join\_time](#conference)  
-         * 5.2.2 [leave\_time](#conference)  
-         * 5.2.3 [flags](#conference)  
-         * 5.2.4 [caller\_profile](#caller_profile)  
-   * 5.3 [Rejected](#conference)
-* 6 [Example parse script](#example-parse-script)
+为了了解会议 CDR 的工作原理以及我们可以做些什么，我们将配置一个简单的场景，并在进行一些呼叫后学习如何找到 CDR 文件的位置以及如何解读其内容。
 
-## Introduction
+## 配置
 
-To understand how conference CDRs works and what we can do with it we'll configure a simple scenario and after making some calls we'll learn how to find the CDR file location and how to interpret his content.
+为了启用会议 CDR，您需要在会议配置文件中指定 cdr-log-dir。
 
-## Configuration
-
-In order to enable conference CDR you need to specify the cdr-log-dir in the conference profile.
-
-Add this param to the video-mcu-stereo profile that is defined in conference.conf.xml:
+将此参数添加到 conference.conf.xml 中定义的 video-mcu-stereo 配置文件中：
 
 ```xml
 <param name="cdr-log-dir" value="auto"/>
 ```
 
-'auto' means $PREFIX/logs/conference\_cdr/&lt;confernece\_uuid>.cdr.xml, a non-absolute path means $PREFIX/logs/&lt;value>/&lt;conference\_uuid>.cdr.xml, absolute path means &lt;value>/&lt;conference\_uuid>.cdr.xml
+'auto' 表示 $PREFIX/logs/conference\_cdr/\<confernece\_uuid>.cdr.xml，非绝对路径表示 $PREFIX/logs/\<value>/\<conference\_uuid>.cdr.xml，绝对路径表示 \<value>/\<conference\_uuid>.cdr.xml。
 
-After setting the param we need to run reloadxml:
+设置参数后，需要运行 reloadxml 命令：
 
 ```xml
 fs_cli -x "reloadxml"
 ```
 
-## Calling
+## 呼叫
 
-We'll setup a simple dialplan in order to place calls in this conference.
+我们将设置一个简单的拨号计划，以便在此会议中进行呼叫。
 
-Under dialplan/default.xml:
+在 dialplan/default.xml 中：
 
 ```xml
-<!-- STEREO 48kHz conferences / Video MCU -->
+<!-- STEREO 48kHz会议/视频MCU -->
 <extension name="cdquality_conferences">
   <condition field="destination_number" expression="^(35\d{2})$">
     <action application="answer"/>
     <action application="conference" data="$1-${domain_name}@video-mcu-stereo"/>
   </condition>
 </extension>
-<!-- STEREO 48kHz conferences / Video MCU / moderator plus muted -->
+<!-- STEREO 48kHz会议/视频MCU/主持人加静音 -->
 <extension name="cdquality_conferences_moderated">
   <condition field="destination_number" expression="^9(35\d{2})$">
     <action application="answer"/>
@@ -68,37 +65,38 @@ Under dialplan/default.xml:
 </extension>
 ```
 
-After changing the dialplan, run again reloadxml command.
+修改完拨号计划后，请重新执行reloadxml命令。
 
-Those condition enable us to dial 35 following two more digits, for example 3565, and we'll enter this conference as a normal caller without any special flags or permissions.
+这些条件使我们能够拨打35开头的两位数，例如3565，我们将以普通呼叫者的身份进入此会议，没有任何特殊的标记或权限。
 
-We cal also dial 935 and two more digits, for example 93565, and we'll enter the same conference as moderator and automatically muted.
+我们还可以拨打935和两位数，例如93565，我们将以主持人的身份自动静音进入同一会议。
 
-Now let's make two calls, one for 3565 and the second for 93565, the users should be able to talk each other.
+现在，让我们进行两个呼叫，一个用于拨打3565，第二个用于拨打93565，用户应该能够互相通话。
 
-At the end of this conference, after all the callers hangup, the conference CDR will be written to a file.
+在此会议结束后，所有呼叫者挂断后，会将会议CDR写入文件。
 
-## Locating the CDR
+## 定位CDR
 
-Since we have 'auto' in our param cdr-log-dir our CDR file will be located at ${log\_dir}/conference\_cdr/&lt;conference\_uuid>.cdr.xml.
+由于我们的参数cdr-log-dir中有'auto'，我们的CDR文件将位于${log\_dir}/conference\_cdr/&lt;conference\_uuid>.cdr.xml。
 
-To find out what we have in our ${log\_dir} you can issue:
+要查找${log\_dir}中有什么，您可以执行以下命令：
 
 ```xml
 root@fsdev:~# fs_cli -x "global_getvar log_dir"
 /var/log/freeswitch
 ```
 
-Then we know that out CDRs are lcoated at /var/log/freeswitch/conference\_cdr, if we list the contents of this file we can confirm it:
+然后我们知道我们的CDR位于/var/log/freeswitch/conference\_cdr下，如果我们列出此文件的内容，我们可以确认一下：
 
 ```xml
 root@dev-vm1:~# ls /var/log/freeswitch/conference_cdr/
 3aaf0382-aff3-4780-97c9-1c82be853a50.cdr.xml
 ```
+```
 
-## Interpreting the CDR
+## 解读CDR
 
-The CDR is written in xml format, here is what we should see if we cat the file:
+CDR以xml格式编写，如果我们使用cat命令查看文件，应该能看到以下内容:
 
 ```xml
 <?xml version="1.0"?>
@@ -146,49 +144,49 @@ The CDR is written in xml format, here is what we should see if we cat the file:
 
 ### conference
 
-This section contains the configuration this conference was created with. You can see what's the conference name, machine hostname, rate, interval (ptime), when it was created, when it was ended and why.
+此部分包含创建该会议时的配置信息。你可以看到会议名称、机器主机名、速率、间隔（ptime）、创建时间、结束时间以及原因。
 
-### members
+### 会员
 
-A list of every member that entered in the conference.
+列出进入会议的每个成员。
 
-#### join_time
+#### 加入时间
 
-UNIX Epoch of when the caller entered the conference.
+呼叫方进入会议的UNIX时间戳。
 
-#### leave_time
+#### 离开时间
 
-UNIX Epoch of when the caller exited the conference.
+呼叫方退出会议的UNIX时间戳。
 
-#### flags
+#### 标志
 
-##### is_moderator
+##### 是主持人
 
-Will be true if you put the caller in the conference using moderator flag, like 3565@video-mcu-default++flags{moderator}.
+如果你使用`moderator`标志将呼叫方放入会议中，此项将为真，例如`3565@video-mcu-default++flags{moderator}`。
 
-##### end_conference
+##### 结束会议
 
-Will be true if you put the caller in the conference using endconf flag.
+如果你使用`endconf`标志将呼叫方放入会议中，此项将为真。
 
-##### was_kicked
+##### 被踢出
 
-Will be true if moderator kicked the user, that's the reason the user exited the conference.
+如果主持人将用户踢出会议，此项将为真。这是用户退出会议的原因。
 
-##### is_ghost
+##### 是幽灵
 
-Will be true if you put the caller in the conference using ghost flag.
+如果你使用`ghost`标志将呼叫方放入会议中，此项将为真。
 
-#### caller_profile
+#### 呼叫方资料
 
-Here you can see all the caller profile fields of this member.
+在这里，你可以看到该成员的所有呼叫方资料字段。
 
-### Rejected
+### 已拒绝
 
-A list of every rejected caller that tried to enter this conference. A caller can be rejected is the conference is locked, if the user provided a wrong pin number or if the conference room has a max number of participants already reached.
+列出尝试加入该会议但被拒绝的每个呼叫方。如果会议已锁定、用户提供错误的PIN码或会议室已达到最大参与人数，呼叫方将被拒绝。
 
-## Example parse script
+## 解析脚本示例
 
-This is an example of what kind of information you can extract from a CDR file.
+下面是从CDR文件中提取信息的示例。
 
 **cdrlog.py**
 
@@ -197,7 +195,9 @@ This is an example of what kind of information you can extract from a CDR file.
 from datetime import datetime
 import sys
 import xml.etree.ElementTree as ET
+```
 
+```python
 def main(cdr_file):
     tree = ET.parse(cdr_file)
     root = tree.getroot()
@@ -205,9 +205,9 @@ def main(cdr_file):
     start_time = datetime.fromtimestamp(int(conference[4].text))
     end_time = datetime.fromtimestamp(int(conference[5].text))
     members = conference[6]
-    print "{} - Conference {} on {} started".format(start_time,
-                                                    conference[0].text,
-                                                    conference[1].text)
+    print "{} - 会议 {} 于 {} 开始".format(start_time,
+                                      conference[0].text,
+                                      conference[1].text)
     for member in members.iter('member'):
         join_time = datetime.fromtimestamp(int(member[0].text))
         leave_time = datetime.fromtimestamp(int(member[1].text))
@@ -218,29 +218,27 @@ def main(cdr_file):
         is_ghost = flags[3].text
         caller_profile = member[3]
         caller_id_name = caller_profile[2].text
-        print "{} - Member {} entered conference, flags: moderator:{} endconf:{} kicked:{} ghost:{}".format(join_time, caller_id_name, is_moderator, end_conference, was_kicked, is_ghost)
-    print "{} - Conference {} on {} ended".format(end_time,
-                                                  conference[0].text,
-                                                  conference[1].text)
+        print "{} - 成员 {} 进入会议，标识符: 主持人：{} 终止会议：{} 被踢出：{} 鬼影：{}".format(join_time, caller_id_name, is_moderator, end_conference, was_kicked, is_ghost)
+    print "{} - 会议 {} 于 {} 结束".format(end_time,
+                                      conference[0].text,
+                                      conference[1].text)
 
 if __name__ == "__main__":
     main(sys.argv[1])
 ```
 
-This script accepts the cdr file path as the first argument:
+该脚本接受cdr文件路径作为第一个参数：
 
 ```xml
 root@fsdev:~# python /tmp/cdrlog.py /var/log/freeswitch/conference_cdr/b9a8c9c8-16d5-402c-8f3d-c21d36384531.cdr.xml
 ```
 
-And should output something like:
+并输出类似以下内容：
 
 ```xml
-2015-11-05 23:45:43 - Conference 3565-187.111.255.227 on fsdev started
-2015-11-05 23:45:43 - Member Italo Rossi entered conference, flags: moderator:true endconf:false kicked:false ghost:false
-2015-11-05 23:46:30 - Conference 3565-187.111.255.227 on fsdev ended
+2015-11-05 23:45:43 - 开始 fsdev 上的会议 3565-187.111.255.227
+2015-11-05 23:45:43 - 成员 Italo Rossi 进入会议，标志: 模特（moderator）:true 结束会议:false 被踢:false 鬼魂:false
+2015-11-05 23:46:30 - 结束 fsdev 上的会议 3565-187.111.255.227
 ```
 
-You can adapt this script and calculate for how long a caller stayed in the conference, and which was the reason the caller exited. Those kind of informations can be inserted into a database of your choice.
-
-
+您可以根据此脚本进行适配并计算参与者在会议中停留的时间长短，并确定参与者离开的原因。这些信息可以插入您选择的数据库中。

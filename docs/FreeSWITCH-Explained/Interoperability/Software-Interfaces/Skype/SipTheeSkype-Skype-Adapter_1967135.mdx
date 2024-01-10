@@ -1,71 +1,68 @@
+# SipTheeSkype Skype 适配器
 
-# SipTheeSkype Skype Adapter 
+* 1 [互连架构](#interconnectivity-architecture)  
+   * 1.1 [适用互连设置](#applicable-interconnectivity-settings)  
+   * 1.2 [限制](#siptheeskypecfg-settings)  
+   * 1.3 [先决条件](#prerequisites--)
+* 2 [示例实现](#example-implementation)  
+   * 2.1 [概述](#siptheeskypecfg-settings)  
+   * 2.2 [SipTheeSkype 配置](#siptheeskype-configuration)  
+      * 2.2.1 [siptheeskype.cfg 设置](#siptheeskypecfg-settings)  
+         * 2.2.2 [SipToSkypeAuth.props 设置](#siptoskypeauthprops-settings)  
+         * 2.2.3 [SkypeToSipAuth.props 设置](#skypetosipauthprops-settings)  
+   * 2.3 [使用](#-freeswitch--siptheeskype-skype-adapter-)
+* 3 [限制](#siptheeskypecfg-settings)
+* 4 [已知问题](#known-issues)
+* 5 [参考文献](#references)
 
- 
+该项目可能已被废弃。SipToSIS 主页的最后更新时间是在2009年。
 
-* 1 [Interconnectivity Architecture](#interconnectivity-architecture)  
-   * 1.1 [Applicable interconnectivity settings](#applicable-interconnectivity-settings)  
-   * 1.2 [Limitations](#siptheeskypecfg-settings)  
-   * 1.3 [Prerequisites](#prerequisites--)
-* 2 [Example implementation](#example-implementation)  
-   * 2.1 [Outline](#siptheeskypecfg-settings)  
-   * 2.2 [SipTheeSkype Configuration](#siptheeskype-configuration)  
-      * 2.2.1 [siptheeskype.cfg settings](#siptheeskypecfg-settings)  
-         * 2.2.2 [SipToSkypeAuth.props settings](#siptoskypeauthprops-settings)  
-         * 2.2.3 [SkypeToSipAuth.props settings](#skypetosipauthprops-settings)  
-   * 2.3 [Usage](#-freeswitch--siptheeskype-skype-adapter-)
-* 3 [Limitations](#siptheeskypecfg-settings)
-* 4 [Known issues](#known-issues)
-* 5 [References](#references)
+## 互连架构
 
-This project is likely deprecated. The last update for the SipToSIS home page was in 2009.
+SipTheeSkype 作为 Skype 客户端的插件适配器与 FreeSWITCH 相互连接。该适配器充当 FreeSWITCH 的单线路客户端 User-Agent，可以像其他 UA 一样发送和接收呼叫。SipTheeSkype 还允许在两个方向上进行一些基本的切换功能。它可以根据呼叫方的 Caller-ID 字段将来自 FreeSWITCH 的呼叫分发到不同的 Skype 联系人，并且可以根据呼入的 Skype 联系人 ID 将来电的 Skype 呼叫发送到不同的 URI。它还具有非常基本的 IVR 机制，可以通过 SkypeOut / SpeedDials 服务拨号。
 
-  
-## Interconnectivity Architecture
+### 适用互连设置
 
-SipTheeSkype interconnects with FreeSWITCH as an add-on adapter to Skype client. The adapter acts as a single-line client User-agent to FreeSWITCH that can send and receive calls just like any other UA. SipTheeSkype also allow for some basic switching capabilities in both directions. It can distribute calls coming from FreeSWITCH to different Skype contacts based on the Caller-ID field and can also send incoming Skype calls to different URI's based on the incoming Skype contact ID. It also has a very basic IVR mechanism allowing to dial through the SkypeOut / SpeedDials services.
+* **信令：** SIP/UDP 或 SIP/TCP
+* **编解码器：** G.711μ、G.711a、iLBC、GSM
+* **DTMF：** RFC2833、Info 和模拟（嵌入式）。
 
-### Applicable interconnectivity settings
+### 限制
 
-* **Signaling:** SIP/UDP or SIP/TCP
-* **Codecs:** G.711μ,G.711a,iLBC,GSM
-* **DTMF:** RFC2833, Info and analogue (in-band).
+* 每个实例仅支持一次同时呼叫
 
-### Limitations
+### 先决条件  
 
-* Supports only one simultaneous call per instance
+* SipTheeSkype 必须在与 Skype 客户端相同的机器上运行
+* Windows 需要 Skype 客户端版本3及以上
+* Java 运行时版本1.5及以上
+* 任何支持 Skype2Java（Skype的Java API）的操作系统：Windows，Linux，OSX
 
-### Prerequisites  
+## 示例实现
 
-* SipTheeSkype has to run on the same machine as the Skype client
-* Windows requires Skype client version 3 and above
-* Java runtime version 1.5 and above
-* Any OS that Skype2Java (Skype's Java API) works: Windows, Linux, OSX
+### 概述
 
-## Example implementation
+这个实现示例基于现有的开箱即用的 FreeSWITCH XML 配置，并添加了相关内容。在此示例中，_斜体_ 部分需要根据部署进行定制：
 
-### Outline
+* FreeSwtich 机器：_192.168.0.100_
+* Skype 机器：_192.168.0.200_
+* _skypeuser1_ - 预配置在客户端中的 Skype 联系人
+* _skypeuser2_ - 预配置在客户端中的 Skype 联系人
+* _skypeuser3_ - 预配置在客户端中的 Skype 联系人
+* 分机号 _7770_ - 用于通用的 Skype 外呼，PIN 码为 _1234_
+* 分机号 _7771_ - 映射到 _skypeuser1_ 的分机
+* 分机号 _7772_ - 映射到 _skypeuser2_ 的分机
+* 分机号 _7773_ - 映射到 _skypeuser3_ 的分机
+* SipTheeSkype SIP 端口映射到无关紧要的 UDP 端口 _5077_
+* 来自这三个联系人的呼入呼叫将分别定向到分机 _1001_、_1002_
+* 为了演示目的，所有来自 _skypeuser3_ 的呼入呼叫都将被拒绝
+* 所有其他呼入呼叫都将定向到分机 _9664_（音乐在等待）。
 
-This implementation example is based on the existing out-of-the-box FreeSWITCH XML configuration with relevant additions. In this example, the _italic_ settings should be customized to your deployment:
+### SipTheeSkype 配置
 
-* Freeswitch machine: _192.168.0.100_
-* Skype machine: _192.168.0.200_
-* _skypeuser1_ \- Preconfigured Skype contact in the client
-* _skypeuser2_ \- Preconfigured Skype contact in the client
-* _skypeuser3_ \- Preconfigured Skype contact in the client
-* Extension _7770_ – A number designated to general Skype outgoing calls with PIN code _1234_
-* Extension _7771_ – An extension map to _skypeuser1_
-* Extension _7772_ – An extension map to _skypeuser2_
-* Extension _7773_ – An extension map to _skypeuser3_
-* The SipTheeSkype SIP port is mapped to UDP port _5077_ for no reason at all
-* Incoming calls coming from these three contacts will be directed respectively to extension _1001_, _1002_.
-* For demonstration purposes, all calls coming from _skypeuser3_ are rejected.
-* All other incoming calls will be directed to extension _9664_ (MoH).
+#### siptheeskype.cfg 设置
 
-### SipTheeSkype Configuration
-
-#### siptheeskype.cfg settings
-
+```
 siptoskypeauthfile=SipToSkypeAuth.props
 skypetosipauthfile=SkypeToSipAuth.props
 skype_connect=yes
@@ -99,24 +96,24 @@ audio=yes
 audio_port=63200
 audio_avp=0
 audio_codec=PCMU
-audio_sample_rate=8000  
+audio_sample_rate=8000
 audio_sample_size=1
 audio_frame_size=320
 dtmf2833payloadtype=101
 do_register=yes
 
-#### SipToSkypeAuth.props settings
+#### SipToSkypeAuth.props 设置
 
 ```xml
 7770,*,*,pin:1234
-#Prompt for pin authorization, then prompt for destination (use Skype's speeddials or skypeout for skype destinations)
+#提示输入PIN码进行授权，然后提示输入目标地址（使用Skype速拨或skypeout作为Skype的目标地址）
 7771,*,*,skypeuser1
-#Incoming sip caller with callerid of 7771 from any IP will dial the skypeuser1
+#从任何IP呼叫者ID为7771的SIP呼叫方将拨通skypeuser1
 7772,*,*,skypeuser2
 7773,*,*,skypeuser3
 ```
 
-#### SkypeToSipAuth.props settings
+#### SkypeToSipAuth.props 设置
 
 ```xml
 <include>
@@ -129,7 +126,7 @@ do_register=yes
 </include>
 ```
 
-Set up the Dial Plan extensions handling (i.e. /conf/dialplan/default.xml):
+设置拨号计划的扩展处理（例如/conf/dialplan/default.xml）：
 
 ```xml
     <extension name="skype">
@@ -140,37 +137,35 @@ Set up the Dial Plan extensions handling (i.e. /conf/dialplan/default.xml):
     </extension>
 ```
 
-### Usage
+### 使用方法
 
-* Dialing from extension 1001 to 7770 - Being prompt for PIN, entering 1234 and then making a SkypeOut / SpeedDials call
-* Dialing from extension 1001 to 7771 - Make a call to Skype contact skypeuser1
-* Dialing from extension 1001 to 7772 - Make a call to Skype contact skypeuser2
-* Dialing from extension 1001 to 7773 - Make a call to Skype contact skypeuser3
-* Accepting incoming call from Skype contact _skypeuser1_ \- Call will be transfered to FreeSWITCH extension 1001
-* Accepting incoming call from Skype contact _skypeuser2_ \- Call will be transfered to FreeSWITCH extension 1002
-* Accepting incoming call from Skype contact _skypeuser3_ \- Call will be denied
-* Accepting incoming call from any other Skype contact - Call with be transfered to FreeSWITCH extension 9664 (MoH)
+* 从分机1001拨打7770 - 提示输入PIN码，输入1234，然后进行SkypeOut / SpeedDials呼叫
+* 从分机1001拨打7771 - 拨打Skype联系人skypeuser1
+* 从分机1001拨打7772 - 拨打Skype联系人skypeuser2
+* 从分机1001拨打7773 - 拨打Skype联系人skypeuser3
+* 接受来自Skype联系人_skypeuser1_的呼叫 - 呼叫将转接到FreeSWITCH分机1001
+* 接受来自Skype联系人_skypeuser2_的呼叫 - 呼叫将转接到FreeSWITCH分机1002
+* 接受来自Skype联系人_skypeuser3_的呼叫 - 呼叫将被拒绝
+* 接受来自其他Skype联系人的呼叫 - 呼叫将转接到FreeSWITCH分机9664（MoH）
 
-## Limitations
+## 限制
 
-Testing was done on:
+测试环境：
 
-* FreeSWITCH version 1.0.0 build 8691
-* SipTheeSkype version V2 2008/06/28
+* FreeSWITCH版本1.0.0 build 8691
+* SipTheeSkype版本V2 2008/06/28
 
-Wasn't tested:
+未经测试：
 
 * SIP/TCP
-* DTMF INFO and analogue
+* DTMF INFO和模拟
 
-## Known issues
+## 已知问题
 
-* **Authentication** \- It appears as the SipTheeSkype SIP authentication mechanism is not compatible with the FreeSWITCH one therefore authenticated registration doesn't seem to work.
+* **认证** \- 似乎SipTheeSkype的SIP认证机制与FreeSWITCH的认证机制不兼容，因此认证注册似乎无法正常工作。
 
-Worked when I tried it.
+我尝试时可以正常工作。
 
-## References
+## 参考资料
 
-[SipTheeSkype SIP to Skype Gateway home page](http://www.mhspot.com/siptheeskype.html)
-
-
+[SipTheeSkype SIP to Skype Gateway主页](http://www.mhspot.com/siptheeskype.html)

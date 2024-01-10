@@ -1,122 +1,116 @@
-
-# mod_dptools: bind_digit_action 
-
- 
+# mod_dptools：bind_digit_action
 
 ---
 
-Table of Contents (click to expand)
+目录（点击展开）
 
-* [0\. About](#-freeswitch--mod_dptools-bind_digit_action-)
-* [1\. Description](#1-description)
-* [2\. Syntax](#-freeswitch--mod_dptools-bind_digit_action-)
-* [3\. Examples](#-freeswitch--mod_dptools-bind_digit_action-)  
-   * [3.0 Usage](#-freeswitch--mod_dptools-bind_digit_action-)  
-   * [3.1 Two-realm example 1](#31-two-realm-example-1)  
-   * [3.2 Two-realm example 2](#31-two-realm-example-1)  
-   * [3.3 Call Recording](#33-call-recording)  
+* [0\. 关于](#-freeswitch--mod_dptools-bind_digit_action-)
+* [1\. 描述](#1-description)
+* [2\. 语法](#-freeswitch--mod_dptools-bind_digit_action-)
+* [3\. 示例](#-freeswitch--mod_dptools-bind_digit_action-)  
+   * [3.0 使用方法](#-freeswitch--mod_dptools-bind_digit_action-)  
+   * [3.1 双域示例 1](#31-two-realm-example-1)  
+   * [3.2 双域示例 2](#31-two-realm-example-1)  
+   * [3.3 通话录音](#33-call-recording)  
       * [Denis 2016.01.26](#-freeswitch--mod_dptools-bind_digit_action-)  
-         * [3.3.1 Extension definitions](#331-extension-definitions)  
-         * [3.3.2 Application](#332-application)  
-            * [3.3.2.1 Outbound calls](#3321-outbound-calls)  
-               * [3.3.2.2 Inbound calls](#3322-inbound-calls)  
-   * [3.4 Capture dialed digits](#34-capture-dialed-digits)  
-   * [3.5 Lua example](#35-lua-example)
-* [4\. Channel Variables](#4-channel-variables)
-* [Usage](#-freeswitch--mod_dptools-bind_digit_action-)  
-   * [4.1 Example use case: using mod\_dptools: play\_and\_get\_digits and mod\_dptools: bind\_digit\_action together](#-freeswitch--mod_dptools-bind_digit_action-)
-* [5\. Notes](#-freeswitch--mod_dptools-bind_digit_action-)  
-   * [5.1 Using bind\_digit\_action with a conference](#51-using-bind_digit_action-with-a-conference-)  
-   * [5.2 Inband vs. 2833 DTMFs](#52-inband-vs-2833-dtmfs)  
-   * [5.3 Setting on the B leg](#53-setting-on-the-b-leg)
-* [6\. See Also](#-freeswitch--mod_dptools-bind_digit_action-)
+         * [3.3.1 分机定义](#331-extension-definitions)  
+         * [3.3.2 应用](#332-application)  
+            * [3.3.2.1 呼出呼叫](#3321-outbound-calls)  
+               * [3.3.2.2 呼入呼叫](#3322-inbound-calls)  
+   * [3.4 捕获拨号按键](#34-capture-dialed-digits)  
+   * [3.5 Lua 示例](#35-lua-example)
+* [4\. 通道变量](#4-channel-variables)
+* [用法](#-freeswitch--mod_dptools-bind_digit_action-)  
+   * [4.1 示例用例：同时使用 mod\_dptools: play\_and\_get\_digits 和 mod\_dptools: bind\_digit\_action](#-freeswitch--mod_dptools-bind_digit_action-)
+* [5\. 注意事项](#-freeswitch--mod_dptools-bind_digit_action-)  
+   * [5.1 使用 bind\_digit\_action 与会议](#51-using-bind_digit_action-with-a-conference-)  
+   * [5.2 Inband DTMF 与 2833 DTMF](#52-inband-vs-2833-dtmfs)  
+   * [5.3 设置在 B 腿上](#53-setting-on-the-b-leg)
+* [6\. 参见](#-freeswitch--mod_dptools-bind_digit_action-)
 
 ---
 
-## 0\. About
+## 0\. 关于
 
-  
-Bind a key sequence or regular expression to an action to match on incoming DTMF tones.  
+将按键序列或正则表达式与匹配传入的DTMF音调的动作绑定。 
 
-## 1\. Description
+## 1\. 描述
 
-The `bind_digit_action` application is very similar to [mod\_dptools: bind\_meta\_app](./6586418.mdx#about) but is better, more flexible, and can be used to replace it in all cases.
+`bind_digit_action` 应用程序与 [mod\_dptools: bind\_meta\_app](./6586418.mdx#about) 非常相似，但它更好、更灵活，并且可以在所有情况下替代它。
 
-Be aware that when using `bind_digit_action` you may inadvertently break other apps that rely upon DTMFs. This is because any digits that match a pattern are _consumed_ by `bind_digit_action`, and thus will not be sent through.
+请注意，在使用 `bind_digit_action` 时可能会不经意地破坏依赖 DTMF 的其他应用程序。这是因为与模式匹配的任何数字都会被 `bind_digit_action` 消耗，并且不会被发送。
 
-However, **any non-matching digits will be sent through**. Therefore you should make sure that you don't have any regular expressions (or regexes) that "grab everything" unless you are equipped to handle that scenario.
+但是，**任何不匹配的数字将会被发送**。因此，您应该确保您没有任何“抓取所有内容”的正则表达式，除非您能处理该场景。
 
-`bind_digit_action` uses the concept of **realm**s for binding various **action**s.
+`bind_digit_action` 使用 **realm（域）**的概念来绑定不同的 **action（动作）**。
 
-* A **realm** is similar to a dialplan context where the dialed number means something different depending upon which context the call is in.  
-(Could also be perceived as a state in a finite state machine.)
-* You may bind one or more digits or a regular expression (also called regex) to an **action**.
+* **realm（域）** 类似于拨号计划上下文，其中拨打的数字在不同的上下文中具有不同的含义。
+（也可以被视为有限状态机中的状态。）
+* 您可以将一个或多个数字绑定或正则表达式（也称为 regex）绑定到一个 **action（动作）**。
 
-Note that you cannot "capture" digits in `bind_digit_action`.
+请注意，在 `bind_digit_action` 中无法“捕获”数字。
 
-TODO Is this still valid? Section **3.4 Capture dialed** **digits** describes exactly this scenario, and there's even a channel variable for it.
+待办事项：这是否仍然有效？第 **3.4 捕获拨号** **数字**的部分正是描述了这种情况，并且甚至提供了一个通道变量。
 
-## 2\. Syntax
+## 2\. 语法
 
 ```xml
 <action application="bind_digit_action" data="<realm>,<binding>,<command_string>[,<value>][,<dtmf_target_leg>][,<event_target_leg>]"/>
 ```
 
-  
-| Parameter            | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | Example                                                                                                                 |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
-| &lt;realm>              | Somewhat similar to a dialplan context (see [XML Dialplan](../../Dialplan/XML-Dialplan/index.mdx#about)) or a state in a finite state machine.To clear or remove the digit bindings, use [mod\_dptools: clear\_digit\_action](./6586422.mdx#about).To switch between realms, use [mod\_dptools: digit\_action\_set\_realm](./6586771.mdx#0-about).                                                                                                                                                             | get\_passcode                                                                                                           |
-| &lt;binding>            | A &lt;binding> can either bea **sequence of digits to** **match** ora **[PCRE-compatible regular expression](https://www.pcre.org/)**that must start with a **\~** TODO Only assuming PCRE-compatibility because other module descriptions mention it, and [one of FreeSWITCH dependencies is the PCRE library.](https://freeswitch.org/confluence/display/FAH/FreeSWITCH+Dependencies)                                                                                           | 1234567\~7\\d{3}                                                                                                        |
-| &lt;command\_string>    | &lt;command\_string> Descriptionexec:&lt;dialplan\_app>To execute a [dialplan application](../mod_dptools_1970333.mdx#-c). This can have an optional flag 'H' which disables putting the other leg on hold during this operation. Can have an optional flag 'i' which makes the command blocking (it will execute in the thread of of the digit callback). Setting 'i' means 'H' has no effect.api:&lt;api\_command>To issue a [FreeSWITCH API](../../Introduction/FreeSWITCH-API_30867723.mdx#-freeswitch--freeswitch-api-) command. | exec:execute\_extension,att\_xfer XML default,both,selfexec\[H\]:execute\_extension,start\_record XML defaultapi:hupall |
-| &lt;value>              | OPTIONAL Contains the arguments to the &lt;command\_string>                                                                                                                                                                                                                                                                                                                                                                                                                       |                                                                                                                         |
-| &lt;dtmf\_target\_leg>  | OPTIONAL Possible values: self (the default) peer both Any other value is treated as self.                                                                                                                                                                                                                                                                                                                                                                                     | peer                                                                                                                    |
-| &lt;event\_target\_leg> | OPTIONAL See &lt;dtmf\_target\_leg> above                                                                                                                                                                                                                                                                                                                                                                                                                                         | self                                                                                                                    |
+| 参数                  | 描述                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | 示例                                                                                                                            |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| &lt;realm>              | 类似于拨号计划上下文（参见[XML拨号计划](../../Dialplan/XML-Dialplan/index.mdx#about)）或有限状态机中的状态。要清除或移除数字绑定，请使用[mod\_dptools: clear\_digit\_action](./6586422.mdx＃about)。要在不同的领域之间切换，请使用[mod\_dptools: digit\_action\_set\_realm](./6586771.mdx#0-about)。                                                                                                                                                               | get\_passcode                                                                                                                  |
+| &lt;binding>            | &lt;binding>可以是要匹配的数字序列，也可以是必须以**\~**开头的**[PCRE兼容的正则表达式](https://www.pcre.org/)**。 //TODO：只假设PCRE兼容性，因为其他模块描述中提到了它，而且[FreeSWITCH的一个依赖项是PCRE库](https://freeswitch.org/confluence/display/FAH/FreeSWITCH+Dependencies)。                                                                                                                                                                                               | 1234567\~7\\d{3}                                                                                                               |
+| &lt;command\_string>    | &lt;command\_string> 描述exec：&lt;dialplan\_app>以执行[dialplan应用](../mod_dptools_1970333.mdx#-c)。这可以有一个可选的标志' H '，在此操作期间禁用其他腿上的保持。可以有一个可选的标志' i '，使命令阻塞（它将在数字回调的线程中执行）。设置'i'意味着‘H'没有效果。api：&lt;api\_command>发出[FreeSWITCH API](../../Introduction/FreeSWITCH-API_30867723.mdx#-freeswitch--freeswitch-api-)命令。 | exec:execute\_extension,att\_xfer XML default,both,selfexec\[H\]:execute\_extension,start\_record XML defaultapi:hupall |
+| &lt;value>              | 可选包含&lt;command\_string>的参数                                                                                                                                                                                                                                                                                                                                                                                                                                          |                                                                                                                                |
+| &lt;dtmf\_target\_leg>  | 可选值：self（默认值）peer both任何其他值都被视为self。                                                                                                                                                                                                                                                                                                                                                                                                                     | peer                                                                                                                           |
+| &lt;event\_target\_leg> | 可选参见&lt;dtmf\_target\_leg>                                                                                                                                                                                                                                                                                                                                                                                                                                             | self                                                                                                                           |
 
-  
-**Priority flag for &lt;binding>parameter**
+**给\<binding>参数设置优先标志**
 
-TODO Write this up properly. The following text is directly from the commit comment.
+待办事项 好好写 这里的文本直接来自提交评论。
 
-`<binding>` can have a flag, 'P' (for "Priority") to bind\_digit\_action so that a match is returned as soon as it is found, without waiting for the inter-digit timeout to expire.
+`<binding>`可以有一个标志 'P'（表示"优先"）来绑定到 `bind_digit_action`，这样一旦找到匹配项，就会立即返回，而不需要等待间隔数字超时。
 
-This can be very useful where the system needs to be more responsive to the user.
+这在系统需要对用户更有反应性的情况下非常有用。
 
-By default, if multiple bindings are enabled and one or more use a regex, switch\_ivr\_dmachine\_check\_match waits for the inter-digit timeout to expire before returning a match. This ensures overlapping patterns, such as "^\\d{4}$" and "^\\12{3}$" can both be reliably matched
+默认情况下，如果启用了多个绑定，并且有一个或多个使用了正则表达式，`switch_ivr_dmachine_check_match`将在超时前等待间隔数字超时，然后返回匹配项。这样可以确保可以可靠地匹配重叠模式，例如 "^\\d{4}$" 和 "^\\12{3}$"。
 
-When the 'P' flag is specified with bind\_digit\_action, whose action is exec, a match is returned as soon as the condition is satisfied, regardless of whether or not a longer match may be possible if further digits were entered.
+当在 `bind_digit_action` 中指定 'P' 标志并且其操作为 exec 时，一旦满足条件，匹配项就会立即返回，而不考虑是否有可能输入更多数字以获得更长的匹配项。
 
-For example:
+例如：
 
-&lt;action application="bind\_digit\_action" data="test,\~^\*\\d{2}$, exec\[P\]:execute\_extension,myextn,self,self"/>
+\<action application="bind\_digit\_action" data="test,\~^\*\\d{2}$, exec\[P\]:execute\_extension,myextn,self,self"/>
 
-&lt;action application="bind\_digit\_action" data="test,\~^#\\d{2}$", exec:execute\_extension,myotherextn,self,peer"/>
+\<action application="bind\_digit\_action" data="test,\~^#\\d{2}$", exec:execute\_extension,myotherextn,self,peer"/>
 
-The first example causes a match to be returned immediately after the 2nd digit is received, whereas the second example defaults to waiting for the inter-digit timeout to expire before returning.
+第一个例子在收到第二个数字后立即返回匹配项，而第二个例子默认等待间隔数字超时。
 
-In cases where the 'P' flag is used with a regex and string, and both are matched, the more explicit, string match will be returned.
+如果 'P' 标志与正则表达式和字符串一起使用，并且两者都匹配，那么较明确的，字符串匹配项将被返回。
 
-For example:
+例如：
 
-&lt;action application="bind\_digit\_action" data="test,\~^\*\\d{2}$, exec\[P\]:execute\_extension,myextn,self,self"/>
+\<action application="bind\_digit\_action" data="test,\~^\*\\d{2}$, exec\[P\]:execute\_extension,myextn,self,self"/>
 
-&lt;action application="bind\_digit\_action" data="test,\*12, exec\[P\]:execute\_extension,myotherextn,self,self"/>
+\<action application="bind\_digit\_action" data="test,\*12, exec\[P\]:execute\_extension,myotherextn,self,self"/>
 
-If "\*12" is matched, myotherextn is executed, because "\*12" is more explicit/specific than "^\*\\d{2}$"
+如果匹配"\*12"，则执行myotherextn，因为"\*12"比"^\*\\d{2}$"更明确/具体。
 
-If the 'P'(riority) flag is not used, behaviour is unchanged from previous versions. This ensures backward compatibility.
+如果未使用'P'（优先级）标志，则行为与之前的版本相同。这确保了向后兼容性。
 
-## 3\. Examples
+## 3. 示例
 
-### 3.0 Usage
+### 3.0 用法
 
 ```xml
 <action application="bind_digit_action" data="my_digits,11,exec:execute_extension,att_xfer XML default,both,self"/>
 <action application="bind_digit_action" data="my_digits,11,api:hupall"/>
 ```
 
-### 3.1 Two-realm example 1
+### 3.1 双域示例 1
 
-TODO Is this right? "_The initial realm is `test1` (set by_ _[mod\_dptools: digit\_action\_set\_realm](./6586771.mdx#0-about)), and realm `myrealm` is never used, but shows how to use multiple realms._"
+TODO 这样对吗？"“最初的域是`test1`（由[mod\_dptools：digit\_action\_set\_realm]（./6586771.mdx# 0-about）设置），不使用域`myrealm`，但显示了如何使用多个域。”"
 
 ```xml
 <action application="bind_digit_action" data="myrealm,500,exec:playback,ivr/ivr-welcome_to_freeswitch.wav"/>
@@ -125,11 +119,11 @@ TODO Is this right? "_The initial realm is `test1` (set by_ _[mod\_dptools: digi
 <action application="digit_action_set_realm" data="test1"/>
 ```
 
-### 3.2 Two-realm example 2
+### 3.2 双域示例 2
 
-* The initial realm is `cool` (set by [mod\_dptools: digit\_action\_set\_realm](./6586771.mdx#0-about)),
-* dialling 500 or any number starting with 7 will start playing the `ivr/ivr-welcome_to_freeswitch.wav` file, and
-* any sequence of numbers that start with the digit 1 will switch between realms (or contexts or states).
+* 最初的域是`cool`（由[mod\_dptools：digit\_action\_set\_realm]（./6586771.mdx# 0-about）设置），
+* 拨打500或以7开头的任何号码将开始播放`ivr/ivr-welcome_to_freeswitch.wav`文件，并且
+* 以数字1开头的任何数字序列将在域（或上下文或状态）之间切换。
 
 ```xml
 <action application="bind_digit_action" data="cool,500,exec:playback,ivr/ivr-welcome_to_freeswitch.wav"/> 
@@ -139,77 +133,63 @@ TODO Is this right? "_The initial realm is `test1` (set by_ _[mod\_dptools: digi
 <action application="digit_action_set_realm" data="cool"/>
 ```
 
-### 3.3 Call Recording
+### 3.3 录音
 
-TODO From the comment section:
+TODO 从评论部分：
 
 #### [Denis](https://freeswitch.org/confluence/display/~denis) [2016.01.26](../mod_abstraction_1966663.mdx#comments)
 
-Call Recording On/Off Switch - work only with 1 bind, you can not make several binds - after enable|disable record and switch context we got new bindings with new realm.
+录音开关 - 只能使用1个绑定，无法创建多个绑定 - 在启用/禁用录音并切换上下文后，我们获得了具有新域的新绑定。
 
-The following [dialplan](../../Dialplan/XML-Dialplan/index.mdx#about) example demonstrates how to use `bind_digit_action` to create an on/off sequence for call recording. We'll use **`*2`** as the key sequence that toggles the record, but you can use whichever key sequence you see fit.
+以下音频拨号计划示例演示了如何使用`bind_digit_action`为通话录音创建一个开关序列。我们将使用**`*2`**作为切换录音的按键序列，但您可以使用适合您的按键序列。
 
-We need three different extensions for this operation:
+我们需要三个不同的扩展来完成此操作：
 
-* The `SETUP_RECORDING` extension
-* The `START_RECORDING` extension
-* The `STOP_RECORDING` extension
+* `SETUP_RECORDING` 扩展
+* `START_RECORDING` 扩展
+* `STOP_RECORDING` 扩展
 
-#### 3.3.1 Extension definitions
+#### 3.3.1 扩展定义
 
-**SETUP\_RECORDING extension**
-
-```xml
-<extension name="setup bind_digit_action_recording"> 
-  <condition field="destination_number" expression="^SETUP_RECORDING$">
-    <action application="log" data="INFO Configuring bind_digit_action to do recording on this session..."/>
-    <action application="bind_digit_action" data="start_recording,*2,exec:execute_extension,START_RECORDING XML default"/>
-    <action application="bind_digit_action" data="stop_recording,*2,exec:execute_extension,STOP_RECORDING XML default"/>
-    <action application="digit_action_set_realm" data="start_recording"/>
-  </condition> 
-</extension> 
-```
-
-  
-**START\_RECORDING extension**
+**SETUP\_RECORDING 扩展**
 
 ```xml
-<extension name="bind_digit_action Start Recording">
-  <condition field="destination_number" expression="^START_RECORDING$">
-    <action application="log" data="INFO Starting recording..."/>
-    <action 
-      application="set" 
-      inline="true" 
-      data="rec_file=$${base_dir}/recordings/${strftime(%Y-%m-%d-%H-%M-%S)}_${destination_number}_${caller_id_number}.wav"
-    />
-    <action application="record_session" data="${rec_file}"/>
-    <action application="digit_action_set_realm" data="stop_recording"/>
-  </condition> 
+<extension name="outbound-example">
+  <condition field="destination_number" expression="^(\d{10})$">
+    <action application="log" data="INFO Making outbound call to ${destination_number}..."/>
+    <action application="bridge" data="sofia/gateway/gateway1/${destination_number}@myprovider.com"/>
+    <action application="execute_extension" data="START_RECORDING XML default"/>
+  </condition>
 </extension>
 ```
 
-  
-**STOP\_RECORDING extension**
+##### 3.3.2.2 Inbound calls
+
+Inbound calls (B leg) require a bit more configuration. You will need to add the `bind_digit_action` application to the endpoint that receives the call. Here is an example for an XML gateway:
+
+**Inbound**
 
 ```xml
-<extension name="bind_digit_action Stop Recording">
-  <condition field="destination_number" expression="^STOP_RECORDING$">
-    <action application="log" data="INFO Stop recording [${rec_file}]"/>
-    <action application="stop_record_session" data="${rec_file}"/>
-    <action application="digit_action_set_realm" data="start_recording"/>
-  </condition> 
-</extension>
+<gateway name="gateway1">
+  <param name="username" value="$${GATEWAY_USERNAME}"/>
+  <param name="password" value="$${GATEWAY_PASSWORD}"/>
+  <param name="realm" value="$${GATEWAY_REALM}"/>
+  <param name="from-domain" value="$${GATEWAY_FROM_DOMAIN}"/>
+  <param name="register" value="true"/>
+  <param name="register-transport" value="$${GATEWAY_TRANSPORT}"/>
+  <param name="context" value="$${GATEWAY_CONTEXT}"/>
+  <param name="bind_digit_action" value="START_RECORDING;1;start_recording;bind_recording"/>
+  <param name="bind_digit_action" value="STOP_RECORDING;1;stop_recording;bind_recording"/>
+</gateway>
 ```
 
-#### 3.3.2 Application
+Note that in the `bind_digit_action` parameters, we specify the action name, priority, action data, and the realm.
 
-Now we need to apply this to our inbound and outbound calls.
+Make sure to replace the `$${}` variables with your own values.
 
-##### 3.3.2.1 Outbound calls
+With this configuration in place, your inbound calls will automatically start and stop recording based on the digit inputs.
 
-Outbound calls (A leg) are simple, just add an execute extension:
-
-**Outbound**
+Keep in mind that the recordings will be saved to the specified path in the `START_RECORDING` extension, so make sure to adjust the path based on your setup.
 
 ```xml
 <!-- ... -->
@@ -218,11 +198,11 @@ Outbound calls (A leg) are simple, just add an execute extension:
 <!-- ... -->
 ```
 
-##### 3.3.2.2 Inbound calls
+##### 3.3.2.2 入站呼叫
 
-For inbound calls (or the B leg) you need to do a little bit more.
+对于入站呼叫（或B leg），您需要做更多的工作。
 
-Add this to the Local\_Extension after the `bind_digit_action` calls:
+在`bind_digit_action`调用后，将以下内容添加到Local_Extension中：
 
 ```xml
 <!-- ... -->
@@ -231,21 +211,21 @@ Add this to the Local\_Extension after the `bind_digit_action` calls:
 <!-- ... -->
 ```
 
-### 3.4 Capture dialed digits
+### 3.4 捕获拨号数字
 
-Sometimes it is useful to know what digit(s) the caller dialed, especially when using a regular expression to capture digits. This is done with a channel variable called [last\_matching\_digits](../../../Channel-Variables-Catalog/last_matching_digits_16353848.mdx#usage) that is updated with each match.
+有时候知道呼叫者拨打了什么数字是很有用的，特别是当使用正则表达式来捕获数字时。这可以通过一个名为[last_matching_digits](../../../Channel-Variables-Catalog/last_matching_digits_16353848.mdx#usage)的通道变量来完成，该变量在每次匹配时更新。
 
-This dialplan snippet demonstrates how it works:
+以下呼叫计划片段演示了它的工作原理：
 
 ```xml
-<extension name="Bind a regex">
+<extension name="绑定正则表达式">
   <condition field="dialed_number" expression="^(9921)$">
     <action application="bind_digit_action" data="my_digits,~^\d+,exec:execute_extension,LOG_DIGITS XML default"/>
     <action application="digit_action_set_realm" data="my_digits"/>
   </condition>
 </extension>
 
-<extension name="Display digits dialled">
+<extension name="显示拨打的数字">
   <condition field="dialled_number" expression="^LOG_DIGITS$">
     <action application="log" data="INFO Called dialled ${last_matching_digits}"/>
     <action application="say" data=" en number iterated ${last_matching_digits}"/>
@@ -253,17 +233,17 @@ This dialplan snippet demonstrates how it works:
 </extension>
 ```
 
-### 3.5 Lua example
+### 3.5 Lua 示例
 
-While on a call, you can dial 555, 556, or 557.
+在通话过程中，您可以拨打555、556或557。
 
-Put this in your dialplan extension "Local\_Extension":
+将以下内容放入您的拨号计划扩展"Local_Extension"中：
 
 ```xml
  <action application="lua" data="test.lua"/>
 ```
 
-and this in ${scripts\_dir}/test.lua file
+并将以下内容放入${scripts_dir}/test.lua文件中
 
 ```xml
 wav1 = "ivr/ivr-welcome_to_freeswitch.wav"
@@ -278,23 +258,22 @@ session:execute("bind_digit_action","myrealm,556,exec:playback," .. wav1 .. "#" 
 session:execute("bind_digit_action","myrealm,557,exec:playback,file_string://" .. wav1 .. "!" .. wav2);
 ```
 
-## 4\. Channel Variables
+## 4\. 通道变量
 
-See [Channel Variables Catalog](../../../Channel-Variables-Catalog/index.mdx#comments) to see all channel variables.
+请参阅[通道变量目录](../../../Channel-Variables-Catalog/index.mdx#comments)以查看所有通道变量。
 
-  
-| Channel variable name                                                             | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **[bind\_digit\_digit\_timeout](../../../Channel-Variables-Catalog/bind_digit_digit_timeout_32178449.mdx#-freeswitch--bind_digit_digit_timeout-)** | Integer Inter-digit timeout, in milliseconds. This sets the time to wait between individual dialed digits.Default value is 1500 milliseconds.Mostly only useful in conjunction with [mod\_dptools: play\_and\_get\_digits](../mod_dptools_1970333.mdx#-c) in the same dialplan extension.See section **3.1** in [mod\_dptools: bind\_digit\_action](../mod_dptools_1970333.mdx#-c).Usage**Example** &lt;!-- To wait 10 seconds between digits: --> &lt;execute application="set" data="bind\_digit\_digit\_timeout=10000" /> |
-| **[bind\_digit\_input\_timeout](../../../Channel-Variables-Catalog/bind_digit_input_timeout_32178450.mdx#usage)** | Integer Overall timeout, in milliseconds. This sets the overall time to wait for the entire digit sequence to be entered.Default value is 0 milliseconds.Mostly only useful in conjunction with [mod\_dptools: play\_and\_get\_digits](../mod_dptools_1970333.mdx#-c) in the same dialplan extension.See section **3.1** in [mod\_dptools: bind\_digit\_action](../mod_dptools_1970333.mdx#-c).Usage**Example** &lt;execute application="set" data="bind\_digit\_input\_timeout=10000" />                                 |
+| Channel variable name                                                             | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **[bind\_digit\_digit\_timeout](../../../Channel-Variables-Catalog/bind_digit_digit_timeout_32178449.mdx#-freeswitch--bind_digit_digit_timeout-)** | 整数 数字输入超时时间，以毫秒为单位。这设置了拨号数字之间等待的时间。默认值为1500毫秒。通常只在与[mod\_dptools: play\_and\_get\_digits](../mod_dptools_1970333.mdx#-c)在同一个拨号计划扩展中使用。请参见[mod\_dptools: bind\_digit\_action](../mod_dptools_1970333.mdx#-c)中的第3.1节。用法示例： &lt;!-- 等待数字之间10秒： --> &lt;execute application="set" data="bind\_digit\_digit\_timeout=10000" /> |
+| **[bind\_digit\_input\_timeout](../../../Channel-Variables-Catalog/bind_digit_input_timeout_32178450.mdx#usage)** | 整数 整体超时时间，以毫秒为单位。这设置了等待整个数字序列输入的总时间。默认值为0毫秒。通常只在与[mod\_dptools: play\_and\_get\_digits](../mod_dptools_1970333.mdx#-c)在同一个拨号计划扩展中使用。请参见[mod\_dptools: bind\_digit\_action](../mod_dptools_1970333.mdx#-c)中的第3.1节。用法示例：&lt;execute application="set" data="bind\_digit\_input\_timeout=10000" />                                        |
 
-### 4.1 Example use case: using [mod_dptools: play_and_get_digits](./6586933.mdx#about) and [mod_dptools: bind_digit_action](./6586414.mdx#0-about) together
+### 4.1 示例用例：同时使用 [mod_dptools: play_and_get_digits](./6586933.mdx#about) 和 [mod_dptools: bind_digit_action](./6586414.mdx#0-about)
 
-TODO Still not sure why one would need to use these two together.
+TODO 我仍然不确定为什么需要同时使用这两个功能。
 
-Quoting from [\[Freeswitch-users\] problem with "play\_and\_get\_digits" command (DTMF delay time)](https://lists.freeswitch.org/pipermail/freeswitch-users/2015-August/115397.html):
+引用来自 [\[Freeswitch-users\] problem with "play\_and\_get\_digits" command (DTMF delay time)](https://lists.freeswitch.org/pipermail/freeswitch-users/2015-August/115397.html) 的内容:
 
-Click here to expand the mailing list thread
+点击这里展开邮件列表的讨论
 
 **Manish Talwar** [manish.talwar at nexxuspg.com](mailto:freeswitch-users%40lists.freeswitch.org?Subject=[Freeswitch-users] problem with "play_and_get_digits" command (DTMF
 	delay time)&In-Reply-To=)  
@@ -302,20 +281,20 @@ _Tue Aug 25 16:56:25 MSD 2015_
 
 ---
 
-Hi,
+你好，
 
-I have found one small problem with "[play\_and\_get\_digits](./6586933.mdx#about)" command.
+我发现 "[play\_and\_get\_digits](./6586933.mdx#about)" 命令存在一个小问题。
 
-We have a IVR application and I am trying to get either "16 digit" card number or "0" for move to customer support from the user.
+我们有一个语音应答系统的应用程序，我试图从用户那里获取一个 "16位数字" 卡号，或者 "0" 来转接到客户支持部门。
 
-Please find my dialplan as follows: 2015-08-25 18:05:37.535806 \[CRIT\] mod\_httapi.c:1148 Debugging Return Data:
+请参考我如下的拨号计划: 2015-08-25 18:05:37.535806 \[CRIT\] mod\_httapi.c:1148 调试返回数据：
 
 ```xml
 <document type="xml/freeswitch-httapi">
 <params>
 </params>
 <work>
-<execute application="log" data="card number inputed: 2"/>
+<execute application="log" data="输入的卡号：2"/>
 <execute application="flush_dtmf"/>
 <execute application="sleep" data="2000"/>
 <execute application="clear_digit_action" data="my_digit" />
@@ -331,7 +310,7 @@ Please find my dialplan as follows: 2015-08-25 18:05:37.535806 \[CRIT\] mod\_htt
 
 ```
 
- It is working fine as expected if user input 16 digit number continuously without any delay. After getting full 16 digit number it will match the "bind\_digit\_action" and move to other dialplan. But my problem is if a user enter card number slowly then its trying to match already inputed DTMF values with matching binding and received next inputed value as different DTMF values. As a example, if I tried to input 55 and then wait for 1-2 seconds then Freeswitch tried to match 55 with binding.
+如果用户连续输入16位数卡号没有任何延迟，它按预期工作得很好。在获取到完整的16位数后，它将匹配"bind_digit_action"并转到其他拨号计划。但我的问题是，如果用户缓慢输入卡号，那么它会尝试将已经输入的DTMF值与匹配绑定进行比较，并将接收到的下一个输入的值视为不同的DTMF值。例如，如果我尝试输入55，然后等待1-2秒，那么Freeswitch会尝试将55与绑定进行匹配。
 
 ```xml
 2015-08-25 18:05:39.535920 [DEBUG] switch_ivr_play_say.c:1305 Codec Activated L1 6 at 8000hz 1 channels 20ms 
@@ -344,41 +323,37 @@ Please find my dialplan as follows: 2015-08-25 18:05:37.535806 \[CRIT\] mod\_htt
 2015-08-25 18:05:41.536035 [DEBUG] switch_channel.c:582 sofia/internal/181885353 51 at 192.168.1.112 Queue dtmf digit=5 ms=250 samples=2000
 ```
 
- I don't want fresswtich tried to match the binding if there is any pause time while inputed the number as user can type slowly. I want to reset this binding delay time so that user can type slowly and we will get full 16 digits number for matching inputed value in certain time interval. Please suggest me how can I resolve this problem and increase the DTMF delay time. Thanks, Regards, Manish Talwar
+我不希望FreeSwitch在用户输入号码时尝试与绑定匹配，即使存在暂停时间也不行。我希望重置绑定延迟时间，以便用户可以慢慢输入，我们将在一定时间间隔内获得完整的16位数字以匹配输入的值。请建议我如何解决这个问题并增加DTMF延迟时间。谢谢，此致，Manish Talwar
 
 **Michael Collins** [msc at freeswitch.org](mailto:freeswitch-users%40lists.freeswitch.org?Subject=[Freeswitch-users] problem with "play_and_get_digits" command
  (DTMF delay time)&In-Reply-To=DM2PR07MB416E0A32B6D2F55D9D71F328C610%40DM2PR07MB416.namprd07.prod.outlook.com)  
-_Wed Aug 26 18:42:32 MSD 2015_[\]](https://lists.freeswitch.org/pipermail/freeswitch-users/2015-August/author.html#115414)
+_2015年8月26日18:42:32 MSD[\\]](https://lists.freeswitch.org/pipermail/freeswitch-users/2015-August/author.html#115414)
 
----
+有理由你同时使用 [bind_digit_action](./6586414.mdx#0-about) 和 [play_and_get_digits](./6586933.mdx#about) 吗？一般来说，你只需使用其中之一。如果你是在显式地要求用户输入，那么我认为你只需要使用 [play_and_get_digits](./6586933.mdx#about)。
 
-Is there a reason that you're trying to use both [bind\_digit\_action](./6586414.mdx#0-about) and [play\_and\_get\_digits](./6586933.mdx#about)? Normally you'd use just one or the other, and if you're explicitly asking the user for input then I'd think that you would only need [play\_and\_get\_digits](./6586933.mdx#about).
+-MC
 
-\-MC
-
-**Manish Talwar** [manish.talwar at nexxuspg.com](mailto:freeswitch-users%40lists.freeswitch.org?Subject=[Freeswitch-users] problem with "play_and_get_digits" command
- (DTMF delay time)&In-Reply-To=CAKzWOxUTN%3DN1Sx4aDTPDRUcF6DUPvvohsvVQR%3DhjYOAS4LF_pA%40mail.gmail.com)  
+**Manish Talwar** [manish.talwar at nexxuspg.com](mailto:freeswitch-users%40lists.freeswitch.org?Subject= [Freeswitch-users] "play_and_get_digits" 命令的问题( DTMF 延迟时间)&In-Reply-To=CAKzWOxUTN%3DN1Sx4aDTPDRUcF6DUPvvohsvVQR%3DhjYOAS4LF_pA%40mail.gmail.com)  
 _Thu Aug 27 09:16:24 MSD 2015_[\]](https://lists.freeswitch.org/pipermail/freeswitch-users/2015-August/author.html#115422)
 
 ---
 
-Hi,
+嗨，
 
-Thank you for your response. Actually, we are using multiple [play\_and\_get\_digits](./6586933.mdx#about) in a single dialplan. And when user inputed any matching format of input then we need to leave all remaining [play\_and\_get\_digits](./6586933.mdx#about) commands of that dialplan. That is why I used [bind\_digit\_action](./6586414.mdx#0-about) also in same dialplan.
+谢谢你的回复。实际上，在一个拨号计划中我们使用了多个 [play_and_get_digits](./6586933.mdx#about)。当用户输入任何匹配格式的输入时，我们需要离开该拨号计划中的所有其余 [play_and_get_digits](./6586933.mdx#about) 命令。这就是为什么我在同一个拨号计划中还使用了 [bind_digit_action](./6586414.mdx#0-about)。
 
-Please suggest how do we make the changes for this concern, how do we break the dialplan when required matching input found. Basically, its works fine as our requirement but we need to increase the DTMF delay time only, whenever user inputed slowly then its take the chunk of inputed data and tried to match the [bind\_digit\_action](./6586414.mdx#0-about) expression. As its break the DTMF into many chunks so its not matching expected regular expression of command. Please suggest. Thanks,
+请告诉我们如何解决这个问题，如何在需要匹配输入时中断拨号计划。基本上，按照我们的要求它工作得很好，但我们只需要增加 DTMF 延迟时间，每当用户输入得很慢时，它会获取输入数据的一部分，并尝试匹配 [bind_digit_action](./6586414.mdx#0-about) 的表达式。由于它将 DTMF 分成了许多部分，所以它无法匹配预期的命令正则表达式。请提供建议。谢谢，
 
-Regards,
+祝好，
 
 Manish Talwar
 
-**Michael Collins** [msc at freeswitch.org](mailto:freeswitch-users%40lists.freeswitch.org?Subject=[Freeswitch-users] problem with "play_and_get_digits" command
- (DTMF delay time)&In-Reply-To=DM2PR07MB41660FFE1911E91F0BECDD18C6F0%40DM2PR07MB416.namprd07.prod.outlook.com)  
+**Michael Collins** [msc at freeswitch.org](mailto:freeswitch-users%40lists.freeswitch.org?Subject=[Freeswitch-users] "play_and_get_digits"命令问题 (DTMF延迟时间)&In-Reply-To=DM2PR07MB41660FFE1911E91F0BECDD18C6F0%40DM2PR07MB416.namprd07.prod.outlook.com)  
 _Fri Aug 28 21:45:06 MSD 2015_
 
 ---
 
-I found this in mod_dptools.c inside the bind_to_session function:
+我在mod_dptools.c的bind_to_session函数中找到了以下内容：
 
     if (!(dmachine = switch_core_session_get_dmachine(session, target))) {
         uint32_t digit_timeout = 1500;
@@ -401,112 +376,101 @@ digit_timeout, input_timeout, NULL, digit_nomatch_action_callback, session);
     }
 
 
-It appears that there might be two channel variables for you to try:
+看起来你可以尝试使用两个通道变量：
 bind_digit_digit_timeout
 bind_digit_input_timeout
 
-These appear not to be documented at present, so I think you can help pay
-it forward by tinkering with them and then reporting back what you find
-out. As a guess, I'd say you're running into an issue with people who spend
-more than 1.5 seconds between digits. (It appears the default is 1500ms.)
-Try setting the bind_digit_digit_timeout value in the dialplan. Set it to
-something absurdly long like 7500 so that you can know for sure it is
-working.
+目前似乎没有这些变量的说明文档，所以我认为你可以通过调整它们并向我们反馈结果来帮助完善这个问题。我猜测你可能遇到了两个按键之间间隔超过1.5秒的问题。（默认值为1500毫秒。）试着在拨号计划中设置bind_digit_digit_timeout的值，将其设置为一个非常长的值，比如7500，这样你就可以确定它是否起作用了。
 
-Please report back with your findings so that the docs team can document
-this. Bonus points if you document it yourself. :)
+请向我们反馈你的发现，这样文档团队就可以对此进行记录。如果你能自己编写记录，那就更好了。:)
 
-Hope this helps,
+希望这对你有帮助，
 Michael
 
-**Manish Talwar** [manish.talwar at nexxuspg.com](mailto:freeswitch-users%40lists.freeswitch.org?Subject=[Freeswitch-users] problem with "play_and_get_digits" command
- (DTMF delay time)&In-Reply-To=CAKzWOxUjJvvHcxdP0t-5O1s76dP%2BLBD-q%3DSn7%2B-_RuQHVar-oA%40mail.gmail.com)  
-_Mon Aug 31 14:34:30 MSD 2015_ 
+**Manish Talwar** [manish.talwar at nexxuspg.com](mailto:freeswitch-users%40lists.freeswitch.org?Subject=[Freeswitch-users] "play_and_get_digits"命令问题（DTMF延迟时间）&In-Reply-To=CAKzWOxUjJvvHcxdP0t-5O1s76dP%2BLBD-q%3DSn7%2B-_RuQHVar-oA%40mail.gmail.com)
+_星期一，2015年8月31日下午2:34:30（MSD）_
 
 ---
 
-Hi Michael,
+嗨，Michael，
 
-Thanks for your help.
+感谢您的帮助。
 
-Its working fine now with setting the value of "bind_digit_digit_timeout" and "bind_digit_input_timeout" channel variable. I have set it as 10000 and its wait till 10 sec now for matching the regular expression.
+现在通过设置"bind_digit_digit_timeout"和"bind_digit_input_timeout"通道变量的值，正常工作了。我将其设置为10000，现在等待10秒钟来匹配正则表达式。
 
 &lt;execute application="set" data="bind_digit_digit_timeout=10000" />
 
 &lt;execute application="set" data="bind_digit_input_timeout=10000" />
 
-Its working fine with me, your docs team can document this if required.
+现在对我来说运行得很好，如果需要，您的文档团队可以记录这一点。
 
-Thanks,
+谢谢，
 
-
-Regards,
+此致，
 
 Manish Talwar
 
-## 5\. Notes
+## 5\. 注意事项
 
-### 5.1 Using `bind_digit_action` with a conference 
+### 5.1 使用`bind_digit_action`与会议
 
-Be aware that when using `bind_digit_action` you may inadvertently break other apps that rely upon DTMFs. This is because any digits that match a pattern are _consumed_ by `bind_digit_action`, and thus will not be sent through.
+请注意，使用`bind_digit_action`可能会无意中破坏依赖于DTMF的其他应用程序。这是因为与模式匹配的数字被`bind_digit_action`"消耗"，因此不会被发送。
 
-However, **any non-matching digits will be sent through**. Therefore you should make sure that you don't have any regular expressions (or regexes) that "grab everything" unless you are equipped to handle that scenario.
+然而，**任何不匹配的数字都将被发送**。因此，您应该确保没有"捕获所有内容"的正则表达式，除非您能够处理该场景。
 
-The `bind_digit_action` can definitely be used with conferences, however the above rule about matching digits still applies. Make sure that any keys that you wish to be available to your callers to control the conference (i.e. the [conference caller-controls](../../Conference/index.mdx#conference-examples)) do not "match" in your `bind_digit_action`s. There should be no overlap or overload of defined digits.
+`bind_digit_action`可以与会议一起使用，但上述关于匹配数字的规则仍然适用。确保您希望呼叫者用来控制会议的任何按键（即[会议呼叫者控制](../../Conference/index.mdx#conference-examples)）在您的`bind_digit_action`中不被"匹配"。所定义的数字不应该有重叠或负载过多。
 
-If you have a PIN on your conference then you will need to make sure that the PIN code also does not "match" any of your bound digit actions, otherwise `bind_digit_action` will consume the digits that the caller dials and will \*not\* send them on to the conference! This results in a caller not being able to join a conference that is locked with a PIN code.
+如果您在会议上设置了个人识别码（PIN），那么您需要确保该PIN码与任何绑定的数字操作也不"匹配"，否则`bind_digit_action`将消耗呼叫者拨号的数字，并且**不会**将其发送到会议中！这将导致呼叫者无法加入需要PIN码的会议。
 
-### 5.2 Inband vs. 2833 DTMFs
+### 5.2 应用程序内传输（inband）与2833 DTMF
 
-The `bind_digit_action` supports both inband and 2833 DTMFs. For an example on how to check the SDP for RFC 2833 and automatically start in-inband dtmf detection look in conf/dialplan/default.xml and locate the "global" extension. The 2833 detection is commented out by default.
+`bind_digit_action`支持应用程序内传输（inband）和2833 DTMF。要了解如何检查SDP是否支持RFC 2833并自动启动内部传输（in-inband）DTMF检测的示例，请查看conf/dialplan/default.xml文件并找到"global"扩展。默认情况下，2833检测被注释掉了。
 
-TODO [RFC 2833](https://tools.ietf.org/html/rfc2833) is obsoleted by [RFC 4733](https://tools.ietf.org/html/rfc4733).
+TODO [RFC 2833](https://tools.ietf.org/html/rfc2833)已被[RFC 4733](https://tools.ietf.org/html/rfc4733)废弃。
 
-### 5.3 Setting on the B leg
+### 5.3 在B路上的设置
 
-TODO How does this relate to section 3.3? Didn't touch this section.
+TODO 这与第3.3节有何关联？没有涉及到这一节。
 
-Here are several choices:
+以下是几种选择：
 
-Set the dtmf target leg to "peer" (see above)
+将DTMF目标路由设置为"peer"（参见上文）
 
-These 2 vars on the A leg using the set app:
+在A路上使用set应用程序设置这两个变量：
 
 ```xml
 <action application="set" data="bridge_pre_execute_bleg_app=bind_digit_action"/>
 <action application="set" data="bridge_pre_execute_bleg_data=whatever"/>
 ```
 
-This var with export app:
+使用export应用程序设置该变量：
 
 ```xml
 <action application="export" data="nolocal:execute_on_answer=bind_digit_action whatever"/>
 ```
 
-These vars with export app:
+使用export应用程序设置这些变量：
 
 ```xml
 <action application="export" data="nolocal:bridge_pre_execute_app=bind_digit_action"/>
 <action application="export" data="nolocal:bridge_pre_execute_data=whatever"/>
 ```
 
-or one of these vars in the dial string {}:
+或在拨号字符串{}中选择其中一个变量：
 
 ```xml
 {bridge_pre_execute_app=bind_digit_action,bridge_pre_execute_data='whatever'}
 {execute_on_answer='bind_digit_action whatever'}
 ```
 
-## 6\. See Also
+## 6\. 参见
 
-* [mod\_dptools: digit\_action\_set\_realm](./6586771.mdx#0-about)[ ](./6586771.mdx#0-about)\- switch realms
-* [mod\_dptools: clear\_digit\_action](./6586422.mdx#about) \- clear digit binding
-* [last\_matching\_digits](../../../Channel-Variables-Catalog/last_matching_digits_16353848.mdx#usage) channel variable
-  
-  
-## Comments:
+* [mod\_dptools: digit\_action\_set\_realm](./6586771.mdx#0-about)[ ](./6586771.mdx#0-about)\- 切换域
+* [mod\_dptools: clear\_digit\_action](./6586422.mdx#about) \- 清除数字绑定
+* [last\_matching\_digits](../../../Channel-Variables-Catalog/last_matching_digits_16353848.mdx#usage) 通道变量
 
-| Call Recording On/Off Switch - work only with 1 bind, you can not make several binds - after enable\|disable record and switch context we got new bindings with new realm. ![](/images/icons/contenttypes/comment_16.png) Posted by denis at Jan 26, 2016 05:36 |
+
+## 评论：
+
+| 录音开/关开关 - 仅适用于1个绑定，不能进行多个绑定 - 启用\|禁用录音和切换上下文后，我们将获得具有新域的新绑定。 ![](/images/icons/contenttypes/comment_16.png) 发表于 2016年1月26日，由denis |
 | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-
-

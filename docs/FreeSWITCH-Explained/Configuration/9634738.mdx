@@ -1,90 +1,87 @@
+# /etc/init.d/freeswitch 的例子
 
-# Examples of /etc/init.d/freeswitch 
+## Unix风格的 /etc/init.d/freeswitch
 
- 
+各种基于Unix的系统通常从位于 /etc/init.d/freeswitch 的脚本启动FreeSWITCH。
 
-## Unix-style /etc/init.d/freeswitch
+点击此处展开目录
 
-The various unix-based systems often start FreeSWITCH from a script that lives in /etc/init.d/freeswitch.
-
-Click here to expand Table of Contents
-
-* 1 [Unix-style /etc/init.d/freeswitch](#unix-style-etcinitdfreeswitch)  
-   * 1.1 [Linux](#-freeswitch--examples-of-etcinitdfreeswitch-)  
-      * 1.1.1 [Debian/Ubuntu](#-freeswitch--examples-of-etcinitdfreeswitch-)  
-         * 1.1.2 [Fedora](#-freeswitch--examples-of-etcinitdfreeswitch-)  
-   * 1.2 [BSD](#-freeswitch--examples-of-etcinitdfreeswitch-)  
+* 1 [Unix风格的 /etc/init.d/freeswitch](#unix-style-etcinitdfreeswitch)
+   * 1.1 [Linux](#-freeswitch--examples-of-etcinitdfreeswitch-)
+      * 1.1.1 [Debian/Ubuntu](#-freeswitch--examples-of-etcinitdfreeswitch-)
+         * 1.1.2 [Fedora](#-freeswitch--examples-of-etcinitdfreeswitch-)
+   * 1.2 [BSD](#-freeswitch--examples-of-etcinitdfreeswitch-)
       * 1.2.1 [FreeBSD](#-freeswitch--examples-of-etcinitdfreeswitch-)
 
 ### Linux
 
 #### Debian/Ubuntu
 
-You should only need to use this if you are not installing from a pre-built package.
+如果您不是从预构建的软件包安装，则应该只需要使用这个。
 
-The existing start-up scripts can be found in the \`src/freeswitch/debian/\` directory, however these are tied in closely with the layout of the package builder and may not be suitable for your needs.
+现有的启动脚本可以在 \`src/freeswitch/debian/\` 目录中找到，但是这些脚本与软件包构建器的布局密切相关，可能不适合您的需求。
 
-Below is a fully functional init.d script which you can use with any standard FreeSWITCH build (assuming you haven't changed --prefix).
+以下是一个完全功能的 init.d 脚本，可与任何标准的FreeSWITCH构建一起使用（假设您没有更改 --prefix）。
 
-##### Adding users / fixing permissions
+##### 添加用户/修复权限
 
-Add the user and group to your system, and change the required permissions for the directory; replace with your installation location as required:
+向系统中添加用户和组，并更改目录的所需权限。根据需要替换您的安装位置：
 
 ```xml
-adduser --disabled-password  --quiet --system --home /usr/local/freeswitch --gecos "FreeSWITCH Voice Platform" --ingroup daemon freeswitch
+adduser --disabled-password --quiet --system --home /usr/local/freeswitch --gecos "FreeSWITCH语音平台" --ingroup daemon freeswitch
 chown -R freeswitch:daemon /usr/local/freeswitch/ 
 chmod -R o-rwx /usr/local/freeswitch/
 ```
 
-Installing the script
+安装脚本
 
-Create the file \`/etc/init.d/freeswitch\` with the following code:
+使用以下代码创建文件 \`/etc/init.d/freeswitch\`：
 
 **/etc/init.d/freeswitch**
 
 ```xml
 #!/bin/bash
 ### BEGIN INIT INFO
-# Provides:          freeswitch
-# Required-Start:    $local_fs $remote_fs
-# Required-Stop:     $local_fs $remote_fs
-# Default-Start:     2 3 4 5
-# Default-Stop:      0 1 6
-# Description:       Freeswitch debian init script.
-# Author:            Matthew Williams
+# 提供:          freeswitch
+# 必需-开始:    $local_fs $remote_fs
+# 必需-停止:     $local_fs $remote_fs
+# 默认-开始:     2 3 4 5
+# 默认-停止:      0 1 6
+# 描述:       Freeswitch Debian启动脚本。
+# 作者:            Matthew Williams
 #
 ### END INIT INFO
-# Do NOT "set -e"
+# 不要"set -e"-
 
-# PATH should only include /usr/* if it runs after the mountnfs.sh script
-PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
-DESC="Freeswitch"
-NAME=freeswitch
-DAEMON=/usr/local/freeswitch/bin/$NAME
-DAEMON_ARGS="-nc"
+# PATH只包含 /usr/* 如果它在 mountnfs.sh 脚本之后运行。
+路径=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
+说明="Freeswitch"
+名称=freeswitch
+守护程序=/usr/local/freeswitch/bin/$NAME
+守护程序参数="-nc"
 PIDFILE=/usr/local/freeswitch/run/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
 
 FS_USER=freeswitch
 FS_GROUP=daemon
 
-# Exit if the package is not installed
+# 如果软件包没有安装则退出
 [ -x "$DAEMON" ] || exit 0
 
-# Read configuration variable file if it is present
+# 如果配置变量文件存在，读取它
 [ -r /etc/default/$NAME ] && . /etc/default/$NAME
 
-# Load the VERBOSE setting and other rcS variables
+# 加载 VERBOSE 设置和其他 rcS 变量
 . /lib/init/vars.sh
 
-# Define LSB log_* functions.
-# Depend on lsb-base (>= 3.0-6) to ensure that this file is present.
+# 定义 LSB log_* 函数。
+# 依赖于 lsb-base (>= 3.0-6) 确保此文件存在。
 . /lib/lsb/init-functions
 
 #
-# Function that sets ulimit values for the daemon
+# 设置 ulimit 值的函数
 #
-do_setlimits() {
+设置限制值() {
         ulimit -c unlimited
         ulimit -d unlimited
         ulimit -f unlimited
@@ -100,76 +97,74 @@ do_setlimits() {
 }
 
 #
-# Function that starts the daemon/service
+# 启动守护程序/服务的函数
 #
-do_start()
-{
-    # Set user to run as
+启动() {
+    # 设置要以哪个用户身份运行
         if [ $FS_USER ] ; then
-      DAEMON_ARGS="`echo $DAEMON_ARGS` -u $FS_USER"
+      守护程序参数="`echo $守护程序参数` -u $FS_USER"
         fi
-    # Set group to run as
+    # 设置要以哪个组身份运行
         if [ $FS_GROUP ] ; then
-          DAEMON_ARGS="`echo $DAEMON_ARGS` -g $FS_GROUP"
+          守护程序参数="`echo $守护程序参数` -g $FS_GROUP"
         fi
+```
 
-        # Return
-        #   0 if daemon has been started
-        #   1 if daemon was already running
-        #   2 if daemon could not be started
+``` shell
+        # 返回
+        #   0 如果守护进程已启动
+        #   1 如果守护进程已经在运行中
+        #   2 如果无法启动守护进程
         start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON --test > /dev/null -- \
                 || return 1
         do_setlimits
         start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON --background -- \
                 $DAEMON_ARGS \
                 || return 2
-        # Add code here, if necessary, that waits for the process to be ready
-        # to handle requests from services started subsequently which depend
-        # on this one.  As a last resort, sleep for some time.
+        # 在此添加代码，如果必要的话，等待进程准备好处理随后启动的依赖于该进程的服务请求。最后的手段是休眠一段时间。
 }
 
 #
-# Function that stops the daemon/service
+# 停止守护进程/服务的函数
 #
 do_stop()
 {
-        # Return
-        #   0 if daemon has been stopped
-        #   1 if daemon was already stopped
-        #   2 if daemon could not be stopped
-        #   other if a failure occurred
+        # 返回
+        #   0 如果守护进程已停止
+        #   1 如果守护进程已经停止
+        #   2 如果无法停止守护进程
+        #   如果失败则返回其他值
         start-stop-daemon --stop --quiet --retry=TERM/30/KILL/5 --pidfile $PIDFILE --name $NAME
         RETVAL="$?"
         [ "$RETVAL" = 2 ] && return 2
-        # Wait for children to finish too if this is a daemon that forks
-        # and if the daemon is only ever run from this initscript.
-        # If the above conditions are not satisfied then add some other code
-        # that waits for the process to drop all resources that could be
-        # needed by services started subsequently.  A last resort is to
-        # sleep for some time.
+        # 如果这是一个分叉的守护进程，同时它只从这个初始化脚本中运行，那么等待子进程也完成。
+        # 如果不满足上述条件，则添加一些其他代码，等待进程释放所有可能会被随后启动的服务所需的资源。最后的手段是休眠一段时间。
         start-stop-daemon --stop --quiet --oknodo --retry=0/30/KILL/5 --exec $DAEMON
         [ "$?" = 2 ] && return 2
-        # Many daemons don't delete their pidfiles when they exit.
+        # 许多守护进程在退出时不会删除它们的 pid 文件。
         rm -f $PIDFILE
         return "$RETVAL"
 }
+```
 
+```
 #
-# Function that sends a SIGHUP to the daemon/service
+# 向守护进程/服务发送 SIGHUP 信号的函数
 #
 do_reload() {
         #
-        # If the daemon can reload its configuration without
-        # restarting (for example, when it is sent a SIGHUP),
-        # then implement that here.
+        # 如果守护进程可以在不重启的情况下重新加载配置
+        # （例如，当收到 SIGHUP 信号时），请在这里实现。
         #
         start-stop-daemon --stop --signal 1 --quiet --pidfile $PIDFILE --name $NAME
         return 0
 }
+```
 
+```shell
 case "$1" in
   start)
-        [ "$VERBOSE" != no ] && log_daemon_msg "Starting $DESC" "$NAME"
+        [ "$VERBOSE" != no ] && log_daemon_msg "正在启动 $DESC" "$NAME"
         do_start
         case "$?" in
                 0|1) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
@@ -177,7 +172,7 @@ case "$1" in
         esac
         ;;
   stop)
-        [ "$VERBOSE" != no ] && log_daemon_msg "Stopping $DESC" "$NAME"
+        [ "$VERBOSE" != no ] && log_daemon_msg "正在停止 $DESC" "$NAME"
         do_stop
         case "$?" in
                 0|1) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
@@ -189,38 +184,36 @@ case "$1" in
        ;;
   #reload|force-reload)
         #
-        # If do_reload() is not implemented then leave this commented out
-        # and leave 'force-reload' as an alias for 'restart'.
+        #如果没有实现do_reload()，则保留此处的注释，并将'force-reload'作为'restart'的别名。
         #
-        #log_daemon_msg "Reloading $DESC" "$NAME"
+        #log_daemon_msg "正在重新加载 $DESC" "$NAME"
         #do_reload
         #log_end_msg $?
         #;;
   restart|force-reload)
         #
-        # If the "reload" option is implemented then remove the
-        # 'force-reload' alias
+        #如果实现了"reload"选项，则移除'force-reload'的别名
         #
-        log_daemon_msg "Restarting $DESC" "$NAME"
+        log_daemon_msg "正在重启 $DESC" "$NAME"
         do_stop
         case "$?" in
           0|1)
                 do_start
                 case "$?" in
                         0) log_end_msg 0 ;;
-                        1) log_end_msg 1 ;; # Old process is still running
-                        *) log_end_msg 1 ;; # Failed to start
+                        1) log_end_msg 1 ;; # 旧进程仍在运行
+                        *) log_end_msg 1 ;; # 启动失败
                 esac
                 ;;
           *)
-                # Failed to stop
+                # 停止失败
                 log_end_msg 1
                 ;;
         esac
         ;;
   *)
         #echo "Usage: $SCRIPTNAME {start|stop|restart|reload|force-reload}" >&2
-        echo "Usage: $SCRIPTNAME {start|stop|restart|force-reload}" >&2
+        echo "使用方法: $SCRIPTNAME {start|stop|restart|force-reload}" >&2
         exit 3
         ;;
 esac
@@ -228,30 +221,30 @@ esac
 exit 0
 ```
 
-Make the script executable and make it auto start on system boot:
+使脚本可执行，并在系统启动时自动启动：
 
 ```xml
 chmod +x /etc/init.d/freeswitch
 update-rc.d freeswitch defaults
 ```
 
-Run priority
+运行优先级
 
-You can modify the run priority in two places.
+您可以在两个位置修改运行优先级。
 
-The first is using DAEMON\_ARGS, using the arguments explained [FreeSwitch\_FAQ#Q:\_How\_do\_I\_setup\_high\_priority\_to\_my\_freeswitch\_daemon.3F](https://wiki.freeswitch.org/wiki/FreeSwitch%5FFAQ#Q:%5FHow%5Fdo%5FI%5Fsetup%5Fhigh%5Fpriority%5Fto%5Fmy%5Ffreeswitch%5Fdaemon.3F "FreeSwitch FAQ"), for example:
+第一个位置是使用DAEMON\_ARGS，在[FreeSwitch\_FAQ#Q:\_How\_do\_I\_setup\_high\_priority\_to\_my\_freeswitch\_daemon.3F](https://wiki.freeswitch.org/wiki/FreeSwitch%5FFAQ#Q:%5FHow%5Fdo%5FI%5Fsetup%5Fhigh%5Fpriority%5Fto%5Fmy%5Ffreeswitch%5Fdaemon.3F "FreeSwitch FAQ")中解释的参数，例如：
 
 ```xml
- DAEMON_ARGS="-nc -np" – normal (system) default priority
- DAEMON_ARGS="-nc -lp" – low priority
- DAEMON_ARGS="-nc -rp" – high real time priority
+ DAEMON_ARGS="-nc -np" – 普通(系统)默认优先级
+ DAEMON_ARGS="-nc -lp" – 低优先级
+ DAEMON_ARGS="-nc -rp" – 高实时优先级
 ```
 
-The second is to modify the `--nicelevel` of start-stop-daemon, for example:
+第二个位置是修改start-stop-daemon的`--nicelevel`参数，例如：
 
 ```xml
 	...
-	DAEMON_ARGS="-nc -np" - normal (system) default priority
+	DAEMON_ARGS="-nc -np" - 普通(系统)默认优先级
 	...
 	start-stop-daemon --start --quiet --nicelevel -19 --pidfile $PIDFILE --exec $DAEMON --test > /dev/null -- \
                 || return 1
@@ -264,44 +257,45 @@ The second is to modify the `--nicelevel` of start-stop-daemon, for example:
 
 #### Fedora
 
-_Note: Also tested on CentOS 5.5 with perfect results, just as always set chmod +x /etc/init.d/freeswitch_
+注意：在CentOS 5.5上也经过完整测试，结果完美，只需始终设置 chmod +x /etc/init.d/freeswitch_
 
-This script runs FreeSWITCH as root (**NOT RECOMMENDED**)  
-Use the -u USER option to switch to a different user on startup. (see _**SECURITY NOTE**_ in the script)
+此脚本以root身份运行FreeSWITCH（**不建议**）  
+在启动时使用-u USER选项切换到其他用户。（请参阅脚本中的**SECURITY NOTE**）
 
-Be sure to run:
+确保运行以下命令：
 
 ```xml
 chkconfig freeswitch on
 ```
 
-So that the script is added to all the rc#.d directories.
+以便将该脚本添加到所有的rc#.d目录。
 
 **/etc/init.d/freeswitch**
 
 ```xml
 #! /bin/sh
 #
-# freeswitch:       Starts the freeswitch Daemon
+# freeswitch:       启动freeswitch守护程序
 #
 # chkconfig: 345 96 02
 # processname: freeswitch
 # description: Freeswitch fedora init script \
 # config:
 # Author: gled
+```
 
-# Source function library.
+# 源函数库
 . /etc/init.d/functions
 . /etc/sysconfig/network
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/freeswitch/bin
-DESC="FreeSwitch Voice Switching System"
+DESC="FreeSwitch 语音切换系统"
 NAME=freeswitch
 DAEMON=/usr/local/freeswitch/bin/$NAME
 DAEMON_ARGS="-nc"
 PIDFILE=/usr/local/freeswitch/log/$NAME.pid
 
-## SECURITY NOTE: To run as non-root, create a new user for FreeSWITCH and set these variables (FS_GROUP is optional).
+## 安全提示：要以非root用户运行，请为FreeSWITCH创建新用户并设置这些变量（FS_GROUP是可选的）。
 ##
 #FS_USER=freeswitch
 #FS_GROUP=freeswitch
@@ -336,9 +330,9 @@ do_start() {
         $DAEMON $DAEMON_ARGS
         RETVAL=$?
         if [ $RETVAL = 0 ]; then
-                success $"$base startup"
+                success $"$base 启动成功"
         else
-                failure $"$base startup"
+                failure $"$base 启动失败"
         fi
         echo
         return $RETVAL
@@ -347,13 +341,13 @@ do_start() {
 do_stop() {
         $DAEMON -stop
         RETVAL=$?
-        [ $RETVAL = 0 ] && success $"$base shutdown" || failure $"$base shutdown"
+        [ $RETVAL = 0 ] && success $"$base 关闭成功" || failure $"$base 关闭失败"
         rm -f $LOCKFILE
         echo
         return $RETVAL
 }
 
-# See how we were called.
+# 查看调用方式
 case "$1" in
   start)
         do_start
@@ -363,17 +357,17 @@ case "$1" in
         ;;
   restart)
         do_stop
-        echo "Waiting for daemon to exit..."
+        echo "等待守护进程退出..."
         sleep 5
         do_start
         ;;
   *)
-        echo $"Usage: $0 {start|stop}"
+        echo $"使用方法: $0 {start|stop}"
         exit 2
         ;;
 esac
 
-exit $RETVAL
+退出 $RETVAL
 ```
 
 OpenSUSE
@@ -383,27 +377,27 @@ OpenSUSE
 ```xml
 #!/bin/sh
 ### BEGIN INIT INFO
-# Provides:          Freeswitch
-# Required-Start:    $network $firewall 
-# Required-Stop:
-# Default-Start:     3 5
-# Default-Stop:      0 1 2 6
-# Short-Description: Freeswitch Back-to-Back User Agent
-# Description:       Start the Freeswitch Back-to-Back
-#       User Agent to provide VOIP/Multimedia gateway services
+# 提供:             Freeswitch
+# 要求启动:         $network $firewall
+# 要求停止:
+# 默认启动:         3 5
+# 默认停止:         0 1 2 6
+# 简短描述:         Freeswitch Back-to-Back User Agent
+# 描述:             启动Freeswitch Back-to-Back
+#                   用户代理以提供VOIP/多媒体网关服务
 ### END INIT INFO
 
 FREESWITCH_BIN=/usr/local/freeswitch/bin/freeswitch
-test -x $FREESWITCH_BIN || { echo "$FREESWITCH_BIN not installed"; 
+test -x $FREESWITCH_BIN || { echo "$FREESWITCH_BIN 未安装";
         if [ "$1" = "stop" ]; then exit 0;
         else exit 5; fi; }
 
 FREESWITCH_CONFIG=/usr/local/freeswitch/conf/freeswitch.xml
-test -r $FREESWITCH_CONFIG || { echo "$FREESWITCH_CONFIG not existing";
+test -r $FREESWITCH_CONFIG || { echo "$FREESWITCH_CONFIG 不存在";
         if [ "$1" = "stop" ]; then exit 0;
         else exit 6; fi; }
 
-# Function that sets ulimit values for the daemon
+# 设置守护进程的 ulimit 值的函数
 #
 do_setlimits() {
         ulimit -c unlimited
@@ -426,7 +420,7 @@ rc_reset
 
 case "$1" in
     start)
-        echo -n "Starting Freeswitch "
+        echo -n "启动 Freeswitch "
 
         do_setlimits
         /sbin/startproc $FREESWITCH_BIN -c
@@ -434,165 +428,164 @@ case "$1" in
         rc_status -v
         ;;
     stop)
-        echo -n "Shutting down Freeswitch "
+        echo -n "关闭 Freeswitch "
         /sbin/killproc $FREESWITCH_BIN
 
-        rc_status -v
-        ;;
-    try-restart|condrestart)
-        if test "$1" = "condrestart"; then
-                echo "${attn} Use try-restart ${done}(LSB)${attn} rather than condrestart ${warn}(RH)${norm}"
-        fi
-        $0 status
-        if test $? = 0; then
-                $0 restart
-        else
-                rc_reset
-        fi
+```xml
+rc_status -v
+;;
+try-restart|condrestart)
+if test "$1" = "condrestart"; then
+echo "${attn} 使用 try-restart ${done}(LSB)${attn} 而不是 condrestart ${warn}(RH)${norm}"
+fi
+$0 status
+if test $? = 0; then
+$0 restart
+else
+rc_reset
+fi
 
-        rc_status
-        ;;
-    restart)
-        $0 stop
-        $0 start
+rc_status
+;;
+restart)
+$0 stop
+$0 start
 
-        rc_status
-        ;;
-    force-reload)
-        echo -n "Reload service Freeswitch "
-        /sbin/killproc -HUP $FREESWITCH_BIN
-        touch /var/run/Freeswitch.pid
+rc_status
+;;
+force-reload)
+echo -n "重新加载 FreeSwitch 服务 "
+/sbin/killproc -HUP $FREESWITCH_BIN
+touch /var/run/Freeswitch.pid
 
-        rc_status -v
-        ;;
-    reload)
-        echo -n "Reload service Freeswitch "
-        /sbin/killproc -HUP $FREESWITCH_BIN
-        touch /var/run/Freeswitch.pid
+rc_status -v
+;;
+reload)
+echo -n "重新加载 FreeSwitch 服务 "
+/sbin/killproc -HUP $FREESWITCH_BIN
+touch /var/run/Freeswitch.pid
 
-        rc_status -v
-        ;;
-    status)
-        echo -n "Checking for service Freeswitch "
-        /sbin/checkproc $FREESWITCH_BIN
+rc_status -v
+;;
+status)
+echo -n "检查 FreeSwitch 服务状态 "
+/sbin/checkproc $FREESWITCH_BIN
 
-        rc_status -v
-        ;;
-    probe)
-        test /usr/local/freeswitch/conf/freeswitch.xml -nt /var/run/Freeswitch.pid && echo reload
-        ;;
-    *)
-        echo "Usage: $0 {start|stop|status|try-restart|restart|force-reload|reload|probe}"
-        exit 1
-        ;;
+rc_status -v
+;;
+probe)
+test /usr/local/freeswitch/conf/freeswitch.xml -nt /var/run/Freeswitch.pid && echo reload
+;;
+*)
+echo "用法：$0 {start|stop|status|try-restart|restart|force-reload|reload|probe}"
+exit 1
+;;
 esac
 rc_exit
 ```
 
-And run:
-
-**...set permissions**
-
+然后运行：
 ```xml
+...设置权限
 chmod +x /etc/init.d/freeswitch
 chkconfig -a freeswitch
 ```
 
-BusyBox Based Systems
+BusyBox 基础系统
 
-This script was written for a CLFS embedded system, but it may be easily adapted for use on any BusyBox embedded systems by simply copy and pasting the code out of the functions
+此脚本适用于 CLFS 嵌入式系统，但可以通过将代码从函数中复制并粘贴以轻松适应任何 BusyBox 嵌入式系统。
+
 
 **BusyBox /etc/init.d/freeswitch**
 
 ```xml
 #!/bin/ash
 #
-# FreeSWITCH BusyBox-style startup Script
+# FreeSWITCH BusyBox风格的启动脚本
 #
-# For use with CLFS Embedded based systems
+# 适用于基于CLFS嵌入式系统
 #
-# Note: If you want to use this in any BusyBox based system, then remove
-# the function definition below and also remove all traces of check_status
+# 注意：如果要在任何基于BusyBox的系统中使用此脚本，则需要删除下面的函数定义，并删除所有check_status的相关内容
 #
-# 
 #
-. /etc/rc.d/init.d/functions
+#
+。/etc/rc.d/init.d/functions
 
 PIDFILE=/usr/local/freeswitch/run/freeswitch.pid
-if [ -e $PIDFILE ]
-then
-	PID=`cat /usr/local/freeswitch/run/freeswitch.pid`
+如果[ -e $PIDFILE ]
+那么
+PID='cat /usr/local/freeswitch/run/freeswitch.pid'
 fi
 
 case "$1" in
-start)
-	echo -n "Starting FreeSWITCH: "
+start）
+echo -n "正在启动FreeSWITCH:"
 
-        if [ -e $PIDFILE ]
-                then
-                false
+        如果[ -e $PIDFILE ]
+                那么
+                错误
                 check_status
-                exit 0
-        fi	
+                退出0
+        fi 
 
-	ulimit -s 240
-	/usr/local/freeswitch/bin/freeswitch -ncwait &> /dev/null
-	check_status
-	;;
-	
-stop)
-	echo -n "Stopping FreeSWITCH: "
+        限制-240
+        /usr/local/freeswitch/bin/freeswitch -ncwait& >/dev/null
+        check_status
+        ;;
+    
+stop）
+echo -n "正在停止FreeSWITCH:"
 
-	if [ ! -e $PIDFILE ]
-	then
-		false
-		check_status
-		exit 0
-	fi
+如果[！-e $PIDFILE ]
+那么
+错误
+check_status
+退出0
+fi
 
-	kill $PID
-	
-# A dirty hack to prevent this embedded system from messing up the filesystems
-	TIMER=0
-	LIMIT=300
-	while [ -e $PIDFILE ]
-	do
-		let TIMER=TIMER+1
-		
-		sleep 1 
-# A Timer to prevent the script from stalling if the FreeSWITCH pid did segfault		
-		if [[ $TIMER -gt $LIMIT && -e $PIDFILE ]]
-		then
-			kill -9 $PID
-			rm -rf $PIDFILE
-			check_status
-			exit 0
-		fi
-	done
+杀死$PID
 
-	check_status
-	;;
-	
-reload)
-	echo "Reloading FreeSWITCH:"
-	if [ ! -e $PIDFILE ]
-	then
-		false
-		check_status
-		exit 0
-	fi
-	
-	kill -HUP $PID
-	check_status
-	;;
-		
-restart)
-	$0 stop
-	$0 start
-	;;
+# 通过一个肮脏的恶意手段来防止嵌入式系统损坏文件系统
+计时器=0
+极限=300
+当[ -e $PIDFILE ]
+做
+让定时器=TIMER+1
+
+睡眠1
+# 一个定时器，防止脚本在FreeSWITCH进程ID发生段错误时停止
+如果[[TIMER -gt极限 && -e $PIDFILE ]]
+那么
+杀死-9 $PID
+rm -rf$PIDFILE
+check_status
+退出0
+fi
+完成
+
+check_status
+;;
+    
+重新加载）
+echo“正在重新加载FreeSWITCH：”
+如果[！-e $PIDFILE ]
+那么
+错误
+check_status
+退出0
+fi
+
+杀死-HUP $PID
+check_status
+;;
+         
+重新启动）
+$0停止
+$0启动
+;;
 *)
-	echo "Usage: $0 {start|stop|reload|restart}"
-	exit 1
+echo“用法：$0 {start | stop | reload | restart}”
+退出1
 esac
 ```
 
@@ -603,8 +596,8 @@ esac
 **/etc/rc.conf**
 
 ```xml
- freeswitch_enable="YES"
- freeswitch_flags="-nonat -nc"
+  freeswitch_enable="YES"
+  freeswitch_flags="-nonat -nc"
 ```
 
 **/usr/local/etc/rc.d**
@@ -612,15 +605,15 @@ esac
 ```xml
  !/bin/sh
  #
- # PROVIDE: freeswitch
- # REQUIRE: LOGIN cleanvar
- # KEYWORD: shutdown
+ # 提供：freeswitch
+ # 需要：LOGIN cleanvar
+ # 关键字：shutdown
  #
- # Add the following lines to /etc/rc.conf to enable freeswitch:
- # freeswitch_enable:       Set it to "YES" to enable freeswitch.
- #                          Default is "NO".
- # freeswitch_flags:        Flags passed to freeswitch-script on startup.
- #                          Default is "".
+ # 在 /etc/rc.conf 中添加以下行以启用freeswitch：
+ # freeswitch_enable：设置为"YES"以启用freeswitch。
+ #                   默认为"NO"。
+ # freeswitch_flags：启动时传递给freeswitch-script的标志。
+ #                   默认为""。
  #
    
  . /etc/rc.subr
@@ -649,5 +642,3 @@ esac
  
  run_rc_command "$1"
 ```
-
-

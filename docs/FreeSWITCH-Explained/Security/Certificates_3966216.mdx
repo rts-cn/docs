@@ -1,62 +1,54 @@
+# 证书
 
-# Certificates 
+Freeswitch的多个领域都使用了证书要求，而在其他许多地方是可选的。怎样管理证书文件并不总是显而易见的，例如放在哪里，格式应该是什么样子以及如何正确配置Freeswitch来使用它们。本页面试图尽可能澄清这方面的问题。它还试图解释一些关于这个主题的一般事项。本页面的目标并不是解释某个模块或协议的安全性是如何工作的。当然，这是一个很薄的界线，但是请尽量将这种深入解释放在相应主题的首页。
 
- 
+单击此处展开目录
 
-Certificate requirements are found in several areas of Freeswitch, and it's optional in a lot of other places. It's not always obvious how to manage your certificate files, for instance where to put them, what the format should be and how to configure Freeswitch to use them properly. This page tries to clarify as much as possible about this. It also tries to explain some general things about the topic. The goal of the page is NOT to explain how the security of some module or protocol actually works. That's a thin line of course, but try to put in depth explanation of something like that in the home of that particular topic.
-
-  
-Click here to expand Table of Contents
-
-* 1 [Encryption based on SSL or TLS](#encryption-based-on-ssl-or-tls)
-* 2 [Free Test Certificates](#free-test-certificates)
-* 3 [Securing SIP](#securing-sip)
+* 1 [基于SSL或TLS的加密](#encryption-based-on-ssl-or-tls)
+* 2 [免费测试证书](#free-test-certificates)
+* 3 [保护SIP](#securing-sip)
 * 4 [SRTP](#srtp)
-* 5 [ZRTP](#srtp) **ZRTP IS NOW DEPREICATED and will be removed out of the docs**
+* 5 [ZRTP](#srtp) **ZRTP现已过时，并将从文档中移除**
 * 6 [WebRTC](#webrtc)
 * 7 [DTLS](#dtls)
 
-## Encryption based on SSL or TLS
+## 基于SSL或TLS的加密
 
-SSL (Secure Sockets Layer) and it's successor TLS (Transport Layer Security) are all about encrypting data flowing between two hosts. Because it's been the standard in security on the internet since a lot of years it's also used for security in a lof of the protocols supported by Freeswitch.
+SSL（Secure Sockets Layer）及其后继者TLS（Transport Layer Security）主要用于加密两个主机之间的数据传输。由于多年来在互联网安全中一直是标准，它也被用于Freeswitch支持的许多协议的安全性。
 
-There are plenty of 'certs for dummies' pages, please look there for the basics.
+有很多“白痴版证书”页面，请在那里了解基础知识。
 
-Some protocols in Freeswitch use the PKI way of doing things, others just create a trust relationship using certificates on the fly to secure communication.
+Freeswitch中的一些协议使用PKI方式处理事务，而其他协议则通过即时生成的证书来建立信任关系以实现通信安全。
 
-## Free Test Certificates
+## 免费测试证书
 
-[Let's Encrypt](https://letsencrypt.org/) offers free short-term certificates good for testing a new FreeSWITCH™ instance with secure communications.
+[Let's Encrypt](https://letsencrypt.org/) 提供免费的短期证书，用于测试新的带有安全通信功能的FreeSWITCH™实例。
 
-## Securing SIP
+## 保护SIP
 
 ## SRTP
 
-## ZRTP **ZRTP IS NOW DEPREICATED and will be removed out of the docs**
+## ZRTP **ZRTP现已过时，将从文档中删除**
 
 ## WebRTC
 
-Most of the times using WebRTC the client is a internet browser. Internet browsers use PKI all the time, so WebRTC uses it too. At the time of writing Chrome, Firefox and Opera support WebRTC natively. Several Internet Explorer plugins are available.
+在大多数情况下，使用WebRTC的客户端是网络浏览器。网络浏览器一直在使用PKI，因此WebRTC也使用它。目前，Chrome、Firefox和Opera原生支持WebRTC。还有一些可用于Internet Explorer的插件。
 
-The connection between the browser and Freeswitch when using WebRTC is based on websockets. Websockets can be used with (wss) and without (ws) encryption. The starting point of a websocket connection is a web page, served by a webserver. It's more convenient to serve the page using https, because the browsers will be more acceptant in remembering the user gave permission to use the mic or the cam from the computer used; when using standard http the browser will ask every time if it's ok. Firefox has a strict policy; if the websocket connection is initiated by a https page, it is mandatory the websocket connection is based on wss.
+使用WebRTC时，浏览器与Freeswitch之间的连接是基于Websockets的。Websockets可以使用（wss）或不使用（ws）加密。启动websocket连接的起点是由web服务器提供的网页。最好使用https来提供页面，因为浏览器会更容易记住用户允许使用电脑的麦克风或摄像头；当使用标准的http时，浏览器会每次都询问是否允许。Firefox有一个严格的策略；如果websocket连接是由https页面发起的，那么websocket连接必须基于wss。
 
-WebRTC does not work properly with self–signed certs. Chrome will not even tell you why when it refuses them. This is why a proper certificate is essential even when testing WebRTC. See Let's Encrypt above.
+WebRTC与自签名证书无法正常工作。当Chrome拒绝自签名证书时，甚至都不会告诉你原因。因此，即使在测试WebRTC时，一个合适的证书也是必不可少的。请参考上面的Let's Encrypt部分。
 
 ## DTLS
 
-To send an INVITE to a WebRTC client or if you just need to send a call using DTLS encryption. For example, you are using Linphone with DTLS as FreeSWITCH clients or in case you need to originate a WebRTC call, but you are not calling a SIP UA that is registered with FS (if the UA is registered with FS, FS knows it should originate a WebRTC call).
+要发送一个针对WebRTC客户端的INVITE请求，或者只需要使用DTLS加密发送通话。例如，您正在使用具有DTLS的Linphone作为FreeSWITCH客户端，或者在需要发起WebRTC呼叫但不打给已在FS注册的SIP UA时（如果UA已在FS注册，则FS知道应发起WebRTC呼叫）。
 
-Usage:
+用法：
 
 ```xml
-# In the origination vars (commands originate or bridge) add:
+# 在origination vars（命令originate或bridge）中添加：
 media_webrtc=true
-# for example:
+# 例如：
 <action application="bridge" data="{media_webrtc=true}sofia/internal/9998881111@sip.yourprovider.com"/>
 ```
 
-  
-To avoid delays in call setup, configure STUN to offer the correct candidates. Otherwise, FreeSWITCH must wait to auto-adjust which is slow and unreliable, and therefore not recommended.
-  
-  
-
+为避免呼叫设置的延迟，请配置STUN以提供正确的候选者。否则，FreeSWITCH必须等待自动调整，这样会很慢且不可靠，因此不建议这样做。

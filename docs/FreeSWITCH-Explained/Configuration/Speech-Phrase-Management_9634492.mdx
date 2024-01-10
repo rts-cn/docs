@@ -1,106 +1,103 @@
-
-# Speech Phrase Management 
-
- 
+# 语音短语管理
 
 ---
 
-Table of Contents (click to expand)
+目录（点击展开）
 
-* [0\. About](#-freeswitch--speech-phrase-management-)
-* [1\. Features](#1-features)
-* [2\. Overview](#2-overview)  
-   * [2.1 Language modules](#21-language-modules)  
-   * [2.2 Configuration](#22-configuration)  
-      * [2.2.1 Load language modules](#221-load-language-modules)  
-         * [2.3 Specify phrase directories](#23-specify-phrase-directories)
-* [3\. Phrase primer](#3-phrase-primer)  
-   * [3.1 Phrase macros](#31-phrase-macros)  
-      * [3.1.1 macros tag](#311-macros-tag)  
-         * [3.1.2 language tag](#312-language-tag)  
-         * [3.1.3 macro tag](#313-macro-tag)  
-         * [3.1.4 input tag](#314-input-tag)  
-            * [3.1.4.1 Example](#3141-example)  
-         * [3.1.5 match and nomatch tags](#315-match-and-nomatch-tags)  
-            * [3.1.5.1 Example](#3141-example)  
-   * [3.2 Phrase macro actions](#-32-phrase-macro-actions)
-* [3\. Usage](#-freeswitch--speech-phrase-management-)  
-   * [3.1 From XML Dialplan](#-freeswitch--speech-phrase-management-)  
-      * [3.1.1 Selecting the language](#311-selecting-the-language)  
-         * [3.1.2 Playing prompts from the dialplan](#32-playing-prompts-from-a-c-application)  
-   * [3.2 Playing prompts from a C application](#32-playing-prompts-from-a-c-application)  
-   * [3.3 Playing prompts from JavaScript application](#33-playing-prompts-from-javascript-application)
-* [4\. Examples](#4-examples)  
-   * [4.1 Speaking a number](#41-speaking-a-number)  
-   * [4.2 Calling a macro from within a macro](#42-calling-a-macro-from-within-a-macro)
-* [5\. Play as Sound Files](#5-play-as-sound-files--)
-* [6\. See Also](#6-see-also)
+* [0\. 关于](#-语音短语管理)
+* [1\. 特点](#1-特点)
+* [2\. 概述](#2-概述)  
+   * [2.1 语言模块](#21-语言模块)  
+   * [2.2 配置](#22-配置)  
+      * [2.2.1 加载语言模块](#221-加载语言模块)  
+         * [2.3 指定短语目录](#23-指定短语目录)
+* [3\. 短语基础知识](#3-短语基础知识)  
+   * [3.1 短语宏](#31-短语宏)  
+      * [3.1.1 宏标签](#311-宏标签)  
+         * [3.1.2 语言标签](#312-语言标签)  
+         * [3.1.3 宏标签](#313-宏标签)  
+         * [3.1.4 输入标签](#314-输入标签)  
+            * [3.1.4.1 示例](#3141-示例)  
+         * [3.1.5 匹配和不匹配标签](#315-匹配和不匹配标签)  
+            * [3.1.5.1 示例](#3151-示例)  
+   * [3.2 短语宏动作](#-32-短语宏动作)
+* [3\. 使用方法](#-语音短语管理)  
+   * [3.1 从 XML 拨号计划中](#-语音短语管理)  
+      * [3.1.1 选择语言](#311-选择语言)  
+         * [3.1.2 从拨号计划播放提示音](#32-从 C 应用程序播放提示音)  
+   * [3.2 从 C 应用程序播放提示音](#32-从 C 应用程序播放提示音)  
+   * [3.3 从 JavaScript 应用程序播放提示音](#33-从 JavaScript 应用程序播放提示音)
+* [4\. 示例](#4-示例)  
+   * [4.1 播放数字](#41-播放数字)  
+   * [4.2 在宏中调用宏](#42-在宏中调用宏)
+* [5\. 作为声音文件播放](#5-作为声音文件播放--)
+* [6\. 参阅](#6-参阅)
 
 ---
 
-## 0\. About
+## 0\. 关于
 
-The FreeSWITCH Speech Phrase Management architecture provides a consistent framework for the management of language dependent voice prompting without the need to dig into the applications source code. A single application developed using the framework will work with the current languages implemented or new languages in the future.
+FreeSWITCH的语音短语管理架构为语言相关的语音提示的管理提供了一致的框架，无需深入应用程序的源代码。使用该框架开发的单个应用程序可以与当前实现的语言或将来的新语言配合工作。
 
-## 1\. Features
+## 1\. 特性
 
-* Multilingual Support
-* No Source Code required to modify prompts
-* Ability to select prompts using pattern matching in XML
-* Integrated support for voice and [TTS](./TTS_9634273.mdx#about) in the same application
-* Custom phrases can be added at any time
-* Switch voice libraries with one setting
-* Only load the code for the languages you want to support (less code bloat).
+* 多语言支持
+* 无需修改提示的源代码
+* 可使用XML中的模式匹配选择提示
+* 相同应用程序中集成语音和[TTS](./TTS_9634273.mdx#about)的支持
+* 随时可以添加自定义短语
+* 仅通过一项设置即可切换语音库
+* 只加载所需语言的代码（减少代码臃肿）。
 
-## 2\. Overview
+## 2\. 概述
 
-There are several ways to speak prompts in FreeSWITCH, but the Speech Phrase Management sub-system provides the most features and flexibility.
+在FreeSWITCH中，有多种播放提示的方法，但是语音短语管理子系统提供了最多的特性和灵活性。
 
-### 2.1 Language modules
+### 2.1 语言模块
 
-Prompts are defined outside the application and can be modified to suit the specific implementation or language. When amounts, dates, numbers, or letters are enunciated, the proper phrases to assemble and the ordering of those phrases is determined by the **`mod_say_xx`** module (where `xx` stands for a two-letter language code, such as `en` ).
+提示的定义在应用程序之外，并可根据特定的实现或语言进行修改。当指定金额、日期、数字或字母时，组装正确的短语和这些短语的排序由**`mod_say_xx`**模块决定（其中`xx`代表两个字母的语言代码，例如`en`）。
 
-Because different languages assemble the same phrases differently (and even use different words depending upon the type of object being referred to), a helper application is needed to do the job properly. This is the job of the `mod_say_xx` (e.g., `mod_say_en`, `mod_say_fr`) module. Within this module are the necessary functions speak time, money, counts, spell letters, and digits.
+由于不同的语言以不同的方式组装相同的短语（甚至根据所指对象的类型使用不同的单词），因此需要一个辅助应用程序来正确执行该任务。这就是`mod_say_xx`（例如`mod_say_en`，`mod_say_fr`）模块的工作。在该模块内部，有执行发音时间、金额、统计次数、拼写字母和数字的必要函数。
 
-In order to support the English version (`mod_say_en`), the code expects certain prompt directories to exist in your base voice file path (for example at `/var/sounds/freeswitch/en`; see `sounds_dir` and `sound_prefix` in [Global Variables](../Introduction/Variables/Global-Variables_13173994.mdx#about)).
+为了支持英文版本(`mod_say_en`), 代码期望在基本语音文件路径中存在特定的提示目录（例如在`/var/sounds/freeswitch/en`；参见[全局变量](../Introduction/Variables/Global-Variables_13173994.mdx#about)中的`sounds_dir`和`sound_prefix`）。
 
-Basic sounds should be installed during a [vanilla install](../Installation/Linux/Vanilla-installation-files_27591294.mdx#0-about) (at `/usr/share/freeswitch/sounds` on Debian 9), but, just in case, here are all the available sounds:
+基本声音应该在[原始安装](../Installation/Linux/Vanilla-installation-files_27591294.mdx#0-about)（在Debian 9上的`/usr/share/freeswitch/sounds`上）时安装，但是，以防万一，以下是所有可用的声音：
 
 <https://github.com/access-news/freeswitch-sounds>
 
-### 2.2 Configuration
+### 2.2 配置
 
-#### 2.2.1 Load language modules
+#### 2.2.1 加载语言模块
 
-For each language you want to support you will need to load the appropriate `mod_say_xx` module in `conf/autoload_configs/modules.conf.xml`. (See [Modules](../Modules/index.mdx#about).)
+对于要支持的每种语言，您需要在`conf/autoload_configs/modules.conf.xml`中加载相应的`mod_say_xx`模块（参见[模块](../Modules/index.mdx#about)）。
 
-**Language Activation**
+**语言激活**
 
 ```xml
 <load module="mod_say_en"/>
 ```
 
-#### 2.3 Specify phrase directories
+#### 2.3 指定短语目录
 
-See **3 Phrase primer** section below to read more on phrases.
+请参阅下面的**3 短语入门**部分以获取有关短语的更多信息。
 
-Also specify the location of language-specific phrase directories for each language in `conf/freeswitch.xml` (e.g., "de" for German):
+还需在`conf/freeswitch.xml`中为每种语言指定特定于该语言的短语目录的位置（例如，对于德语为"de"）：
 
-**Language Configuration**
+**语言配置**
 
 ```xml
  <X-PRE-PROCESS cmd="include" data="lang/de/*.xml"/>
 ```
 
-See **6\. Configuration files** in [Default Configuration](./Default-Configuration_6587388.mdx#mod_vp8).
+请参阅[默认配置](./Default-Configuration_6587388.mdx#mod_vp8)中的**6\. 配置文件**。
 
-## 3\. Phrase primer
+## 3\. 短语入门
 
-The `phrases` section in `conf/freeswitch.xml` defines the construction and enunciation of phrases in various languages. 
+`conf/freeswitch.xml`中的`phrases`部分定义了各种语言中短语的构造和发音。
 
 TODO By [Tomas Bajarunas](https://freeswitch.org/confluence/display/~tomasb):
 
-add optional name attribute for macros:
+为宏添加可选的名称属性：
 
 &lt;macros name="optional_macros_name">
 
@@ -108,153 +105,152 @@ add optional name attribute for macros:
 
 &lt;/macros>
 
-I think that name later can be used when using phrases like this in dialplan:
+我认为稍后可以在使用拨号计划中的短语时使用该名称：
 
-&lt;action application="playback" data="phrase:MyPhrase@optional\_macros\_name" />
+&lt;action application="playback" data="phrase:MyPhrase@optional_macros_name" />
 
-  
-from other phrases:
+来自其他短语:
 
-&lt;action function="phrase" phrase="MyPhrase@optional\_macro\_name" data="some:data" />
+&lt;action function="phrase" phrase="MyPhrase@optional_macro_name" data="some:data" />
 
-### 3.1 Phrase macros
+### 3.1 短语宏
 
-#### 3.1.1 `macros` tag
+#### 3.1.1 `macros` 标签
 
-The following XML snippet illustrates the structure to define phrase macros:
+以下 XML 片段演示了定义短语宏的结构:
 
-**Phrases**
+**短语**
 
 ```xml
-<section name="phrases" description="Speech Phrase Management">
+<section name="phrases" description="语音短语管理">
   <macros>
   ...
   </macros>
 </section>
 ```
 
-All prompts should be defined in this section.
+所有提示都应在此部分中定义。
 
-#### 3.1.2 `language` tag
+#### 3.1.2 `language` 标签
 
-The `<macros>` section is then sub-divided into languages as follows.
+然后，`<macros>` 部分根据语言进行细分。
 
-**Language tags**
+**语言标签**
 
 ```xml
 <language name="en" sound_path="/var/sounds/phrases/en" tts_engine="cepstral" tts_voice="david">
-  <!-- macros -->
+  <!-- 宏 -->
 </language>
 ```
 
-Where
+其中
 
-* **`name`** \- _Defines the specific language these prompts belong to._  
-In the above example it is `en` , that will cause the `mod_say_en` module to be used to enunciate any constructed phrases (like money, date, time, etc.)
-* **`sound_path`** \- _The base path to the voice files for this language._
-* **`tts_engine`** \- _The text-to-speech engine to use for any [TTS](./TTS_9634273.mdx#about) spoken._
-* **`tts_voice`** \- _The specific voice to use for [TTS](./TTS_9634273.mdx#about)_.
+* **`name`** \- _定义提示所属的具体语言。_  
+在上面的示例中，它是 `en` ，这将导致使用 `mod_say_en` 模块来发音任何构建的短语（例如货币、日期、时间等）。
+* **`sound_path`** \- _该语言的音频文件的基本路径。_
+* **`tts_engine`** \- _用于任何 [TTS](./TTS_9634273.mdx#about) 的文本转语音引擎。_
+* **`tts_voice`** \- _用于 [TTS](./TTS_9634273.mdx#about) 的特定语音。_
 
-See [TTS](./TTS_9634273.mdx#about) page for available engines and voices.
+有关可用引擎和语音，请参阅 [TTS](./TTS_9634273.mdx#about) 页面。
 
-#### 3.1.3 `macro` tag
+#### 3.1.3 `macro` 标签
 
-Within the language there are one or more macros defined:
+在该语言中，可以定义一个或多个宏:
 
-**Macros**
+**宏**
 
 ```xml
 <macro name="msgcount">
-  <!-- inputs -->
+  <!-- 输入 -->
 </macro>
 ```
 
-#### 3.1.4 `input` tag
+#### 3.1.4 `input` 标签
 
-**Macros**
+**宏**
 
 ```xml
 <macro name="msgcount">
   <input pattern="^\d+$">
-    <!-- match and nomatch tags -->
+    <!-- match 和 nomatch 标签 -->
   </input>
 </macro>
 ```
 
-`pattern` is a [PCRE-compatible regular expression](https://www.pcre.org/) to match on the second argument to the [phrase application](../Modules/mod-dptools/6586692.mdx#0-about) (i.e., the actual data to speak).
+`pattern`是一个[PCRE兼容的正则表达式](https://www.pcre.org/)，用于匹配[短语应用](../Modules/mod-dptools/6586692.mdx#0-about)的第二个参数（即要朗读的实际数据）。
 
-For example, using the example below, the above macro pattern will match "130".
+例如，使用下面的示例，上述宏的模式将匹配"130"。
 
 ```xml
     <action application="phrase" data="msgcount,130"/>
 ```
 
-Using regexes, you can filter for specific conditions, and even "scrub" the data to ensure it is in the proper layout.
+使用正则表达式，您可以过滤特定条件，并且可以“洗净”数据以确保其布局正确。
 
-Within `macro` all `input` patterns will be tested for possible matches, unless the **`break` action** is used.
+在`macro`中，除非使用**`break`动作**，所有`input`模式都将被测试是否可能匹配。
 
-See **3.2 Phrase macro actions** section below.
+请参阅下面的**3.2 短语宏动作**部分。
 
-##### 3.1.4.1 Example
+##### 3.1.4.1 示例
 
-To achieve proper pluralization, you may define multiple `input` patterns, and use different prompts for each, such as "You have 2 messages" versus "You have 1 message".
+为了实现正确的复数形式，您可以定义多个`input`模式，并为每个模式使用不同的提示，比如 "您有2条消息" 与 "您有1条消息"。
 
-**Macros**
+**宏**
 
 ```xml
 <macro name="msgcount">
   <input pattern="^\d+$">
-    <!-- ... plural prompt ... -->
+    <!-- ... 复数提示 ... -->
   </input>
   <input pattern="^\d$">
-    <!-- ... singular prompt ... -->
+    <!-- ... 单数提示 ... -->
   </input>
 </macro>
 ```
 
-#### 3.1.5 `match` and `nomatch` tags
+#### 3.1.5 `match`与`nomatch`标签
 
-Within a `input` tag there are one or more `match` and `nomatch` tags.
+在`input`标签中，可以有一个或多个`match`和`nomatch`标签。
 
-**Macros**
+**宏**
 
 ```xml
 <macro name="msgcount">
   <input pattern="^\d+$">
     <match>
-      <!-- actions -->
+      <!-- 动作 -->
     </match>
     <nomatch>
-      <!-- actions -->
+      <!-- 动作 -->
     </nomatch>
   </input>
 </macro>
 ```
 
-These define the actions to take if the input pattern is matched (or not matched).
+这些标签定义了输入模式匹配（或不匹配）时要执行的动作。
 
-##### 3.1.5.1 Example
+##### 3.1.5.1 示例
 
 ```xml
 <macro name="tts-timeleft">
   <input pattern="(\d+):(\d+)">
     <match>
-      <!-- Speak the time in the format: -->
-      <action function="speak-text" data="You have $1 minutes, $2 seconds remaining $strftime(%Y-%m-%d)"/>
+      <!-- 以如下格式朗读时间： -->
+      <action function="speak-text" data="你还剩下$1分钟$2秒 $strftime(%Y-%m-%d)"/>
     </match>
     <nomatch>
-      <!-- The input wasn't in the format of 12:34 (or similar), hence: -->
-      <action function="speak-text" data="That input was invalid."/>
+      <!-- 输入不符合12:34（或类似格式），因此： -->
+      <action function="speak-text" data="输入无效。"/>
     </nomatch>
   </input>
 </macro>
 ```
 
-3.1.6 `action` tag
+3.1.6 `action`标签
 
-Within a `match` and `nomatch` tag there are one or more actions.
+在`match`和`nomatch`标签中，有一个或多个动作。
 
-**Matches and No matches**
+**匹配和未匹配**
 
 ```xml
 <action function="execute" data="sleep(1000)"/>
@@ -262,53 +258,52 @@ Within a `match` and `nomatch` tag there are one or more actions.
 <action function="say" data="$1" method="pronounced" type="items"/>
 ```
 
-These define the specific actions to take when this macro is applied. It usually consist of calling the [say application](../Modules/mod-dptools/6586961.mdx#0-about), passing the parsed data to be spoken. 
+这些定义了应用此宏时要采取的具体操作。通常会使用[say应用程序](../Modules/mod-dptools/6586961.mdx#0-about)来调用，并传递要朗读的解析数据。
 
-The possible actions are described in **3.2 Phrase macro actions** section below.
+可能的操作在下面的**3.2短语宏动作**部分中进行了描述。
 
-###  3.2 Phrase macro actions
+###  3.2短语宏动作
 
-**Syntax**
+**语法**
 
 ```xml
-<action function=[phrase_macro_action] data=[arguments] [other_properties] />
+<action function=[短语宏动作] data=[参数] [其他属性] />
 ```
 
-Where `phrase_macro_action` can be:
+其中，`短语宏动作`可以是：
 
-| phrase\_macro\_action | Description                                                                                                                                                                                                                                                                        |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| execute               | Calls the FreeSWITCH execute API (you can execute any other API's).TODO What is the execute API?                                                                                                                                                                                   |
-| play-file             | Play a specific audio file or play a macro in the form phrase:macro\_name                                                                                                                                                                                                          |
-| say                   | Use the pre-recorded sound files to read or say various things like dates, times, digits, etc.Requires the type and method properties whose values correspond to the say\_type and say\_method input values of [mod\_dptools:say](../Modules/mod-dptools/6586961.mdx#0-about). See **1\. Syntax** section there. |
-| speak-text            | Speak some text using the TTS engine.                                                                                                                                                                                                                                              |
-| break                 | Stop parsing any more input patterns.See **3.1.4 input tag** section.                                                                                                                                                                                                              |
+| phrase_macro_action | 描述                                                                                                                                                                                                                                                                                   |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| execute               | 调用FreeSWITCH执行API（您可以执行任何其他API）。待办事项：什么是执行API？                                                                                                                                                                                                                     |
+| play-file             | 播放特定的音频文件或播放以 phrase:macro_name 形式的宏                                                                                                                                                                                                                                             |
+| say                   | 使用预录制的声音文件读取或说出各种内容，例如日期、时间、数字等。需要 type 和 method 属性，其值对应于 [mod_dptools:say](../Modules/mod-dptools/6586961.mdx#0-about) 输入值的 say_type 和 say_method。请参见那里的 **1. 语法** 部分。                                                                                              |
+| speak-text            | 使用 TTS 引擎朗读一些文本                                                                                                                                                                                                                                                                  |
+| break                 | 停止解析更多的输入模式。请参见 **3.1.4 输入标签** 部分。                                                                                                                                                                                                                                                  |
 
-  
-## 3\. Usage
+## 3. 使用方法
 
-### 3.1 From [XML Dialplan](../Dialplan/XML-Dialplan/index.mdx#about)
+### 3.1 从[XML拨号计划](../Dialplan/XML-Dialplan/index.mdx#about)中
 
-#### 3.1.1 Selecting the language
+#### 3.1.1 选择语言
 
-The language to use is selected by setting the `default_language` variable (see [Channel Variables Catalog](../../Channel-Variables-Catalog/index.mdx#comments)) to the specific language code you want.
+通过设置`default_language`变量（参见[通道变量目录](../../Channel-Variables-Catalog/index.mdx#comments)）来选择要使用的语言。将其设置为您想要的具体语言代码。
 
-**Language selection**
+**语言选择**
 
 ```xml
-<!-- select English as the default language -->
+<!-- 选择英语作为默认语言 -->
 <action application="set" data="default_language=en"/>
 ```
 
-**If you specify a specific language to use in the API call (see below methods), it will override the `default_language` channel variable setting.** 
+**如果您在API调用中指定了特定的语言（见下述方法），它将覆盖`default_language`通道变量的设置。** 
 
-This is to support prompts that should be spoken in a particular language regardless of the users default language selection.
+这是为了支持应该在特定语言下发音的提示，而不考虑用户的默认语言选择。
 
-#### 3.1.2 Playing prompts from [the dialplan](../Dialplan/XML-Dialplan/index.mdx#about)
+#### 3.1.2 从[拨号计划](../Dialplan/XML-Dialplan/index.mdx#about)中播放提示音
 
-The [phrase application](../Modules/mod-dptools/6586692.mdx#0-about) will call the [say API](../Modules/mod-dptools/6586961.mdx#0-about) using the phrases defined in the `phrases` section of your `conf/freeswitch.xml` file.
+"phrase application"将调用`conf/freeswitch.xml`文件中的`phrases`部分中定义的短语来调用"say API"(../Modules/mod-dptools/6586961.mdx#0-about)。
 
-**Invoke phrases in the Dialplan** 
+**在拨号计划中调用短语**
 
 ```xml
 <action application="phrase" data="msgcount:10"/>
@@ -316,16 +311,16 @@ The [phrase application](../Modules/mod-dptools/6586692.mdx#0-about) will call t
 <action application="phrase" data="spell:${caller_id_name}"/>
 ```
 
-The data field passes two parameters:
+"data"字段传递了两个参数：
 
-* **phrase macro name** to use  
-The macro names are arbitrary but should be meaningful for documentation purposes.
-* **data** (i.e., arguments) to pass to the macro  
-The data can be a literal as in the first two examples above or a string variable as in the third example.
+* **要使用的短语宏名称**  
+短语宏名称是任意的，但应具有说明文档用途的意义。
+* **要传递给宏的数据**  
+该数据可以是直接字面量，如前两个示例所示，也可以是字符串变量，如第三个示例所示。
 
-The [playback application](../Modules/mod-dptools/6586776.mdx#0-about) can also be used in same way as "phrase" application.
+与“phrase”应用程序类似，"playback application"也可以以相同的方式使用。
 
-**Example using "playback"**
+**使用“playback”的示例**
 
 ```xml
 <action application="set" data="playback_terminators=#"/>
@@ -333,17 +328,17 @@ The [playback application](../Modules/mod-dptools/6586776.mdx#0-about) can also 
 <action application="playback" data="phrase:voicemail_message_count:16:new"/>
 ```
 
-### 3.2 Playing prompts from a C application
+### 3.2 从C应用程序中播放提示音
 
-**Prompts form "C"**
+**来自"C"的提示音**
 
 ```cpp
 status = switch_ivr_phrase_macro(session, "phrasename", "phrasedata", language, args);
 ```
 
-### 3.3 Playing prompts from JavaScript application
+### 3.3 从JavaScript应用程序中播放提示音
 
-**Prompts from JavaScript**
+**来自JavaScript的提示音**
 
 ```js
 function sayphrase(phrase, args)
@@ -361,17 +356,16 @@ if (session.ready()) {
 }
 ```
 
-## 4\. Examples
+## 4\. 示例
 
-### 4.1 Speaking a number
+### 4.1 朗读数字
 
-  
-The sample dialplan extension below demonstrates speaking a number of the prompts in the "phrases" section.
+下面的样本拨号计划扩展演示了朗读"phrases"部分中的多个提示音。
 
-**Dialplan** Expand source 
+**拨号计划** 展开源代码
 
 ```xml
-<extension name="556"> 
+<extension name="556">
    <condition field="destination_number" expression="^556$">
      <action application="answer"/>
      <action application="set" data="call_start_time=$strftime"/>
@@ -412,11 +406,10 @@ The sample dialplan extension below demonstrates speaking a number of the prompt
  </extension>
 ```
 
-  
-**Phrase macro definition for the above dialplan** Expand source 
+**上述拨号计划的短语宏定义** 展开源码
 
 ```xml
-<section name="phrases" description="Speech Phrase Management">
+<section name="phrases" description="语音短语管理">
    <macros>
      <language name="en" sound_path="/var/sounds/phrases/en" tts_engine="cepstral" tts_voice="david">
        <macro name="msgcount">
@@ -503,19 +496,19 @@ The sample dialplan extension below demonstrates speaking a number of the prompt
        <macro name="tts-timeleft">
          <input pattern="(\d+):(\d+)">
            <match>
-             <action function="speak-text" data="You have $1 minutes, $2 seconds remaining $strftime(%Y-%m-%d)"/>
+             <action function="speak-text" data="你还有$1分钟，$2秒钟剩余，$strftime(%Y-%m-%d)"/>
            </match>
            <nomatch>
-             <action function="speak-text" data="That input was invalid."/>
+             <action function="speak-text" data="输入无效。"/>
            </nomatch>
          </input>
          <input pattern="(\d+) min (\d+) sec">
            <match>
-             <action function="speak-text" data="You have $1 minutes, $2 seconds remaining $strftime(%Y-%m-%d)"/>
+             <action function="speak-text" data="你还有$1分钟，$2秒钟剩余，$strftime(%Y-%m-%d)"/>
              <action function="break"/>
            </match>
            <nomatch>
-             <action function="speak-text" data="That input was invalid."/>
+             <action function="speak-text" data="输入无效。"/>
            </nomatch>
          </input>
        </macro>
@@ -533,7 +526,7 @@ The sample dialplan extension below demonstrates speaking a number of the prompt
        <macro name="timeleft">
          <input pattern="(\d+):(\d+)">
            <match>
-             <action function="speak-text" data="il y a $1 minutes et de $2 secondes de restant"/>
+             <action function="speak-text" data="还有$1分钟和$2秒钟"/>
            </match>
          </input>
        </macro>
@@ -542,15 +535,15 @@ The sample dialplan extension below demonstrates speaking a number of the prompt
  </section>
 ```
 
-### 4.2 Calling a macro from within a macro
+### 4.2 在宏中调用宏
 
-**Calling a macro from a macro** Expand source 
+**在宏中调用宏** 展开源代码
 
 ```xml
  <macro name="main_menu" pause="100">
    <input pattern="(.*)">
      <match>
-       <action function="speak-text" data="Welcome to the FreeSWITCH System."/>
+       <action function="speak-text" data="欢迎使用FreeSWITCH系统。"/>
        <action function="play-file" data="phrase:main_menu_short"/>
      </match>
    </input>
@@ -558,18 +551,19 @@ The sample dialplan extension below demonstrates speaking a number of the prompt
  <macro name="main_menu_short" pause="100">
    <input pattern="(.*)">
      <match>
-       <action function="speak-text" data="For English press 1."/>
-       <action function="speak-text" data="To speak to the operator press 0."/>
+       <action function="speak-text" data="按1选择英文。"/>
+       <action function="speak-text" data="按0联系客服人员。"/>
      </match>
    </input>
  </macro>
 ```
 
-## 5\. Play as Sound Files  
+## 5. 播放声音文件
 
-I used the following for German prompts conf/lang/de/de.xml
+我在德语提示文件 conf/lang/de/de.xml 中使用了以下内容：
 
-**Comment pre-process lines**
+**注释预处理行**
+
 
 ```xml
   <include>
@@ -583,17 +577,12 @@ I used the following for German prompts conf/lang/de/de.xml
   </include>
 ```
 
-  
-The FreeSWITCH parser will ignore comment strings for &lt;X-PRE-PROCESS... lines, so to prevent the parser from reading the line at FS start add another character thus
+FreeSWITCH解析器会忽略&lt;X-PRE-PROCESS...行中的注释字符串，所以为了防止解析器在FS启动时读取该行，请添加另一个字符，例如
 
 &lt;YX-PRE-PROCESS cmd="include" data="vm/tts.xml"/> 
 
-if you need voice prompts to be played as sound files.
+如果你需要将语音提示作为声音文件播放。
 
-  
-## 6\. See Also
+## 6. 另请参阅
 
-* [mod\_dptools: phrase ](../Modules/mod-dptools/6586692.mdx#0-about)
-  
-  
-
+* [mod_dptools: phrase](../Modules/mod-dptools/6586692.mdx#0-about)

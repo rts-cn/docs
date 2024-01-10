@@ -57,7 +57,7 @@ const config = {
             label: "首页",
           },
           {
-            href: "/docs/rts",
+            href: "/docs/rts/",
             label: "RTS文档",
           },
           {
@@ -94,7 +94,7 @@ const config = {
             items: [
               {
                 label: "关于",
-                to: "/about/rts",
+                to: "/about/rts/",
               },
               // {
               //   label: "Tutorial",

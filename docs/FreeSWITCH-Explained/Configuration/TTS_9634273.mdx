@@ -1,77 +1,123 @@
-
 # TTS 
 
- 
+## 关于
 
-## About
+文字转语音的一般信息。Freeswitch目前支持几种TTS选项。
 
-Text-To-Speech general Information.Freeswitch currently supports several TTS options.
+* [mod\_unimrcp](../Modules/mod_unimrcp_6586728.mdx#tts) - 使用MRCP协议的TTS
+* [mod\_cepstral](../Modules/mod_cepstral_3965164.mdx#faq) - 商业高质量[Cepstral](http://www.cepstral.com)声音和语音引擎。
+* [mod\_flite](../Modules/mod_flite_3965160.mdx#about) - 一种开源的选项，[Flite](http://www.speech.cs.cmu.edu/flite/) / [Festival](http://www.cstr.ed.ac.uk/projects/festival/) Lite. [旧维基](https://wiki.freeswitch.org/wiki/Mod%5Fflite)
+* [mod\_tts\_commandline](../Modules/mod_tts_commandline_13172802.mdx#about) - 运行命令行并播放输出文件。
 
-* [mod\_unimrcp](../Modules/mod_unimrcp_6586728.mdx#tts) \- TTS using MRCP protocol
-* [mod\_cepstral](../Modules/mod_cepstral_3965164.mdx#faq) \- Commercial high-quality \[[Cepstral](http://www.cepstral.com)\] voices & Text to Speech engine.
-* [mod\_flite](../Modules/mod_flite_3965160.mdx#about) \- An FOSS option, [Flite](http://www.speech.cs.cmu.edu/flite/) / [Festival](http://www.cstr.ed.ac.uk/projects/festival/) Lite. \[[old wiki](https://wiki.freeswitch.org/wiki/Mod%5Fflite)\]
-* [mod\_tts\_commandline](../Modules/mod_tts_commandline_13172802.mdx#about) \- Run a command line and play the output file.
+完整的TTS模块列表可在[模块列表页面](https://wiki.freeswitch.org/wiki/Modules#Speech%5FRecognition%5F.2F%5FText-to-Speech "Modules")上找到。
 
-The complete list of TTS modules is available [on the modules list page](https://wiki.freeswitch.org/wiki/Modules#Speech%5FRecognition%5F.2F%5FText-to-Speech "Modules").
+单击此处展开目录
 
-Click here to expand Table of Contents
+1 [Javascript实现](#javascript-implementation)
+2 [通过mod\_shout使用在线TTS](#about)  
+   2.1 [Bing翻译](#bing-translate)  
+   2.2 [谷歌翻译](#google-translate)
 
-* 1 [Javascript Implementation](#javascript-implementation)
-* 2 [Via mod\_shout using online TTS](#about)  
-   * 2.1 [Bing Translate](#bing-translate)  
-   * 2.2 [Google Translate](#google-translate)
-
-### Javascript Implementation
+### Javascript实现
 
 [Javascript\_Session\_Speak](../Client-and-Developer-Interfaces/JavaScript/JavaScript-API-Reference/index.mdx#sessionspeak)
 
-### Via [mod_shout](../Modules/mod_shout_3965531.mdx#21-play) using online TTS
+### 通过[mod_shout](../Modules/mod_shout_3965531.mdx#21-play)使用在线TTS
 
-Using mod\_shout allows you to stream audio from an URL, this allows you to utilize high quality online TTS services by writing out custom GET requests. Since an Internet transfer occurs on each TTS transaction this approach might not be desirable in a production environment.
+使用mod\_shout允许您从URL流式传输音频，这使您能够通过编写自定义GET请求来使用高质量的在线TTS服务。由于每个TTS事务都需要进行互联网传输，这种方法在生产环境中可能不理想。
 
-#### Bing Translate
+#### Bing翻译
 
-Register for an API Key (appid): <http://www.bing.com/developers/appids.aspx> and replace the 'YOUR-KEY-HERE' in the GET url below. For more information see <http://msdn.microsoft.com/en-us/library/ff512420.aspx>.
+在此注册一个 API 密钥（Appid）：<http://www.bing.com/developers/appids.aspx> ，然后在下面的 GET url 中替换 'YOUR-KEY-HERE'。更多信息请参阅 <http://msdn.microsoft.com/en-us/library/ff512420.aspx>。
 
 http://api.microsofttranslator.com/V2/Http.svc/Speak?language=en&format=audio/mp3&options=MaxQuality&appid=YOUR-KEY-HERE&text=Text+to+say
 
-#####  IVR Example 
+##### IVR 示例
 
 &lt;include>
-  	&lt;!-- demo IVR, Main Menu -->
-  	&lt;!-- Other "flite" voices slt (female voice - best), rms (male voice), awb (male voice), kal (male voice) -->
-	&lt;menu name="ivr_danols_after_hours" 
-  		tts-engine="flite" tts-voice="slt" 
-  		max-failures="3" max-timeouts="3"
-  		confirm-macro="" confirm-key="" confirm-attempts="3"
-    	timeout="10000" inter-digit-timeout="2000"
-    	digit-len="1"
-    	&lt;!-- say using online TTS -->
-    	greet-long="shout://api.microsofttranslator.com/V2/Http.svc/Speak?language=en&format=audio/mp3&options=MaxQuality&appid=YOUR-KEY-HERE&text=Thank+you+for+calling+Danols."
-    	&lt;!-- or say using built in flite -->
-    	greet-short="say:Thank+you+for+calling+Danols."
-    	invalid-sound="say:Invalid selection"
-    	exit-sound="say:Goodby and thank you for calling Danols.">
+  &lt;!-- 演示 IVR，主菜单 -->
+  &lt;!-- 其他 "flite" 声音 slt（女声 - 最佳），rms（男声），awb（男声），kal（男声） -->
+  &lt;menu name="ivr_danols_after_hours" 
+	tts-engine="flite" tts-voice="slt" 
+	max-failures="3" max-timeouts="3"
+	confirm-macro="" confirm-key="" confirm-attempts="3"
+	timeout="10000" inter-digit-timeout="2000"
+	digit-len="1"
+	&lt;!-- 使用在线 TTS 进行播放 -->
+	greet-long="shout://api.microsofttranslator.com/V2/Http.svc/Speak?language=en&format=audio/mp3&options=MaxQuality&appid=YOUR-KEY-HERE&text=Thank+you+for+calling+Danols."
+	&lt;!-- 或者使用内置的 flite 进行播放 -->
+	greet-short="say:Thank+you+for+calling+Danols."
+	invalid-sound="say:Invalid selection"
+	exit-sound="say:Goodby and thank you for calling Danols.">
 	
-	&lt;!-- The following are the definitions for the digits the user dials -->
+	&lt;!-- 以下是用户拨打的按键定义 -->
 	&lt;entry action="menu-exec-app" digits="1" param="transfer 1000 XML default"/>
-	&lt;/menu>
+  &lt;/menu>
 &lt;/include>
 
-#### Google Translate
+#### Google 翻译
 
-You probably need to agree with Google API TOS, located at..? Please note google will fail to convert if the input text is to long so test url in browser first; Bing appears to be more lenient in this regard.
+您可能需要同意 Google API 的服务条款，位置在..? 请注意，如果输入的文本过长，则谷歌无法转换，因此请先在浏览器中测试url；相对而言，Bing 在这方面似乎更宽容。
 
-&lt;extension name="Free_Google_Text_To_Speech">
+&lt;extension name="免费谷歌语音合成">
   &lt;condition field="destination_number" expression="^2115$">
     &lt;action application="answer" data=""/>
-    &lt;action application="playback" data="shout://translate.google.com/translate_tts?tl=en&q=Buy+Cheap+dids+at+www+dot+voice+network+dot+see+eh"/>
+    &lt;action application="playback" data="shout://translate.google.com/translate_tts?tl=en&q=在www.voice.network.see.buy便宜的did号码"/>
   &lt;/condition>
 &lt;/extension>
 
 ### Comments:
 
-| According to \[1\], google has done some changes. The link presented in \[1\] works for me(gets played back by freeswitch) at this point in time. However, each text input to be played is matched with that "tk" value.LATER EDIT 1:After some more searching I've found the kind of links that work:shout://[translate.google.com/translate\_tts?ie=UTF-8&total=1&idx=0&textlen=32&client=tw-ob&q=Test+this&tl=En-gb](http://translate.google.com/translate%5Ftts?ie=UTF-8&total=1&idx=0&textlen=32&client=tw-ob&q=Test+this&tl=En-gb)LATER EDIT 2:Bing appId is deprecated, as stated in \[2\]. One should use the azure clientID and clientSecret to query for a token, used in the body of the request. [\[1\] http://stackoverflow.com/questions/32053442/google-translate-tts-api-blocked](http://stackoverflow.com/questions/32053442/google-translate-tts-api-blocked)[\[2\] http://stackoverflow.com/questions/10196487/bing-appid-is-invalid](http://stackoverflow.com/questions/10196487/bing-appid-is-invalid) ![](/images/icons/contenttypes/comment_16.png) Posted by stefan.mititelu at Aug 05, 2016 06:41 |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+根据\[1\] ，谷歌做了一些改变。 现在\[1\]中提供的链接对我来说是有效的（被freeswitch播放）。 但是，要播放的每个文本输入都与那个“tk”值匹配。稍后编辑 1：经过进一步搜索，我找到了有效的链接类型：shout://[translate.google.com/translate\_tts?ie=UTF-8&total=1&idx=0&textlen=32&client=tw-ob&q=Test+this&tl=En-gb](http://translate.google.com/translate%5Ftts?ie=UTF-8&total=1&idx=0&textlen=32&client=tw-ob&q=Test+this&tl=En-gb)。 稍后编辑 2：\[2\]中明确说明Bing appId已经过时。 使用Azure的clientId和clientSecret来查询令牌，该令牌用于请求的主体。 \[\[1\] [http://stackoverflow.com/questions/32053442/google-translate-tts-api-blocked](http://stackoverflow.com/questions/32053442/google-translate-tts-api-blocked)\] \[\[2\] [http://stackoverflow.com/questions/10196487/bing-appid-is-invalid](http://stackoverflow.com/questions/10196487/bing-appid-is-invalid)\]![](/images/icons/contenttypes/comment_16.png) 由stefan.mititelu于2016年8月5日06:41发布 |
 
+### Markdown使用指南
 
+Markdown是一种简单而流行的标记语言，用于格式化纯文本。它可以在各种平台和编辑器中使用，并且非常适合在网页上展示内容。
+
+以下是一些常见的Markdown语法示例：
+
+#### 标题
+
+```
+# 一级标题
+## 二级标题
+### 三级标题
+```
+
+#### 列表
+
+```
+- 项目1
+- 项目2
+- 项目3
+```
+
+#### 链接
+
+```
+[链接文本](URL)
+```
+
+#### 图片
+
+```
+![图片描述](URL)
+```
+
+#### 引用
+
+```
+> 引用内容
+```
+
+#### 代码块
+
+```
+​```
+代码
+​```
+```
+
+Markdown使用简单明了，但提供了丰富的功能。对于那些需要在不同平台和编辑器中共享和展示文本的人来说，Markdown是一个非常有用的选项。无论是编写技术文档、博客文章还是撰写学术论文，都可以使用Markdown来格式化文本。
+
+开始使用Markdown吧！

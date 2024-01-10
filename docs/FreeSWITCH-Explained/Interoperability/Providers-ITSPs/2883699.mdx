@@ -1,149 +1,146 @@
-
-# Provider Broadvox (USA) 
-
- 
+# Provider Broadvox (美国)
 
 * 1 [Broadvox.com](#broadvoxcomhttpbroadvoxcom)
-* 2 [Purpose, Scope, and Audience](#purpose-scope-and-audience)
-* 3 [FreeSWITCH Deployment Information](#freeswitch-deployment-information)  
-   * 3.1 [FreeSWITCH External IP Address](#freeswitch-external-ip-address)  
-   * 3.2 [Sending Calls to Broadvox](#sending-calls-to-broadvox)  
-   * 3.3 [SRV Records](#srv-records)  
-   * 3.4 [Testing SRV Records](#testing-srv-records)  
-   * 3.5 [Preferred and Alternate Codecs](#preferred-and-alternate-codecs)  
-   * 3.6 [Is FreeSWITCH NATd](#is-freeswitch-natd)  
-   * 3.7 [Is FreeSWITCH Behind a Firewall](#is-freeswitch-behind-a-firewall)  
-   * 3.8 [Is There a Local Firewall](#is-there-a-local-firewall)
-* 4 [Configuring FreeSWITCH](#configuring-freeswitch)
+* 2 [目的、范围和受众](#purpose-scope-and-audience)
+* 3 [FreeSWITCH 部署信息](#freeswitch-deployment-information)  
+   * 3.1 [FreeSWITCH 外部 IP 地址](#freeswitch-external-ip-address)  
+   * 3.2 [呼叫发送到 Broadvox](#sending-calls-to-broadvox)  
+   * 3.3 [SRV 记录](#srv-records)  
+   * 3.4 [测试 SRV 记录](#testing-srv-records)  
+   * 3.5 [首选和备用编解码器](#preferred-and-alternate-codecs)  
+   * 3.6 [是否有 NAT 配置](#is-freeswitch-natd)  
+   * 3.7 [是否位于防火墙后面](#is-freeswitch-behind-a-firewall)  
+   * 3.8 [是否有本地防火墙](#is-there-a-local-firewall)
+* 4 [配置 FreeSWITCH](#configuring-freeswitch)
 
 ## [Broadvox.com](http://broadvox.com/)
 
-## Purpose, Scope, and Audience
+## 目的、范围和受众
 
-This technical application note describes the configuration of FreeSWITCH for the Broadvox GO! SIP Trunking service on the Fusion platform. This document is suitable for use by anyone deploying the Broadvox GO! SIP Trunking service in conjunction with FreeSWITCH. This document has a technical audience in mind – specifically IT professionals skilled in Linux with some experience in PBX administration and familiarity with VoIP technologies. This document is not for business administrators or people in other non-technical careers. In order to successfully use this document to deploy Broadvox GO! SIP Trunking service, you will need to possess the following skills, or have access to professionals or consultants with the following skills:
+这篇技术应用说明描述了在 Fusion 平台上使用 FreeSWITCH 配置 Broadvox GO! SIP Trunking 服务。本文档适用于与 FreeSWITCH 配合使用 Broadvox GO! SIP Trunking 服务的任何部署者。本文档主要面向技术人员，特别是具有 Linux 技能、具有一定 PBX 管理经验并熟悉 VoIP 技术的 IT 专业人员。本文档不适用于业务管理员或非技术类职业人员。为了成功使用这份文档部署 Broadvox GO! SIP Trunking 服务，您需要具备以下技能，或能够请到具备以下技能的专业人员或顾问：
 
-* Understanding of UNIX or Linux operating systems, including:  
-   * Understanding of file and directory structure on target OS  
-   * Understanding of firewall configuration on target OS  
-   * Understanding of network configuration on target OS  
-   * Understanding of service configuration on target OS
-* Familiarity with network troubleshooting tools, including:  
-   * Wireshark/Ethereal  
-   * dig/nslookup  
-   * ping  
+* 对UNIX或Linux操作系统的理解，包括：  
+   * 对目标操作系统上的文件和目录结构的理解
+   * 对目标操作系统上的防火墙配置的理解
+   * 对目标操作系统上的网络配置的理解
+   * 对目标操作系统上的服务配置的理解
+* 对网络故障排除工具的熟悉，包括：  
+   * Wireshark/Ethereal
+   * dig/nslookup
+   * ping
    * traceroute
-* Familiarity with PBX systems, including:  
-   * Trunk configuration  
-   * Calling plan configuration  
-   * Extension configuration  
-   * Mailbox configuration
-* Familiarity with Session Initiation Protocol (SIP)
-* An understanding of all seven layers of the Open System Interconnection (OSI) model
-* A complete understanding of your internal network structure, Network Address Translation (NAT) setup, and firewall setup
-* A complete understanding of your public Internet connectivity
+* 对PBX系统的熟悉，包括：  
+   * 干线配置
+   * 呼叫计划配置
+   * 分机配置
+   * 邮箱配置
+* 对会话初始协议（SIP）的熟悉
+* 对开放系统互连（OSI）模型的七层的全面理解
+* 对内部网络结构、网络地址转换（NAT）设置和防火墙设置的全面理解
+* 对公共互联网连接的全面理解
 
-Broadvox can only provide support for FreeSWITCH to the extent covered in this Technical Application Note and the included reference configuration, so if your level of technical expertise does not include the above skills, it is recommended that you obtain the services of a FreeSWITCH professional.
+Broadvox只能提供对FreeSWITCH在技术应用说明书和包含的参考配置中所涵盖的支持，因此，如果您在技术上不具备以上技能，建议您寻求FreeSWITCH专业人员的帮助。
 
-## FreeSWITCH Deployment Information
+## FreeSWITCH部署信息
 
-Before you begin deploying FreeSWITCH, please locate the following information. If you have questions about any item, refer to the descriptions and additional details provided on the pages that follow.
+在开始部署FreeSWITCH之前，请获取以下信息。如果对任何项目有疑问，请参考后续页面中提供的描述和其他细节。
 
-External IP Address or DNS: \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_  
-Preferred Codec: PCMU g729  
-Alternate Codec: PCMU g729 none  
-Is FreeSWITCH NATd: Yes No  
-Is FreeSWITCH Behind a Firewall: Yes No  
-Is There a Local Firewall: Yes No
+外部IP地址或DNS：\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_  
+首选编解码器：PCMU g729  
+备选编解码器：PCMU g729 none  
+是否进行NAT转换：是 否  
+FreeSWITCH是否在防火墙后面：是 否  
+是否存在本地防火墙：是 否
 
-### FreeSWITCH External IP Address
+### FreeSWITCH外部IP地址
 
-Your FreeSWITCH server will either use a public IP address or a private IP address. If the IP address on your FreeSWITCH server is of the form 192.168.x.x, 172.16.x.x – 172.31.x.x, or 10.x.x.x, then your FreeSWITCH server uses an internal, private IP address. This internal address is not routable on the public Internet. In order for your FreeSWITCH server to connect to the Broadvox Session Border Controller, you must either have a public IP address on your FreeSWITCH server or you must translate your private IP address into a public IP address using a Network Address Translator (NAT).
+您的FreeSWITCH服务器可以使用公共IP地址或私有IP地址。如果您的FreeSWITCH服务器的IP地址形式是192.168.x.x、172.16.x.x至172.31.x.x或10.x.x.x，那么您的FreeSWITCH服务器使用的是内部私有IP地址。这个内部地址在公共互联网上是无法路由的。为了使您的FreeSWITCH服务器能够连接到Broadvox会话边界控制器，您必须在FreeSWITCH服务器上拥有公共IP地址，或者使用网络地址转换器（NAT）将您的私有IP地址转换为公共IP地址。
 
-If your FreeSWITCH server is behind a NAT, your public IP address will typically be the public IP address of your NAT. You may also have a static, one-to-one mapping of a public IP address to your private IP address. In this case, your public IP address will not match the IP address of your NAT, but you can look up the correct public IP address in your NAT configuration. If in doubt, you can perform a network packet capture using Wireshark (previously called Ethereal) on the public side of your NAT while simultaneously issuing some form of Internet request on your FreeSWITCH server.
+如果您的FreeSWITCH服务器在NAT后面，那么您的公共IP地址通常是NAT的公共IP地址。您还可以具有公共IP地址到私有IP地址的静态一对一映射。在这种情况下，您的公共IP地址将与NAT的IP地址不匹配，但您可以在NAT配置中查找正确的公共IP地址。如果有疑问，您可以在FreeSWITCH服务器上发出某种形式的互联网请求时，在NAT的公共侧使用Wireshark（以前称为Ethereal）进行网络数据包捕获。
 
-### Sending Calls to Broadvox
+### 发送电话至Broadvox
 
-In your Welcome letter, Broadvox provides DNS records to which you may send calls, and from which you should be prepared to receive calls. FreeSWITCH supports DNS A records, DNS SRV records, and IP addresses.
+在您的欢迎信中，Broadvox提供了DNS记录，您可以将电话发送到该记录，并准备好接收来电。FreeSWITCH支持DNS A记录、DNS SRV记录和IP地址。
 
-At the top of your technical welcome letter, you will see a table like this one which shows your account number, turn-up ticket number, and trunk number. This information should be provided to Broadvox when you call for assistance to expedite support
+在您的技术欢迎信的顶部，您将看到一个类似于以下表格的表格，显示您的账户号码、启动凭证号码和通道号码。在寻求帮助时，应向Broadvox提供此信息以加快支持流程。
 
 ![](/attachments/2883699/3178499.png)
 
-The third page of the welcome letter contains a table of the IP addresses and ports you need to allow through your firewall. Your firewall should be configured to accept signaling and media from these IP address and port combinations.
+欢迎信的第三页包含了一个表格，列出了您需要允许通过防火墙的 IP 地址和端口。您的防火墙应该配置为接受来自这些 IP 地址和端口组合的信令和媒体流。
 
-The third page also contains the IP address and DNS information you should use for configuring your trunk. Broadvox recommends you utilize the DNS A record entries for FreeSWITCH unless you have specific reasons not to.
+第三页还包含了用于配置您的主干线路的 IP 地址和 DNS 信息。Broadvox 建议您使用 DNS A 记录条目来配置 FreeSWITCH，除非您有特定原因不这样做。
 
-Also on the third page, you will find a section containing information about how your trunk is configured on the Broadvox side. You should carefully review this information to ensure it is configured properly.
+第三页还有一个章节，包含有关您在 Broadvox 一侧配置主干线路的信息。您应仔细审核这些信息，以确保其正确配置。
 
-[![](https://wiki.freeswitch.org/images/7/79/Figure_4.png)](https://wiki.freeswitch.org/wiki/File:Figure%5F4.png "Figure 4: Configuration of Broadvox Side")
+[![](https://wiki.freeswitch.org/images/7/79/Figure_4.png)](https://wiki.freeswitch.org/wiki/File:Figure%5F4.png "图4: Broadvox 侧的配置")
 
-The 'Admin E-mail' lists the E-mail address which will receive alerts from the Broadvox SIP Trunking (Fusion) platform when various recognizable events occur. These events include things such as calls being blocked because they would cause you to exceed the simultaneous call sessions you purchased.
+'Admin E-mail' 列出了接收来自 Broadvox SIP Trunking (Fusion) 平台警报的电子邮件地址，这些警报是针对发生的各种可识别事件。这些事件包括诸如呼叫被阻止，因为它们会导致您超出已购买的同步呼叫会话的数量。
 
-FreeSWITCH has been tested to support TLS and SRTP with some more technically advanced configuration changes.
+经过一些技术上的先进配置更改，FreeSWITCH 已经经过测试支持 TLS 和 SRTP。
 
-Finally, on the fourth page, you will find two sections that specify how Broadvox is configured to send calls to your FreeSWITCH box and how Broadvox is configured to receive calls from your FreeSWITCH box. These two sections are only utilized if you provided static IP address information or DNS information. Broadvox can send calls to entirely separate systems from the ones it is configured to receive calls from. This allows you to split your inbound and outbound traffic for any reason you may have, including but not limited to load distribution over several systems or multiple Internet connections. In addition, Broadvox can randomly load-balance calls across several systems using an identical priority for the Send-To records. These options should allow you to engineer your traffic flow to suite your particular needs.
+最后，第四页上有两个部分专门指定了如何配置Broadvox以将呼叫发送到您的FreeSWITCH服务器以及如何配置Broadvox以从您的FreeSWITCH服务器接收呼叫。只有在您提供了静态IP地址信息或DNS信息时才会使用这两个部分。Broadvox可以将呼叫发送到与接收呼叫的系统完全不同的系统。这使您可以根据需要将入站和出站流量分开处理，包括但不限于在多个系统或多个互联网连接上进行负载均衡。此外，Broadvox还可以使用相同的优先级在多个系统之间随机负载均衡呼叫。这些选项应该满足您对流量流向的特定需求。
 
 ![](/attachments/2883699/3178498.png)
 
-### SRV Records
+### SRV记录
 
-Service records (SRV) are a form of Domain Name System (DNS) record. They contain information about where to send requests for a particular service offered at a specific domain. In the case of Broadvox GO! SIP Trunking, they provide the IP addresses, port numbers, and preferences to use for sending SIP calls over UDP, TCP, and TLS to Broadvox. The SRV location to use for sending calls to Broadvox for each of your trunk groups is in your Welcome letter.
+服务记录（SRV）是一种域名系统（DNS）记录。它们包含有关在特定域上提供特定服务的请求的发送位置的信息。对于Broadvox GO！SIP中继，它们提供了用于通过UDP、TCP和TLS发送SIP呼叫到Broadvox的IP地址、端口号和优先级。每个中继组发送呼叫到Broadvox的SRV位置在您的欢迎信中。
 
-### Testing SRV Records
+### 测试SRV记录
 
-Most Broadvox GO! SIP Trunking customers like to ensure the DNS entries are functioning or they like to look up the actual IP addresses. In a Windows environment, you can perform the SRV query using the nslookup command at a command prompt, as shown in Figure 6.
+大多数Broadvox GO！SIP中继的客户喜欢确认DNS条目是否正常工作，或者喜欢查找实际的IP地址。在Windows环境中，您可以在命令提示符下使用nslookup命令执行SRV查询，如图6所示。
 
-![](/attachments/2883699/3178501.png)
+![](/attachment/2883699/3178501.png)
 
-As you can see, a SRV record consists of a service type definition (\_sip), a transport definition (\_udp), and the domain ([nyc01-01.fs.broadvox.net](http://nyc01-01.fs.broadvox.net)). FreeSWITCH will automatically add the service and transport definitions as a prefix to the domain before performing the query. The query returns a priority, weight, port and hostname for each entry. The query also returns the “A record" entries for each hostname, which provides the IP address for each host.
+正如您所看到的，SRV记录由服务类型定义（\_sip）、传输定义（\_udp）和域名（[nyc01-01.fs.broadvox.net](http://nyc01-01.fs.broadvox.net)）组成。在执行查询之前，FreeSWITCH会自动在域名前添加服务和传输定义作为前缀。该查询返回每个条目的优先级、权重、端口和主机名。该查询还返回每个主机名的“A记录”条目，该条目提供每个主机的IP地址。
 
-In a UNIX or Linux environment, you can perform a query on the Broadvox SRV records using the dig command:
+在UNIX或Linux环境中，您可以使用dig命令对Broadvox的SRV记录进行查询：
 
 ```text
 $ dig srv _sip._udp.nyc01-01.fs.broadvox.net
 
 ; <<>> DiG 9.3.4-P1 <<>> srv _sip._udp.nyc01-01.fs.broadvox.net
-;; global options:  printcmd
-;; Got answer:
-;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 26443
-;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 2, ADDITIONAL: 1
+;;全局选项： printcmd
+;;获得响应：
+;; ->>HEADER<<- 操作码：查询，状态：NOERROR，ID：26443
+;;标志： qr rd ra; 查询：1，答案：1，权威：2，附加：1
 
-;; QUESTION SECTION:
+;;问题部分：
 ;_sip._udp.nyc01-01.fs.broadvox.net. IN SRV
 
-;; ANSWER SECTION:
+;;答案部分：
 _sip._udp.nyc01-01.fs.broadvox.net. 600 IN SRV  10 0 5060 nyc01-01.fs.broadvox.net.
 
-;; AUTHORITY SECTION:
+;;权限部分：
 fs.broadvox.net.        600     IN      NS      ns03.broadvox.net.
 fs.broadvox.net.        600     IN      NS      ns04.broadvox.net.
 
-;; ADDITIONAL SECTION:
+;;附加部分：
 nyc01-01.fs.broadvox.net. 600   IN      A       208.93.226.212
 
-;; Query time: 95 msec
-;; SERVER: 10.128.6.4#53(10.128.6.4)
-;; WHEN: Thu Jul 30 13:59:26 2009
-;; MSG SIZE  rcvd: 150 
+;;查询时间：95毫秒
+;;服务器：10.128.6.4#53(10.128.6.4)
+;;时间：Thu Jul 30 13:59:26 2009
+;;接收到的消息大小：150 
 ```
 
-### Preferred and Alternate Codecs
+### 首选和备选编解码器
 
-Broadvox allows you to select preferred and alternate codecs to simultaneously meet your bandwidth requirements and provide greater end-to-end support. In the event that your destination party or your destination party’s carrier cannot support your preferred codec or alternate codecs, Broadvox will automatically transcode your call to a supported codec.
+Broadvox允许您选择首选和备选编解码器，以同时满足带宽需求并提供更全面的端到端支持。如果目标方或目标方的承载方无法支持您的首选编解码器或备选编解码器，Broadvox将自动将您的呼叫进行转码，以支持受支持的编解码器。
 
-When configuring codecs, please keep in mind that G.711 μLaw (PCMU) consumes approximately 87.2 Kbps of bandwidth per simultaneous call over Ethernet. G.729 Annex A (g729) will consume approximately 31.2 Kbps of bandwidth per simultaneous call over Ethernet. Also, keep in mind that G.711 offers superior call quality when compared to G.729, but only if you have enough bandwidth to support all of your simultaneous calls.
+在配置编解码器时，请记住，每个以太网上的同时呼叫所使用的G.711 μLaw (PCMU)大约消耗87.2 Kbps的带宽。每个以太网上的同时呼叫所使用的G.729 Annex A (g729)大约消耗31.2 Kbps的带宽。此外，请记住，与G.729相比，G.711提供更高质量的通话音质，但前提是您有足够的带宽来支持所有同时呼叫。
 
-### Is FreeSWITCH NATd
+### FreeSWITCH是否在NAT后面
 
-If your FreeSWITCH server uses an Internet-facing IP address of the form 192.168.x.x, 172.16.x.x – 172.31.x.x, or 10.x.x.x, then it is almost certainly behind a Network Address Translation (NAT) device. If your server uses an address of that form and is not behind a NAT, then it has no connectivity to the Internet. Even if your server uses an IP address that does not match the forms above, it is still possible (though very unlikely) that it is behind a NAT. If FreeSWITCH is behind a NAT, you may need to perform port forwarding, set up a DMZ host or configure a one-to-one static IP map.
+如果您的FreeSWITCH服务器使用192.168.x.x、172.16.x.x – 172.31.x.x或10.x.x.x等形式的面向Internet的IP地址，则几乎肯定在NAT设备后面。如果服务器使用上述形式的地址但未在NAT后面，则无法连接到Internet。即使您的服务器使用的IP地址不符合以上形式，仍有可能（尽管非常不太可能）它在NAT之后。如果FreeSWITCH在NAT后面，您可能需要进行端口转发、设置DMZ主机或配置一对一静态IP映射。
 
-### Is FreeSWITCH Behind a Firewall
+### FreeSWITCH是否在防火墙后面
 
-If FreeSWITCH is behind a NAT, then it is almost certainly behind a firewall. It is also possible that FreeSWITCH uses a public IP address but is still behind a firewall. If you use a Cisco PIX, SonicWALL, Shorewall, Firebox, or any other brand of firewall, you may need to perform additional configuration steps on the firewall device to allow FreeSWITCH to function properly. Additionally, you may be using an Application Gateway such as an Ingate SIParator. These devices will also need additional configuration to allow FreeSWITCH to function properly. Configuring your firewall or application gateway is beyond the scope of this document. In general, you will need to allow UDP port 5060 in both directions, as well as UDP ports 1024 to 65535 for RTP.
+如果FreeSWITCH位于NAT后面，那几乎肯定也位于防火墙后面。同时，FreeSWITCH可能使用公共IP地址，但仍然位于防火墙后面。如果您使用的是Cisco PIX、SonicWALL、Shorewall、Firebox或其他任何品牌的防火墙，您可能需要在防火墙设备上执行额外的配置步骤，以确保FreeSWITCH正常运行。此外，您还可能使用应用网关，例如Ingate SIParator。这些设备也需要额外的配置才能正常使用FreeSWITCH。本文档不包括防火墙或应用网关的配置。一般来说，您需要允许UDP端口5060的双向通信，以及UDP端口1024到65535用于RTP。
 
-### Is There a Local Firewall
+### 是否存在本地防火墙
 
-In addition to being behind a firewall, it is also possible that the FreeSWITCH server itself utilizes a local firewall. Typically, FreeSWITCH is deployed on a UNIX or Linux operating system. These systems usually come with a firewall program installed, like iptables. If your server uses iptables, you can check to see if there are any rules in place by issuing the following commands:
+除了位于防火墙后面之外，FreeSWITCH服务器本身也可能使用本地防火墙。通常，FreeSWITCH部署在UNIX或Linux操作系统上。这些系统通常会预装有防火墙程序，如iptables。如果您的服务器使用iptables，您可以通过以下命令检查是否存在任何规则：
 
 ```bash
 $ iptables -L -v -n 
@@ -162,36 +159,35 @@ $ iptables -L -v -n -t nat
 Chain PREROUTING (policy ACCEPT 1836K packets, 118M bytes)
  pkts bytes target     prot opt in     out     source               destination
 
-Chain POSTROUTING (policy ACCEPT 2247K packets, 136M bytes)
- pkts bytes target     prot opt in     out     source               destination
+`Chain POSTROUTING (policy ACCEPT 2247K packets, 136M bytes)
+ pkts bytes target     prot opt in     out     source               destination`
+ 
+`Chain OUTPUT (policy ACCEPT 2247K packets, 136M bytes)
+ pkts bytes target     prot opt in     out     source               destination`
+ 
+`$ iptables -L -v -n -t mangle`
 
-Chain OUTPUT (policy ACCEPT 2247K packets, 136M bytes)
- pkts bytes target     prot opt in     out     source               destination
+`Chain PREROUTING (policy ACCEPT 3551M packets, 4907G bytes)
+ pkts bytes target     prot opt in     out     source               destination`
 
-$ iptables -L -v -n -t mangle
+`Chain INPUT (policy ACCEPT 3549M packets, 4907G bytes)
+ pkts bytes target     prot opt in     out     source               destination`
 
-Chain PREROUTING (policy ACCEPT 3551M packets, 4907G bytes)
- pkts bytes target     prot opt in     out     source               destination
+`Chain FORWARD (policy ACCEPT 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination`
 
-Chain INPUT (policy ACCEPT 3549M packets, 4907G bytes)
- pkts bytes target     prot opt in     out     source               destination
+`Chain OUTPUT (policy ACCEPT 688M packets, 51G bytes)
+ pkts bytes target     prot opt in     out     source               destination`
 
-Chain FORWARD (policy ACCEPT 0 packets, 0 bytes)
- pkts bytes target     prot opt in     out     source               destination
-
-Chain OUTPUT (policy ACCEPT 688M packets, 51G bytes)
- pkts bytes target     prot opt in     out     source               destination
-
-Chain POSTROUTING (policy ACCEPT 688M packets, 51G bytes)
- pkts bytes target     prot opt in     out     source               destination 
-```
-
-The output shown above indicates that there are no firewall rules configured on this server. If you are using a different type of firewall software on your FreeSWITCH server, you will need to consult the documentation for that software to learn how to check whether it is enabled. If you have a local firewall enabled, you will need to configure it to allow the appropriate ports, as described in “Is FreeSWITCH Behind a Firewall".
-
-If you are using a standard iptables firewall setup, such as the one on Red Hat Enterprise Linux, CentOS, Gentoo Linux, or Slackware Linux, these rules may be of use to you in allowing the appropriate traffic from the Broadvox Fusion platform:
+`Chain POSTROUTING (policy ACCEPT 688M packets, 51G bytes)
+ pkts bytes target     prot opt in     out     source               destination`
+ 
+上面显示的输出表明该服务器上没有配置防火墙规则。如果您在FreeSWITCH服务器上使用了其他类型的防火墙软件，请查阅该软件的文档，了解如何检查其是否已启用。如果您启用了本地防火墙，您需要配置以允许适当的端口，如“Is FreeSWITCH Behind a Firewall”所述。
+ 
+如果您使用的是标准的iptables防火墙设置，例如Red Hat Enterprise Linux、CentOS、Gentoo Linux或Slackware Linux上的设置，以下规则可能对您有用，可以允许来自Broadvox Fusion平台的适当流量通过：
 
 ```text
-# Allow SIP over UDP, TCP, and TLS:
+# 允许使用UDP、TCP和TLS的SIP连接：
 iptables -I INPUT -p udp --dport 5060 -s 208.93.224.224/28 -j ACCEPT
 iptables -I INPUT -p tcp --dport 5060 -s 208.93.224.224/28 -j ACCEPT
 iptables -I INPUT -p tcp --dport 5061 -s 208.93.224.224/28 -j ACCEPT
@@ -201,7 +197,7 @@ iptables -I INPUT -p tcp --dport 5061 -s 208.93.226.208/28 -j ACCEPT
 iptables -I INPUT -p udp --dport 5060 -s 208.93.227.208/28 -j ACCEPT
 iptables -I INPUT -p tcp --dport 5060 -s 208.93.227.208/28 -j ACCEPT
 iptables -I INPUT -p tcp --dport 5061 -s 208.93.227.208/28 -j ACCEPT
-# Allow media:
+# 允许媒体流量：
 iptables -I INPUT -p udp --dport 1024:65535 -s 208.93.224.224/28 -j ACCEPT
 iptables -I INPUT -p udp --dport 1024:65535 -s 208.93.226.208/28 -j ACCEPT
 iptables -I INPUT -p udp --dport 1024:65535 -s 208.93.227.208/28 -j ACCEPT
@@ -216,26 +212,26 @@ iptables -I INPUT -p udp --dport 1024:65535 -s 208.93.227.5 -j ACCEPT
 iptables -I INPUT -p udp --dport 1024:65535 -s 208.93.226.5 -j ACCEPT 
 ```
 
-Please note, you may not be able to copy and paste these directly into a terminal program like SecureCRT, PuTTY, ZOC, etc. You may need to paste into Notepad or a similar text-only editor, and then copy and paste from there into the terminal program. This extra step should eliminate any hidden formatting characters that get copied along with the text (typically only applies when performing the copy and paste on a Microsoft platform).
+请注意，您可能无法直接将这些内容复制粘贴到类似SecureCRT、PuTTY、ZOC等终端程序中。您可能需要将其粘贴到记事本或类似的纯文本编辑器中，然后再从那里复制粘贴到终端程序中。这个额外的步骤应当可以消除随文本一起复制的任何隐藏格式字符（通常仅适用于在Microsoft平台上执行复制和粘贴操作时）。
 
-Any rules you insert into iptables must be loaded each time the FreeSWITCH server restarts. There are typically two methods to accomplish this. The first (and usually preferred) method is to use the iptables save and restore functionality. On most platforms, you can simply issue one of these two commands:
+在iptables中插入的任何规则在每次FreeSWITCH服务器重启时都必须加载。通常有两种方法可以实现这一点。第一种（通常首选的方法）是使用iptables的保存和恢复功能。在大多数平台上，您只需执行以下两个命令之一：
 
 ```bash
 /etc/init.d/iptables save
 /etc/rc.d/iptables save 
 ```
 
-The second method is to use a start-up script to re-issue the commands that add the rules. Generally, you would create a file in /etc/init.d or the appropriate /etc/rc.d directory (based on your individual platform) that contains the commands to create the rules. You would then chmod the file so that it is executable. Next, you would either create a symbolic link in the appropriate /etc/rc.d directory, or you would add it to your ‘local’ script which is responsible for executing any custom start-up commands.
+第二种方法是使用启动脚本来重新执行添加规则的命令。通常，您可以在/etc/init.d目录或适当的/etc/rc.d目录（根据您所用的平台）中创建一个文件，其中包含创建规则的命令。然后，您需要为该文件授予可执行权限。接下来，您可以在适当的/etc/rc.d目录中创建一个符号链接，或者将其添加到负责执行任何自定义启动命令的“local”脚本中。
 
-If you require any further assistance in modifying your local firewall, please consult the documentation appropriate for your OS distribution and firewall program.
+如果您需要进一步的帮助来修改本地防火墙，请查阅适用于您的操作系统发行版和防火墙程序的文档。
 
-## Configuring FreeSWITCH
+## 配置FreeSWITCH
 
-**Please note that these configuration examples are presented only as a guide and do not constitute a complete FreeSWITCH configuration. In addition, they may contain errors or omissions.**
+**请注意，这些配置示例仅作为指南提供，并不构成完整的FreeSWITCH配置。此外，它们可能包含错误或遗漏。**
 
-**If you require additional assistance configuring FreeSWITCH, you may be able to obtain additional support using the FreeSWITCH IRC channel. The FreeSWITCH developers, as well as many FreeSWITCH experts and consultants, are available on the #freeswitch IRC channel on [irc.freenode.net](http://irc.freenode.net) during normal business hours. The FreeSWITCH developers also provide support contracts through <http://www.freeswitchsolutions.com/>.**
+**如果您需要额外的帮助配置FreeSWITCH，您可以通过FreeSWITCH IRC频道获得额外的支持。在正常工作时间内，即可在[irc.freenode.net](http://irc.freenode.net)的#freeswitch IRC频道上找到FreeSWITCH开发人员以及许多FreeSWITCH专家和顾问。FreeSWITCH开发人员还通过<http://www.freeswitchsolutions.com/>提供支持合同。**
 
-After building and installing FreeSWITCH, you must configure it to use the Broadvox "Fusion" SIP Trunking platform. You will need to start by configuring your [Sofia](https://wiki.freeswitch.org/wiki/Sofia "Sofia") [SIP profile](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Structure%5Fof%5Fa%5FProfile "Sofia Configuration Files") so that it will speak to the Broadvox Fusion platform using the correct protocols and options. This is a summary of the primary parameters that need to be set on your [SIP profile](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Structure%5Fof%5Fa%5FProfile "Sofia Configuration Files") (on Linux, this is typically located in /usr/local/freeswitch/conf/sip\_profiles):
+构建和安装FreeSWITCH后，您需要配置它以使用Broadvox "Fusion" SIP Trunking平台。您需要首先配置您的[Sofia](https://wiki.freeswitch.org/wiki/Sofia "Sofia") [SIP配置文件](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Structure%5Fof%5Fa%5FProfile "Sofia Configuration Files")，以便使用正确的协议和选项与Broadvox Fusion平台进行通信。这是您的[SIP配置文件](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Structure%5Fof%5Fa%5FProfile "Sofia Configuration Files")上需要设置的主要参数摘要（在Linux上，通常位于/usr/local/freeswitch/conf/sip\_profiles）：
 
 ```xml
 <profile name="broadvox">
@@ -256,17 +252,17 @@ After building and installing FreeSWITCH, you must configure it to use the Broad
     <param name="rtp-hold-timeout-sec" value="1800"/>
     <param name="challenge-realm" value="auto_from"/>
   </settings>
-</profile> 
+</profile>
 ```
 
-After modifying your [Sofia](https://wiki.freeswitch.org/wiki/Sofia "Sofia") [SIP profile](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Structure%5Fof%5Fa%5FProfile "Sofia Configuration Files"), you must define [gateways](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Gateway "Sofia Configuration Files") to the Broadvox Fusion platform for each city specified in your welcome letter. Start by making a directory to hold the [gateway](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Gateway "Sofia Configuration Files") information:
+修改您的[Sofia](https://wiki.freeswitch.org/wiki/Sofia "Sofia")[SIP配置文件](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Structure%5Fof%5Fa%5FProfile "Sofia Configuration Files")后，您必须为您欢迎信中指定的每个城市的Broadvox融合平台定义[网关](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Gateway "Sofia Configuration Files")。首先创建一个目录来保存[网关](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Gateway "Sofia Configuration Files")信息：
 
 ```bash
 cd /usr/local/freeswitch/conf/sip_profiles
 mkdir broadvox
 ```
 
-Then create an XML file for each city-based gateway:
+然后为每个基于城市的网关创建一个XML文件：
 
 ```text
 vim dfw01-01.fs.broadvox.net.xml
@@ -274,76 +270,75 @@ vim lax01-01.fs.broadvox.net.xml
 vim nyc01-01.fs.broadvox.net.xml
 ```
 
-The contents of these files should look like this:
+这些文件的内容应如下所示：
 
 ```xml
-<!-- This is dfw01-01.fs.broadvox.net.xml -->
+<!-- 这是 dfw01-01.fs.broadvox.net.xml -->
 <include>
   <gateway name="dfw01-01">
   <param name="username" value="your_btn_goes_here"/>
   <!--<param name="from-domain" value="your_public_ip_or_dns_goes_here"/>-->
   <param name="password" value="your_password_goes_here"/>
   <param name="proxy" value="dfw01-01.fs.broadvox.net"/>
-  <!--/// expire in seconds: *optional* 3600, if blank ///-->
+  <!--/// 过期时间，以秒为单位：*可选* 3600，如果为空则不填 ///-->
   <!--<param name="expire-seconds" value="300"/>-->
-  <!--/// do not register ///-->
+  <!--/// 不注册 ///-->
   <param name="register" value="false"/>
   <!--<param name="retry-seconds" value="30"/>-->
   <param name="ping" value="25"/>
   </gateway>
 </include>
-<!-- End of dfw01-01.fs.broadvox.net.xml -->
+<!-- 结束 dfw01-01.fs.broadvox.net.xml -->
 
 
-<!-- This is lax01-01.fs.broadvox.net.xml -->
+<!-- 这是 lax01-01.fs.broadvox.net.xml -->
 <include>
   <gateway name="lax01-01">
   <param name="username" value="your_btn_goes_here"/>
   <!--<param name="from-domain" value="your_public_ip_or_dns_goes_here"/>-->
   <param name="password" value="your_password_goes_here"/>
   <param name="proxy" value="lax01-01.fs.broadvox.net"/>
-  <!--/// expire in seconds: *optional* 3600, if blank ///-->
+  <!--/// 过期时间，以秒为单位：*可选* 3600，如果为空则不填 ///-->
   <!--<param name="expire-seconds" value="300"/>-->
-  <!--/// do not register ///-->
+  <!--/// 不注册 ///-->
   <param name="register" value="false"/>
   <!--<param name="retry-seconds" value="30"/>-->
   <param name="ping" value="25"/>
   </gateway>
 </include>
-<!-- End of lax01-01.fs.broadvox.net.xml -->
+<!-- 结束 lax01-01.fs.broadvox.net.xml -->
+```
 
-
-<!-- This is nyc01-01.fs.broadvox.net.xml -->
+<!-- 这是 nyc01-01.fs.broadvox.net.xml -->
 <include>
   <gateway name="nyc01-01">
   <param name="username" value="your_btn_goes_here"/>
   <!--<param name="from-domain" value="your_public_ip_or_dns_goes_here"/>-->
   <param name="password" value="your_password_goes_here"/>
   <param name="proxy" value="nyc01-01.fs.broadvox.net"/>
-  <!--/// expire in seconds: *optional* 3600, if blank ///-->
+  <!--/// 过期时间（秒）：*可选* 3600，如果为空 ///-->
   <!--<param name="expire-seconds" value="300"/>-->
-  <!--/// do not register ///-->
+  <!--/// 不要注册 ///-->
   <param name="register" value="false"/>
   <!--<param name="retry-seconds" value="30"/>-->
   <param name="ping" value="25"/>
   </gateway>
 </include>
-<!-- End of nyc01-01.fs.broadvox.net.xml --> 
-```
+<!-- nyc01-01.fs.broadvox.net.xml 的结束 -->
 
-If you are behind a [NAT](https://wiki.freeswitch.org/wiki/NAT "NAT") or have a dynamic, public IP address, you may wish to enable registration. Registration is not required, even under a [NAT](https://wiki.freeswitch.org/wiki/NAT "NAT") scenario or a dynamic, public IP address scenario, but it is recommended. You may utilize a dynamic DNS record to support a dynamic, public IP address. You may utilize a static NAT or DMZ configuration on your firewall/NAT router to support a [NAT](https://wiki.freeswitch.org/wiki/NAT "NAT") configuration. Alternatively, Broadvox provides [stun.fs.broadvox.net](http://stun.fs.broadvox.net) if you prefer to use STUN in a [NAT](https://wiki.freeswitch.org/wiki/NAT "NAT") configuration. Broadvox generally does not recommend the use of STUN. The Broadvox switch will perform automatic [NAT](https://wiki.freeswitch.org/wiki/NAT "NAT") traversal if it detects that you are behind a [NAT](https://wiki.freeswitch.org/wiki/NAT "NAT"). FreeSWITCH also has built-in [NAT](https://wiki.freeswitch.org/wiki/NAT "NAT") detection code through the [UPnP or NAT-PMP](https://wiki.freeswitch.org/wiki/Auto%5FNAT "Auto NAT") functionality that may be built into your [NAT](https://wiki.freeswitch.org/wiki/NAT "NAT") router.
+如果你在[NAT](https://wiki.freeswitch.org/wiki/NAT "NAT")后面，或者拥有动态公网IP地址，你可能希望启用注册。注册并非必需，即使在[NAT](https://wiki.freeswitch.org/wiki/NAT "NAT")或动态公网IP地址的情况下，但是建议这么做。你可以利用动态DNS记录来支持动态公网IP地址。你可以通过在防火墙/NAT路由器上使用静态NAT或DMZ配置来支持[NAT](https://wiki.freeswitch.org/wiki/NAT "NAT")配置。另外，如果你更喜欢在[NAT](https://wiki.freeswitch.org/wiki/NAT "NAT")配置中使用STUN，可以使用Broadvox提供的[stun.fs.broadvox.net](http://stun.fs.broadvox.net)。Broadvox通常不建议使用STUN。如果Broadvox检测到你在[NAT](https://wiki.freeswitch.org/wiki/NAT "NAT")后面，Broadvox交换机将自动进行[NAT](https://wiki.freeswitch.org/wiki/NAT "NAT")穿越。FreeSWITCH还具有内置的[NAT](https://wiki.freeswitch.org/wiki/NAT "NAT")检测代码，通过[UPnP或NAT-PMP](https://wiki.freeswitch.org/wiki/Auto%5FNAT "Auto NAT")功能可以在你的[NAT](https://wiki.freeswitch.org/wiki/NAT "NAT")路由器中实现。
 
-After configuring the gateways to Broadvox, you will need to configure your [dialplan](https://wiki.freeswitch.org/wiki/Dialplan "Dialplan") to route DIDs from Broadvox to your extensions. You can do this by creating a new XML file in your [dialplan](https://wiki.freeswitch.org/wiki/Dialplan "Dialplan") directory that provides a [dialplan](https://wiki.freeswitch.org/wiki/Dialplan "Dialplan") for the "broadvox-in" context:
+在配置与Broadvox的网关后，你需要配置你的拨号计划，以将来自Broadvox的DID路由到你的分机。你可以在你的[dialplan](https://wiki.freeswitch.org/wiki/Dialplan "Dialplan")目录中创建一个新的XML文件，为"broadvox-in"上下文提供拨号计划：
 
 ```bash
 cd /usr/local/freeswitch/conf/dialplan/
 vim broadvox-in.xml 
 ```
 
-The contents of the XML file would look something like this:
+XML 文件的内容可能如下所示：
 
 ```xml
-include>
+<include>
   <context name="broadvox-in"> 
     <extension name="unloop">
       <condition field="${unroll_loops}" expression="^true$"/>
@@ -362,8 +357,31 @@ include>
         <action application="info"/>
       </condition>
     </extension>
+```
 
-    <extension name="public_extensions">
+```xml
+<extension name="public_extensions">
+      <condition field="destination_number" expression="^5552345678$">
+        <action application="answer"/>
+        <action application="play_and_get_digits" data="10 11 3 7000 # $${sound_prefix}/ivr/8000/ivr-enter_ext_pound.wav $${sound_prefix}/ivr/8000/ivr-that_was_an_invalid_entry.wav digits \d+"/>
+        <action application="playback" data="$${sound_prefix}/ivr/8000/ivr-thank_you.wav"/>
+        <action application="playback" data="$${sound_prefix}/ivr/8000/ivr-hold_connect_call.wav"/>
+        <action application="set" data="continue_on_fail=true"/>
+        <action application="set" data=" hangup_after_bridge=true"/>
+        <action application="set" data="bypass_media=false"/>
+        <action application="set" data="proxy_media=true"/>
+        <action application="bridge" data="sofia/internal.domain.com/${digits}"/>
+        <action application="playback" data="$${sound_prefix}/ivr/8000/ivr-im_sorry.wav"/>
+        <action application="playback" data="$${sound_prefix}/ivr/8000/ivr-please_try_again.wav"/>
+        <action application="respond" data="503"/>
+      </condition>
+    </extension>
+  </context>
+</include>
+```
+
+```xml
+<extension name="public_extensions">
       <condition field="destination_number" expression="^5552345678$">
         <action application="answer"/>
         <action application="play_and_get_digits" data="10 11 3 7000 # $${sound_prefix}/ivr/8000/ivr-enter_ext_pound.wav $${sound_prefix}/ivr/8000/ivr-that_was_an_invalid_entry.wav digits \d+"/>
@@ -383,9 +401,9 @@ include>
 </include> 
 ```
 
-In this example, if the dialed DID matches 5552345678, the call is sent to a very basic IVR that simply gathers an extension from the calling party. It will then attempt to ring that extension on the internal [Sofia](https://wiki.freeswitch.org/wiki/Sofia "Sofia") [SIP profile](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Structure%5Fof%5Fa%5FProfile "Sofia Configuration Files") you have configured (assuming that [internal.domain.com](http://internal.domain.com) is a domain mapped to that internal profile through an alias). When the call is connected, the media will be transparently proxied through the FreeSWITCH server. On modern hardware, you should be able to run hundreds (if not thousands) of calls through the FreeSWITCH server in this manner.
+在这个例子中，如果呼叫的DID与5552345678匹配，呼叫将被发送到一个非常基本的IVR，它只是从呼叫方收集一个分机号码。然后，它将尝试在您配置的内部[Sofia](https://wiki.freeswitch.org/wiki/Sofia "Sofia") [SIP配置文件](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Structure%5Fof%5Fa%5FProfile "Sofia配置文件")上振铃该分机号码（假设`internal.domain.com`是通过别名映射到该内部配置文件的域名）。通话连接后，媒体将通过FreeSWITCH服务器透明地代理。在现代硬件上，您应该能够以这种方式通过FreeSWITCH服务器运行数百个（甚至数千个）通话。
 
-This context will allow your DIDs to be routed to either specific users or to specific IVR systems. Four outbound dialing, you need to set up a similar context for your phones. You may use the default contexts provided by FreeSWITCH and simply customize them to suit your needs. When you finally need to [bridge](https://wiki.freeswitch.org/wiki/Misc.%5FDialplan%5FTools%5Fbridge "Misc. Dialplan Tools bridge") the call to Broadvox, you may use this [Sofia dialstring](https://wiki.freeswitch.org/wiki/Dialplan%5FXML#SIP-Specific%5FDialstrings "Dialplan XML"):
+此上下文将允许将您的DID路由到特定用户或特定的IVR系统。对于四线输出拨号，您需要为您的电话设置类似的上下文。您可以使用FreeSWITCH提供的默认上下文，并根据需要进行自定义。当您最终需要将呼叫桥接到Broadvox时，您可以使用这个[Sofia拨号字符串](https://wiki.freeswitch.org/wiki/Dialplan%5FXML#SIP-Specific%5FDialstrings "Dialplan XML")。
 
 ```xml
 <action application="set" data="hangup_after_bridge=true"/>
@@ -393,17 +411,24 @@ This context will allow your DIDs to be routed to either specific users or to sp
 <action application="set" data="originate_timeout=2"/>
 <action application="set" data="originate_retries=1"/>
 <action application="set" data="progress_timeout=15"/>
-<action applicat="bridge" data="sofia/gateway/dfw01-01/${destination_number}|sofia/gateway/nyc01-01/${destination_number}|sofia/gateway/lax01-01/${destination_number}"/> 
+<action applicat="bridge" data="sofia/gateway/dfw01-01/${destination_number}|sofia/gateway/nyc01-01/${destination_number}|sofia/gateway/lax01-01/${destination_number}"/>
 ```
 
-This [dialstring](https://wiki.freeswitch.org/wiki/Dialplan%5FXML#SIP-Specific%5FDialstrings "Dialplan XML") will attempt the number on the Dallas [gateway](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Gateway "Sofia Configuration Files") first. If it fails for any reason, it will attempt the NYC [gateway](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Gateway "Sofia Configuration Files") next. If that also fails, then it will attempt the LA [gateway](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Gateway "Sofia Configuration Files"). The actions prior to the [dialstring](https://wiki.freeswitch.org/wiki/Dialplan%5FXML#SIP-Specific%5FDialstrings "Dialplan XML") instruct FreeSWITCH to allow 2 seconds for attempting each [gateway](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Gateway "Sofia Configuration Files") with a maximum of one retries on each [gateway](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Gateway "Sofia Configuration Files") before hunting to the next. In addition, it will timeout the call attempt on a [gateway](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Gateway "Sofia Configuration Files") if no ringing is received within 15 seconds of the [gateway](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Gateway "Sofia Configuration Files") notifying you that the call is being attempted. While a [gateway](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Gateway "Sofia Configuration Files") outage should be extremely rare, this will make any [gateway](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Gateway "Sofia Configuration Files") outage completely transparent to you. You may, of course, order the [gateways](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Gateway "Sofia Configuration Files") however you like.
+```xml
+<action application="set" data="hangup_after_bridge=true"/>
+<action application="set" data="continue_on_fail=true"/>
+<action application="set" data="originate_timeout=2"/>
+<action application="set" data="originate_retries=1"/>
+<action application="set" data="progress_timeout=15"/>
+<action applicat="bridge" data="sofia/gateway/dfw01-01/${destination_number}|sofia/gateway/nyc01-01/${destination_number}|sofia/gateway/lax01-01/${destination_number}"/>
+```
 
-### Attachments:
+此[dialstring](https://wiki.freeswitch.org/wiki/Dialplan%5FXML#SIP-Specific%5FDialstrings "Dialplan XML") 将首先尝试拨打达拉斯的号码[gateway](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Gateway "Sofia Configuration Files")。如果由于任何原因失败，接下来将尝试纽约的[gateway](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Gateway "Sofia Configuration Files")。如果这也失败了，那么将尝试洛杉矶的[gateway](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Gateway "Sofia Configuration Files")。在[dialstring](https://wiki.freeswitch.org/wiki/Dialplan%5FXML#SIP-Specific%5FDialstrings "Dialplan XML")之前的操作指示FreeSWITCH在每个[gateway](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Gateway "Sofia Configuration Files")上尝试2秒，并在每个[gateway](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Gateway "Sofia Configuration Files")上最多重试一次，然后转到下一个。此外，如果在[gateway](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Gateway "Sofia Configuration Files")尝试呼叫时没有收到任何响铃信号，它将在15秒内超时。尽管[gateway](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Gateway "Sofia Configuration Files")故障应该非常罕见，但这将使任何[gateway](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Gateway "Sofia Configuration Files")故障对您完全透明。当然，您可以按您喜欢的顺序对[gateways](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Gateway "Sofia Configuration Files")进行排序。
 
-![](/images/icons/bullet_blue.gif) [Figure\_1.png](/attachments/2883699/3178497.png) (image/png)  
-![](/images/icons/bullet_blue.gif) [Broadvox\_Figure\_5.png](/attachments/2883699/3178498.png) (image/png)  
-![](/images/icons/bullet_blue.gif) [Broadvox\_Figure\_1.png](/attachments/2883699/3178499.png) (image/png)  
-![](/images/icons/bullet_blue.gif) [Figure\_6.png](/attachments/2883699/3178500.png) (image/png)  
-![](/images/icons/bullet_blue.gif) [Broadvox\_Figure\_6.png](/attachments/2883699/3178501.png) (image/png)  
+### 附件：
 
-
+![](/images/icons/bullet_blue.gif) [Figure\_1.png](/attachments/2883699/3178497.png) (image/png)
+![](/images/icons/bullet_blue.gif) [Broadvox\_Figure\_5.png](/attachments/2883699/3178498.png) (image/png)
+![](/images/icons/bullet_blue.gif) [Broadvox\_Figure\_1.png](/attachments/2883699/3178499.png) (image/png)
+![](/images/icons/bullet_blue.gif) [Figure\_6.png](/attachments/2883699/3178500.png) (image/png)
+![](/images/icons/bullet_blue.gif) [Broadvox\_Figure\_6.png](/attachments/2883699/3178501.png) (image/png)

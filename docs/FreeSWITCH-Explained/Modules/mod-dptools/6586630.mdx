@@ -1,59 +1,54 @@
-
 # mod_dptools: group 
 
- 
+## 关于
 
-## About
+该应用程序用于向数据库（内部数据库或[ODBC](../../Databases/ODBC-DSN/Using-ODBC-in-the-core_6586653.mdx)）中添加/删除群组，并允许与[bridge](./6586484.mdx#45-user)应用程序结合使用来呼叫这些群组。依赖于mod_db和mod_dptools。
 
-This application adds/deletes groups to/from the db(internal db or [ODBC](../../Databases/ODBC-DSN/Using-ODBC-in-the-core_6586653.mdx)) and allows calls to these groups in conjunction with the [bridge](./6586484.mdx#45-user)\-application. Depends on mod\_db and mod\_dptools.
+单击此处展开目录
 
-Click here to expand Table of Contents
+* 1 [用法](#用法)
+* 2 [示例](#示例)
 
-* 1 [Usage](#usage)
-* 2 [Examples](#examples)
-
-### Usage
+### 用法
 
 ```xml
 group,[insert|delete|call]:<group name>:<url>,group [insert|delete|call]
 ```
 
-### Examples
+### 示例
 
-The default dialplan uses these commands for add-group, del-group, and the call-group extensions in conf/dialplan/default.xml
+默认拨号计划在conf/dialplan/default.xml文件中使用这些命令来添加群组、删除群组和在呼叫群组中添加扩展。
 
-On the CLI, to add an external number (i.e. a mobile) to a call group:
+在CLI中，如果要将外部号码（例如移动电话）添加到呼叫群组中：
 
 ```xml
 group insert:01@example.com:sofia/gateway/provider/0123456789
 ```
 
-This would add to group ''01'' (as callable via 8201) assuming that the local domain set in vars.xml is ''[example.com](http://example.com)'', that the gateway name is ''provider'' and the number to dial is ''0123456789''
+这将添加到群组 ''01''（可通过8201呼叫）假设vars.xml中设置的本地域名为''[example.com](http://example.com)''，网关名称为''provider''，要拨打的号码为''0123456789''
 
-If you need to set a channel variable, you can do this thus:
+如果需要设置通道变量，可以使用以下方式：
 
 ```xml
 group insert:01@example.com:[sip_cid_type=none]sofia/gateway/provider/0123456789
 ```
 
-Deleting group members is of course possible with group delete, but (as far as I know) it's not possible to list the members of a group via the CLI, so you might be better off using SQL. If you're using the default sqlite setup, you'll need to install sqlite, and then you'll be able to point that at the file ''db/call\_limit.db'' thus:
+当然还可以使用group delete删除群组成员，但是（据我所知）无法通过CLI列出群组成员，所以最好使用SQL。如果使用默认的sqlite设置，您需要安装sqlite，然后可以将其指向文件''db/call_limit.db''，如下所示：
 
 ```xml
 sqlite3 db/call_limit.db
 ```
 
-and then you can do things like:
+然后可以执行以下操作：
 
 ```xml
 select * from group_data;
 ```
 
-to list all group members, to empty a group you could use:
+以列出所有群组成员，要清空群组，您可以使用以下命令：
 
 ```xml
 delete from group_data where groupname = '01@example.com';
 ```
 
-&lt;Need examples, please add if you have some>
-
-
+&;lt;需要示例，请提供您的示例>

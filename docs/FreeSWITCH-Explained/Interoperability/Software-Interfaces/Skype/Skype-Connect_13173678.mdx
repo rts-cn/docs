@@ -1,43 +1,38 @@
+# Skype Connect
 
-# Skype Connect 
+## 关于
 
- 
+Skype现在支持通过[Skype Connect](http://www.skype.com/intl/zh-cn/business/skype-connect/)使用SIP，作为其Skype for Business套餐的一部分。
 
-## About
+点击此处展开目录
 
-Skype now supports SIP via [Skype Connect](http://www.skype.com/intl/en-us/business/skype-connect/), as part of its Skype for Business offering.
-
-Click here to expand Table of Contents
-
-* 1 [Caveats](#caveats)
-* 2 [SIP Profile](#sip-profile)  
+* 1 [注意事项](#caveats)
+* 2 [SIP配置](#sip-profile)  
    * 2.1 [conf/sip\_profiles/external/skype.xml](#confsip_profilesexternalskypexml)
-* 3 [Dialplan Configuration](#dialplan-configuration)  
-   * 3.1 [Inbound: conf/dialplan/public/01\_skype.xml](#inbound-confdialplanpublic01_skypexml)  
-   * 3.2 [Outbound: conf/dialplan/default/01\_skype.xml](#outbound-confdialplandefault01_skypexml)
-* 4 [Support](#support)
+* 3 [拨号计划配置](#dialplan-configuration)  
+   * 3.1 [呼入：conf/dialplan/public/01\_skype.xml](#inbound-confdialplanpublic01_skypexml)  
+   * 3.2 [呼出：conf/dialplan/default/01\_skype.xml](#outbound-confdialplandefault01_skypexml)
+* 4 [支持](#support)
 
-## Caveats
+## 注意事项
 
-Note the [EULA](http://www.skype.com/intl/en-us/legal/business/eula/) and [Terms of Service](http://www.skype.com/intl/en-us/legal/business/terms/), e.g. no reselling allowed, for business users only, no emergency calls, etc.Caveats
+请注意[EULA](http://www.skype.com/intl/zh-cn/legal/business/eula/)和[服务条款](http://www.skype.com/intl/zh-cn/legal/business/terms/)，例如不允许转售，仅限商业用户，不支持紧急呼叫等。
 
-Also, incoming calls from Skype users are supported, but only Skype business accounts created via the Skype Manager (not for personal accounts), and Skype Connect only appears to support outgoing calls to landlines (via Skype Out), not outgoing calls to any Skype users.
+此外，Skype用户发起的呼入呼叫是被支持的，但仅限于通过Skype管理器创建的Skype商业账户（不能是个人账户），而且Skype Connect只能支持呼叫固定电话（通过Skype Out），不能呼叫任何Skype用户。
 
-## SIP Profile
+## SIP配置
 
-Skype _SIP User_and _Password_ values can be found or set in the Skype Manager under Features > Skype Connect > SIP Profiles > YOUR PROFILE > Authentication Details. Note: this is **not** your Skype username, but a separate SIP username for each SIP Profile you've created in the Skype Manager.
+Skype _SIP用户名和密码_可以在Skype管理器的功能 > Skype Connect > SIP配置文件 > 您的配置文件 > 认证详情中找到或设置。注意：这**不是**您的Skype用户名，而是每个在Skype管理器中创建的SIP配置文件的单独SIP用户名。
 
 ### conf/sip_profiles/external/skype.xml
 
-Skype offers Registration _or_ IP based authentication for each SIP profile.
-
-Using the Registration method:
+Skype为每个SIP配置文件提供“注册”或“基于IP”的认证方法。 使用注册方法：
 
 ```xml
 <include>
   <gateway name="skype">
     <param name="realm" value="sip.skype.com"/>
-    <param name="proxy" value="sip.skype.com"/> <!-- is this necessary? it's the same as realm -->
+    <param name="proxy" value="sip.skype.com"/> <!-- 这个必要吗？和 realm 是一样的 -->
     <param name="from-domain" value="sip.skype.com"/>
     <param name="username" value="YOUR_SKYPE_sip_USERNAME"/>
     <param name="from-user" value="YOUR_SKYPE_sip_USERNAME"/>
@@ -51,19 +46,19 @@ Using the Registration method:
 </include>
 ```
 
- Param _caller-id-in-from_ should be set **false**. _Quick Start Guide: "If you are making outgoing calls, ensure that your SIP user name is in the From field in the SIP message (i.e. [990500000231@sip.skype.com](mailto:990500000231@sip.skype.com))"_
+调用者 ID 号码在来源字段中设置为**false**。快速入门指南：“如果您要拨打外拨电话，请确保您的 SIP 用户名在 SIP 消息的 From 字段中（例如 [990500000231@sip.skype.com](mailto:990500000231@sip.skype.com)）。
 
-**TODO**: using IP based authentication
+**TODO**: 使用基于 IP 的身份验证。
 
-## Dialplan Configuration
+## 拨号计划配置
 
-Main Source: <http://forum.skype.com/index.php?showtopic=609283&st=0&p=2772523&#entry2772523>
+主要参考： <http://forum.skype.com/index.php?showtopic=609283&st=0&p=2772523&#entry2772523>
 
-In the Skype Manager, you must purchase at least one channel for the SIP profile, and configuring incoming / outgoing appropriately.
+在 Skype 管理中心，您必须为 SIP 配置购买至少一个通道，并相应地配置呼入/呼出。
 
-### Inbound: conf/dialplan/public/01_skype.xml
+### 呼入：conf/dialplan/public/01_skype.xml
 
-You must first configure the Incoming settings for the SIP Profile in the Skype Manager. Note that Skype business accounts can be configured here, but not Skype personal accounts.
+首先，您必须在 Skype 管理中心中配置 SIP 配置的呼入设置。请注意，这里可以配置 Skype 商业帐户，但无法配置 Skype 个人帐户。
 
 ```xml
 <include>
@@ -77,9 +72,9 @@ You must first configure the Incoming settings for the SIP Profile in the Skype 
 
 ### Outbound: conf/dialplan/default/01_skype.xml
 
-**This has not been tested yet.**
+**这段代码尚未测试过。**
 
-Note: Any number beginning with YOURPREFIX (e.g. 00) will be routed via Skype. Replace YOURPREFIX with the prefix you would like to use.
+注意：以YOURPREFIX开头的任何号码（例如00）都将通过Skype转接。将YOURPREFIX替换为您想使用的前缀。
 
 ```xml
 <include>
@@ -91,8 +86,6 @@ Note: Any number beginning with YOURPREFIX (e.g. 00) will be routed via Skype. R
 </include>
 ```
 
-## Support
+## 支持
 
-Quick Start Guide, Users Guides, Requirements, forums, etc. are available at the [Skype Connect support page](https://support.skype.com/en/faq/FA10549/what-is-skype-connect-and-how-does-it-work)
-
-
+快速入门指南、用户指南、要求、论坛等详细信息请访问[Skype Connect支持页面](https://support.skype.com/en/faq/FA10549/what-is-skype-connect-and-how-does-it-work)。

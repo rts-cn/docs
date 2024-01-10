@@ -1,201 +1,195 @@
+# Khomp
 
-# Khomp 
+## 关于
 
- 
+本文档详细介绍了Khomp作为一个整体的_Endpoint_ 的信息，包括选项、_应用程序_、**CLI** 命令等等。
 
-## About
+点击此处展开目录
 
-This document covers information about the _Endpoint_ of Khomp as a whole, including the options, _applications_, **CLI** commands, among others.
+* 1 [首要考虑](#first-considerations)
+* 2 [配置](#configuration)
+   * 2.1 [K3L API 配置](#k3l-api-configuration)
+   * 2.2 [端点配置](#endpoint-configuration-)
+   * 2.3 [FreeSWITCH 配置](#freeswitch-configuration)
+      * 2.3.1 [E1 通道上下文](#contexts-for-e1-channels)
+         * 2.3.2 [FXS/FXO/GSM 通道上下文](#contexts-of-fxsfxogsm-channels)
+         * 2.3.3 [短信消息上下文（仅限 GSM）](#contexts-for-sms-messages-gsm-only)
+         * 2.3.4 [Khomp_PR 通道上下文 (KPR)](#contexts-for-khomp_pr-channels-kpr)
+         * 2.3.5 [群组上下文](#groups-contexts)
+         * 2.3.6 [使用桥接应用](#using-the-_bridge_-application)
+         * 2.3.7 [通道分配分组](#grouping-channel-allocations)
+         * 2.3.8 [变量列表](#list-of-variables)
+         * 2.3.9 [变量说明](#description-of-variables)
+* 3 [控制台命令](#console-commands)
+* 4 [附加功能](#additional-features)
+   * 4.1 [Aplicações (应用程序)和通道](#aplicaes-applications-e-canais)
+      * 4.1.1 ["KUserTransfer" 应用程序](#kusertransfer-application)
+         * 4.1.2 [应用程序 "KSendSMS"](#application-ksendsms)
+         * 4.1.3 [应用程序 "KEchoCanceller"](#application-kechocanceller)
+         * 4.1.4 [应用程序 "KAutoGainControl"](#application-kautogaincontrol)
+         * 4.1.5 [应用程序 "KDTMFSuppression"](#application-kdtmfsuppression)
+         * 4.1.6 [应用程序 "KSetVolume"](#application-ksetvolume)
+         * 4.1.7 [应用程序 "KAdjustForFax"](#application-kadjustforfax)
+         * 4.1.8 [应用程序 "KSendFax"](#application-ksendfax)
+         * 4.1.9 [应用程序 "KReceiveFax"](#application-kreceivefax)
+         * 4.1.10 [通道 "Khomp_SMS"](#channel-khomp_sms)
+         * 4.1.11 [通道 "Khomp_PR"](#channel-khomp_pr)
+* 5 [代码和含义](#codes-and-meanings)
+   * 5.1 [通道状态](#channel-state)
+   * 5.2 [呼叫状态](#call-state)
+   * 5.3 [FreeSWITCH 呼叫状态](#freeswitch-call-states)
+   * 5.4 [GSM 代码](#gsm-codes)
+      * 5.4.1 [短信代码 (短信原因)](#sms-codes-sms-causes)
+         * 5.4.2 [呼叫代码 (呼叫原因)](#call-codes-call-causes)
+         * 5.4.3 [通用代码 (移动原因)](#general-codes-mobile-causes)
+* 6 [故障排除](#troubleshooting)
+   * 6.1 [内核模块安装错误](#error-during-installation-of-kernel-module)
+      * 6.1.1 [编译驱动程序并启动服务](#compiling-the-drivers-and-starting-the-services)
+   * 6.2 [设置音频或信令的特殊参数](#setting-up-special-parameters-for-audio-or-signaling)
+   * 6.3 [服务和内核模块的自动加载](#automatic-load-of-services-and-kernel-modules)
+* 7 [附录](#appendix)
+   * 7.1 [已安装文件的排列](#arrangement-of-installed-files)
 
-Click here to expand Table of Contents
+## 初步考虑
 
-* 1 [First considerations](#first-considerations)
-* 2 [Configuration](#configuration)  
-   * 2.1 [K3L API Configuration](#k3l-api-configuration)  
-   * 2.2 [Endpoint Configuration](#endpoint-configuration-)  
-   * 2.3 [FreeSWITCH Configuration](#freeswitch-configuration)  
-      * 2.3.1 [Contexts for E1 channels](#contexts-for-e1-channels)  
-         * 2.3.2 [Contexts of FXS/FXO/GSM channels](#contexts-of-fxsfxogsm-channels)  
-         * 2.3.3 [Contexts for SMS messages (GSM only)](#contexts-for-sms-messages-gsm-only)  
-         * 2.3.4 [Contexts for Khomp\_PR channels (KPR)](#contexts-for-khomp_pr-channels-kpr)  
-         * 2.3.5 [Groups contexts](#groups-contexts)  
-         * 2.3.6 [Using the bridge application](#using-the-_bridge_-application)  
-         * 2.3.7 [Grouping channel allocations](#grouping-channel-allocations)  
-         * 2.3.8 [List of variables](#list-of-variables)  
-         * 2.3.9 [Description of variables](#description-of-variables)
-* 3 [Console commands](#console-commands)
-* 4 [Additional features](#additional-features)  
-   * 4.1 [Aplicações (applications) e canais](#aplicaes-applications-e-canais)  
-      * 4.1.1 ["KUserTransfer" application](#kusertransfer-application)  
-         * 4.1.2 [Application "KSendSMS"](#application-ksendsms)  
-         * 4.1.3 [Application "KEchoCanceller"](#application-kechocanceller)  
-         * 4.1.4 [Application "KAutoGainControl"](#application-kautogaincontrol)  
-         * 4.1.5 [Application "KDTMFSuppression"](#application-kdtmfsuppression)  
-         * 4.1.6 [Application "KSetVolume"](#application-ksetvolume)  
-         * 4.1.7 [Application "KAdjustForFax"](#application-kadjustforfax)  
-         * 4.1.8 [Application "KSendFax"](#application-ksendfax)  
-         * 4.1.9 [Application "KReceiveFax"](#application-kreceivefax)  
-         * 4.1.10 [Channel "Khomp\_SMS"](#channel-khomp_sms)  
-         * 4.1.11 [Channel "Khomp\_PR"](#channel-khomp_pr)
-* 5 [Codes and meanings](#codes-and-meanings)  
-   * 5.1 [Channel state](#channel-state)  
-   * 5.2 [Call state](#call-state)  
-   * 5.3 [FreeSWITCH call states](#freeswitch-call-states)  
-   * 5.4 [GSM Codes](#gsm-codes)  
-      * 5.4.1 [SMS codes (SMS causes)](#sms-codes-sms-causes)  
-         * 5.4.2 [Call codes (call causes)](#call-codes-call-causes)  
-         * 5.4.3 [General codes (mobile causes)](#general-codes-mobile-causes)
-* 6 [Troubleshooting](#troubleshooting)  
-   * 6.1 [Error during installation of kernel module](#error-during-installation-of-kernel-module)  
-      * 6.1.1 [Compiling the drivers and starting the services](#compiling-the-drivers-and-starting-the-services)  
-   * 6.2 [Setting up special parameters for audio or signaling](#setting-up-special-parameters-for-audio-or-signaling)  
-   * 6.3 [Automatic load of services and kernel modules](#automatic-load-of-services-and-kernel-modules)
-* 7 [Appendix](#appendix)  
-   * 7.1 [Arrangement of installed files](#arrangement-of-installed-files)
+有关首次安装程序，请参阅[Khomp README](./13173192.mdx#about)。该软件无法在Windows上运行！它仅支持Linux。
 
-## First considerations
+## 配置
 
-For first installation procedures, please see the [Khomp README](./13173192.mdx#about).   
-It does not work on Windows! It's only supported on Linux. 
+Khomp终端配置由以下三个步骤组成：
 
-## Configuration
+* 通过K3L配置板卡；
+* 设置终端；
+* 设置FreeSWITCH。
 
-Configuring the Khomp Endpoint is a task that consists of three steps:
+下面更详细地描述了这些步骤。
 
-* Configuration of the boards through the K3L;
-* Setting up the Endpoint;
-* Setting up FreeSWITCH.
+### K3L API配置
 
-These steps are described more fully below. 
+此步骤使用**khompwizard**程序以半自动化的方式完成，该向导可配置系统板卡的基本参数。此向导在需要时使用用户提供的信息初始化配置文件，并将其标准设置初始化为默认值。
 
-### K3L API Configuration
+通常，在系统安装后，此程序会自动运行。但是，如果正在进行更新操作或者在安装新驱动程序后添加了新的卡片，则可能需要手动运行它。
 
-This step is carried out in a semi-automated way using the **khompwizard** program, a wizard that configures the basic parameters of the system boards. This wizard initializes the configuration files using information from the user when they are needed, initializing the standard settings to default values.
+如果需要设置板卡和/或信令的高级参数，请使用**k3lconfig**程序，该程序允许您访问每个已安装卡片的所有可用设置。有关此程序的更多信息，请查阅**k3lconfig用户指南**。要解决同步问题，请查阅[故障排除](index.mdx#troubleshooting)部分以进行手动配置板卡。
 
-Typically, this program runs automatically after installation of the system. However, you may need to run it manually if an update is being performed, or if new cards were added to the system after installing new drivers.
+### 终端配置
 
-  
-If you need to set advanced parameters of the board and/or signaling, the program **k3lconfig** allows you to access all the available settings for each installed card. For more information about this program, check the **k3lconfig User's Guide**. For solving synchronization issues, check the [Troubleshooting](index.mdx#troubleshooting) section for manual configuration of the boards. 
+系统的默认配置通常能够满足大多数用户的需求。然而，Endpoint Khomp的配置可以通过配置文件“/usr/local/freeswitch/conf/autoload_configs/khomp.conf.xml”进行修改。
 
-### Endpoint Configuration 
-
-The system's default configuration normally meet most user's needs. However, the configuration of the Endpoint Khomp can be modified through the configuration file '**/usr/local/freeswitch/conf/autoload\_configs/khomp.conf.xml'**.
-
-The list of options is as follows:
+以下是选项的列表：
 
 ##### channels
 
-Define general settings of all channels of Khomp:
+定义Khomp的所有通道的常规设置：
 
 ```xml
-Sintaxe: <param name="..." value="..."/>
+Syntax: <param name="..." value="..."/>
 ```
 
-* **accountcode**: Sets the default account code to calls in the Endpoint. This option can be any alphanumeric string;
-* **dialplan**: Name of the dialplan module in use.
-* **auto-fax-adjustment**: Enable ("yes") or disables ("no") the automatic adjustment of the channel (disable the echo canceller and the suppression DTMF) tone to detect FAX (local option) ;
-* **auto-gain-control**:Enable ("yes") or disables ("no") the activation of the automatic gain control (AGC) by the Endpoint (local option);
-* **context-digital**: Context for incoming connections on digital boards (the default is "khomp-DD-LL", where "DD" will be replaced at the time of connection by the device number, "LL" by the number of the link, "CCC" by channel number and "SSSS" for the device serial number);
-* **context-fxo**: Context for incoming connections on FXO cards (the default is "khomp-CC-DD", where "DD" will be replaced at the time of connection by the device number, "CC" by channel number, and "SSSS" by the device serial number);
-* **context-fxs**: Context for incoming connections on FXS cards (the default is "khomp-CC-DD", where "DD" will be replaced at the time of connection by the device number, "CC" by channel number, and "SSSS" by the device serial number);
-* **context-gsm-call** (or **context-gsm**): Context of entry for GSM boards (the default is "khomp-CC-DD", where "DD" will be replaced at the time of connection by the device number, "CC" by channel number, and "SSSS" by the device serial number);
-* **context-gsm-sms**: Context for incoming SMSs (the default is "khomp-sms-CC-DD", where "DD" will be replaced by the number of device, "CC" by channel number and "SSSS" by the device's serial number);
-* **context-pr**: Context for incoming connections on boards KPR (default is "khomp-CC-DD", where "DD" will be replaced at the time of connection by the device number, "CC "by channel number);
-* **delay-ringback-co**: Sets the delay to enable the generation of call control tone (ringback) by the Endpoint Khomp when there is an ringback indication from signaling and there is no audio being sent by the channel which indicated the situation (local option);
-* **delay-ringback-pbx**: Sets the delay to enable the generation of call control tone (ringback) by the Endpoint Khomp when there is an ringback indication, and the audio has no tone (silence) (local option);
-* **disconnect-delay**: Sets the time in milliseconds to perform processing a disconnect event, to ignore situations where other equipment performing the double service to overthrow collect calls (local option);
-* **drop-collect-call**: Enables/Disables the action of dropping collect calls. If enabled, all collect calls will be dropped no matter what KDropCollectCall is set to (the default value is "no");
-* **echo-canceller** (former 'echocanceller): Active ("yes") or disables ("no") echo cancellation automatic Endpoint (local option);
-* **flash-to-digits**: Defines the digits to be sent when the FLASH is detected on FXS channels;
-* **fxo-send-pre-audio**: When enabled ("yes") releases audio channel before the outgoing call connection boards KFXO (the default value is "yes");
-* **fxs-digit-timeout**: Defines the timeout, in seconds, between digits of a FXS board's extension;
-* **fxs-global-orig**: Start number for sequencial branch numbering in FXS cards that are not listed in the **\[fxs-branches\]** section (the numbering follows ascending order from board number and physical channel number) (default is "0");
-* **fxs-co-dialtone**: Sequences of numbers, separated by commas, which fires a continuous tone (of central office) in FXS branches (eg: "0,99" means that, when you dial "0" or "99", the user will hear a continuous dial tone) (default is empty);
-* **fxs-bina**: When enabled ("yes"), calls to FXS lines will send digits corresponding to the source phone identification using BINA DTMF signaling (the default value is "no") (local option);
-* **ignore-letter-dtmfs**: Defines if the channel should ignore some uncommon DTMF digits detected by the board (A, B, C and D). However, if you need to pass those digits througth the board, you may need to set this option to 'no' (the default value is "yes");
-* **input-volume**: Sets the volume gain for incoming audio (entering the board), from -10 to +10 (local option);
-* **kommuter-activation**: Sets whether to activate devices kommuter found in the system will be done automatically ("auto") by the channel, or manually ("manual") by the user through the command "khomp kommuter on/off"
-* **kommuter-timeout**: Sets the timeout (in seconds) for initializing the kommuter devices. If this timeout is reached without receiving notification of the channel, the devices will switch back to "off" condition. The minimum value is "0", where the links will always remain switched "on", and the maximum is "255";
-* **language**: Set language to Khomp board calls;
-* **log-to-console**: Set log messages to be printed on the console;
-* **log-to-disk** (old "log"): Set log messages to be saved to disk;
-* **out-of-band-DTMF** (former **dtmfsuppression**): Activate ("yes") or disables ("no") the removal and DTMF sending these out-of-band (local option);
-* **output-volume**: Define o volume de saída das ligações, varia de -10 a +10 ;
-* **pulse-forwarding** (former 'pulsedetection): Active ("yes") or disables ("no") for the detection of pulses and converting them into DTMF (local option);
-* **r2-preconnect-wait** (former 'r2preconnectwait): Sets the timeout sending the ringback signaling, protocol R2/MFC to start sending audio silence. Only used when "r2-strict-Behavior" is set to "no" (local option);
-* **r2-strict-Behaviour**: Enable ("yes") or disables ("no") the behavior of signaling R2/MFC as the standard sets. The default is "no", and can be changed to "yes" if needed to receive / send data precise signaling protocol (condition B, for example) (local option);
-* **suppression-delay** (former **suppressiondelay**): Activate ("yes") or disables ("no") the delay necessary to suppress DTMF. If disabled ("no"), also disables suppression of DTMF (local option);
-* **trace**: Set debugging options. Should not be used in production unless absolutely necessary;
-* **user-transfer-digits**: Defines a sequence of DTMF digits to initiate the transfer between FreeSWITCH® and another PBX (using user signaling, like QSig or FXO FLASH);
+* **accountcode**: 设置终端的默认账户编码。该选项可以是任何字母数字组合。
+* **dialplan**: 使用的拨号计划模块的名称。
+* **auto-fax-adjustment**: 启用（"yes"）或禁用（"no"）终端的自动调整功能（禁用回声消除器和DTMF抑制），以便检测传真信号（本地选项）。
+* **auto-gain-control**: 启用（"yes"）或禁用（"no"）终端的自动增益控制功能（本地选项）。
+* **context-digital**: 数字板卡的呼入连接上下文（默认为 "khomp-DD-LL"，其中 "DD" 在连接时将被设备号替换，"LL" 将被链接号替换，"CCC" 将被通道号替换，"SSSS" 将被设备序列号替换）。
+* **context-fxo**: FXO卡的呼入连接上下文（默认为"khomp-CC-DD"，其中 "DD" 在连接时将被设备号替换，"CC" 将被通道号替换，"SSSS" 将被设备序列号替换）。
+* **context-fxs**: FXS卡的呼入连接上下文（默认为"khomp-CC-DD"，其中 "DD" 在连接时将被设备号替换，"CC" 将被通道号替换，"SSSS" 将被设备序列号替换）。
+* **context-gsm-call**（或 **context-gsm**）: GSM板卡的入口上下文（默认为"khomp-CC-DD"，其中 "DD" 在连接时将被设备号替换，"CC" 将被通道号替换，"SSSS" 将被设备序列号替换）。
+* **context-gsm-sms**: 短信的呼入上下文（默认为"khomp-sms-CC-DD"，其中 "DD" 将被设备号替换，"CC" 将被通道号替换，"SSSS" 将被设备的序列号替换）。
+* **context-pr**: KPR板卡的呼入连接上下文（默认为"khomp-CC-DD"，其中 "DD" 在连接时将被设备号替换，"CC" 将被通道号替换）。
+* **delay-ringback-co**: 设置延迟时间（以毫秒为单位），以便在信令上有回铃指示的情况下，当通道没有发送音频时由Khomp终端生成呼叫控制音（回铃）（本地选项）。
+* **delay-ringback-pbx**: 设置延迟时间（以毫秒为单位），以便在有回铃指示时，音频没有音调（静音）时由 Khomp 终端生成呼叫控制音（回铃）（本地选项）。
+* **disconnect-delay**: 设置在处理断开事件的时间（以毫秒为单位），以忽略其他设备处理收集呼叫的双重服务的情况（本地选项）。
+* **drop-collect-call**: 启用/禁用丢弃收集呼叫的动作。如果启用，则不管 KDropCollectCall 设置为什么，所有收集呼叫都将被丢弃（默认值为"no"）。
+* **echo-canceller**（原为 'echocanceller'）: 启用（"yes"）或禁用（"no"）终端的自动消除回声功能（本地选项）。
+* **flash-to-digits**: 定义在FXS通道上检测到FLASH时要发送的数字。
+* **fxo-send-pre-audio**: 当启用（"yes"）时，在外拨电话连接到KFXO板卡之前释放音频通道（默认值为"yes"）。
+* **fxs-digit-timeout**: 定义FXS板卡分机之间的数字之间的超时时间（以秒为单位）。
+* **fxs-global-orig**: FXS卡片上的顺序分支编号的起始号码，此号码未列在 **\[fxs-branches\]** 部分中（编号按照板卡号和物理通道号的顺序增加）（默认值为"0"）。
+* **fxs-co-dialtone**: 以逗号分隔的数字序列，用于在FXS分机中触发持续的中央局呼叫音（例如："0,99" 表示当拨号 "0" 或 "99" 时，用户将听到一个持续的拨号音）（默认为空）。
+* **fxs-bina**: 当启用（"yes"）时，对FXS线路的呼叫将使用BINA DTMF信号发送与源电话标识对应的数字（默认值为"no"）（本地选项）。
+* **ignore-letter-dtmfs**: 定义通道是否应忽略板卡检测到的一些不常见的DTMF数字（A、B、C和D）。但是，如果需要将这些数字通过板卡，请将此选项设置为 'no' （默认值为"yes"）。
+* **input-volume**: 设置传入音频（进入板卡）的音量增益，范围从-10到+10（本地选项）。
+* **kommuter-activation**: 设置系统中发现的传送器设备是由通道自动执行（"auto"）还是由用户通过 "khomp kommuter on/off" 命令手动执行（"manual"）。
+* **kommuter-timeout**: 设置传送器设备初始化的超时时间（以秒为单位）。如果在超时时间内未收到通道的通知，则设备将切换回 "off" 状态。最小值为 "0"，表示链接将始终保持打开状态，最大值为 "255"。
+* **language**: 设置Khomp板卡呼叫的语言。
+* **log-to-console**: 设置是否将日志消息打印到控制台。
+* **log-to-disk**（旧的 "log"）: 设置是否将日志消息保存到磁盘。
+* **out-of-band-DTMF**（原为 **dtmfsuppression**）: 启用（"yes"）或禁用（"no"）使用带外信令删除和发送DTMF（本地选项）。
+* **output-volume**: 设置呼叫的输出音量增益，范围从-10到+10。
+* **pulse-forwarding**（原为 'pulsedetection'）: 启用（"yes"）或禁用（"no"）脉冲检测并将其转换为DTMF（本地选项）。
+* **r2-preconnect-wait**（原为 'r2preconnectwait'）: 设置发送振铃信令的超时时间，用于开始发送音频静音的 R2/MFC 协议。仅在 "r2-strict-Behavior" 设置为 "no" 时使用（本地选项）。
+* **r2-strict-Behaviour**: 启用（"yes"）或禁用（"no"）以 R2/MFC 标准方式处理信令行为。默认值为 "no"，如果需要接收/发送精确的信令协议数据（如条件 B），可以将其更改为 "yes"（本地选项）。
+* **suppression-delay**（原为 **suppressiondelay**）: 启用（"yes"）或禁用（"no"）延迟抑制DTMF所需的时间。如果禁用（"no"），还将禁用DTMF的抑制（本地选项）。
+* **trace**: 设置调试选项。除非绝对必要，否则不应在生产环境中使用。
+* **user-transfer-digits**: 定义启动FreeSWITCH®与另一个PBX之间的转接的一系列DTMF数字（使用用户信令，如QSig或FXO FLASH）。
 
-##### groups
+##### groups（组）
 
-Defines the groups to be used in channel allocation.
+定义在信道分配中要使用的组。
 
-In this case, the options are used to define names for _strings allocation of channels_. The format follows the standard **&lt;group name> = &lt;allocation string>**, where the **allocation string** is the same string used in the bridge application, and **group name** is an arbitrary name chosen by the user.
+在该情况下，这些选项用于定义_信道字符串分配_的名称。格式遵循标准的**&lt;组名> = &lt;分配字符串>**，其中**分配字符串**是在网桥应用程序中使用的相同字符串，**组名**是用户选择的任意名称。
 
-For example, to define the group pstn as the channels 0 and 5 of the board 0, the following line could be used:
+例如，要将组`pstn`定义为板卡0的通道0和通道5，可以使用以下指令：
 
 ```xml
 <param name="pstn" value="b0c0 + b0c5"/> 
 ```
 
-This group, in turn, could be used in the _bridge application_ as **&lt;action application="bridge" data="Khomp/Gpstn/..."/>**.
+这个组能够在_bridge应用程序_中像这样使用：**&lt;action application="bridge" data="Khomp/Gpstn/..."/>**。
 
-You can associate a given input context to a channel group, simply specify a name of context string after the allocation, separated by ':'.
+您可以将特定的输入上下文与通道组相关联，只需在分配后面指定上下文字符串的名称，用冒号分隔。
 
-For example, to define the same group **pstn** as channels 0 to 20 of card 0, and defining the incoming context to for channels in this groups to **from-pstn**, one could use the line:
+例如，要将相同的组**pstn**定义为板卡0的通道0到通道20，并将输入上下文定义为该组中通道的**from-pstn**，可以使用以下指令：
 
 ```xml
 <param name="pstn" value="b0c0-20:from-pstn"/>
 ```
 
-This group would be used the same way as before in the _bridge application_, and all the calls coming from these channels would be treated in context **from-pstn**. 
+这个组将与之前一样在_bridge应用程序_中使用，并且所有来自这些通道的呼叫都将在上下文**from-pstn**中处理。
 
-##### cadences
+##### cadences（节奏）
 
-Defines settings for the Endpoint cadences.
+定义终端节奏的设置。
 
-In this case, the options are names cadences, followed by one or two pairs of numbers - that define the ranges of tone and silence to be used in cadences. For details, please refer to the configuration file for examples. 
+在这种情况下，选项是节奏的名称，后面是一个或两个数字对-用于定义节奏中使用的音调和静音的范围。详细信息请参阅配置文件的示例。
 
-##### fxs-branches
+##### fxs-branches（FXS支线）
+定义KFXS板的源号码。
 
-Defines source numbers for the board KFXS.
-
-In this case, the options are sequences of prefixes of branches and serial numbers of the boards, which define the basic numbers of source addresses, and the numerical order of the boards. The format of the options is:
-
-```xml
-<param name="prefixo" value="serial1, serial2, ...."/>
-```
-
-For example, if two **KFXS-300 SPX** boards with serial numbers **K0374** and **K2352** must be numbered sequentially, starting from branch 200, you may write:
+在这种情况下，选项是分支的前缀序列和板卡的序列号，用于定义源地址的基本号码和板卡的数值顺序。选项的格式为：
 
 ```xml
-<param name="200" value="374, 2352"/>
+<param name="prefixo" value="serial1、serial2、..."/>
 ```
 
-This will define the first branch of board '_K0374_ as number 200, the second as 201, and so one. The first branch from board K2352 will have number 230 (as K0374 has 30 channels), the second will be numbered 231, and so on - until the last channel, numbered 259.
+比如，如果两块带有序列号KFXS-300 SPX的板卡的序列号为K0374和K2352，需要按顺序编号，从第200个分支开始，可以这样写：
 
-For more details, please refer to the configuration file for other exemples. 
+```xml
+<param name="200" value="374、2352"/>
+```
+
+这将定义第一块板卡“_K0374_”的分支号为200，第二块为201，以此类推。从板卡K2352的第一个分支将编号为230（因为K0374有30个通道），第二个将编号为231，依此类推，直到最后一个通道，编号为259。
+
+更详细的信息，请参考配置文件中的其他例子。
 
 ##### fxs-hotlines
 
-Sets hotlines for the KFXS based boards
+为基于KFXS的板卡设置热线
 
-In this case, the options are sequences of branches and sequences of destination numbers, which define branches to be treated as "hotlines" and numbers to be dialed when they are take off hook. For instance:
+在这种情况下，选项是分支序列和目标号码的序列，这些序列定义了在摘机时要被拨打的分支和号码。例如：
 
 ```xml
 <param name="100" value="1234"/>
 <param name="200" value="4321"/> 
 ```
 
-In the first line, the branch numbered 100 will call extension 1234 when taken off hook, while in the second one, branch 200 will call number 4321 when taken off hook. 
+在第一行中，编号为100的分支在摘机时将拨打分机号码1234，在第二行中，编号为200的分支在摘机时将拨打号码4321。
 
 ##### fxs-options
 
-Allows you to set specific settings for FXS extension.
+允许您为FXS分机设置特定的设置。
 
-In this case, the settings are extension numbers (based on those defined in the **&lt;fxs-branches>**), and the options and their values.
+在这种情况下，设置是基于**&lt;fxs-branches>**中定义的分机号码，以及选项和其值。
 
 * context;
 * input-volume;
@@ -206,64 +200,63 @@ In this case, the settings are extension numbers (based on those defined in the 
 * accountcode;
 * flash-to-digits.
 
-Each option is separated from each other by a pipe "|" or a slash "/" and defined after the colon ":". Example:
+每个选项之间使用管道符“|”或斜杠“/”进行分隔，并在冒号“:”后定义。例如：
 
 ```xml
 <param name="200" value="input-volume:1|context:master-branch" />
 ```
 
-For more information on the syntax and examples, please refer to the configuration file.
+有关语法和示例的更多信息，请参考配置文件。
 
-For more information visit the configuration file '**khomp.conf.xml'**. 
+欲查看更多信息，请访问配置文件 '**khomp.conf.xml'**。
 
-### FreeSWITCH Configuration
+### FreeSWITCH配置
 
-When connections are received on the boards and devices Khomp, they are forwarded by the _Endpoint_ to specific contexts within the dialplan of FreeSWITCH®. These settings can be changed via the configuration file **khomp.conf.xml**, available on the FreeSWITCH configuration directory (by default, "**/usr/local/freeswitch/conf/autoload\_configs**").
+当连接到Khomp的板卡和设备时，它们将由_Endpoint_转发到FreeSWITCH®的拨号计划中的特定上下文中。这些设置可以通过配置文件**khomp.conf.xml**进行更改，该文件位于FreeSWITCH配置目录中（默认情况下为 "**/usr/local/freeswitch/conf/autoload_configs**"）。
 
-For details about the specific contexts, see section [Endpoint configuration](index.mdx#appendix).
+关于特定上下文的详细信息，请参阅 [Endpoint configuration](index.mdx#appendix) 章节。
 
-Below are details of how to configure the settings for incoming calls 
+以下是如何配置传入呼叫设置的详细信息
 
-#### Contexts for E1 channels
+#### E1通道的上下文
 
-For E1 boards, inbound contexts are predefined as option **context-digital** with default value as follows:
+对于E1板卡，传入上下文预定义为选项**context-digital**，其默认值如下所示：
 
 ```xml
 <param name="context-digital" value="khomp-DD-LL"/>
 ```
 
-This standard defines the context that links will be redirected in accordance with the number of the board and number of the link: **DD** is the device number (two digits), and **LL** is the number of the link (also with two digits).
+此标准定义了将根据板卡号和链接号重定向链接的上下文：**DD**是设备号（两位数字），**LL**是链接号（同样是两位数字）。
 
-However, it is possible to configure other inbound contexts, with different formats. There is format **CCC**, which means the channel number on the card (three digits), and **SSSS**, which represents the serial board number (with four digits).
+但是，您可以配置其他传入上下文，具有不同的格式。有格式**CCC**，表示卡上的通道号（三位数字），以及**SSSS**表示串行板号（四位数字）。
 
-Examples for configuration entries (**khomp.conf.xml**):
+配置条目示例（**khomp.conf.xml**）：
 
 ```xml
-<!-- Serial board number and sequential link (ex: khomp-01-00) -->
+<!-- 串行板号和顺序链接（例如：khomp-01-00） -->
 <param name="context-digital" value="khomp-DD-LL"/>
 ```
 
 ```xml
-<!-- Serial board number and sequential link (ex: khomp-3049-00) -->
+<!-- 串行板号和顺序链接（例如：khomp-3049-00） -->
 <param name="context-digital" value="khomp-SSSS-LL"/>
 ```
 
 ```xml
-<!-- Sequential board number and the channel (ex: khomp-00-001) -->
+<!-- 顺序板号和通道（例如：khomp-00-001） -->
 <param name="context-digital" value="khomp-DD-CCC"/>
 ```
 
 ```xml
-<!-- Receive all calls in one context (khomp-digital) -->
+<!-- 在一个上下文（khomp-digital）中接收所有呼叫 -->
 <param name="context-digital" value="khomp-digital"/>
 ```
 
-Follows an example the context usage inside the dialplan:
+下面是拨号计划中上下文的使用示例：
 
 ```xml
 <!--
-The present context in 'extensions.conf' will handle calls
-that come from the link 0 (first link) of the board 0.
+当前位于'extensions.conf'的上下文将处理来自板卡0的第0个链路的呼叫。
 -->
 <context name="khomp-00-00">
              .
@@ -272,12 +265,11 @@ that come from the link 0 (first link) of the board 0.
 </context>
 ```
 
-Another example, using the same format:
+另一个使用相同格式的示例：
 
 ```xml
 <!-- 
-The present context in 'extensions.conf' will handle calls
-that come from the link 1 (second link) of the board 0.
+当前位于'extensions.conf'的上下文将处理来自板卡0的第1个链路的呼叫。
 -->
 <context name="khomp-00-01>
              .
@@ -286,7 +278,7 @@ that come from the link 1 (second link) of the board 0.
 </context>
 ```
 
-A complete example, with a few simple actions:
+下面是一个完整的示例，包含几个简单的动作：
 
 ```xml
 <context name="khomp-00-00">
@@ -313,50 +305,50 @@ A complete example, with a few simple actions:
 </context>
 ```
 
-This dialplan defines that:
+该拨号计划定义了以下内容：
 
-1. The incoming calls on the link **0** of the board **0** will have the following handling:  
-   * Calls to the extension 1234 for will be redirected to the second link on the first board (b0L1), calling number **2345**;  
-   * Calls to any four digit number starting with**23** will be redirected to SIP phones numbered **11** plus the last two digits of the number dialed.
-2. The incoming calls on the link **1** of the board **0** for the number **1111** will be redirected to the first link of the first board (b0L0) calling number **2345**.
+1. 板卡 0 的链路 0 上的呼入电话将有以下处理方式：
+   * 拨打分机号码 1234 的电话将被重定向到第一块板卡的第二条链路（b0L1），拨打号码为 2345；
+   * 以 23 开头的任何四位数号码将被重定向到 SIP 电话的号码为 11 加上拨打的号码的最后两位数。
+2. 板卡 0 的链路 1 上的号码为 1111 的呼入电话将被重定向到第一块板卡的第一条链路（b0L0），拨打号码为 2345。
 
-#### Contexts of FXS/FXO/GSM channels
+#### FXS/FXO/GSM 通道的上下文环境
 
-Just as in the context of E1 cards, inbound links are forwarded to the Endpoint FreeSwitch.
+与 E1 卡的上下文环境一样，呼入链路会被转发到 Endpoint FreeSwitch。
 
-The context is pre-defined as follows, according to the file **khomp.conf.xml**:
+根据文件 khomp.conf.xml，上下文环境预定义如下：
 
 ```xml
-<param name="context-gsm" value="khomp-DD-CC"/> ;placas GSM
+<param name="context-gsm" value="khomp-DD-CC"/> ; GSM 板卡
 ```
 
 ```xml
-<param name="context-fxs" value="khomp-DD-CC"/> ; placas FXS
+<param name="context-fxs" value="khomp-DD-CC"/> ; FXS 板卡
 ```
 
 ```xml
-<param name="context-fxo" value="khomp-DD-CC"/> ; placas FXO
+<param name="context-fxo" value="khomp-DD-CC"/> ; FXO 板卡
 ```
 
-For these options, **DD** is the device number (two digits), and **CC** is the channel number (also two digits). There is also the **SSSS** format, which represents the serial number board.
+在这些选项中，**DD** 是设备号（两位数），**CC** 是通道号（也是两位数）。还有表示序列号板卡的 **SSSS** 格式。
 
-* **NOTE**: In the **KGSM** board, incoming calls are **always** redirected to the **"s"** extension, since the GSM protocol does not identify the target number, only the originator - if not omitted.
+* **注意**：在 **KGSM** 板卡上，呼入电话始终被重定向到 **"s"** 分机号码，因为 GSM 协议仅识别来源号码，而不识别目标号码 - 除非目标号码被省略。
 
-##### Priority settings on the FXS branches
+##### FXS 分机的优先级设置
 
-On calls originated from an FXS branch, the Endpoint searches for a valid extension (digits sent) after the DTMF **#** or after the _timeout_ (option **fxs-digit-timeout**). That search is done in the context defined in section **&lt;fxs-options>**, or if no context configured, the search is done in context defined in **context-fxs**. 
+对于从 FXS 分机发起的呼叫，在 DTMF **#** 或 _超时_（选项 **fxs-digit-timeout**）之后，Endpoint 寻找有效的分机号码（发送的数字）。该搜索在 **&lt;fxs-options>** 部分定义的上下文中进行，如果没有配置上下文，则在 **context-fxs** 中定义的上下文中进行搜索。
 
-#### Contexts for SMS messages (GSM only)
+#### 短信消息的上下文环境（仅适用于 GSM）
 
-SMS messages are received by the Khomp _Endpoint_ and forwarded to FreeSWITCH as a normal connection but no audio, which has some variables set with information received in the message - for more information on these variables, see the documentation of the variables of the _Endpoint_. This context can also be modified in the same way as the above contexts.
+SMS消息由Khomp _Endpoint_接收并转发到FreeSWITCH，作为一个正常的连接，但没有音频。消息中还设置了一些变量，这些变量包含了接收到的信息。有关这些变量的更多信息，请参阅_Endpoint_的变量文档。这个上下文也可以像上面的上下文一样进行修改。
 
-The default value for this option follows (**khomp.conf.xml**):
+这个选项的默认值如下（**khomp.conf.xml**）：
 
 ```xml
 <param name="context-gsm-sms" value="khomp-sms-DD-CC"/>
 ```
 
-Where **DD** is the device number (two digits), and **CC** is the channel number (also with two digits). For example:
+其中**DD**是设备号（两位数字），**CC**是通道号（也是两位数字）。例如：
 
 ```xml
 <context name="khomp-sms-00-01">
@@ -369,29 +361,29 @@ Where **DD** is the device number (two digits), and **CC** is the channel number
 </context>
 ```
 
-#### Contexts for Khomp_PR channels (KPR)
+#### Khomp_PR通道（KPR）的上下文
 
-For these cards, inbound links have a pre-defined context, as shown below:
+对于这些卡，入站链路有一个预定义的上下文，如下所示：
 
 ```xml
 <param name="context-pr" value="khomp-DD-CC"/> 
 ```
 
-In this case, **DD** is the device number (two digits), and**CC** is the channel number (also two digits). The name and format of this context can also be changed through the "context-pr" in the configuration file. 
+在这种情况下，**DD**是设备号（两位数字），**CC**是通道号（同样是两位数字）。该上下文的名称和格式也可以通过配置文件中的"context-pr"进行更改。
 
-#### Groups contexts
+#### 组上下文
 
-The section **groups**, in the configuration file **khomp.conf.xml**, can be used to define specific settings for certain groups of channels.
+在配置文件**khomp.conf.xml**的**groups**部分，可以用来定义特定组的通道的特定设置。
 
-This section is detailed in the section **Endpoint Configuration**. 
+这个部分在**Endpoint配置**部分有详细介绍。
 
-#### Using the _bridge_ application
+#### 使用_bridge_应用程序
 
-The **bridge** application is responsible for generating calls from the FreeSWITCH from a dialplan. This application can be used to generate calls from different Endpoints technologies, following a specific format to define destination, dialing options and define the communication _Endpoint_ to be used.
+**桥接（bridge）** 应用程序负责从拨号计划中生成来自 FreeSWITCH 的呼叫。该应用程序可用于从不同的终端点技术中生成呼叫，遵循特定格式来定义目的地、拨号选项和要使用的通信**终端点**。
 
-##### Fields relating to the Khomp _Endpoint_ 
+##### 与 Khomp **终端点** 相关的字段
 
-When used for **Khomp** channels, the _bridge_ _string_ can have two, three or four fields separated by slash (/). Some example strings:
+当用于 **Khomp** 通道时，**桥接字符串**（bridge string）可以由两个、三个或四个由斜杠（/）分隔的字段组成。以下是一些示例字符串：
 
 ```xml
 <action application="bridge" data="Khomp/B2L0/32625644"/>
@@ -405,49 +397,49 @@ When used for **Khomp** channels, the _bridge_ _string_ can have two, three or f
 <action application="bridge" data="Khomp/r304"/>
 ```
 
-In the first five examples, three fields have been specified; in the sixth, four fields are used; in the last three examples, just two are used.
+在前五个示例中，指定了三个字段；在第六个示例中，使用了四个字段；在最后三个示例中，只使用了两个字段。
 
-The fields description for the Khomp Endpoint:
+针对 Khomp 终端点的字段描述：
 
-* **1st** field: **Khomp**: identifying the type of _Endpoint_ in question;
-* **2nd** field: **B2L0**, **S0411**, **Gpstn**, etc: represents the **Policy for channel allocation** (detailed below);
-* **3rd** field: **32625644** and **99991234**: the destination numbers (missing for calls to **KFXS** channels);
-* **4th** field: **category=4:orig=4855553232**: additional options, detailed below.
+* 第一个字段：**Khomp**，表示所讨论的_终端点_的类型；
+* 第二个字段：**B2L0**、**S0411**、**Gpstn** 等，代表**通道分配策略**（详见下文）；
+* 第三个字段：**32625644** 和 **99991234**，目标号码（对于呼叫到 **KFXS** 通道，此字段缺失）；
+* 第四个字段：**category=4:orig=4855553232**，附加选项，详见下文。
 
-NOTE: The _bridge_ allocation string with only two fields is specific to the KFXS boards, where the destination is the channel itself.
+注意：只有两个字段的 _桥接分配字符串_ （bridge allocation string）是特定于 KFXS 板的，其中目标是通道本身。
 
-##### Policy for channel allocation
+##### 通道分配策略
 
-The policy for allocation of channels on the **Khomp** Endpoint can be specified in the **bridge** string itself or in the **groups** section (inside the configuration file **khomp.conx.conf**). To specify boards, links and channels, the following syntax is available (considering X, Y and Z as any numbers):
+**Khomp** 端点的通道分配策略可以在 **bridge** 字符串中或者 **groups** 部分（在配置文件 **khomp.conx.conf** 中）进行指定。为了指定板卡、链路和通道，可以使用下面的语法（其中 X，Y 和 Z 表示任意数字）：
 
-* b**X** \-- search the channels on the board **X**, ascending order;
-* b**X**L**Y** \-- search channel on the link **Y** from **X** board, ascending order;
-* b**X**c**Y** \-- try to allocate channel **Y** from board **X**;
-* b**X**c**Y**\-**Z** \-- search for channels starting from channel **Y** to channel **Z** (inclusive) of board **X**, ascending order;
-* B**X**c**Y**\-**Z** \-- same as above, but descending order;
-* s**X** \-- search the channels on the board of serial number **X**, ascending order;
-* s**X**L**Y** \-- search channel on the link **Y** from board of serial number **X**, ascending order;
-* s**X**c**Y** \-- try to allocate channel **Y** from board of serial number **X**;
-* s**X**c**Y**\-**Z** \-- search for channels starting from channel **Y** to channel **Z** (inclusive) from board of serial number **X**, ascending order;
-* S**X**c**Y**\-**Z**\-- same as above, but descending order.
+* b**X** -- 查找板卡 **X** 上的通道，按升序排列；
+* b**X**L**Y** -- 查找来自板卡 **X** 的链路 **Y** 上的通道，按升序排列；
+* b**X**c**Y** -- 尝试分配板卡 **X** 上的通道 **Y**；
+* b**X**c**Y**\-**Z** -- 查找来自板卡 **X** 的通道 **Y** 到通道 **Z**（包括两个端点），按升序排列；
+* B**X**c**Y**\-**Z** -- 与上述一样，但按降序排列；
+* s**X** -- 查找序列号为 **X** 的板卡上的通道，按升序排列；
+* s**X**L**Y** -- 查找序列号为 **X** 的板卡上链路 **Y** 上的通道，按升序排列；
+* s**X**c**Y** -- 尝试分配序列号为 **X** 的板卡上的通道 **Y**；
+* s**X**c**Y**\-**Z** -- 在序列号为 **X** 的板卡上查找通道 **Y** 到通道 **Z**（包括两个端点），按升序排列；
+* S**X**c**Y**\-**Z** -- 与上述一样，但按降序排列。
 
-To search for extensions of cards**KFXS** according to the extension number, can be used the following syntax (whereas X and Y valid extension numbers):
+要根据卡片 **KFXS** 的分机号搜索，可以使用以下语法（其中 X 和 Y 是有效的分机号）：
 
-* r**X**\- search branch numbered **X**;
-* R**X**\- equivalent to the above;
-* r**X**\-**Y**\- search from branch **X** to **Y**, ascending order;
-* R**X**\-**Y**\- search from branch **X** to **Y**, descending order.
+* r**X**\- -- 查找编号为 **X** 的分支；
+* R**X**\- -- 与上述一样；
+* r**X**\-**Y**\- -- 从分支 **X** 到 **Y** 进行搜索，按升序排列；
+* R**X**\-**Y**\- -- 从分支 **X** 到 **Y** 进行搜索，按降序排列。
 
-The capitalization of the letter 'B', 'S' or 'R' defines the search order of the channels: if capitalized, order is descending; otherwise, ascending.
+大写字母 'B'、'S' 或 'R' 的大小写定义了通道的搜索顺序：如果大写，则按降序排列；否则，按升序排列。
 
-As for the allocation of channels across groups, the following syntax is available:
+关于通道在组之间的分配，可以使用以下语法：
 
-* ggroupname - uses the string defined the group "groupname" in the configuration file (detailed in the configuration section of the Endpoint).
-* Ggroupname - equivalent to the above.
+* g组名 - 使用配置文件中定义的“组名”来指定字符串（详见Endpoint配置部分）。
+* G组名 - 与上述相同。
 
-#### Grouping channel allocations
+#### 分组通道分配
 
-There are cases where you need to get more channels for a particular device or particular group of extensions. For this, there is an extension available in string allocation, with respect to the use of token sum (**+**) to concatenate multiple strings_binding_, as follows:
+有时需要为特定设备或特定扩展组获得更多通道。为此，可以使用字符串分配的扩展，使用令牌和加号（+）来连接多个字符串绑定，如下所示：
 
 ```xml
 <action application="bridge" data="Khomp/B1L0+B2L0/32332933"/>
@@ -457,86 +449,86 @@ There are cases where you need to get more channels for a particular device or p
 <action application="bridge" data="Khomp/*gOperadora1+gOperadora2/98891234"/>
 ```
 
-This grouping is available for the _application_ **bridge** and on the specification of groups. The processing of allocation takes place from left to right - except when using cyclic channel allocation, where**all** the specified channels are scanned simultaneously.
+这种分组适用于_bridge_应用，并且适用于组的指定。分配的处理从左到右进行 - 除非使用循环通道分配，此时将同时扫描所有指定的通道。
 
-##### Cyclical and/or _fair_ allocation
+##### 循环和/或_公平_分配
 
-Another way for allocation of channels is the cyclic and/or _fair_ allocation, which chooses the channel that has **completed** the the lowest number of **outgoing** calls. This mode of allocation may be used by passing an asterisk (**\***) before the allocation string of channels (as can be seen in the section above, in the second and fifth examples).
+另一种通道分配的方式是循环和/或_公平_分配，它选择已完成的且具有最少**外呼**通话数量的通道。通过在通道的分配字符串之前加上星号（***），可以使用此分配模式（可以在上面的部分中的第二个和第五个示例中看到）。
 
-When started with an asterisk (**\***), other forms of allocation (increasing, decreasing, etc) are used to decide what channel will be allocated when there are two or more channels with less number of outgoing calls.
+当以星号（**\***）开始时，其他形式的分配（增加、减少等）用于决定在拥有两个或更多通道的情况下将分配哪个通道以进行呼出。
 
-* **WARNING: The use of fair and/or cyclic is recommended only for analog (KFXO), branches (KFXS) and cellular interface (KGSM) boards**. E1 connections should allocate channels in one way (ascending/descending) from one side and the opposite on the other to avoid problems of double seizure (which may occur in R2/MFC signaling). Fair/cyclic allocation also costs more in memory and processor footprint, which tends to be a higher cost in E1 due to the higher number of channels (30 in each link).  
-    
-For these reasons, fair/cyclic allocations should only be used on signalizations where it can represent any real difference, like equalizing the charge costs of the lines, the total usage, or the number of connections received by each branch.
+**警告：仅推荐在模拟（KFXO）、分支（KFXS）和蜂窝接口（KGSM）板上使用公平和/或循环**。E1连接应该从一侧按一种方式（升序/降序）分配通道，而在另一侧则相反，以避免双重占用的问题（在R2/MFC信令中可能发生）。公平/循环分配还会增加内存和处理器资源的成本，而E1由于通道数量较多（每个链路30个），成本则会更高。
 
-##### Available options
+因此，公平/循环分配应仅在能够代表任何真正差异的信令中使用，例如均衡线路的通话成本、总使用量或每个分支接收的呼叫数量。
 
-* **orig**: Sets the originator number, **without changing the variable ${CALLERID(num)}**. That is, the option **orig** serves **only** to pass a number of different source of${origination\_caller\_id\_number}. If FreeSWITCH has already set the variable ${origination\_caller\_id\_number}, which is the default behavior, Endpoint automatically uses this value as a reference to the number of origin, without having to pass any additional options.  
-    
-On the boards **KGSM**, is set to **restricted**, omits the number of origin. Example:
+##### 可用选项
+
+* **orig**：设置发起者号码，**不更改变量${CALLERID(num)}**。也就是说，选项**orig**仅用于传递不同源的${origination\_caller\_id\_number}号码。如果FreeSWITCH已经设置了变量${origination\_caller\_id\_number}，这是默认行为，Endpoint将自动使用此值作为发起者号码的参考，而无需传递任何其他选项。
+
+在**KGSM**板上，将其设置为**restricted**，不包含发起者号码。示例：
 
 ```xml
 <action application="bridge" data="Khomp/b0/99887766/orig=restricted"/>
 ```
 
-* **category**: When set to a numeric value, sets the category of outgoing call to this value (available only in R2/MFC signaling);
-* **uui**: When adjusted for a number and a string of text, separated by hash ("#"), sends a "UserToUser" to the other end before making the call - the first value will be the descriptor and the second one will be the message as the text (available only in ISDN signaling);
-* **ring\_cadence**: When set to a cadence name (listed in the **\[cadences\]** section), uses this for ringing FXS channels;
-* **ring**: When set to two numbers separated by a dot ("."), defines the cadences to be used while ringing a FXS channel - the first time is the ringing time, and the second one, the silence time;
-* **ring\_ext**: When set to two numbers separated by a dot ("."), defines the extended cadences to be used while ringing a FXS channel, executed after the **ring** specification - the first time
-* **usr\_xfer**: Defines a group of DTMF digits to initiate a transfer between PBXes (using QSig or FXO FLASH, for instance);
-* **drop\_on**: When set to "message\_box", "human\_answer", "answering\_machine", "carrier\_message", "unknown" or a list them - separated by plus sign ("+") or dot ("." ) - drops the call when detect voice mail box, human answer, answering machine messages, operator messages, or unknown answer pattern - respectively. Available in digital signals (E1 links and boards KGSM). Additionally, the information service is reported to the user in the variable**KCallAnswerInfo**;
-* **answer\_info**: When specified (take no parameters), report answer information to the user through the variable**KCallAnswerInfo**
-* **pre**: When set to a string of DTMF digits, uses these to pre-allocate an output channel in an analog PABX, dial the desired number of B below. Only available for signaling analog (FXO);
-* **pre\_answer**: When set (need no value), answers the channel before the connection is completed - allowing, for instance, DTMF tones to sent (useful for use in a **DISA**);
-* **output\_volume**: Sets the output volume of the link (ranges from -10 to +10);
-* **input\_volume**: Sets the volume of inbound link (ranges from -10 to +10);
+* **category**: 将其设置为数值时，将呼出通话的类别设置为该值（仅在R2/MFC信令中可用）；
+* **uui**: 当调整为一个数字和一个由井号（"#"）分隔的文本字符串时，在拨打电话之前向对方发送“UserToUser” - 第一个值将是描述符，第二个值将是文本消息（仅在ISDN信令中可用）；
+* **ring\_cadence**: 将其设置为节奏名称（在**\[节奏\]**部分列出）时，将该名称用于振铃FXS通道；
+* **ring**: 当设置为由点号（"."）分隔的两个数字时，定义在振铃FXS通道时要使用的节奏 - 第一个时间是振铃时间，第二个时间是静音时间；
+* **ring\_ext**: 当设置为由点号（"."）分隔的两个数字时，定义在使用**ring**规范后振铃FXS通道时要使用的扩展节奏 - 第一个时间
+* **usr\_xfer**: 定义了一组DTMF数字，用于在PBX之间发起传输（例如使用QSig或FXO FLASH）；
+* **drop\_on**: 当设置为"message\_box"、"human\_answer"、"answering\_machine"、"carrier\_message"、"unknown"或它们的列表 - 用加号（"+"）或点号（"."）分隔 - 在检测到语音信箱、人工接听、自动答录机消息、操作员消息或未知的答复模式时挂断通话 - 仅适用于数字信号（E1链路和KGSM板）。此外，信息服务将通过变量**KCallAnswerInfo**报告给用户；
+* **answer\_info**: 当指定时（不带参数），通过变量**KCallAnswerInfo**向用户报告答复信息；
+* **pre**: 当设置为一串DTMF数字时，使用这些数字预分配模拟PABX的输出通道，在下面拨打所需数量的B。仅适用于模拟信令（FXO）；
+* **pre\_answer**: 当设置后（不需要值），在连接完成之前应答通道 - 允许例如发送DTMF音调（在**DISA**中非常有用）；
+* **output\_volume**: 设置链接的输出音量（范围从-10到+10）；
+* **input\_volume**: 设置传入链接的音量（范围从-10到+10）；
 
-#### List of variables
+#### 变量列表
 
-Here's a list of variables available in the Endpoint:
+以下是在终端点可用的变量列表：
 
-* **KDropCollectCall**: When set before ringing or answer an incoming call, enables ("yes") or disables ("no", default) the drop of collect calls based on signaling received from the central public, double answer, audio tone recognition (can be defined globally);
-* **KR2SendCondition**: When set to a numeric value, before the ringing an incoming call, adjusts the condition for this Endpoint to this value (available only on R2 signaling);
-* **KR2GotCategory**: Adjusted by the Endpoint when an incoming call is received, with the category number of the caller (only available on R2 signaling);
-* **KR2GotCondition \***: Adjusted by the Endpoint, available after returning from a call made by FreeSWITCH (**bridge** application). Has the condition of the remote end received when making the call (available only for R2 signaling);
-* **KISDNGotCause \***: Adjusted by the Endpoint, available after returning from a call made by FreeSWITCH (**bridge** application). Has the ISDN "cause" code received when making the call (available only for ISDN signaling);
-* **KCallAnswerInfo \***: Adjusted by the Endpoint, available after returning from a call made by FreeSWITCH (**bridge** application). Contains the service information identified to make the call (available only for digital signaling - E1 and GSM);
-* **KSmsDelivered**: Adjusted by the Endpoint when sending a SMS message with the application **KSendSMS**, saying whether the message was delivered successfully ("yes") or not ("no");
-* **KSmsErrorCode**: Adjusted by the Endpoint when sending a SMS message with the application **KSendSMS**, containing the error code that happened when sending the message;
-* **KSmsErrorName**: Adjusted by the Endpoint when sending a SMS message with the application **KSendSMS**, contains the name of the error or "None" if there has been no error;
-* **KSmsType**: Adjusted for the input Endpoint in the context of SMS messages, defines the type of message received (can contain the values "message", "confirm" or "broadcast";
-* **KSmsFrom**: Adjusted for the input Endpoint in the context of SMS messages, sets the number of origin of the received message (available on types" message "and" confirm ");
-* **KSmsDate**: Adjusted for the input Endpoint in the context of SMS messages, sets the date of sending the message (available on types "message" and "confirm");
-* **KSmsSize**: Adjusted for the input Endpoint in the context of SMS messages, contains the size (in bytes) of the received message (available on types "message" and "broadcast");
-* **KSmsMode**: Adjusted for the input Endpoint in the context of SMS messages, contains the encoding type of the received message (available on types "message" and "broadcast");
-* **KSmsBody**: Adjusted for the input Endpoint in the context of SMS messages, contains the text of the received message (available in types "message" and "broadcast");
-* **KSmsDelivery**: Adjusted for the input Endpoint in the context of SMS messages, containing the date of delivery of the message sent earlier (available in type "confirm");
-* **KSmsStatus**: Adjusted for the input Endpoint in the context of SMS messages, contains the status of the message sent earlier (available on the type "confirm");
-* **KSmsSerial**: Adjusted for the input Endpoint in the context of SMS messages, contains the serial number of the received message (available on the type "broadcast");
-* **KSmsPage**: Adjusted for the input Endpoint in the context of SMS messages, contains the page number of the received message (available on the type broadcast");
-* **KSmsPages**: Adjusted for the input Endpoint in the context of SMS messages, contains the total number of pages to be received (available in type "broadcast");
-* **KUserInfoDescriptor**: Sets/reports protocol descriptor of the User-to-User Information message (ISDN).
-* **KUserInfoData**: Sets/reports data in the User-to-User Information message (ISDN).
-* **KFaxSent**: Adjusted by the Endpoint when sending FAX with **KSendFax** application, and determines whether the fax was successfully sent ("yes") or not ("No");
-* **KFaxReceived**: Adjusted by channel when receiving FAX with **KReceiveFax** application, and determines whether the fax was successfully received ("yes") or not ("no");
-* **KFaxResult**: Adjusted by the channel when sending or receiving FAX with the application **KSendFax** or **KReceiveFax** (respectively), and defines the result of execution.
+* **KDropCollectCall**: 在响铃或接听来电之前设置，启用（“是”）或禁用（“否”，默认）基于中央公共双重应答信令的有偿来电丢弃（可以全局定义）；
+* **KR2SendCondition**: 在响铃来电之前设置为一个数字值，调整此终端的条件为该值（仅适用于 R2 信令）；
+* **KR2GotCategory**: 当收到来电时，由终端调整，包含呼叫者的类别号码（仅适用于 R2 信令）；
+* **KR2GotCondition \***: 由终端调整，在使用 FreeSWITCH（bridge 应用程序）发起呼叫后返回。包含在发起呼叫时远程端接收到的条件（仅适用于 R2 信令）；
+* **KISDNGotCause \***: 由终端调整，在使用 FreeSWITCH（bridge 应用程序）发起呼叫后返回。包含在发起呼叫时收到的 ISDN “cause” 代码（仅适用于 ISDN 信令）；
+* **KCallAnswerInfo \***: 由终端调整，在使用 FreeSWITCH（bridge 应用程序）发起呼叫后返回。包含用于发起呼叫的服务信息（仅适用于数字信令 - E1 和 GSM）；
+* **KSmsDelivered**: 在使用 **KSendSMS** 应用程序发送短信消息时，由终端调整，表示消息是否成功发送（“是”）或失败（“否”）；
+* **KSmsErrorCode**: 在使用 **KSendSMS** 应用程序发送短信消息时，由终端调整，包含发送消息时发生的错误代码；
+* **KSmsErrorName**: 在使用 **KSendSMS** 应用程序发送短信消息时，由终端调整，包含错误的名称，如果没有错误则为“None”；
+* **KSmsType**: 在短信消息的输入终端上调整，定义收到的消息类型（可以包含值“message”、“confirm”或“broadcast”）；
+* **KSmsFrom**: 在短信消息的输入终端上调整，设置收到消息的来源号码（仅在类型为“message”和“confirm”时可用）；
+* **KSmsDate**: 在短信消息的输入终端上调整，设置发送消息的日期（仅在类型为“message”和“confirm”时可用）；
+* **KSmsSize**: 在短信消息的输入终端上调整，包含接收消息的大小（以字节为单位）（仅在类型为“message”和“broadcast”时可用）；
+* **KSmsMode**: 在短信消息的输入终端上调整，包含接收消息的编码类型（仅在类型为“message”和“broadcast”时可用）；
+* **KSmsBody**: 在短信消息的输入终端上调整，包含接收消息的文本内容（仅在类型为“message”和“broadcast”时可用）；
+* **KSmsDelivery**: 在短信消息的输入终端上调整，包含先前发送的消息的交付日期（仅在类型为“confirm”时可用）；
+* **KSmsStatus**: 在短信消息的输入终端上调整，包含先前发送的消息的状态（仅在类型为“confirm”时可用）；
+* **KSmsSerial**: 在短信消息的输入终端上调整，包含接收消息的序列号（仅在类型为“broadcast”时可用）；
+* **KSmsPage**: 在短信消息的输入终端上调整，包含接收消息的页码（仅在类型为“broadcast”时可用）；
+* **KSmsPages**: 在短信消息的输入终端上调整，包含需要接收的总页数（仅在类型为“broadcast”时可用）；
+* **KUserInfoDescriptor**: 设置/报告 ISDN 用户对用户信息消息的协议描述符；
+* **KUserInfoData**: 设置/报告 ISDN 用户对用户信息消息中的数据；
+* **KFaxSent**: 在使用 **KSendFax** 应用程序发送传真时由终端调整，确定传真是否成功发送（“是”）或失败（“否”）；
+* **KFaxReceived**: 在使用 **KReceiveFax** 应用程序接收传真时由信道调整，确定是否成功接收到传真（“是”）或失败（“否”）；
+* **KFaxResult**: 在使用 **KSendFax** 或 **KReceiveFax** 应用程序（分别）发送或接收传真时由信道调整，定义执行的结果。
 
-#### Description of variables
+#### 变量说明
 
-Below, follows an explanation on how to use variables of Khomp Endpoint in the dialplan, to communicate and/or to receive information:
+以下是关于在拨号计划中使用Khomp终端变量进行通信和/或接收信息的解释:
 
 ##### KDropCollectCall
 
-When activated, causes the Endpoint to drop Khomp collect calls through dual service (available for signaling 'R2 Digital' and FXO), through information available on the ISDN protocol and R2/MFC, or by detecting the audio call collect (available for any digital signage for E1, and GSM signaling).
+当激活时，通过ISDN协议和R2 / MFC中可用的信息，或通过检测音频呼叫集合（适用于任何数字标牌E1和GSM信号），使终端放弃Khomp集合呼叫通过双重服务（适用于信令'R2 Digital'和FXO）。
 
-This variable is useful to filter collect calls to certain extensions, and **must** be set before making any type of answer - applications such as **playback** and **bridge** should always be executed after setting this variable, for example.
+此变量可用于过滤特定分机的集合呼叫，必须在进行任何类型的应答之前设置 - 例如，`playback` 和 `bridge` 等应用程序应始终在设置此变量之后执行。
 
-For better functionality, is also recommended that no call status (_ringback_) is sent before this variable is set, so applications should be performed only after the correct setting of this variable.
+为了更好的功能，还建议在设置此变量之前不要发送呼叫状态（回铃音），因此应在正确设置此变量后才执行应用程序。
 
-This variable can be set locally and globally, both to **yes** or **no**. The adjustment of global variable to **yes** will drop all the collect calls, unless the particular call is set to **no** \- this allows the creation of a global filter of collect calls, with few exceptions.
+此变量可以在本地和全局上设置为 **yes** 或 **no**。将全局变量调整为 **yes** 将放弃所有集合呼叫，除非将特定呼叫设置为 **no** - 这允许创建一个具有少数异常的全局集合呼叫过滤器。
 
-Enabling the variable in context **default**:
+在 **default** 上下文中启用变量：
 
 ```xml
 <context name="default">
@@ -553,7 +545,7 @@ Enabling the variable in context **default**:
 </context>
 ```
 
-Enabling the variable in the global context, remembering that it must be configured in the file **vars.xml**:
+在全局上下文中启用变量，记住必须在 **vars.xml** 文件中进行配置：
 
 ```xml
 <X-PRE-PROCESS cmd="set" data="KDropCollectCall=yes"/>
@@ -561,20 +553,20 @@ Enabling the variable in the global context, remembering that it must be configu
 
 ##### KR2SendCondition
 
-When you receive a call, can be set before sending ringback by FreeSWITCH (ie, before the run FreeSWITCH applications **answer**, **bridge**). When used in signaling R2/MFC, this variable sets the condition for B to the numeric value desired.
+当您接到一个电话时，可以在发送回铃之前设置FreeSWITCH(即在运行FreeSWITCH应用程序 **answer**, **bridge** 之前)。当用于信令R2 / MFC时，此变量设置B的条件为所需的数值。
 
-Exemplo:
+示例：
 
 ```xml
-<!-- Condition "NUMBER CHANGED" warns the caller that the number of B has changed. -->
+<!-- 条件 "NUMBER CHANGED" 警告呼叫者B的号码已更改。 -->
 <action application="KR2SendCondition" data="3"/>
 ```
 
 ##### KR2GotCategory
 
-When you receive a call, is set by the Endpoint with the category received from the number that originated the call. It is set in signaling R2/MFC, and can be found anywhere in the dialplan.
+当您接到一个电话时，由Endpoint使用从发起呼叫的号码接收到的类别进行设置。它在信令R2 / MFC中设置，并且可以在拨号计划的任何地方找到。
 
-Example:
+示例：
 
 ```xml
 <action application="log" data="DEBUG KR2GotCategory [${KR2GotCategory}]"/>
@@ -582,9 +574,9 @@ Example:
 
 ##### KR2GotCondition
 
-Variable adjusted by the Endpoint, and available after returning from a call made by FreeSWITCH. Has the condition of B received when making the call. Available only for signaling R2/MFC.
+由Endpoint调整的变量，在从由FreeSWITCH发起的呼叫返回后可用。具有进行呼叫时接收到的B的条件。仅适用于信令R2 / MFC。
 
-Example:
+示例：
 
 ```xml
 <action application="log" data="DEBUG KR2GotCondition [${KR2GotCondition}]"/>
@@ -592,11 +584,11 @@ Example:
 
 ##### KUserInfoDescriptor
 
-Variable adjusted by the Endpoint in the context of entry, from information received by the ISDN network functionality through user-to-User Information. Contains the descriptor number of the protocol used by the other end, and usually contains the value '0 ', but this is dependent on application.
+由Endpoint在入口上下文中根据通过用户到用户信息从ISDN网络功能接收到的信息进行调整的变量。包含由对端使用的协议的描述符编号，通常包含值'0'，但这取决于应用程序。
 
-For further information, consult the specification ITU-T Q931 (more precisely, the specification table 4-26).
+有关更多信息，请参阅ITU-T Q931规范（更准确地说，是规范表4-26）。
 
-Example (working with the descriptor number of the protocol):
+示例（使用协议的描述符编号）：
 
 ```xml
 <action application="log" data="DEBUG KUserInfoDescriptor [${KUserInfoDescriptor}]"/>
@@ -604,652 +596,680 @@ Example (working with the descriptor number of the protocol):
 
 ##### KUserInfoData
 
-Variable adjusted by the channel in the context of entry, from information received by the ISDN network functionality through user-to-User Information. Contains the actual data, which were received in the form of a string of text.
+在入口上下文中，通过ISDN网络功能收到的信息来调整变量，通过用户对用户信息进行。包含以文本字符串形式接收的实际数据。
 
-More information about this feature, see the specification ITU-T Q931.
+有关此功能的更多信息，请参阅ITU-T Q931规范。
 
-Example (working with the data received):
+示例（使用接收到的数据进行操作）：
 
 ```xml
 <action application="log" data="DEBUG KUserInfoData [${KUserInfoData}]"/>
 ```
 
-It is important to note that the variables are sensitive to the capitalization of letters (case sensitive).
+重要的是要注意变量对字母的大小写敏感（区分大小写）。
 
 ##### KCallAnswerInfo
 
-Variable adjusted by the Endpoint. It is set in outbound connections, representing the type of answer performed by the other end. May contain the following values:
+由终端进行调整的变量。它在出站连接中设置，表示对端执行的答案类型。可能包含以下值：
 
-"MessageBox" (\*): detected mailbox of a cell phone;"CarrierMessage": message sent before the service provider;"AnsweringMachine" (\*\*): answering answering machine;"HumanAnswer" (\*\*): human service;"Fax": reported when a fax tone is detected."Unknown": unknown type of care;
+"MessageBox"（\*）：检测到手机号码的邮箱；“CarrierMessage”：在服务提供商之前发送的消息；“AnsweringMachine”（\*\*）：应答唤醒设备；“HumanAnswer”（\*\*）：人工服务；“Fax”：在检测到传真音调时报告。“Unknown”：未知类型的关注。
 
-(\*) This type of service is detected by signals at certain frequencies that are sent before the call comes into a mailbox, and vary by operator. The algorithm captures most of the mailboxes, but can fail if there is not a clear signal, or if it is not within the standards most commonly used;
+（\*）这种类型的服务是通过在呼叫进入邮箱之前发送的某些频率的信号来检测的，这些频率根据运营商而变化。该算法能够捕捉到大多数邮箱，但如果没有清晰的信号或不符合最常用的标准，则可能会失败。
 
-(\*\*) The difference between these two types of care depends on the specific configuration using the program **k3lanswerinfoconfig**, with the detection only based on heuristics and **never** with an accuracy of 100%. 
+（\*\*）这两种关注类型之间的区别取决于使用程序**k3lanswerinfoconfig**的特定配置，该配置仅基于启发式进行检测，**绝不**具有100％的准确性。
 
-## Console commands
+## 控制台命令
 
-List of available commands in the console for the FreeSWITCH Endpoint of Khomp:
+FreeSWITCH的Khomp终端可用的控制台命令列表：
 
-* **khomp channels disconnect** : Disconnect one or more channels. This command sends a message directly to the physical channel of the card in question, requesting a disconnection. Use with caution;
-* **khomp channels unblock** : Unlock blocked channels for input or output. Only available in digital signage via E1;
-* **khomp clear links**: Clears error counters on the links;
-* **khomp clear statistics**: Clears the statistics of channel connections, or statistics for a particular channel;
-* **khomp get** : Gets the number of options Endpoint Khomp;
-* **khomp kommuter** : Enables or disables kommuters connected via USB on this machine. Only accessible when the configuration "kommuter-activation" is set to "manual".
-* **khomp kommuter count**: Gets the amount of kommuters connected via USB on this machine;
-* **khomp log console**: Sets options in the console logs;
-* **khomp log disk**: Sets logging options to disk;  
-   * **khomp log console** and **khomp log disk** have auxiliary options **No**, which reverses the selection of messages, and **just**, which generalizes the choice. Examples:  
-      * **khomp log disk just commands events** (Enables **only** logging to the disk of commands and events);  
-         * **khomp log disk no commands** (Disable logging to the disk of commands sent to board);  
-         * **khomp log disk warnings** (Enables also logging to the disk of warnings from Endpoint).  
-   * More information on options for the **log** command, type: "**help khomp log disk**" or "**help console log khomp**".
-* **khomp log rotate**: Rotate log files from the Endpoint;
-* **khomp log status**: Shows log messages currently being written to disk and displayed on the console;
-* **khomp log trace isdn**: Enable Debugging ISDN signaling;
-* **khomp log trace k3l** : Enables debugging low-level API K3L;
-* **khomp log trace r2** : Enables debugging low-level signaling R2/MFC;
-* **khomp reset links**: Sends a reset command for a specific **E1** of a particular _card_;
-* **khomp revision**: Shows version number and revision of the Endpoint;
-* **khomp select sim**: Select the SIM card, available on the boards KGSM;
-* **khomp send command** : Sends command API K3L directly to the board (only for debugging, may compromise the stability of the system if used improperly);
-* **khomp send raw command** : Sends a command directly to the DSP board (only for debugging, may compromise the stability of the system if used improperly);
-* **khomp set** : Sets various options of the Endpoint Khomp;
-* **khomp show calls** : Shows states for calls, may also listing specific channels or boards;
-* **khomp show channels** : Shows the status of the channels Khomp and may also list specific adapter;
-* **khomp show links**: Display states of E1 links available.
-* **khomp show statistics** : Shows the statistics of channel connections, or statistics for a particular channel;
-* **khomp sms** : Send an SMS message for a given number, using KGSM channels;
-* **khomp summary** : Prints a summary of system boards and their features;
+* **khomp channels disconnect**: 断开一个或多个通道。该命令直接发送消息到所选卡的物理通道，请求断开连接。请谨慎使用；
+* **khomp channels unblock**: 解锁输入或输出通道的阻塞。仅在通过E1的数字标志中可用；
+* **khomp clear links**: 清除链路上的错误计数器；
+* **khomp clear statistics**: 清除通道连接的统计信息，或特定通道的统计信息；
+* **khomp get**: 获取Endpoint Khomp的选项数量；
+* **khomp kommuter**: 启用或禁用通过USB连接的kommuters。仅当配置的"kommuter-activation"设置为"manual"时可用；
+* **khomp kommuter count**: 获取通过USB连接到此设备的kommuters数量；
+* **khomp log console**: 设置控制台日志的选项；
+* **khomp log disk**: 设置将日志记录到磁盘的选项；
+   * **khomp log console**和**khomp log disk**提供辅助选项**No**，用于反向选择消息，以及**just**，用于广义选择。示例：  
+      * **khomp log disk just commands events**（仅将命令和事件日志记录到磁盘）；
+      * **khomp log disk no commands**（禁止将命令日志记录到磁盘）；
+      * **khomp log disk warnings**（还将终端警告日志记录到磁盘）。
+   * 关于**log**命令的更多选项信息，请输入命令： "**help khomp log disk**"或 "**help console log khomp**"。
+* **khomp log rotate**: 旋转Endpoint的日志文件；
+* **khomp log status**: 显示当前正在写入磁盘和显示在控制台上的日志消息；
+* **khomp log trace isdn**: 启用ISDN信令调试；
+* **khomp log trace k3l**: 启用低级API K3L调试；
+* **khomp log trace r2**: 启用低级信令R2/MFC调试；
+* **khomp reset links**: 发送重置命令给特定卡的特定E1；
+* **khomp revision**: 显示Endpoint的版本号和修订号；
+* **khomp select sim**: 选择在KGSM板上可用的SIM卡；
+* **khomp send command**: 直接将API K3L命令发送到板上（仅用于调试，如果使用不当可能会影响系统的稳定性）；
+* **khomp send raw command**: 直接发送命令到DSP板（仅用于调试，如果使用不当可能会影响系统的稳定性）；
+* **khomp set**: 设置Endpoint Khomp的各种选项；
+* **khomp show calls**: 显示呼叫状态，也可以列出特定通道或板；
+* **khomp show channels**: 显示Khomp通道的状态，也可以列出特定适配器；
+* **khomp show links**: 显示可用的E1链路状态；
+* **khomp show statistics**: 显示通道连接的统计信息，或特定通道的统计信息；
+* **khomp sms**: 使用KGSM通道向给定号码发送短信；
+* **khomp summary**: 打印系统板及其功能的摘要；
 
-## Additional features
+## 附加功能
 
-This chapter discusses additional features of the Endpoint, related to the special features present in certain signs. 
+本章讨论终端点的附加功能，与特定标志中存在的特殊功能相关。
 
-### Aplicações (applications) e canais
+### 应用与通道
 
-The Endpoint Khomp, and to record a type of communication channel "Khomp" also records the following items: 
+Endpoint Khomp记录一种类型的通信通道"Khomp"，以及以下项目：
 
-#### "KUserTransfer" application
+#### "KUserTransfer" 应用程序
 
-Performs the transfer process from the current channel _number_ for the extension using the signaling protocol QSig (Single Step Call Transfer) for boards configured with E1 ISDN signaling (ISDN), or use the FLASH command for FXO.
+通过QSig信令协议（单步呼叫转移）执行从当前通道`number`到分机的转移过程，适用于配置了E1 ISDN信令（ISDN）的板卡，或者使用FXO的FLASH命令。
 
-The syntax follows:
+语法如下:
 
 ```xml
 <action application="KUserTransfer" data="number[,options])"/>
 ```
 
-Example:
+例子:
 
 ```xml
 <action application="answer"/>
 <action application="KUserTransfer" data="2345"/>
 ```
 
-The fields have the following meanings:
+字段具有以下含义:
 
-* **number**: Number where the link should be transferred.
-* **options**: Sets the transfer options to be used, which are:  
-   * **N**: Wait until the channel is disconnected.
+* **number**: 链接应该转移的号码。
+* **options**: 设置要使用的转移选项，包括:
+   * **N**: 等到通道断开连接后再进行转移。
 
-#### Application "KSendSMS"
+#### 应用 "KSendSMS"
 
-This application has the function of sending SMS messages through the boards of KGSM Khomp using modules and SIM cards in the board to do so. The syntax of the application is as follows:
+此应用程序通过KGSM Khomp板卡和模块使用板卡上的SIM卡发送短信。应用程序的语法如下:
 
 ```xml
-<action application="KSendSMS" data="resource | destination | message" />
+<action application="KSendSMS" data="resource|destination|message" />
 ```
 
-Each field can be summarized in:
+每个字段可以总结如下:
 
-* **resource**: The following is a syntax identical to the allocation of channels Dial application, and defines what modem use;
-* **destination**: Number where to send the message, may be preceded or succeeded by**!** to request a confirmation of transmission;
-* **message**: Text (without quotes) to be sent to**destination**.
+* **resource**: 与 Dial 应用程序中的通道分配语法相同，定义要使用的调制解调器；
+* **destination**: 发送消息的号码，可以前置或后置**!**以请求发送确认；
+* **message**: 发送到**destination**的文本（不带引号）。
 
-After sending the message, the variables **KSmsDelivered** and **KSmsErrorCode** will contain the result of the post. For more information about these, please consult the section on variables used in the Endpoint.
+发送消息后，变量**KSmsDelivered**和**KSmsErrorCode**将包含发送结果。有关这些变量的更多信息，请参阅用于该端点的变量部分。
 
-Examples of use of this application are as follows:
+该应用程序的用法示例如下：
 
-* Sends "Test message." phone for "99887766" using the modem "1" (second modem) card "0":
+* 使用"1"号（第二个）调制解调器卡"0"，向电话号码"99887766"发送消息"Test message."：
 
 ```xml
-<action application="log" data="DEBUG Sending SMS ..." />
+<action application="log" data="DEBUG 发送短信..." />
 <action application="KSendSMS" data="b0c1|99887766|Test message" />
 ```
 
-* Sends "Test message." phone for "99887766" using the first free modem card "0", and checks the return shipment:
+* 使用第一个可用的调制解调器卡"0"，向电话号码"99887766"发送消息"Test message."，并检查返回发货情况：
 
 ```xml
-<action application="log" data="DEBUG  Sending SMS ..." />
+<action application="log" data="DEBUG 发送短信..." />
 <action application="KSendSMS" data="b0|99887766|Test message" />
-<action application="log" data="DEBUG Sent? ${KSmsDelivered}" />
-<action application="log" data="DEBUG Code: ${KSmsErrorCode}" />
-<action application="log" data="DEBUG Desc: ${KSmsErrorName}" />
+<action application="log" data="DEBUG 是否发送成功？${KSmsDelivered}" />
+<action application="log" data="DEBUG 错误码：${KSmsErrorCode}" />
+<action application="log" data="DEBUG 描述：${KSmsErrorName}" />
 ```
 
-* Sends "Test message." phone for "99887766" using the first free modem card "0", or the first free channel board "1" (if no free channel at the first sign):
+* 使用第一个可用的调制解调器卡"0"，或者第一个可用的通道板"1"（如果第一个标志位没有空闲通道），向电话号码"99887766"发送消息"Test message."：
 
 ```xml
-<action application="log" data="DEBUG Sending SMS ..." />
+<action application="log" data="DEBUG 发送短信..." />
 <action application="KSendSMS" data="b0+b1|99887766|Test message" />
 ```
 
-* Sends "Test message." phone for "99887766" using the first free modem card "0", requesting confirmation:
+* 使用第一个可用的调制解调器卡"0"，向电话号码"99887766"发送消息"Test message."，并请求确认：
 
 ```xml
-<action application="log" data="DEBUG Sending SMS ..." />
+<action application="log" data="DEBUG 发送短信..." />
 <action application="KSendSMS" data="b0|99887766!|Test message" />
 ```
 
-#### Application "KEchoCanceller"
+#### 应用程序 "KEchoCanceller"
 
-This application has the function to enable or disable the echo canceller channel.
+该应用程序具有启用或禁用回声消除器通道的功能。
 
 ```xml
 <action application="KEchoCanceller" data="action[,options])"/>
 ```
 
-Where:
+其中：
 
-* **actions**: It is **on** to enable the echo canceller, and **off** to disable;
+* **action**：输入**on**以启用回声消除器，输入**off**以禁用回声消除器；
 
-Example usage of this application:
+这个应用的示例用法：
 
 ```xml
 <action application="KEchoCanceller" data="off"/>
 ```
 
-#### Application "KAutoGainControl"
+#### 应用程序 "KAutoGainControl"
 
-This application has the function to enable or disable the automatic gain control in the channel.
+此应用程序的功能是启用或禁用通道的自动增益控制。
 
 ```xml
 <action application="KAutoGainControl" data="action[,options])"/>
 ```
 
-Where:
+其中：
 
-* **actions**: It is **on** to enable the automatic gain control, and **off** to disable;
+* **action**：可设置为 **on** 以启用自动增益控制，或者 **off** 以禁用。
 
-Example usage of this application:
+此应用程序的示例用法：
 
 ```xml
 <action application="KAutoGainControl" data="on"/>
 ```
 
-#### Application "KDTMFSuppression"
+#### 应用程序 "KDTMFSuppression"
 
-This application has the function to enable or disable the suppression of DTMF channel. The syntax of the application is as follows:
-
-```xml
-<action applicatin="KDTMFSuppression" value="action[,options])"/>
-```
-
-Where:
-
-* **actions**: It is**on** to enable DTMF suppression, and **off** to disable;
-
-It is important to note that when disabled suppression of DTMF, DTMF tones are passed inband _and_ will not be reported to FreeSWITCH. Thus FreeSWITCH does not recognize the DTMF tones, which may result in malfunction of applications such as IVR.
-
-Example usage of this application:
+此应用程序的功能是启用或禁用 DTMF 信号的抑制。应用程序的语法如下：
 
 ```xml
-<action applicatin="KDTMFSuppression" value="off"/>
+<action application="KDTMFSuppression" value="action[,options])"/>
 ```
 
-#### Application "KSetVolume"
+其中：
 
-This application has the function to adjust the volume of incoming and outgoing channels Khomp, and its syntax as follows:
+* **action**：可设置为 **on** 以启用 DTMF 抑制，或者 **off** 以禁用。
+
+需要注意的是，禁用 DTMF 抑制后，DTMF 信号将以内部信号的形式传递，并且不会被报告给 FreeSWITCH。因此，FreeSWITCH 将无法识别 DTMF 信号，这可能导致诸如 IVR 等应用程序的故障。
+
+此应用程序的示例用法：
+
+```xml
+<action application="KDTMFSuppression" value="off"/>
+```
+
+#### 应用程序 "KSetVolume"
+
+此应用程序的功能是调整 Khomp 通道的音量，包括输入和输出音量。应用程序的语法如下：
 
 ```xml
 <action application="KSetVolume" data="<volume>"/>
 <action application="KSetVolume" data="<output-volume>|<input-volume>"/>
 ```
 
-Where the fields have the following meanings:
+其中，各字段的含义如下：
 
-* **volume**: Sets the volume of input and output (-10 to +10);
-* **output-volume**: Sets the output volume (-10 to +10, "none" for no change);
-* **input-volume**: Sets the input level (-10 to +10, "none" for no change).
+* **volume**：设置输入和输出音量的值（-10 到 +10）；
+* **output-volume**：设置输出音量的值（-10 到 +10，使用 "none" 表示不更改）；
+* **input-volume**：设置输入音量的值（-10 到 +10，使用 "none" 表示不更改）。
 
-#### Application "KAdjustForFax"
+#### 应用程序 "KAdjustForFax"
 
-This application has the function of setting a channel for receiving Khomp signal FAX/modem, optimizing the communication channel for data traffic. Syntax:
-
-```xml
-<action application="KAdjustForFax" data=""/>
-```
-
-This application does not receive parameters. Example of use:
+该应用程序具有设置接收Khomp信号FAX/modem频道的功能，优化数据流量通信频道的功能。语法：
 
 ```xml
 <action application="KAdjustForFax" data=""/>
 ```
 
-#### Application "KSendFax"
-
-This application has the function to send faxes using digital channels or FXO connections Khomp in pre-established, and its syntax as follows:
+该应用程序不接收参数。使用示例：
 
 ```xml
-<action application="KSendFax" data="<file>[:<file2>[:...]][|<faxid>]"/>
+<action application="KAdjustForFax" data=""/>
 ```
 
-**This application requires a license purchased separately to be used in digital (non-FXO) channels**. Fields have the following meanings:
+#### 应用程序"KSendFax"
 
-* **file**: Files to be sent to the fax should be encapsulated in TIFF format and have a resolution of 98, 196 or 392 dpi;
-* **faxid**: the fax number. If not specified, the value is obtained by the id of the link, and if this also is not valid, the fax number will be set as default in K3L.
+该应用程序具有使用数字频道或FXO连接Khomp发送传真的功能，其语法如下：
 
-Example usage of this application:
+```xml
+<action application="KSendFax" data="<文件>[:<文件2>[:...]][|<传真ID>]"/>
+```
+
+**该应用程序需要单独购买的许可证才能在数字（非FXO）频道中使用**。字段具有以下含义：
+
+* **文件**：需要发送到传真的文件应以TIFF格式封装，并具有98、196或392 dpi的分辨率；
+* **传真ID**：传真号码。如果未指定，则该值通过链接的ID获得，如果这也无效，则传真号码将默认设置为K3L中的默认值。
+
+此应用程序的使用示例：
 
 ```xml
 <action application="KSendFax" data="/tmp/fax.tif:/home/root/fax2.tif,1234"/>
 ```
 
-#### Application "KReceiveFax"
+#### 应用程序"KReceiveFax"
 
-This application has the function of receiving digital channels or fax using the FXO Khomp, and its syntax as follows:
+该应用程序具有使用FXO Khomp接收数字频道或传真的功能，其语法如下：
 
 ```xml
-<action application="KReceiveFax" data="<file>[|<faxid>]/>
+<action application="KReceiveFax" data="<文件>[|<传真ID>]/>
 ```
 
-**This application requires a license purchased separately to be used in digital (non-FXO) channels**. Fields have the following meanings:
+**该应用程序需要单独购买的许可证才能在数字（非FXO）频道中使用**。字段具有以下含义：
 
-* **file**: Name that file will be assigned to incoming fax.
-* **faxid**: the fax number. If not specified, the value is obtained by the id of the link, and if this also is not valid, the fax number will be set as default in K3L.
+* **文件**：入站传真将分配给的文件名。
+* **传真ID**：传真号码。如果未指定，则该值通过链接的ID获得，如果这也无效，则传真号码将默认设置为K3L中的默认值。
 
-Example usage of this application:
+此应用程序的使用示例：
 
 ```xml
 <action application="answer" />
 <action application="KReceiveFax" data="/tmp/fax.tif"/>
 ```
 
-#### Channel "Khomp_SMS"
+#### 渠道 "Khomp_SMS"
 
-This communication channel is used to receive SMS and create incoming links in FreeSWITCH for each message received. This channel does not have any treatment or audio processing, and is called with five variables set:
+这个通讯渠道用于接收短信并在每次接收到消息时在FreeSWITCH中创建传入链接。此通道无需任何处理或音频处理，并提供五个设置变量来调用：
 
-* **KSmsFrom**, containing the number of source who sent the message;
-* **KSmsDate**, which sets the date/time of receipt of the message;
-* **KSmsSize**, representing the message size (in bytes);
-* **KSmsMode**, containing the encoding used to transmit the message;
-* **KSmsBody**, that is the message itself.
+- **KSmsFrom**，包含发送消息的来源号码；
+- **KSmsDate**，设置消息接收的日期/时间；
+- **KSmsSize**，表示消息大小（以字节为单位）；
+- **KSmsMode**，包含用于传输消息的编码；
+- **KSmsBody**，即消息本身。
 
-The FreeSWITCH dialplan processing can be used to store this message in a database, run any application, among others. However, the only action accepted by this channel is shutdown (Hangup), so this incoming call should be considered a special dialplan execution without audio streams or channel allocation. 
+FreeSWITCH 的呼叫计划处理可用于将此消息存储在数据库中、运行任何应用程序等。然而，此渠道仅接受关闭（挂断）操作，因此应将此传入呼叫视为特殊的呼叫计划执行，没有音频流或渠道分配。
 
-#### Channel "Khomp_PR"
+#### 渠道 "Khomp_PR"
 
-This communication channel is used to receive calls on boards passive recording (**KPR family** and **KFXO-HI**), creating incoming links on FreeSWITCH for each incoming call. This channel allows only receiving audio captured the _link_by not allowing both the transmission of audio signalings as the control.
+这个通讯渠道用于接收被动录音板（**KPR系列**和**KFXO-HI**）上的呼叫，在FreeSWITCH上为每个呼入呼叫创建传入链接。该通道仅允许接收通过链路捕获的音频，不允许音频信令和控制的传输。
 
-The FreeSWITCH dialplan processing can be used to record data on this link in a database, perform some special application and/or some recording application (such as **record**), among others. However, the only action accepted by this channel is shutdown (Hangup), so this should not be considered a common call. 
+FreeSWITCH 的呼叫计划处理可用于将此链接上的数据记录在数据库中，执行一些特殊应用程序和/或某个录音应用程序（如**record**）等。然而，此渠道仅接受关闭（挂断）操作，因此不应将其视为普通呼叫。
 
-## Codes and meanings
+## 代码和含义
 
-This chapter presents the codes present in the channel Khomp and their meanings, used in both events as in the AMI console commands: 
+本章介绍了渠道 Khomp 中的代码及其含义，这些代码在事件和 AMI 控制台命令中均有使用：
 
-### Channel state
+### 渠道状态
 
-Reflect the state of the channel on the board. In the case of E1 links, the state may have one or more of the following:
+在面板上反映通道的状态。对于E1链路，状态可以有以下一种或多种：
 
-* **Free**: the channel is free;
-* **Busy**: the channel is not free (or occupied, or failure);
-* **Outgoing**: the channel has an output connection;
-* **Incoming**: the channel has an input connection;
-* **Locked**: the channel is blocked;
-* **Outgoing Lock**: The channel is blocked for outgoing calls;
-* **Local Fail**: The channel has a fault (at this point);
-* **Incoming Lock**: the channel is blocked for incoming calls;
-* **Remote Lock**: there is a remote lock (at the other end) in this channel.
+* **空闲**：通道空闲；
+* **忙碌**：通道不空闲（或被占用、故障）；
+* **呼出**：通道有输出连接；
+* **呼入**：通道有输入连接；
+* **锁定**：通道被锁定；
+* **呼出锁定**：通道被锁定用于呼出电话；
+* **本地故障**：通道存在故障（此时）；
+* **呼入锁定**：通道被锁定用于呼入电话；
+* **远程锁定**：通道存在远程锁定（在另一端）。
 
-In the case of a FXS channel, the state is defined by one of these values:
+对于FXS通道，状态由以下值定义：
 
-* **On Hook**: the phone connected to this channel is on-hook or disconnected;
-* **Off Hook**: the phone connected to this channel is off the hook;
-* **Ringing**: the channel is being called;
-* **Failure**: the channel is in failure due to communication problems between the central and the plate.
+* **摘机**：连接到该通道的电话机处于摘机或未连接状态；
+* **挂机**：连接到该通道的电话机处于摘机状态；
+* **响铃**：通道正在被呼叫；
+* **故障**：由于中心与面板之间的通信问题，通道处于故障状态。
 
-In the case of a GSM channel, the state is defined by one of the following values:
+对于GSM通道，状态由以下值之一定义：
 
-* **Idle**: the channel is free and available for calls;
-* **Call In Progress**: the channel is busy on a call;
-* **SMS In Progress**: the channel is busy sending / receiving SMS messages;
-* **Modem Error**: an error occurred communicating with the modem channel;
-* **SIM Card Error**: The SIM card is not present or is not inserted / detected correctly;
-* **Network Error**: an error occurred while communicating with the network;
-* **Not Ready**: The modem is initializing the channel.
+* **空闲**：通道空闲，可用于电话呼叫；
+* **通话中**：通道正在进行电话通话；
+* **短信中**：通道正在发送/接收短信；
+* **调制解调器错误**：与调制解调器通道通信发生错误；
+* **SIM卡错误**：SIM卡不存在或未正确插入/检测到；
+* **网络错误**：与网络通信时发生错误；
+* **未准备好**：调制解调器正在初始化通道。
 
-And in the case of an FXO channel, the states are as follows:
+而对于FXO通道，状态如下：
 
-* **Disabled**: the channel is disabled;
-* **Enabled**: the channel is enabled.
+* **已禁用**：通道已被禁用；
+* **已启用**：通道已启用。
 
-### Call state
+### 通话状态
 
-Defines the logical state for each channel, which can be:
+为每个通道定义逻辑状态，可能为：
 
-* **Free**: the channel is free;
-* **Incoming**: the channel is receiving a call;
-* **Outgoing**: the channel is making a call;
-* **Failure**: the channel is in fault.
-
-### FreeSWITCH call states
-
-Directly reflects the call state controlled by FreeSWITCH, which can be:
-
-* **new**: Channel is newly created;
-* **init**: Channel has been initialized;
-* **routing**: Channel is looking for an extension to execute;
-* **execute**: Channel is executing its dialplan;
-* **ex\_media**: Channel is exchanging media with another channel;
-* **cs\_media**: Channel is consuming all media;
-* **hangup**: Channel is flagged for hangup and ready to end.
-
-### GSM Codes
-
-The following numeric codes are reported:
-
-#### SMS codes (SMS causes)
+* **0**: Operation was successful;
+* **1**: Unknown error;
+* **2**: Dropped due to resource shortage;
+* **3**: Invalid parameter;
+* **4**: SMS service not supported;
+* **5**: SMS buffer full;
+* **6**: SIM card not ready;
+* **7**: SIM card is busy;
+* **8**: SMS not ready;
+* **9**: Unknown subscriber;
+* **10**: Network failure;
+* **11**: SMS not allowed;
+* **12**: Unknown error;
+* **13**: Message length exceeds limit;
+* **14**: Invalid remote address;
+* **15**: Connection timed out;
+* **16**: Operation cancelled;
+* **17**: SIM card not found;
+* **18**: SMS storage not available;
+* **19**: Retry period expired;
+* **20**: Invalid short message reference value;
+* **21**: Operation exported by SIM card;
+* **22**: SIM application toolkit busy;
+* **23**: SIM data download error;
+* **24**: SIM application toolkit is not available;
+* **25**: SIM application toolkit operation cancelled;
+* **26**: SIM operation not allowed;
+* **27**: SIM operation failed;
+* **30**: Service not subscribed;
+* **31**: Operation restricted due to SIM toolkit;
+* **32**: SIM toolkit call control is not allowed;
+* **33**: IMEI is not accepted;
+* **34**: Device file system is full;
+* **35**: No network registration;
+* **36**: Network rejected the request;
+* **37**: SIM toolkit control is not allowed;
+* **38**: LTE not allowed;
+* **39**: Operator rejected the request;
+* **40**: SMS type not supported;
+* **41**: Invalid memory index;
+* **42**: Device is busy;
+* **43**: SIM toolkit refresh failed;
+* **44**: Channel not available;
+* **45**: SS error unspecified;
+* **46**: Server rejected the request;
+* **47**: Service rejected;
+* **48**: SMS service failed;
+* **49**: SMS service rejected;
+* **50**: SIM toolkit session terminated;
+* **51**: SIM toolkit command not accepted;
+* **52**: SIM toolkit command **not allowed**.
 
 ```xml
-1	Unassigned number
-8	Operator determined barring
-10	Call barred
-21	SMS transfer rejected
-27	Destination out of service
-28	Unidentified subscriber
-29	Facility rejected
-30	Unknown subscriber
-38	Network out of order
-41	Temporary failure
-42	Congestion
-47	Resources unavailable
-50	Facility not subscribed
-69	Facility not implemented
-81	Invalid SMS transfer reference value
-95	Invalid message
-96	Invalid mandatory information
-97	Message type non existent
-98	Message not compatible with SMS protection state
-99	Information element non existent
-111	Protocol error
-127	Interworking
-128	Telematic interworking not supported
-129	SMS type zero not supported
-130	Cannot replace SMS
-143	Unspecified TPPID error
-144	Alphabet not supported
-145	Message class not supported
-159	Unspecified TPDCS error
-160	Command cannot be actioned
-161	Command unsupported
-175	Unspecified TP command error
-176	TPDU not supported
-192	SC busy
-193	No SC subscription
-194	SC system failure
-195	Invalid SME address
-196	Destination SME barred
-197	SM rejected duplicate SM
-198	TPVPF not supported
-199	TPVP not supported
-208	SIM SMS storage full
-209	No SMS storage capability in SIM
-210	Error in SMS
-211	Memory capatity exceeded
-213	SIM data download error
-255	Unspecified error
-300	Phone failure
-301	SMS service reserved
-302	Operation not allowed
-303	Operation not supported
-304	Invalid PDU mode parameter
-305	Invalid text mode parameter
-310	SIM not inserted
-311	SIM PIN necessary
-312	Phone SIM PIN necessary
-313	SIM failure
-314	SIM busy
-315	SIM wrong
-320	Memory failure
-321	Invalid memory index
-322	Memory full
-330	SMSC address unknown
-331	No network service
-332	Network timeout
-500	Unknown error
-512	Network busy
-513	Invalid destination address
-514	Invalid message body length
-515	Phone is not in service
-516	Invalid preferred memory storage
-517	User terminated
+1	未分配号码
+8	由运营商决定的呼叫限制
+10	呼叫被限制
+21	SMS传输被拒绝
+27	目标服务不可用
+28	未识别的用户
+29	设备被拒绝
+30	未知用户
+38	网络故障
+41	暂时失败
+42	拥塞
+47	资源不可用
+50	设备未订阅
+69	设备未实现
+81	无效的短信传输参考值
+95	无效的消息
+96	无效的强制信息
+97	消息类型不存在
+98	消息与短信保护状态不兼容
+99	信息元素不存在
+111	协议错误
+127	互通性问题
+128	不支持远程交互通信
+129	不支持零时短信
+130	无法替换短信
+143	未指明TPPID错误
+144	不支持的字母表
+145	不支持的消息类别
+159	未指明TPDCS错误
+160	无法执行的命令
+161	不支持的命令
+175	未指明TP命令错误
+176	不支持的TPDU
+192	SC忙碌
+193	无SC订阅
+194	SC系统故障
+195	无效的SME地址
+196	目标SME被限制
+197	重复短信被拒绝
+198	不支持的TPVPF
+199	不支持的TPVP
+208	SIM卡短信存储已满
+209	SIM卡无短信存储功能
+210	短信错误
+211	内存容量超限
+213	SIM数据下载错误
+255	未指明错误
+300	手机故障
+301	短信服务预留
+302	操作不被允许
+303	操作不被支持
+304	无效的PDU模式参数
+305	无效的文本模式参数
+310	未插入SIM卡
+311	需输入SIM卡PIN码
+312	需输入手机SIM卡PIN码
+313	SIM卡故障
+314	SIM卡忙碌
+315	SIM卡错误
+320	内存故障
+321	无效的内存索引
+322	内存已满
+330	SMSC地址未知
+331	无网络服务
+332	网络超时
+500	未知错误
+512	网络繁忙
+513	无效的目标地址
+514	无效的消息体长度
+515	手机无服务
+516	无效的首选存储器
+517	用户终止
 ```
 
-#### Call codes (call causes)
+#### 呼叫代码（呼叫原因）
 
 ```xml
-1	Unallocated number
-3	No route to destination
-6	Channel unacceptable
-8	Operator determined barring
-16	Normal call clear
-17	User busy
-18	No user responding
-19	No answer from user
-21	Call rejected
-22	Number changed
-26	Non Selected user clear
-27	Destination out of order
-28	Invalid number format
-29	Facility rejected
-30	Response status enquiry
-31	Normal, unspecified
-34	No circuit channel available
-38	Network out of order
-41	Temporary failure
-42	Switch congestion
-43	Access information discarded
-44	Requested channel unavailable
-47	Resource unavailable
-49	QoS unavailable
-50	Request facility not subscribed
-55	Call barred with UG
-57	Bearer capability not authorized
-58	Bearer capability not available
-63	Service not available
-65	Bearer capability not implemented
-69	Request facility not implemented
-70	Only restricted bearer capability available
-79	Service not implemented
-81	Invalid call reference value
-82	User not member of UG
-88	Incompatible destination
-91	Invalid transit network selected
-95	Invalid message
-96	Missing mandatory information element
-97	Message type not implemented
-98	Message incompatible with state
-99	Information element not implemented
-100	Invalid information element
-101	Message incompatible with state (2)
-102	Recovery on timer expiry
-111	Protocol error
-127	Interworking
+1	未分配的号码
+3	无法路由到目标
+6	通道不可接受
+8	运营商确定的禁止
+16	正常呼叫结束
+17	用户忙线
+18	用户无响应
+19	用户未接听
+21	呼叫被拒绝
+22	号码已更改
+26	未选择用户呼叫结束
+27	目标设备故障
+28	无效的号码格式
+29	设备拒绝
+30	响应状态查询
+31	正常，未指定的原因
+34	无可用信道
+38	网络故障
+41	临时故障
+42	交换机拥塞
+43	访问信息被丢弃
+44	请求的信道不可用
+47	资源不可用
+49	QoS不可用
+50	未订阅请求附加功能
+55	被UG网络禁止呼叫
+57	传输能力未授权
+58	传输能力不可用
+63	服务不可用
+65	传输能力未实现
+69	请求附加功能未实现
+70	仅受限传输能力可用
+79	服务未实现
+81	无效的呼叫引用值
+82	用户不属于UG网络
+88	不兼容的目标设备
+91	无效的传输网络选择
+95	无效的消息
+96	缺少必需的信息元素
+97	消息类型未实现
+98	消息与状态不兼容
+99	信息元素未实现
+100	无效的信息元素
+101	消息与状态不兼容（2）
+102	计时器到期后恢复
+111	协议错误
+127	互通性问题
 ```
 
-#### General codes (mobile causes)
+#### 通用代码（移动原因）
 
 ```xml
-0	Phone failure
-1	No connection to phone
-2	Phone adaptor link reserved
-3	Operation not allowed
-4	Operation not supported
-5	Phone SIM PIN required
-6	Phone FSIM PIN required
-7	Phone FSIM PUK required
-10	SIM not inserted
-11	SIM PIN required
-12	SIM PUK required
-13	SIM failure
-14	SIM busy
-15	SIM wrong
-16	Incorrect password
-17	SIM PIN2 required
-18	SIM PUK2 required
-20	Memory full
-21	Invalid index
-22	Not found
-23	Memory failure
-24	Text string too long
-25	Invalid character in text string
-26	Dial string too long
-27	Invalid character in dial string
-30	No network service
-31	Network timeout
-32	Network not allowed
-33	Command aborted
-34	Number parameter instead of text parameter
-35	Text parameter instead of number parameter
-36	Numeric parameter out of bounds
-37	Text string too short
-40	Network PIN required
-41	Network PUK required
-42	Network subset PIN required
-43	Network subset PUK required
-44	Network service provider PIN required
-45	Network service provider PUK required
-46	Corporate PIN required
-47	Corporate PUK required
-60	SIM Service option not supported
-100	Unknown
-103	Illegal MS #3
-106	Illegal MS #6
-107	GPRS service not allowed #7
-111	PLMN not allowed #11
-112	Location area not allowed #12
-113	Roaming not allowed #13
-132	Service option not supported #32
-133	Registration service option not subscribed #33
-134	Service option temporary out of order #34
-147	Long context activation
-148	Unspecified GPRS error
-149	PDP authentication failure
-150	Invalid mobile class
-151	GPRS disconnection TMR active
-256	Too many active calls
-257	Call rejected
-258	Unanswered call pending
-259	Unknown calling error
-260	No phone number recognized
-261	Call state not idle
-262	Call in progress
-263	Dial state error
-264	Unlock code required
-265	Network busy
-266	Invalid phone number
-267	Number entry already started
-268	Cancelled by user
-269	Number entry could not be started
-280	Data lost
-281	Invalid message body length
-282	Inactive socket
-283	Socket already open
+0	电话故障
+1	无法与电话建立连接
+2	电话适配器链接保留
+3	操作不允许
+4	操作不支持
+5	需要电话SIM卡PIN码
+6	需要电话FSIM卡PIN码
+7	需要电话FSIM卡PUK码
+10	SIM卡未插入
+11	需要SIM卡PIN码
+12	需要SIM卡PUK码
+13	SIM卡故障
+14	SIM卡忙碌
+15	SIM卡错误
+16	密码错误
+17	需要SIM卡PIN2码
+18	需要SIM卡PUK2码
+20	内存已满
+21	无效的索引
+22	未找到
+23	内存故障
+24	文本字符串过长
+25	文本字符串中包含无效字符
+26	拨号字符串过长
+27	拨号字符串中包含无效字符
+30	无网络服务
+31	网络超时
+32	不允许的网络
+33	命令中止
+34	数值参数而非文本参数
+35	文本参数而非数值参数
+36	数值参数超出范围
+37	文本字符串过短
+40	需要网络PIN码
+41	需要网络PUK码
+42	需要网络子集PIN码
+43	需要网络子集PUK码
+44	需要网络服务供应商PIN码
+45	需要网络服务供应商PUK码
+46	需要企业PIN码
+47	需要企业PUK码
+60	SIM服务选项不支持
+100	未知
+103	非法的MS #3
+106	非法的MS #6
+107	不允许GPRS服务 #7
+111	不允许PLMN #11
+112	不允许的位置区域 #12
+113	不允许漫游 #13
+132	不支持的服务选项 #32
+133	未订阅的注册服务选项 #33
+134	服务选项暂时不可用 #34
+147	长上下文激活
+148	未指定的GPRS错误
+149	PDP认证失败
+150	无效的移动类别
+151	GPRS断开TMR激活
+256	活动通话过多
+257	呼叫被拒绝
+258	未接来电等待
+259	未知呼叫错误
+260	无法识别的电话号码
+261	呼叫状态非空闲
+262	正在通话中
+263	拨号状态错误
+264	需要解锁码
+265	网络忙碌
+266	无效的电话号码
+267	已开始输入号码
+268	用户取消
+269	无法开始输入号码
+280	数据丢失
+281	无效的消息正文长度
+282	非活动套接字
+283	套接字已打开
 ```
 
-## Troubleshooting
+## 故障排除
 
-In this section, errors and their most common solutions are presented.
+本节中介绍了错误及其常见解决方案。
 
-### Error during installation of kernel module
+### 安装内核模块时发生错误
 
-During installation of the _Endpoint_of Khomp may occur the following messages:
+在安装 _Endpoint_of Khomp 时可能会出现以下消息：
 
 ```xml
-K3L: WARNING: Unable to find a module for [...]
+K3L: 警告：无法找到模块 [...]
 ```
 
-or
+或者
 
 ```xml
-install: ******  THE KERNEL MODULE HAS NOT BEEN INSTALLED: *******
+install: ****** 未安装内核模块：*******
 install: 
-install: ** Please, untar the file kpdriver*.tar.gz located in: **
-install: **                 '/usr/src/khomp/'                   **
-install: **             then check the README.txt               **
-install: **  for knowing how to proceed with the installation.  **
+install: ** 请解压文件 kpdriver*.tar.gz，该文件位于：**
+install: **     '/usr/src/khomp/'    **
+install: **   然后查看README.txt以了解进一步的安装过程。 **
 ```
 
-In this case, you must compile the drivers manually to your system. Proceed to the item below for more information. 
+在这种情况下，您必须手动编译适用于您的系统的驱动程序。请参考下面的内容获取更多信息。
 
-#### Compiling the drivers and starting the services
+#### 编译驱动程序并启动服务
 
-Just follow to the directory **/usr/src/khomp**, unpack the file "kpdriver\_2.0.0**XX**.tar.gz", and follow procedures described in the file **README\_en.txt**.
+只需进入 **/usr/src/khomp** 目录，解压文件 "kpdriver\_2.0.0**XX**.tar.gz"，并按照 **README\_en.txt** 文件中的步骤进行操作。
 
-After performing compilation and installation of the module, just load it into the system, configuring the boards and start the server processes Khomp.
+在完成编译和安装模块后，只需要将其加载到系统中，配置板卡并启动Khomp服务器进程。
 
-To load the kernel driver, you must run the following command:
+要加载内核驱动程序，您需要运行以下命令：
 
 ```xml
 # /etc/init.d/khompdrv start
 ```
 
-To set up the boards, in turn, must run the command:
+要设置板卡，依次运行以下命令：
 
 ```xml
 # khompwizard
 ```
 
-This will run a setup wizard that will ask the signaling used in the system, as well as other parameters of use of the boards.
+这将运行一个设置向导，询问系统中使用的信令，以及板卡使用的其他参数。
 
-If necessary configure other additional parameters you can use the following command:
+如果需要配置其他附加参数，可以使用以下命令：
 
 ```xml
 # k3lconfig
 ```
 
-This configurator, in turn, shows all possible options for card configuration. The parameters that are not configured automatically assume the default values, and are compatible with most systems. More details about this program can be obtained from the section number '2 '.
+这个配置工具会显示所有卡配置的可能选项。未配置的参数将自动采用默认值，并且与大多数系统兼容。有关此程序的更多详细信息，请查看“2”节。
 
-* **ATTENTION**: To start FreeSWITCH®, it is necessary that the Khomp board is configured and all modules are running (as shown above).  
-    
-If you want to run the system without the Khomp board, you need to configure FreeSWITCH for it does not load the module Khomp. To do this, open the **/usr/local/freeswitch/conf/autoload\_configs/modules.conf.xml** and comment the line:
+**注意**：要启动FreeSWITCH®，必须配置Khomp板，并使所有模块运行（如上所示）。
+
+如果要在没有Khomp板的情况下运行系统，需要为FreeSWITCH进行配置，以便它不加载Khomp模块。为此，请打开**/usr/local/freeswitch/conf/autoload_configs/modules.conf.xml**文件，并注释掉以下行：
 
 ```xml
 <!-- <load module="mod_khomp" /> -->
 ```
 
-When the board Khomp is properly configured and loaded modules khomp (explained above), remember to uncomment this line in the file.
+当Khomp板正确配置并加载khomp模块（如上所述）后，请记得在文件中取消注释此行。
 
-Finally, to load the server process, simply run the following command:
+最后，只需运行以下命令来加载服务器进程：
 
 ```xml
 # kserver start
 ```
 
-After performing these procedures, the Endpoint is already operational, and FreeSWITCH can now be loaded. 
+执行完这些步骤后，终端已经可以运行，可以加载FreeSWITCH了。
 
-### Setting up special parameters for audio or signaling
+### 设置音频或信号的特殊参数
 
-To set specific parameters of timing and/or signaling, you can use the program "k3lconfig": simply select the card you want, and options of the boards will be presented, divided into sections and subsections for easy access. It is not necessary to effect the configuration of all parameters: default values are assumed, if not configured.
+要设置特定的时间和/或信号参数，您可以使用“k3lconfig”程序：只需选择您想要的卡，板卡的选项将显示，按部分和子部分划分以便于访问。不需要配置所有参数：如果未配置，将采用默认值。
 
-To adjust the signaling link, simply - after selecting the card - enter the "Options signaling, and then in" Signs of the line. " To choose a particular signaling, just use the direction keys (arrows) to select it, press 'space', and confirm the option by pressing 'Enter' on the "Confirm" button.
+要调整信号链接，只需在选择卡后进入“Options signaling”，然后进入“Signs of the line”。要选择特定的信号，只需使用方向键选择它，按下“空格”键，然后按下“确认”按钮上的“Enter”键确认选项。
 
-Finally, to save the modified settings, just exit the program: it will display a window with options to save the changes made or not.
+最后，要保存修改后的设置，只需退出程序：它会显示一个窗口，其中有保存所做更改的选项或不保存的选项。
 
-Please not that **the following options are required to be unchanged from the defaults**:
+请注意，**以下选项需要保持与默认设置相同**：
 
-* Automatic echo cancellation;
-* DTMF suppression;
-* Automatic Gain Control (AGC).
+* 自动回声抵消；
+* DTMF抑制；
+* 自动增益控制（AGC）。
 
-These options are **controlled by Endpoint** and should be **disabled** in 'k3lconfig' (the default configuration). 
+这些选项由**Endpoint**控制，并且应在'k3lconfig'（默认配置）中**禁用**。
 
-### Automatic load of services and kernel modules
+### 自动加载服务和内核模块
 
-If the loading of _kernel_ module or Khomp services startup is not performed automatically at startup, you can perform this installation manually, creating a _link_ for the _scripts_ **/etc/init.d/khompdrv** and **/etc/init.d/kserver** in the system startup directory.
+如果在启动时没有自动执行内核模块或Khomp服务的加载，您可以手动执行此安装，将**/etc/init.d/khompdrv**和**/etc/init.d/kserver**的链接创建在系统启动目录中的**脚本**。
 
-In the case of **Debian**\-based distributions the _script_ for loading _kernel_ modules would be _linked_ within the directory _/etc/rcS.d_, while the services loader would be _linked_ within the directories _/etc/rc2.d_, _/etc/rc3.d_, _/etc/rc4.d_, _/etc/rc5.d_ as follows:
+对于基于**Debian**的发行版，在目录**/etc/rcS.d**中链接加载内核模块的**脚本**，而在目录**/etc/rc2.d**，**/etc/rc3.d**，**/etc/rc4.d**，**/etc/rc5.d**中链接服务加载器的脚本，如下所示：
 
 ```xml
 # ln -s /etc/init.d/khompdrv  /etc/rcS.d/S19khompdrv
@@ -1259,37 +1279,36 @@ In the case of **Debian**\-based distributions the _script_ for loading _kernel_
 # ln -s /etc/init.d/kserver   /etc/rc5.d/S20kserver
 ```
 
-Please check the rules of your distribution to initialize the services in accordance with what is expected by the start of it. 
+请根据您的发行版规则，按照预期的启动方式初始化服务。
 
-## Appendix
+## 附录
 
-This section presents useful informations about Endpoint and related components.
+此部分提供有关Endpoint和相关组件的有用信息。
 
-### Arrangement of installed files
+### 已安装文件的排列
 
-The directories created/modified in this facility are:
+在此设施中创建/修改的目录包括：
 
 ```xml
-/etc/init.d/                -- Startup scripts;
+/etc/init.d/                -- 启动脚本；
 
-/etc/khomp/                 -- Firmware files and settings;
+/etc/khomp/                 -- 固件文件和设置；
 
-/usr/local/freeswitch/conf/ -- Settings for FreeSWITCH and Endpoint;
+/usr/local/freeswitch/conf/ -- FreeSWITCH和Endpoint的设置；
 
-/usr/doc/khomp/             -- Docs for the boards, Channel, and utilities;
+```
+/usr/doc/khomp/             -- 板卡、通道和实用工具的文档；
 
-/usr/sbin/                  -- Utilities and server processes;
+/usr/sbin/                  -- 实用工具和服务器进程；
 
-/usr/lib/                   -- Shared libraries;
+/usr/lib/                   -- 共享库；
 
-/usr/local/freeswitch/mod/  -- Endpoint module;
+/usr/local/freeswitch/mod/  -- 终端模块；
  
-/var/log/khomp2.1/          -- Log directory for K3L and Endpoint;
+/var/log/khomp2.1/          -- K3L 和终端的日志目录；
 ```
 
-The script **/etc/init.d/khompdrv** is responsible for loading modules **kpci9030.ko** and **kpex8311.ko** in the kernel, which should be carried out automatically at system startup. In case of problems, check the [Troubleshooting](index.mdx#troubleshooting) section.
+脚本 **/etc/init.d/khompdrv** 负责在内核中加载模块 **kpci9030.ko** 和 **kpex8311.ko**，这应该在系统启动时自动执行。如果出现问题，请参考 [Troubleshooting](index.mdx#troubleshooting) 部分。
 
   
-For more details: [http://www.khomp.com.br](http://www.khomp.com.br/)
-
-
+更多详情请见：[http://www.khomp.com.br](http://www.khomp.com.br/)

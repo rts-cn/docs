@@ -1,105 +1,98 @@
+# macOS 24x7 准备
 
-# macOS 24x7 Preparation 
+## 关于
 
- 
+本节介绍了如何为在 macOS 上运行 FreeSWITCH™ 进行 24x7 准备。它是 FreeSWITCH™ [macOS](./index.mdx#about) 文档的一部分。
 
-## About
+* 1 [为什么需要全天候运营？](#why-24x7-operation)
+* 2 [创建虚拟命令文件](#create-dummy-command-file)
+* 3 [创建FreeSWITCH™命令脚本](#create-the-freeswitch-command-script)
+* 4 [自动启动和关闭](#automatic-startup-and-shutdown)  
+   * 4.1 [使用登陆项自动启动](#autostart-using-login-items)  
+      * 4.1.1 [配置macOS账户以自动启动FreeSWITCH™](#setup-macos-account-to-autostart-freeswitch)  
+   * 4.2 [使用Launchd自动启动](#autostart-using-launchd)  
+      * 4.2.1 [创建FreeSWITCH™的plist文件](#create-the-freeswitch-plist)  
+         * 4.2.2 [测试FreeSWITCH™的plist文件](#create-the-freeswitch-plist)  
+   * 4.3 [使用Launchd自动关闭](#shutdown-using-launchd)  
+      * 4.3.1 [创建关闭脚本](#create-shutdown-script)  
+         * 4.3.2 [创建关闭的plist文件](#create-shutdown-plist)  
+   * 4.4 [诊断plist文件问题](#diagnosing-plist-problems)
+* 5 [创建FreeSWITCH-CLI命令脚本](#create-a-freeswitch-cli-command-script)
+* 6 [日志分割与清理](#log-segmentation-and-clearing)  
+   * 6.1 [自动日志分割](#automatic-log-segmentation)  
+      * 6.1.1 [创建日志分割脚本](#create-shutdown-script)  
+         * 6.1.2 [创建日志分割的plist文件](#automatic-log-segmentation)  
+   * 6.2 [自动日志清理](#automatic-log-clearing)  
+      * 6.2.1 [创建日志清理脚本](#automatic-log-clearing)  
+         * 6.2.2 [创建日志清理的plist文件](#automatic-log-clearing)  
+   * 6.3 [登录时自动重命名日志](#automatic-log-rename-at-login)  
+      * 6.3.1 [创建重命名脚本](#why-24x7-operation)  
+         * 6.3.2 [配置macOS账户运行重命名脚本](#create-shutdown-script)
+* 7 [停电恢复](#power-failure-recovery)  
+   * 7.1 [不间断电源](#uninterruptible-power-supply)  
+   * 7.2 [故障后自动上电](#auto-power-up-after-failure)
 
-This section describes how to prepare macOS for running FreeSWITCH™ 24x7\. It is part of the FreeSWITCH™ [macOS](./index.mdx#about) documentation.
+## 为什么要进行24x7运行？
 
-* 1 [Why 24x7 Operation?](#why-24x7-operation)
-* 2 [Create Dummy Command File](#create-dummy-command-file)
-* 3 [Create the FreeSWITCH™ Command Script](#create-the-freeswitch-command-script)
-* 4 [Automatic Startup and Shutdown](#automatic-startup-and-shutdown)  
-   * 4.1 [Autostart Using Login Items](#autostart-using-login-items)  
-      * 4.1.1 [Setup macOS Account to Autostart FreeSWITCH™](#setup-macos-account-to-autostart-freeswitch)  
-   * 4.2 [Autostart Using Launchd](#autostart-using-launchd)  
-      * 4.2.1 [Create the FreeSWITCH™ plist](#create-the-freeswitch-plist)  
-         * 4.2.2 [Test the FreeSWITCH™ plist](#create-the-freeswitch-plist)  
-   * 4.3 [Shutdown Using Launchd](#shutdown-using-launchd)  
-      * 4.3.1 [Create Shutdown Script](#create-shutdown-script)  
-         * 4.3.2 [Create Shutdown plist](#create-shutdown-plist)  
-   * 4.4 [Diagnosing plist Problems](#diagnosing-plist-problems)
-* 5 [Create A freeswitch-CLI Command Script](#create-a-freeswitch-cli-command-script)
-* 6 [Log Segmentation and Clearing](#log-segmentation-and-clearing)  
-   * 6.1 [Automatic Log Segmentation](#automatic-log-segmentation)  
-      * 6.1.1 [Create Log Segment Script](#create-shutdown-script)  
-         * 6.1.2 [Create Log Segment plist](#automatic-log-segmentation)  
-   * 6.2 [Automatic Log Clearing](#automatic-log-clearing)  
-      * 6.2.1 [Create Log Clear Script](#automatic-log-clearing)  
-         * 6.2.2 [Create Log Clear plist](#automatic-log-clearing)  
-   * 6.3 [Automatic Log Rename at Login](#automatic-log-rename-at-login)  
-      * 6.3.1 [Create Rename Script](#why-24x7-operation)  
-         * 6.3.2 [Setup macOS Account to Run the Rename Script](#create-shutdown-script)
-* 7 [Power Failure Recovery](#power-failure-recovery)  
-   * 7.1 [Uninterruptible Power Supply](#uninterruptible-power-supply)  
-   * 7.2 [Auto Power Up After Failure](#auto-power-up-after-failure)
+一旦完成所有FreeSWITCH™的配置并安装好电话设备，就需要准备macOS，以确保FreeSWITCH™始终启动并保持运行。如果Mac故意重新启动，或者由于崩溃等任何原因导致macOS重新启动，您肯定希望电话系统能够尽快重新运行。本指南说明如何准备macOS，使得在这些情况下，FreeSWITCH™可以自动重新启动。
 
-## Why 24x7 Operation?
+您可以使用TextEdit进行所有的编辑工作，但是您应该熟悉Xcode编辑器。它的优势在于可以对显示的[XML](http://en.wikipedia.org/wiki/XML)代码进行彩色标记，以便您可以快速找到语法错误。这非常适合编辑FreeSWITCH™的XML配置文件。
 
-Once all of the FreeSWITCH™ configuration is completed and phones are in place, macOS must be prepared so that FreeSWITCH™ is always started and kept running. If the Mac is restarted intentionally, or macOS is restarted for any reason, such as a crash, you'll want the phone system up and running as fast as possible. These instructions illustrate how to prepare macOS so that FreeSWITCH™ is _automatically_ restarted under those conditions.
+## 创建虚拟命令文件
 
-You can perform all editing using Textedit, however, you should become familiar with the Xcode editor. Its advantage is that it displays [XML](http://en.wikipedia.org/wiki/XML) code colorized so you can find syntax errors quickly. This is ideal for editing FreeSWITCH™ XML configuration files.
+本部分的某些步骤需要一个命令脚本文件。这是一个可以双击在Terminal应用程序中运行的文件。更重要的是，这些文件还用于自动启动功能。
 
-## Create Dummy Command File
+命令文件是包含Terminal命令的文本文件，并且通过更改文件的权限可以使其可执行。您无需为每个文件重复此过程，只需创建一个虚拟命令文件，它将作为一个骨架，并在复制时保留其权限。这些文件保存在/usr/local/freeswitch-scripts目录下，但您也可以将它们放在任何地方。创建命令文本文件后，可以使用TextEdit或Xcode打开并保存，根据个人喜好自行选择，无需额外步骤。
 
-  
-Some steps in this section require a command script file. This is a file that you can double click to run in the Terminal application. More importantly, these files are also used for automatic startup functions.
-
-Command files are text files containing Terminal commands with the file's permission changed to become executable. Rather than repeat this process for each file, create a dummy command file that will serve as a skeleton and retain its permissions when copied. The files are saved in /usr/local/freeswitch-scripts but you can place them anywhere. Once a command text file is created it can be opened and saved in Textedit or Xcode, whatever is your preference, without any extra steps.
-
-* Create the /usr/local/freeswitch-scripts directory:  
+* 创建/usr/local/freeswitch-scripts目录：  
 ```xml  
    mkdir /usr/local/freeswitch-scripts  
 ```
-1. Start Textedit
-2. Paste the two lines below into the empty document:  
+1. 启动TextEdit
+2. 将下面两行粘贴到空白文档中：  
 ```xml  
 #!/bin/bash  
 exit 0  
 ```
 
-Make sure they are saved as text:
+确保它们以纯文本格式保存。
 
-1. Pull down the Format menu
-2. Select Make Plain Text, if the default for saving text is already Plain Text, this step is not needed.
-3. Save the file in /usr/local/freeswitch-scripts as dummy.command. While the file window is open press command+shift+.(period) to view hidden files.
-4. You may see examples with #!/bin/sh as the first line, either will work in any of these scripts.
+1. 下拉格式菜单
+2. 选择“纯文本”，如果保存文本的默认设置已经是“纯文本”，则不需要此步骤。
+3. 将文件保存在 /usr/local/freeswitch-scripts 中，文件名为 dummy.command。在文件窗口打开的同时按下 command+shift+.(点号) 键以查看隐藏文件。
+4. 可能会看到以 #!/bin/sh 作为第一行的示例，任何一个都可以在这些脚本中使用。
 
-  
-Start the Terminal application, switch to the new directory and enter the chmod command to make the file executable:
+启动终端应用程序，切换到新目录并输入 chmod 命令使文件可执行：
 
 ```xml
   cd /usr/local/freeswitch-scripts
   chmod +x dummy.command
 ```
 
-## Create the FreeSWITCH™ Command Script
+## 创建 FreeSWITCH™ 命令脚本
 
-The command to start FreeSWITCH™ is /usr/local/freeswitch/bin/freeswitch -parm1 -parm2…. You can start the freeswitch program using this command. However, it's much better to use a [bash](http://en.wikipedia.org/wiki/Bash%5F%28Unix%5Fshell%29) [script](http://en.wikipedia.org/wiki/Script%5F%28computing%29) which starts FreeSWITCH™.
+启动 FreeSWITCH™ 的命令是 /usr/local/freeswitch/bin/freeswitch -parm1 -parm2…。您可以使用该命令启动 freeswitch 程序。然而，最好使用一个 [bash](http://en.wikipedia.org/wiki/Bash%5F%28Unix%5Fshell%29) 脚本来启动 FreeSWITCH™。
 
-Consider these requirements for a 24x7 phone system:
+考虑以下对于一个 24x7 的电话系统的需求：
 
-* Should start automatically when the computer powers up
-* Should restart itself due to a failure such as program crash
-* Should restart in case it was accidentally manually shutdown
-* Should not restart if available resources such as TCP ports are not available
-* Write messages to the console so problems can be determined easily
-* Allow easy updating of startup parameters without requiring a reboot
+* 应在计算机启动时自动启动
+* 应在程序崩溃等故障时自动重启
+* 应在意外手动关闭时自动重启
+* 如果可用资源（如 TCP 端口）不可用，则不应重启
+* 将消息写入控制台，以便轻松识别问题
+* 允许在不需要重新启动的情况下轻松更新启动参数
 
-These are all accomplished using the instructions and script below. You can change or add parameters such as -nonat or -nc. However, the -nc option is required to run freeswitch as a [background process](http://en.wikipedia.org/wiki/Background%5Fprocess) from the bash script.
+使用以下指令和脚本即可完成所有这些要求。您可以更改或添加参数，例如 -nonat 或 -nc。然而，在 bash 脚本中运行 freeswitch 作为 [background process](http://en.wikipedia.org/wiki/Background%5Fprocess) 时，-nc 选项是必需的。
 
-From the new directory, enter the command below to create the freeswitch.command file, it can be placed anywhere but you must change the Launchd plist to match the location.
+从新目录中，输入以下命令以创建freeswitch.command文件，该文件可以放置在任何位置，但您必须更改Launchd plist以匹配位置。
 
 ```xml
   cp dummy.command freeswitch.command
 ```
 
-  
-Open the freeswitch.command file in the editor and replace the two lines with the following bash script:
+在编辑器中打开freeswitch.command文件，并用以下bash脚本替换两行：
 
-  
-Click here to view the entire script...
+点击此处查看整个脚本...
 
 #!/bin/sh
 #set -xv # For debugging
@@ -140,93 +133,98 @@ function check_tcp () {
   done
 }
 
+```bash
 function check_sip {
   while : ; do
      local a=$(/usr/sbin/netstat -a -p $1)
      writelog "${a}"
      if [[ "$a" != *sip* ]] ; then
-       writelog "freeswitch-startup - SIP is clear on $1"
+       writelog "freeswitch-startup - $1 的 SIP 端口已清空"
        break
      fi
-     writelog "freeswitch-startup Port 5060 still in use by $1 - retry in 3 seconds"
+     writelog "freeswitch-startup - $1 上的端口 5060 仍在使用中 - 3 秒后重试"
      sleep 3
   done
 }
 
-# Main flow starts here
-# Test to see if freeswitch is still running, should never occur under normal operation at this point
+# 主流程从这里开始
+# 测试 freeswitch 是否仍在运行，正常情况下不应发生这种情况
 while : ; do
   check_fs
   rc=$?
   if [[ $rc = 0 ]]; then
     break
   fi
-  writelog "freeswitch-startup - freeswitch process $pid is still running, retry in 3 seconds"
+  writelog "freeswitch-startup - freeswitch 进程 $pid 仍在运行中 - 3 秒后重试"
   sleep 3
 done
 
-check_tcp      # Make sure TCPIP is up
+check_tcp      # 确保 TCPIP 正常运行
+```
 
-# If FS is shutdown and started quickly, must wait for SIP port to clear or FS profile "internal" fails to start.
-# Test TCP and UDP separately since plain netstat may contain "sip" characters elsewhere.
+# 如果 FS 关闭并快速重启，必须等待 SIP 端口清除，否则 FS 的 "internal" 配置文件无法启动。
+# 分别测试 TCP 和 UDP，因为普通的 netstat 可能包含其他地方的 "sip" 字符。
+
 check_sip tcp
 check_sip udp
-   
+
 OS_Version=$(sw_vers -productVersion | sed "s:.[[:digit:]]*.$::g")
 if [[ ${OS_Version} == 10.7 ]] | [[ ${OS_Version} == 10.8 ]] | [[ ${OS_Version} == 10.9 ]]; then   # Bug in 10.789 causes netstat to show ports clear but they are not - Mario G 2012-03-26
-  writelog "freeswitch-startup - FreeSwitch waiting for 60 seconds due to 10.8 bug"
+  writelog "freeswitch-startup - 由于10.8版本的 bug，FreeSwitch 等待60秒"
   sleep 60
 fi
-# Start freeswitch - do NOT use nohup and & since FS starts a new pid and the wrong one would be returned in check_fs
-writelog "freeswitch-startup - FreeSwitch is being started, script will wait until FreeSwitch is stopped"
+
+writelog "freeswitch-startup - 正在启动 FreeSwitch，脚本将等待直到 FreeSwitch 停止"
 /usr/local/freeswitch/bin/freeswitch  -nc -nonat
-# Now wait for freeswitch to end, otherwise Launchd will restart this script when it ends
+
+# 现在等待 FreeSwitch 结束，否则当它结束时，Launchd 将重新启动此脚本
 check_fs
-writelog "freeswitch-startup - Waiting for FreeSwitch process $pid to terminate"
+
+writelog "freeswitch-startup - 等待 FreeSwitch 进程 $pid 终止"
 while [ $(ps -p $pid -o 'pid=') ]; do sleep 15; done
-writelog "freeswitch-startup - script has ended"
+
+writelog "freeswitch-startup - 脚本已结束"
 exit 0
 
-  
-Save the file, remember it's already executable. You can use this to manually start FreeSWITCH™ anytime once security has been set.
+保存此文件，记住它已经具有可执行权限。一旦安全性设置完成，可以使用此文件随时手动启动 FreeSWITCH™。
 
-Set Security and Test
+设置安全性并进行测试
 
-The command file MUST be included in the macOS security settings. Make sure FreeSWITCH™ is not running and double click the file to test and start FreeSWITCH™. It will fail the first time due to security. Open Settings–>Security & Privacy, unlock the lock at the bottom, and allow the command name to run. The setting will be permanent.
+必须将命令文件包含在 macOS 安全设置中。确保 FreeSWITCH™ 不在运行状态，双击此文件以测试并启动 FreeSWITCH™。由于安全性原因，第一次启动会失败。打开“设置”->“安全性与隐私”，解锁底部的锁，并允许命令名称运行。此设置将是永久的。
 
-## Automatic Startup and Shutdown
+## 自动启动和关闭
 
-Although there are a few ways to automatically start programs on macOS, only two are covered here. Both are the current recommended methods for automatically starting programs on macOS. If you depend on FreeSWITCH™ running 24x7 be sure to start the script using [Launchd](http://wiki.freeswitch.org/wiki/Installation%5Fand%5FSetup%5Fon%5FOS%5FX#Startup%5FUsing%5FLaunchd) method below since it has many advantages.
+虽然在 macOS 上有几种自动启动程序的方法，但这里只涵盖了两种方法。这两种方法都是当前在 macOS 上推荐的自动启动程序的方法。如果你依赖 FreeSWITCH™ 24x7 运行，请确保使用下面的 [Launchd](http://wiki.freeswitch.org/wiki/Installation%5Fand%5FSetup%5Fon%5FOS%5FX#Startup%5FUsing%5FLaunchd) 方法来启动脚本，因为它具有许多优点。
 
-### Autostart Using Login Items
+### 使用登录项自动启动
 
-This technique starts FreeSWITCH™ as a "foreground" Terminal application. This is useful for testing FreeSWITCH™ when it's automatically started after a reboot and you require all console messages easily viewable. Starting FreeSWITCH™ in a Terminal window has one serious disadvantage: Terminal stores the console messages in memory. Once memory becomes full the Mac will slow down and may not respond. Consequently you would have to restart FreeSWITCH™ regularly depending on the number of messages. This is not useful for running a normal production system.
+这种技术将以“前台”终端应用程序的形式启动 FreeSWITCH™。这在在重新启动后自动启动 FreeSWITCH™ 并且您需要轻松查看所有控制台消息的情况下非常有用。以终端窗口模式启动 FreeSWITCH™ 有一个严重的缺点：终端将控制台消息存储在内存中。一旦内存满了，Mac 会变慢甚至无响应。因此，您需要根据消息数量定期重启 FreeSWITCH™。这对于运行正常的生产系统是没有用的。
 
-#### Setup macOS Account to Autostart FreeSWITCH™
+#### 设置 macOS 账户自动启动 FreeSWITCH™
 
-This runs the command file every time the user logs in manually or automatically. If FreeSWITCH™ is shutdown using this startup process, it will _not_ automatically restart.
+这将在用户手动或自动登录时每次运行命令文件。如果使用此启动过程关闭 FreeSWITCH™，它**不会**自动重新启动。
 
-1. Start System Preferences
-2. Click Accounts
-3. Click Logon Items
-4. Check "+"
-5. Navigate to the freeswitch.command file and click Add.
+1. 打开“系统偏好设置”
+2. 点击“用户与群组”
+3. 点击“登录项”
+4. 勾选“+”
+5. 导航至 freeswitch.command 文件并点击“添加”。
 
-### Autostart Using Launchd
+### 使用 Launchd 自动启动
 
-The macOS [Launchd](http://en.wikipedia.org/wiki/Launchd) daemon can be used to start FreeSWITCH™ when macOS starts or preferably when the user logs on. We'll cover how to automatically start FreeSWITCH™ when the user logs on. If FreeSWITCH™ is shutdown using this startup process, it _will_ automatically restart.
+macOS 的 [Launchd](http://en.wikipedia.org/wiki/Launchd) 守护程序可用于在 macOS 启动时或最好在用户登录时启动 FreeSWITCH™。我们将介绍如何在用户登录时自动启动 FreeSWITCH™。如果使用此启动过程关闭 FreeSWITCH™，它**将**自动重新启动。
 
-#### Create the FreeSWITCH™ plist
+#### 创建 FreeSWITCH™ plist 文件
 
-First, we create a "property list" file, also known as a ["plist"](http://en.wikipedia.org/wiki/Plist) that will:
+首先，我们创建一个“属性列表”文件，也称为["plist"](http://en.wikipedia.org/wiki/Plist)，该文件将实现以下功能：
 
-* Start FreeSWITCH™ when the user logs on or is auto logged on
-* Restart FreeSWITCH™ as soon as it stops for any reason including manual or auto shutdown and crashes
-1. Start Textedit
-2. Paste the lines below into the empty document
-3. Pull down the Format menu
-4. Select Make Plain Text
-5. Save the file in /users/yourid/Library/LaunchAgents as org.freeswitch.freeswitch.plist, yourid is the user home directory
+* 当用户登录或自动登录时启动FreeSWITCH™
+* 当FreeSWITCH™因任何原因停止运行，包括手动或自动关闭和崩溃时，重新启动FreeSWITCH™
+1. 启动TextEdit
+2. 将下面的行粘贴到空白文档中
+3. 点击“格式”菜单
+4. 选择“转为纯文本”
+5. 将文件保存在/users/yourid/Library/LaunchAgents中，文件名为org.freeswitch.freeswitch.plist，yourid是用户的主目录
 
 ```xml
  <?xml version="1.0" encoding="UTF-8"?>
@@ -251,75 +249,69 @@ First, we create a "property list" file, also known as a ["plist"](http://en.wik
 
 ```
 
-  
-Although FreeSWITCH™ is started via the script, the freeswitch program could be executed directly from this plist, that is not recommended.
+虽然FreeSWITCH™是通过脚本启动的，但也可以直接从这个plist文件执行freeswitch程序，但这不是推荐的做法。
 
-#### Test the FreeSWITCH™ plist
+#### 测试FreeSWITCH™的plist文件
 
-Make sure FreeSWITCH™ is down. Then in Terminal execute the follow command:
+确保FreeSWITCH™已关闭。然后在终端执行以下命令：
 
 ```xml
   launchctl load ~/Library/LaunchAgents/org.freeswitch.freeswitch.plist
 ```
 
-Now check if FreeSWITCH™ is running by either:
+然后通过以下方式检查FreeSWITCH™是否正在运行：
 
-1. Test your phones
-2. Launch Activity Monitor
-3. In Terminal, run /usr/local/freeswitch/bin/freeswitch-cli
+1. 测试您的电话
+2. 启动活动监视器
+3. 在终端中运行 /usr/local/freeswitch/bin/freeswitch-cli
 
-If FreeSWITCH™ is running, you can shut it down by issuing:
+如果FreeSWITCH™正在运行，您可以通过以下命令关闭它：
 
 ```xml
   launchctl unload ~/Library/LaunchAgents/org.freeswitch.freeswitch.plist
 ```
 
-  
-Or from Terminal either of these commands would work from the freeswitch/bin directory:
+或者从终端，你可以在freeswitch/bin目录中执行以下命令：
 
 ```xml
   freeswitch -stop
   freeswitch-cli -x shutdown
 ```
 
-### Shutdown Using Launchd
+### 使用Launchd关闭
 
-The macOS Launchd daemon can be also be used to shutdown FreeSWITCH™. This is not needed during macOS shutdown because macOS sends shutdown signals to all of the running programs. However, you may find it desirable to automatically recycle FreeSWITCH™ for problem determination. Or you may just feel more comfortable knowing FreeSWITCH™ is recycled at a set day and time.
+在macOS中，也可以使用Launchd守护程序来关闭FreeSWITCH™。这在macOS关机时是不需要的，因为macOS会向所有正在运行的程序发送关闭信号。然而，您可能会发现自动重启FreeSWITCH™以进行问题排查很有用。或者，您可能更希望在设定的日期和时间自动重启FreeSWITCH™。
 
-#### Create Shutdown Script
+#### 创建关闭脚本
 
-Start Terminal and enter this command to create the freeswitch-shutdown.command file in directory freeswitch-scripts:
+打开终端，并输入以下命令创建freeswitch-shutdown.command文件并放置在freeswitch-scripts目录中：
 
 ```xml
   cp dummy.command freeswitch-shutdown.command
 ```
 
-  
-Open the file in the editor and add the following line as the second line of the file (between the existing two lines):
+打开编辑器，将以下行添加为文件的第二行（在现有两行之间）：
 
 ```xml
 /usr/local/freeswitch/bin/freeswitch-cli -x "shutdown"
 ```
 
-  
-Save the file, remember it's already executable.  
-Make sure FreeSWITCH™ is up and double click the file to test it and set the one time security setting. If FreeSWITCH™ shuts down then proceed with the next steps.
+保存该文件，并记得它已经可执行。确保FreeSWITCH™正在运行，然后双击该文件进行测试并设置单次安全设置。如果FreeSWITCH™关闭，则继续执行下一步。
 
-Set Security and Test
+设置安全性并进行测试
 
-The command file MUST be included in the macOS security settings. Double click the file to test, it will fail the first time due to security. Open Settings–>Security & Privacy, unlock the lock at the bottom, and allow the command name to run. The setting will be permanent.
+该命令文件必须包含在macOS安全设置中。双击该文件进行测试，由于安全性原因，第一次会失败。打开设置->安全性与隐私，解锁底部的锁，并允许该命令运行。设置将会永久保存。
 
-  
-#### Create Shutdown plist
+#### 创建Shutdown plist文件
 
-Next, create the plist file for Launchd:
+接下来，创建Launchd的plist文件：
 
-1. Start Textedit
-2. Paste the lines below into the empty document
-3. Pull down the Format menu
-4. Select Make Plain Text
-5. Change yourid to the id of the home directory and change the time shutdown will occur if needed (the example below is set for 2am each Sunday morning)
-6. Save the file in /users/yourid/Library/LaunchAgents as org.freeswitch.shutdown.plist, yourid is the user home directory
+1. 启动Textedit
+2. 将下面的行粘贴到空白文档中
+3. 下拉“格式”菜单
+4. 选择“转为纯文本”
+5. 根据需要更改你的用户目录下的id和关机时间（下面的示例设置为每周日早上2点）
+6. 将文件保存在/users/yourid/Library/LaunchAgents中，将文件名命名为org.freeswitch.shutdown.plist，yourid是用户的家目录
 
 ```xml
    <?xml version="1.0" encoding="UTF-8"?>
@@ -349,155 +341,147 @@ Next, create the plist file for Launchd:
 
 ```
 
-  
-You can either restart the Mac or issue the following command to activate the plist:
+您可以重新启动Mac或使用以下命令激活plist：
 
 ```xml
   launchctl load ~/Library/LaunchAgents/org.freeswitch.freeswitch-shutdown.plist
 ```
 
-### Diagnosing plist Problems
+### 检测plist问题
 
-If you receive the following message: launchctl: no plist was returned for:…..plist it usually means there was some type of error in the format of the plist. Open the macOS Console application in the Applications/Utilities folder to view messages.
+如果收到以下消息：launchctl: no plist was returned for:…..plist，通常意味着plist格式出现了错误。打开位于Applications/Utilities文件夹中的macOS控制台应用程序以查看消息。
 
-## Create A freeswitch-CLI Command Script
+## 创建freeswitch-CLI命令脚本
 
-Once FreeSWITCH™ is running in background mode you will need to use freeswitch-cli to communicate with it. Rather than starting Terminal and having to type the path to freeswitch-cli you can simply double click an icon to launch directly to freeswitch-cli.
+一旦 FreeSWITCH™ 运行在后台模式，您将需要使用 freeswitch-cli 与其进行通信。您无需启动终端并输入 freeswitch-cli 的路径，只需双击一个图标即可直接启动到 freeswitch-cli。
 
-Create the freeswitch-cli.command file in directory freeswitch-scripts:
+在 freeswitch-scripts 目录下创建 freeswitch-cli.command 文件：
 
 ```xml
-  cp dummy.command freeswitch-cli.command
+cp dummy.command freeswitch-cli.command
 ```
 
-  
-Next, add a line containing the command needed to start freeswitch-cli. Edit the new file and add the following line as the second line of the file (between the existing two lines):
+接下来，添加一行包含启动 freeswitch-cli 所需命令的内容。编辑新文件，在文件的第二行（现有两行之间）添加以下内容：
 
 ```xml
 /usr/local/freeswitch/bin/freeswitch-cli
 ```
 
-Since it's already executable just double click the icon while FreeSWITCH™ is running and freeswitch-cli will communicate with it. You may want to place an alias of the script on the Desktop for easy access.
+由于它已经是可执行文件，只需在 FreeSWITCH™ 运行时双击图标，freeswitch-cli 就会与其通信。您可能希望在桌面上放置该脚本的别名以便轻松访问。
 
-Set Security and Test
+设置安全性和测试
 
-The command file MUST be included in the macOS security settings. Double click the file to test, it will fail the first time due to security. Open Settings–>Security & Privacy, unlock the lock at the bottom, and allow the command name to run. The setting will be permanent.
+命令文件必须包含在 macOS 安全设置中。双击文件进行测试，第一次会由于安全性而失败。打开设置->安全性与隐私，解锁底部的锁，并允许运行该命令名称。设置将永久有效。
 
-  
-## Log Segmentation and Clearing
+## 日志分割和清除
 
-FreeSWITCH™ has a lot of [logging options](http://wiki.freeswitch.org/wiki/Mod%5Flogfile) and the log files can become quite large. This section illustrates how to make macOS automatically trigger events to control logging.
+FreeSWITCH™ 有很多[日志选项](http://wiki.freeswitch.org/wiki/Mod%5Flogfile)，日志文件可能会变得非常大。本节说明如何让 macOS 自动触发事件来控制日志记录。
 
-### Automatic Log Segmentation
+### 自动日志分割
 
-By default, the freeswitch.log file is appended to each time FreeSWITCH™ starts, and segments when its size reaches about 10 megabytes. This can be changed. However, FreeSWITCH™ does not have a mechanism to segment by time or day. By creating two files in macOS we can accomplish day and time controlled segmentation.
+默认情况下，每次启动 FreeSWITCH™ 时，freeswitch.log 文件都会被附加，并且在其大小达到约 10 兆字节时进行分段。这可以进行更改。然而，FreeSWITCH™ 没有按时间或日期分割的机制。通过在 macOS 中创建两个文件，我们可以实现基于日期和时间的分段。
 
-###### Create Log Segment Script
+###### 创建日志分割脚本
 
-Start Terminal and enter this command to create the freeswitch-logseg.command file in directory freeswitch-scripts:
+打开终端并输入以下命令，以在freeswitch-scripts目录中创建freeswitch-logseg.command文件：
 
 ```xml
   cp dummy.command freeswitch-logseg.command
 ```
 
-  
-Open the file in the editor and add the following line as the second line of the file (between the existing two lines).
+在编辑器中打开该文件，在现有的两行之间添加以下行作为第二行。
 
 ```xml
 kill -HUP `cat /usr/local/freeswitch/run/freeswitch.pid`
 ```
 
-Save the file, remember it's already executable.
+保存文件，记住已经可执行。
 
-Make sure FreeSWITCH™ is up and double click the file to test it. View the /usr/local/freeswitch/log directory, if the log was segmented proceed with the next steps.
+确保FreeSWITCH™处于运行状态，然后双击文件进行测试。查看/usr/local/freeswitch/log目录，如果日志已经切片，则进行下一步。
 
-Set Security and Test
+设置安全性并进行测试
 
-The command file MUST be included in the macOS security settings. Double click the file to test, it will fail the first time due to security. Open Settings–>Security & Privacy, unlock the lock at the bottom, and allow the command name to run. The setting will be permanent.
+必须将命令文件包括在macOS安全设置中。双击文件进行测试，由于安全性问题，首次测试会失败。打开“设置”->“安全性与隐私”，解锁底部的锁，并允许命令名称运行。该设置将是永久的。
 
-  
-###### Create Log Segment plist
+###### 创建日志分段PLIST文件
 
-Next, the plist file Launchd requires is created:
+接下来，创建Launchd所需的plist文件：
 
-1. Start Textedit
-2. Paste the lines below into the empty document
-3. Pull down the Format menu
-4. Select Make Plain Text
-5. Change yourid to the id of the home directory and change the time segmentation will occur if needed (23:59 is right before midnight)
-6. Save the file in /users/yourid/Library/LaunchAgents as org.freeswitch.logseg.plist, yourid is the user home directory
-
-```xml
-   <?xml version="1.0" encoding="UTF-8"?>
-   <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" 
-   "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-   <plist version="1.0">
-   <dict>
-        <key>Label</key>
-              <string>org.freeswitch.logseg</string>
-        <key>ProgramArguments</key>
-        <array>
-             <string>/usr/local/freeswitch-scripts/freeswitch-logseg.command</string>
-        </array>
-        <key>RunAtLoad</key>
-             <false/>
-        <key>StartCalendarInterval</key>
-        <dict>
-             <key>Hour</key>
-                  <integer>23</integer>
-             <key>Minute</key>
-                  <integer>59</integer>
-        </dict>
-   </dict>
-   </plist>
-
-```
-
-  
-You can either restart the Mac or issue the following command to activate the plist:
+1. 启动TextEdit
+2. 将以下行粘贴到空白文档中
+3. 下拉“格式”菜单
+4. 选择“变成纯文本”
+5. 将yourid更改为主目录的id，并根据需要更改时间分段发生的时间（23:59是午夜前）
+6. 将文件保存在/users/yourid/Library/LaunchAgents目录中，文件名为org.freeswitch.logseg.plist，其中yourid是用户主目录的名称。
 
 ```xml
-  launchctl load ~/Library/LaunchAgents/org.freeswitch.freeswitch-logseg.plist
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" 
+"http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>org.freeswitch.logseg</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/freeswitch-scripts/freeswitch-logseg.command</string>
+    </array>
+    <key>RunAtLoad</key>
+    <false/>
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>23</integer>
+        <key>Minute</key>
+        <integer>59</integer>
+    </dict>
+</dict>
+</plist>
 ```
 
-### Automatic Log Clearing
-
-Most likely you will want to erase old FreeSWITCH™ logs to free up disk space. This procedure will run periodically to delete files older than the number of days specified in a script.
-
-###### Create Log Clear Script
-
-Start Terminal and enter this command to create the freeswitch-logclr.command file in directory freeswitch-scripts:
+你可以重新启动 Mac 或执行以下命令来激活 plist：
 
 ```xml
-  cp dummy.command freeswitch-logclr.command
+launchctl load ~/Library/LaunchAgents/org.freeswitch.freeswitch-logseg.plist
 ```
 
-  
-Open the file in the editor and add the following line as the second line of the file (between the existing two lines). Notice that mtime is set so files older than 14 days are deleted. You can change this to any valid mtime value.
+### 自动清理日志
+
+很可能你希望清除旧的 FreeSWITCH™ 日志以释放磁盘空间。此过程将定期运行，以删除在脚本中指定的天数之前的文件。
+
+###### 创建日志清理脚本
+
+打开终端并输入以下命令，将在 "freeswitch-scripts" 目录中创建 freeswitch-logclr.command 文件：
+
+```xml
+cp dummy.command freeswitch-logclr.command
+```
+
+在编辑器中打开该文件并将以下行添加为文件的第二行（在现有的两行之间）。请注意，设置了 "mtime"，因此删除超过 14 天的文件。您可以将此值更改为任何有效的 "mtime" 值。
 
 ```xml
 /usr/bin/find /usr/local/freeswitch/log -name "freeswitch.log.*" -mtime +14 -delete
 ```
 
-Save the file, remember it's already executable.
+保存该文件，记住它已经是可执行文件。
 
-Make sure FreeSWITCH™ is up and double click the file to test it. View the /usr/local/freeswitch/log directory, if old logs were cleared proceed with the next steps.
+确保FreeSWITCH™已启动，并双击文件进行测试。查看/usr/local/freeswitch/log目录，如果旧日志已清除，请继续执行以下步骤。
 
-Set Security and Test
+设置安全性并进行测试
 
-The command file MUST be included in the macOS security settings. Double click the file to test, it will fail the first time due to security. Open Settings–>Security & Privacy, unlock the lock at the bottom, and allow the command name to run. The setting will be permanent.
+命令文件**必须**包含在macOS的安全设置中。双击文件进行测试，第一次会由于安全性问题而失败。打开“设置” -> “安全性与隐私”，解锁底部的锁，并允许命令名称运行。设置将会保持永久。
 
   
-###### Create Log Clear plist
+###### 创建日志清除的plist文件
 
-Next, the plist file Launchd requires is created:
+接下来，需创建Launchd所需的plist文件：
 
-1. Start Textedit
-2. Paste the lines below into the empty document
-3. Pull down the Format menu
-4. Select Make Plain Text
-5. Change yourid to the id of the home directory and change the time clearing will occur if needed (day 0 00:00 is Sunday midnight)
-6. Save the file in /users/yourid/Library/LaunchAgents as org.freeswitch.logclr.plist, yourid is the user home directory
+1. 启动TextEdit
+2. 将以下内容粘贴到空白文档中
+3. 下拉“格式”菜单
+4. 选择“转为纯文本”
+5. 将“yourid”更改为家目录的ID，并根据需要更改清除日志的时间（例如“day 0 00:00”表示星期日午夜）
+6. 将文件保存为/org.freeswitch.logclr.plist于/users/yourid/Library/LaunchAgents路径下，其中“yourid”为用户家目录的ID
 
 ```xml
    <?xml version="1.0" encoding="UTF-8"?>
@@ -527,28 +511,28 @@ Next, the plist file Launchd requires is created:
 ```
 
   
-You can either restart the Mac or issue the following command to activate the plist:
+您可以重新启动Mac，或者执行以下命令来激活plist：
 
 ```xml
   launchctl load ~/Library/LaunchAgents/org.freeswitch.freeswitch-logclr.plist
 ```
 
-### Automatic Log Rename at Login
+### 登录自动更名日志
 
-FreeSWITCH™ does not segment the log file when it is shutdown and restarted, it simply appends to the previous log file. Use this procedure to rename the last log file before FreeSWITCH™ starts at login. This is especially useful when restarting FreeSWITCH™ frequently for testing purposes, since you can double click the script to run it manually when needed.
+当关闭并重新启动FreeSWITCH™时，日志文件不会被分割，而是会追加到上一个日志文件中。使用以下步骤在登录时更名最后一个日志文件之前，重命名日志文件。当频繁重新启动FreeSWITCH™进行测试时，这非常有用，因为您可以在需要时手动双击运行脚本。
 
-###### Create Rename Script
+###### 创建重命名脚本
 
-A command file must be created containing the bash script statements to perform the rename function.
+必须创建一个包含Bash脚本语句以执行重命名功能的命令文件。
 
-Start Terminal and enter this command to create the freeswitch-logren.command file in directory freeswitch-scripts:
+打开终端并输入以下命令，在`freeswitch-scripts`目录中创建`freeswitch-logren.command`文件：
 
 ```xml
   cp dummy.command freeswitch-logren.command
 ```
 
   
-Open the file in an editor and replace the text with the following lines that will obtain the log file modification date and time, and add it to the file name:
+在编辑器中打开文件，并将以下文本替换为将获取日志文件的修改日期和时间，并将其添加到文件名中的行：
 
 ```xml
   #!/bin/sh
@@ -560,47 +544,45 @@ Open the file in an editor and replace the text with the following lines that wi
 ```
 
   
-Save the file, remember it's already executable.
+保存文件，记住它已经是可执行文件。
 
-FreeSWITCH™ can be running to test but it's preferable to shut it down so it comes up with a new log file. Double click the icon to test and check the log directory for the name change.
+可以运行FreeSWITCH™进行测试，但最好关闭它，这样它将使用一个新的日志文件启动。双击图标进行测试，并检查日志目录以获取名称更改。
 
-Set Security and Test
+设置安全性并进行测试
 
-The command file MUST be included in the macOS security settings. Double click the file to test, it will fail the first time due to security. Open Settings–>Security & Privacy, unlock the lock at the bottom, and allow the command name to run. The setting will be permanent.
+必须在macOS安全设置中包括该命令文件。双击文件进行测试，由于安全性的原因，第一次会失败。打开"设置"->"安全性与隐私"，在底部解锁锁定，并允许运行该命令名称。设置将是永久的。
 
-###### Setup macOS Account to Run the Rename Script
+###### 设置macOS帐户运行重命名脚本。
 
-This runs the command file every time the Desktop user logs in.
+每次桌面用户登录时都会运行该命令文件。
 
-1. Start System Preferences
-2. Click Accounts
-3. Click Logon Items
-4. Check "+"
-5. Navigate to the freeswitch-logren.command file and click Add.
+1. 打开系统偏好设置
+2. 点击账户
+3. 点击自动登录项
+4. 勾选 "+"
+5. 浏览到 freeswitch-logren.command 文件，然后点击添加。
 
-## Power Failure Recovery
+## 断电恢复
 
-Most likely, you are using FreeSWITCH™ on a 24x7 Mac. In case of a power failure there are two things that should be done to maintain FreeSWITCH™ availability:
+很可能，您正在使用24x7的Mac上的FreeSWITCH™。在断电情况下，有两件事需要做来保持 FreeSWITCH™ 的可用性：
 
-### Uninterruptible Power Supply
+### 不间断电源
 
-The Mac should be connected to a "smart" UPS that has a USB connection. This allows macOS to automatically perform a clean shutdown when there is not enough battery power to continue. macOS supports major UPS units that do not require additional software to be installed, these units are highly recommended. Once you connect the UPS via a USB cable:
+Mac 应该连接到带有 USB 连接的“智能”不间断电源 (UPS)。这样在电池电量不足以继续供电时，macOS 就能自动进行干净的关机。macOS 支持不需要安装额外软件的主流 UPS 单元，强烈建议使用这些设备。连接 UPS 通过 USB 线缆后：
 
-1. Start System Preferences
-2. Click Energy Saver
-3. Click UPS
-4. Set desired Computer and Screen sleep options. FreeSWITCH™ seems to do fine with sleep set.
-5. Click Shutdown Options
-6. Set the desired options based on your UPS backup time.
+1. 打开系统偏好设置
+2. 点击节能
+3. 点击 UPS
+4. 设置所需的计算机和屏幕休眠选项。FreeSWITCH™ 似乎在休眠设置下表现良好。
+5. 点击关机选项
+6. 根据您的 UPS 备用时间设置所需选项。
 
-### Auto Power Up After Failure
+### 断电后自动开机
 
-If you don't have a UPS, or your UPS runs out of battery power, the Mac will shut off. If there is no one around to restart it and you want it to restart automatically follow these steps:
+如果您没有UPS，或者您的UPS电池电量耗尽，Mac 将自动关闭。如果周围没有人可以重新启动它，并且您希望它能自动重新启动，请按照以下步骤操作：
 
-1. Start System Preferences
-2. Click Energy Saver
-3. Check "Start up automatically after power failure"
-4. Click UPS
-5. Check "Start up automatically after power failure"
-
-
+1. 打开系统偏好设置
+2. 点击节能
+3. 勾选"断电后自动启动"
+4. 点击 UPS
+5. 勾选"断电后自动启动"

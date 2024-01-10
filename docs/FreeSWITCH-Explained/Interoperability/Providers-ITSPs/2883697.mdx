@@ -1,27 +1,24 @@
+# Freephoneline（加拿大）
 
-# Provider Freephoneline (Canada) 
+最后更新时间：2013年12月15日
 
- 
+点击展开目录
 
-Last update 15 December 2013
+* 1 [通过Fongo提供支持的freephoneline.ca](#freephonelinecahttpfreephonelineca-powered-by-fongo)
+* 2 [SIP网关设置](#sip-gateway-settings)
+* 3 [Dialplan设置](#-freeswitch--provider-freephoneline-canada-)
+* 4 [发送和接收传真](#sending-and-receiving-faxes)
 
-Click to expand Table of Contents
+## 通过Fongo提供支持的freephoneline.ca
 
-* 1 [freephoneline.ca powered by Fongo](#freephonelinecahttpfreephonelineca-powered-by-fongo)
-* 2 [SIP Gateway Settings](#sip-gateway-settings)
-* 3 [Dialplan Setup](#-freeswitch--provider-freephoneline-canada-)
-* 4 [Sending and Receiving Faxes](#sending-and-receiving-faxes)
+* \[[freephoneline.ca](http://freephoneline.ca/)\]，也称为Bud Phone、Kokanee Phone、ZPhone。
+* 在加拿大的多个\[[城市](http://www.freephoneline.ca/cityListing)\]提供免费的电话线路，用于呼出和呼入。
+* 一次性支付50加币+ HST 解锁并获取SIP配置文件的登录信息。
+* 能够发送和接收传真，请参阅\[[详情](http://wiki.freeswitch.org/wiki/Provider%5FConfiguration:%5Ffreephoneline.ca#Sending%5Fand%5FReceiving%5FFaxes)\]。
 
-## [freephoneline.ca](http://freephoneline.ca) powered by Fongo
+## SIP网关设置
 
-* \[[freephoneline.ca](http://freephoneline.ca/)\], aka: Bud Phone, Kokanee Phone, ZPhone
-* Free phone line for outgoing and incomming in many \[[cities](http://www.freephoneline.ca/cityListing)\] across Canada.
-* $50 + HST one time fee to unlock and receive the SIP profile login information.
-* Sending and receiving Fax does work see \[[details](http://wiki.freeswitch.org/wiki/Provider%5FConfiguration:%5Ffreephoneline.ca#Sending%5Fand%5FReceiving%5FFaxes)\].
-
-## SIP Gateway Settings
-
-Create a **conf/sip\_profiles/[voip.freephoneline.ca](http://voip.freephoneline.ca).xml** and populate it as below using your SIP login settings:
+创建一个名为**conf/sip\_profiles/voip.freephoneline.ca.xml**的文件，并使用您的SIP登录设置填写如下内容：
 
 ```xml
 <include>
@@ -34,67 +31,62 @@ Create a **conf/sip\_profiles/[voip.freephoneline.ca](http://voip.freephoneline.
 </include> 
 ```
 
-## Dialplan Setup
+## Dialplan设置
 
-For incoming calls from your freephone DID create a **conf/dialplan/public/03\_inbound\_ANY\_did.xml** dialplan file and populate it as follows.
+为来自您的freephone DID的呼入呼叫创建一个名为**conf/dialplan/public/03\_inbound\_ANY\_did.xml**的dialplan文件，并按以下方式填写内容。
 
 ```xml
 <include>
   <extension name="public_did">
     <!--
-	Freephone line is missing support for SIP DTMF phone signaling hence we auto detect for this
-    and activate inband detection as needed; not having this means FS will not detect your keypresses
-    in your custom IVR, voicemail, etc.
+  免费电话线路不支持SIP DTMF电话信令，因此我们会自动检测，并在需要时激活嵌入检测；没有这个配置，FS将无法检测到您自定义IVR、语音邮箱等中的按键操作。
     -->
     <condition field="${switch_r_sdp}" expression="a=rtpmap:(\d+)\stelephone-event/8000" break="never">
 	   <action application="set" data="rtp_payload_number=$1"/>
 	   <anti-action application="start_dtmf"/>
-	   <anti-action application="log" data="WARNING Incoming DID can not do SIP INFO/RFC2833 DTMF tones."/>
+	   <anti-action application="log" data="WARNING 收到的DID无法支持SIP INFO/RFC2833 DTMF音调。"/>
     </condition>
-    <!-- Replace "expression" with your DID or leave to trigger on 1-xxx-xxx-xxxx or xxx-xxx-xxxx numbers -->
+    <!-- 将 "expression" 替换为您的DID或留空，以触发1-xxx-xxx-xxxx或xxx-xxx-xxxx号码 -->
     <condition field="destination_number" expression="^(1{0,1}\d{10})$">
-      <action application="log" data="INFO matched incoming DID destination_number: ${destination_number}"/>
-      <anti-action application="log" data="WARNING not matched incoming DID destination_number: ${destination_number}"/>
+      <action application="log" data="INFO 已匹配到收到的DID的目标号码: ${destination_number}"/>
+      <anti-action application="log" data="WARNING 未匹配到收到的DID的目标号码: ${destination_number}"/>
       <action application="transfer" data="1000 XML default"/>
       <!--
-      If you have an IVR setup replace above line with something like below line:
+      如果您已设置IVR，请将上述行替换为以下内容:
       <action application="transfer" data="IVR_danols XML default"/>
       -->
     </condition>
   </extension>
-</include> 
+</include>
 ```
 
-Setup your outgoing dialplan by creating **conf/dialplan/default/01\_outbound\_america\_digit\_dialing.xml** file and populating it as follows; don't forget to change the effective caller id and if you expand on the below pattern matching then update this page:
+通过创建**conf/dialplan/default/01\_outbound\_america\_digit\_dialing.xml**文件并按以下方式填充来设置外拨拨号计划；别忘记更改有效的呼叫者ID，如果您在下面的模式匹配上进行了扩展，请更新此页面：
 
-**NOTE:** Make sure your **conf/dialplan/default/[01\_example.com](http://01%5Fexample.com).xml** file is disabled or deleted otherwise it will conflict.
+**注意：** 确保禁用或删除您的**conf/dialplan/default/[01\_example.com](http://01%5Fexample.com).xml**文件，否则会发生冲突。
 
 ```xml
-<!-- 
-  freephoneline suggests following linksys dialing patters: 
-  (911|[2-9]xxxxxxxxx|1xxxxxxxxxx|011xxxxxxxxxxxx.|98*|[6-7]x*xxxxxxxxxxx.)
+<!--
+Freephoneline推荐使用Linksys拨号规则：
+(911|[2-9]xxxxxxxxx|1xxxxxxxxxx|011xxxxxxxxxxxx.|98*|[6-7]x*xxxxxxxxxxx.)
 -->
-<extension name="America Calling">
+<extension name="CALLTYPE美国">
 	<!-- pattern 1xxxxxxxxxx -->
-    <condition field="destination_number" expression="^1{0,1}(\d{10})$">
-        <action application="set" data="effective_caller_id_number=0000000000"/>
-        <action application="bridge" data="sofia/gateway/voip.freephoneline.ca/$1"/>
-    </condition>
-</extension> 
+	<condition field="destination_number" expression="^1{0,1}(\d{10})$">
+		<action application="set" data="effective_caller_id_number=0000000000"/>
+		<action application="bridge" data="sofia/gateway/voip.freephoneline.ca/$1"/>
+	</condition>
+</extension>
 ```
 
-## Sending and Receiving Faxes
+## 发送和接收传真
 
-It appears when searching the web that people have had success, and it is possible to send faxes, after trail and error below is what worked for me:
+据网络搜索显示，人们在经过一些尝试后成功地发送传真是可能的。以下是我成功的方法：
 
-* IMPORTANT: add '&lt;action application="set" data="t38\_passthru=true"/>' to your ougoing plan - without this I was not able to get realiable sending.  
-   * see: <http://lists.freeswitch.org/pipermail/freeswitch-users/2011-March/069834.html>
-* In your VOIP box switch SIP protocol to UDP  
-   * If you are having UDP issues but TCP works and you are behind NAT/Firewall try enabling 'Handle VIA rport' and 'Handle VIA received' options in your SIP box (spa3012 VOIP box)
-* Try changing Line 1 > Network Jitter Level: to 'very high' or 'extremely high' (spa3012 VOIP box)
-* Also I was getting better luck sending when I swtiched the 'FAX Passthru Method:' to ReINVITE
+* **重要：**在传出计划中添加'&lt;action application="set" data="t38\_passthru=true"/>' - 如果没有这个设置，发送传真可能不稳定。参考：<http://lists.freeswitch.org/pipermail/freeswitch-users/2011-March/069834.html>
+* 将VOIP盒子的SIP协议切换为UDP
+   * 如果你在NAT/Firewall后面遇到UDP问题，但TCP正常工作，请尝试在SIP盒子中启用'Handle VIA rport'和'Handle VIA received'选项（spa3012 VOIP盒子）
+* 尝试将'Line 1 > Network Jitter Level:'更改为 'very high' 或 'extremely high'（spa3012 VOIP盒子）
+* 当我将'FAX Passthru Method:' 切换为 ReINVITE 时，发送传真的成功率更高
 
-Sending long 10+ min graphic intensive faxes worked without a hitch. Directly receiving faxes was not tested as one can simply get another Freephoneline only to receive faxes. This is accomplished by using the fax to email built in service. To setup up login into Freephoneline's admin and in the VM setting setup email forwarding.
-
-  
-
+发送超过10分钟的图形密集型传真没有任何问题。直接接收传真的功能没有测试，因为你可以简单地使用另一个Freephoneline来接收传真。这可以通过使用内置传真到电子邮件的服务来实现。要设置，请登录到Freephoneline的管理员界面，在VM设置中设置电子邮件转发。
+```

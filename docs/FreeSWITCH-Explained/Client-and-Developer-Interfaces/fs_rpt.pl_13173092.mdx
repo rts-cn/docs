@@ -1,93 +1,90 @@
+# fs_rpt.pl
 
-# fs_rpt.pl 
+## 关于
 
- 
+由[Bret McDanel](https://freeswitch.org/confluence/display/~trixter)创建
 
-## About
+fs_rpt.pl的工作方式类似于Jim Dixon最初编写的Asterisk的app_rpt。它可以让您构建一个中继器、一个简单的无线电端点或其他根据情况而定的操作。
 
-by [Bret McDanel](https://freeswitch.org/confluence/display/~trixter)
+这个脚本是使用Perl编写的，特意为了鼓励更多人根据自己的需求修改脚本，而不需要安装编译器或了解如何编译程序。它遵循MPL许可证以鼓励其在其他项目中的采用。
 
-fs\_rpt.pl will operate in a similar fashion to Asterisk's app\_rpt originally written by Jim Dixon. This will let you build a repeater, a simple radio endpoint, or other operations as the situation dictates.
+点击此处展开目录
 
-This was written in Perl specifically to encourage more people to modify the script to suit their needs, without requiring a compiler to be installed nor knowledge of how to compile programs. It is released under the MPL license to encourage adoption into other projects.
+* 1 [FreeSWITCH拥有无线电端点！](#freeswitch-has-a-radio-endpoint)
+* 2 [要求](#requirements)  
+   * 2.1 [可选](#optional)
+* 3 [安装和配置](#installation-and-configuration)  
+   * 3.1 [无线电互连](#radio-interconnect)  
+   * 3.2 [会议配置](#conference-configuration)  
+   * 3.3 [拨号计划配置](#dialplan-configuration)  
+   * 3.4 [脚本配置](#script-configuration)
+* 4 [运行](#running)
 
-Click here to expand Table of Contents
+## FreeSWITCH拥有无线电端点！
 
-* 1 [FreeSWITCH Has A Radio Endpoint!](#freeswitch-has-a-radio-endpoint)
-* 2 [Requirements](#requirements)  
-   * 2.1 [Optional](#optional)
-* 3 [Installation and Configuration](#installation-and-configuration)  
-   * 3.1 [Radio interconnect](#radio-interconnect)  
-   * 3.2 [Conference Configuration](#conference-configuration)  
-   * 3.3 [Dialplan Configuration](#dialplan-configuration)  
-   * 3.4 [Script Configuration](#script-configuration)
-* 4 [Running](#running)
+由trixter于2009年9月3日发布，涉及无线电、电话技术
 
-## FreeSWITCH Has A Radio Endpoint!
+我完成了我编写的Perl脚本的初始版本，它将FreeSWITCH与无线电设备连接起来。虽然我主要是考虑业余无线电，但您也可以使用它连接FRS、GMRS或其他类似类型的无线电设备。
 
-by trixter on Sep.03, 2009, under Radio, Telephony
+使用FT-897 PTT控制电路，您可以通过将各种接头连接到几乎任何电台来控制PTT。有一些将不兼容，有些将需要硬件修改（删除麦克风/扬声器，用耳机线取而代之，并将PTT按钮连接到串口）。我将不在此处讨论如何做到这一点。如果您无法解决问题，您可能不应该这样做。
 
-I finished the initial version of my perl script that will link FreeSWITCH to a radio device. While I am primarily doing this with amateur radio in mind, you could use this to connect an FRS, GMRS, or other similar type of radio.
+为了使用脚本，您必须安装FreeSWITCH。一旦您完成了安装，您必须配置一些内容才能使其工作。
 
-Using the FT-897 PTT control circuit, you can control PTT by connecting the various connectors to virtually any radio. Some will not be compatible, some will require hardware modification (removal of the mic/speaker and replacing them with headphone wires and connecting the PTT button to the serial port). I will not be discussing how to do that here. If you can’t figure that out you probably shouldn't be doing it.
+## 要求
 
-In order to use the script, you must install FreeSWITCH. Once you have done that you have to configure a few things for this to work.
-
-## Requirements
-
-* Radio with speaker/mic connected to sound card, and a PTT connection to a serial port.
-* Serial port for PTT (push to talk) control.
-* Perl (Windows, Linux or OSX should all be usable)  
-   * Device::SerialPins  
-   * Getopt::Std  
-   * FreeSWITCH::Client - in {src}/scripts/perl  
-   * POSIX ':signal\_h'  
-   * Switch  
+* 用麦克风/扬声器连接到声卡的电台，以及用串口连接PTT的电台。
+* 用于PTT（按下讲话）控制的串口。
+* Perl（Windows，Linux或OSX都可使用）
+   * Device::SerialPins
+   * Getopt::Std
+   * FreeSWITCH::Client - 在{src}/scripts/perl中
+   * POSIX的':signal\_h'
+   * Switch
    * File::stat
 * [mod\_event\_socket](../Modules/mod_event_socket_1048924.mdx#11-acl)
 * [mod\_conference](../Modules/mod_conference_3965534.mdx#list)
 * [mod\_portaudio](../Modules/mod_portaudio_9634724.mdx#about)
 * [FreeSWITCH-contrib/trixter/radio/fs\_rpt.pl](https://freeswitch.org/stash/projects/FS/repos/freeswitch-contrib/browse/trixter/radio)
 
-### Optional
+### 可选
 
-* [morse.js](https://freeswitch.org/stash/projects/FS/repos/freeswitch-contrib/browse/trixter/radio/morse.js) \- to play your callsign in morse code; required in some jurisdictions
-* TTS engine - to make announcements periodically
+* [morse.js](https://freeswitch.org/stash/projects/FS/repos/freeswitch-contrib/browse/trixter/radio/morse.js) \- 以摩尔斯码播放您的呼号；在某些司法管辖区中是必需的
+* TTS引擎 - 定期进行通告
 
-## Installation and Configuration
+## 安装和配置
 
-### Radio interconnect
+### 电台互连
 
-You will need to make or buy a cable that is suitable to connect to a radio. Some ideas can be found at [AllStar USB fob interface](http://docs.allstarlink.org/drupal/node/95).
+您需要制作或购买一根适合连接到电台的电缆。一些想法可以在[AllStar USB fob interface](http://docs.allstarlink.org/drupal/node/95)中找到。
 
-### Conference Configuration
+### 会议配置
 
-In autoload\_configs/conference.conf.xml you must add to the “caller-controls" section: In order for DTMF to be acted upon by fs\_rpt.pl we need to map all of the DTMF keys to the "event" option, so they are sent to Event Socket instead of being acted upon by mod\_conference itself. To accomplish this we need to add a group to the &lt;caller-controls> section of [conference.conf.xml](../Modules/mod_conference_3965534.mdx#list)
+在autoload_configs/conference.conf.xml中，您需要添加到“caller-controls”部分：为了使 DTMF 由 fs_rpt.pl 处理，我们需要将所有的 DTMF 键映射到“event”选项，这样它们就会被发送到 Event Socket，而不是被 mod_conference 本身处理。为了实现这一点，我们需要将一个组添加到[conference.conf.xml](../Modules/mod_conference_3965534.mdx#list)的`<caller-controls>`部分。
 
-**conf/autoload\_configs/conference.conf.xml**
+**conf/autoload_configs/conference.conf.xml**
 
 ```xml
  <group name="radio">
-     <control action="event" digits="1″/>
-     <control action="event" digits="2″/>
-     <control action="event" digits="3″/>
-     <control action="event" digits="4″/>
-     <control action="event" digits="5″/>
-     <control action="event" digits="6″/>
-     <control action="event" digits="7″/>
-     <control action="event" digits="8″/>
-     <control action="event" digits="9″/>
-     <control action="event" digits="0″/>
+     <control action="event" digits="1"/>
+     <control action="event" digits="2"/>
+     <control action="event" digits="3"/>
+     <control action="event" digits="4"/>
+     <control action="event" digits="5"/>
+     <control action="event" digits="6"/>
+     <control action="event" digits="7"/>
+     <control action="event" digits="8"/>
+     <control action="event" digits="9"/>
+     <control action="event" digits="0"/>
      <control action="event" digits="*"/>
      <control action="event" digits="#"/>
  </group>
 ```
 
-You must also make a profile for the conference. I am only listing the important sections since most of this is specific to your configuration and preferences.
+您还需要为会议创建一个配置文件。我只列出了重要的部分，因为大部分内容是针对您的配置和偏好的。
 
-The important thing is to set the caller-controls to the group you made in the previous step, in this example that is "radio".
+重要的是要将caller-controls设置为您在上一步中创建的组，示例中为"radio"。
 
-**conf/autoload\_configs/conference.conf.xml**
+**conf/autoload_configs/conference.conf.xml**
 
 ```xml
  <profile name="radio">
@@ -95,7 +92,7 @@ The important thing is to set the caller-controls to the group you made in the p
  </profile>
 ```
 
-### Dialplan Configuration
+### 拨号计划配置
 
 **dialplan/default/radio.xml**
 
@@ -113,76 +110,74 @@ The important thing is to set the caller-controls to the group you made in the p
  </extension>
 ```
 
-This will run [start\_dtmf](../Modules/mod-dptools/6587132.mdx#0-about) on the portaudio port so that when the radio receives DTMF tones, they can be decoded and acted upon by [fs\_rpt.pl](http://fs%5Frpt.pl). It will put all callers into a conference where they can communicate.
+这段代码会在portaudio端口上运行[start\_dtmf](../Modules/mod-dptools/6587132.mdx#0-about)，这样当无线电接收到DTMF音调时，可以通过[fs\_rpt.pl](http://fs%5Frpt.pl)解码并进行相关操作。它将把所有呼叫方放入一个会议中，以便它们可以进行通信。
 
-### Script Configuration
+### 脚本配置
 
-There are a few different variables that you need to configure in the script itself. These variables control some of the functionality of the script as it interfaces with the radio. When you edit the script you will see the following:
+脚本本身需要配置几个不同的变量。这些变量控制脚本与无线电交互时的一些功能。当您编辑脚本时，您会看到以下内容：
 
-Configure the event socket parameters. If you set the timeout too low, it will constantly try to reconnect, if you set it too high it won't notice that it lost its connection. 30 seconds is a good value and it should only be changed if you are experiencing some problem.
+配置事件套接字参数。如果将超时时间设置得太低，它将不断尝试重新连接，如果将其设置得太高，它将察觉不到连接丢失。30秒是一个很好的值，只有在遇到问题时才应更改。
 
-**ESL parameters**
-
-```perl
- my $password = "ClueCon";    # event socket password
- my $host     = "localhost";  # event socket host
- my $port     = 8021;         # event socket port
- my $timeout  = 30;           # seconds to expect a heartbeat or reconnect
-```
-
-Configure the serial port for PTT functionality.
-
-**Radio interface parameters**
+**ESL参数**
 
 ```perl
- my $device   = undef;        # radio control device (/dev/ttyS0, COM1, etc)
- my $baud     = 9600;         # radio control device baud rate
+ my $password = "ClueCon";    # 事件套接字密码
+ my $host     = "localhost";  # 事件套接字主机
+ my $port     = 8021;         # 事件套接字端口
+ my $timeout  = 30;           # 期望的心跳时间或重新连接时间（秒）
 ```
 
-Configure a courtesy tone, this is a tone played just after the signal into the radio receiver stops, so that people listening to your radio transmission know that you are finished transmitting. If its value is 'undef' then the tone is disabled.
+配置PTT功能的串口。
 
-**Beep parameters**
+**无线电接口参数**
 
 ```perl
- my $courtesy_tone = "tone_stream://%(150,150,500);%(150,0,400)"; # tone played before releasing PTT           
- #my $courtesy_tone = "/sounds/beep.wav"; # play a sound file
- #my $courtesy_tone = undef; # disable courtesy tone
+ my $device   = undef;        # 无线电控制设备（/dev/ttyS0，COM1等）
+ my $baud     = 9600;         # 无线电控制设备波特率
 ```
 
-Configure the conference information, use the extension you created in your dialplan and the conference name you created in the profile in the previous steps.
+配置一种礼貌音，这是在无线电接收器收到信号后播放的音调，以便听你的无线电传输的人知道你已经传输完成。如果值为'undef'，则意味着禁用音调。
 
-**Conference parameters**
+**蜂鸣器参数**
 
 ```perl
- my $confname = "radio";      # the name of the conference
- my $extension = "1337";      # this is the extension that portaudio will call to join the radio conference
+ my $courtesy_tone = "tone_stream://%(150,150,500);%(150,0,400)"; # 释放PTT之前播放的音调
+ #my $courtesy_tone = "/sounds/beep.wav"; #播放音频文件
+ #my $courtesy_tone = undef; #禁用礼貌音
 ```
 
-Configure your callsign if desired or required. This will use the morse.js script, which is required to be in the 'scripts' directory under your main FreeSWITCH install directory. If it is 'undef' then no callsign will be transmitted, which may violate some laws in some jurisdictions.
+配置会议信息，使用您在拨号计划中创建的分机和在之前步骤中创建的配置文件中的会议名称。
 
-**Ham callsign parameters**
+**会议参数**
 
 ```perl
- my $callsign = undef;     # callsign for morse autoID
- my $callsign_interval = 600; # 10 minute intervals
+ my $confname = "radio";      # 会议名称
+ my $extension = "1337";      # 这是Portaudio将调用加入无线电会议的分机
 ```
 
-Configure the path to Cepstral (or some other TTS engine). If you use another TTS engine you may need to edit the options that are passed to Cepstral. I do not use mod\_cepstral since it is unlikely that this information is going to change frequently, so a sound file is generated once, and only updated if the file modification timestamp changes. You just make a file named "announcement.txt" and place the content in there that you want read. It will be read _after_ your CWID.
+根据需要配置您的呼号。这将使用morse.js脚本，该脚本需要位于主FreeSWITCH安装目录下的“scripts”目录中。如果为'undef'，则不会传输呼号，这可能违反某些司法管辖区的法律。
 
-**TTS parameters**
+**业余电台呼号参数**
 
 ```perl
- my $voice = "Allison";
- my $swift = "/opt/swift/bin/swift";
- my $filetime = 0;
+ my $callsign = undef;     # morse自动识别呼号
+ my $callsign_interval = 600; # 10分钟为间隔
 ```
 
-## Running
+配置到Cepstral（或其他TTS引擎）的路径。如果使用其他TTS引擎，可能需要编辑传递给Cepstral的选项。我不使用mod\_cepstral，因为这些信息不太可能经常发生变化，所以只生成一次声音文件，并且仅在文件修改时间戳更改时更新。您只需创建一个名为“announcement.txt”的文件，并将要朗读的内容放在其中。它将在你的CWID之后被读取。
 
-Start FreeSWITCH as normal, or reloadxml if it was already running to load the new settings. Launch fs\_rpt.pl which will place a portaudio call into the conference.
+**TTS参数**
 
-Create an announcement.txt for any announcements that you want audibly spoken after each morse code identification, delete this file to disable announcements when they are no longer relevant.
+```perl
+my $voice = "Allison";
+my $swift = "/opt/swift/bin/swift";
+my $filetime = 0;
+```
 
-Have callers go into the conference to talk to people on the radio. **It may be illegal to allow non-licensed operators into the conference with talk ability**. If you want to allow non-licensed people listen it may be better to use the recording capabilities of mod\_conference to relay the audio to a Shoutcast or Icecast server so anyone can listen via that mechanism. At the very least they should remain muted for the entire duration they are in the conference which can be controlled with a flag to the conference.
+## 运行
 
+按照正常流程启动FreeSWITCH，或者如果已经在运行，则使用reloadxml加载新的设置。运行fs_rpt.pl，并在会议中呼叫portaudio。
 
+创建一个announcement.txt文件，用于在每个摩尔斯码识别后要朗读的任何公告，如果不再需要公告，则删除该文件以停用它们。
+
+让呼叫者进入会议，与无线电上的人交谈。**允许非持牌操作员进入具有通话功能的会议可能是非法的**。如果要允许非持牌人员进行收听，最好使用mod_conference的录音功能，将音频传输到Shoutcast或Icecast服务器，以便任何人都可以通过该机制收听。至少他们在会议期间应保持静音，可以使用会议的标志来控制。

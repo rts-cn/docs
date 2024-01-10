@@ -1,199 +1,192 @@
+# 全局变量
 
-# Global Variables 
+## 关于
 
- 
+在启动FreeSWITCH时，会创建一些全局变量，这些变量是只读的（从技术上讲，你可以更改它们，但更改值没有任何效果）。其中一些在默认配置中被广泛使用，其他一些只是用于信息目的。
 
-## About
+在此页面上，我们列出了所有这些预定义变量。
 
-At startup FreeSWITCH creates some global variables, these are read-only (technically, you can change them, but changing the value has no effect). Some of these are used heavily in the default configuration, others are just there for informational purpose.
+点击此处展开目录
 
-On this page we list all these pre-defined variables.
+* 1 [网络和SIP相关](#networking--sip-related)
+   * 1.1 [hostname](#hostname)
+   * 1.2 [local_ip_v4](#local_ip_v4)
+   * 1.3 [local_ip_v6](#local_ip_v4)
+   * 1.4 [local_mask_v4](#local_mask_v4)
+   * 1.5 [nat_public_addr](#nat_public_addr)
+   * 1.6 [nat_private_addr](#nat_private_addr)
+   * 1.7 [nat_type](#nat_type)
+   * 1.8 [zrtp_enabled](#zrtp_enabled) **ZRTP已弃用，并将从文档中移除**
+* 2 [目录](#directories)
+   * 2.1 [base_dir](#base_dir)
+   * 2.2 [cache_dir](#cache_dir)
+   * 2.3 [certs_dir](#certs_dir)
+   * 2.4 [conf_dir](#base_dir)
+   * 2.5 [db_dir](#base_dir)
+   * 2.6 [grammar_dir](#grammar_dir)
+   * 2.7 [htdocs_dir](#htdocs_dir)
+   * 2.8 [log_dir](#base_dir)
+   * 2.9 [mod_dir](#base_dir)
+   * 2.10 [recordings_dir](#recordings_dir)
+   * 2.11 [run_dir](#base_dir)
+   * 2.12 [script_dir](#script_dir)
+   * 2.13 [sounds_dir](#sounds_dir)
+   * 2.14 [sound_prefix](#sound_prefix)
+   * 2.15 [storage_dir](#storage_dir)
+   * 2.16 [temp_dir](#base_dir)
+* 3 [其他](#others)
+   * 3.1 [core_uuid](#core_uuid)
+   * 3.2 [switch_serial](#switch_serial)
 
-Click here to expand Table of Contents
+## 网络和SIP相关
 
-* 1 [Networking & SIP Related](#networking--sip-related)  
-   * 1.1 [hostname](#hostname)  
-   * 1.2 [local\_ip\_v4](#local_ip_v4)  
-   * 1.3 [local\_ip\_v6](#local_ip_v4)  
-   * 1.4 [local\_mask\_v4](#local_mask_v4)  
-   * 1.5 [nat\_public\_addr](#nat_public_addr)  
-   * 1.6 [nat\_private\_addr](#nat_private_addr)  
-   * 1.7 [nat\_type](#nat_type)  
-   * 1.8 [zrtp\_enabled](#zrtp_enabled) **ZRTP IS NOW DEPREICATED and will be removed out of the docs**
-* 2 [Directories](#directories)  
-   * 2.1 [base\_dir](#base_dir)  
-   * 2.2 [cache\_dir](#cache_dir)  
-   * 2.3 [certs\_dir](#certs_dir)  
-   * 2.4 [conf\_dir](#base_dir)  
-   * 2.5 [db\_dir](#base_dir)  
-   * 2.6 [grammar\_dir](#grammar_dir)  
-   * 2.7 [htdocs\_dir](#htdocs_dir)  
-   * 2.8 [log\_dir](#base_dir)  
-   * 2.9 [mod\_dir](#base_dir)  
-   * 2.10 [recordings\_dir](#recordings_dir)  
-   * 2.11 [run\_dir](#base_dir)  
-   * 2.12 [script\_dir](#script_dir)  
-   * 2.13 [sounds\_dir](#sounds_dir)  
-   * 2.14 [sound\_prefix](#sound_prefix)  
-   * 2.15 [storage\_dir](#storage_dir)  
-   * 2.16 [temp\_dir](#base_dir)
-* 3 [Others](#others)  
-   * 3.1 [core\_uuid](#core_uuid)  
-   * 3.2 [switch\_serial](#switch_serial)
+### 主机名
 
-## Networking & SIP Related
-
-### hostname
-
-string This global variable is set dynamically by the FreeSWITCH core and is set to the host name of the server on which FreeSWITCH is running. You cannot override the value of this variable by setting it. However if you change the host name of the server the value of the variable will be updated.
+`这个全局变量是由FreeSWITCH核心动态设置的，它被设置为运行FreeSWITCH的服务器的主机名。您无法通过设置来覆盖此变量的值。然而，如果您更改服务器的主机名，此变量的值将被更新。
 
 ### local_ip_v4
 
 string
 
-This global variable is set dynamically by the FreeSWITCH core by asking the underlying OS for the IP address of the server on which FreeSWITCH is running. If the server has multiple IP addresses this will be set to the first one returned by the OS. In the [default configuration](../../Configuration/Default-Configuration_6587388.mdx#mod_vp8) there are many settings that use this global variable. 
+这个全局变量是由FreeSWITCH核心动态设置的，它通过向底层操作系统请求运行FreeSWITCH的服务器的IP地址来设置。如果服务器有多个IP地址，则该变量将被设置为操作系统返回的第一个IP地址。在[默认配置](../../Configuration/Default-Configuration_6587388.mdx#mod_vp8)中，有许多设置使用了这个全局变量。
 
-You cannot override the value of this global variable, because it will be reset by the FreeSWITCH core every minute. If your server has multiple IP addresses and you want to force FreeSWITCH to use a particular IP address, you can create a global variable `force_local_ip_v4` and set it to the IP address you prefer. You must also set the local\_ip\_v4 variable to this IP address, you can do it by simply setting local\_ip\_v4 to use the value of `force_local_ip_v4` 
+由于FreeSWITCH核心每分钟都会重置该全局变量，因此您无法覆盖它的值。如果您的服务器有多个IP地址，并且您想强制FreeSWITCH使用特定的IP地址，您可以创建一个名为`force_local_ip_v4`的全局变量，并将其设置为您偏爱的IP地址。您还必须将local_ip_v4变量设置为该IP地址，可以通过简单地将local_ip_v4设置为`force_local_ip_v4`的值来实现。
 
-**Example: force\_local\_ip\_v4**
+**示例: force_local_ip_v4**
 
 ```xml
 <X-PRE-PROCESS cmd="set" data="force_local_ip_v4=1.1.1.1"/>
 <X-PRE-PROCESS cmd="set" data="local_ip_v4=$${force_local_ip_v4 }"/>
 ```
 
-FreeSWITCH will not validate that the IP address you entered for `force_local_ip_v4` is actually pointing to the server, it's up to you to ensure that you use a valid IP address that's routed correctly to the server.
+FreeSWITCH不会验证您为`force_local_ip_v4`输入的IP地址实际上是否指向该服务器，这取决于您确保使用正确路由到服务器的有效IP地址。
+
 
 ### local_ip_v6
 
-string
+string`
 
-This global variable is set dynamically by the FreeSWITCH core by asking the underlying OS for the IPv6 address of the server on which FreeSWITCH is running (if it supports IPv6). If the server has multiple IPv6 addresses this will be set to the first one returned by the OS. In the [default configuration](../../Configuration/Default-Configuration_6587388.mdx#mod_vp8) this variable is used for setting up IPv6 SIP and Verto Profiles.
+这个全局变量是由FreeSWITCH核心动态设置的，它通过向底层操作系统请求运行FreeSWITCH的服务器的IPv6地址（如果支持IPv6）来进行设置。如果服务器有多个IPv6地址，那么这个变量将被设置为操作系统返回的第一个地址。在[默认配置](../../Configuration/Default-Configuration_6587388.mdx#mod_vp8)中，这个变量用于设置IPv6 SIP和Verto配置文件。
 
-You cannot override the value of this global variable, because it will be reset by the FreeSWITCH core every minute. If your server has multiple IPv6 addresses and you want to force FreeSWITCH to use a particular IPv6 address, you can create a global variable force\_local\_ip\_v6 and set it to the IP address you prefer. You must also set the local\_ip\_v6 variable to this IP address, you can do it by simply setting local\_ip\_v6 to use the value of force\_local\_ip\_v6.
+您无法覆盖这个全局变量的值，因为FreeSWITCH核心每分钟都会重新设置它。如果您的服务器有多个IPv6地址，并且希望强制FreeSWITCH使用特定的IPv6地址，您可以创建一个名为`force_local_ip_v6`的全局变量，并将其设置为您偏好的IP地址。您还必须将`local_ip_v6`变量设置为此IP地址，可以通过将local_ip_v6简单地设置为force_local_ip_v6的值来实现。
 
-**Example: force\_local\_ip\_v6**
+**示例：force_local_ip_v6**
 
 ```xml
 <X-PRE-PROCESS cmd="set" data="force_local_ip_v4=1.1.1.1"/>
 <X-PRE-PROCESS cmd="set" data="local_ip_v4=$${force_local_ip_v4 }"/>
 ```
 
-FreeSWITCH will not validate that the IPv6 address you entered for `force_local_ip_v6` is actually pointing to the server, it's up to you to ensure that you use a valid IP address that's routed correctly to the server.
+FreeSWITCH不会验证您为`force_local_ip_v6`输入的IPv6地址是否实际指向服务器，这取决于您确保使用有效的IP地址并将其正确路由到服务器。
 
 ### local_mask_v4
 
 string
 
-This global variable is set dynamically by the FreeSWITCH core by using the network mask received from the underlying OS when determining the [local\_ip\_v4](../../../Channel-Variables-Catalog/local_ip_v4_16353556.mdx#local_ip_v4).
+这个全局变量是由FreeSWITCH核心动态设置的，它通过使用从底层操作系统接收到的网络掩码来确定[local_ip_v4](../../../Channel-Variables-Catalog/local_ip_v4_16353556.mdx#local_ip_v4)。
 
 ### nat_public_addr
 
 string
 
-If you use [auto-nat](../../Networking/Auto-Nat_6587487.mdx#about) and FreeSWITCH was able to identify the public IP address pointing to your server, this variable will be set with the auto detected public IP address.
+如果您使用[auto-nat](../../Networking/Auto-Nat_6587487.mdx#about)，并且FreeSWITCH能够识别指向您服务器的公共IP地址，那么此变量将被设置为自动检测到的公共IP地址。
 
 ### nat_private_addr
 
-string
+字符串
 
-If you use [auto-nat](../../Networking/Auto-Nat_6587487.mdx#about) and a public IP address was detected, this variable will be set with the private IP address to which the detected public IP address is mapped.
+如果您使用[auto-nat](../../Networking/Auto-Nat_6587487.mdx#about)，并且检测到了公共IP地址，则此变量将被设置为检测到的公共IP地址映射到的私有IP地址。
 
 ### nat_type
 
-string
+字符串
 
-If you use auto-nat FreeSWITCH will set this global variable to the type of [auto nat](../../Networking/Auto-Nat_6587487.mdx#about) device it detected this can be either pmp or upnp.
+如果您使用auto-nat，FreeSWITCH将将此全局变量设置为它检测到的[auto nat](../../Networking/Auto-Nat_6587487.mdx#about)设备类型，可以是pmp或upnp。
 
-### zrtp_enabled **ZRTP IS NOW DEPREICATED and will be removed out of the docs**
+### zrtp_enabled **ZRTP现已不推荐使用，并将从文档中移除**
 
-string
+字符串
 
-This global variable is set by the FreeSWITCH core to the value of the global rtp-enable-zrtp setting in [switch.conf.xml](../../Configuration/Configuring-FreeSWITCH/Switch.conf.xml_9634306.mdx#about). For more information see the [SIP TLS](../../Security/SIP-TLS_9634135.mdx#attachments) page.
+此全局变量由FreeSWITCH核心设置为[switch.conf.xml](../../Configuration/Configuring-FreeSWITCH/Switch.conf.xml_9634306.mdx#about)中全局rtp-enable-zrtp设置的值。有关更多信息，请参见[SIP TLS](../../Security/SIP-TLS_9634135.mdx#attachments)页面。
 
-## Directories
+## 目录
 
-These variables show the default directory used by FreeSWITCH for certain files. At startup FreeSWITCH will assign default values to all of these, to use a different directory, you can pass it along as a [Command Line Switch](../../Configuration/Command-Line-Switches_6587362.mdx#about) at startup.
+这些变量显示了FreeSWITCH用于某些文件的默认目录。在启动时，FreeSWITCH将为所有这些变量分配默认值，要使用不同的目录，您可以在启动时作为[命令行开关](../../Configuration/Command-Line-Switches_6587362.mdx#about)传递它。
 
-  
 ### base_dir
 
-string
+字符串
 
-This defines the base directory for most other directory settings
+这定义了大多数其他目录设置的基础目录。
 
 ### cache_dir
 
-string
+字符串
 
 ### certs_dir
 
-string
+字符串
 
 ### conf_dir
 
-string
+字符串
 
 ### db_dir
 
-string
+字符串
 
 ### grammar_dir
 
-string
+字符串
 
 ### htdocs_dir
 
-string
+字符串
 
 ### log_dir
 
-string
+字符串
 
 ### mod_dir
 
-string
+字符串
 
 ### recordings_dir
 
-string
+字符串
 
 ### run_dir
 
-string
+字符串
 
 ### script_dir
 
-string
+字符串
 
 ### sounds_dir
 
-string
+字符串
 
 ### sound_prefix
 
-string Directory prefix where the sounds for phrase macros live, and where recordings are saved by default. See [mod\_dptools:record](../../Modules/mod_dptools_1970333.mdx#-c), [mod\_dptools:record\_session](../../Modules/mod_dptools_1970333.mdx#-c), and [mod\_commands](../../Modules/mod_commands_1966741.mdx#--)'s (the FreeSWITCH API) `uuid_record` .
+存放短语宏声音和默认保存录音的目录前缀。参见[mod_dptools:record](../../Modules/mod_dptools_1970333.mdx#-c)，[mod_dptools:record_session](../../Modules/mod_dptools_1970333.mdx#-c)，以及[mod_commands](../../Modules/mod_commands_1966741.mdx#--)（FreeSWITCH API）的`uuid_record`。
 
-  
-See [Variables](index.mdx#0-about) on how to check the values of local and global variables.
-  
-  
+参见[变量](index.mdx#0-about)以了解如何检查本地和全局变量的值。
+
 ### storage_dir
 
-string
+字符串
 
 ### temp_dir
 
-string
+字符串
 
-## Others
+## 其他
 
 ### core_uuid
 
-string
+字符串
 
 ### switch_serial
 
-string
-
-
+字符串

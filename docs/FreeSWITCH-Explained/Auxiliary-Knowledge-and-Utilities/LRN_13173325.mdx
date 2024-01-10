@@ -1,115 +1,110 @@
+# LRN
 
-# LRN 
+## 关于
 
- 
+本文档涵盖了有关存储 LRN 数据的信息。
 
-## About
+点击此处展开目录
 
-This document covers information about storing LRN.
+* 1 [在 redis 中存储完整的 LRN 数据](#storing-entire-lrn-data-in-redis)
+   * 1.1 [原因](#reasons)
+   * 1.2 [方法](#method)
+* 2 [导入速度](#import-speed)
+* 3 [持久性](#persistence)
 
-Click here to expand Table of Contents
+## 在 redis 中存储完整的 LRN 数据
 
-* 1 [Storing Entire LRN data in redis](#storing-entire-lrn-data-in-redis)  
-   * 1.1 [Reasons](#reasons)  
-   * 1.2 [Method](#method)
-* 2 [Import Speed](#import-speed)
-* 3 [Persistence](#persistence)
+这是由 [avimarcus](https://freeswitch.org/confluence/display/~avimarcus) 撰写的一篇关于存储整个 LRN 数据库的文章，而不是关于缓存条目的文章。
 
-## Storing Entire LRN data in redis
+### 原因
 
-This is an article written by [avimarcus](https://freeswitch.org/confluence/display/~avimarcus) about storing the entire LRN DB, not about _caching_ entries.
+为什么不使用 MySQL？
 
-### Reasons
+* 在 MySQL 中存储 LRN 数据只需将数据插入数据库并创建一个基本键即可，非常快（不到 30 分钟）。然而，应用差异要花费相当长的时间。
+* 使用唯一键会更快，但仍然需要很长时间。
+* 导入差异 - 在撰写本文时有 210 个差异 - 花费了超过 48 小时。
+* 更糟糕的是，如果使用 MyISAM，导入差异似乎会锁定表以只读方式访问。
+* 使用 InnoDB 并使用行级锁定似乎需要花费更长时间来进行初始导入。
 
-Why not MySQL?
+为什么不使用 PostgreSQL？
 
-* Storing LRN data in MySQL was very fast to just insert into the database and create a basic key (under 30 mins). However, applying diffs would take a significant amount of time.
-* It is faster with a unique key, but that likewise took a long time.
-* Importing diffs - 210 of them at the time of writing - took over 48 hours.
-* Worse, if using MyISAM importing diffs seemed to lock the table to reads.
-* Using InnoDB with row level locking seemed to take much, much longer to do initial import.
+* 本文作者对 PG 并不太熟悉，但尝试过。主要问题是使用文件的 COPY 操作会遇到损坏的行并中止。我甚至没有进一步测试差异导入的时间。
 
-Why not PostgreSQL?
+为什么不使用 memcache？
 
-* This author is not that familiar with PG but did attempt. The main issue was using COPY from the file would hit a corrupt line and abort. I didn't even get to test further diff import times.
+* 即使不需要内存，Memcache 据说会随机清除键。请参阅[此文章](http://www.sparklewise.com/do-not-use-memcache-as-a-data-store)中的第 2 点。
+* 此外，memcache 没有持久性。
 
-Why not memcache?
+为什么选择 redis？
 
-* Memcache supposedly evicts keys randomly even if the memory isn't needed. See #2 in [this article](http://www.sparklewise.com/do-not-use-memcache-as-a-data-store).
-* Also, there's no persistence in memcache.
+* redis 不会清除键。
+* redis 有一个相当好的持久性方法。
+* redis 会快速更新键，因为它必须在每个键上具有唯一索引（按 SQL 术语）。
+* 在更新键时，redis 不会锁定请求。
 
-Why redis?
+那么，为什么你不从 redis 开始呢？
 
-* redis doesn't evict keys.
-* redis has a pretty good persistence method
-* redis will update keys quickly since it must have a unique index (in sql terms) on each key.
-* redis won't lock out requests when updating keys.
+* Redis将所有数据都保存在内存中
+* 普通的键值对需要很大的开销，使得每个条目大约占用90字节。
+* 480百万条记录 * 90字节 = 40.2331352千兆字节 -- 这相当可观
 
-Wait, so why didn't you start with redis?
+### 方法
 
-* redis keeps everything in memory
-* Normal key->value have a large overhead that makes each entry about 90bytes.
-* 480 million records \* 90 bytes = 40.2331352 gigabytes -- that's quite a chunk
+"方法，或者说是我如何将480万条记录的存储容量减少到7.5千兆字节以下"
 
-### Method
+Redis官方网站提出了一种[内存优化方法](http://redis.io/topics/memory-optimization)，即将许多条目批量存储在一个键下。
 
-"Method, or How I got storage for 480million records to under 7.5gigabytes"
-
-The redis website suggests a [memory optimization method](http://redis.io/topics/memory-optimization) of batching many entries under a single key.
-
-So instead of storing 3 keys:
+所以，我们可以将上面的3个键值对改为：
 
 ```xml
 2011111111 -> 7323330000 (SET 2011111111 7323330000)
 2011111112 -> 7323330000 (SET 2011111112 7323330000)
 2011111113 -> 7182220000 (SET 2011111113 7182220000)
-(retrieve: GET 2011111113)
-each object: encoding:int serializedlength:11
-Total Usage: 400 bytes (3 keys)
+(检索：GET 2011111113)
+每个对象：编码: 整型 序列化长度: 11
+总使用量：400字节（3个键）
 ```
 
-Store them in chunk of 100, in a HASH, e.g.
+将它们存储在100个一组的哈希表中，如下所示：
 
 ```xml
 20111111 -> 11 -> 7323330000 (HSET 20111111 11 7323330000)
          -> 12 -> 7323330000 (HSET 20111111 12 7323330000)
          -> 13 -> 7182220000 (HSET 20111111 13 7182220000)
-(retrieve: HGET 20111111 13)
-debug object 20111111 encoding:zipmap serializedlength:41
-Total Usage: 128 bytes (3 keys)
+(检索：HGET 20111111 13)
+调试对象 20111111 编码: 压缩映射 序列化长度: 41
+总使用量：128字节（3个键）
 ```
 
-Here's data from some much large numbers:
+以下是一些更大数字的数据：
 
-Results on a sample dump of 6,060,574 numbers:
+对于一个包含6,060,574个数字的样本转储的结果：
 
-* Stored straight up, "SET key val"  
-   * Memory usage of 91 bytes each.
-* Stored in chunks of 100: 148489 keys, approx 40 per key.  
-   * Memory usage: 17.2 bytes per stored number pair.
-* Stored in chunks of 1000: 26535 keys, approx 228 per key.  
-   * Memory usage: 50.2 bytes each -- with default settings.
-* Stored in chunks of 1000: 26535 keys, approx 228 per key.  
-   * Memory usage: 17 bytes each -- with config of "hash-max-ziplist-entries 1000". Only a 1.1% savings.
+* 直接存储，"SET key val"  
+   * 每个条目的内存使用量为91字节。
+* 分组存储，每组100个：148489个键，每个键大约有40个。  
+   * 每个存储数字对的内存使用量为17.2字节。
+* 分组存储，每组1000个：26535个键，每个键大约有228个。  
+   * 每个条目的内存使用量为50.2字节 -- 使用默认设置。
+* 分组存储，每组1000个：26535个键，每个键大约有228个。  
+   * 每个条目的内存使用量为17字节 -- 使用配置 "hash-max-ziplist-entries 1000"，只节省了1.1%。
 
-There's several ways batching like this saves space:
+批量存储可以节省空间的几个方法有：
 
-1. Instead of overhead of storing LRU and volatility on each key, it's stored for about 50 keys at a time. (On average, it's 50 keys per 100 grouping, since not all ranges have an LRN entry)
-2. Instead of storing the first 8/10 digits 50 times, it gets stored once. That's a savings of 8 bytes \* 49/50 \* 480million = 3.5 gigabytes
-3. Assumption: npanxxyyyy doesn't fit in a 4 byte INT, it requires an 8 byte INT. However, npanxxyy does fit in a 4 byte int, and the last yy fits into a 1 byte INT. So we went from 8 bytes to 5 bytes. 3 bytes \* 480 million = 1.34 gigabytes
-4. Supposition: Since the overall usage goes down to \~17 bytes per number (despite zipmap overhead?) I think the zipmap is further compressing them. Since in each batch many are LRN'd to the same destination, it's perhaps compressing that, too.
+1. 不同于在每个键上都存储LRU和易变性的开销，现在是每次存储大约50个键。（平均每100个分组有50个键，因为并非所有的范围都有LRN条目）
+2. 不需要重复存储50次前8/10位数字，只需存储一次即可。这样可以节省8字节 \* 49/50 \* 4.8亿 = 3.5GB的空间。
+3. 假设：`npanxxyyyy`不适合用4字节INT表示，需要8字节INT。然而，`npanxxyy`适合用4字节INT表示，最后的`yy`适合用1字节INT表示。所以我们从8字节减少到5字节。3字节 \* 4.8亿 = 1.34GB的空间。
+4. 推测：由于整体使用量降至每个数字约17字节（尽管有zipmap开销？），我认为zipmap可能进一步压缩了数据。由于每个批次中有许多项都被LRN到相同的目标，它也可能对目标进行了压缩。
 
-## Import Speed
+## 导入速度
 
-* I wrote a Node.js script to split the lines up, and send directly over TCP to redis (using a node.js NET connection writable stream.)  
-   * (Using native redis format didn't seem to help, since it bottlenecked on TCP streaming, and native is longer. Simply use "HSET ....." format.)
-* node.js ran at 100% CPU and redis at 80% cpu and imported around 190k keys/second, so a full import should be under 45 minutes.
-* Initial import speed isn't quite so crucial - once it's imported, you don't need to import again until the next new full dump. If you do it on another machine, then you can reload faster from redis' dump.rdb in 1-3 minutes depending on the speed of the machine.
-* Each diff takes just seconds to load and doesn't block the redis DB. (Redis forks and saves a new RDB file if you have that set up.)
+* 我编写了一个Node.js脚本将行拆分，并直接通过TCP发送到Redis（使用Node.js的NET连接可写流进行传输）。
+   * （使用原生Redis格式似乎没有帮助，因为它在TCP流传输上成为瓶颈，而且原生格式较长。只需使用“HSET ......”格式即可。）
+* Node.js以100%的CPU运行，Redis以80%的CPU运行，并且每秒导入大约19万个键，因此完整导入应在45分钟内完成。
+* 初始导入速度并不那么关键——一旦导入完成，除非进行下一次完整备份，否则不需要再次导入。如果您在另一台机器上执行操作，则可以从Redis的“dump.rdb”中较快地重新加载，具体时间取决于机器的速度，通常在1-3分钟之间。
+* 每个差异只需要几秒钟就可以加载，并且不会阻塞Redis数据库。（如果您进行了相应的设置，Redis会进行分叉并保存一个新的RDB文件。）
 
-## Persistence
+## 持久性
 
-* Storage to the dump.rdb file is \~2.6gb, with compression enabled in redis.conf.
-* It takes under 3 minutes (155-165 seconds) to cold-start redis to load into RAM the persistence \[on the machine I tested\]. Do note that redis will not serve anything until the file has finished importing.
-
-
+- 存储到dump.rdb文件的大小约为2.6GB，在redis.conf中启用了压缩功能。
+- 冷启动redis并将持久性加载到内存中需要不到3分钟（155-165秒）\[在我测试的设备上\]。请注意，在文件导入完成之前，redis不会提供任何服务。

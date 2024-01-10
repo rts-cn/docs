@@ -1,62 +1,59 @@
+# FreeSWITCH PBX 示例
 
-# FreeSWITCH PBX Example 
+## 关于
 
- 
+本文档是一个简短的教程，让您可以将 FreeSWITCH™ 服务器用作基本的 PBX。它是最小 FreeSWITCH 配置的一部分，可以在 <https://github.com/voxserv/freeswitch%5Fconf%5Fminimal> 上找到。
 
-## About
+[Stanislav Sinyagin](https://freeswitch.org/confluence/display/~ssinyagin) 慷慨地允许我们在这里发布这个有用的示例，我们对他的工作表示感谢。原始文档可以在 <https://github.com/voxserv/freeswitch%5Fconf%5Fminimal/blob/master/docs/tutorial%5F01%5Fsimple%5Fpbx.md> 找到。
 
-This document presents a short tutorial that allows you to start using a FreeSWITCH™ server as a basic PBX. It is part of the minimal FreeSWITCH configuration which is available at <https://github.com/voxserv/freeswitch%5Fconf%5Fminimal>
+单击此处展开目录
 
-[Stanislav Sinyagin](https://freeswitch.org/confluence/display/~ssinyagin) has graciously permitted us to publish this useful example here and we thank him for his work. The original document is on github at <https://github.com/voxserv/freeswitch%5Fconf%5Fminimal/blob/master/docs/tutorial%5F01%5Fsimple%5Fpbx.md>
+* 1 [介绍](#introduction)
+* 2 [DNS 配置](#dns-configuration)
+* 3 [拨号计划上下文](#internal-dialplan-context)
+   * 3.1 [公共拨号计划上下文](#public-dialplan-context)
+   * 3.2 [内部拨号计划上下文](#internal-dialplan-context)
+   * 3.3 [pstnout 拨号计划上下文](#pstnout-dialplan-context)
+* 4 [运营商出站网关](#carrier-outbound-gateway)
+* 5 [用户目录](#user-directory)
+* 6 [防火墙设置](#firewall-settings)
+* 7 [结论](#conclusion)
+* 8 [参考信息](#see-also)
 
-Click here to expand Table of Contents
+## 介绍
 
-* 1 [Introduction](#introduction)
-* 2 [DNS Configuration](#dns-configuration)
-* 3 [Dialplan Contexts](#internal-dialplan-context)  
-   * 3.1 [Public Dialplan Context](#public-dialplan-context)  
-   * 3.2 [Internal Dialplan Context](#internal-dialplan-context)  
-   * 3.3 [pstnout Dialplan Context](#pstnout-dialplan-context)
-* 4 [Carrier Outbound Gateway](#carrier-outbound-gateway)
-* 5 [User Directory](#user-directory)
-* 6 [Firewall Settings](#firewall-settings)
-* 7 [Conclusion](#conclusion)
-* 8 [See Also](#see-also)
+本文档不试图涵盖 FreeSWITCH 配置和维护的所有方面，强烈建议先阅读这本书：<https://www.packtpub.com/networking-and-servers/freeswitch-12>
 
-## Introduction
+安装最小配置后，您的 FreeSWITCH 服务器能够处理 SIP 请求，但其拨号计划是空的，因此呼叫无法到达任何地方。这个短教程列出了一些步骤，以开始配置一个简单的 PBX。
 
-This document does not try to cover all aspects of FreeSWITCH configuration and maintenance, and it is highly recommended to read the book first: <https://www.packtpub.com/networking-and-servers/freeswitch-12>
+在本文档的后续部分中，我们将标准的FreeSWITCH配置称为"vanilla"。vanilla配置引入了一个拨号计划，展示了许多FreeSWITCH功能，但将其清理为您未来的生产配置需要花费太多时间。而且，vanilla配置将所有域别名设置为服务器的IPv4地址，使用户注册中的域名部分无法区分。最小配置使"多租户"场景成为可能，其中SIP地址的域名部分起到重要作用。即使您不计划在我们的FreeSWITCH服务器上使用多个域，多租户配置仍然具有其优点之一是，您可以在同一个域中混合使用通过IPv4和IPv6连接的SIP用户，并让他们彼此通信。
 
-After installing the minimal configuration, your FreeSWITCH server is able to process SIP requests, but its dialplan is empty, so the calls would not go anywhere. This short tutorial lists the steps to get started with a simple PBX configuration.
+## DNS配置
 
-Further in this document, we refer to the standard FreeSWITCH configuration as "vanilla". The vanilla configuration introduces a dialplan that demonstrates lots of FreeSWITCH features, but it takes too much time to clean it up for your future production configuration. Also the vanilla configuration aliases all domains to the server's IPv4 address, making the domain name part in user registrations indistinguishable. The minimal configuration enables the "multi-tenant" scenario, where the domain name part of SIP address makes a difference. Even if you're not planning multiple domains on our FreeSWITCH server, a multi-tenant configuration still has its benefits. One of the benefits is that you can mix SIP users that connect via IPv4 and IPv6 in the same domain and let them communicate to each other.
+首先，您需要为您的SIP服务选择一个域名。或者更好地是选择两个不同的域名：1）供内部用户用于SIP客户端注册；2）供外部SIP对等体用于向您的服务器发送未经身份验证的呼叫。
 
-## DNS Configuration
+在本例中，我们将[int.example.net](http://int.example.net)作为内部SIP客户端注册的域名，并将[pub.example.net](http://pub.example.net)用作外部对等体连接到我们的服务器的域名。
 
-First of all, you need to choose a domain name for your SIP service. Or even better, two different domain names: 1) for internal users to use for SIP client registration; 2) for external SIP peers to send unauthenticated calls to your server.
+因此，SIP客户端将使用类似[701@int.example.net](mailto:701@int.example.net)的账户在我们的服务器上进行注册，而外部对等体将使用类似`sip:attendant@[pub.example.net](http://pub.example.net)`的SIP URL向我们的服务器发起未经身份验证的呼叫。
 
-In this example, we use [int.example.net](http://int.example.net) as the domain name for internal SIP client registrations, and [pub.example.net](http://pub.example.net) as the domain name for external peers to connect to our server.
+如果您不打算通过SIP URL从外部对等体接收呼叫，则未经身份验证呼叫的DNS条目是不必要的（尽管一些ITSPs使用此功能接受DID号码的呼叫）。
 
-Thus, the SIP clients would use accounts like [701@int.example.net](mailto:701@int.example.net) for registering on our server, and external peers would use a SIP URL like `sip:attendant@[pub.example.net](http://pub.example.net)` to place unauthenticated calls to our server.
+大多数现代SIP客户端首先查找NAPTR DNS记录，以确定为该域服务的SIP服务。一些DNS托管提供商（例如[godaddy.com](http://godaddy.com)）不允许通过他们的DNS编辑GUI添加NAPTR记录。一个简单的解决办法是将一个子域的NS记录指向一些替代的DNS托管，例如[dns.he.net](http://dns.he.net)或[gandi.net](http://www.gandi.net/)。
 
-If you don't plan to receive calls via SIP URL from external peers, the DNS entry for unauthenticated calls is not necessary (although some ITSPs use this to accept calls on DID numbers).
+如果您的域名没有NAPTR记录，也不会有太大的问题。大多数客户端如果在SIP域中找不到NAPTR记录，会退回到SRV记录。
 
-Most modern SIP clients look up first a NAPTR DNS record in order to find out the SIP service that is serving the domain. Some DNS hosting providers ([godaddy.com](http://godaddy.com), for example) do not allow adding NAPTR records via their DNS editing GUI. A simple solution would be to point an NS record for a sub–domain to some alternative DNS hosting, such as [dns.he.net](http://dns.he.net) or [gandi.net](http://www.gandi.net/) .
+此外，如果您的局域网中使用Windows服务器作为DNS解析器，NAPTR记录查询可能会产生不可预测的结果。有一次，我不得不从一个域中删除NAPTR记录，因为在使用Windows服务器作为默认解析器时，Gigaset C610IP电话无法解析该服务。
 
-It is also not too dramatic if there is no NAPTR record for your domain. Most clients fall back to the SRV record if they don't find a NAPTR record for the SIP domain.
+NAPTR记录应指向一个或多个SRV DNS记录。标准允许您放置一个优先级更高的TCP SRV记录，但并不是所有SIP客户端都会理解这一点。FreeSWITCH支持SIP的TCP传输，监听与UDP传输相同的端口。
 
-Also, if a Windows server is used as a DNS resolver in your LAN, the NAPTR record queries may produce unpredictable results. On one occasion, I had to remove the NAPTR record from a domain, because a Gigaset C610IP phone failed to resolve the service while Windows server was used as the default resolver.
+默认情况下，FreeSWITCH使用端口5060来处理经过身份验证的SIP请求，使用端口5080来处理未经身份验证的请求。因此，[int.example.net](http://int.example.net)的SRV记录应指向UDP或TCP端口5060，并且[pub.example.net](http://pub.example.net)的记录应使用端口5080。
 
-A NAPTR record should point to one or several SRV DNS records. The standard allows you to put a TCP SRV record with a higher priorty, but not all SIP clients would understand that. FreeSWITCH supports TCP transport for SIP, listening on the same ports as the UDP transport.
+以下示例在BIND名称服务器中创建这些记录：
 
-By default, FreeSWITCH uses port 5060 for authenticated SIP requests, and port 5080 for non-authenticated ones. Thus, the SRV records for [int.example.net](http://int.example.net) should point to UDP or TCP port 5060, and use port 5080 for [pub.example.net](http://pub.example.net) records.
-
-The following example creates the records in a BIND name server:
-
-**BIND config**
+**BIND配置**
 
 ```text
-;;; inside the zone file for example.net
+;;; example.net域的区域文件内部
 pbx01               IN A 198.51.100.10
 pbx01               IN AAAA 2001:DB8::0A
 _sip._udp.int       IN SRV 10 0 5060 pbx01
@@ -65,24 +62,24 @@ _sip._udp.pub       IN SRV 10 0 5080 pbx01
 pub                 IN NAPTR 110 100 S SIP+D2U "" _sip._udp.pub
 ```
 
-## Dialplan Contexts
+## 拨号计划上下文
 
-The FreeSWITCH dialplan consists of contexts — independent sets of matching rules and actions for the calls. Each call enters a context, and later it may be transferred to another context, or bridged with some remote party, or a dialplan application can be executed on it according to the matching rules and actions.
+FreeSWITCH拨号计划由上下文组成，每个上下文都是一个独立的匹配规则和呼叫动作集合。每个呼叫进入一个上下文，然后可以转移到另一个上下文，或者与远程方建立桥接，或者根据匹配规则和动作在其上执行拨号计划应用程序。
 
-The vanilla configuration defines two dialplan contexts: "public" is where all unauthenticated calls are landing, and "default" where calls to and from registered users are processed.
+基本配置定义了两个拨号计划上下文："public"上下文用于处理未经身份验证的呼叫，而"default"上下文用于处理已注册用户之间的呼叫。
 
-The minimal configuration defines only the "public" context, leaving you the freedom to define other contexts as needed.
+最小配置只定义了"public"上下文，让您自由定义其他所需的上下文。
 
-The structure and contents of a dialplan are described in detail in this FreeSWITCH wiki and in the FreeSWITCH book. It is important to understand the two-pass processing workflow, the `continue` attribute in extensions and `break` attribute in conditions. Also you need to understand the meaning of `inline` attribute in the action statements.
+拨号计划的结构和内容在FreeSWITCH维基和FreeSWITCH书籍中都有详细描述。重要的是要理解两遍处理流程，扩展中的"continue"属性和条件中的"break"属性的含义。此外，您还需要理解动作语句中"inline"属性的含义。
 
-### Public Dialplan Context
+### 公共拨号计划上下文
 
-The file `dialplan/public/10_gateway_inbound.xml` in the minimal configuration defines a simple dispatcher for inbound calls from SIP gateways. It expects the SIP gateway to define two variables: `target_context` and `domain`, and if both are defined, the inbound call is transferred into the specified context, with the `${domain_name}` variable set to the domain name. This allows you, for example, to use multiple SIP trunks in a multi-tenant configuration, so that each trunk is used for a different tenant and its own context. The following example of a SIP gateway demonstrates the feature:
+minimal配置中的文件`dialplan/public/10_gateway_inbound.xml`定义了一个用于来自SIP网关的呼入呼叫的简单调度器。它期望SIP网关定义两个变量：`target_context`和`domain`，如果两者都定义了，呼入呼叫将被转移到指定的上下文，并且`${domain_name}`变量设置为域名。这样，您可以在多租户配置中使用多个SIP干线，使每个干线用于不同的租户和其自己的上下文。下面是一个SIP网关的示例：
 
-**SIP gateway config**
+**SIP网关配置**
 
 ```xml
-<!-- File: sip_profiles/external/sipcall.ch.xml -->
+<!-- 文件：sip_profiles/external/sipcall.ch.xml -->
   <gateway name="sipcall_41449999990">
     <param name="username" value="41449999990"/>
     <param name="proxy" value="business1.voipgateway.org"/>
@@ -102,40 +99,40 @@ The file `dialplan/public/10_gateway_inbound.xml` in the minimal configuration d
   </gateway>
 ```
 
-Another common approach is to set up matching patterns in the public context, each matching a particular phone number or a range of numbers, and making a transfer to a specific extension:
+另一种常见的方法是在公共上下文中设置匹配模式，每个模式与特定的电话号码或一系列号码相匹配，并进行到特定分机的转接：
 
-**PBX public dialplan**
+**PBX的公共拨号计划**
 
 ```xml
-<!-- File: dialplan/public/20_inbound_did.xml -->
-  <extension name="0449999990">  <!-- Hotline -->
-    <condition field="destination_number" expression="^0449999990$">
-      <action application="transfer" data="7000 XML int.example.net"/>
-    </condition>
-  </extension>  
-  <extension name="0449999991"> <!-- Automatic Attendant -->
-    <condition field="destination_number" expression="^0449999991$">
-      <action application="transfer" data="7800 XML int.example.net"/>
-    </condition>
-  </extension>
+<!-- 文件: dialplan/public/20_inbound_did.xml -->
+<extension name="0449999990"> <!-- 热线电话 -->
+  <condition field="destination_number" expression="^0449999990$">
+    <action application="transfer" data="7000 XML int.example.net"/>
+  </condition>
+</extension>  
+<extension name="0449999991"><!-- 自动接待员 -->
+  <condition field="destination_number" expression="^0449999991$">
+    <action application="transfer" data="7800 XML int.example.net"/>
+  </condition>
+</extension>
 ```
 
-### Internal Dialplan Context
+### 内部拨号方案上下文
 
-In this example for int.example.net, registered users can dial 7xx to reach other registered users, 500 for an audio conference (unmoderated, anyone can join), 520 to check voicemail, and anything that starts with `0` or `1` or `+` goes to the PSTN. Calls to the PSTN are processed in a separate context — this is done to simplify the logic and to let you manage PSTN calls from different internal contexts in a single place.
+在此示例中，对于 int.example.net，注册用户可以拨打7XX来联系其他注册用户，拨打500进行音频会议（无主持人，任何人都可以加入），拨打520来查收语音邮件，以及以0或1或+开头的任何内容都进入公网交换电话网（PSTN）。对于公网交换电话网的呼叫将在单独的上下文中进行处理——这样做是为了简化逻辑并让您可以从不同的内部上下文管理公网交换电话网的呼叫。
 
-This example dialplan allows specifying the fallback path for every extension, by defining the variable `fallback_route` in the user directory. The value of this variable should be `voicemail` for falling back to the voicemail system, or `transfer DEST CONTEXT` to transfer the call to a corresponding destination in specified context. This allows for the flexibility of defining the fallback routes for each user. Keep in mind that if you are using `mod_xml_curl` for user directory, each execution of `user_data` function will trigger the HTTP request for this user. Thus, defining and checking too many variables for a user may cause performance degradation.
+此示例拨号方案允许为每个分机指定备用路径，通过在用户目录中定义变量 `fallback_route` 来实现。此变量的值应为 `voicemail`，以便在出现故障时转接到语音邮件系统；或者为 `transfer DEST CONTEXT`，以便将呼叫转接到指定上下文中的相应目的地。这种方法使得能够为每个用户定义备用路径变得更灵活。请注意，如果您在用户目录中使用了 `mod_xml_curl`，每次执行 `user_data` 函数都会触发此用户的 HTTP 请求。因此，为用户定义和检查过多的变量可能会导致性能下降。
 
-Note that in the fallback transfer action, we copy the original caller ID from the variable `caller_id_number`. If the outbound connection allows us to set the caller ID, it will be preserved from the original inbound call.
+请注意，在回退转接操作中，我们从变量`caller_id_number`中复制原始呼叫者ID。如果出站连接允许我们设置呼叫者ID，则会保留原始入站呼叫的呼叫者ID。
 
-**PBX internal dialplan**
+**PBX内部拨号计划**
 
 ```xml
 <!-- File: dialplan/int.example.net.xml -->
 <include>
   <context name="int.example.net">
 
-  <!-- Call locally registered user, and fall back if the user is not registered or not answering. -->
+  <!-- 呼叫本地注册用户，并在用户未注册或未接听时回退。 -->
   <extension name="Local_Extension">
     <condition field="destination_number" expression="^(7\d\d)$">
       <action application="set" data="dialed_extension=$1"/>
@@ -151,61 +148,22 @@ Note that in the fallback transfer action, we copy the original caller ID from t
     </condition>
   </extension>
 
-  <!-- Extract fallback_route from the user directory and perform corresponding actions -->
+  <!-- 从用户目录中提取fallback_route并执行相应的操作 -->
   <extension name="Local_Extension_Failure">
     <condition field="destination_number" expression="^local_ext_failure$" break="on-false">
       <action application="set" inline="true" data="fallback_route=${user_data(${dialed_user} var fallback_route)}"/>
     </condition>
-
-    <condition field="${fallback_route}" expression="^voicemail$" break="on-true">
-      <action application="answer"/>
-      <action application="sleep" data="1000"/>
-      <action application="voicemail" data="default ${domain_name} ${dialed_extension}"/>
-    </condition>
-
-    <!-- transfer DEST CONTEXT -->
-    <condition field="${fallback_route}" expression="^transfer\s+(\S+)\s+(\S+)$" break="on-true">
-      <action application="set" data="outbound_caller_id_number=${caller_id_number}"/>
-      <action application="transfer" data="$1 XML $2"/>
-    </condition>    
-  </extension>
-
-  <extension name="conference">
-    <condition field="destination_number" expression="^500$">
-      <action application="answer"/>
-      <action application="sleep" data="500"/>
-      <action application="conference" data="example_net"/>
-    </condition>
-  </extension>
-
-  <extension name="check_voicemail">
-    <condition field="destination_number" expression="^520$">
-      <action application="answer"/>
-      <action application="sleep" data="500"/>
-      <action application="voicemail" data="check default ${domain_name} ${ani}"/>
-    </condition>
-  </extension>
-
-  <!-- send the call to PSTN -->
-  <extension name="pstnout">
-    <condition field="destination_number" expression="^[01+]">
-      <action application="transfer" data="${destination_number} XML pstnout"/>
-    </condition>
-  </extension>
-
-  </context>
-</include>
 ```
 
-### pstnout Dialplan Context
+### pstnout拨号计划上下文
 
-This is an example of dialplan context that places the outbound call to external telephony providers. If you are building a multi-tenant PBX, you may want to have separate dialplan contexts for each tenant, so that their calls are billed to different accounts.
+这是一个示例拨号计划上下文，将呼出电话转接到外部电信提供商。如果您正在构建一个多租户PBX系统，您可能希望为每个租户创建单独的拨号计划上下文，以便将其呼叫计费到不同的账户中。
 
-This example demonstrates the rules for number normalization: the caller is supposed to be in Switzerland and is dialing a Swiss local number with one leading zero, or an international number with two leading zeros. These rules are needed to build a full E.164 number before placing the call to Voxbeam. The rules apply to called and calling numbers accordingly.
+这个示例演示了数字规范化的规则：呼叫者应该在瑞士，并拨打带有一个前导零的瑞士本地号码，或者带有两个前导零的国际号码。这些规则在拨打Voxbeam之前需要构建完整的E.164号码。这些规则分别适用于被呼叫号码和呼叫号码。
 
-Note that we use the channel variable `outbound_caller_id_number` to determine the caller ID. This is not a standard FS variable, and it needs to be set somewhere previously in the dialplan. In our example, it is set in the user directory and in the fallback transfer condition.
+请注意，我们使用通道变量 `outbound_caller_id_number` 来确定呼叫者的身份识别号码。这不是标准的FS变量，需要在拨号计划的某个位置预先设置。在我们的示例中，它是在用户目录和回退转移条件中设置的。
 
-**pstnout dialplan**
+**pstnout拨号计划**
 
 ```xml
 <!-- File: dialplan/pstnout.xml -->
@@ -227,40 +185,39 @@ Note that we use the channel variable `outbound_caller_id_number` to determine t
     </condition>
   </extension>
 
-  <!-- here we select Voxbeam as outbound ITSP for specific country codes -->
-  <extension name="pstn_select_itsp" continue="true">
-    <condition field="${e164_dest}" expression="^(7|38|81)" break="on-true">
-      <action inline="true" application="set" data="outbound_itsp=voxbeam"/>
-    </condition>
-  </extension>
+<!--这里我们选择Voxbeam作为特定国家代码的出站ITSP-->
+<extension name="pstn_select_itsp" continue="true">
+  <condition field="${e164_dest}" expression="^(7|38|81)" break="on-true">
+    <action inline="true" application="set" data="outbound_itsp=voxbeam"/>
+  </condition>
+</extension>
 
-  <extension name="pstn_voxbeam">
-    <condition field="${outbound_itsp}" expression="^voxbeam$" break="on-false">
-      <action application="set" data="effective_caller_id_number=${e164_cid}"/>
-      <action application="bridge" data="sofia/gateway/voxbeam_outbound/0011103${e164_dest}"/>
-    </condition>
-  </extension>
+<extension name="pstn_voxbeam">
+  <condition field="${outbound_itsp}" expression="^voxbeam$" break="on-false">
+    <action application="set" data="effective_caller_id_number=${e164_cid}"/>
+    <action application="bridge" data="sofia/gateway/voxbeam_outbound/0011103${e164_dest}"/>
+  </condition>
+</extension>
 
-  <!-- send everything else to sipcall.ch -->
-  <extension name="pstn_sipcall">
-    <condition field="destination_number" expression="^(0\d+)$">
-      <action application="set" data="effective_caller_id_number=${outbound_caller_id_number}"/>
-      <action application="bridge" data="sofia/gateway/sipcall_41449999990/$1"/>
-    </condition>
-  </extension>
+<!--将其他所有内容发送到sipcall.ch-->
+<extension name="pstn_sipcall">
+  <condition field="destination_number" expression="^(0\d+)$">
+    <action application="set" data="effective_caller_id_number=${outbound_caller_id_number}"/>
+    <action application="bridge" data="sofia/gateway/sipcall_41449999990/$1"/>
+  </condition>
+</extension>
 
-  </context>
-</include> 
-```
+</context>
+</include>
 
-## Carrier Outbound Gateway
+## 运营商出站网关
 
-Voxbeam uses authentication by SIP IP address, so we need to define a gateway which does not register on the provider, and sends the caller ID in the `From:` field.
+Voxbeam使用SIP IP地址验证，因此我们需要定义一个不在提供商注册并将呼叫者ID发送到“From:”字段的网关。
 
-**Voxbeam gateway example**
+**Voxbeam网关示例**
 
 ```xml
-<!-- File: sip_profiles/external/voxbeam.xml -->
+<!-- 文件：sip_profiles/external/voxbeam.xml -->
 <include>
   <gateway name="voxbeam_outbound">
     <param name="realm" value="sbc.voxbeam.com" />
@@ -270,18 +227,18 @@ Voxbeam uses authentication by SIP IP address, so we need to define a gateway wh
 </include> 
 ```
 
-## User Directory
+## 用户目录
 
-The user directory is quite standard as described here in the FreeSWITCH wiki. An important detail is that the domain name should be specified explicitly, and it should match the DNS records as described above. This is especially important in a multi-tenant environment.
+用户目录在FreeSWITCH维基中的描述非常标准。一个重要的细节是，域名应明确指定，并且应与上面描述的DNS记录匹配。在多租户环境中，这一点尤为重要。
 
-You have a choice of specifying the password in clear text or as MD5 hashes for better security.
+您可以选择使用明文或MD5哈希值来指定密码，以提高安全性。
 
-In this example, user 701 has the fallback route to a mobile number, 702 falls back into voicemail, and 703 does not have any fallback at all.
+在这个示例中，用户701有一个回退路由到一个移动电话号码，702回退到语音信箱，而703则没有任何回退。
 
-**PBX user directory example**
+**PBX用户目录示例**
 
 ```xml
-<!-- File: directory/int.example.net.xml -->
+<!-- 文件：directory/int.example.net.xml -->
 <include>
   <domain name="int.example.net">
     <params>
@@ -289,12 +246,14 @@ In this example, user 701 has the fallback route to a mobile number, 702 falls b
     </params>
 
     <variables>
-      <!-- this is the context where outbound calls will start -->
+      <!-- 这是出站呼叫将开始的上下文 -->
       <variable name="user_context" value="fsdemo.voxserv.net"/>
     </variables>
 
+```simplified_chinese
+
     <groups>
-      <group name="default">
+      <group name="默认">
         <users>          
           <user id="701">
             <params>
@@ -326,18 +285,18 @@ In this example, user 701 has the fallback route to a mobile number, 702 falls b
 </include>
 ```
 
-## Firewall Settings
+## 防火墙设置
 
-The following example deploys `iptables` rules that limit the rate of SIP requests to your server, thus preventing attackers from overloading your FreeSWITCH instance. Depending on your scalability requirements, the rate of allowed SIP messages can be increased. You may also have requirements for a more strict firewall policy, and add rules that reject completely certain kinds of traffic.
+以下示例部署了“iptables”规则，限制了SIP请求率，从而防止攻击者对您的FreeSWITCH实例进行过载。根据您的可扩展性要求，可以增加允许的SIP消息的速率。您可能还需要对防火墙策略进行更严格的要求，并添加拒绝某些类型流量的规则。
 
-The following example is suitable for Debian and can be simply copy-pasted to the command line.
+以下示例适用于Debian，并可直接复制粘贴到命令行中。
 
-**PBX firewall example**
+**PBX防火墙示例**
 
 ```bash
 apt-get install -y iptables-persistent
 
-#####  IPv4 rules #####
+##### IPv4规则 #####
 iptables -N dos-filter-sip-external
 
 iptables -A INPUT -p udp -m udp --dport 5060 \
@@ -348,7 +307,9 @@ iptables -A INPUT -p tcp -m tcp --dport 5060 \
 
 iptables -A INPUT -p udp -m udp --dport 5080 \
 -j dos-filter-sip-external
+```
 
+```plaintext
 iptables -A dos-filter-sip-external \
 -m hashlimit --hashlimit 5/sec \
 --hashlimit-burst 30 --hashlimit-mode srcip \
@@ -372,7 +333,7 @@ iptables -A dos-filter-ssh -j DROP
 
 iptables-save > /etc/iptables/rules.v4
 
-#####  IPv6 rules #####
+##### IPv6 rules #####
 
 ip6tables -N dos-filter-sip-external
 
@@ -409,25 +370,83 @@ ip6tables -A dos-filter-ssh -j DROP
 ip6tables-save > /etc/iptables/rules.v6 
 ```
 
-## Conclusion
+## 结论
+```plaintext
+iptables -A dos-filter-sip-external \
+-m hashlimit --hashlimit 5/sec \
+--hashlimit-burst 30 --hashlimit-mode srcip \
+--hashlimit-name SIPMSG --hashlimit-htable-size 24593 \
+--hashlimit-htable-expire 90000 -j RETURN
 
-After following this tutorial, you would get a basic PBX which allows the SIP users to register and place and receive calls. It also demonstrates various features, such as a fallback scenario when the SIP user is not available.
+iptables -A dos-filter-sip-external -j \
+REJECT --reject-with icmp-admin-prohibited
 
-There are many other topics which might be interesting to implement, such as:
+iptables -N dos-filter-ssh
 
-1. Receiving and sending faxes;
-2. Deploying WebRTC to let the users use their browsers as VoIP clients;
-3. Setting up a static IVR;
-4. Programming the server to look up some databases before connecting a call;
-5. Queues, call centers, virtual assistants, etc.
+iptables -I INPUT -p tcp -m tcp --dport 22 \
+--tcp-flags FIN,SYN,RST,ACK SYN -j dos-filter-ssh
 
-## See Also
+iptables -A dos-filter-ssh -m hashlimit --hashlimit 3/min \
+--hashlimit-burst 10 --hashlimit-mode srcip,dstip \
+--hashlimit-name ssh_hash --hashlimit-htable-expire 60000 \
+-j ACCEPT
 
-Some useful scripts and configurations are available on Github and in my blog:
+iptables -A dos-filter-ssh -j DROP
+
+iptables-save > /etc/iptables/rules.v4
+
+##### IPv6 rules #####
+
+ip6tables -N dos-filter-sip-external
+
+ip6tables -A INPUT -p udp -m udp --dport 5060 \
+-j dos-filter-sip-external
+
+ip6tables -A INPUT -p tcp -m tcp --dport 5060 \
+-j dos-filter-sip-external
+
+ip6tables -A INPUT -p udp -m udp --dport 5080 \
+-j dos-filter-sip-external
+
+ip6tables -A dos-filter-sip-external \
+-m hashlimit --hashlimit 5/sec \
+--hashlimit-burst 30 --hashlimit-mode srcip \
+--hashlimit-name SIPMSG --hashlimit-htable-size 24593 \
+--hashlimit-htable-expire 90000 -j RETURN
+
+ip6tables -A dos-filter-sip-external -j \
+REJECT --reject-with icmp6-adm-prohibited
+
+ip6tables -N dos-filter-ssh
+
+ip6tables -I INPUT -p tcp -m tcp --dport 22 \
+--tcp-flags FIN,SYN,RST,ACK SYN -j dos-filter-ssh
+
+ip6tables -A dos-filter-ssh -m hashlimit --hashlimit 3/min \
+--hashlimit-burst 10 --hashlimit-mode srcip,dstip \
+--hashlimit-name ssh_hash --hashlimit-htable-expire 60000 \
+-j ACCEPT
+
+ip6tables -A dos-filter-ssh -j DROP
+
+ip6tables-save > /etc/iptables/rules.v6 
+```
+
+完成本教程后，您将获得一个基本的PBX，允许SIP用户注册并拨打和接收电话。它还演示了各种功能，比如当SIP用户不可用时的备用场景。
+
+还有许多其他可能感兴趣的主题可以实现，例如：
+
+1. 接收和发送传真；
+2. 部署WebRTC以让用户将其浏览器用作VoIP客户端；
+3. 设置静态IVR；
+4. 在连接呼叫之前，编写服务器以查找某些数据库；
+5. 队列，呼叫中心，虚拟助手等。
+
+## 另请参阅
+
+一些有用的脚本和配置可在Github和我的博客上找到：
 
 * <https://github.com/voxserv/>
 * <https://github.com/xlab1>
 * <https://txlab.wordpress.com/tag/freeswitch/>
-* <https://github.com/voxserv/freeswitch%5Fconf%5Fminimal/blob/master/docs/tutorial%5F01%5Fsimple%5Fpbx.md> — Original source of this article by [Stanislav Sinyagin](https://freeswitch.org/confluence/display/~ssinyagin)
-
-
+* <https://github.com/voxserv/freeswitch_conf_minimal/blob/master/docs/tutorial_01_simple_pbx.md> - 本文的原始来源为[Stanislav Sinyagin](https://freeswitch.org/confluence/display/~ssinyagin)。

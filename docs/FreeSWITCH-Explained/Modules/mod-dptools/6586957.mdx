@@ -1,80 +1,79 @@
-
-# mod_dptools: tone_detect 
+# mod_dptools：tone_detect 
 
  
 
-## About
+## 关于
 
-About text.
+关于文本。
 
-Click here to expand Table of Contents
+点击此处展开目录
 
-* 1 [Usage](#tone_detect_hits)
-* 2 [Notes:](#tone_detect_hits)
-* 3 [Once tone\_detect is triggered, it won't be triggered again ''unless'' you have specified the "hits" argument in which case it will only get triggered once the "hits" count has been reached](#once-tone_detect-is-triggered-it-wont-be-triggered-again-unless-you-have-specified-the-hits-argument-in-which-case-it-will-only-get-triggered-once-the-hits-count-has-been-reached)
-* 4 [Variables](#tone_detect_hits)  
+* 1 [使用方法](#tone_detect_hits)
+* 2 [说明：](#tone_detect_hits)
+* 3 [一旦触发tone\_detect，除非指定了"hits"参数，否则将不会再次触发，而只有达到"hits"计数时才会触发](#once-tone_detect-is-triggered-it-wont-be-triggered-again-unless-you-have-specified-the-hits-argument-in-which-case-it-will-only-get-triggered-once-the-hits-count-has-been-reached)
+* 4 [变量](#tone_detect_hits)  
    * 4.1 [execute\_on\_tone\_detect](#execute_on_tone_detect)  
    * 4.2 [tone\_detect\_hits](#tone_detect_hits)
-* 5 [Comments](#tone_detect_hits)
-* 6 [Samples](#tone_detect_hits)  
-   * 6.1 [Detect the fax tone and receive a fax with mod\_spandsp.](#detect-the-fax-tone-and-receive-a-fax-with-mod_spandsp)  
-   * 6.2 [Detect the fax tone and receive a fax with socket2me.](#detect-the-fax-tone-and-receive-a-fax-with-socket2me)  
-   * 6.3 [Detect an inband busy signal and send a real busy message.](#detect-an-inband-busy-signal-and-send-a-real-busy-message)  
-   * 6.4 [Detect some SIT tones:](#detect-some-sit-tones)  
-   * 6.5 [Detect 3 consecutive busy tones any time during a call and hangup when detected.](#detect-3-consecutive-busy-tones-any-time-during-a-call-and-hangup-when-detected)  
-   * 6.6 [How to use tone\_detect and originate for automatic test calls to detect missing or corrupt audio.](#how-to-use-tone_detect-and-originate-for-automatic-test-calls-to-detect-missing-or-corrupt-audio)
-* 7 [See Also](#tone_detect_hits)
+* 5 [注释](#tone_detect_hits)
+* 6 [示例](#tone_detect_hits)  
+   * 6.1 [检测传真音并用mod\_spandsp接收传真](#detect-the-fax-tone-and-receive-a-fax-with-mod_spandsp)  
+   * 6.2 [检测传真音并用socket2me接收传真](#detect-the-fax-tone-and-receive-a-fax-with-socket2me)  
+   * 6.3 [检测拨号音并发送真实忙音消息](#detect-an-inband-busy-signal-and-send-a-real-busy-message)  
+   * 6.4 [检测一些SIT音调：](#detect-some-sit-tones)  
+   * 6.5 [在呼叫过程中的任意时间检测到3个连续忙音时结束呼叫](#detect-3-consecutive-busy-tones-any-time-during-a-call-and-hangup-when-detected)  
+   * 6.6 [如何使用tone\_detect和originate进行自动测试呼叫以检测缺失或损坏的音频](#how-to-use-tone_detect-and-originate-for-automatic-test-calls-to-detect-missing-or-corrupt-audio)
+* 7 [另请参阅](#tone_detect_hits)
 
-## Usage
+## 使用方法
 
-If you are trying to detect fax tones, using [mod\_spandsp spandsp\_start\_fax\_detect](../mod_spandsp_6587021.mdx#--) is recommended.
+如果您想要检测传真音，推荐使用[mod\_spandsp spandsp\_start\_fax\_detect](../mod_spandsp_6587021.mdx#--)。 
 
-Updated, preferred behavior:
-
-```xml
-<action application="set" data="execute_on_tone_detect=set my_tone=true"/>
-<action application="set" data="tone_detect_hits=2"/>
-<action application="set" data="execute_on_media=tone_detect mytone 820 w +30000"/>
-<action application="bridge" data="sofia/gateway/foo/123456789"/>
-```
-
-This method will execute the application immediately. If you actually like to run the app async on the media stream specify this:
+已更新，优选行为：
 
 ```xml
-<action application="set" data="execute_on_tone_detect=set::mytone=true"/>
+<action application = "set" data = "execute_on_tone_detect = 指定我的声调 = true"/>
+<action application = "set" data = "tone_detect_hits = 2"/>
+<action application = "set" data = "execute_on_media = tone_detect mytone 820 w +30000"/>
+<action application = "bridge" data = "sofia/gateway/foo/123456789"/>
 ```
 
-Older, still working behavior:
+这种方法将立即执行应用程序。如果您确实希望在媒体流上异步运行应用程序，请指定如下内容：
 
 ```xml
-<action application="tone_detect" data="<key> <freqs> <flags> <timeout> <app> <data> <hits>">
+<action application = "set" data = "execute_on_tone_detect = set :: mytone = true"/>
 ```
 
-| Field   | Description                                                                                                                                                                                       | Examples                                           |
-| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| key     | Name of the tone (user defined)                                                                                                                                                                   | busy, fax, mytone                                  |
-| freqs   | Frequencies to "listen" for                                                                                                                                                                       | 425 - 480,620                                      |
-| flags   | Which direction to sniff the tones in (r = read (default), w = write)                                                                                                                             | r                                                  |
-| timeout | Window of time to listen for the tones in (0 = forever, +&lt;milliseconds> = milliseconds relative to the time tone\_detect is called (now), \= time in "epoch" (ie. seconds since January 1, 1970)) | +2000 (2 seconds) or 1227132612 (absolute example) |
-| app     | Optional. Application to call when the tone detect conditions are met                                                                                                                             | transfer, hangup                                   |
-| appdata | Optional. Argument to the application specified above                                                                                                                                             | '1000 XML default' , 'normal\_clearing'            |
-| hits    | Number of hits needed before calling app/appdata (useful to avoid false positives)                                                                                                                |                                                    |
+旧版本的工作行为：
 
-## Notes:
+```xml
+<action application = "tone_detect" data = "<key> <freqs> <flags> <timeout> <app> <data> <hits>">
+```
 
-* ## Once tone_detect is triggered, it won't be triggered again ''unless'' you have specified the "hits" argument in which case it will only get triggered once the "hits" count has been reached
-* Only "key" and "frequencies" are required (the rest are optional)
-* If you want to catch the DETECTED\_TONE event with the channel-uuid use something like this:
+| 字段       | 描述                                                                                                                                                                                                 | 示例                                            |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| key        | 音调的名称（用户定义）                                                                                                                                                                                 | busy, fax, mytone（繁忙、传真、我的音调）        |
+| freqs      | 需要「听取」的频率                                                                                                                                                                                   | 425 - 480,620（425 到 480,620）                 |
+| flags      | 侦听音调的方向（r = 读取（默认），w = 写入）                                                                                                                                                            | r                                               |
+| timeout    | 侦听音调的时间窗口（0 = 永远，+<milliseconds> = 相对于调用 tone_detect 的时间的毫秒数，\= 从「纪元」开始的时间（即从1970年1月1日算起的秒数））                                                            | +2000（2秒），或 1227132612（绝对时间示例）       |
+| app        | 可选。当满足音调检测条件时调用的应用程序                                                                                                                                                               | transfer, hangup（转接、挂断）                   |
+| appdata    | 可选。上述指定的应用程序的参数                                                                                                                                                                         | '1000 XML default'，'normal_clearing'（标准清除） |
+| hits       | 在调用 app/appdata 之前所需的命中次数（有助于避免误报）                                                                                                                                                 |                                                 |
+
+## 注意：
+
+* ## 一旦触发tone_detect，除非你在"hits"参数中指定了次数，否则不会再次触发
+* 只需要"key"和"frequencies"（其他是可选的）
+* 如果你想使用channel-uuid捕捉DETECTED_TONE事件，请使用以下方法：
 
 ```xml
 <action application="tone_detect" data="fax 1100 r +8000 '''set fax=true''' 2">
 ```
 
-## Variables
+## 变量
 
 ### execute_on_tone_detect
 
-Specifies the application and arguments to be executed when the tone\_detect application gets a positive detection. This represents the new, preferred behavior for using tone\_detect. However, the older method will still work.
+指定tone_detect应用程序和参数在检测到正检时执行。这代表使用tone_detect的新的优先行为。但是，旧的方法仍然有效。
 
 ```xml
 <action application="set" data="execute_on_tone_detect=found_my_tone=true"/>
@@ -84,7 +83,7 @@ Specifies the application and arguments to be executed when the tone\_detect app
 
 ### tone_detect_hits
 
-Specifies the number of "hits" that the tone\_detect app needs to see before considering a positive detection. This represents the new, preferred behavior for using tone\_detect. However, the older method will still work.
+指定tone_detect应用程序在考虑到正检之前需要看到的"hits"数量。这代表使用tone_detect的新的优先行为。但是，旧的方法仍然有效。
 
 ```xml
 <action application="set" data="execute_on_tone_detect=found_my_tone=true"/>
@@ -92,64 +91,42 @@ Specifies the number of "hits" that the tone\_detect app needs to see before con
 <action application="set" data="execute_on_media=tone_detect mytone 820 w +30000"/>
 ```
 
-## Comments
+## 评论
 
-Some of the advanced knowledge about tone\_detect is actually found in this nice little IRC exchange with anthm and MikeJ.
+关于tone_detect的一些高级知识实际上是在anthm和MikeJ的这段有趣的IRC对话中发现的。
 
 ```xml
 <MikeJ> <action application="tone_detect" data="test 350,440 r +100 hangup 'normal_clearing' 1"/>
-<MikeJ> test is name, freqs, +100 is timeout I think..
-<MikeJ> anthm?
-<trixter_> test I assume is the name of the tone, what is r+100? and is hangup normal_clearing the action to do once you get it?
+<MikeJ> 测试是名称，频率，+100 是超时时间，我想..
+<MikeJ> 是嗎？
+<trixter_> 我猜测试是音调的名称，r+100 是什么？hangup normal_clearing 是触发后要执行的动作吗？
 <anthm> <key> <freqs> [<flags> <timeout> <app> <data>]
-<anthm> flags r and w
-<anthm> for which way you want to sniff
-<trixter_> ok.. 
-<anthm> everything after freqs is optional
-<anthm> default is "r'
-<MikeJ> timeout in secs ? and allways need the + ?
-<anthm> with + is relative to now
-<anthm> w/o is absolute
-<MikeJ> and if you dont specify app.. you just get event, right/
+<anthm> 标志 r 和 w
+<anthm> 用于指定嗅探的方向
+<trixter_> 好的..
+<anthm> freqs 后的所有内容都是可选的
+<anthm> 默认是 "r"
+<MikeJ> 超时时间是以秒为单位的吗？并且总是需要加上 + 吗？
+<anthm> 带有 + 是相对于现在的时间
+<anthm> 不带 + 是绝对时间
+<MikeJ> 如果不指定 app，只是得到事件，对吗？
 <MikeJ> ?
-<anthm> right
-<anthm> once it's tripped it wont anymore
-<anthm> but you can reset it with just key
-<anthm> if you call one with only key name and it already exists it will reactivate it
-<MikeJ> just app.. or api too?
-<anthm> key is arbitrary and just what you get in the event
-<anthm> app and api are identical but api needs uuid too as first arg and all the other are shifted 1 to the right
-<anthm> it won't let you decide that
+<anthm> 对的
+<anthm> 一旦触发后就不会再触发了
+<anthm> 但你可以使用键名来重置它
+<anthm> 如果你只提供键名并且它已经存在，它将重新激活
+<MikeJ> 只有 app.. 还是 api 也可以？
+<anthm> 键名是任意的，只是作为事件中的标识
+<anthm> app 和 api 是相同的，但 api 需要作为第一个参数提供 uuid，并且其他的参数向右移动 1 个位置
+<anthm> 它不允许你选择
 <anthm> =D
-<anthm> once you use it at all it adds 1
-<anthm> and if you call it again it just adds more to the same 1
+<anthm> 只要你使用一次，它就会增加 1
+<anthm> 如果你再次调用它，它就会继续增加
 ```
 
-## Samples
+## 示例
 
-### Detect the fax tone and receive a fax with mod_spandsp.
-
-```xml
-<extension name="5555555">
-  <condition field="destination_number" expression="^(5555555)$"/>
-    <action application="tone_detect" data="fax 1100 r +5000 transfer 'fax XML default' 1"/>
-    <action application="answer"/>
-    <action application="sleep" data="1000"/>
-    <action application="ivr" data="main"/>
-    <action application="hangup"/>
-  </condition>
-</extension>
-<extension name="fax">
-  <condition field="destination_number" expression="^fax$">
-    <action application="answer" />
-    <action application="playback" data="silence_stream://2000"/>
-    <action application="rxfax" data="/usr/local/freeswitch/fax/${caller_id_number}-${strftime(%Y-%m-%d-%H-%M-%S)}.tiff"/>
-    <action application="hangup"/>
-  </condition>
-</extension>
-```
-
-### Detect the fax tone and receive a fax with socket2me.
+### 使用 mod_spandsp 检测传真音调并收取传真。
 
 ```xml
 <extension name="5555555">
@@ -173,15 +150,56 @@ Some of the advanced knowledge about tone\_detect is actually found in this nice
     <action application="hangup"/>
   </condition>
 </extension>
-```
 
-### Detect an inband busy signal and send a real busy message.
+<extension name="busy">
+  <condition field="destination_number" expression="^busy$">
+    <action application="answer"/>
+    <action application="sleep" data="1000"/>
+    <action application="set" data="busy_message='Sorry, the line is currently busy. Please try again later.'"/>
+    <action application="busy"/>
+    <action application="hangup"/>
+  </condition>
+</extension>
+```
+```xml
+<extension name="5555555">
+  <condition field="destination_number" expression="^(5555555)$"/>
+    <action application="[to_be_replace[xxx]]" data="fax 1100 r +5000 transfer 'fax XML default' 1"/>
+    <action application="answer"/>
+    <action application="sleep" data="1000"/>
+    <action application="ivr" data="main"/>
+    <action application="hangup"/>
+  </condition>
+</extension>
+
+<extension name="fax">
+  <condition field="destination_number" expression="^fax$">
+    <action application="answer"/>
+    <action application="sleep" data="1000"/>
+    <action application="set" data="[to_be_replace[xxx]]"/>
+    <!--"send" or "recv"-->
+    <action application="set" data="[to_be_replace[xxx]]"/>
+    <action application="socket" data="127.0.0.1:8084 async"/>
+    <action application="hangup"/>
+  </condition>
+</extension>
+
+<extension name="busy">
+  <condition field="destination_number" expression="^busy$">
+    <action application="answer"/>
+    <action application="sleep" data="1000"/>
+    <action application="set" data="[to_be_replace[xxx]]"/>
+    <action application="[to_be_replace[xxx]]"/>
+    <action application="hangup"/>
+  </condition>
+</extension>
+```
 
 ```xml
 <action application="tone_detect" data="busy 480,620 w +15000 hangup 34"/>
 ```
 
-### Detect some SIT tones:
+### 检测一些特定的SIT音调：
 
 ```xml
 <action application="tone_detect" data="sit-high-1 985.2 w +15000 hangup 41"/>
@@ -190,18 +208,19 @@ Some of the advanced knowledge about tone\_detect is actually found in this nice
 <action application="tone_detect" data="sit-low-2 1370.6 w +15000 hangup 41"/>
 ```
 
-### Detect 3 consecutive busy tones any time during a call and hangup when detected.
+### 在通话过程中检测连续3个忙音调，并在检测到时挂断。
 
 ```xml
 <action application="tone_detect" data="busy 425 r 0 hangup 'normal_clearing' 3"/>
 ```
 
-### How to use tone_detect and originate for automatic test calls to detect missing or corrupt audio.
+### 如何使用`tone_detect`和`originate`进行自动测试呼叫以检测丢失或损坏的音频。
 
-On B side of the call simply answer the call and do echo loopback. The A side of the call like below. Control is done by external script that does "originate", "show calls", "uuid\_kill" and "uuid\_dump". You can even make your script collect tcpdump for you based on IP:port from "uuid\_dump".
+在呼叫的B端简单地接听呼叫并进行回声回环。A端如下所示。控制由外部脚本执行，该脚本执行"originate"、"show calls"、"uuid_kill"和"uuid_dump"。甚至可以根据"uuid_dump"中的IP:port让您的脚本为您收集tcpdump。
+```
 
 ```xml
-<!-- Use originate to start a test call here -->
+<!-- 在此处使用originate开始一个测试呼叫 -->
 <extension name="test_tone_init">
   <condition field="destination_number" expression="^test_tone_init$">
     <action application="set" data="pass_counter=0"/>
@@ -209,9 +228,9 @@ On B side of the call simply answer the call and do echo loopback. The A side of
   </condition>
 </extension>
 <!-- 
-This extension will be executed 10 times. If 10 cycles were Ok, it means no issue reproduced. Test call ends.
-If test tone is not detected for consequtive number of hits, it means a bad call. Dailplan execution goes to the last two instructions and stays there forever. 
-This allows external script to detect bad call based on "show calls" and do uuid_dump for such call(s) 
+这个extension将被执行10次。如果10个周期都没有问题，就表示没有重现的问题。测试呼叫结束。
+如果持续多次未检测到测试音，说明是一次错误的呼叫。拨号计划执行到最后两条指令并永远停留在那里。
+这允许外部脚本通过“show calls”检测到错误呼叫，并对这样的呼叫进行uuid_dump 
 -->
 <extension name="test_tone">
   <condition field="destination_number" expression="^test_tone$"/>
@@ -219,18 +238,16 @@ This allows external script to detect bad call based on "show calls" and do uuid
     <action application="set" data="pass_counter=${expr(${pass_counter}+1)}"/>
     <action application="tone_detect" data="tone_1 1004 r 0 transfer 'test_tone' 28"/>
     <action application="playback" data="tone_stream://%(18000,0,1004);loops=1"/>
-    <!-- this is only triggered if tone_detect failed in one of the previous loops -->
+    <!-- 只有在之前的循环中tone_detect失败时才会触发此项 -->
     <action application="stop_tone_detect"/>
-    <!-- sit here and do playback forever -->
+    <!-- 停在这里，永远播放音频 -->
     <action application="playback" data="tone_stream://%(18000,0,1004);loops=-1"/>
   </condition>
 </extension>
 ```
 
-## See Also
+## 参见
 
 [stop\_tone\_detect](./6586992.mdx#about)
 
-[mod\_spandsp Call Progress](../mod_spandsp_6587021.mdx#--)
-
-
+[mod\_spandsp呼叫进展](../mod_spandsp_6587021.mdx#--)

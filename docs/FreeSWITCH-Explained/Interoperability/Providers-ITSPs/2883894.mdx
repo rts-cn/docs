@@ -1,91 +1,82 @@
+# voip.ms Swiftvox (美国) 供应商
 
-# Provider voip.ms Swiftvox (USA) 
+最近更新日期：2012年4月25日
 
- 
+* 1 [voip.ms即Switfvox](#voipmshttpvoipms-aka-switfvox)
+* 2 [终止](#-freeswitch--provider-voipms-swiftvox-usa-)
+* 3 [配置](#-freeswitch--provider-voipms-swiftvox-usa-)
+* 4 [来电显示](#-freeswitch--provider-voipms-swiftvox-usa-)
+* 5 [错误](#-freeswitch--provider-voipms-swiftvox-usa-)
 
-Last update: 25 Aprile 2012
+### [voip.ms](http://voip.ms) 即 Switfvox
 
-* 1 [voip.ms aka Switfvox](#voipmshttpvoipms-aka-switfvox)
-* 2 [Termination](#-freeswitch--provider-voipms-swiftvox-usa-)
-* 3 [Config](#-freeswitch--provider-voipms-swiftvox-usa-)
-* 4 [Caller ID](#-freeswitch--provider-voipms-swiftvox-usa-)
-* 5 [Errors](#-freeswitch--provider-voipms-swiftvox-usa-)
+### 终止
 
-### [voip.ms](http://voip.ms) aka Switfvox
+* 2012年4月7日
 
-### Termination
-
-* 2012-04-07
-
-After a year of running fine with below, I had to add from domain param set to [voip.ms](http://voip.ms) for termination to work. I'm not sure what happened, other than it worked one day (for a year) and then stopped working.
+在以下情况下，运行了一年良好后，我不得不添加一个域参数设置为[voip.ms](http://voip.ms)，以使终止工作。我不确定发生了什么，除了它在一天内（一年）起作用，然后停止工作。
 
 ```xml
 <param name="from-domain" value="voip.ms"/> 
 ```
 
-### Config
+### 配置
 
-* If you have a linksys device (spa2102 spa5xx series), they will reject calls if ptime is not set to 20\. Make sure you change that in the phone's configuration (rtp packet size 0.020 \[from 0.030\]). You should do this anyway.
+* 如果您有一个 Linksys 设备（spa2102 spa5xx 系列），如果 ptime 未设置为 20，它们将拒绝呼叫。确保在电话的配置中更改该设置（rtp 包大小为 0.020 \[来自 0.030\]）。无论如何，您都应该这样做。
 * \[[Voip.ms](http://www.voip.ms/)\]
-* Based on icall config above
-* Only tested with IP auth
-* Place the following in _conf/sip\_profiles/external/voipms.xml_:
+* 基于上述 icall 配置
+* 仅与 IP 验证进行了测试
+* 将以下内容放入 _conf/sip\_profiles/external/voipms.xml_ 文件：
 
 ```xml
 <include>
   <gateway name="voipms">
-    <!-- Replace the values below with your Voip.ms username and password.  Even if you use an IP-based sub-account, FreeSWITCH likes values for the username and password -->
+    <!-- 用您的 Voip.ms 用户名和密码替换下面的值。即使您使用基于 IP 的子帐号，FreeSWITCH 也需要用户名和密码的值 -->
     <param name="username" value="100XXX" />
     <param name="password" value="PASSWORD" />
-    <!-- This gateway could be different depending on which switch you are on -->
+    <!-- 根据您所在的交换机，这个网关可能会有所不同 -->
     <param name="proxy" value="sip.us4.voip.ms" />
     <param name="realm" value="sip.us4.voip.ms" />
-    <!-- This should be set to "false" for IP-based accounts, or "true" for registration based -->
+    <!-- 对于基于 IP 的帐号，应将此设置为 "false"，对于注册基帐号，应将此设置为 "true" -->
     <param name="register" value="false" />
   </gateway>
 </include>
 ```
 
-* Tested with registration auth (2010-10-19)
-* Updated so Caller ID works properly
+* 测试了注册认证（2010-10-19）
+* 更新了呼叫者ID以确保正常工作
 
 ```xml
 <include>
   <gateway name="voipms">
-    <!-- Replace the values below with your Voip.ms username and password. -->
+    <!--请使用您的Voip.ms用户名和密码替换下面的值。-->
     <param name="username" value="your_username" />
     <param name="password" value="your_password" />
-    <!-- This gateway could be different depending on which switch you are on -->
+    <!--根据您所在的交换机不同，此网关可能有所不同-->
     <param name="proxy" value="montreal|houston|newyork|etc.voip.ms" />
     <param name="realm" value="voip.ms" />
-    <!-- This should be set to "true" for registration based -->
+    <!--此值应设置为 "true" 以进行基于注册的设置-->
     <param name="register" value="true" />
-    <!-- Voip.ms requires the Remote-Party-Identity Header to be set in the Sip invite for Caller-ID to work right
-        DON'T FORGET TO REMOVE ANY CALLER ID INFO IN http://voip.ms->Main Menu->Account Settings->CallerID Number
+    <!--Voip.ms要求在SIP邀请中设置Remote-Party-Identity标头以使呼叫者ID正常工作
+        注意：在http://voip.ms->主菜单->账户设置->呼叫者ID号码 中删除所有呼叫者ID信息
     -->
     <param name="sip_cid_type" value="rpd" /> 
-    <!--Setting in one place is much easier than everywhere you may bridge. You can do this since 2010 Sept 27 
-       http://jira.freeswitch.org/browse/FS-2722
+    <!--设置一个地方比到处都要容易。自2010年9月27日起可以这样做
+       去http://jira.freeswitch.org/browse/FS-2722
     -->
   </gateway>
  </include>
 ```
 
-### Caller ID
+### 呼叫者ID
 
-[Voip.ms](http://Voip.ms) requires the Remote-Party-Identity Header to be set in the Sip invite. Use:
+[Voip.ms](http://Voip.ms)需要在SIP邀请中设置Remote-Party-Identity标头。使用以下设置：
 
 ```xml
 <param name="sip_cid_type" value="rpd" /> 
 ```
 
-### Errors
+### 错误
 
-1. destination\_number (inbound public) is getting set as my Sip\_profile username.  
-   * if you use [voip.ms](http://voip.ms) and have a subaccount set up, make sure "Device Type" is set to "Asterisk, ip pbx, gateway or voip switch" and not "ata device, ip phone or soft phone". Once this is fixed, destination\_number will be the correct DID number.
-
-`  
-`
-
-  
-
+1. 目标号码（入站公共号码）被设置为我的SIP配置文件用户名。  
+   * 如果您使用[voip.ms](http://voip.ms)并设置了子账户，请确保将“设备类型”设置为“Asterisk, ip pbx, gateway or voip switch”，而不是“ata device, ip phone or soft phone”。修复后，目标号码将是正确的DID号码。

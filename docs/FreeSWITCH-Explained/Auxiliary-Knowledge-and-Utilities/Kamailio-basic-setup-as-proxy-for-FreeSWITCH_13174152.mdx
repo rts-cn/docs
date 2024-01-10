@@ -1,22 +1,19 @@
+# Kamailio作为FreeSWITCH的代理的基本设置
 
-# Kamailio basic setup as proxy for FreeSWITCH 
+## 关于
 
- 
+以下是两个Kamailio作为SIP代理到FreeSWITCH的示例配置。
 
-## About
+点击此处展开目录
 
-Below is two example sample configurations of Kamailio as a SIP proxy to FreeSWITCH.
+* 1 [简单设置](#-freeswitch--kamailio-basic-setup-as-proxy-for-freeswitch-)
+* 2 [带有数据库查询的简单设置](#simple-setup-with-database-lookup)
 
-Click here to expand Table of Contents
+### 简单设置
 
-* 1 [Simple Setup](#-freeswitch--kamailio-basic-setup-as-proxy-for-freeswitch-)
-* 2 [Simple setup with database lookup](#simple-setup-with-database-lookup)
+192.168.0.101是Kamailio的IP地址
 
-### Simple Setup
-
-192.168.0.101 is the IP of Kamailio
-
-192.168.0.102 is the IP of FreeSWITCH
+192.168.0.102是FreeSWITCH的IP地址
 
 ```bash
 memdbg=5
@@ -31,7 +28,7 @@ listen=udp:192.168.0.101:5060
 port=5060
 mpath="/usr/lib64/kamailio/modules/"
 
-# ------------------ module loading ----------------------------------
+# ------------------ 模块加载 ----------------------------------
 loadmodule "mi_fifo.so"
 loadmodule "tm.so"
 loadmodule "sl.so"
@@ -42,91 +39,93 @@ loadmodule "textops.so"
 loadmodule "siputils.so"
 loadmodule "xlog.so"
 
-# ----------------- setting module-specific parameters ---------------
+# ----------------- 设置模块特定参数 ---------------
 modparam("mi_fifo", "fifo_name", "/tmp/kamailio_fifo")
 
-# -------------------------  request routing logic -------------------
+# -------------------------  请求路由逻辑 -------------------
 
-# main routing logic
+# 主要的路由逻辑
 
 route{
 
-        /* ********* ROUTINE CHECKS  ********************************** */
+        /* ********* 检查逻辑  ********************************** */
 
-        # filter too old messages
+        # 过滤过时的消息
         if (!mf_process_maxfwd_header("10")) {
-                log("LOG: Too many hops\n");
-                sl_send_reply("483","Too Many Hops");
+                log("LOG: 跳数过多\n");
+                sl_send_reply("483","跳数过多");
                 break;
         };
 
-        # grant Route routing if route headers present 
-        if (has_totag()) {
-                if (loose_route()) {
-                        t_relay();
-                        break;
-                } else {
-                        if ( is_method("ACK") ) {
-                                if ( t_check_trans() ) {
-                                        t_relay();
-                                        break;
-                                } else {
-                                        exit;
-                                }
-                        }
-                        sl_send_reply("404","Not here");
-                }
+```bash
+# 如果路由头存在，则授予路由路由
+if (has_totag()) {
+    if (loose_route()) {
+        t_relay();
+        break;
+    } else {
+        if (is_method("ACK")) {
+            if (t_check_trans()) {
+                t_relay();
+                break;
+            } else {
                 exit;
+            }
         }
+        sl_send_reply("404", "这里没有");
+    }
+    exit;
+}
 
-        # CANCEL processing
-        if (is_method("CANCEL"))
-        {
-                if (t_check_trans())
-                        t_relay();
-                exit;
-        }
+# CANCEL处理
+if (is_method("CANCEL")) {
+    if (t_check_trans()) {
+        t_relay();
+    }
+    exit;
+}
 
-        # Process initial INVITE
-        if (method=="INVITE") {
-                record_route();
-        } else {
-                sl_send_reply("404","Not here");
-                exit;
-        };
+# 处理初始INVITE
+if (method == "INVITE") {
+    record_route();
+} else {
+    sl_send_reply("404", "这里没有");
+    exit;
+};
 
-        rewritehostport("192.168.0.102:5060");
+rewritehostport("192.168.0.102:5060");
 
-        # forward the request now
-        if (!t_relay()) {
-                sl_reply_error(); 
-                break; 
-        };
+# 现在转发请求
+if (!t_relay()) {
+    sl_reply_error();
+    break;
+};
 } 
 ```
 
-### Simple setup with database lookup
+### 具有数据库查找的简单设置
 
-192.168.0.101 is the IP of Kamailio
+192.168.0.101是Kamailio的IP地址
 
-192.168.0.102 is the IP of FreeSWITCH box 1
+192.168.0.102是FreeSWITCH第一台的IP地址
 
-192.168.0.103 is the IP of FreeSWITCH box 2
+192.168.0.103是FreeSWITCH第二台的IP地址
 
 ```bash
- memdbg=5
-memlog=5
+memdbg = 5
+memlog = 5
 
-log_facility=LOG_LOCAL0
+log_facility = LOG_LOCAL0
 
-fork=yes
-children=4
-disable_tcp=yes
-listen=udp:192.168.0.101:5060
-port=5060
-mpath="/usr/lib64/kamailio/modules/"
+fork = yes
+children = 4
+disable_tcp = yes
+listen = udp:192.168.0.101:5060
+port = 5060
+mpath = "/usr/lib64/kamailio/modules/"
+```
 
-# ------------------ module loading ----------------------------------
+# ------------------ 模块加载 ----------------------------------
 loadmodule "db_postgres.so"
 loadmodule "mi_fifo.so"
 loadmodule "tm.so"
@@ -139,26 +138,26 @@ loadmodule "siputils.so"
 loadmodule "xlog.so"
 loadmodule "sqlops.so"
 
-# ----------------- setting module-specific parameters ---------------
+# ----------------- 设置各模块的参数 ---------------
 modparam("mi_fifo", "fifo_name", "/tmp/kamailio_fifo")
 modparam("sqlops", "sqlcon", "ca=>postgres://kamailio:kamailio@localhost/kamailio")
 
-# -------------------------  request routing logic -------------------
+# -------------------------  请求路由逻辑 -------------------
 
-# main routing logic
+# 主要的路由逻辑
 
 route{
 
-        /* ********* ROUTINE CHECKS  ********************************** */
+        /* ********* 路由检查  ********************************** */
 
-        # filter too old messages
+        # 过滤过时的消息
         if (!mf_process_maxfwd_header("10")) {
-                log("LOG: Too many hops\n");
-                sl_send_reply("483","Too Many Hops");
+                log("LOG: Hops过多\n");
+                sl_send_reply("483","Hops过多");
                 break;
         };
 
-        # grant Route routing if route headers present 
+        # 如果有路由头，允许Route路由
         if (has_totag()) {
                 if (loose_route()) {
                         t_relay();
@@ -172,57 +171,56 @@ route{
                                         exit;
                                 }
                         }
-                        sl_send_reply("404","Not here");
+                        sl_send_reply("404","不在这里");
                 }
                 exit;
         }
 
-        # CANCEL processing
+        # 处理CANCEL请求
         if (is_method("CANCEL"))
         {
                 if (t_check_trans())
                         t_relay();
                 exit;
         }
+}
 
-        $var(hp) = 0;
-        # Process initial INVITE
-        if (method=="INVITE") {
-                record_route();
-                # only match 10-11 digit numbers and strip '+' if it exists
-                if (subst_user('/^\+?1?([0-9]{10})$/1\1/')) {
-                        sql_query ("ca", "SELECT accountcode FROM numbers WHERE number = '$rU'", "ra");
-                        $var(hp) = $dbr(ra=>[0,0]);
-                        sql_result_free("ra");
+```ini
+$var(hp) = 0;
+# 处理初始INVITE请求
+if (method=="INVITE") {
+    record_route();
+    # 只匹配10-11位数字并删除'+'
+    if (subst_user('/^\+?1?([0-9]{10})$/1\1/')) {
+        sql_query ("ca", "SELECT accountcode FROM numbers WHERE number = '$rU'", "ra");
+        $var(hp) = $dbr(ra=>[0,0]);
+        sql_result_free("ra");
 
-                } else {
-                        sl_send_reply("404","Not here");
-                        exit;
-                }
-        } else {
-                sl_send_reply("404","Not here");
-                exit;
-        };
+    } else {
+        sl_send_reply("404","这里没有");
+        exit;
+    }
+} else {
+    sl_send_reply("404","这里没有");
+    exit;
+};
 
-        if ($var(hp) == 0) {
-                sl_send_reply("404","Not here");
-                exit;
-        } else {
-                switch ($var(hp)) {
-                        case 1:
-                                rewritehostport("192.168.0.102:5060");
-                        case 2:
-                                rewritehostport("192.168.0.103:5060");
-                }
-        }
+if ($var(hp) == 0) {
+    sl_send_reply("404","这里没有");
+    exit;
+} else {
+    switch ($var(hp)) {
+        case 1:
+            rewritehostport("192.168.0.102:5060");
+        case 2:
+            rewritehostport("192.168.0.103:5060");
+    }
+}
 
-        # forward the request now
-        if (!t_relay()) {
-                sl_reply_error(); 
-                break; 
-        };
+# 现在转发请求
+if (!t_relay()) {
+    sl_reply_error(); 
+    break; 
+};
 }
 ```
-
-  
-

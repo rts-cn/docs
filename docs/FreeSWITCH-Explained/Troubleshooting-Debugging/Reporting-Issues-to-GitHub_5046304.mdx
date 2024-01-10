@@ -1,161 +1,153 @@
+# 在GitHub上报告问题
 
-# Reporting Issues to GitHub 
 
- 
+## 关于
 
-## About
+在您确认配置正确并且确定发现了FreeSWITCH™中的一个错误之后，请按照以下步骤通过[JIRA](https://freeswitch.org/jira)向核心开发团队报告错误。
 
-After you performed due diligence to make sure that your configuration is correct and you are confident that you have discovered a bug in FreeSWITCH™, please follow these steps to report a bug to the core development team via [JIRA](https://freeswitch.org/jira).
+在撰写本页时，请参考bkw创建的[大纲](https://docs.google.com/document/d/1KSlqOEozNhQdylBv3iAy4kEOVMpmFbaIJMoDngaAiQY/edit?pli=1)。
 
-While writing this page refer to the [outline](https://docs.google.com/document/d/1KSlqOEozNhQdylBv3iAy4kEOVMpmFbaIJMoDngaAiQY/edit?pli=1) created by bkw
+单击此处展开目录
 
-Click here to expand Table of Contents
+* 1 [使用最新代码](#use-latest-code)
+* 2 [收集信息](#collect-information)  
+   * 2.1 [推荐提交内容](#recommended-submissions)
+* 3 [清单](#checklist)  
+   * 3.1 [基础内容](#-freeswitch--reporting-issues-to-github-)  
+   * 3.2 [附加文件](#attach-files)  
+   * 3.3 [高级](#advanced)
+* 4 [良好编写的错误报告示例](#examples-of-well-written-bug-report-submissions)
+* 5 [开启一个GitHub错误报告](#open-a-github-bug-report--)  
+   * 5.1 [新问题报告](#the-new-issue-report)  
+   * 5.2 [描述](#description)  
+   * 5.3 [附件](#attachments)  
+      * 5.3.1 [使用Git复现？](#reproduced-with-git)
+* 6 [另请参阅](#-freeswitch--reporting-issues-to-github-)
 
-* 1 [Use Latest Code](#use-latest-code)
-* 2 [Collect Information](#collect-information)  
-   * 2.1 [Recommended Submissions](#recommended-submissions)
-* 3 [Checklist](#checklist)  
-   * 3.1 [Basics](#-freeswitch--reporting-issues-to-github-)  
-   * 3.2 [Attach Files](#attach-files)  
-   * 3.3 [Advanced](#advanced)
-* 4 [Examples Of Well-Written Bug Report Submissions](#examples-of-well-written-bug-report-submissions)
-* 5 [Open a GitHub bug report](#open-a-github-bug-report--)  
-   * 5.1 [The New Issue Report](#the-new-issue-report)  
-   * 5.2 [Description](#description)  
-   * 5.3 [Attachments](#attachments)  
-      * 5.3.1 [Reproduced With Git?](#reproduced-with-git)
-* 6 [See Also](#-freeswitch--reporting-issues-to-github-)
+## 使用最新代码
 
-## Use Latest Code
+核心开发人员要求您能够在最新的主代码中复现错误。如果您在旧版本上报告错误，则可能已经纠正。项目志愿者的时间有限，所以我们不应该给他们增加虚假的错误报告。
 
-The core developers require that you can reproduce the bug on the latest Master source code. If you report a bug on an older build, it is possible that it has already been corrected. The project volunteers have limited time available so it is only fair that we not burden them with false bug reports.
+有关从最新代码构建的说明，请参阅[Installation](../Installation/index.mdx#about) wiki树下的内容。
 
-Instructions on building from the latest code can be found under the [Installation](../Installation/index.mdx#about) wiki tree.
+## 收集信息
 
-## Collect Information
+有一点**非常重要**，就是在报告问题时，请务必提供具体、详细的操作说明来重现该问题。附上任何必要的配置文件、拨号计划条目、脚本等以复现该问题。如果没有包含这些必要的信息，将导致错误报告被关闭。
 
-It is absolutely **essential** that you include specific, detailed instructions on how to reproduce the issue that you are reporting. Attach copies of any config files, dialplan entries, scripts, etc. that are necessary to replicate the issue. Failing to include this necessary information will result in the bug report being closed.
+#### 推荐的提交内容
 
-#### Recommended Submissions
-
-* Submit your DialPlan
-* Submit a log from your FreeSWITCH by turning on the following  
-   * change logfile.conf.xml  
-      * update from  
+* 提交您的拨号计划
+* 通过打开以下开关，在您的FreeSWITCH上提交日志  
+   * 修改logfile.conf.xml文件 
+      * 从： 
          ```xml  
          <map name="all" value="debug,info,notice,warning,err,crit,alert"/>  
          ```  
-         * to  
+         * 到： 
          ```xml  
          <map name="all" value="console,debug,info,notice,warning,err,crit,alert"/>  
-         ```  
-   * reloadxml  
-   * reload mod\_logfile  
-   * console loglevel 7  
-   * fsctl loglevel debug  
-   * sofia global siptrace on  
-   * sofia loglevel all 9  
-   * fsctl send\_sighup (start a new log before running the scenario, then send when scenario complete)
-* If you had a segmentation fault collect and submit the backtrace from the coredump file.  
-   * See [Creating A Backtrace With gdb (Linux/Unix)](Debugging_3965831.mdx#advanced-debugging-techniques).  
-   * If you don't have a coredump, start FS with the -core startup option and try to reproduce it.
-* (Optional) Submit a debug from ngrep or Wireshark by running either command:
-* * ngrep -qt -W byline port &lt;sip port> -O filename.pcap **\--or--**  
-   * tshark -S -w filename.pcap port &lt;sip port>
-* Provide a way to filter the call that contains a bug; for instance,  
-   * sip.Call-ID=="&lt;Call-ID>"
+         ```
+   * reloadxml
+   * reload mod_logfile 
+   * console loglevel 7 
+   * fsctl loglevel debug 
+   * sofia global siptrace on 
+   * sofia loglevel all 9 
+   * fsctl send_sighup（在运行场景之前启动一个新的日志，然后在场景完成后发送）
+* 如果出现分段错误，请收集并提交从核心转储文件中的回溯信息。 
+   * 参考[通过gdb创建回溯信息（Linux/Unix）](Debugging_3965831.mdx#advanced-debugging-techniques) 
+   * 如果没有核心转储文件，请使用-core启动选项启动FS并尝试重现该问题。
+* （可选）通过运行以下命令之一，使用ngrep或Wireshark提交调试日志：
+* * ngrep -qt -W byline port <sip端口> -O filename.pcap **\--或--**  
+   * tshark -S -w filename.pcap port <sip端口>
+* 提供一个包含错误的呼叫的筛选方法；例如，  
+   * sip.Call-ID=="<Call-ID>"
 
-## Checklist
+## 清单
 
-To make life easier for the developers, please gather this information prior to posting questions to the mailing list or submitting bug reports to [jira](http://jira.freeswitch.org/).
+为了让开发人员的生活更轻松，请在向邮件列表提问或向 [jira](http://jira.freeswitch.org/) 提交错误报告之前收集以下信息。
 
-### Basics
+### 基本信息
 
-* Git revision number (or binary file)
-* Operating System and revision (CentOS 6.2, OSX 10.5, Windows Server 2008 R2, etc.)
-* Hardware information (32 or 64 bit processor, RAM, etc.)  
-   * On Linux, do these commands and capture the output
+* Git修订号（或二进制文件）
+* 操作系统和版本（CentOS 6.2，OSX 10.5，Windows Server 2008 R2等）
+* 硬件信息（32位或64位处理器，RAM等）
+   * 在Linux上运行以下命令并捕获输出
 
 ```xml
 sed '/^$/!H;/^$/x;$!d' /proc/cpuinfo
 uname -a
 ```
 
-* Did you install the default configuration files? Y/N
-* Have you made any modifications or additions to the default config? Y/N  
-   * If yes, please post copies of any changes made
-* Can the issue be reproduced? Y/N  
-   * If not, why? Is it intermittent?  
-   * If yes, please be prepared to help us reproduce it
+* 是否安装了默认配置文件？Y / N
+* 是否对默认配置进行了修改或添加？Y / N
+   * 如果是，请备份任何更改的副本
+* 是否可以重现该问题？Y / N
+   * 如果不能，为什么？是间歇性的吗？
+   * 如果可以，请准备好帮助我们重现它
 
-### Attach Files
+### 附加文件
 
-* Attach logs, config files, core files, etc. to the JIRA ticket
-* Don't use pastebin for JIRA tickets as pastebin expires and the logs and configs will be lost
-* Don't attach .rar or zip Files
+* 附加日志，配置文件，核心文件等到JIRA票证
+* 不要将JIRA票证附加到pastebin，因为pastebin会过期，日志和配置将会丢失
+* 不要附加.rar或.zip文件
 
-### Advanced
+### 高级信息
 
-* Are you experiencing a segfault? Y/N  
-   * Can it consistently be reproduced? Y/N  
-   * Supply a [backtrace](Debugging_3965831.mdx#advanced-debugging-techniques) (bt and bt full)
-* Are you using a script? Y/N  
-   * What language? Lua/Perl/JavaScript/Python/.Net/C/C++/Java  
-   * Post a copy of the script
-* Are you using the event socket? Y/N
+* 是否出现了segfault错误？Y / N
+   * 是否能够稳定地重现？Y / N
+   * 提供一个[backtrace](Debugging_3965831.mdx#advanced-debugging-techniques)（使用bt和bt full命令）
+* 是否使用了脚本？Y / N
+   * 使用的是哪种语言？Lua / Perl / JavaScript / Python / .Net / C / C++ / Java
+   * 发布脚本的副本
+* 是否使用了事件套接字？Y / N
 
-## Examples Of Well-Written Bug Report Submissions
+## 良好撰写的错误报告示例
 
-Note these are on our old bug platform:
+注意：这些示例来自我们的旧错误平台：
 
-* [Bug report](http://jira.freeswitch.org/browse/MODLANG-88)
-* [Bug report with patch](http://jira.freeswitch.org/browse/MODAPP-30)
-* [Bug report with informative code sample](http://jira.freeswitch.org/browse/MDXMLINT-53)
+* [错误报告](http://jira.freeswitch.org/browse/MODLANG-88)
+* [带修补程序的错误报告](http://jira.freeswitch.org/browse/MODAPP-30)
+* [带有信息丰富的代码示例的错误报告](http://jira.freeswitch.org/browse/MDXMLINT-53)
 
-All of these examples are from community member John Wehle, who does a great job of submitting bug reports and patches. All of his submissions can be viewed [here](http://jira.freeswitch.org/secure/IssueNavigator.jspa?reset=true&reporterSelect=specificuser&reporter=jwehle).
+以下所有示例均来自社区成员John Wehle，他在提交错误报告和补丁方面做得非常出色。你可以在[这里](http://jira.freeswitch.org/secure/IssueNavigator.jspa?reset=true&reporterSelect=specificuser&reporter=jwehle)查看他的所有提交。
 
-## Open a GitHub bug report  
+## 提交 GitHub 错误报告
 
-If one of the developers requests that you submit a bug report then you will need to log on to github with your account (if you do not have one you can create one for free). Then open a github bug report [here](https://github.com/signalwire/freeswitch/issues/new/choose).
+如果其中一名开发人员要求你提交错误报告，你需要使用你的帐号登录到 GitHub（如果你没有帐号，可以免费创建一个）。然后在[这里](https://github.com/signalwire/freeswitch/issues/new/choose)开启一个 GitHub 错误报告。
 
-It is absolutely **essential** that you include specific, detailed instructions on how to reproduce the issue that you are reporting. **Attach** copies of any config files, dialplan entries, scripts, etc. that are necessary to replicate the issue. Failing to include this necessary information will result in the issue being closed.
+非常**重要**的是，你需要包括详细的指令来重现你报告的问题。**附上**任何必需的配置文件、拨号计划条目、脚本等副本以复制该问题。如果缺少这些必要信息，错误报告将被关闭。
 
-Issue Type
+问题类型
 
-  
-Specify the type of ticket you are opening:
+指定你开启的票据类型：
 
-* Bug - Use this if you have a bug that needs to be repaired
-* Feature Requests - Use this to suggest a new feature
+* Bug - 如果你有一个需要修复的错误
+* Feature Requests - 如果你想提出新功能的建议
 
-### The New Issue Report
+### 新问题报告
 
-In the report will be a default template. Be sure to fill out the information it asks for. It is also best to try and note the following items in your bug report (if they have any chance of being applicable).
+报告中将有一个默认模板。请务必填写它要求的信息。最好还能在你的错误报告中指出以下事项（如果有可能的话）。
 
-* Component - freeswitch is broken down into various modules like mod\_spandsp or mod\_perl, try to identify which the issue may be related to for it to be assigned to the right user faster
-* Version - Please test with master (and please paste in the ticket the exact version hash of the head you tested against) but if you have found it is broken in other versions too you may also note them.
-* Environment - Specify the environment as it affects this issue. Is there any special hardware? Are you using special drivers or kernel options? What operating system and version are you using. How did you install freeswitch? CPU information (ie: sed '/^$/!H;/^$/x;$!d' /proc/cpuinfo). LSB release too: lsb\_release -a. Finally the version freeswtich reports: \`fs\_cli "version"\`
+* 组件 - freeswitch被拆分为各种模块，如mod_spandsp或mod_perl，请尝试确定与问题相关的模块，以便更快地将问题分配给正确的用户
+* 版本 - 请使用master进行测试（并在工单中粘贴您测试的确切版本哈希），但如果您发现其他版本也有问题，您也可以记录它们。
+* 环境 - 指定环境，因为它会影响此问题。是否有特殊硬件？您是否使用特殊驱动程序或内核选项？您正在使用哪个操作系统和版本？您如何安装freeswitch？CPU信息（例如：sed '/^$/!H;/^$/x;$!d' /proc/cpuinfo）。LSB版本也是：lsb_release -a。最后freeswitch报告的版本：`fs_cli "version"`
 
-### Description
+### 描述
 
-Provide a detailed description of how to reproduce the symptoms you are experiencing or a description of the new feature or improvement that you are suggesting. When reporting a bug, please describe the **symptoms** and not a diagnosis. Please note what is actually happening versus what you believe should be happening.   
-Please do **not** paste more than 30 lines of text into the description box.  
- **Attach** logs, config files, debug traces, and backtraces as separate files. (See below.)
+提供详细说明如何重现您所遇到的症状，或者您建议的新功能或改进的描述。报告错误时，请描述**症状**，而不是诊断。请注意当前实际发生的情况与您认为应该发生的情况之间的区别。请不要将超过30行的文本粘贴到描述框中。
+请**附加**日志、配置文件、调试跟踪和回溯作为单独的文件。 （请参阅下文。）
 
-### Attachments
+### 附件
 
-Click the attach files area at the bottom of the issue page to attach text files to this issue. Please **attach** logs, configuration files, screen captures of CLI debug output, backtraces, etc. here. Do not use pastebin for JIRA tickets as pastebin entries expire after a time.
+单击问题页面底部的附加文件区域，将文本文件附加到此问题。请在此处**附加**日志、配置文件、CLI调试输出的屏幕截图、回溯等。不要在JIRA工单中使用pastebin，因为pastebin的条目会在一段时间后过期。
 
-  
-#### Reproduced With Git?
+#### 使用Git重现？
 
-Please verify that the issue is occurring with the latest Git revision. The simplest way to do this is to do a "make current" in the FreeSWITCH source directory.  
-Windows users please use your Git client (e.g. [TortoiseGit](http://code.google.com/p/tortoisegit/)) and update to the latest Git revision and then rebuild the project.  
-If you are able to reproduce the issue on the latest revision then please go ahead and file your bug report.
+请验证问题是否出现在最新的 Git 版本中。最简单的方法是在 FreeSWITCH 源代码目录中执行 "make current" 命令。  
+Windows 用户请使用您的 Git 客户端（例如 [TortoiseGit](http://code.google.com/p/tortoisegit/)），更新到最新的 Git 版本，然后重新构建项目。  
+如果您能够在最新版本上重现该问题，请继续提交您的错误报告。
 
-## See Also
+## 另请参阅
 
-<https://github.com/signalwire/freeswitch> \- GitHub trouble ticket tracking system
-
-  
-
+<https://github.com/signalwire/freeswitch> \- GitHub 故障跟踪系统

@@ -1,48 +1,45 @@
+# Queue_which_calls_extensions
 
-# Queue_which_calls_extensions 
+下面的提示和技巧在将代理回调函数和fifo_chime_list添加到fifo函数之后已经过时。通过使用指向适当声音文件的符号链接，在客户进入fifo后可以更改fifo_chime_list文件的内容，请参阅[mod_fifo](../Modules/mod_fifo_3966031.mdx#-add)。
 
- 
+点击此处展开目录
 
-The tips and tricks below are outdated after the agent callback function and fifo\_chime\_list have been added to the fifo function. With the improved fifo, the contents of the fifo\_chime\_list files can be changed after customers have entered the fifo by using symlinks which point at the appropiate sound files, see [mod\_fifo](../Modules/mod_fifo_3966031.mdx#-add).
+* 1 [介绍](#-freeswitch--queue_which_calls_extensions-)
+* 2 [组件](#-freeswitch--queue_which_calls_extensions-)
+* 3 [从客户接收呼叫的拨号计划](#the-dialplan-which-receives-calls-from-the-customer)
+* 4 [断开连接的javascript](#the-disconnection-javascript)
+* 5 [播放欢迎音的javascript](#the-playwelcome-javascript)
+* 6 [呼叫连接队列的脚本](#the-call-connectqueue-script)
+* 7 [连接队列的javascript](#the-connectqueue-javascript)
+* 8 [Loopback拨号字符串](#loopback-dialstring)
 
-Click here to expand Table of Contents
+## 介绍
 
-* 1 [Introduction](#-freeswitch--queue_which_calls_extensions-)
-* 2 [The components](#-freeswitch--queue_which_calls_extensions-)
-* 3 [The dialplan which receives calls from the customer](#the-dialplan-which-receives-calls-from-the-customer)
-* 4 [The disconnection javascript](#the-disconnection-javascript)
-* 5 [The playwelcome javascript](#the-playwelcome-javascript)
-* 6 [The call connectqueue script](#the-call-connectqueue-script)
-* 7 [The connectqueue javascript](#the-connectqueue-javascript)
-* 8 [Loopback dialstring](#loopback-dialstring)
+FIFO应用程序是一个代理人连接到FIFO外部并等待客户的最佳方式，特别适用于大型组织中的队列处理。然而，在小型组织中，没有全职代理人等待客户，一个呼叫一组分机的队列更有用。本示例展示了如何实现此目的。
 
-## Introduction
+已经在用户列表中展示了使用php脚本和javascript编码的示例。这个示例只使用javascript编码，不需要后台运行的php守护进程。为了统一术语，我们将设置为响铃的分机称为“代理人”。
 
-The fifo application, where agents connect to fifo out and wait for customers, is probably the best way of handling queues in large organizations. In small organizations, though, where there are no full time agents waiting for customers, a queue which calls a number of extensions is more useful. This example shows how this can be accomplished.
+这个队列系统的工作方式和Asterisk中的队列类似：一组坐席会在XX秒内被呼叫。如果第一次呼叫没有接听，系统会在开始第二次尝试之前等待YY秒。系统中没有包括主动方法来检查坐席是否正在工作，以便在他们释放后立即呼叫他们。相反，我们会再试一次。通过调整connectqueue.js脚本创建的拨号字符串来修改振铃策略。系统不支持“您在队列中的排队号码是XX”，但我认为这个功能完全可以实现。以下代码示例没有经过充分测试，可能有错误！从检查下面的代码可以看出，代码和使用的措施都不清晰或干净，一个真正的dptools应用程序会比这个好得多。
 
-Examples have been shown on the userlist which uses a combination of a php script and javascript coding. This example only uses javascript coding and has no requirement for a php demon running in the background. For the sake of terminology, we denote the extensions which are set up to ring, “agents".
+## 组件
 
-This queue system works much alike the queue in Asterisk: A number of agents are called in goes of XX seconds. If not answered in the first go, the system waits YY seconds before starting the second attemp. No active method is included to check if agents are engaged in order to call them as soon as they release. Instead, we just try in another go. The ring strategy can be modified by adjusting the dialstring created by the connectqueue.js script. The system does not include support for "you are number XX in the queue", but I see no reason why the feature could not be implemented as well. The code examples below have not been test thoroughly, and it will be buggy! As you may see from checking the code below, the code and the measures used are not at all clear or clean, and a “real" dptools application which does the trick, would be much better than this.
+示例包括以下组件：
 
-## The components
+1. 一个拨号计划接收来自客户的呼叫。
+2. 一个断开连接的javascript，disconnectqueue.js，当一个客户在被服务之前放弃队列时，将断开所有坐席的呼叫。
+3. 一个javascript，playwelcome.js，向客户播放欢迎消息。
+4. 一个小的javascript，call\_connectqueue.js，当客户进入队列时，调用另一个javascript，connectqueue.js，连接到FIFO并呼叫坐席。
+5. 一个javascript，connectqueue.js，设置从FIFO到从数据库中检索到的坐席的呼叫。
+6. 一个循环拨号计划，将来自网关的呼叫传递到正确的分机或正确的外部网关。
 
-The example includes the following components:
+在此设定中需要某种机制来识别来自客户的呼叫，当呼叫在脚本中传播时。在此示例中，使用了客户uuid，并通过javascript参数和通过SIP呼叫的caller\_id\_number将其传递给应用程序的其余部分。
 
-1. A dialplan which receives calls from customers.
-2. A disconnection javascript, disconnectqueue.js, which kills calls to all agents, when a customer abondons the queue before he has been serviced.
-3. A javascript, playwelcome.js, which plays a welcome message to the customer.
-4. A call small javascript, call\_connectqueue.js, which (when customers enter the queue) calls another javascript, connectqueue.js, which connects to the fifo and calls the agents.
-5. A javascript, connectqueue.js, which sets up a call from the fifo to the agents who are retrieved from a database.
-6. A loopback dialplan, which passes calls from the gateway on to the right extension or the right external gateway.
-
-Some mechanism is required in this setup to identify the call from the customer as it propagates through the scripts. In this example, the customer uuid is used and it is transferred to the rest of the application via javascript arguments and through SIP calls via the caller\_id\_number.
-
-## The dialplan which receives calls from the customer
+## 接收客户呼叫的拨号计划
 
 ```xml
-<extension name="Receive queue, fifo customer" >
+<extension name="接收队列，FIFO客户" >
   <condition field="destination_number" expression="^(\*13\*.*)$">
-    <action application="set" data="queue_caller_id_name=Queue ${destination_number:4} ${effective_caller_id_name}"/>
+    <action application="set" data="queue_caller_id_name=队列 ${destination_number:4} ${effective_caller_id_name}"/>
     <action application="set" data="queue_name=${used_domain}${destination_number:4}"/>
     <action application="set" data="argv=${queue_caller_id_name}|${queue_name}|${uuid}|${ANI}|${used_domain}"/>
     <action application="set" data="fifo_music=$${hold_music}"/>
@@ -56,23 +53,23 @@ Some mechanism is required in this setup to identify the call from the customer 
 </extension>
 ```
 
-The dialplan above takes calls from the customer. The dialstring is \*13\*&lt;queue-number>.
+上述拨号计划接受来自客户的呼叫。拨号字符串是\*13\*&lt;队列号码>。
 
-A few comments: The queue\_caller\_id\_name is used to carry some useful information about the call, which can be displayed to the agents when they take the call. Further down in the dialplan, the javascript call\_connectqueue.js is called and this information is passed on together with the queue\_namr, uuid and ANI as a part of a |-separated argument.
+一些注释：queue\_caller\_id\_name用于携带关于呼叫的一些有用信息，在坐席接听呼叫时可以显示出来。在拨号计划的后面，调用了javascript的call\_connectqueue.js，并将此信息与queue\_namr、uuid和ANI一起作为|-分隔的参数传递。
 
-The javascript playwelcome.js plays a queue-dependent welcome message provided the presence of a .wav file.
+`javascript playwelcome.js`播放一个队列依赖的欢迎消息，前提是有一个.wav文件。
 
-If the caller hangs up before he has been answered, the javasript disconnectqueue.js is run. Without such a mechanism, the calls to the agents will just continue until answered.
+如果呼叫者在接通之前挂断电话，将运行`javascript disconnectqueue.js`。如果没有这样的机制，呼叫将持续到被接听为止。
 
-Finally, the call is answered by the fifo application.
+最后，呼叫将由FIFO应用程序接听。
 
-## The disconnection javascript
+## 断开连接的Javascript
 
-The disconnectqueue.js looks up in the SQLite database: core, table: channels. The FreeSWITCH uses this database when keeping track of the calls. The calls are selected by the state and the caller-id\_number, which has been set in the connectqueue.js script. The uuid is thus retrieved and killed using the api uuid\_kill. As a precaution, this script removes the customer from the waiting queue. This may well have happened before, but it catches early abandon situations.
+`disconnectqueue.js`在SQLite数据库的core表channels中进行查找。FreeSWITCH在跟踪呼叫时使用该数据库。通过状态和caller-id\_number来选择呼叫，该值在connectqueue.js脚本中设置。通过api uuid\_kill获取并终止uuid。为了预防起见，该脚本还会将客户从等待队列中移除。这种情况可能之前就发生过，但它会及早捕捉到放弃呼叫的状态。
 
 ```xml
-//This script is used to disconnect agents being rung from a queue when abandoned by the customer
-//before answered.
+//该脚本用于断开等待队列中被放弃的呼叫的坐席
+//在接听之前。
 var variable = new String(argv);
 var components = variable.split("|");
 var fifoname = components[1];
@@ -92,24 +89,25 @@ while(db.next()) {
   apiExecute("uuid_kill", rec["uuid"]);
 }
 db.close();
+```
 
-//Deplete uuid from list of customers waiting
+// 从等待客户的列表中删除uuid
 var waitingliststring = getGlobalVariable(waitinglistname);
 waitingliststring = waitingliststring.replace("|"+disconnect_identifier,"");
 waitingliststring = waitingliststring.replace(disconnect_identifier+"|","");
 waitingliststring = waitingliststring.replace(disconnect_identifier,"");
 setGlobalVariable(waitinglistname,waitingliststring);
 
-console_log("info","Call in queue ended: " + fifoname + "\n");
+console_log("info","队列中的通话结束: " + fifoname + "\n");
 console_log("info","waitingliststring: " + getGlobalVariable(waitinglistname) + "\n");
 ```
 
-## The playwelcome javascript
+## playwelcome JavaScript脚本
 
 playwelcome.js:
 
 ```xml
-//This script checks if a voiceprompt file exists
+//该脚本检查语音提示文件是否存在
 filename = argv;
 var fd = new File(argv);
 if (fd.isFile) {
@@ -118,78 +116,78 @@ if (fd.isFile) {
 }
 ```
 
-## The call connectqueue script
+## connectqueue呼叫脚本
 
-This script calls another script via an api call. Thus the other script is executed outside the channel. Call\_connectqueu.js:
+该脚本通过api呼叫另一个脚本。因此，其他脚本在通道之外执行。Call\_connectqueue.js:
 
 ```xml
-//This script used the fifo to simulate an Asterisk queue, TEST!
+//该脚本使用fifo模拟Asterisk队列，测试！
 apiExecute("jsrun", "connectqueue.js "+argv);
 ```
 
-## The connectqueue javascript
+## connectqueue JavaScript脚本
 
-The example below shows a javascript having room for much improvement such as handling of agent priorities, ring strategies, "you are number XX in the queue", etc. It simply generates a dialstring based on the queue number. The agents in this dialstring are retrieved from a database, which has the same format as in the real-time queue\_member table in Asterisk, but any other mechanism for retrieving the agents could be used.
+下面的示例展示了一个JavaScript脚本，有很大的改进空间，例如处理坐席优先级、振铃策略、"您在队列中的编号是XX"等。它简单地基于队列号生成一个拨号字符串。此拨号字符串中的坐席是从数据库中检索出来的，该数据库具有与Asterisk中实时队列\_member表相同的格式，但也可以使用其他检索坐席的机制。
 
-Connectqueue.js:
+connectqueue.js:
 
 ```xml
-//This script uses the fifo to simulate an Asterisk queue without priorities!
+//该脚本使用fifo模拟没有优先级的Asterisk队列!
 
-//We call the dialstring and connect to the fifo with stated fifoname
-function connectqueue(dialstring,fifoname,timeout,disconnect_identifier,used_domain) {
+//我们调用拨号字符串并连接到指定的FIFO队列
+function connectqueue(dialstring, fifoname, timeout, disconnect_identifier, used_domain) {
   var newSession = new Session();
-  var result = newSession.originate(session,dialstring,timeout);
-  if(result) {
-    
-    //We remove the customer from waiting list
+  var result = newSession.originate(session, dialstring, timeout);
+  if (result) {
+
+    //我们将客户从等待队列中移除
     var waitinglistname = "queuewaitinglist_" + fifoname;
     var waitingliststring = getGlobalVariable(waitinglistname);
-    waitingliststring = waitingliststring.replace("|"+disconnect_identifier,"");
-    waitingliststring = waitingliststring.replace(disconnect_identifier+"|","");
-    waitingliststring = waitingliststring.replace(disconnect_identifier,"");
-    setGlobalVariable(waitinglistname,waitingliststring);  
-    newSession.execute( "fifo", fifoname + " out nowait" );
+    waitingliststring = waitingliststring.replace("|" + disconnect_identifier, "");
+    waitingliststring = waitingliststring.replace(disconnect_identifier + "|", "");
+    waitingliststring = waitingliststring.replace(disconnect_identifier, "");
+    setGlobalVariable(waitinglistname, waitingliststring);
+    newSession.execute("fifo", fifoname + " out nowait");
     exit();
   }
 }
 
-//Creates a dummy session to be used for the wait function, we try 4 times
-//If the session has been created before, we use that
+//创建一个假会话供等待函数使用，我们尝试4次
+//如果会话已经创建过，则使用已有的会话
 function makedummysession() {
   var cont = true;
   var i = 0;
   var waitSession = new Session();
   while (cont) {
-    result = waitSession.originate(session,"sofia/gateway/500/wait",1);
-    if(result) {
-      console_log("info","+++++++++++++++Waiting session created++++++++++++\n");
+    result = waitSession.originate(session, "sofia/gateway/500/wait", 1);
+    if (result) {
+      console_log("info", "+++++++++++++++已创建等待会话++++++++++++\n");
       cont = false;
     }
     i++;
-    if (i>4) cont = false;
+    if (i > 4) cont = false;
   }
   return waitSession;
 }
 
-//Wait function
-function wait(waitSession,timeout) {
-    waitSession.execute("sleep", timeout*1000);
-    //Alternatively, comment out the line above and uncomment the line below:
-    //msleep(1000*timeout);
-    //Just for debug, the error type makes it easyly read!
-    console_log("err","+++++++++++++++Waiting session++++++++++++\n");
+//等待函数
+function wait(waitSession, timeout) {
+  waitSession.execute("sleep", timeout * 1000);
+  //或者，注释上面一行并取消下面一行的注释：
+  //msleep(1000*timeout);
+  //仅作为调试时使用，错误类型使其易于阅读！
+  console_log("err", "+++++++++++++++等待中的会话++++++++++++\n");
 }
 
-//Find position in queue, if -1: uuid is out of the queue
-function queueposition(waitinglistname,uuid) {
+//查找排队位置，如果为-1：uuid不在队列中
+function queueposition(waitinglistname, uuid) {
   var waitingliststring = getGlobalVariable(waitinglistname);
   var j = -1;
   if (waitingliststring) {
     var waitingliststringarray = waitingliststring.split("|");
     var i = -1;
     var imax = waitingliststringarray.length - 1;
-    while (i<imax) {
+    while (i < imax) {
       i++;
       if (waitingliststringarray[i] == disconnect_identifier) {
         imax = i;
@@ -200,12 +198,11 @@ function queueposition(waitinglistname,uuid) {
   return j;
 }
 
-
-//We check if the caller - customer end - is still alive
+//我们检查呼叫者（客户端）是否仍然在线
 function checkcall(uuid) {
   use("CoreDB");
   var db = new CoreDB("core");
-  var sql="select uuid from channels where uuid='"+uuid+"' and state='CS_EXECUTE';";
+  var sql = "select uuid from channels where uuid='" + uuid + "' and state='CS_EXECUTE';";
   db.prepare(sql);
   var alive = false;
   if (db.next()) alive = true;
@@ -213,50 +210,49 @@ function checkcall(uuid) {
   return alive;
 }
 
-//We create the dialstring, which includes all the phones to call
-//This info in fetched from a database
-function getDialstring(caller_id_name,ani,fifoname,disconnect_identifier,used_domain) {
+//我们创建拨号字符串，其中包括所有要拨打的电话
+//此信息从数据库中获取
+function getDialstring(caller_id_name, ani, fifoname, disconnect_identifier, used_domain) {
   use("ODBC");
-  var DSN="maxpowersoft_odbc";
-  var DB_USER="XXXXX";
-  var DB_PASS="YYYYY";
+  var DSN = "maxpowersoft_odbc";
+  var DB_USER = "XXXXX";
+  var DB_PASS = "YYYYY";
   var db = new ODBC(DSN, DB_USER, DB_PASS);
   db.connect();
   var dialstring = "";
-  //The asterisk type queue member table is used here as an illustration only
-  var sql="select interface from queue_member_table WHERE queue_name='"+fifoname+"' ORDER BY interface;";
+  //这里示例使用星号类型的队列成员表
+  var sql = "select interface from queue_member_table WHERE queue_name='" + fifoname + "' ORDER BY interface;";
   //var sql="select astvalue from astdb WHERE  astfamily='K00001210' AND astkey='MYPHONE_201;";
   //console_log("Info",sql + "\n");
   db.exec(sql);
-  //Variable communication is via caller_id_name, as this call is leaving (and returning) FS
-  //Remark: the dialstring below uses "," as separators => simultanious call to all agents
-  //Another strategy for the queue could be defined by playing with the dialstring constructed below.
+  //变量通信通过caller_id_name进行，因为此呼叫正在离开（并返回）FS
+  //备注：下面的拨号字符串使用“,”作为分隔符=>同时呼叫所有座席
+  //通过调整下面构建的拨号字符串，可以定义队列的另一种策略。
   while (db.nextRow()) {
     record = db.getData();
-    //We parse the Asterisk style interface and get the real number
+    //我们解析Asterisk风格的接口并获取真实号码
     queuemember = record['interface'].substr(7).split("@")[0];
-    //Right below, we check if the agent is an external number
+    //接下来，我们检查座席是否为外部号码
     if (queuemember.length > 7) {
-      dialstring = dialstring + ",[origination_caller_id_name="+ani+",origination_caller_id_number=" + disconnect_identifier + "]sofia/gateway/500/*delay*gateway45161002/" + queuemember;
-    }
-    else dialstring = dialstring + ",[origination_caller_id_name="+caller_id_name+",origination_caller_id_number=" + disconnect_identifier + "]sofia/gateway/500/*delay*user" + queuemember;
+      dialstring = dialstring + ",[origination_caller_id_name=" + ani + ",origination_caller_id_number=" + disconnect_identifier + "]sofia/gateway/500/*delay*gateway45161002/" + queuemember;
+    } else dialstring = dialstring + ",[origination_caller_id_name=" + caller_id_name + ",origination_caller_id_number=" + disconnect_identifier + "]sofia/gateway/500/*delay*user" + queuemember;
   }
   db.close();
-  console_log("notice",dialstring.substr(1) + "\n");
+  console_log("notice", dialstring.substr(1) + "\n");
   return dialstring.substr(1);
 }
 
-//Initialization of variables
+//变量初始化
 var variable = new String(argv);
 var components = variable.split("|");
-//When arguments with spaces are passed to the variable argv, the spaces are replaced by commas.
-//Right below, we reverse this.
+//当将带有空格的参数传递给变量argv时，空格将被逗号替换。
+//在下面，我们将其还原。
 var caller_id_name = components[0].replace(","," ","g");
 var fifoname = components[1];
 var disconnect_identifier = components[2];
 var ani = components[3];
 var used_domain = components[4];
-//We don't count, instead we use the max waiting time in the queue
+//我们不计数，而是使用队列中的最大等待时间
 var trials = 0;
 var maxtrials = 100;
 var waitingtime = 0;
@@ -267,7 +263,7 @@ var used_timeout = timeout;
 var waitinglistname = "queuewaitinglist_" + fifoname;
 var dummysessionmade = false;
 
-//add customer (stored as uuid) to end of waitingliststring
+//将客户添加到等待列表末尾（以uuid形式存储）
 var waitingliststring = getGlobalVariable(waitinglistname);
 waitingliststringarray = waitingliststring.split("|");
 var restart = false;
@@ -283,8 +279,7 @@ used_dialstring = dialstring.replace("*delay*",0,"g");
 
 i = queueposition(waitinglistname,disconnect_identifier);
 
-//For each loop, one could chose a different dialstring, thus implementing
-//some kind of priority among the agents
+//对于每个循环，可以选择不同的拨号字符串，从而实现代理之间的优先级
 while ((waitingtime<maxwaitingtime) && (i>-1)) {
   if (i == 0) {
     connectqueue(used_dialstring,fifoname,used_timeout,disconnect_identifier,used_domain);
@@ -301,39 +296,39 @@ while ((waitingtime<maxwaitingtime) && (i>-1)) {
   }
   i = queueposition(waitinglistname,disconnect_identifier);
   
-  //Some information for debugging...
+  //一些用于调试的信息...
   console_log("err","+++++++++++++++ ANI: "+ani+" ++++++++++++\n");
   console_log("err","+++++++++++++++ Waitingliststring: "+getGlobalVariable(waitinglistname)+" ++++++++++++\n");
   console_log("err","+++++++++++++++ Position in queue: " + i + " ++++++++++++\n");
   console_log("err","+++++++++++++++ Qnameueue: " + fifoname + " ++++++++++++\n");
 }
 
-//After the trials we hangup the customer
+//在尝试后，我们挂断客户
 apiExecute("uuid_kill", disconnect_identifier);
 ```
 
-Please note that the gateway numbers above are specific to the dialplan, replace when appropriate.
+请注意，上面的网关号码是特定于拨号计划的，请在适当的时候进行更改。
 
-**The following seems to be obsolete, based on one person's specific setup and only tested against an old version of FreeSwitch..... will be deleted later in 2012 if nobody comments otherwise........** 
+**以下似乎已过时，基于一个人的特定设置，仅针对旧版本的FreeSwitch进行测试......如果没有评论，将于2012年后删除........** 
 
-The dialstring generated by the function getDialstring, is a bit tricky:
+由函数`getDialstring`生成的拨号字符串有一些技巧：
 
-First of all, we want the possibility of calling a many agents simultaneously. In the versions tested (last tested on is 1.0.trunk (10220)), a dialstring using the syntax: user/&lt;user1>, user/&lt;user2> only calls &lt;user1>. I have tried to find out if this is a general problem or related to my specific setup, and according the userslist, it seems to be specific to my setup. Anyhow, it has also been reported by others (B Karthik). To circumvent this problem, the dialstring calls the agent through a gateway which is looped back to the FreeSWITCH. By this trick, we achieve almost the same as using the Local channel in Asterisk (I apologize if you have no Asterisk background). The required channel variables are propagated through the caller\_id\_number and caller\_id\_name. This is not very elegant, but it works.
+首先，我们希望可以同时呼叫多个坐席的可能性。在测试的版本中（最后一次测试是在1.0.trunk（10220）上），使用了以下语法的拨号字符串：user/&lt;user1>，user/&lt;user2>，只会呼叫&lt;user1>。我尝试了解这是否是一个普遍的问题，还是与我的特定设置有关，根据用户列表的说法，看起来似乎是与我的设置有关。不管怎样，也有其他人报告过这个问题（B Karthik）。为了解决这个问题，拨号字符串通过一个被反向连接到FreeSWITCH的网关来呼叫坐席。通过这个技巧，我们几乎可以达到在Asterisk中使用Local通道的效果（如果您不熟悉Asterisk，我向您道歉）。所需的通道变量通过caller\_id\_number和caller\_id\_name传递。这并不是很优雅，但它能够工作。
 
-The format used for the gateway dialstring depends on the agent: if the agent is an extension, one format is used, if it is an external number, another format is used. This also depends on the specific dialplan used in the solution.
+网关拨号字符串的格式取决于坐席：如果坐席是一个分机，就使用一种格式；如果它是一个外部号码，就使用另一种格式。这也取决于解决方案中使用的特定拨号计划。
 
-The script uses a special construction for creating a "sleep". This is used for customers, who are not in front of the queue. We let them wait some seconds before we check their position. A dummy session is created, which in combination with the session.execute(“sleep","xxxx") yields the desired result. This may not be a smart way, and a functioning wait command in javascript, which does not rely on an existing session, would be nice!
+该脚本使用了一个特殊的构造来创建一个“等待”。这用于那些不在队列前面的客户。我们让他们等待几秒钟，然后再检查他们的位置。创建了一个虚拟会话，结合session.execute("sleep","xxxx")可以达到期望的结果。这可能不是一个聪明的方法，有一个在javascript中的功能完好的等待命令，而不依赖于现有会话，会很好！
 
-The msleep command, which was introduced by Anthony, has been tested, but made the application unpredictable, and the sessions hang. I have tested it in various versions, the last version tested is 10638, where it sometimes messes up the audio.
+msleep命令由Anthony引入，但它使应用程序变得不可预测，而且会导致会话挂起。我在各个版本中进行了测试，最后测试的版本是10638，在该版本中，它有时会破坏音频。
 
-The fifoinformation, such as the uuid in the queue, could be retrieved using a command like this: fifoinfo = apiExecute("fifo","list "+fifoname);, but the problem is that the script runs before the fifo has been populated, and such information would not exist when needed the first time. Therefore, we have opted for another solution: We store the required information in a global variable (called: queuewaitinglist\_ + &lt;fifoname>;), and we update the variable when needed.
+关于队列中的uuid等fifoinformation，可以使用类似以下命令来获取：fifoinfo = apiExecute("fifo","list "+fifoname);，但问题在于脚本在队列被填充之前就开始运行了，所以在第一次需要时这些信息是不存在的。因此，我们选择了另一种解决方案：我们将所需的信息存储在一个全局变量中（命名为：queuewaitinglist_ + &lt;fifoname>），并在需要时更新该变量。
 
-## Loopback dialstring
+## 回环拨号字符串
 
-The calls initiated by the connectqueue.js script are looped back to the switch, where they are treated by the dialplan:
+connectqueue.js脚本发起的呼叫会被回环到交换机，然后由拨号计划进行处理：
 
 ```xml
-<extension name="loopback to local and external">
+<extension name="回环到本地和外部">
   <condition field="destination_number" expression="^(\d*)user(.*)$" break="on-true">
     <action application="sleep" data="$1"/>
     <action application="set" data="effective_caller_id_number=${caller_id_name:10}" />
@@ -350,13 +345,13 @@ The calls initiated by the connectqueue.js script are looped back to the switch,
 </extension> 
 ```
 
-The dialplan above includes a sleep application used to insert delays between the ring rounds. Unfortunately the javascript does not include a sleep function, so pauses between the dial rounds must be implemented in this fasion. The delay is parsed from the destination\_number.
+上述拨号计划中包含了一个sleep应用程序，用于在响铃轮回之间插入延迟。不幸的是，JavaScript不包含sleep函数，所以拨号轮回之间的暂停必须采用这种方式实现。延迟时间从destination_number参数中解析。
 
-For wait function (before agents are attempted called), a special dialplan used for a semi-permanent session, is made:
+为了等待功能（在尝试呼叫坐席之前），我们创建了一个用于半永久会话的特殊拨号计划：
 
 ```xml
-<extension name="loopback to local and external, used to create a wait">
-  <condition field="destination_number" expression="^wait">
+<extension name="回传到本地和外部，用于创建等待">
+  <condition field="destination_number" expression="^等待">
     <action application="set" data="continue_on_fail=true"/>
     <action application="answer" />
     <action application="sleep" data="3600000"/>
@@ -364,5 +359,3 @@ For wait function (before agents are attempted called), a special dialplan used 
   </condition>
 </extension>
 ```
-
-

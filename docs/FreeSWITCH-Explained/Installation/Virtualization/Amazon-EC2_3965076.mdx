@@ -1,44 +1,38 @@
+# Amazon EC2
 
-# Amazon EC2 
+## 关于
 
- 
+本页面介绍如何在 [Amazon EC2](http://aws.amazon.com/ec2/) 上安装和配置 FreeSWITCH。
 
-## About 
+很多 FreeSWITCH 安装已经成功部署在虚拟环境中。由于虚拟主机在性能和提供的服务方面差异很大，而且你的应用程序会有自己的特定需求，因此你必须测试你的虚拟主机与 FreeSWITCH 应用程序的特定组合。例如，一个大型视频会议服务器与语音中转交换机将有不同的需求。请向 FreeSWITCH 社区寻求指导和经验，以帮助你选择。
 
-This page covers how to install and configure FreeSWITCH on [Amazon EC2](http://aws.amazon.com/ec2/). 
+点击展开目录
 
-  
-Many FreeSWITCH installations have been successfully deployed on virtual environments. Because virtual hosts vary widely in performance and services that they offer and because your application will have its own specific needs, you must test your specific combination of virtual host and FreeSWITCH application. For example, a large video conference server will have different requirements than a voice transit switch. Ask the FreeSWITCH community for guidance and experiences to help you choose.
-
-  
-Click to expand Table of Contents
-
-* 1 [Opening Firewall Ports](#opening-firewall-ports)  
-   * 1.1 [Create Security Group via EC2 Management Console](#create-security-group-via-ec2-management-console)  
-   * 1.2 [Assign new Security group to instance.](#assign-new-security-group-to-instance)
-* 2 [or, do it via aws cli](#or-do-it-via-aws-cli-)  
+* 1 [打开防火墙端口](#opening-firewall-ports)  
+   * 1.1 [通过 EC2 管理控制台创建安全组](#create-security-group-via-ec2-management-console)  
+   * 1.2 [将新的安全组分配给实例](#assign-new-security-group-to-instance)
+* 2 [或者，使用 AWS CLI 完成](#or-do-it-via-aws-cli-)  
    * 2.1 [SIP](#sip)  
    * 2.2 [RTP](#rtp)  
-   * 2.3 [Additional EC2 NAT Notes](#additional-ec2-nat-notes)
-* 3 [Sofia External IP Config](#sofia-external-ip-config)
-* 4 [FAQ](#faq)  
-   * 4.1 [Q: What distro should I use?](#q-what-distro-should-i-use)  
-   * 4.2 [Q: Can I run this as a production switch?](#q-can-i-run-this-as-a-production-switch)
+   * 2.3 [其他 EC2 NAT 注意事项](#additional-ec2-nat-notes)
+* 3 [Sofia 外部 IP 配置](#sofia-external-ip-config)
+* 4 [常见问题解答](#faq)  
+   * 4.1 [问：我应该使用哪个发行版？](#q-what-distro-should-i-use)  
+   * 4.2 [问：我能将其用作生产交换机吗？](#q-can-i-run-this-as-a-production-switch)
 
-  
-## Opening Firewall Ports
+## 打开防火墙端口
 
-### Create Security Group via EC2 Management Console
+### 通过 EC2 管理控制台创建安全组
 
-Create a Security Group with the following ports. The ports listed in this snapshot are for Verto Communicator only... Add additional ports for SIP (not listed here).
+创建一个包含以下端口的安全组。此快照中列出的端口仅供 Verto Communicator 使用... 请为 SIP 添加附加端口（未在此处列出）。
 
-![](/attachments/3965076/17695679.png)  
+![](/attachments/3965076/17695679.png)
 
-### Assign new Security group to instance.
+### 将新的安全组分配给实例
 
 ![](/attachments/3965076/16354752.png)
 
-## or, do it via aws cli 
+## 或者，使用 AWS CLI 完成
 
 ### SIP
 
@@ -52,11 +46,11 @@ ec2-authorize default -P udp -p 5060
 ec2-authorize default -P udp -p 16384-32768
 ```
 
-The RTP port range given should match your configuration in switch.conf.xml.
+给定的RTP端口范围应与switch.conf.xml中的配置相匹配。
 
-### Additional EC2 NAT Notes
+### 附加的EC2 NAT注意事项
 
-For SIP, setup a security group with the following ports enabled (easiest to do with [Elasticfox](http://developer.amazonwebservices.com/connect/entry.jspa?externalID=609)):
+对于SIP，请设置一个具有以下启用端口的安全组（最方便使用[Elasticfox](http://developer.amazonwebservices.com/connect/entry.jspa?externalID=609)进行设置）：
 
 ```xml
 udp     16384:32768
@@ -69,9 +63,9 @@ tcp     8000
 udp     8000
 ```
 
-Make sure you make the security group, and apply it before you boot the instance. After this, the quick and dirty install guide worked just fine for me. You'll just need to tweak the default dialplan to your needs.
+确保在启动实例之前创建并应用该安全组。之后，快速且简单的安装指南应该就可以正常工作了。您只需要根据自己的需求调整默认拨号计划。
 
-You may also need to make some of the following changes, particularly the external SIP and RTP IPs. The URLs in the commands below retrieves the external IP address of an instance (either the one mapped automatically at instance creation or the Elastic IP attached to the instance.)
+您还可能需要进行一些其他更改，特别是外部SIP和RTP IP地址。下面命令中的URL获取实例的外部IP地址（可以是在实例创建时自动映射的IP地址，也可以是附加到实例上的弹性IP地址）。
 
 **conf/vars.xml**
 
@@ -81,7 +75,7 @@ You may also need to make some of the following changes, particularly the extern
 <X-PRE-PROCESS cmd="exec-set" data="external_sip_ip=curl -s http://instance-data/latest/meta-data/public-ipv4"/>
 ```
 
-The alternative to the above commands is to hard code the external IP addresses. However, this will require you to customize the vars.xml file for each instance (i.e. each external IP address) to which it is deployed. It will also have to be changed if you map/unmap an Elastic IP to the instance.
+上述命令的替代方法是硬编码外部IP地址。但是，这将要求您根据部署到的每个实例（即每个外部IP地址）自定义vars.xml文件。如果将弹性IP地址映射/取消映射到实例，则还需要更改该文件。
 
 ```xml
 <X-PRE-PROCESS cmd="set" data="bind_server_ip=[AWS EIP]"/>
@@ -127,36 +121,36 @@ The alternative to the above commands is to hard code the external IP addresses.
 <param name="rtp-end-port" value="32768"/>
 ```
 
-## Sofia External IP Config
+## Sofia外部IP配置
 
-You shouldn't have to make any changes to the Sofia profile. The FreeSWITCH [Auto NAT](https://wiki.freeswitch.org/wiki/Auto%5FNAT "Auto NAT") feature will take care of this automatically. However, if you want to do this manually, edit the sip\_profiles/internal.xml file and replace auto-nat with the external IP address in the ext-rtp-ip and ext-sip-ip parameters.
+您无需对Sofia配置文件进行任何更改。FreeSWITCH的[Auto NAT](https://wiki.freeswitch.org/wiki/Auto%5FNAT "Auto NAT")功能会自动处理此问题。但是，如果您想手动进行配置，请编辑sip\_profiles/internal.xml文件，并在ext-rtp-ip和ext-sip-ip参数中将auto-nat替换为外部IP地址。
 
-## FAQ
+## 常见问题解答
 
-### Q: What distro should I use?
+### 问：我应该使用什么发行版？
 
-Debian 10 Buster is the recommended distribution to use for FreeSWITCH™ 1.10 and later. See [Installation](../index.mdx#about) for more details.
+Debian 10 Buster是推荐用于FreeSWITCH™ 1.10及更高版本的发行版。有关更多详情，请参阅[安装文档](../index.mdx#about)。
 
-### Q: Can I run this as a production switch?
+### Q: 我能将其用作生产交换机吗？
 
-A small instance is not recommended for running FreeSWITCH in production, however you should be happy with a High CPU Medium instance.
+不建议在生产环境中使用小型实例来运行FreeSWITCH，但是您可能会对使用高CPU中型实例感到满意。
 
-Experiences:
+经验分享：
 
-* **From Cfurmori in May 2009:** I wouldn't recommend running FreeSWITCH in production on Amazon EC2\. I purchased a 1 year instance of a small server setup and used a base CentOS 5.3 image 32-bit x86\. Built FreeSWITCH from the latest snapshot and it worked great for dev and testing purposes but the call quality was pretty bad at times. I spent a fair amount of time tuning / testing / watching resource utilizations running a 4 person conference and I would see an average of 0.5 to 1.0 second audio delay. I tried with direct SIP phone registrations and through a SIP trunk provider, same results. EC2 is a great dev/test platform but I would say your best to run a realtime voice application on a physical server. You can virtualize voice systems but they need to be designed and engineered by someone that knows what they are doing.
-* **A mailing list user said in March 2010:** "We run FreeSWITCH on AWS' EC2\. A medium EC2 instance is happily supporting 100 Polycom users, conference bridges etc. Been running for over a year. We also use FlowRoute as our PSTN->SIP Interface, and also Skype Business SIP. Our users are scattered across the globe - so having the box sitting on AWS' network infrastructure is key to avoiding issues with latency, jitter, packet loss (i.e. I don't think we could afford the connectivity AWS gives us if we had to provision this in-house)."
+* **Cfurmori于2009年5月的评论：** 我不建议在Amazon EC2上的生产环境中运行FreeSWITCH。我购买了一个小型服务器设置的1年实例，并使用了基于32位x86架构的CentOS 5.3镜像。从最新快照中构建了FreeSWITCH，它在开发和测试目的上运行得很好，但通话质量有时非常糟糕。我花了很多时间来调试/测试/观察资源利用情况，在4人会议中会出现平均0.5到1.0秒的音频延迟。我尝试了直接SIP电话注册和通过SIP通道提供商，结果相同。EC2是一个很好的开发/测试平台，但我建议最好在物理服务器上运行实时语音应用。虚拟化语音系统是可行的，但需要由了解这方面知识的人员进行设计和工程。
 
-### Attachments:
-
-![](/images/icons/bullet_blue.gif) [image2018-2-16 8:44:48.png](/attachments/3965076/16354746.png) (image/png)  
-![](/images/icons/bullet_blue.gif) [image2018-2-16 8:50:31.png](/attachments/3965076/16354749.png) (image/png)  
-![](/images/icons/bullet_blue.gif) [image2018-2-16 9:22:11.png](/attachments/3965076/16354752.png) (image/png)  
-![](/images/icons/bullet_blue.gif) [aws\_inbound\_rules.png](/attachments/3965076/17695679.png) (image/png)  
-
-### Comments:
-
-| why is multiple-registrations required? ![](/images/icons/contenttypes/comment_16.png) Posted by at Jun 17, 2014 14:52                                          |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Why not? In internal context all users are verified. You can comment this. ![](/images/icons/contenttypes/comment_16.png) Posted by denis at Feb 02, 2015 05:13 |
+* **一个邮件列表用户在2010年3月说：** “我们在AWS的EC2上运行FreeSWITCH。一个中型EC2实例可以很好地支持100个Polycom用户、会议桥接等。我们已经运行了一年多了。我们还使用FlowRoute作为我们的PSTN->SIP接口，还使用Skype Business SIP。我们的用户遍布全球-所以将服务器放在AWS的网络基础设施上是避免延迟、抖动、数据包丢失等问题的关键（即使我们必须在内部自行规划，我也认为我们无法承受AWS提供的连接性）。”
 
 
+### 附件：
+
+![](/images/icons/bullet_blue.gif) [image2018-2-16 8:44:48.png](/attachments/3965076/16354746.png) (image/png)
+![](/images/icons/bullet_blue.gif) [image2018-2-16 8:50:31.png](/attachments/3965076/16354749.png) (image/png)
+![](/images/icons/bullet_blue.gif) [image2018-2-16 9:22:11.png](/attachments/3965076/16354752.png) (image/png)
+![](/images/icons/bullet_blue.gif) [aws_inbound_rules.png](/attachments/3965076/17695679.png) (image/png)
+
+### 评论：
+
+| 为什么要进行多次注册？![](/images/icons/contenttypes/comment_16.png) 于2014年6月17日14:52发布   |
+| ---------------------------------------------------------------------------------------------- |
+| 为什么不呢？在内部环境中，所有的用户都经过验证。您可以发表评论。![](/images/icons/contenttypes/comment_16.png) 于2015年2月2日05:13发布 |

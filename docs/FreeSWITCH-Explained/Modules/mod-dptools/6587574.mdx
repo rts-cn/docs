@@ -1,30 +1,25 @@
+# mod_dptools: check_acl （检查访问控制列表）
 
-# mod_dptools: check_acl 
+## 关于
 
- 
+除非其符合访问控制列表，否则阻止发起呼叫的地址。测试发起呼叫的 IP 地址，并将其与访问控制列表或 CIDR 掩码进行匹配，如果发起地址不符合，则终止呼叫。如果匹配成功，则呼叫将通过其他拨号计划。
 
-## About
-
-Block originating address unless it matches an ACL.Test the i.p. address that originates the call against an Access Control List or CIDR mask and terminate the call if the originating address does not match. If it matches, the call proceeds through the remainder of the dialplan.
-
-## Usage
+## 用法
 
 check_acl &lt;ip> &lt;acl | cidr> [&lt;hangup_cause>]
 
-inline=yes, this application may be run inline from the XML dialplan.
+inline=yes，此应用程序可以从 XML 拨号计划中直接运行。
 
-hangup\_cause defaults to call\_rejected (see [Hangup Causes](../../Troubleshooting-Debugging/Hangup-Cause-Code-Table_3964945.mdx#about))
+hangup_cause 默认为 call_rejected（请参阅 [挂机原因](../../Troubleshooting-Debugging/Hangup-Cause-Code-Table_3964945.mdx#about)）
 
-## Examples
+## 示例
 
 &lt;action application="check_acl" data="${network_addr} foo normal_clearing"/>
 
-A call originating from an i.p. address that is not listed in the Access Control List named "foo" will be terminated with cause code "normal\_clearing".
+当呼叫来源的 IP 地址未列在名为 "foo" 的访问控制列表中时，将以 "normal_clearing" 的原因代码终止呼叫。
 
 &lt;action application="check_acl" data="${network_addr} 1.2.3.0/8 normal_clearing" inline="true"/>
 
-A call originating from i.p. address 1.2.3.4 will match the CIDR specified and continue the pass through the dialplan.
+当呼叫来源的 IP 地址为 1.2.3.4 时，将匹配指定的 CIDR，并继续通过拨号计划进行呼叫。
 
-A call originating from i.p. address 4.3.2.1 will not match the CIDR specified and be terminated immediately because the inline flag is set to "true". There will be no further dialplan processing after this application is executed.
-
-
+当呼叫来源的 IP 地址为 4.3.2.1 时，由于将 inline 标志设置为 "true"，将立即终止呼叫，并且在执行此应用程序后将不再进行其他拨号计划处理。

@@ -1,53 +1,49 @@
-
 # HylaFax 
 
- 
+## 关于
 
-## About
+Hylafax 是“世界上最先进的开源传真服务器”。
 
-Hylafax is "The world's most advanced open source fax server".
+点击此处展开目录
 
-  
-Click here to expand Table of Contents
-
-* 1 [Download](#download)
-* 2 [Dependencies](#dependencies)
-* 3 [Installation](#installation)
+* 1 [下载](#下载) 
+* 2 [依赖](#依赖)
+* 3 [安装](#安装)
 * 4 [mod\_spandsp](#mod_spandsp)
-* 5 [Configuration](#configuration)
-* 6 [Stop/ Start Hylafax](#stop-start-hylafax)
-* 7 [Minicom testing for CallerID](#minicom-testing-for-callerid)
-* 8 [Incoming](#incoming)  
-   * 8.1 [Dialplan](#dialplan)  
-   * 8.2 [ESL](#esl)  
-   * 8.3 [File name based on UUID](#file-name-based-on-uuid)
-* 9 [Outgoing](#outgoing)
-* 10 [Logs](#logs)
-* 11 [Modem devices permissions issue](#modem-devices-permissions-issue)
+* 5 [配置](#配置)
+* 6 [停止/启动 Hylafax](#停止-启动-hylafax)
+* 7 [使用 Minicom 进行 CallerID 测试](#使用-minicom-进行-callerid-测试)
+* 8 [传入传真](#传入传真) 
+   * 8.1 [拨号计划](#拨号计划)
+   * 8.2 [ESL](#esl)
+   * 8.3 [基于 UUID 的文件名](#基于-uuid-的文件名)
+* 9 [传出传真](#传出传真)
+* 10 [日志](#日志)
+* 11 [调制解调器设备权限问题](#调制解调器设备权限问题)
 
-## Download
+## 下载
 
 <http://www.hylafax.org/content/Download#Source%5FCode>
 
-## Dependencies
+## 依赖
 
 ```bash
 apt-get update
 apt-get install libtiff4-dev
 ```
 
-## Installation
+## 安装
 
 ```bash
 cd hylafax-version
-./configure (uses default values)
+./configure（使用默认值）
 make
-make install (must be root or equivalent)
+make install（必须是 root 或等效用户）
 ```
 
 ## mod_spandsp
 
-The recommended way to integrate HylaFax with FreeSWITCH is to use emulated soft modem via mod\_spandsp. Edit conf/autoload\_configs/spandsp.conf.xml to include the following
+将 HylaFax 与 FreeSWITCH 集成的推荐方式是通过模拟软调制解调器使用 mod\_spandsp。编辑 conf/autoload\_configs/spandsp.conf.xml 文件，包含以下内容
 
 ```xml
 <modem-settings> 
@@ -55,15 +51,13 @@ The recommended way to integrate HylaFax with FreeSWITCH is to use emulated soft
 </modem-settings>
 ```
 
-  
-After reloading mod\_spandsp on fs\_cli
+在 fs\_cli 中重新加载 mod\_spandsp
 
 ```bash
  fs> reload mod_spandsp
 ```
 
-  
-You will see new soft modems being created with relevant pointers to modem devices.
+您将看到新的软调制解调器被创建，并与调制解调器设备相关联。
 
 ```bash
  # ls -l /dev/FS*
@@ -99,37 +93,35 @@ You will see new soft modems being created with relevant pointers to modem devic
  lrwxrwxrwx 1 root root 11 2012-05-31 18:31 /dev/FS9 -> /dev/pts/13
 ```
 
-  
-To test if the newly created soft modems are okay and respond to AT commands, you can find their support class by using cu command.
+为了测试新创建的软调制解调器是否正常并能响应AT指令，您可以使用cu命令来查找它们的支持类。
 
 ```bash
- # apt-get install cu
- # cu -l FS0
- Connected
- at+fclass=?
- 0,1,1.0
- OK
+# apt-get install cu
+# cu -l FS0
+Connected
+at+fclass=?
+0,1,1.0
+OK
 ```
 
-## Configuration
+## 配置
 
 ```bash
- faxsetup (with default settings)
- faxaddmodem FS0
- faxaddmodem FS1
- .
- .
- .
- faxaddmodem FS29
+faxsetup（使用默认设置）
+faxaddmodem FS0
+faxaddmodem FS1
+.
+.
+.
+faxaddmodem FS29
 ```
 
-  
-Edit /etc/rc.local to start hfaxd, faxq and faxgetty at boot
+编辑/etc/rc.local以在启动时启动hfaxd、faxq和faxgetty。
 
 ```bash
- # Starting the HylaFAX hfaxd and faxq Daemons at Boot.
+ # 在启动时启动HylaFAX hfaxd和faxq守护进程。
  /usr/local/sbin/hylafax start
- # Starting faxgetty for incoming Fax
+ # 启动用于传真传入的faxgetty
  m0:2345:respawn:/usr/local/sbin/faxgetty FS0
  m1:2345:respawn:/usr/local/sbin/faxgetty FS1
  m2:2345:respawn:/usr/local/sbin/faxgetty FS2
@@ -162,26 +154,25 @@ Edit /etc/rc.local to start hfaxd, faxq and faxgetty at boot
  m29:2345:respawn:/usr/local/sbin/faxgetty FS29
 ```
 
-  
-The directories are located in
+目录位于
 
 ```bash
  /var/spool/hylafax
 ```
 
-Configuration files for individual soft modems created by mod\_spandsp are in /var/spool/hylafax/etc/config.FS\*
+由mod\_spandsp创建的用于各个软调制解调器的配置文件位于 /var/spool/hylafax/etc/config.FS\*
 
-## Stop/ Start Hylafax
+## 停止/启动Hylafax
 
-To start/stop hfaxd, the HylaFax Daemon and faxq, the HylaFax queue manager.
+启动/停止 hfaxd，即 HylaFax 守护程序和 faxq，即 HylaFax 队列管理器。
 
 ```bash
  /etc/init.d/hylafax {stop|start|restart}
 ```
 
-## Minicom testing for CallerID
+## 用 Minicom 测试 CallerID
 
-Use minicom on the tty (instead of faxgetty). And then do the following:
+在 tty 上使用 minicom（而不是 faxgetty）。然后执行以下操作：
 
 ```xml
  ATZ
@@ -190,15 +181,15 @@ Use minicom on the tty (instead of faxgetty). And then do the following:
  ATI3
 ```
 
-And then send a call to that modem. Check what the CallerID display says.
+然后给该调制解调器打电话。检查 CallerID 显示的内容。
 
-## Incoming
+## 来电
 
-For incoming Fax sessions, the call should be bridged to modem/x/y where x is the slot and y is the dialed number. Use a to get the next available slot and number.
+对于传真传入会话，通话应该连接到 modem/x/y，其中 x 是插槽号，y 是拨入号码。使用 `a` 获取下一个可用插槽和号码。
 
-### Dialplan
+### 拨号计划
 
-Edit the dialplan conf/dialplan/default.xml to include the following snippet or similar commands over ESL.
+编辑 dialplan conf/dialplan/default.xml 文件，包含以下片段或类似命令来通过 ESL 进行配置。
 
 ```xml
  <extension name="fax_receive">
@@ -244,81 +235,79 @@ Edit the dialplan conf/dialplan/default.xml to include the following snippet or 
  server.serve_forever()
 ```
 
-### File name based on UUID
+### 基于 UUID 的文件名
 
-Bridge call to modem/1/a/uuid, where uuid is a variable with value equal to the uuid of the call
+桥接到modem/1/a/uuid的电话，其中uuid是一个变量，其值等于呼叫的uuid
 
-Edit /var/spool/hylafax/etc/config.FS0, config.FS1 etc to include the following
+编辑/var/spool/hylafax/etc/config.FS0，config.FS1等，包括以下内容
 
 ```xml
-RingsBeforeAnswer: 2  (you probably already have this configured, but check)
-ModemResetCmds:  AT+VCID=1
+RingsBeforeAnswer: 2（你可能已经配置了这个，但需要检查）
+ModemResetCmds: AT+VCID=1
 CallIDPattern: "NMBR="
 CallIDPattern: "NDID="
 ```
 
-  
-Restart faxgetty. Then in your bin/faxrcvd $CALLID1 will refer to the CallerID, and $CALLID2 will refer to the DID. Edit bin/faxrcvd to include the following
+重新启动faxgetty。然后在你的bin/faxrcvd中，$CALLID1将指代主叫号码，$CALLID2将指代DID。编辑bin/faxrcvd，包括以下内容
 
 ```xml
- DID=$CALLID1
- UUID=`echo $CALLID2 | cut -d "/" -f 2-`
- NEWFILE=$UUID
- mv -f $FILE $NEWFILE
+DID=$CALLID1
+UUID=`echo $CALLID2 | cut -d "/" -f 2-`
+NEWFILE=$UUID
+mv -f $FILE $NEWFILE
 ```
 
-## Outgoing
+## 呼出
 
-Use sendfax for putting your outgoing Faxes in the queue.
+使用sendfax将你的传真放入队列中。
 
 ```xml
 sendfax -n -vv -d <destination_number> <filename.ps>
 ```
 
-  
-Edit the dialplan to include a bridge to the called number.
+编辑拨号计划，包括对被叫号码的桥接。
 
 ```xml
- <extension name="fax_transmit">
-   <condition field="destination_number" expression="^(.*)$">
-     <action application="bridge" data="freetdm/1/a/$1"/>
-     <action application="hangup"/>
-   </condition>
- </extension>
+<extension name="fax_transmit">
+  <condition field="destination_number" expression="^(.*)$">
+    <action application="bridge" data="freetdm/1/a/$1"/>
+    <action application="hangup"/>
+  </condition>
+</extension>
 ```
 
-## Logs
+## 日志
 
-The log files with detailed message transaction between modem and hylafax are in directory /var/spool/hylafax/log
+详细记录modem和hylafax之间的消息交互的日志文件位于目录/var/spool/hylafax/log中
 
-The transfer status of each received or sent fax is stored in /var/spool/hylafax/etc/xferfaxlog in tab separated format with the following parameters
+每份接收或发送的传真的传输状态以制表符分隔的格式存储在/var/spool/hylafax/etc/xferfaxlog中，包括以下参数
 
 ```xml
- date - The date and time of the transaction in the format MM/DD/YY HH:MM , where MM is the numeric month, DD the numeric day, YY the last two digits of the year, and HH:MM is the time in 24-hour format.
- commid - The communication identifier for the call.
- modem - The device identifier for the modem that was used to do the send or receive.
- jobid - The job number for outbound calls.
- jobtag - The client-specified job tag for outbound calls.
- fax.tif - The associated recvq fax TIFF file for the event.
- sender - The sender/receiver’s electronic mailing address (facsimile receptions are always attributed to the ‘‘fax’’ user).
- dest-number - The phone number dialed for outgoing calls.
- TSI - The Transmitter Subscriber Identification string (as received) for incoming calls.
- CSI - The Caller Subscriber Identification string of the remote machine (as reported) for outgoing calls.
- local-number - The local phone number on which the data was received.
- params - The negotiated facsimile session parameters used for transferring data encoded as described below.
- #pages - The total number of pages transferred.
- jobtime - The duration of the session; in the format HH:MM:SS . This time includes setup overhead and any time spent cleaning up after a call.
- conntime - The time spent on the phone; in the format HH:MM:SS . This should be the time used by the Telco/PTT (see https://freeswitch.org/confluence/display/FREESWITCH/Glossary#Glossary-Telco) to calculate usage charges.
- reason - A string that indicates if any problem occurred during the session.
- CIDName - The received CIDName value for the session.
- CIDNumber - The received CIDNumber value for the session.
- owner - The login name of the job owner.
- dcs - The T.30 DCS string that was used in the facsimile communication.
+ date - 交易的日期和时间，格式为 MM/DD/YY HH:MM，其中 MM 为数字月份，DD 为数字日期，YY 为年份的后两位，HH:MM 为24小时制的时间。
+ commid - 通话的通信标识符。
+ modem - 用于发送或接收的调制解调器的设备标识符。
+ jobid - 外呼电话的作业号码。
+ jobtag - 外呼电话的客户指定的作业标签。
+ fax.tif - 与事件相关的接收队列（recvq）传真TIFF文件。
+ sender - 发送者/接收者的电子邮件地址（传真接收总是归属于“fax”用户）。
+ dest-number - 外呼电话拨打的电话号码。
+ TSI - 用于传入电话的发射方用户标识字符串（按实际接收到的）。
+ CSI - 用于传出电话的远程设备的发送方用户标识字符串（按报告的）。
+ local-number - 数据接收的本地电话号码。
+ params - 用于传输数据的协商传真会话参数，编码如下所述。
+ #pages - 传输的总页数。
+ jobtime - 会话的持续时间，格式为 HH:MM:SS。此时间包括设置开销和清理通话后所需的时间。
+ conntime - 在电话上花费的时间，格式为 HH:MM:SS。这应该是电信运营商用来计算通话费用的时间。
+ reason - 一个字符串，指示会话期间是否发生了任何问题。
+ CIDName - 会话的接收CIDName值。
+ CIDNumber - 会话的接收CIDNumber值。
+ owner - 作业所有者的登录名。
+ dcs - 传真通信中使用的T.30 DCS字符串。
 ```
 
-## Modem devices permissions issue
+## Modem设备权限问题
 
-If running FS as a non-root user, mod\_spandsp will fail when trying to create the /dev/FS devices (the /dev/pts are a non issue). The solution for this is to edit conf/autoload\_configs/spandsp.conf.xml to include the undocumented "directory" parameter:
+如果以非root用户身份运行FS，mod_spandsp在尝试创建/dev/FS设备时将失败（/dev/pts不会受影响）。解决方法是编辑conf/autoload_configs/spandsp.conf.xml，包含未经记录的"directory"参数：
 
 ```xml
 <modem-settings>
@@ -327,28 +316,23 @@ If running FS as a non-root user, mod\_spandsp will fail when trying to create t
 </modem-settings>
 ```
 
-  
-Then modify the init.d script of FS to include the creation of /dev/FS and its correct permission and ownership settings.
+然后修改FS的init.d脚本，包括创建/dev/FS及其正确的权限和所有权设置。
 
-In the SET section
-
-```xml
- FS_USER=freeswitch
- FS_GROUP=freeswitch
- FS_DEVDIR=/dev/FS
-```
-
-  
-inside do\_start()
+在SET部分：
 
 ```xml
- # Create /dev/FS for mod_spandsp soft modems
- if [ $FS_DEVDIR ] ; then
-    mkdir $FS_DEVDIR
-    chown $FS_USER:$FS_GROUP $FS_DEVDIR
-    chmod -R 0775 $FS_DEVDIR
- fi
+FS_USER=freeswitch
+FS_GROUP=freeswitch
+FS_DEVDIR=/dev/FS
 ```
-  
-  
 
+在do_start()里面：
+
+```xml
+# 为mod_spandsp软调制解调器创建/dev/FS
+if [ $FS_DEVDIR ] ; then
+   mkdir $FS_DEVDIR
+   chown $FS_USER:$FS_GROUP $FS_DEVDIR
+   chmod -R 0775 $FS_DEVDIR
+fi
+```

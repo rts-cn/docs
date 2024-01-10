@@ -1,64 +1,60 @@
+# jitterbuffer_msec
 
-# jitterbuffer_msec 
-
- Created by  Ryan Harris, last modified by  John Boteler on 2021.08.27
+由Ryan Harris创建，最后由John Boteler在2021.08.27进行了修改
 
 ## jitterbuffer_msec
 
-string
+字符串
 
-Channel variable. Activates the jitter buffer. The jitter buffer has three params: length, max length, and max drift.
+通道变量。激活jitter缓冲区。jitter缓冲区有三个参数：长度、最大长度和最大漂移。
 
-**Usage**
+**用法**
 
-jitterbuffer\_msec=buffer length:maximum buffer length:maximum drift
+jitterbuffer\_msec=缓冲区长度:最大缓冲区长度:最大漂移
 
-The three arguments specify the size of the jitter buffer either in units of milliseconds when only numerals are used or in the count of packets when the suffix 'p' is appended to the number.
+这三个参数指定了jitter缓冲区的大小，当只使用数字时，以毫秒为单位，或者当数字后缀'p'附加在数字后面时，表示数据包的数量。
 
-buffer length – beginning length of jitter buffer
+缓冲区长度 - jitter缓冲区的起始长度
 
-max length – maximum size to which the jitter buffer is allowed to grow
+最大长度 - jitter缓冲区允许增长到的最大大小
 
-max drift – maximum delay the jitter buffer will tolerate before dropping frames to make up ground
+最大漂移 - jitter缓冲区容忍的最大延迟，在此之前会删除帧以追赶时间
 
-**Examples**
+**示例**
 
-**Numeric time example**
+**数字时间示例**
 
 ```xml
 <action application="set" data="jitterbuffer_msec=60:200:20"/>
 <action application="answer"/>
 ```
 
-**Packet count example**
+**数据包数量示例**
 
 ```xml
 <action application="set" data="jitterbuffer_msec=2p:25p:4p"/>
 <action application="answer"/>
 ```
 
-Or to set it only on the subsequent outbound (Leg B) call: the [export](../FreeSWITCH-Explained/Modules/mod-dptools/6586592.mdx#about) dialplan app sets a variable on both the current channel and on any channels it creates, while the 'nolocal:' directive disables setting it on the current (Leg A) channel and only sets it on the subsequent outbound channels.
+或者仅在随后的呼出（Leg B）呼叫上设置它：[export](../FreeSWITCH-Explained/Modules/mod-dptools/6586592.mdx#about)拨号计划应用程序在当前通道和任何它创建的通道上设置一个变量，而'nolocal:'指令禁用在当前通道（Leg A）上设置它，只在随后的呼出通道上设置它。
 
-**Leg B only with nolocal:**
+**仅限Leg B，使用nolocal:**
 
 ```xml
 <action application="export" data="nolocal:jitterbuffer_msec=60"/>
 <action application="bridge" data="sofia/default/888@conference.freeswitch.org"/>
 ```
 
-You can also activate the Jitter Buffer in the bridge as follows:
+你也可以在桥接中激活Jitter缓冲区，方法如下：
 
-**jb in bridge app**
+**在桥接应用中使用jb**
 
 ```xml
 <action application="bridge" data="{jitterbuffer_msec=60}sofia/gateway/$1@gateway.com"/>
 ```
 
-This will add a jitter buffer to packets flowing from a remote gateway towards a local freeswitch user. The network would look like this:
+这将在从远程网关流向本地FreeSWITCH用户的数据包中添加一个抖动缓冲区。网络拓扑将如下所示：
 
-(local sip user) -----> FreeSWITCH -----> (remote gateway)
+（本地SIP用户）-----> FreeSWITCH ----->（远程网关）
 
-Where the link between FreeSWITCH and the remote gateway has jitter, and say the local SIP user has no jitter buffering on their IP-phone. This will help the voice quality for the incoming audio.
-
-  
-
+在FreeSWITCH和远程网关之间的链路存在抖动，而且假设本地SIP用户的IP电话没有抖动缓冲。这将有助于提高传入语音的音质。

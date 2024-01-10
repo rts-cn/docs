@@ -1,49 +1,46 @@
+# IVR
 
-# IVR 
+## 关于
 
- 
+交互式语音应答（IVR）是一种自动话务系统，与来电者进行互动，收集信息并将通话路由给合适的接收者。
 
-## About
+点击此处展开目录
 
-Interactive Voice Response (IVR) is an automated telephony system that interacts with callers, gathers information and routes calls to the appropriate recipient.
+- 1 [示例 IVR](#sample-ivrs)
+   - 1.1 [源代码中包含的示例](#included-in-source)
+      - 1.1.1 [demo-ivr.xml](#demo-ivrxml)
+- 2 [Lua IVR](#lua-ivrs)
+   - 2.1 [Hello World](#hello-world)
+   - 2.2 [播放菜单并获取按键](#play-menu-and-get-digits)
+   - 2.3 [读取按键](#read-digits)
+   - 2.4 [数据库坐席登录](#db_agent_login)
+   - 2.5 [使用 Lua 的目录](#directory-lua)
+   - 2.6 [在 Lua 中使用 ASR 和 TTS 的目录](#directory-in-lua-using-asr-and-tts)
+   - 2.7 [使用 Lua 的传入会议](#inbound-conferencing-using-lua)
+   - 2.8 [“群组确认”的替代示例：朗读文本，无需接通电话](#example-of-a-group-confirm-alternative-speaks-text-and-does-not-require-the-call-to-be-accepted)
+   - 2.9 [在拨号前检查用户是否存在且已注册](#checking-if-a-user-exists--if-theyre-registered-before-dialing)
+   - 2.10 [Javascript IVR](#javascript-ivrs)
+      - 2.10.1 [dbivrmenu js](#dbivrmenu-js)
+   - 2.11 [Python IVR](#python-ivrs)
+      - 2.11.1 [frontdoor py](#frontdoor-py)
+         - 2.11.2 [基本语音信箱](#basic-voicemail)
+- 3 [参见](#see-also)
 
-Click here to expand Table of Contents
+请注意，如果你在和一个传统电信背景的人交流，一个简单的呼叫路由菜单被称为[自动接待员](http://zh.wikipedia.org/zh-cn/自动接待员)。而在电信行业，术语[IVR](http://zh.wikipedia.org/zh-cn/互动语音应答)是指一种更复杂的系统，它依赖于某种背后的应用程序。一个独立的菜单，仅仅用于将呼叫路由到目的地，并不能被视为IVR。FreeSWITCH和其他开源电信应用程序因为即使是最基本的菜单也可以被视为符合IVR的定义而变得很酷，但在电信行业，通常更倾向于使用术语"自动接待员"，除非有更多的基本呼叫路由功能。电信人士梦想着有一天，新兴的电信和VoIP专业人士能够理解IVR和自动接待员之间的区别，并正确使用这些术语。（在电信中，将自动接待员称为"IVR"的人被立即视为新手）。在大家正确使用这些术语的那一天（或者其中一方放弃之前），请注意和你对话的人，否则在讨论项目范围时可能会产生混淆。
 
-* 1 [Sample IVRs](#sample-ivrs)  
-   * 1.1 [Included in Source](#included-in-source)  
-      * 1.1.1 [demo-ivr.xml](#demo-ivrxml)
-* 2 [Lua IVRs](#lua-ivrs)  
-   * 2.1 [Hello World](#hello-world)  
-   * 2.2 [Play Menu and get digits](#play-menu-and-get-digits)  
-   * 2.3 [Read Digits](#read-digits)  
-   * 2.4 [db\_agent\_login](#db_agent_login)  
-   * 2.5 [directory lua](#directory-lua)  
-   * 2.6 [directory in lua using ASR and TTS](#directory-in-lua-using-asr-and-tts)  
-   * 2.7 [inbound conferencing using lua](#inbound-conferencing-using-lua)  
-   * 2.8 [Example of a "group confirm" alternative: speaks text and does not require the call to be accepted](#example-of-a-group-confirm-alternative-speaks-text-and-does-not-require-the-call-to-be-accepted)  
-   * 2.9 [Checking if a user exists & if they're registered before dialing](#checking-if-a-user-exists--if-theyre-registered-before-dialing)  
-   * 2.10 [Javascript IVRs](#javascript-ivrs)  
-      * 2.10.1 [dbivrmenu js](#dbivrmenu-js)  
-   * 2.11 [Python IVRs](#python-ivrs)  
-      * 2.11.1 [frontdoor py](#frontdoor-py)  
-         * 2.11.2 [basic voicemail](#basic-voicemail)
-* 3 [See also](#see-also)
+语言
 
-Please note that if you are speaking to someone with a traditional telephony background, a simple call routing menu is called an [Automated Attendant](http://en.wikipedia.org/wiki/Automated%5Fattendant). The term [IVR](http://en.wikipedia.org/wiki/IVR) is reserved in the telecom industry to refer to a more complex system that relies on some sort of back end application. A self-contained menu that does nothing more than route calls to destinations would not be considered an IVR. FreeSWITCH and other open source telecom apps are cool because even the most basic menu could be argued to meet the definition of an IVR, but generally the term "Automated Attendant" is preferred in the telecom industry unless something more than rudimentary call routing is involved. Telecom people dream of the day when Emerging Telecom and VoIP professionals start to understand the difference between an IVR and an Automated Attendant, and use the terms correctly. (In telecom, people who refer to an Automated Attendant as "The IVR" are instantly considered newbies). Until the day everyone uses the terms correctly (or one side gives up), be aware of who you are talking to, or there will be confusion when you are scoping out a project.
+FreeSWITCH支持使用任何FreeSWITCH支持的语言编写IVR，包括JavaScript，Python，Perl，Lua和XML宏格式。
 
-Language
+## 示例IVR
 
-FreeSWITCH IVRs can be written in any language that FreeSWITCH supports including JavaScript, Python, Perl, Lua and an XML macro format.
-
-## Sample IVRs
-
-### Included in Source
+### 包含在源代码中
 
 #### demo-ivr.xml
 
-A sample IVR written in XML is included in the source. The IVR menus are loaded from conf/autoload\_configs/ivr.conf.xml
+源代码中包含了一个用XML编写的示例IVR。IVR菜单从conf/autoload\_configs/ivr.conf.xml中加载。
 
-The dialplan entry that calls the IVR menu is:
+调用IVR菜单的拨号计划条目如下：
 
 ```xml
  <extension name="ivr_demo">
@@ -53,70 +50,69 @@ The dialplan entry that calls the IVR menu is:
    </extension>
 ```
 
-  
-The macro file for the IVR is located at conf/lang/en/demo/[demo-ivr.xml](./Dialplan/XML-Dialplan/Demo-IVR_3966405.mdx#xml).
+IVR的宏文件位于conf/lang/en/demo/demo-ivr.xml。
 
-## Lua IVRs
+## Lua IVR
 
-### Hello World
+### 你好世界
 
 ```xml
--- answer the call
+-- 接听电话
 session:answer();
--- play a file
+-- 播放文件
 session:streamFile("/path/to/blah.wav");
--- hangup
+-- 挂断电话
 session:hangup();
 ```
 
-### Play Menu and get digits
+### 播放菜单并获取按键
 
 ```xml
 digits = session:playAndGetDigits(1, 3, 3, 3000, "#", "/menu-greeting.wav", "/invalid.wav", "\\d+")
-session:consoleLog("info", "Got dtmf: ".. digits .."\n");  
+session:consoleLog("info", "获取到按键: ".. digits .."\n");  
 ```
 
-### Read Digits
+### 读取数字
 
 ```xml
 digits = '12345';
--- the next line will say "one two three four five"
+-- 下一行会说出"one two three four five"
 session:execute("say","en name_spelled pronounced " .. digits);
--- the next line will say "twelve thousand, three hundred forty-five"
+-- 下一行会说出"twelve thousand, three hundred forty-five"
 session:execute("say","en number pronounced " .. digits); 
 ```
 
 ### db_agent_login
 
-[Example PostgreSQL-backed Lua IVR](./Client-and-Developer-Interfaces/Lua-API-Reference/Lua-examples/Lua-Database-agent-login-example_3965212.mdx#about)
+[示例支持PostgreSQL的Lua IVR](./Client-and-Developer-Interfaces/Lua-API-Reference/Lua-examples/Lua-Database-agent-login-example_3965212.mdx#about)
 
-### directory lua
+### lua目录
 
-* answers call
-* plays file asking for input of 1st 3 chars of last name
-* looks in list for matches
-* if match found play recorded\_name if available
-* otherwise spell out name and extension
-* ask for confirmation of match
-* if not the right one play the next one
-* if confirmed transfer to extension
-* otherwise play no match found and restart directory ivr
+* 接听电话
+* 播放文件并要求输入姓氏的前3个字符
+* 在列表中查找匹配项
+* 如果找到匹配项，则播放recorded\_name（如果可用）
+* 否则，拼读出姓名和分机号码
+* 要求确认匹配项
+* 如果不是正确的匹配项，则播放下一个
+* 如果确认是正确的匹配项，则转接至分机
+* 否则，播放未找到匹配项并重新启动目录IVR
 
 [directory.lua](./Client-and-Developer-Interfaces/Lua-API-Reference/Lua-examples/Lua-Directory-example_1049009.mdx#about)
 
-### directory in lua using ASR and TTS
+### 使用ASR和TTS的lua目录
 
-[directory\_asr.lua](./Client-and-Developer-Interfaces/Lua-API-Reference/Lua-examples/index.mdx#about)
+[directory_asr.lua](./Client-and-Developer-Interfaces/Lua-API-Reference/Lua-examples/index.mdx#about)
 
-### inbound conferencing using lua
+### 使用lua进行入站会议
 
-[simple\_conference.lua](./Client-and-Developer-Interfaces/Lua-API-Reference/Lua-examples/index.mdx#about)
+[simple_conference.lua](./Client-and-Developer-Interfaces/Lua-API-Reference/Lua-examples/index.mdx#about)
 
-### Example of a "group confirm" alternative: speaks text and does not require the call to be accepted
+### “群组确认”替代方案示例：朗读文本，不需要通话接听
 
-Here's an example where you can use Lua to speak some text (using TTS), or playback a file, or do whatever you want without requiring a group confirm key!
+以下是一个示例，您可以使用Lua朗读文本（使用TTS），或播放文件，或者进行您想要的任何操作，而无需要求群组确认按键！
 
-To achieve this, we want to use the [exec functionality of group\_confirm\_key](./Client-and-Developer-Interfaces/Lua-API-Reference/Lua-examples/index.mdx#about) to call a Lua script with the selected menu option so we know what text to speak. The following script would be the frontend "automated attendant" Lua script:
+为了实现这一点，我们希望使用[group\_confirm\_key的exec功能](./Client-and-Developer-Interfaces/Lua-API-Reference/Lua-examples/index.mdx#about)，调用一个带有所选菜单选项的Lua脚本，这样我们就知道要朗读的文本。下面的脚本将作为前端“自动接听员”Lua脚本：
 
 ```xml
 selection = session:playAndGetDigits( 1, 1, 1, 3000, "#", "main-menu.wav", "", "" )
@@ -128,22 +124,22 @@ if( selection ) then
 end
 ```
 
-As you can see, we are calling speak\_selection.lua with 1 argument: _tonumber(selection)_ (ie. the digit the caller pressed from the main menu). The content of speak\_selection.lua is:
+正如您所见，我们用1个参数调用了speak\_selection.lua: _tonumber(selection)_（即来电者从主菜单选择的数字）。speak\_selection.lua的内容如下：
 
 ```xml
-options = { "sales", "technical support", "whatever text you want to read out for menu option 3" }
+options = { "销售", "技术支持", "您想要为菜单选项3朗读的任何文本" }
 session:execute( "speak", "flite|kal|" .. options[tonumber(argv[1])] )
 ```
 
-This was mostly for "playing" purposes, but if you happen to share an extension where different types of calls may come in (sales, tech support, etc) this system helps as it announces which menu option the caller entered.
+这主要是为了“展示”之用，但是如果您恰好使用一个扩展名，接收不同类型的呼叫（销售、技术支持等），此系统可帮助您宣布来电者进入了哪个菜单选项。
 
-### Checking if a user exists & if they're registered before dialing
+### 检查用户是否存在以及是否注册后才拨号
 
-This is used, for example, in a menu where you allow the caller to enter an extension. Rather than blindly dialing their extension, you could check if the user exists first and if they do, check if they're registered before finally attempting to dial. This is my way of doing it. If you have a different way of doing it .. add to the page!
+这是在菜单中使用的，例如允许呼叫者输入分机号码的情况。与其盲目拨打分机号码，你可以先检查用户是否存在，如果存在，则再检查用户是否已注册，最后再试图拨打。这是我自己的方法。如果你有其他做法...可以添加到页面上！
 
 ```xml
--- * = go back to the main menu
--- <blank> = timeout after 3 tries
+-- * = 返回主菜单
+-- <blank> = 3次尝试后超时
 local extension = session:playAndGetDigits( 1, 2, 3, 3000, "#", "ivr/ivr-enter_ext.wav", "ivr/ivr-that_was_an_invalid_entry.wav", "[\\d{2}|*]" )
 if( extension ~= "*" and extension ~= "" ) then
    session:execute( "set", "contact_exists=${user_exists(id " .. extension .. " ${domain})}" )
@@ -153,7 +149,7 @@ if( extension ~= "*" and extension ~= "" ) then
        session:execute( "set", "contact_available=${sofia_contact(internal/" .. extension .. "@${domain})}" )
        contact_available = session:getVariable( "contact_available" )
        if( string.find( contact_available, "error" ) ) then
-           session:execute( "speak", "flite|kal|the extension number " .. extension .. " is not available" )
+           session:execute( "speak", "flite|kal|分机号码 " .. extension .. " 不可用" )
        else
            session:execute( "playback", "ivr/ivr-hold_connect_call.wav" )
            session:execute( "set", "transfer_ringback=${hold_music}" )
@@ -163,55 +159,53 @@ if( extension ~= "*" and extension ~= "" ) then
 end
 ```
 
-### Javascript IVRs
+### JavaScript IVR
 
-See also: The [Javascript Examples](./Client-and-Developer-Interfaces/JavaScript/Javascript-Examples/index.mdx#about) page.
+另请参阅：[JavaScript示例](./Client-and-Developer-Interfaces/JavaScript/Javascript-Examples/index.mdx#about)页面。
 
 #### dbivrmenu js
 
-This IVR uses an sqlite database for storing the menu options. The database creation script is here - [Examples dbivrmenu dbcreate js](./Client-and-Developer-Interfaces/JavaScript/Javascript-Examples/JavaScript-Example---dbIVRmenu_7144656.mdx#about). The IVR script is here - [Examples dbivrmenu js](./Client-and-Developer-Interfaces/JavaScript/Javascript-Examples/JavaScript-Example---dbIVRmenu_7144656.mdx#about).
+这个IVR使用sqlite数据库来存储菜单选项。数据库创建脚本在这里 - [Examples dbivrmenu dbcreate js](./Client-and-Developer-Interfaces/JavaScript/Javascript-Examples/JavaScript-Example---dbIVRmenu_7144656.mdx#about)。IVR脚本在这里 - [Examples dbivrmenu js](./Client-and-Developer-Interfaces/JavaScript/Javascript-Examples/JavaScript-Example---dbIVRmenu_7144656.mdx#about)。
 
 ##### afterhours ivr
 
-This is a basic javascript ivr that plays the message once and transfers to the voicemail extension of the operator at the end if no input is given. The IVR script is here - [JavaScript Example afterhoursivr.js](./Client-and-Developer-Interfaces/JavaScript/Javascript-Examples/Javascript-Example---AfterHoursIVR_7144104.mdx#about).
+这是一个基本的Javascript IVR，如果没有输入，会播放一次消息，并在最后转接到操作员的语音信箱分机。IVR脚本在这里 - [JavaScript Example afterhoursivr.js](./Client-and-Developer-Interfaces/JavaScript/Javascript-Examples/Javascript-Example---AfterHoursIVR_7144104.mdx#about)。
 
-### Python IVRs
+### Python IVR
 
-See [Mod\_python](./Modules/mod_python_1048940.mdx#eol) for more info on how to get these working.
+有关如何让这些工作的更多信息，请参见[Mod\_python](./Modules/mod_python_1048940.mdx#eol)。
 
 #### frontdoor py
 
-* Plays welcome message
-* During welcome message play, press "0" to get special options (sneak in the backdoor)
-* If nothing pressed, continues
-* If "after hours", makes users press an extra key to continue
-* Bridges to destination endpoint(s) (eg, your phones)
+* 播放欢迎消息
+* 在播放欢迎消息期间，按下"0"以获取特殊选项（从后门进入）
+* 如果没有按下任何按键，继续执行
+* 如果是"非工作时间"，要求用户按下额外的按键继续执行
+* 桥接到目标终点（例如，您的电话）
 
-The IVR script is here - [Examples frontdoor py](./Modules/mod-python/9634487.mdx#about).
+IVR脚本在这里 - [Examples frontdoor py](./Modules/mod-python/9634487.mdx#about)。
 
-#### basic voicemail
+#### 基本语音信箱
 
-Uses Django O/R layer to talk to a database and save/retrieve voicemails:
+使用Django O/R层与数据库通信以保存/检索语音信箱：
 
 [voicemail.py](http://fisheye.freeswitch.org/browse/~raw,r=46/WikiPBX/ivr/voicemail.py)
 
 ##### directory py
 
-* answers call
-* plays file asking for input of 1st 3 chars of last name
-* looks in list for matches
-* if match found play recorded\_name if available
-* otherwise spell out name and extension
-* ask for confirmation of match
-* if not the right one play the next one
-* if confirmed transfer to extension
-* otherwise play no match found and restart directory ivr
+- 接听电话
+- 播放要求输入姓氏的前三个字符的文件
+- 在列表中查找匹配项
+- 如果找到匹配项，如果有录音的名字，则播放录音的名字
+- 否则拼写名字和分机号码
+- 要求确认匹配项
+- 如果不是正确的匹配项，则播放下一个
+- 如果确认了，则转接到分机号
+- 否则播放未找到匹配项并重新开始目录云呼叫
 
 [directory.py](./Modules/mod-python/9634440.mdx#about)
 
-## See also
+## 另请参阅
 
-* [IVR Menu](./Modules/mod-dptools/6586989.mdx#about)
-* [Freeswitch IVR Originate](./Dialplan/Freeswitch-IVR-Originate_9634753.mdx#channel-variables)
-
-
+* [IVR 菜单](./Modules/mod-dptools/6586989.mdx#about)
+* [Freeswitch IVR 拨号](./Dialplan/Freeswitch-IVR-Originate_9634753.mdx#channel-variables)

@@ -1,27 +1,24 @@
+# mod_xml_curl C# 示例
 
-# mod_xml_curl C sharp example 
+## 关于
 
- 
+以下页面将展示如何在你的.NET应用程序中包含一个Web服务器，并让该Web服务器生成一个拨号计划。
 
-## About
+点击这里展开目录
 
-The following page will show you how to include a web server in your .NET application, and how to let the web server generate a dialplan.
+* 1 [要求](#requirements)
+* 2 [实现](#implementation)
+* 3 [配置](#configuration)
 
-Click here to expand Table of Contents
+### 要求
 
-* 1 [Requirements](#requirements)
-* 2 [Implementation](#implementation)
-* 3 [Configuration](#configuration)
+MiniHTTPd是一个根据艺术许可发布的C#项目。它使用.NET 1.1编码，在.NET 2.0中会有一些警告。
 
-### Requirements
+可以从这里下载：<http://www.codeproject.com/KB/IP/minihttpd.aspx>
 
-MiniHTTPd is a C# project released under the artistic license. It is coded in .NET 1.1 and will give some warnings in .NET 2.0.
+### 实现
 
-It can be downloaded from here: <http://www.codeproject.com/KB/IP/minihttpd.aspx>
-
-### Implementation
-
-First of all, you need to download and install MiniHTTPd. The next thing to do is to create a new project (whatever flavor you like), and add this class to it.
+首先，您需要下载并安装MiniHTTPd。接下来要做的是创建一个新项目（任何喜欢的类型），并将这个类添加到项目中。
 
 ```xml
 using System;
@@ -33,7 +30,7 @@ using MiniHttpd;
 namespace FreeSwitch
 {
     /// <summary>
-    /// The following class is coded by Jonas Gauffin.
+    /// 以下类由Jonas Gauffin编写。
     /// 
     /// </summary>
     class FreeSwitchCurlPage : IFile
@@ -52,7 +49,7 @@ namespace FreeSwitch
         }
 
         /// <summary>
-        /// Gets the name of the entry.
+        /// 获取条目的名称。
         /// </summary>
         public string Name
         {
@@ -60,18 +57,20 @@ namespace FreeSwitch
         }
 
         /// <summary>
-        /// Gets the parent directory of the object.
+        /// 获取对象的父目录。
         /// </summary>
         public IDirectory Parent
         {
             get { return parent; }
         }
+```
 
+```csharp
         /// <summary>
-        /// Called when the file is requested by a client.
+        /// 当客户端请求文件时调用。
         /// </summary>
-        /// <param name="request">The <see cref="HttpRequest"/> requesting the file.</param>
-        /// <param name="directory">The <see cref="IDirectory"/> of the parent directory.</param>
+        /// <param name="request">请求文件的 HttpRequest。</param>
+        /// <param name="directory">父目录的 IDirectory。</param>
         public void OnFileRequested(HttpRequest request, IDirectory directory)
         {
             UriQuery queryString = new UriQuery(GetPostData(request));
@@ -103,7 +102,7 @@ namespace FreeSwitch
         }
 
         /// <summary>
-        /// Gets the MIME type of the content.
+        /// 获取内容的 MIME 类型。
         /// </summary>
         public string ContentType
         {
@@ -116,33 +115,34 @@ namespace FreeSwitch
         public void Dispose()
         {
         }
+```
 
-        void SetParent(IDirectory parent)
+```csharp
+void SetParent(IDirectory parent)
+{
+    this.parent = parent;
+}
+
+
+private string GetPostData(HttpRequest request)
+{
+    try
+    {
+        using (StreamReader reader = new StreamReader(request.PostData))
         {
-            this.parent = parent;
-        }
-
-
-        private string GetPostData(HttpRequest request)
-        {
-            try
-            {
-                using (StreamReader reader = new StreamReader(request.PostData))
-                {
-                    return reader.ReadToEnd();
-                }
-            }
-            catch (ArgumentException err)
-            {
-                Console.WriteLine(err.ToString());
-            }
-            return "";
+            return reader.ReadToEnd();
         }
     }
+    catch (ArgumentException err)
+    {
+        Console.WriteLine(err.ToString());
+    }
+    return "";
+}
 }
 ```
 
-Next, you should add the following class which setups MiniHTTPd with our own page handler.
+下一步，您应该添加以下类，用于设置 MiniHTTPd 并使用自定义页面处理程序。
 
 ```xml
 using System;
@@ -151,28 +151,28 @@ using System.IO;
 
 namespace FreeSwitch
 {
- 	/// <summary>
-	/// Summary description for HttpTest.
-	/// </summary>
-	public class ModCurlHandler
-	{
+    /// <summary>
+    /// HttpTest 的摘要说明。
+    /// </summary>
+    public class ModCurlHandler
+    {
         private HttpWebServer server = null;
 
         public ModCurlHandler()
-		{
-            server = new HttpWebServer(8080);            
+        {
+            server = new HttpWebServer(8080);
 
-            // Setup directories
+            // 设置目录
             VirtualDirectory root = new VirtualDirectory("/", null);
             server.Root = root;
 
-            // We want curl to call http://localhost:8080/freeswitch/curl.fetch
+            // 我们希望 curl 调用 http://localhost:8080/freeswitch/curl.fetch
             VirtualDirectory dir = new FreeSwitchVirtualDirectory("freeswitch", root);
             FreeSwitchCurlPage curlPage = new FreeSwitchCurlPage(dir);
             curlPage.OnGetDialplan += OnGetDialplan;
             dir.AddFile(curlPage);
             root.AddDirectory(dir);
-		}
+        }
 
         public void Start()
         {
@@ -183,31 +183,32 @@ namespace FreeSwitch
         {
             server.Stop();
         }
+```
 
-        protected string OnGetDialplan(UriQuery query)
-        {
-            return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\r\n" +
-                    "<document type=\"freeswitch/xml\">\r\n" +
-                    "  <section name=\"dialplan\" description=\"RE Dial Plan For FreeSwitch\">\r\n" +
-                    "    <context name=\"default\">\r\n" +
-                    "      <extension name=\"test9\">\r\n" +
-                    "        <condition field=\"destination_number\" expression=\"^1111$\">\r\n" +
-                    "          <action application=\"playback\" data=\"C:\\temp\\sounds\\tt-monkeys.wav\"/>\r\n" +
-                    "        </condition>\r\n" +
-                    "      </extension>\r\n" +
-                    "    </context>\r\n" +
-                    "  </section>\r\n" +
-                    "</document>\r\n";
-        }
+```csharp
+	protected string OnGetDialplan(UriQuery query)
+	{
+		return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\r\n" +
+			"<document type=\"freeswitch/xml\">\r\n" +
+			"  <section name=\"dialplan\" description=\"RE Dial Plan For FreeSwitch\">\r\n" +
+			"    <context name=\"default\">\r\n" +
+			"      <extension name=\"test9\">\r\n" +
+			"        <condition field=\"destination_number\" expression=\"^1111$\">\r\n" +
+			"          <action application=\"playback\" data=\"C:\\temp\\sounds\\tt-monkeys.wav\"/>\r\n" +
+			"        </condition>\r\n" +
+			"      </extension>\r\n" +
+			"    </context>\r\n" +
+			"  </section>\r\n" +
+			"</document>\r\n";
 	}
 }
 ```
 
-You should change the OnGetDialplan to do something useful=) For instance, fetch actions from the database or something like that.
+你需要把OnGetDialplan改为有用的东西=) 例如，从数据库中获取操作或类似的东西。
 
-### Configuration
+### 配置
 
-Next, you need to configure mod\_xml\_curl to fetch the dialplan from our code. That configuration should look like this:
+接下来，你需要配置mod\_xml\_curl以从我们的代码中获取拨号计划。配置应该是这样的：
 
 ```xml
 <configuration name="xml_curl.conf" description="cURL XML Gateway">
@@ -218,5 +219,3 @@ Next, you need to configure mod\_xml\_curl to fetch the dialplan from our code. 
   </bindings>
 </configuration>
 ```
-
-

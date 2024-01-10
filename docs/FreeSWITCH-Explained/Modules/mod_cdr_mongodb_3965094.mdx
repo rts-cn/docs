@@ -1,43 +1,40 @@
+# mod_cdr_mongodb
 
-# mod_cdr_mongodb 
+## 关于
 
- 
+该模块可直接将通话详单 (CDR) 存储到 MongoDB 数据库中。
 
-## About
+* [安装和配置](#安装和配置)
+* [模式定义](#模式定义)
+* [MongoDB 服务器配置](#mongodb-服务器配置)
+* [模块配置](#模块配置)
+* [身份验证](#身份验证)
+  * [副本集](#副本集)
+  * [Unix 域套接字](#unix-域套接字)
 
-This module stores CDRs (Call Detail Record) directly to a MongoDB database.
+## 安装和配置
 
-* [Install & Configure](#install--configure)
-* [Schema Definition](#schema-definition)
-* [MongoDB Server Configuration](#mongodb-server-configuration)
-* [Module Configuration](#module-configuration)
-* [Authentication](#authentication)  
-   * [Replica Sets](#replica-sets)  
-   * [Unix Domain Sockets](#unix-domain-sockets)
+要在 FreeSWITCH 中编译该模块，在 modules.conf 中去除注释，然后在 _freeswitch_/conf/autoload\_configs/modules.conf.xml 中将模块添加为自动加载项。
 
-## Install & Configure
-
-To compile the module in FreeSWITCH, uncomment the module in modules.conf and add the module to _freeswitch_/conf/autoload\_configs/modules.conf.xml for autoload.
-
-Uncomment in modules.conf:
+在 modules.conf 中去除注释:
 
 ```xml
 event_handlers/mod_cdr_mongodb
 ```
 
-Add in _freeswitch_/conf/autoload\_configs/modules.conf.xml:
+在 _freeswitch_/conf/autoload\_configs/modules.conf.xml 中添加:
 
 ```xml
 <load module="mod_cdr_mongodb"/>
 ```
 
-## Schema Definition
+## 模式定义
 
-Compared to other modules, such as [mod\_cdr\_pg\_csv](mod_cdr_pg_csv_6587338.mdx#about) or [mod\_cdr\_sqlite](mod_cdr_sqlite_6587351.mdx#about), there is no need with MongoDB to define a schema due to the nature of NoSQL
+与其他模块（如 [mod\_cdr\_pg\_csv](mod_cdr_pg_csv_6587338.mdx#about) 或 [mod\_cdr\_sqlite](mod_cdr_sqlite_6587351.mdx#about)）不同，由于 NoSQL 的特性，使用 MongoDB 不需要定义模式。
 
-## MongoDB Server Configuration
+## MongoDB 服务器配置
 
-Recent versions of MongoDB (on 64-bit platforms) preallocate by default a 3GB journal. If you simply want to test this module in a non-production environment, or if you have low call volume, you can disable this journal preallocation. To do so, make sure that that the journal config option is commented out, and instead add a nojournal option:
+最新版本的 MongoDB（64 位平台上）默认预分配 3GB 的日志文件。如果您只是想在非生产环境中测试此模块，或者通话量较低，可以禁用此日志文件的预分配。要这样做，请确保将 journal 配置选项注释掉，并添加一个 nojournal 选项:
 
 ```xml
 # Enable journaling, http://www.mongodb.org/display/DOCS/Journaling
@@ -45,62 +42,61 @@ Recent versions of MongoDB (on 64-bit platforms) preallocate by default a 3GB jo
 nojournal=true
 ```
 
-This is equivalent to launching the MongoDB server with the --nojournal command line option. Once the server is running with journalling disabled, you can safely delete the journal files (usually in /var/lib/mongodb/journal).
+这相当于使用 --nojournal 命令行选项启动 MongoDB 服务器。一旦服务器禁用了日志记录，可以安全地删除日志文件（通常位于 /var/lib/mongodb/journal）。
 
-## Module Configuration
+## 模块配置
 
-The default configuration file can be found in _freeswitch_/conf/autoload\_configs/cdr\_mongodb.conf.xml.
+默认配置文件可以在_freeswitch_/conf/autoload\_configs/cdr\_mongodb.conf.xml中找到。
 
-Default values are shown.
+默认值如下所示。
 
 ```xml
 <configuration name="cdr_mongodb.conf" description="MongoDB CDR logger">
   <settings>
-    <!-- Specify MongoDB server in hostname[:port] format. Specify multiple
-        comma-delimited hosts for a replica set -->
+    <!-- 以hostname[:port]的格式指定MongoDB服务器。对于副本集，可以指定多个用逗号分隔的主机 -->
     <param name="host" value="127.0.0.1"/>
     <param name="port" value="27017"/>
 
-    <!-- Optionally override default replica set name -->
+    <!-- 可选地覆盖默认的副本集名称 -->
     <!-- <param name="replica_set_name" value="cdr_mongodb"/> -->
 
-    <!-- Namespace format is database.collection -->
+    <!-- 命名空间的格式为database.collection -->
     <param name="namespace" value="test.cdr"/>
 
-    <!-- Set username and password to enable MongoDB authentication -->
+    <!-- 设置用户名和密码以启用MongoDB身份验证 -->
     <!-- <param name="username" value="freeswitch"/> -->
     <!-- <param name="password" value="secret"/> -->
 
-    <!-- If true, create CDR for B-leg of call (default: true) -->
+    <!-- 如果为true，为呼叫的B-leg创建CDR记录（默认值：true） -->
     <param name="log-b-leg" value="false"/>
   </settings>
 </configuration>
 ```
 
-## Authentication
+## 身份验证
 
-If you have enabled authentication on your MongoDB server, simply uncomment and configure the username and password params.
+如果在MongoDB服务器上启用了身份验证，只需取消注释并配置用户名和密码参数。
 
-### Replica Sets
+### 副本集
 
-Replica sets are the preferred method of replication in MongoDB, superseding the older master/slave style replication. Replica sets support up to 12 member servers, and the configuration is largely automatic. To enable replica set support in the module, simply specify more than one server in the host param. Members can run on different ports if desired.
+副本集是MongoDB中首选的复制方法，取代了旧的主/从式复制。副本集支持最多12个成员服务器，并且配置大部分都是自动的。为了在模块中启用副本集支持，只需在主机参数中指定多个服务器。如果需要，成员服务器可以在不同的端口上运行。
 
-For example, the following will connect to a 3-member replica set, comprised of localhost and two additional servers. The third server is running on a non-standard port:
+例如，以下配置将连接到一个由本地主机和另外两个服务器组成的3成员副本集。第三个服务器正在非标准端口上运行：
 
 ```xml
 <param name="host" value="127.0.0.1,192.0.2.100,192.0.2.200:37017"/>
 <param name="replica_set_name" value="my_replica"/>
 ```
 
-Remember to configure the replica\_set\_name to match what your MongoDB replica set is configured as.
+请记得根据您的MongoDB副本集配置，设置正确的`replica_set_name`。
 
-### Unix Domain Sockets
+### Unix域套接字
 
-If the MongoDB server is running on the same host as your FreeSWITCH server, you can configure the module to connect via a Unix domain socket. This may provide a small performance boost over connecting via TCP. Specify the path to the Unix domain socket in the host param, and specify a port number less than zero, e.g.:
+如果MongoDB服务器和您的FreeSWITCH服务器运行在同一台主机上，您可以配置该模块通过Unix域套接字连接。这可能会比通过TCP连接提供轻微的性能提升。在`host`参数中指定Unix域套接字的路径，并将端口号设置为负数，例如：
 
 ```xml
 <param name="host" value="/tmp/mongodb-27017.sock"/>
 <param name="port" value="-1"/>
 ```
 
-  Document generated by Confluence on Dec 27, 2022 04:51
+由Confluence在2022年12月27日 04:51生成的文档

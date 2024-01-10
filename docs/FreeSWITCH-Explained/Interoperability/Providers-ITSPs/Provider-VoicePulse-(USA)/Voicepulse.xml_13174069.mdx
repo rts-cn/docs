@@ -1,91 +1,63 @@
+# Voicepulse.xml
 
-# Voicepulse.xml 
+单击这里展开目录
 
- 
+* 1 [Voicepulse 警告](#voicepulse-warning)
 
-Click here to expand Table of Contents
+以下所有文本最后编辑于2010年，因此很可能已经过时、不准确，并且急需更新。
 
-* 1 [Voicepulse Warning](#voicepulse-warning)
+## Voicepulse 警告
 
-All the text below was last edited in 2010, it is therefore likely out-of-date, inaccurate and in dire need of a refresh
+VoicePulse 最近的更改（2008年9月）将 connect03 限制为只能进行 IAX 终止。请从您的拨号计划中删除任何与下方网关相关的条目，因为它很可能会接听呼叫并播放一条信息，内容是因为我们在产品环境中进行了更改，旨在展示糟糕的工程设计。BAD 是 Broken As Designed（设计如此）的缩写。请挂断电话并对所有交换机进行更改。尽管我们本不应该接听呼叫，而是完全忽略它，以便另一个网关能够处理您的呼叫，但我们认为立即接听呼叫且不给其他网关放置呼叫的机会对您造成严重不便是明智的。感谢您使用我们的服务，我们期待在不久的将来再次滥用您。
 
-## Voicepulse Warning
-
-Recent changes (Sep 2008) in VoicePulse have limited connect03 to only IAX termination. Please remove any entries that you may have reflecting the gateway below from your dialplan as it will most likely answer the call and play a message saying something to the effect of "Your call could not be completed as dialed because we changed our production environment in an effort to demonstrate what bad engineering is all about. BAD is an acronym for Broken As Designed. Please hang up and make changes on all your switches. Even though we shouldn't have answered the call and simply ignored it entirely so that another gateway could facilitate your call, we FELT it wise to seriously inconvenience you by answering the call immediately giving no other gateway a chance to place the call. Thanks for using our service and we look forward to abusing you again in the near future.
-
-**UPDATE** \- Problem getting worse, not better **3/30/2009**. I switched DID providers because of problems w/ Voicepulse, such as echo, dropped calls, and consistent registration problems hence calls don't get placed and inbound don't get routed to me. Incidentally, they will not port DID's, they'll tell you they will, but they don't.
+**更新** \- 问题变得更糟，而不是更好 **2009年3月30日**。由于 Voicepulse 存在回声、掉线和连续注册问题，例如呼叫无法放置和呼入无法路由到我，我更换了 DID 供应商。顺便说一下，他们不会提供 DID 的转移，他们会告诉你会提供，但实际上并不会这样做。
 
 ```xml
-2009-03-30 05:20:17 [ERR] sofia_reg.c:1333 sofia_reg_handle_sip_r_register() voicepulse-backupsjc Registration Failed with status DNS Error [503]. failure #1
-2009-03-30 05:20:18 [WARNING] sofia_reg.c:320 sofia_reg_check_gateway() voicepulse-backupsjc Failed Registration, setting retry to 60 seconds.
-2009-03-30 05:21:19 [NOTICE] sofia_reg.c:291 sofia_reg_check_gateway() Registering voicepulse-backupsjc
-2009-03-30 05:21:19 [ERR] sofia_reg.c:1333 sofia_reg_handle_sip_r_register() voicepulse-backupsjc Registration Failed with status DNS Error [503]. failure #2
-2009-03-30 05:21:20 [WARNING] sofia_reg.c:320 sofia_reg_check_gateway() voicepulse-backupsjc Failed Registration, setting retry to 90 seconds.
-2009-03-30 05:21:41 [NOTICE] sofia_reg.c:291 sofia_reg_check_gateway() Registering voicepulse
-2009-03-30 05:21:41 [ERR] sofia_reg.c:1333 sofia_reg_handle_sip_r_register() voicepulse Registration Failed with status DNS Error [503]. failure #1
-2009-03-30 05:21:42 [WARNING] sofia_reg.c:320 sofia_reg_check_gateway() voicepulse Failed Registration, setting retry to 60 seconds.
+2009-03-30 05:20:17 [ERR] sofia_reg.c:1333 sofia_reg_handle_sip_r_register() voicepulse-backupsjc 注册失败，状态为 DNS 错误 [503]，失败次数 #1
+2009-03-30 05:20:18 [WARNING] sofia_reg.c:320 sofia_reg_check_gateway() voicepulse-backupsjc 注册失败，设置重试时间为 60 秒。
+2009-03-30 05:21:19 [NOTICE] sofia_reg.c:291 sofia_reg_check_gateway() 正在注册 voicepulse-backupsjc
+2009-03-30 05:21:19 [ERR] sofia_reg.c:1333 sofia_reg_handle_sip_r_register() voicepulse-backupsjc 注册失败，状态为 DNS 错误 [503]，失败次数 #2
+2009-03-30 05:21:20 [WARNING] sofia_reg.c:320 sofia_reg_check_gateway() voicepulse-backupsjc 注册失败，设置重试时间为 90 秒。
+2009-03-30 05:21:41 [NOTICE] sofia_reg.c:291 sofia_reg_check_gateway() 正在注册 voicepulse
+2009-03-30 05:21:41 [ERR] sofia_reg.c:1333 sofia_reg_handle_sip_r_register() voicepulse 注册失败，状态为 DNS 错误 [503]，失败次数 #1
+2009-03-30 05:21:42 [WARNING] sofia_reg.c:320 sofia_reg_check_gateway() voicepulse 注册失败，设置重试时间为 60 秒。
 ```
 
-You can put outbound gateways in one of two places. An example of each is listed below. If you put a gateway on a user everyone in the system can use that gateway, it doesn't limit the gateway to that one user.
+您可以将出站网关放在其中一个位置。下面分别列出了每个位置的示例。如果您将出站网关放在用户上，系统中的所有人都可以使用该出站网关，并不限制出站网关的使用于该用户。
 
-Example #1:
+示例 #1：
 
-This file (voicepulse.xml) should be placed in _prefix_/conf/sip\_profiles/external.
+这个文件（voicepulse.xml）应该放置在 _prefix_/conf/sip\_profiles/external。
 
-East Coast Example:
+东海岸示例：
 
 ```xml
 <include>
   <gateway name="voicepulse">
     <param name="username" value="''your-username''"/>
-    <param name="realm" value="jfk-primary.voicepulse.com"/>
+    <param name="realm" value="''your-realm''"/>
     <param name="password" value="''your-password''"/>
-    <param name="proxy" value="jfk-primary.voicepulse.com"/>
+    <param name="proxy" value="''your-proxy''"/>
     <param name="expire-seconds" value="600"/>
     <param name="register" value="true"/>
   </gateway>
   <gateway name="voicepulse-backup">
     <param name="username" value="''your-username''"/>
-    <param name="realm" value="jfk-backup.voicepulse.com"/>
+    <param name="realm" value="''your-realm''"/>
     <param name="password" value="''your-password''"/>
-    <param name="extension" value="1NXXNXXXXXX"/>
-    <param name="proxy" value="jfk-backup.voicepulse.com"/>
+    <param name="extension" value="''your-extension''"/>
+    <param name="proxy" value="''your-proxy''"/>
     <param name="expire-seconds" value="600"/>
     <param name="register" value="true"/>
   </gateway>
 </include>
 ```
 
-  
-West Coast Example:
+例子 #2:
 
-```xml
-<include>
-  <gateway name="voicepulse">
-    <param name="username" value="''your-username''"/>
-    <param name="realm" value="sjc-primary.voicepulse.com"/>
-    <param name="password" value="''your-password''"/>
-    <param name="proxy" value="sjc-primary.voicepulse.com"/>
-    <param name="expire-seconds" value="600"/>
-    <param name="register" value="true"/>
-  </gateway>
-  <gateway name="voicepulse-backup">
-    <param name="username" value="''your-username''"/>
-    <param name="realm" value="sjc-backup.voicepulse.com"/>
-    <param name="password" value="''your-password''"/>
-    <param name="extension" value="1NXXNXXXXXX"/>
-    <param name="proxy" value="sjc-backup.voicepulse.com"/>
-    <param name="expire-seconds" value="600"/>
-    <param name="register" value="true"/>
-  </gateway>
-</include>
-```
+这是一个将网关放在用户目录中的示例。此文件（voicepulse.xml）应放置在 _prefix_/conf/directory/default 目录中。
 
-Example #2:
-
-This is an example of putting a gateway in the user directory. This file (voicepulse.xml) should go in _prefix_/conf/directory/default
-
-The external sip profile has the domains tag which will parse the domain and register all gateways it finds:
+外部的 SIP 配置文件具有 domains 标签，它将解析域名并注册找到的所有网关：
 
 ```xml
   <domains>
@@ -93,9 +65,9 @@ The external sip profile has the domains tag which will parse the domain and reg
   </domains>
 ```
 
- And the user directory has this:
+而用户目录中有以下内容：
 
-East Coast:
+东海岸：
 
 ```xml
 <include>
@@ -126,24 +98,24 @@ East Coast:
 </include>
 ```
 
-West Coast:
+西海岸：
 
 ```xml
 <include>
   <user id="voicepulse">
    <gateways>
      <gateway name="voicepulse">
-    <param name="username" value="''your-username''"/>
+    <param name="username" value="''填写你的用户名''"/>
     <param name="realm" value="sjc-primary.voicepulse.com"/>
-    <param name="password" value="''your-password''"/>
+    <param name="password" value="''填写你的密码''"/>
     <param name="proxy" value="sjc-primary.voicepulse.com"/>
     <param name="expire-seconds" value="600"/>
     <param name="register" value="true"/>
   </gateway>
   <gateway name="voicepulse-backup">
-    <param name="username" value="''your-username''"/>
+    <param name="username" value="''填写你的用户名''"/>
     <param name="realm" value="sjc-backup.voicepulse.com"/>
-    <param name="password" value="''your-password''"/>
+    <param name="password" value="''填写你的密码''"/>
     <param name="extension" value="1NXXNXXXXXX"/>
     <param name="proxy" value="sjc-backup.voicepulse.com"/>
     <param name="expire-seconds" value="600"/>
@@ -157,8 +129,6 @@ West Coast:
 </include>
 ```
 
-Taken from <https://freeswitch.org/confluence/pages/viewpage.action?pageId=2883880>
+来源：<https://freeswitch.org/confluence/pages/viewpage.action?pageId=2883880>
 
-See Also: [default config](../../../Configuration/Default-Configuration_6587388.mdx#mod_vp8)
-
-
+另请参阅：[默认配置](../../../Configuration/Default-Configuration_6587388.mdx#mod_vp8)

@@ -1,41 +1,38 @@
+# mod_sonar
 
-# mod_sonar 
+## 关于
 
- 
+注意：_这只是一个草稿页面。Seven Du在ML上描述了这个模块。我只是在这里复制粘贴以克服空白页面的影响：_
 
-## About
+看起来mod_sonar就像一个真正的声纳：
 
-NOTE: _This is just a stub page. Seven Du described this mod on the ML. I just did a C&P here to overcome the blank page effect:_
+- 您设置一个能够回显的远程服务器
+- 在本地服务器上生成一些声音，并调用远程服务器
+- 回声使用一些声音检测或VAD技术来帮助检查可能的网络问题
 
-Looks like mod_sonar is just like a real Sonar that:
-
-- You setup a remote server which can echo
-- Generate some tones on the local server and call the remote server
-- When the echo back use some tone_detect or VAD things to help check possible network problems
-
--- 
+--
 Seven Du
 
-Click here to expand Table of Contents
+单击此处展开目录
 
-* 1 [Usage](#usage)
-* 2 [Event](#event)
+* 1 [使用方法](#使用方法)
+* 2 [事件](#事件)
 
-### Usage
+### 使用方法
 
-To use this, you need two FS servers in different places, e.g.
+要使用此功能，您需要在不同地点拥有两个FS服务器，例如：
 
-FS1       -------------------------   FS2 (remote)
+FS1       -------------------------   FS2 (远程)
 
-The remote server doesn't need mod\_sonar, actually it dones't need to be a FS, any server can echo back the audio should work.
+远程服务器不需要mod\_sonar，实际上，它不需要是一个FS，任何服务器都可以回显音频。
 
-Or use only one server, and deploy some loops
+或者只使用一个服务器，并部署一些循环
 
-FS ---->------Carrier------ PSTN ---->-------- SOME WHERE ELSE --->----- PSTN ----->------ DID ---->----------
+FS ---->------载波------ PSTN ---->--------其他地方------->----- PSTN ----->------ DID ---->----------
 |                                                                                                            |
-|(echo)--------&lt;-------------------------------&lt;------------------------------------------&lt;------------------|
+|(回声)--------&lt;-------------------------------&lt;------------------------------------------&lt;------------------|
 
-Create an echo dialplan on FS2 (or the same FS that receive the DID side) and let it echo:
+在FS2上创建一个回声拨号计划（或接收DID侧相同的FS），并让它回显：
 
 ```xml
 <extension name="test-sonar">
@@ -46,34 +43,34 @@ Create an echo dialplan on FS2 (or the same FS that receive the DID side) and le
 </extension>
 ```
 
-then on FS1, do
+然后在FS1上执行
 
 ```xml
 originate sofia/external/echo@FS2:5080 &sonar(10)
 ```
 
-It will call FS2, and send some tone streams to it, and FS2 will just echo back, and FS1 should can detect the tone echoed back and then do some statistics!
+它将呼叫FS2，并将一些音频流发送到它，FS2将只回显，并且FS1应该能够检测到回显的声音，然后进行一些统计！
 
-### Event
+### 事件
 
-It fires a sonar::ping CUSTOM event on finish.
+它在完成时触发一个 sonar::ping CUSTOM 事件。
 
 ```xml
-RECV EVENT
-Event-Subclass: sonar::ping
-Event-Name: CUSTOM
-Core-UUID: 6ee351da-f3d3-4cc1-ab32-d99a24e20b80
-FreeSWITCH-Hostname: seven.local
-FreeSWITCH-Switchname: seven.local
-FreeSWITCH-IPv4: 192.168.0.100
-FreeSWITCH-IPv6: ::1
-Event-Date-Local: 2013-09-27 06:31:55
-Event-Date-GMT: Thu, 26 Sep 2013 22:31:55 GMT
-Event-Date-Timestamp: 1380234715430108
-Event-Calling-File: mod_sonar.c
-Event-Calling-Function: sonar_app
-Event-Calling-Line-Number: 172
-Event-Sequence: 4962
+接收事件
+事件子类: sonar::ping
+事件名称: CUSTOM
+核心 UUID: 6ee351da-f3d3-4cc1-ab32-d99a24e20b80
+FreeSWITCH 主机名: seven.local
+FreeSWITCH 开关名: seven.local
+FreeSWITCH IPv4: 192.168.0.100
+FreeSWITCH IPv6: ::1
+本地事件日期: 2013-09-27 06:31:55
+GMT 事件日期: Thu, 26 Sep 2013 22:31:55 GMT
+事件时间戳: 1380234715430108
+事件调用文件: mod_sonar.c
+事件调用函数: sonar_app
+事件调用行号: 172
+事件序列: 4962
 ping_min: 619
 ping_max: 680
 ping_avg: 649
@@ -81,27 +78,25 @@ ping_mdev: 43
 ping_sent: 2
 ping_recv: 2
 ping_lost: 0
-lost_rate: 0.00%
+丢失率: 0.00%
 ```
 
-Channel Variables
+通道变量
 
-It will call the remote FS, so it is a channel.
+由于它将调用远程 FS，因此它是一个通道。
 
 * sonar\_ping\_ref
 
-Set a reference string so you can get it back at the sonar::ping event
+设置一个引用字符串，以便在 sonar::ping 事件中获取它
 
 * sonar\_channel\_event
 
-Set to true to get all Channel Vars attached to sonar::ping
+设置为true以获取附加到 sonar::ping 的所有通道变量
 
-example:
+示例：
 
 ```xml
-originate {sonar_channel_event=true,sonar_ping_ref=ping_test_1}sofia/external/echo@FS2:5080 &sonar(40)
+发起呼叫呼叫通道 {sonar_channel_event=true,sonar_ping_ref=ping_test_1}sofia/external/echo@FS2:5080 &sonar(40)
 ```
 
-Maybe add ignore\_early\_media=true if you test against PSTN and the path send you early media.
-
-
+如果您与 PSTN 进行测试并且路径发送了早期媒体，请考虑添加 ignore_early_media=true。

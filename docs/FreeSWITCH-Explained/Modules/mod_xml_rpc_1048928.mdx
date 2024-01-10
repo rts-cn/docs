@@ -1,53 +1,50 @@
+# mod_xml_rpc
 
-# mod_xml_rpc 
+## 关于
 
- 
+mod_xml_rpc允许您使用webapi，从Web浏览器中触发任何API，就像从FS控制台中一样！
 
-## About
+API命令文档可以在[mod_commands](./mod_commands_1966741.mdx#--)章节中找到。
 
-mod\_xml\_rpc allows you to use the webapi - firing any API from the web browser just as you would from the FS console!
+### webapi
 
-API command documentation can be found in the [mod\_commands](./mod_commands_1966741.mdx#--) section.
+要使用它，您必须在`conf/autoload_configs/modules.conf.xml`文件中启用该模块，并重新启动开关。您可以在`conf/autoload_configs/xml_rpc.conf.xml`文件中配置该模块（HTTP端口，域，登录/密码）。
 
-### webapi 
-
-To use, you must enable this module within the `conf/autoload_configs/modules.conf.xml` file and restart the switch. You can configure the module (HTTP port, domain, login/password) within the `conf/autoload_configs/xml_rpc.conf.xml` file.
-
-The basic syntax would be:
+基本语法如下：
 
 [http://](http://confluence.freeswit.ch)&lt;freeswitch-hostname-or-IP>:8080/webapi/&lt;api command>
 
-For example:
+例如：
 
 <http://192.168.1.1:8080/webapi/help>
 
-Requires:
+要求:
 
-* HTTP only, no HTTPS
-* port 8080
-* Typical HTTP authentication - username, password (default is freeswitch/works)
+* 仅限HTTP，不支持HTTPS
+* 端口8080
+* 典型的HTTP身份验证 - 用户名，密码（默认为freeswitch/works）
 
-Generally, the web root is {prefix}/freeswitch/htdocs.
+通常，Web根目录为{prefix}/freeswitch/htdocs。
 
-Other HTML/JavaScript/etc. files in htdocs will get served up as requested.
+htdocs中的其他HTML/JavaScript等文件将按请求提供服务。
 
-When using an API command that has more than one word, use a question mark to separate the first and second words, then a space for the rest.
+当使用具有多个单词的API命令时，请使用问号分隔第一个和第二个单词，然后使用空格。
 
-Example:
+示例：
 
 <http://192.168.1.1:8080/webapi/sofia?status%20profile%20internal>
 
-###  Returning data to the webpage using Lua and [stream:write](http://streamwrite) 
+### 使用Lua和[stream:write](http://streamwrite)将数据返回到网页
 
-To execute a FS command from a web page and display the result in the webpage use:
+要从Web页面执行FS命令并在页面中显示结果，请使用：
 
 <http://127.0.0.1:8080/api/lua?lua/api.lua>
 
-### Using webapi with curl
+###  使用curl与webapi
 
-Examples:
+示例：
 
-**show channels, text output**
+**展示通道，文本输出**
 
 ```bash
 curl -s -S -G -X GET \
@@ -57,7 +54,7 @@ curl -s -S -G -X GET \
 
 ```
 
-**output**
+**输出**
 
 ```bash
 uuid,direction,created,created_epoch,name,state,cid_name,cid_num,ip_addr,dest,application,application_data,dialplan,context,read_codec,read_rate,read_bit_rate,write_codec,write_rate,write_bit_rate,secure,hostname,presence_id,presence_data,accountcode,callstate,callee_name,callee_num,callee_direction,call_uuid,sent_callee_name,sent_callee_num,initial_cid_name,initial_cid_num,initial_ip_addr,initial_dest,initial_dialplan,initial_context
@@ -68,7 +65,7 @@ uuid,direction,created,created_epoch,name,state,cid_name,cid_num,ip_addr,dest,ap
 
 ```
 
-**show channels, xml output**
+**显示通道，输出为XML格式**
 
 ```bash
 curl -s -S -G -X GET \
@@ -77,7 +74,7 @@ curl -s -S -G -X GET \
       'http://127.0.0.1:8080/xmlapi/show'
 ```
 
-**output**
+**输出**
 
 ```bash
 <result row_count="1">
@@ -126,7 +123,7 @@ curl -s -S -G -X GET \
 
 ```
 
-**show channels, json output**
+**显示通道，以 JSON 输出**
 
 ```bash
 curl -s -S -G -X GET \
@@ -135,7 +132,7 @@ curl -s -S -G -X GET \
       'http://127.0.0.1:8080/xmlapi/show' | jq
 ```
 
-**output**
+**输出**
 
 ```bash
 {
@@ -143,7 +140,7 @@ curl -s -S -G -X GET \
   "rows": [
     {
       "uuid": "5d2ae508-ab6b-11ea-88cb-311ce82e049e",
-      "direction": "inbound",
+      "direction": "入站",
       "created": "2020-06-10 18:40:20",
       "created_epoch": "1591828820",
       "name": "sofia/internal/1019@192.0.2.10",
@@ -191,22 +188,22 @@ curl -s -S -G -X GET \
 
 ```bash
 curl -s -S -G -X GET \
-      --user login:password   \
+      --user 登录名:密码   \
       --data-urlencode "<uuid> record_sample_rate 8000" \
       'http://127.0.0.1:8080/xmlapi/uuid_setvar'
 ```
 
-**start stream rtmp**
+**开始流媒体 RTMP**
 
 ```bash
 curl -s -S -G -X GET \
-      --user login:password   \
+      --user 登录名:密码   \
       --data-urlencode "<uuid> start rtmp://domain.local/stream:teststream" \
       'http://127.0.0.1:8080/xmlapi/uuid_record'
 ```
 
   
-**use uuid\_buglist**
+**使用 uuid\_buglist**
 
 ```bash
 curl -s -S -G -X GET \
@@ -229,7 +226,7 @@ curl -s -S -G -X GET \
 
 ```
 
-**Initiate call with silence in channel**
+**在通道中以静音方式发起呼叫**
 
 ```bash
 curl -s -S -G -X GET \
@@ -253,7 +250,7 @@ curl -s -S -G -X GET \
 </include>
 ```
 
-**Start stream media in the channel**
+**在通道中开始流媒体**
 
 ```bash
 curl -s -S -G -X GET \
@@ -262,7 +259,7 @@ curl -s -S -G -X GET \
       'http://127.0.0.1:8080/xmlapi/uuid_broadcast'
 ```
 
-**Pause/resume stream in the channel**
+**暂停/恢复通道中的流媒体**
 
 ```bash
 curl -s -S -G -X GET \
@@ -271,7 +268,7 @@ curl -s -S -G -X GET \
       'http://127.0.0.1:8080/xmlapi/uuid_fileman'
 ```
 
-**Stop stream in the channel**
+**停止通道中的流媒体**
 
 ```bash
 curl -s -S -G -X GET \
@@ -280,7 +277,7 @@ curl -s -S -G -X GET \
       'http://127.0.0.1:8080/xmlapi/uuid_fileman'
 ```
 
-**Stop call**
+**停止通话**
 
 ```bash
 curl -s -S -G -X GET \
@@ -289,17 +286,14 @@ curl -s -S -G -X GET \
       'http://127.0.0.1:8080/xmlapi/uuid_kill'
 ```
 
-  
-### See also 
+### 另请参阅
 
-* [Examples of calling mod\_xml\_rpc from various languages](../Configuration/FreeSWITCH-XML-RPC_13173038.mdx#--)
+* [各种语言调用mod\_xml\_rpc的示例](../Configuration/FreeSWITCH-XML-RPC_13173038.mdx#--)
 * <http://wiki.freeswitch.org/wiki/Webapi>
-* [Freeswitch Portal](./mod-xml-rpc/Freeswitch-Portal_13173033.mdx#faq)
+* [Freeswitch门户](./mod-xml-rpc/Freeswitch-Portal_13173033.mdx#faq)
 * [FreeSWITCH XML-RPC](../Configuration/FreeSWITCH-XML-RPC_13173038.mdx#--)
 
-### Comments:
+### 评论:
 
-| In page [FreeSWITCH XML-RPC](../Configuration/FreeSWITCH-XML-RPC_13173038.mdx#--) I can find the **freeswitch.api** examples,but where can I find the **freeswitch.management** some examples ? ![](/images/icons/contenttypes/comment_16.png) Posted by livem at May 09, 2019 06:05 |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-
-
+| 在页面[FreeSWITCH XML-RPC](../Configuration/FreeSWITCH-XML-RPC_13173038.mdx#--)中我可以找到**freeswitch.api**的示例，但是在哪里可以找到**freeswitch.management**的一些示例？ ![](/images/icons/contenttypes/comment_16.png) 作者：livem 于2019年5月9日06:05发布 |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |

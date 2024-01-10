@@ -1,92 +1,89 @@
-
 # Cisco 7960 SIP 
 
  
 
-## About
+## 关于
 
-This page discusses the Cisco 796x series phones when used with SIP signaling.
+本页面讨论了使用SIP信令的Cisco 796x系列电话。
 
-If you intend to use SCCP (skinny protocol) beware of the limitations in outbound dialing from Cisco phones as outlined in [FS-477](https://freeswitch.org/jira/browse/FS-477?src=confmacro)  \-[Authenticate](https://freeswitch.org/confluence/plugins/servlet/applinks/oauth/login-dance/authorize?applicationLinkID=c4b15fa3-ad57-3c05-af05-8c167cb92266) to see issue details 
+如果您打算使用SCCP（skinny协议），请注意Cisco电话的呼出拨号限制，详细信息请参见[FS-477](https://freeswitch.org/jira/browse/FS-477?src=confmacro) - [验证](https://freeswitch.org/confluence/plugins/servlet/applinks/oauth/login-dance/authorize?applicationLinkID=c4b15fa3-ad57-3c05-af05-8c167cb92266) 查看问题详细信息。
 
-* 1 [About](#about)  
-   * 1.1 [CISCO 7960 / 7960G LAB ENVIRONMENT:](#cisco-7960--7960g-lab-environment)  
-   * 1.2 [CISCO 7960 / 7960G PROVISIONING:](#cisco-7960--7960g-provisioning)  
-   * 1.3 [BLIND XFER (Blind Transfer):](#blind-xfer-blind-transfer)  
-   * 1.4 [Call Parking](#call-parking)  
-   * 1.5 [Conferencing and Intercom](#sip-timers)
+* 1 [关于](#about)
+   * 1.1 [CISCO 7960 / 7960G 实验环境：](#cisco-7960--7960g-lab-environment)
+   * 1.2 [CISCO 7960 / 7960G 配置：](#cisco-7960--7960g-provisioning)
+   * 1.3 [盲目转接：](#blind-xfer-blind-transfer)
+   * 1.4 [呼叫保持](#call-parking)
+   * 1.5 [会议和对讲](#sip-timers)
 
-### **CISCO 7960 / 7960G LAB ENVIRONMENT:**
+### **CISCO 7960 / 7960G 实验环境：**
 
-**Firmware Revisions:**
+**固件版本：**
 
-* **App Load:** P0S3-08-8-00
-* **Boot Load:** PC030301
-* **DSP Load:** 4.0(2.0)\[A0\]
+* **应用程序版本：** P0S3-08-8-00
+* **引导程序版本：** PC030301
+* **DSP版本：** 4.0(2.0)\[A0\]
 
-**Also confirmed as working:**
+**也已确认可用的版本：**
 
-* **App Load:** P0S3-08-11-00
-* **Boot Load:** PC030301
-* **DSP Load:** 4.0(5.0)\[A0\]
+* **应用程序版本：** P0S3-08-11-00
+* **引导程序版本：** PC030301
+* **DSP版本：** 4.0(5.0)\[A0\]
 
-_**\*Note:**_ With previous revisions of the SIP Firmware for this phone it was discovered that NAT traversal was nearly impossible, and calls would mysteriously hang up after 120 seconds, etc.
+_**\*注意：**_ 使用此电话的SIP固件的先前版本发现NAT穿越几乎是不可能的，通话在120秒后会神秘地挂断等等。
 
-Firmware Revision Warning
+固件版本警告
 
-App Load: P0S3-08-11-00
+应用程序版本：P0S3-08-11-00
 
-This is confirmed as broken. Weird things happen with this firmware revision. Please consider using P0S3-08-8-00 until a fixed version is released.
+已确认存在问题。此固件版本会发生奇怪的事情。请考虑使用P0S3-08-8-00，直到修复版本发布。
 
-Details: The bug in that version of Cisco firmware tends to create massive re-registration attempts, to the point that FS is so busy servicing the registration requests that it has no time to process incoming calls. When you have only a few phones it will handle this without much of a problem, but when you add more you'll notice one-way audio and dropped calls, adding yet more will create a situation whereby we've seen up to 25 seconds before an incoming call is even displayed on the CLI.
+细节：那个版本的Cisco固件中存在的错误容易导致大量的重新注册尝试，以至于FS忙于处理注册请求，没有时间来处理呼入电话。当您只有几部电话时，不会有太大的问题，但是当您增加更多电话时，您会注意到单向音频和丢失的电话，如果再增加更多电话，就会出现这样的情况，我们曾看到有多达25秒的时间，才在命令行界面上显示呼入电话。
 
-This was only noticed when multiple phones were pointed to a production FS instance since, with one phone configured, everything in the test lab worked.
+只有当多个电话指向一个生产FS实例时，才会注意到这一点，因为当只有一个电话被配置时，测试实验室中的所有功能都能正常工作。
 
-Update 11/19/2008 - This was a compounded problem having to do with a linux kernel bug, and it corrupting the DBD Database in Freeswitch. Oddly enough, this didn't surface until the aforementioned Cisco firmware weirdness above. This bug seems to affect linux 2.6.28.10, but earlier and later versions may also be affected. The workaround was to put the Freeswitch SQLLite database in a RAM disk.
+更新11/19/2008 - 这是一个复合问题，与Linux内核错误有关，它破坏了Freeswitch中的DBD数据库。令人奇怪的是，这个问题直到上述的Cisco固件异常出现后才浮现出来。这个错误似乎影响Linux 2.6.28.10版本，但之前和之后的版本也可能受到影响。解决方法是将Freeswitch的SQLLite数据库放在RAM磁盘中。
 
-### **CISCO 7960 / 7960G PROVISIONING:**
+### **CISCO 7960 / 7960G配置：**
 
-ASSUMPTIONS:
+假设：
 
-This HowTo assumes that you have a TFTP Server, have a DHCP Server configured to point the DHCP client devices at the IP address of the TFTP server, and that the Cisco 7960 Firmware listed above is installed properly on the TFTP server. There are many howto's that discuss how to install and/or upgrade the SIP Firmware Images on the TFTP server, so this is not covered in this HowTo.
+本教程假设您拥有一个TFTP服务器，并在DHCP服务器上进行了配置，将DHCP客户端设备指向TFTP服务器的IP地址，并且正确安装了上面列出的Cisco 7960固件在TFTP服务器上。有很多教程讨论如何在TFTP服务器上安装或升级SIP固件映像，所以这里不涉及这个问题。
 
-For ISC DHCPD, you will need to have this line:
+对于ISC DHCPD，您需要在dhcpd.conf中添加以下行：
 
 ```xml
 option tftp-server-name "your.tftp.server.ip";
 ```
 
-in your dhcpd.conf
+如果该选项不起作用或不存在，请参考您的TFTP服务器文档中有关“option 150”的内容。
 
-If that option doesn't work, or doesn't exist, try consulting your tftp server documentation for "option 150".
+**文件：**
 
-**The Files:**
+您将需要一个名为**SIPDefault.cnf**的文件，该文件设置了电话的合理默认值，您需要为每个电话创建一个文件，文件名中嵌入电话的MAC地址，例如**SIP_0A0B0C0D0E0F_.cnf**。
 
-You will need a **SIPDefault.cnf** file that sets up reasonable defaults for phones, and you will need one file created per phone with the MAC Address of the phone embedded into the filename such as **SIP_0A0B0C0D0E0F_.cnf**
+**文件内容：**
 
-**The File Contents:**
+下面是SIPDefault.cnf文件在我的服务器上的内容。您可能希望根据您所在的地区/国家和您希望的安全级别更新一些项目，例如 sntp\_server参数和date\_format参数。
 
-The contents of the SIPDefault.cnf file are listed below as it appears on my server. You may wish to update some items such as the sntp\_server parameter and the date\_format parameter depending on where you are in the world and/or the telnet\_level depending on how secure you want things to be.
-
-The auto\_answer parameter is a bitmap, and as set will set line 6 to be capable of answering the call automatically. This can be useful for an intercom and paging for instance.
+auto\_answer参数是一个位图，设置后将使第6行能够自动接听电话。这对于内部通信和寻呼等场景非常有用。
 
 **SIPDefault.cnf:**
 
 ```xml
-# SIP Default Generic Configuration File
+# SIP 默认通用配置文件
 
-# Image Version
+# Image 版本号
 image_version: P0S3-08-8-00
 
-# Proxy Server
-proxy1_address: ""              ; Can be dotted IP or FQDN
-proxy2_address: ""              ; Can be dotted IP or FQDN
-proxy3_address: ""              ; Can be dotted IP or FQDN
-proxy4_address: ""              ; Can be dotted IP or FQDN
-proxy5_address: ""              ; Can be dotted IP or FQDN
-proxy6_address: ""              ; Can be dotted IP or FQDN
+# 代理服务器
+proxy1_address: ""              ; 可以是 IP 地址或全域名
+proxy2_address: ""              ; 可以是 IP 地址或全域名
+proxy3_address: ""              ; 可以是 IP 地址或全域名
+proxy4_address: ""              ; 可以是 IP 地址或全域名
+proxy5_address: ""              ; 可以是 IP 地址或全域名
+proxy6_address: ""              ; 可以是 IP 地址或全域名
 
-# Proxy Server Port (default - 5060)
+# 代理服务器端口（默认-5060）
 proxy1_port: 5060
 proxy2_port: 5060
 proxy3_port: 5060
@@ -94,19 +91,19 @@ proxy4_port: 5060
 proxy5_port: 5060
 proxy6_port: 5060
 
-# Proxy Registration (0-disable (default), 1-enable)
+# 代理服务器注册（0-禁用（默认），1-启用）
 proxy_register: 1
 
-# Phone Registration Expiration [1-3932100 sec] (Default - 3600)
+# 电话注册到期时间 [1-3932100 秒]（默认-3600）
 timer_register_expires: 3600
 
-# Codec for media stream (g711ulaw (default), g711alaw, g729a)
+# 媒体流编解码器（g711ulaw（默认），g711alaw，g729a）
 preferred_codec: g711ulaw
 
-# TOS bits in media stream [0-5] (Default - 5)
+# 媒体流中的TOS位 [0-5]（默认-5）
 tos_media: 5
 
-# Inband DTMF Settings (0-disable, 1-enable (default))
+# 嵌入式 DTMF 设置（0-禁用，1-启用（默认））
 dtmf_inband: 0
 
 # Out of band DTMF Settings (none-disable, avt-avt enable (default), avt_always - always avt )
@@ -116,141 +113,140 @@ dtmf_outofband: avt_always
 dtmf_db_level: 3
 
 # SIP Timers
-timer_t1: 500                   ; Default 500 msec
-timer_t2: 4000                  ; Default 4 sec
-sip_retx: 10                    ; Default 10
-sip_invite_retx: 6              ; Default 6
-timer_invite_expires: 180       ; Default 180 sec
+timer_t1: 500                   ; 默认 500 毫秒
+timer_t2: 4000                  ; 默认 4 秒
+sip_retx: 10                    ; 默认 10
+sip_invite_retx: 6              ; 默认 6
+timer_invite_expires: 180       ; 默认 180 秒
 
-####### New Parameters added in Release 2.0 #######
+####### Release 2.0 新添加的参数 #######
 
-# Dialplan template (.xml format file relative to the TFTP root directory)
+# 拨号计划模板（.xml 格式文件，相对于 TFTP 根目录的路径）
 dial_template: dialplan
 
-# TFTP Phone Specific Configuration File Directory
-tftp_cfg_dir: ""                ; Example:  ./sip_phone/
+# TFTP 电话特定的配置文件目录
+tftp_cfg_dir: ""                ; 示例：./sip_phone/
 
-# Time Server (There are multiple values and configurations refer to Admin Guide for Specifics)
-sntp_server: "192.168.21.2"      ; SNTP Server IP Address
-sntp_mode: unicast              ; unicast, multicast, anycast, or directedbroadcast (default)
-time_zone: EST                  ; Time Zone Phone is in
-dst_offset: 01/00               ; Offset from Phone's time when DST is in effect
-dst_start_month: March          ; Month in which DST starts
-dst_start_day: 0                ; Day of month in which DST starts
-dst_start_day_of_week: Sunday   ; Day of week in which DST starts
-dst_start_week_of_month: 8      ; Week of month in which DST starts
-dst_start_time: 02/00           ; Time of day in which DST starts
-dst_stop_month: October         ; Month in which DST stops
-dst_stop_day: 0                 ; Day of month in which DST stops
-dst_stop_day_of_week: Sunday    ; Day of week in which DST stops
-dst_stop_week_of_month: 8       ; Week of month in which DST stops 8=last week of month
-dst_stop_time: 02/00            ; Time of day in which DST stops
-dst_auto_adjust: 1              ; Enable(1-Default)/Disable(0) DST automatic adjustment
-time_format_24hr: 1             ; Enable(1 - 24Hr Default)/Disable(0 - 12Hr)
+# 时间服务器（具体的值和配置请参考管理员指南）
+sntp_server: "192.168.21.2"      ; SNTP服务器IP地址
+sntp_mode: unicast              ; 单播、组播、任播或者定向广播（默认）
+time_zone: EST                  ; 手机所在的时区
+dst_offset: 01/00               ; 夏时制生效时相对于手机时间的偏移量
+dst_start_month: March          ; 夏时制开始的月份
+dst_start_day: 0                ; 夏时制开始的日期（月份中的某一天）
+dst_start_day_of_week: Sunday   ; 夏时制开始的星期
+dst_start_week_of_month: 8      ; 夏时制开始的月份中的第几周
+dst_start_time: 02/00           ; 夏时制开始的时间
+dst_stop_month: October         ; 夏时制结束的月份
+dst_stop_day: 0                 ; 夏时制结束的日期（月份中的某一天）
+dst_stop_day_of_week: Sunday    ; 夏时制结束的星期
+dst_stop_week_of_month: 8       ; 夏时制结束的月份中的第几周（第8周代表该月的最后一周）
+dst_stop_time: 02/00            ; 夏时制结束的时间
+dst_auto_adjust: 1              ; 启用（1-默认）或禁用（0）夏时制自动调整
+time_format_24hr: 1             ; 启用（1-24小时制默认）或禁用（0-12小时制）24小时制
 
 date_format: M/D/Y
 
-# Do Not Disturb Control (0-off, 1-on, 2-off with no user control, 3-on with no user control)
-dnd_control: 2                  ; Default 0 (Do Not Disturb feature is off)
+# 勿扰控制（0-关闭，1-开启，2-关闭且无用户控制，3-开启且无用户控制）
+dnd_control: 2                  ; 默认值为0（勿扰功能关闭）
 
-# Caller ID Blocking (0-disbaled, 1-enabled, 2-disabled no user control, 3-enabled no user control)
-callerid_blocking: 0            ; Default 0 (Disable sending all calls as anonymous)
+# 来电显示阻止（0-禁用，1-启用，2-禁用且无用户控制，3-启用且无用户控制）
+callerid_blocking: 0            ; 默认值为0（不发送来电显示）
 
-# Anonymous Call Blocking (0-disabled, 1-enabled, 2-disabled no user control, 3-enabled no user control)
-anonymous_call_block: 0         ; Default 0 (Disable blocking of anonymous calls)
+# 匿名呼叫阻止（0-禁用，1-启用，2-禁用且无用户控制，3-启用且无用户控制）
+anonymous_call_block: 0         ; 默认值为0（不阻止匿名呼叫）
 
-# DTMF AVT Payload (Dynamic payload range for AVT tones - 96-127)
-dtmf_avt_payload: 101           ; Default 101
+# DTMF AVT有效载荷（AVT音调的动态有效载荷范围-96-127）
+dtmf_avt_payload: 101 ; 默认为101
 
-# Sync value of the phone used for remote reset
-sync: 1                         ; Default 1
+# 用于远程重置的电话的同步值
+sync: 1 ; 默认为1
 
-####### New Parameters added in Release 2.1 #######
+####### 2.1版本中新增的参数 #######
 
-# Backup Proxy Support
-proxy_backup: ""                ; Dotted IP of Backup Proxy
-proxy_backup_port: 5060         ; Backup Proxy port (default is 5060)
+# 备份代理支持
+proxy_backup: "" ; 备份代理的点分IP
+proxy_backup_port: 5060 ; 备份代理端口（默认为5060）
 
-# Emergency Proxy Support
-proxy_emergency: ""             ; Dotted IP of Emergency Proxy
-proxy_emergency_port: 5060      ; Emergency Proxy port (default is 5060)
+# 紧急代理支持
+proxy_emergency: "" ; 紧急代理的点分IP
+proxy_emergency_port: 5060 ; 紧急代理端口（默认为5060）
 
-# Configurable VAD option
-enable_vad: 0                   ; VAD setting 0-disable (Default), 1-enable
+# 可配置的VAD选项
+enable_vad: 0 ; VAD设置 0-禁用（默认），1-启用
 
-####### New Parameters added in Release 2.2 ######
+####### 2.2版本中新增的参数 ######
 
-# NAT/Firewall Traversal
-nat_enable: 0                   ; 0-Disabled (default), 1-Enabled
-nat_address: ""                 ; WAN IP address of NAT box (dotted IP or DNS A record only)
-voip_control_port: 5060         ; UDP port used for SIP messages (default - 5060)
-start_media_port: 16384         ; Start RTP range for media (default - 16384)
-end_media_port: 32766           ; End RTP range for media (default - 32766)
-nat_received_processing: 0      ; 0-Disabled (default), 1-Enabled
+# NAT/Firewall穿越
+nat_enable: 0 ; 0-禁用（默认），1-启用
+nat_address: "" ; NAT盒的广域网IP地址（只能是点分IP或DNS A记录）
+voip_control_port: 5060 ; 用于SIP消息的UDP端口（默认-5060）
+start_media_port: 16384 ; 媒体的起始RTP范围（默认-16384）
+end_media_port: 32766 ; 媒体的结束RTP范围（默认-32766）
+nat_received_processing: 0 ; 0-禁用（默认），1-启用
 
-# Outbound Proxy Support
-outbound_proxy: ""              ; restricted to dotted IP or DNS A record only
-outbound_proxy_port: 5060       ; default is 5060
+# 出站代理支持
+outbound_proxy: "" ; 限制为点分IP或DNS A记录
+outbound_proxy_port: 5060 ; 默认为5060
 
-####### New Parameter added in Release 3.0 #######
+####### 3.0版本中新增的参数 #######
 
-# Allow for the bridge on a 3way call to join remaining parties upon hangup
-cnf_join_enable : 0             ; 0-Disabled, 1-Enabled (default)
+# 允许在三方通话中的桥接在挂断时加入剩余的参与方
+cnf_join_enable: 0 ; 0-禁用，1-启用（默认）
 
-####### New Parameters added in Release 3.1 #######
+####### 3.1版本中新增的参数 #######
 
-# Allow Transfer to be completed while target phone is still ringing
-semi_attended_transfer: 1       ; 0-Disabled, 1-Enabled (default)
+# 允许在目标电话还在响铃时完成转接
+semi_attended_transfer: 1 ; 0-禁用，1-启用（默认）
 
-# Telnet Level (enable or disable the ability to telnet into the phone)
-telnet_level: 2                 ; 0-Disabled (default), 1-Enabled, 2-Privileged
+# Telnet等级（启用或禁用连接到电话的Telnet功能）
+telnet_level: 2               ; 0-已禁用（默认），1-已启用，2-特权
 
-####### New Parameters added in Release 4.0 #######
+####### 在4.0版本中添加的新参数 #######
 
-# XML URLs
-services_url: ""                ; URL for external Phone Services
-directory_url: "http://kjv.homeip.net/cisco/dir.xml"               ; URL for external Directory location
-logo_url: ""                    ; URL for branding logo to be used on phone display
+# XML网址
+services_url: ""              ; 外部电话服务的网址
+directory_url: "http://kjv.homeip.net/cisco/dir.xml"             ; 外部目录位置的网址
+logo_url: ""                  ; 用于电话显示屏的品牌标志的网址
 
-# HTTP Proxy Support
-http_proxy_addr: ""             ; Address of HTTP Proxy server
-http_proxy_port: 80             ; Port of HTTP Proxy Server (80-default)
+# HTTP代理支持
+http_proxy_addr: ""           ; HTTP代理服务器的地址
+http_proxy_port: 80           ; HTTP代理服务器的端口（默认为80）
 
-# Dynamic DNS/TFTP Support
-dyn_dns_addr_1: ""              ; restricted to dotted IP
-dyn_dns_addr_2: ""              ; restricted to dotted IP
-dyn_tftp_addr: ""               ; restricted to dotted IP
+# 动态DNS/TFTP支持
+dyn_dns_addr_1: ""            ; 限制为点分IP地址
+dyn_dns_addr_2: ""            ; 限制为点分IP地址
+dyn_tftp_addr: ""             ; 限制为点分IP地址
 
-# Remote Party ID
-remote_party_id: 1              ; 0-Disabled (default), 1-Enabled
+# 远程方ID
+remote_party_id: 1            ; 0-已禁用（默认），1-已启用
 
-####### New Parameters added in Release 4.4 #######
+####### 在4.4版本中添加的新参数 #######
 
-# Call Hold Ringback (0-disabled, 1-enabled, 2-disabled no user control, 3-enabled no user control)
-call_hold_ringback: 3           ; Default 0 (Disable ringback of held call)
+# 通话保持回铃（0-禁用，1-启用，2-禁用无用户控制，3-启用无用户控制）
+call_hold_ringback: 3         ; 默认为0（禁用被保持通话的回铃）
 
 auto_answer: 32
 autocomplete: 0
 dnd_control: 2
 ```
 
-The next file that needs to exist is the SIP&lt;macaddress>.cnf file where &lt;macaddress> is the hardware ethernet address of the phone itself. Hence: SIP00DEADBEEF00.cnf would pertain to a phone who's MAC Address is 00:DE:AD:BE:EF:00
+下一个必须存在的文件是SIP&lt;macaddress>.cnf文件，其中&lt;macaddress>是电话设备的硬件以太网地址。因此：SIP00DEADBEEF00.cnf 对应的是MAC地址为00:DE:AD:BE:EF:00的电话。
 
-You will need to replace host.domain.tld with the hostname or IP address of the SIP Profile you intend to use with the Cisco 7960's.
+您需要将host.domain.tld替换为您打算与Cisco 7960使用的SIP配置文件的主机名或IP地址。
 
-You will also need to replace the mysecret and 701X numbers with the credentials you created in the Freeswitch Directory. (more on that later).
+您还需要将mysecret和701X号码替换为您在Freeswitch目录中创建的凭据。（稍后会详细介绍）。
 
-The messages\_uri is where you would specify the number to be dialed in order to retrieve voice mail. This corresponds directly to the number dialed by pressing the messages button, or the envelope button on the (7960 / 7960G).
+**注意：** messages\_uri 是您可以指定拨号以检索语音邮件的号码的地方。这与按下消息按钮或信封按钮（7960 / 7960G）拨打的号码对应。
 
-**\*\*Be Advised:** The demo dialplan that comes stock with freeswitch seems to expect the extensions to be 1XXX such as 1000, the configuration file below starts at 7010, and therefore you may need to make additional changes to the dialplan before you're able to call any of the provisioned lines on the phone.
+**请注意：** freeswitch 自带的演示拨号计划似乎希望分机号为1XXX，例如1000，下面的配置文件从7010开始，因此您可能需要在能够拨打电话上的任何已供应线路之前对拨号计划进行其他更改。
 
-**SIP&lt;mac address>.cnf**
+**SIP\<mac地址>.cnf**
 
 ```xml
-# SIP Configuration Generic File (start)
+# SIP配置通用文件（开始）
 
-
-# Proxy Server
+# 代理服务器
 proxy1_address: "host.domain.tld"
 proxy2_address: "host.domain.tld"
 proxy3_address: "host.domain.tld"
@@ -258,103 +254,103 @@ proxy4_address: "host.domain.tld"
 proxy5_address: "host.domain.tld"
 proxy6_address: "host.domain.tld"
 
-# Line 1 Settings
-line1_name: "7010"                     ; Line 1 Extension\User ID
-line1_displayname: "7010"           ; Line 1 Display Name
-line1_authname: "7010"         ; Line 1 Registration Authentication
-line1_password: "mysecret"         ; Line 1 Registration Password
+# 第1行设置
+line1_name: "7010"                     ; 第1行分机号/用户ID
+line1_displayname: "7010"           ; 第1行显示名称
+line1_authname: "7010"         ; 第1行注册认证
+line1_password: "mysecret"         ; 第1行注册密码
 
-# Line 2 Settings
-line2_name: "7011"                          ; Line 2 Extension\User ID
-line2_displayname: "7011"                   ; Line 2 Display Name
-line2_authname: "7011"         ; Line 2 Registration Authentication
-line2_password: "mysecret"         ; Line 2 Registration Password
+# 第2行设置
+line2_name: "7011"                          ; 第2行分机号/用户ID
+line2_displayname: "7011"                   ; 第2行显示名称
+line2_authname: "7011"         ; 第2行注册认证
+line2_password: "mysecret"         ; 第2行注册密码
 
-# Line 3 Settings
-line3_name: "7012"                          ; Line 3 Extension\User ID
-line3_displayname: "7012"                   ; Line 3 Display Name
-line3_authname: "7012"         ; Line 3 Registration Authentication
-line3_password: "mysecret"         ; Line 3 Registration Password
+# 第3行设置
+line3_name: "7012"                          ; 第3行分机号/用户ID
+line3_displayname: "7012"                   ; 第3行显示名称
+line3_authname: "7012"         ; 第3行注册认证
+line3_password: "mysecret"         ; 第3行注册密码
 
-# Line 4 Settings
-line4_name: "7013"                          ; Line 3 Extension\User ID
-line4_displayname: "7013"                   ; Line 3 Display Name
-line4_authname: "7013"         ; Line 3 Registration Authentication
-line4_password: "mysecret"         ; Line 3 Registration Password
+＃第4行设置
+line4_name： "7013" ;第3行分机号码\用户ID
+line4_displayname： "7013" ;第3行显示名称
+line4_authname： "7013" ;第3行注册认证
+line4_password： "mysecret" ;第3行注册密码
 
-# Line 5 Settings
-line5_name: "7014"                          ; Line 3 Extension\User ID
-line5_displayname: "7014"                   ; Line 3 Display Name
-line5_authname: "7014"         ; Line 3 Registration Authentication
-line5_password: "mysecret"         ; Line 3 Registration Password
+＃第5行设置
+line5_name： "7014" ;第3行分机号码\用户ID
+line5_displayname： "7014" ;第3行显示名称
+line5_authname： "7014" ;第3行注册认证
+line5_password： "mysecret" ;第3行注册密码
 
-# Line 6 Settings
-line6_name: "7015"                          ; Line 3 Extension\User ID
-line6_displayname: "7015"                   ; Line 3 Display Name
-line6_authname: "7015"         ; Line 3 Registration Authentication
-line6_password: "mysecret"         ; Line 3 Registration Password
+＃第6行设置
+line6_name： "7015" ;第3行分机号码\用户ID
+line6_displayname： "7015" ;第3行显示名称
+line6_authname： "7015" ;第3行注册认证
+line6_password： "mysecret" ;第3行注册密码
 
 
-# Emergency Proxy info
-proxy_emergency: ""
-proxy_emergency_port: "5060"
+＃紧急代理信息
+proxy_emergency： ""
+proxy_emergency_port： "5060"
 
-# Backup Proxy info
-proxy_backup: ""
-proxy_backup_port: "5060"
+＃备用代理信息
+proxy_backup： ""
+proxy_backup_port： "5060"
 
-# Outbound Proxy info
-outbound_proxy: ""
-outbound_proxy_port: "5060"
+＃呼出代理信息
+outbound_proxy： ""
+outbound_proxy_port： "5060"
 
-# NAT/Firewall Traversal
-nat_enable: "1"
-nat_address: ""
-voip_control_port: "5060"
-start_media_port: "16384"
-end_media_port:  "32766"
-nat_received_processing: "0"
+＃NAT /防火墙穿越
+nat_enable： "1"
+nat_address： ""
+voip_control_port： "5060"
+start_media_port： "16384"
+end_media_port：  "32766"
+nat_received_processing： "0"
 
-# Phone Label (Text desired to be displayed in upper right corner)
-phone_label: "FreeSwitch"            ; Has no effect on SIP messaging
+＃电话标签（在右上角显示的希望的文本）
+phone_label： "FreeSwitch" ;对SIP消息没有影响
 
-# Time Zone phone will reside in
-time_zone: EST
+＃电话所在的时区
+time_zone：东部标准时间
 
-# Telnet Level (enable or disable the ability to telnet into this phone
-telnet_level: "2"      ; 0-Disabled (default), 1-Enabled, 2-Privileged
+＃Telnet级别（启用或禁用通过telnet进入电话的能力
+telnet_level： "2" ;0-禁用（默认），1-启用，2-特权
 
-# Phone prompt/password for telnet/console session
-phone_prompt: "C7960"                              ; Telnet/Console Prompt
-phone_password: "myphonesecret"                          ; Telnet/Console Password
+＃用于telnet /控制台会话的电话提示/密码
+phone_prompt： "C7960" ;Telnet /控制台提示
+phone_password： "myphonesecret" ;Telnet /控制台密码
 
-# Enable_VAD (1-enabled, 0-disabled)
+# Enable_VAD（1-启用，0-禁用）
 enable_vad: "0"
 
-# Network Media Type (auto, full100, full10, half100, half10)
+# 网络媒体类型（自动，全速100Mbps，全速10Mbps，半速100Mbps，半速10Mbps）
 network_media_type: "auto"
 user_info: phone
 
-# URL for external Directory location
-#logo_url: "http://10.0.1.3/10-20logo.bmp"                    ; URL for branding logo to be used on phone display
+# 外部目录位置的URL
+#logo_url: "http://10.0.1.3/10-20logo.bmp"                    ; 用于在电话显示屏上使用的品牌logo的URL
 
-# SIP Configuration Generic File (stop)
+# SIP配置通用文件（停用）
 
-# Insert Extension for voice mail retrieval here, this is what's dialed when they hit the "envelope" key on the phone.
-messages_uri:  ""
+# 在此处插入用于检索语音邮件的分机号码，当用户在电话上点击“信封“键时将拨打该号码。
+messages_uri: ""
 
-# This is a bitmap, and it's supposed to set line 6 for auto-answer.  
-#However it seems that the newer versions won't allow anything above line4 to be set to auto-answer via tftp.
+# 这是一个位图，它应该设置第6线路为自动应答。
+#然而，新版本似乎不允许设置超过第4线路的任何内容通过tftp自动应答。
 auto_answer: 32
 autocomplete: 0
 dnd_control: 2
 ```
 
-### **BLIND XFER (Blind Transfer):**
+### **BLIND XFER（盲转移）：**
 
-While the attended transfer works. the blind transfer exhibited a problem when a call was placed to the telephone as an intercom call where the line was automatically answered.
+尽管参与转移运作正常，但在将呼叫作为对讲呼叫自动应答的情况下，盲转移存在问题。
 
-In my defaut dialplan context I had to add this right at the top in order for the device to properly transfer calls that were placed to it's intercom line:
+在我的默认拨号计划上下文中，我必须在开头添加以下内容，以便设备能够正确地转接呼叫：
 
 ```xml
 <extension name="Cisco Xfer Fix">
@@ -364,21 +360,75 @@ In my defaut dialplan context I had to add this right at the top in order for th
 </extension>
 ```
 
-### **Call Parking**
+### **呼叫保持**
 
-There doesn't seem to be a way to provision the bottom keys on the phone, so parking has been implemented as a blind transfer to a particular extension in my dial plan. Frankly I'm disappointed, but hey it's Cisco.
+似乎无法为电话设备配置底部按键，因此在我的拨号计划中将呼叫保持实施为盲转移到特定分机。老实说，我感到失望，但没办法，这就是思科。
 
 ---
 
-### **[Conferencing and Intercom](https://wiki.freeswitch.org/wiki/Conferencing%5Fand%5FIntercom "Conferencing and Intercom")**
+### **[会议和对讲](https://wiki.freeswitch.org/wiki/Conferencing%5Fand%5FIntercom "会议和对讲")**
 
-The Cisco 7960 and/or 7960G don't implement a multicast paging group, so there is no paging and intercom. See above link on how to implement it with unicast and a conference bridge.
+如上所述链接, Cisco 7960和/或7960G没有实施多播寻呼组，因此没有寻呼和对讲功能。请参考上述链接以了解如何使用单播和会议桥来实现。
 
-  
-### Comments:
-
-| I followed the above directions, and this is the error I get when I telnet into a phoneCurrent Phone Status --------------------♥W350 unprovisioned proxy\_backup♥W351 unprovisioned proxy\_emergency♥W310 1 Error(s) Parsing: SIPDefault.cnfE600 REG send failure: REGISTER ☻W250 TFTP Error: Not Found dialplan.xml ☺E102 MISC Error: No time server\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*are these values correct and are they what is causing the error ? \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\# Dialplan template (.xml format file relative to the TFTP root directory) dial_template: dialplan\# TFTP Phone Specific Configuration File Directory tftp_cfg_dir: "./srv/tftp/" ; Example: ./sip_phone/ TFTP Phone Specific Configuration File Directory ![](/images/icons/contenttypes/comment_16.png) Posted by kc6ymp at Jun 19, 2016 23:44 |
+| 我按照上述步骤进行操作，当我 telnet 进入手机时出现以下错误：当前手机状态 --------------------♥ W350 未预配置的代理备份♥ W351 未预配置的紧急代理♥ W310 1 个错误解析：SIPDefault.cnfE600 REG 发送失败：REGISTER ☻ W250 TFTP 错误：未找到 dialplan.xml ☺ E102 MISC 错误：无时间服务器 ******************************这些值是否正确，是否是造成错误的原因？# 拨号计划模板（.xml 格式文件相对于 TFTP 根目录）dial_template: dialplan# TFTP 电话特定配置文件目录tftp_cfg_dir: "./srv/tftp/" ; 例如：./sip_phone/ TFTP 电话特定配置文件目录![](/images/icons/contenttypes/comment_16.png) 由 kc6ymp 于 2016 年 6 月 19 日 23:44 发布 |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| this is my question, do I need to write a logical link to the dialplan.xml in freeswitch ? Password :\*\*\*\*\*\*\*\*\*\*\*\*\*Cisco Systems, Inc. Copyright 2000-2005 Cisco IP phone MAC: 0012:7f29:f78c Loadid: SW: P0S3-08-8-00 ARM: PAS3ARM1 Boot: PC030301 DSP: 4.0(2.0)\[A0\]C7960> show statusCurrent Phone Status --------------------♥W350 unprovisioned proxy\_backup♥W351 unprovisioned proxy\_emergency♥W310 2 Error(s) Parsing: SIPDefault.cnfE640 REG msg unsupported: in 403, request failureW250 TFTP Error: Not Found dialplan.xmlC7960> ![](/images/icons/contenttypes/comment_16.png) Posted by kc6ymp at Jun 20, 2016 14:40                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| 这是我的问题，我需要在 freeswitch 中为 dialplan.xml 编写一个逻辑链接吗？密码：********** Cisco Systems, Inc. 版权所有 © 2000-2005 Cisco IP 电话 MAC：0012:7f29:f78c Loadid：SW：P0S3-08-8-00 ARM：PAS3ARM1 Boot：PC030301 DSP：4.0(2.0)[A0]C7960> show status当前手机状态 --------------------♥ W350 未预配置的代理备份♥ W351 未预配置的紧急代理♥ W310 2 个错误解析：SIPDefault.cnfE640 REG 消息不支持：403 中的请求失败W250 TFTP 错误：未找到 dialplan.xmlC7960> ![](/images/icons/contenttypes/comment_16.png) 由 kc6ymp 于 2016 年 6 月 20 日 14:40 发布                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 
+# Markdown文件示例
 
+这是一篇用于演示的Markdown文件。它包含各种类型的文本和格式，以展示Markdown的不同功能和语法。
+
+## 标题
+
+这是一个一级标题
+
+### 这是一个三级标题
+
+## 强调
+
+**这是个粗体的文本**
+
+*这是个斜体的文本*
+
+## 列表
+
+- 无序列表项1
+- 无序列表项2
+- 无序列表项3
+
+1. 有序列表项1
+2. 有序列表项2
+3. 有序列表项3
+
+## 链接
+
+这是一个链接 [Markdown教程](https://markdown.com)
+
+## 图片
+
+这是一张图片：
+
+![图片描述](https://example.com/image.jpg)
+
+## 引用
+
+> 这是一个引用文本
+
+## 代码块
+
+```python
+print("Hello, world!")
+```
+
+## 表格
+
+| 列1    | 列2    | 列3    |
+| ------ | ------ | ------ |
+| 内容1  | 内容2  | 内容3  |
+| 内容4  | 内容5  | 内容6  |
+
+## 数学公式
+
+$E = mc^2$
+
+这是一篇用于演示的Markdown文件。希望能够对你理解Markdown有所帮助。

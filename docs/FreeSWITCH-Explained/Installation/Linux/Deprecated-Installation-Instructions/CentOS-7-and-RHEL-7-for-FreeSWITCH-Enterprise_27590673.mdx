@@ -1,33 +1,29 @@
+# 适用于 CentOS 7 和 RHEL 7 的 FreeSWITCH 企业版
 
-# CentOS 7 and RHEL 7 for FreeSWITCH Enterprise 
+## 关于
 
- 
+FreeSWITCH 企业版项目已迁移到 GitHub: <https://github.com/signalwire/stack>   
+请在此处提交新的问题：<https://github.com/signalwire/stack/issues>
 
-## About
+本文包含在 CentOS 7 或 RHEL 7 操作系统上主机上安装 FreeSWITCH™ 的说明。
 
-FreeSWITCH Enterprise project has been moved to GitHub: <https://github.com/signalwire/stack>   
-Please open new issues in: <https://github.com/signalwire/stack/issues>
+点击展开目录
 
-This article contains FreeSWITCH™ installation instructions on hosts with CentOS7 or RHEL7 operating system.
+* 1 [从 RPM 包安装](#installing-from-rpm-packages)  
+   * 1.1 [正式版（Release）](#-freeswitch--centos-7-and-rhel-7-for-freeswitch-enterprise-)  
+   * 1.2 [用于测试的开发分支](#-freeswitch--centos-7-and-rhel-7-for-freeswitch-enterprise-)  
+   * 1.3 [调试（Debug）](#-freeswitch--centos-7-and-rhel-7-for-freeswitch-enterprise-)
+* 2 [从源代码编译](#-freeswitch--centos-7-and-rhel-7-for-freeswitch-enterprise-)  
+   * 2.1 [正式版（Release）](#-freeswitch--centos-7-and-rhel-7-for-freeswitch-enterprise-)  
+   * 2.2 [用于测试的开发分支](#-freeswitch--centos-7-and-rhel-7-for-freeswitch-enterprise-)
 
-  
-Click to expand Table of Contents
+## 从 RPM 包安装
 
-* 1 [Installing from RPM Packages](#installing-from-rpm-packages)  
-   * 1.1 [Release](#-freeswitch--centos-7-and-rhel-7-for-freeswitch-enterprise-)  
-   * 1.2 [Dev repo for Testing](#-freeswitch--centos-7-and-rhel-7-for-freeswitch-enterprise-)  
-   * 1.3 [Debug](#-freeswitch--centos-7-and-rhel-7-for-freeswitch-enterprise-)
-* 2 [Building from source](#-freeswitch--centos-7-and-rhel-7-for-freeswitch-enterprise-)  
-   * 2.1 [Release](#-freeswitch--centos-7-and-rhel-7-for-freeswitch-enterprise-)  
-   * 2.2 [Dev branch for Testing](#-freeswitch--centos-7-and-rhel-7-for-freeswitch-enterprise-)
+**简单方法**
 
-## Installing from RPM Packages
+### 正式版（Release）
 
-**Easy Way**
-
-### Release
-
-FreeSWITCH™ can be installed from packages as follows
+可以按照以下步骤安装 FreeSWITCH™
 
 ```bash
 echo "USER" > /etc/yum/vars/fsausername
@@ -38,7 +34,7 @@ yum install -y freeswitch-config-vanilla freeswitch-lang-* freeswitch-sounds-*
 systemctl enable freeswitch
 ```
 
-FreeSWITCH™ is now installed and can be accessed with
+现在已经安装了 FreeSWITCH™，可以使用以下方式访问
 
 **FreeSwitch CLI**
 
@@ -46,11 +42,11 @@ FreeSWITCH™ is now installed and can be accessed with
 fs_cli -rRS
 ```
 
-### Dev repo for Testing
+### 用于测试的开发分支
 
-WARNING not suitable for production
+警告：不适用于生产环境
 
-The master branch of FreeSWITCH™ can be installed from packages as follows
+可以按照以下步骤安装 FreeSWITCH™ 的主分支。
 
 ```bash
 echo "USER" > /etc/yum/vars/fsausername
@@ -58,16 +54,16 @@ echo "PASS" > /etc/yum/vars/fsapassword
 yum install -y https://$(< /etc/yum/vars/fsausername):$(< /etc/yum/vars/fsapassword)@fsa.freeswitch.com/repo/yum-stack/fsa/centos-dev/signalwire-stack-dev-repo-0-1.noarch.rpm epel-release
 ```
 
-And then install as follows
+然后按以下步骤安装：
 
 ```bash
 yum install -y freeswitch-config-vanilla freeswitch-lang-* freeswitch-sounds-*
 systemctl enable freeswitch
 ```
 
-### Debug
+### 调试
 
-FreeSWITCH™ Debug symbols can be installed with the following. Other package symbols are available also. Use **yum search &lt;package-name>** to find the symbols you want to install.
+可以使用以下方式安装FreeSWITCH™调试符号。也可以安装其他软件包符号。使用 **yum search &lt;package-name>** 查找要安装的符号。
 
 ```bash
 yum install -y yum-utils
@@ -77,7 +73,7 @@ ldconfig
 
 ```
 
-Use the following example to install system debug symbols.
+使用以下示例安装系统调试符号。
 
 ```bash
 debuginfo-install glibc
@@ -85,20 +81,20 @@ ldconfig
 
 ```
 
-Use yum info to see what repo the package was installed from
+使用 yum info 查看软件包所在的仓库
 
 ```bash
 yum info spandsp
 
 ```
 
-**Compiling from source code**
+**从源代码编译**
 
-## Building from source
+## 从源代码构建
 
-### Release
+### 发行版
 
-FreeSWITCH™ can be built from source if you desire but it is not recommended.
+如果需要，可以从源代码构建FreeSWITCH™，但不建议这样做。
 
 ```bash
 echo "USER" > /etc/yum/vars/fsausername
@@ -109,7 +105,9 @@ yum install -y yum-plugin-ovl centos-release-scl rpmdevtools yum-utils git
 yum install -y devtoolset-7-gcc*
 
 scl enable devtoolset-7 'bash'
+```
 
+```bash
 cd /usr/local/src
 git clone -b release https://github.com/signalwire/stack.git freeswitch
 cd /usr/local/src/freeswitch
@@ -125,11 +123,10 @@ make -j cd-moh-install
 ```
 
   
-### Dev branch for Testing
+### 用于测试的开发分支
+警告：不适用于生产环境
 
-WARNING not suitable for production
-
-FreeSWITCH™ can be built from source if you desire but it is not recommended.
+如果您愿意，可以从源代码构建FreeSWITCH™，但这并不被推荐。
 
   
 ```bash
@@ -155,5 +152,3 @@ make -j install
 make -j cd-sounds-install
 make -j cd-moh-install
 ```
-
-

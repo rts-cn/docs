@@ -1,29 +1,26 @@
+# mod_dptools: 事件
 
-# mod_dptools: event 
+## 关于
 
- 
+事件应用程序可用于触发任意事件。
 
-## About
-
-Event application can be used to fire aribtrary events.
-
-## Usage
+## 用法
 
 ```xml
 Event Event-Name=$event_name[,Event-Subclass=$event_subclass][,header=value,header=value]
 ```
 
-This application may be run _[inline](../../Dialplan/index.mdx#2-modules)_ from the XML dialplan.
+此应用程序可以从XML拨号计划中 _[内联](../../Dialplan/index.mdx#2-modules)_ 运行。
 
-## Examples
+## 示例
 
-by [Pawel Pierscionek](https://freeswitch.org/confluence/display/~urtho)
+作者：[Pawel Pierscionek](https://freeswitch.org/confluence/display/~urtho)
 
 ```xml
 <action application="event" data="Event-Subclass=myevent::notify,Event-Name=CUSTOM,key1=value1,key2=value2"/>
 ```
 
-I find it useful in driving inbound event socket finite state machines that do not subscribe to CHANNEL\_EXECUTE\* events yet need signals when some actions of [inline dialplans](../../Dialplan/Inline-Dialplan_13173434.mdx#escaping) are completed. Eg: fire a custom notification that a file has been played and the channel is now waiting for more instructions while the customer listens to MOH.
+我发现在驱动传入的事件套接字有限状态机中非常有用，这些状态机不订阅 CHANNEL\_EXECUTE\* 事件，但在一些[内联拨号计划](../../Dialplan/Inline-Dialplan_13173434.mdx#escaping)完成某些操作时需要信号。例如：在文件播放完成并且客户端正在等待更多指示时，触发自定义通知。
 
 ```xml
 <extension name="ACDIntro">
@@ -37,7 +34,7 @@ I find it useful in driving inbound event socket finite state machines that do n
 </extension>
 ```
 
-This is how such an event appears on the wire:
+以下是此类事件在数据流中的显示方式：
 
 ```xml
 Core-UUID: 1ebe7b98-1533-11de-a612-0b68f08ca0e3
@@ -50,14 +47,12 @@ state: Intro
 condition: IntroPlayed
 ```
 
-If you wish to schedule an event to be triggered from a dialplan, you can use the following approach:
+如果您希望从拨号计划中安排触发事件，请使用以下方法：
 
 ```xml
 <action application="set" data="api_result=${sched_api(+5 ${uuid} uuid_broadcast ${uuid} event::Event-Subclass=myevent-notify,Event-Name=CUSTOM)}"/>
 ```
 
-See Also
+参见
 
-* [Dialplan](../../Dialplan/index.mdx#0-about)
-
-
+* [拨号计划](../../Dialplan/index.mdx#0-about)

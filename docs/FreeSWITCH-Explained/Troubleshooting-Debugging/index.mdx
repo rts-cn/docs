@@ -1,58 +1,56 @@
+# 故障排除调试
 
-# Troubleshooting Debugging 
+## 关于
 
- 
+（这应该成为常规故障排除过程和方法的列表。将具体内容移至适用的页面。)
 
-## About
+您无需重新编译并使用调试器来执行这些步骤（有关调试Freeswitch的内容，请参阅[调试Freeswitch](Debugging_3965831.mdx#top)）
 
-( This should become a list of generalized troubleshooting procedures and methodologies. Move specifics to the pages to which they apply.)
+[报告故障的新大纲](https://docs.google.com/document/d/1KSlqOEozNhQdylBv3iAy4kEOVMpmFbaIJMoDngaAiQY/edit?pli=1)
 
-You need not recompile with debug symbols or use a debugger to take these steps (for that, see [Debugging Freeswitch](Debugging_3965831.mdx#top))
+请勿发布日志
 
-[New outline for Reporting Bugs](https://docs.google.com/document/d/1KSlqOEozNhQdylBv3iAy4kEOVMpmFbaIJMoDngaAiQY/edit?pli=1)
+如果您在freeswitch-users邮件列表上寻求帮助，请**勿发布日志输出**。请使用pastebin保存日志，如下所述，然后在用户列表中的问题中发布pastebin的链接。   
+您必须将日志**附加**到JIRA，**请勿在JIRA工单中使用PASTEBIN**网址，因为它们会过期，日志将丢失。
 
-DO NOT POST LOGS
+因此：
+邮件列表和IRC => 使用pastebin   
+JIRA工单 => 作为单独的文件附加日志，文件名具有意义
 
-If you ask for help on the freeswitch-users mailing list **DO NOT POST LOG OUTPUT**. Use pastebin to hold the logs as outlined below, then post a link to the pastebin in your question on the users list,   
-You must **ATTACH** logs to the JIRA, **DO NOT PUT PASTEBIN** URLs in JIRA tickets as they expire, so the logs will be lost.
+点击展开目录
 
-So:  
-mailing list and IRC => Use pastebin  
-JIRA tickets => ATTACH logs as separate files with meaningful file names
-
-Click to expand Table of Contents
-
-* 1 [Common Problems](#common-problems)
-* 2 [Enabling SIP Tracing](#enabling-sip-tracing)
-* 3 [Log Level](#-freeswitch--troubleshooting-debugging-)
-* 4 [Colorizing output](#colorizing-output)
-* 5 [Enabling libedit](#enabling-libedit)
-* 6 [Call Troubles](#-freeswitch--troubleshooting-debugging-)
+* 1 [常见问题](#common-problems)
+* 2 [启用SIP跟踪](#enabling-sip-tracing)
+* 3 [日志级别](#-freeswitch--troubleshooting-debugging-)
+* 4 [着色输出](#colorizing-output)
+* 5 [启用libedit](#enabling-libedit)
+* 6 [呼叫问题](#-freeswitch--troubleshooting-debugging-)
 
   
-## Common Problems
+## 常见问题
 
-If you have trouble with applications that communicate with 'localhost' edit your /etc/hosts file to eliminate the reference between localhost and unused protocols. For example, if you use only ipv4 while the hosts file still contains a line pointing localhost to an ipv6 address, then fs\_cli and Event Socket communications might fail.  
+如果您遇到与“localhost”通信的应用程序的问题，请编辑您的/etc/hosts文件，消除localhost和未使用协议之间的关联。例如，如果您仅使用ipv4，而hosts文件仍然包含一行将localhost指向ipv6地址，则fs_cli和Event Socket通信可能会失败。
 
-## Enabling SIP Tracing
+## 启用SIP跟踪
 
-At fs\_cli type:
+在fs_cli上键入：
 
 sofia loglevel all 9  
 sofia global siptrace on 
 
-## Log Level
+## 日志级别
 
-Edit console.conf.xml
+编辑console.conf.xml
 
+```xml
 &lt;param name="log_event" value="DEBUG"/> 
 &lt;param name="all" value="DEBUG"/>
 
-Edit switch.conf.xml (especially if you have lots of calls, reduce logging)
+编辑switch.conf.xml（特别是如果你有很多呼叫，要减少日志记录）
 
 &lt;param name="loglevel" value="debug"/>
 
-The possible values for value are (use only the text value in ""):
+value的可能值为（只使用引号中的文本值）：
 
 0 "CONSOLE",
 1 "ALERT",
@@ -63,50 +61,49 @@ The possible values for value are (use only the text value in ""):
 6 "INFO",
 7 "DEBUG"
 
-\[what are the possible name values?\]
+\[可能的name值是什么呢？\]
 
-You may also use the console API to set debug level on FS console.
+您还可以使用控制台API在FS控制台上设置调试级别。
 
-freeswitch@de> console loglevel [0-7] (numerical value as above)
+freeswitch@de> console loglevel [0-7]（使用上述的数值）
 
-And you can also set the levels of fsctl.
+您也可以设置fsctl的级别。
 
-freeswitch@de> fsctl loglevel [0-7] (numerical value as above)
+freeswitch@de> fsctl loglevel [0-7]（使用上述的数值）
 
-Use `/log [<loglevel>](https://wiki.freeswitch.org/wiki/Mod%5Fconsole#Log%5FLevels "Mod console")` to change the console log level when connected via [fs\_cli](https://wiki.freeswitch.org/wiki/Fs%5Fcli#While%5FConnected "Fs cli"), because the above methods have no effect on fs\_cli.
+在通过fs_cli连接时，使用`/log [<loglevel>](https://wiki.freeswitch.org/wiki/Mod%5Fconsole#Log%5FLevels "Mod console")`来更改控制台日志级别，因为上述方法对fs_cli没有影响。
 
-## Colorizing output
+## 着色输出
 
-In console.conf.xml uncomment the color mode.
+在console.conf.xml中取消注释颜色模式。
 
-The colors are:
+颜色为：
 
-* ALER - Red
-* CRIT - Red
-* ERROR - Red
-* WARNING - Magenta
-* NOTICE - Cyan
-* INFO - Green
-* DEBUG - Yellow
+* ALER - 红色
+* CRIT - 红色
+* ERROR - 红色
+* WARNING - 品红色
+* NOTICE - 青色
+* INFO - 绿色
+* DEBUG - 黄色
 
-## Enabling libedit
+## 启用libedit
 
-Enable libedit via --enable-core-libedit-support argument to the configure script when you build FreeSWITCH™ to enable command-line history editing and curses functionality.
+在构建FreeSWITCH™时，通过--enable-core-libedit-support参数启用libedit，以启用命令行历史编辑和curses功能。
 
-## Call Troubles  
+## 呼叫故障
+```
 
-1. Check to see what the encoding is, so you know what needs to be debugged. 'show channels' on the fs\_cli.
-2. Make a call to the same endpoint, to see if it is related to a short, or long call.
-3. Check for any error or warning output in the fs\_cli during the calls, to see if there is something obvious that FS already knows about.
-4. If with the same endpoint you always experience the problem, try to isolate where the issue is.
-5. Call 9198 and listen to Tetris to see if the problem is present there.
-6. Call 9197 and listen to the mw tone.
-7. Call 9196 and test the echo.
-8. If steps 5-7 don't show the issue, then the connection between phone to FS is fine.
-9. Try other endpoints to see whether it is experienced in all cases.
-10. Call 5000, and call the 888 conference to see whether the issue is present there.
-11. Call the endpoint (if it is [PSTN](https://freeswitch.org/confluence/pages/viewpage.action?pageId=1048834)) with a POTS or mobile phone, to see whether it is VoIP related or endpoint related.
+1. 确认所使用的编码格式，以便知道需要调试的内容。在fs_cli中使用`show channels`命令。
+2. 对同一端点发起通话，以确定是与短通话还是长通话有关。
+3. 检查在通话过程中fs_cli是否输出任何错误或警告信息，以查看FS是否已经知道明显的问题。
+4. 如果使用同一端点始终遇到问题，尝试分离问题所在。
+5. 拨打9198号码，听听俄罗斯方块（Tetris），看看问题是否存在。
+6. 拨打9197号码，听听MW音调。
+7. 拨打9196号码，测试回声。
+8. 如果步骤5-7都没有出现问题，则表示电话与FS之间的连接正常。
+9. 尝试使用其他端点，看是否在所有情况下都有问题。
+10. 拨打5000号码，并呼叫888会议，看看问题是否存在。
+11. 如果是[PSTN](https://freeswitch.org/confluence/pages/viewpage.action?pageId=1048834)端点，使用POTS电话或移动电话拨打，查看是与VoIP相关还是端点相关。
 
-You should know where the issue lies after these steps!
-
-
+经过上述步骤，您应该能够确定问题所在！

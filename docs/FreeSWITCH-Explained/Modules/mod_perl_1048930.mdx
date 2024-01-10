@@ -1,92 +1,89 @@
+# mod_perl
 
-# mod_perl 
+## 关于
 
- 
+mod_perl在RC4发布后得到支持。
 
-## About
+请注意，如果你只想执行Perl脚本（或者通过Perl通过套接字与FreeSWITCH通信），那么你不需要mod_perl。通常，您只在需要通过由FreeSWITCH执行的脚本与实时会话进行交互时才需要mod_perl支持（请参见下面的示例）。有关在没有mod_perl的情况下使用Perl的更多详细信息，请参阅[Perl页面](https://wiki.freeswitch.org/wiki/Perl "Perl")。
 
-mod\_perl is supported as of RC4.
+点击展开目录
 
-Keep in mind that if you just want to execute perl scripts (or talk to FreeSWITCH using sockets through perl) you do not need mod\_perl. Generally the only time you will need mod\_perl support is if you want to interact with a live session from a script executed by FreeSWITCH (see examples below). For more details on using Perl without mod\_perl see the [Perl](https://wiki.freeswitch.org/wiki/Perl "Perl") page.
+* 1 [安装](#installing)  
+   * 1.1 [SUSE Linux的问题](#issue-with-suse-linux--)  
+   * 1.2 [Perl多线程要求](#perl-multiplicity-requirement)
+* 2 [用法](#usage)  
+   * 2.1 [Dialplan应用程序](#dialplan-application--)  
+   * 2.2 [内联执行](#inline-execution)  
+   * 2.3 [XML dialplan生成](#xml-dialplan-generation)
+* 3 [使用mod_perl进行编程](#programming-with-mod_perl)  
+   * 3.1 [函数和类](#functions-and-classes)  
+   * 3.2 [使用mod_perl进行编程的一些建议](#some-tips-for-programming-with-mod_perl)  
+   * 3.3 [从mod_perl内执行API](#executing-an-api-from-within-mod_perl)  
+   * 3.4 [挂断钩子](#hangup-hook)
+* 4 [参阅](#-see-also-)
+* 5 [示例](#-examples-)
 
-Click to expand Table of Contents
+### 安装
 
-* 1 [Installing](#installing)  
-   * 1.1 [Issue with SUSE Linux](#issue-with-suse-linux--)  
-   * 1.2 [Perl Multiplicity Requirement](#perl-multiplicity-requirement)
-* 2 [Usage](#usage)  
-   * 2.1 [Dialplan application](#dialplan-application--)  
-   * 2.2 [Inline execution](#inline-execution)  
-   * 2.3 [XML dialplan generation](#xml-dialplan-generation)
-* 3 [Programming with mod\_perl](#programming-with-mod_perl)  
-   * 3.1 [Functions and classes](#functions-and-classes)  
-   * 3.2 [Some tips for programming with mod\_perl](#some-tips-for-programming-with-mod_perl)  
-   * 3.3 [Executing an API from within mod\_perl](#executing-an-api-from-within-mod_perl)  
-   * 3.4 [Hangup hook](#hangup-hook)
-* 4 [See Also](#-see-also-)
-* 5 [Examples](#-examples-)
+首先要注意的是，要支持mod_perl，必须使用带有线程/多线程功能的perl编译（通常一旦为线程编译，这个功能就会被启用）。如果你不确定你是否有带有多线程功能的perl（FreeSWITCH安装不会为您检查此问题），或者如果你想了解重新编译带有此支持的perl的技巧，请参阅本页末尾关于perl多线程要求的部分。
 
-### Installing
+一旦您拥有了多线程支持，您可以继续：
 
-First beware that for mod\_perl support you must have perl compiled with threads/multiplicity (generally once you compile for threads this is enabled). If you are not sure if you have perl compiled with multiplicity (the FreeSWITCH install will \_not\_ check this for you) or if you are looking for tips on recompiling perl with this support please see the section on the perl multiplicity requirement at the end of this page.
+* 在FreeSWITCH的构建根目录的modules.conf文件中取消mod_perl的注释
+* 重新编译freeswitch
+* 在shell中执行"make mod_perl-install"命令
+* 在modules.conf.xml文件中取消mod_perl的加载行的注释
+* Mod perl现在将能够正确加载和正常工作
 
-Once you have multiplicity support working you can continue:
+在RHEL/CentOS上，需要安装gdbm-devel和db4-devel软件包。
 
-* Uncomment the mod\_perl line in modules.conf in the build root of FreeSWITCH
-* (re)compile freeswitch
-* issue "make mod\_perl-install" from the shell
-* Uncomment the mod\_perl load line in modules.conf.xml
-* Mod perl will now load and work correctly
+#### SUSE Linux的问题
 
-On RHEL / CentOS, gdbm-devel and db4-devel packages must be installed.
+在Suse 10.3、11.0和11.1上，FreeSWITCH会编译mod_perl，但可能会出现核心转储的问题。我解决了这个问题，重新编译了perl 5（并在此过程中升级到了5.10.0版本），这似乎解决了这个bug。如果您不熟悉重新编译perl，请联系您的发行商并要求他们停止修复那些没有问题的东西。
 
-#### Issue with SUSE Linux  
+我没有在早期的Suse发行版上尝试使用FreeSWITCH，可能会有所不同...
 
-FreeSWITCH will compile mod\_perl on Suse 10.3, 11.0, and 11.1 however it appears that it will coredump. I resolved this by recompiling perl 5, (and upgrading to 5.10.0 in the process) which seems to have gotten this bug resolved. If you're not sufficiently skilled to re-compile perl yourself, contact your Distribution vendor and ask them to stop fixing things that aren't broken.
+#### Perl多重性要求
 
-I have not tried FreeSWITCH on earlier Suse distributions, your mileage may vary...
+由于FreeSWITCH是多线程的，所以需要mod_perl也是多线程的，如果没有编译支持，这可能有点麻烦。
 
-#### Perl Multiplicity Requirement
-
-As FreeSWITCH is multithreaded it requires mod\_perl to be multithreaded this can be a bit of a task to get working if it is not already compiled with this support.
-
-While there is a check in the makefile for this it doesn't actually execute currently so it is best to verify this yourself. At a command line run:
+虽然makefile中有针对这个的检查，但目前实际上并没有执行，所以最好自己验证一下。在命令行中运行以下命令：
 
 perl -V | grep -oP "usemultiplicity=[a-z]+"
 
-you should get back something like: usemultiplicity=define however if you get back usemultiplicity=undef you are in bad shape. If this happens to you you will need to recompile perl to make mod\_perl for FreeSWITCH load correctly. Keep in mind that in addition to recompiling some (many) of your perl modules may need to be reinstalled to work correctly along with some apps that may require in with perl/libperl. You should test this on a non-production system before trying to convert a production system.
+你应该会得到类似这样的结果：usemultiplicity=define，但如果得到了usemultiplicity=undef，那就麻烦了。如果发生这种情况，您需要重新编译perl，以使mod_perl能够正确加载FreeSWITCH。请记住，在重新编译之外，您可能还需要重新安装一些（许多）perl模块，以便与perl/libperl一起正确工作的一些应用程序。在尝试转换生产系统之前，您应该在非生产系统上进行测试。
 
-For gentoo do the following:
+对于gentoo，请执行以下操作：
 
-Add ithreads to the perl and libperl use flags
-recompile perl and libperl
+将ithreads添加到perl和libperl的使用标志中
+重新编译perl和libperl
 perl-cleaner reallyall
 
-That should help to ensure everything that could be effected is recompiled but it may not get everything (specifically manually compiled apps or cpan installed modules).
+这将确保重新编译可能受到影响的所有内容，但可能无法获取所有内容（特别是手动编译的应用程序或cpan安装的模块）。
 
-A script to help ensure all modules are reinstalled for your new version of perl can be found at: <http://mitchcapper.com/missing%5Fmodules.pl.txt>
+可以在以下网址找到一个帮助确保所有模块在您的新perl版本上重新安装的脚本： <http://mitchcapper.com/missing%5Fmodules.pl.txt>
 
-### Usage
+### 用法
 
-#### Dialplan application  
+#### 拨号计划应用程序  
 
-Once you have enabled mod\_perl in the modules config, you are ready to start using it. If you want to call it as part of a dial plan you just have to call your script using:
+在模块配置中启用mod\_perl后，您可以开始使用它。如果您想在拨号计划的一部分中调用它，只需使用以下方式调用您的脚本：
 
 &lt;action application="perl" data="/path/to/your/script.pl"/>
 
-You can pass arguments to the script by just placing them at the end of the data string (separated by spaces).
+您可以通过将参数放置在数据字符串的末尾（用空格分隔）来将参数传递给脚本。
 
-The script receives `$session` variable which represents the session object.
+该脚本接收`$session`变量，该变量表示会话对象。
 
-`mod_perl` will automatically import the `freeswitch` Perl module, but nothing is imported into the global namespace. This means if you want to access a non-instance function from the class, say `consoleLog`, it is `freeswitch::consoleLog`.
+`mod_perl`将自动导入`freeswitch` Perl模块，但不会导入全局命名空间。这意味着如果您想从类中访问一个非实例函数，例如`consoleLog`，则应使用`freeswitch::consoleLog`。
 
-Your script should always end with a line of '`1;`', or if you are returning out of the script make sure you use '`return 1`' not just '`return`'.
+您的脚本应始终以`1;`结尾，或者如果您要退出脚本，请确保使用`return 1`而不仅仅是`return`。
 
-Keep in mind that your Perl script gets full control of the session, and nothing is happening to the session if the script is waiting for something. You cannot, for example, play music to the session and perform some bulky lookups in external databases.
+请注意，您的Perl脚本完全控制会话，如果脚本正在等待某些事情，会话中不会发生任何操作。例如，您不能向会话播放音乐并在外部数据库中执行一些繁重的查找。
 
-Example:
+示例：
 
-**mod\_perl dialplan script example**
+**mod\_perl拨号计划脚本示例**
 
 ```perl
 use strict;
@@ -97,25 +94,29 @@ $session->setVariable('business_hour', 'true');
 1;
 ```
 
-#### Inline execution
+#### 内联执行
 
-`<` `action` `application` `=` `"set"` `data` `=` `"foo=${perl(/path/to/your/script.pl)}"` `/>`
+```xml
+<` `action` `application` `=` `"set"` `data` `=` `"foo=${perl(/path/to/your/script.pl)}"` `/>`
+```
 
-In case of inline execution, in addition to `$session` variable as described above, the script receives a predefined `$stream` variable which allows you to write the output:
+在内联执行的情况下，除了上述提到的`$session`变量，脚本还接收一个预定义的`$stream`变量，它允许您写入输出：
 
+```perl
 $stream->write("hello world");
+```
 
-Also the variable `$env` represents an event object.
+另外，变量`$env`表示一个事件对象。
 
-#### XML dialplan generation
+#### XML呼叫计划生成
 
-If you want to use mod\_perl to call a perl script to generate XML for a dialplan however you want to do a few additional things:
+如果您想使用mod_perl调用perl脚本来生成呼叫计划的XML，但希望进行一些额外操作：
 
-The file conf/autoload\_configs/perl.conf.xml is used in the default FreeSWITCH™ setup.
+文件`conf/autoload_configs/perl.conf.xml`在默认的FreeSWITCH™设置中使用。
 
-Here is a minimum configuration file, it will fetch a [dialplan ](../Dialplan/XML-Dialplan/index.mdx#about)from perl script:
+下面是一个最小的配置文件示例，它将从perl脚本中获取一个[dialplan](../Dialplan/XML-Dialplan/index.mdx#about)：
 
-**conf/autoload\_configs/perl.conf.xml** 
+**conf/autoload_configs/perl.conf.xml**
 
 ```xml
 <configuration name="perl.conf" description="PERL Configuration">
@@ -124,10 +125,8 @@ Here is a minimum configuration file, it will fetch a [dialplan ](../Dialplan/XM
     <param name="xml-handler-bindings" value="dialplan"/>
 
     <!--
-	The following options identifies a perl script that is launched	
-	at startup and may live forever in the background.
-	You can define multiple lines, one for each script you 
-	need to run.
+    以下选项标识了在启动时启动的perl脚本，并且可能在后台永远运行。
+    您可以定义多行，每行对应一个脚本。
     -->
     <!--param name="startup-script" value="startup_script_1.pl"/-->
     <!--param name="startup-script" value="startup_script_2.pl"/-->
@@ -136,28 +135,28 @@ Here is a minimum configuration file, it will fetch a [dialplan ](../Dialplan/XM
 </configuration>
 ```
 
-The **startup-script** values represent perl scripts (located inside the scripts/ directory) that are launched when FreeSWITCH is started. The scripts live in their own thread. You can use them to run simple tasks (and then let them finish) or looping forever, watching (for example) for events, generating calls or whatever you like.
+**startup-script**值表示在FreeSWITCH启动时启动的perl脚本（位于scripts/目录中）。这些脚本在它们自己的线程中运行。您可以使用它们来运行简单的任务（然后让它们完成）或永远循环，例如监听事件、生成呼叫或其他您喜欢的操作。
 
-The **xml-handler-bindings** value can assume the following values:
+**xml-handler-bindings**的值可以是以下之一：
 
-* configuration
-* dialplan
-* directory
+* 配置
+* 拨号计划
+* 目录
 
-See [Mod xml curl](./mod_xml_curl_1049001.mdx) for more informations. Mod\_perl behaves the same identical way.
+参见[Mod xml curl](./mod_xml_curl_1049001.mdx)获取更多信息。Mod_perl的行为与其完全相同。
 
-The handler script receives two hashes that are populated for you by freeswitch:
+处理程序脚本由freeswitch自动填充两个哈希值：
 
-* %XML\_REQUEST
-* %XML\_DATA
+* %XML_REQUEST
+* %XML_DATA
 
-It also receives $params that is a wrapped switch event.
+它还接收一个被包装的switch事件 $params。
 
-You should return a valid XML dialplan in the $XML\_STRING variable before exiting your code.
+在退出代码之前，你应该将一个有效的XML拨号计划字符串返回给 $XML_STRING 变量。
 
-See the following example to start experimenting. The code will dump all the data to the console:
+请参阅以下示例开始实验。该代码将把所有数据转储到控制台：
 
-**mod\_perl XML handler example**
+**mod_perl XML处理程序示例**
 
 ```xml
 #!/usr/bin/perl
@@ -168,12 +167,12 @@ while( ($name, $value) = each(%XML_REQUEST)) {
     freeswitch::console_log("info", '[XML_REQUEST] '."$name => $value\n");
 }
 
-# %XML_DATA is only present when perl is used as a binding
+# 只有当perl用作绑定时才会出现 %XML_DATA
 while( ($name, $value) = each(%XML_DATA)) {
     freeswitch::console_log("info", '[XML_DATA] '."$name => $value\n");
 }
 
-# even $params is full of data
+# 即使$params也是满载的数据
 my $xml_dump = $params->serialize();
 freeswitch::console_log("info", "[PARAMS] $xml_dump\n");
 
@@ -195,61 +194,62 @@ $XML_STRING = '
 
 ```
 
-### Programming with mod_perl
+### 使用mod_perl进行编程
 
-#### Functions and classes
+#### 函数和类
 
-Useful commands that may help get a list of functions and classes from mod\_perl source files:
+使用下面的命令可以从mod_perl源文件中获得函数和类的列表：
 
 grep -o -P "^(\*[^=]+|############# Class.+)" freeswitch.pm
 
-grep -o -P 'Usage: ([^"]+)' mod_perl_wrap.cpp
+```shell
+grep -o -P '用法: ([^"]+)' mod_perl_wrap.cpp
 
-#### Some tips for programming with mod_perl
+#### 使用 mod_perl 进行编程的一些提示
 
-Most instance functions have 'this' as the first parameter, you don't actually pass 'this', it is automatically passed when you call a function, for example:
+大多数实例函数的第一个参数为'this'，在调用函数时，你不需要显式传递'this'，它会自动传递进去，例如:
 
 $session->answer();
 
-will pass $session as the this automatically.
+会自动将$session作为'this'参数传递进去。
 
-It is important to know that the perl->c++ conversion is not always perfect. Passing functions is done by passing the function name as a string, rather than the standard dereferencing:
+需要注意的是，perl到c++的转换并不总是完美的。传递函数时，需要将函数名作为字符串传递，而不是标准的解引用方式：
 
-# GOOD  
+# 正确的写法  
 $session->setHangupHook( 'on_hangup' ); 
-# BAD  
+# 错误的写法  
 $session->setHangupHook( \&on_hangup );
 
-In addition a function that takes a string argument you should not pass it a number, so:
+另外，如果一个函数接受一个字符串参数，你不能将数字作为参数传递进去，例如：
 
-# GOOD  
+# 正确的写法  
 $session->execute("sleep","1500");  
-# BAD   
+# 错误的写法  
 $session->execute("sleep",1500);
 
-Generally if you pass an invalid argument it will give you an error when you run it, with an error of "No matching function for overloaded".
+通常情况下，如果传递了无效的参数，运行时会报错，错误信息为"No matching function for overloaded"。
 
-Also, some differences exist in the function names. For example, where in JavaScript you might do:
+此外，函数名称也存在一些差异。例如，在JavaScript中可能会这样写：
 
 var hangup_cause = session.cause
 
-In Perl, you would do:
+在Perl中，你需要这样写：
 
 $hangup_cause = $session->hangupCause();
 
-Finally functions can behave a little bit different than expected, for example consoleLog does not append a newline at the end of the log message automatically, and may not flush it to the console until a new line is printed.
+最后，函数的行为可能有一些出乎意料的地方，例如consoleLog函数不会自动在日志消息的末尾添加换行符，并且直到打印新的一行时才会将日志刷新到控制台。
 
-#### Executing an API from within mod_perl
+#### 在 mod_perl 中执行 API
 
-Sometimes you need to execute an API (like 'show channels' or 'fifo list') while processing in your script. You need to create an API object:
+有时候，你需要在脚本处理期间执行一个API（例如'show channels'或'fifo list'）。你需要创建一个API对象：
 
 my $api = new freeswitch::API;
 
-Then use the **execute** or **executeString** method and capture the return value:
+然后使用**execute**或**executeString**方法，并捕获返回值：
 
 my $res = $api->executeString("show channels");
 
-Here's a very simple example that calls **version** and prints the value in the debug log.
+以下是一个非常简单的示例，调用**version**并将值打印到调试日志中。
 
 ```xml
 # api_example.pl
@@ -257,31 +257,31 @@ Here's a very simple example that calls **version** and prints the value in the 
 my $api = new freeswitch::API;
 my $res = $api->executeString("version");
 chomp($res);
-freeswitch::consoleLog("INFO","Version information is '$res'\n");
+freeswitch::consoleLog("INFO","版本信息为 '$res'\n");
 $session->hangup;
-1; ## Always end with a TRUE value    
+1; ## 总是以TRUE值作为结尾    
 ```
 
-#### Hangup hook
+#### 挂断钩子
 
-FreeSWITCH's [api\_hangup\_hook](https://wiki.freeswitch.org/wiki/Variable%5Fapi%5Fhangup%5Fhook "Variable api hangup hook") is a handy tool for post-processing on a call. While many use Lua for this (because it is lightweight and easy) there are valid reasons for using Perl. For example, Lua does not natively support directory operations (create file, delete file, etc.). Also, Perl has many CPAN modules that can be leveraged for post processing. 
+FreeSWITCH的[api\_hangup\_hook](https://wiki.freeswitch.org/wiki/Variable%5Fapi%5Fhangup%5Fhook "Variable api hangup hook")是通话后的后处理的有用工具。虽然很多人使用Lua（因为它轻量级且易于使用），但使用Perl也有充分的理由。例如，Lua不原生支持目录操作（创建文件、删除文件等），而Perl有许多可以用于后处理的CPAN模块。
 
-Setting a hook is simple:
+设置钩子很简单：
 
 &lt;action application="set" data="api_hangup_hook=perl hook.pl"/>
 
-The above hook will run `perl hook.pl` when the channel hangs up.
+上述钩子将在通道挂断时运行`perl hook.pl`。
 
-A sample `hook.pl`:
+一个示例的`hook.pl`：
 
 our $env;
 open(FILEOUT,'>','/tmp/hookdata.txt');
 print FILEOUT $env->serialize;
 close(FILEOUT);
 
-A dump of hookdata.txt will show you what is available. Note that this particular hook ran after a successful [rxfax](https://wiki.freeswitch.org/wiki/Mod%5Fspandsp#For%5Freceiving%5Fa%5Ffax "Mod spandsp") application:
+`hookdata.txt`的输出会显示可用的内容。请注意，此特定的钩子在成功运行[rxfax](https://wiki.freeswitch.org/wiki/Mod%5Fspandsp#For%5Freceiving%5Fa%5Ffax "Mod spandsp")应用程序之后运行：
 
-Expand source 
+展开源码
 
 ```text
 'direction: outbound
@@ -438,105 +438,43 @@ variable_fax_local_station_id: SpanDSP%20Fax%20Ident
 variable_fax_remote_station_id: SpanDSP%20Fax%20Ident
 variable_fax_document_transferred_pages: 1
 variable_fax_document_total_pages: 1
-variable_fax_image_resolution: 8031x3850
-variable_fax_image_size: 0
-variable_fax_bad_rows: 0
-variable_fax_transfer_rate: 14400
-variable_read_codec: L16
-variable_read_rate: 8000
-variable_current_application: hangup
-variable_hangup_cause: NORMAL_CLEARING
-variable_hangup_cause_q850: 16
-variable_digits_dialed: none
-variable_start_stamp: 2011-08-26%2013%3A15%3A43
-variable_profile_start_stamp: 2011-08-26%2013%3A15%3A43
-variable_answer_stamp: 2011-08-26%2013%3A15%3A43
-variable_end_stamp: 2011-08-26%2013%3A16%3A39
-variable_start_epoch: 1314389743
-variable_start_uepoch: 1314389743241198
-variable_profile_start_epoch: 1314389743
-variable_profile_start_uepoch: 1314389743241198
-variable_answer_epoch: 1314389743
-variable_answer_uepoch: 1314389743261208
-variable_bridge_epoch: 0
-variable_bridge_uepoch: 0
-variable_last_hold_epoch: 0
-variable_last_hold_uepoch: 0
-variable_hold_accum_seconds: 0
-variable_hold_accum_usec: 0
-variable_hold_accum_ms: 0
-variable_resurrect_epoch: 0
-variable_resurrect_uepoch: 0
-variable_progress_epoch: 0
-variable_progress_uepoch: 0
-variable_progress_media_epoch: 0
-variable_progress_media_uepoch: 0
-variable_end_epoch: 1314389799
-variable_end_uepoch: 1314389799501207
-variable_last_app: hangup
-variable_caller_id: 5594372600
-variable_duration: 56
-variable_billsec: 56
-variable_progresssec: 0
-variable_answersec: 0
-variable_waitsec: 0
-variable_progress_mediasec: 0
-variable_flow_billsec: 56
-variable_mduration: 56260
-variable_billmsec: 56240
-variable_progressmsec: 0
-variable_answermsec: 20
-variable_waitmsec: 0
-variable_progress_mediamsec: 0
-variable_flow_billmsec: 56260
-variable_uduration: 56260009
-variable_billusec: 56239999
-variable_progressusec: 0
-variable_answerusec: 20010
-variable_waitusec: 0
-variable_progress_mediausec: 0
-variable_flow_billusec: 56260009
-API-Command: perl
-API-Command-Argument: hook.pl
-'
-```
+variable_fax_image_resolution: 8031x385
 
- Individual items can be accessed using the getHeader method:
+可以使用`getHeader`方法来访问各个单独的项：
 
+```perl
 print FILEOUT "UUID: " . $env->getHeader('uuid') . "\n";
 print FILEOUT "Caller: " . $env->getHeader('caller_id') . "\n";
-print FILEOUT "Fax result: " $env->getHeader('fax_result_text') . "\n";
+print FILEOUT "Fax result: " . $env->getHeader('fax_result_text') . "\n";
 print FILEOUT "Fax pages: " . $env->getHeader('fax_document_transferred_pages') . "\n";
-
-Once you have the values you need you simply build a perl script and do whatever you wish to do.
-
-The following is an example of dialplan extension that executes a Perl script after a fax is received:
-
-```xml
-  <extension name="fax in">
-    <condition field="destination_number" expression="^9905$">
-      <action application="answer"/>
-      <action application="playback" data="silence_stream://2000"/>
-      <action application="set" data="api_hangup_hook=perl hook.pl"/>
-      <action application="set" data="fax_file=/tmp/fax-in-${uuid}.tif"/>
-      <action application="rxfax" data="${fax_file}"/>
-      <action application="info"/>
-      <action application="log" data="INFO Fax recd!!"/>
-      <action application="hangup"/>
-    </condition>
-  </extension>
 ```
 
-  
-###  See Also 
+一旦获取到所需的值，您只需构建一个 Perl 脚本，并执行您想要执行的操作。
 
-* [Script Language Choice](../Client-and-Developer-Interfaces/Script-Language-Choice_1048942.mdx#about)
+以下是一个示例拨号计划扩展，在收到传真后执行 Perl 脚本：
 
-###  Examples 
+```xml
+<extension name="fax in">
+  <condition field="destination_number" expression="^9905$">
+    <action application="answer"/>
+    <action application="playback" data="silence_stream://2000"/>
+    <action application="set" data="api_hangup_hook=perl hook.pl"/>
+    <action application="set" data="fax_file=/tmp/fax-in-${uuid}.tif"/>
+    <action application="rxfax" data="${fax_file}"/>
+    <action application="info"/>
+    <action application="log" data="INFO Fax recd!!"/>
+    <action application="hangup"/>
+  </condition>
+</extension>
+```
 
-* [ENUM Caller ID lookup](../Examples/ENUM-Caller-ID-lookup_1966681.mdx#about)
-* [IVR in Perl](../Examples/IVR-in-Perl_7144389.mdx#--)
-* [Caller ID LDAP Lookup](../Examples/Caller-ID-LDAP-Lookup_7144395.mdx#about)
-* [mod\_perl examples by Mitch Capper](../Examples/mod_perl-examples-by-Mitch-Capper_7144403.mdx#--)
+### 参考资料
 
+* [脚本语言选择](../Client-and-Developer-Interfaces/Script-Language-Choice_1048942.mdx#about)
 
+### 示例
+
+* [ENUM 来电显示查询](../Examples/ENUM-Caller-ID-lookup_1966681.mdx#about)
+* [使用 Perl 的 IVR](../Examples/IVR-in-Perl_7144389.mdx#--)
+* [来电显示 LDAP 查询](../Examples/Caller-ID-LDAP-Lookup_7144395.mdx#about)
+* [Mitch Capper 的 mod_perl 示例](../Examples/mod_perl-examples-by-Mitch-Capper_7144403.mdx#--)

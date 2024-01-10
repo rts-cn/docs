@@ -1,80 +1,75 @@
+# 简单的白天黑夜模式
 
-# Simple Day Nite Mode 
+## 关于
 
- 
+这是一个使用拨号计划来操作全局变量的简单示例。
 
-## About
+点击此处展开目录
 
-A very simple example of using the dialplan to manipulate global variables. 
-
-Click here to expand Table of Contents
-
-* 1 [](#set-nite-mode)
-* 2 [Discussion](#discussion)
-* 3 [Dialplan](#dialplan)  
-   * 3.1 [Set DAY mode:](#set-day-mode)  
-   * 3.2 [Set NITE mode:](#set-nite-mode)
-* 4 [See Also](#see-also)
+* 1 [设置黑夜模式](#set-nite-mode)
+* 2 [讨论](#discussion)
+* 3 [拨号计划](#dialplan)  
+   * 3.1 [设置白天模式：](#set-day-mode)  
+   * 3.2 [设置黑夜模式：](#set-nite-mode)
+* 4 [相关链接](#see-also)
 
 ##   
 
-## Discussion
+## 讨论
 
-This dialplan example will manipulate the global variable "sys\_mode" which normally contains "DAY" or "NITE" depending on the system mode. Dial x9200 to set day mode and dial x9201 to set nite mode. NOTE: At the time of this writing I did not have "day mode" or "night mode" prompts recorded, so I just filled in with "call forwarding set" for setting NITE mode and "Call forwarding cancelled" for indicating that DAY mode has been set.
+这个拨号计划示例将操作全局变量"sys_mode"，该变量通常包含系统模式的"DAY"或"NITE"。拨打x9200来设置白天模式，拨打x9201来设置黑夜模式。注意：在撰写本文时，我没有录制"白天模式"或"晚上模式"的提示音，因此我只是用"设置来电转发"代替了设置黑夜模式，用"来电转发已取消"表示已设置白天模式。
 
-To act on DAY mode vs. NITE mode simply check the value of ${sys\_mode} and act accordingly.
+只需检查${sys_mode}的值，根据白天模式和黑夜模式来执行相应的操作。
 
-## Dialplan
+## 拨号计划
 
-Simple extension to display what the current mode is:
+简单的扩展，用于显示当前模式：
 
-**Dialplan**
+**拨号计划**
 
 ```xml
- <extension name="Day/Nite mode check" continue="true">
-    <condition>
-      <action application="log" data="INFO Current system mode is: ${sys_mode}"/>
-    </condition>
-  </extension>
+<extension name="白天/黑夜模式检查" continue="true">
+  <condition>
+    <action application="log" data="INFO 当前系统模式是：${sys_mode}"/>
+  </condition>
+</extension>
 ```
 
-### **Set DAY mode:**
+### **设置白天模式：**
 
-**DAY mode**
+**白天模式**
 
 ```xml
-  <extension name="Day mode example">
-    <condition field="destination_number" expression="^9200$">
-      <action application="answer"/>
-      <action application="sleep" data="500"/>
-      <action application="set" data="${global_setvar(sys_mode=DAY)}"/>
-      <action application="playback" data="ivr/ivr-call_forwarding_has_been_cancelled.wav"/>>
-      <action application="log" data="WARNING System has been put into [[[DAY mode]]] by ${caller_id_number}"/>
-      <action application="hangup"/>
-    </condition>
-  </extension>
+<extension name="白天模式示例">
+  <condition field="destination_number" expression="^9200$">
+    <action application="answer"/>
+    <action application="sleep" data="500"/>
+    <action application="set" data="${global_setvar(sys_mode=DAY)}"/>
+    <action application="playback" data="ivr/ivr-call_forwarding_has_been_cancelled.wav"/>>
+    <action application="log" data="WARNING 系统已被 ${caller_id_number} 设置为 [[[白天模式]]]"/>
+    <action application="hangup"/>
+  </condition>
+</extension>
 ```
 
-### **Set NITE mode:**
+### **设置黑夜模式：**
 
-**NITE mode**
+**夜间模式**
 
 ```xml
-  <extension name="Night mode example">
+  <extension name="夜间模式示例">
     <condition field="destination_number" expression="^9201$">
       <action application="answer"/>
       <action application="sleep" data="500"/>
       <action application="set" data="${global_setvar(sys_mode=NITE)}"/>
-      <action application="playback" data="ivr/ivr-call_forwarding_has_been_set.wav"/>>
-      <action application="log" data="WARNING System has been put into [[[NITE mode]]] by ${caller_id_number}"/>
+      <action application="playback" data="ivr/ivr-call_forwarding_has_been_set.wav"/>
+      <action application="log" data="WARNING 系统已被 ${caller_id_number} 设置为夜间模式"/>
       <action application="hangup"/>
     </condition>
   </extension>
 ```
 
-## See Also
+## 参见
 
-* [Dialplan\_XML](../Dialplan/XML-Dialplan/index.mdx#about)
-* [Dialplan\_Recipes](../Dialplan/Dialplan-Recipes_9634252.mdx#about)
-
-
+* [Dialplan\_XML](../Dialplan/XML-Dialplan/index_zh.mdx#about)
+* [Dialplan\_Recipes](../Dialplan/Dialplan-Recipes_9634252_zh.mdx#about)

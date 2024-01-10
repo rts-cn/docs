@@ -1,271 +1,266 @@
+# FreeSWITCH 和 Opus 音频编解码器
 
-# FreeSWITCH And The Opus Audio Codec 
+## 关于
 
- 
+本页面源于 Dragos 和 Giacomo 于2016年10月初撰写的一份文档（您可以在[这里附上原始文件](/attachments/12517398/12517399.pdf) 以便保留历史记录）。它试图从多个角度（使用、配置、开发、调试、安装）提供 FreeSWITCH 和 Opus 之间相互关联的综述。本文基于 FreeSWITCH v1.6，尤其是 v1.6.12 版本。
 
-## About
+我们还希望建立一个通用术语表，以帮助理解和沟通与 FreeSWITCH 和 Opus 相关的话题。
 
-This page derives from a document written initially by Dragos and Giacomo in October 2016 (you can find the [original attached here](/attachments/12517398/12517399.pdf) for historical reasons). It is an attempt to provide a general view of the interaction between FreeSWITCH and Opus, under several points of view: use, configuration, development, debug, installation. This is based on FreeSWITCH v1.6, in particular v1.6.12.
+您的反馈和问题非常欢迎。
 
-We also wanted to build a common terminology to help understand and communicate topics related to FreeSWITCH when Opus is involved.
+点击展开目录
 
-Feedback and questions are very welcome.
+* 1 [介绍](#-freeswitch--freeswitch-and-the-opus-audio-codec-)
+* 2 [在FreeSWITCH中使用Opus](#using-opus-in-freeswitch)  
+   * 2.1 [示例](#-freeswitch--freeswitch-and-the-opus-audio-codec-)
+* 3 [用户手册](#-freeswitch--freeswitch-and-the-opus-audio-codec-)  
+   * 3.1 [配置参数](#configuration-parameters)
+* 4 [配置示例](#examples-of-configuration)  
+   * 4.1 [WebRTC配置](#webrtc-configuration)  
+   * 4.2 [只进行转码的配置](#webrtc-configuration)
+* 5 [Opus流的SDP Offer/Answer](#-freeswitch--freeswitch-and-the-opus-audio-codec-)  
+   * 5.1 [强制参数](#mandatory-parameters)  
+   * 5.2 [可选参数](#optional-parameters)  
+      * 5.2.1 [解码器参数](#decoder-parameters)  
+         * 5.2.2 [编码器参数](#decoder-parameters)  
+   * 5.3 [SDP Offer示例](#sdp-offers-examples)  
+      * 5.3.1 [通用Offer](#-freeswitch--freeswitch-and-the-opus-audio-codec-)  
+   * 5.4 [窄带Offer](#narrowband-offer)
+* 6 [开发](#-freeswitch--freeswitch-and-the-opus-audio-codec-)  
+   * 6.1 [解码器上的前向纠错](#fec-on-the-decoder)  
+   * 6.2 [编码器上的前向纠错](#fec-on-the-encoder)  
+   * 6.3 [编解码器控制（拥塞控制）](#codec-control-congestion-control)
+* 7 [调试](#-freeswitch--freeswitch-and-the-opus-audio-codec-)  
+   * 7.1 [介绍](#-freeswitch--freeswitch-and-the-opus-audio-codec-)  
+   * 7.2 [如何使用"opus\_debug" CLI命令](#-freeswitch--freeswitch-and-the-opus-audio-codec-)  
+      * 7.2.1 [示例](#-freeswitch--freeswitch-and-the-opus-audio-codec-)  
+         * 7.2.2 [带有PLC的示例](#-freeswitch--freeswitch-and-the-opus-audio-codec-)  
+         * 7.2.3 [带有FEC的示例](#-freeswitch--freeswitch-and-the-opus-audio-codec-)  
+   * 7.3 [解码器的统计数据](#statistics-of-decoder)  
+   * 7.4 [编码器的统计数据](#statistics-of-decoder)  
+   * 7.5 [使用Wireshark调试](#debugging-with-wireshark)
+* 8 [附件 - libopus](#appendix--libopus)  
+   * 8.1 [安装libopus](#installing-libopus)  
+   * 8.2 [构建libopus](#building-libopus)  
+      * 8.2.1 [准备tarball源码](#prepare-source-from-tarball)  
+         * 8.2.2 [准备git源码](#prepare-source-from-git)  
+         * 8.2.3 [构建](#-freeswitch--freeswitch-and-the-opus-audio-codec-)  
+   * 8.3 [打包libopus](#packaging-libopus)  
+      * 8.3.1 [构建libopus RPM](#building-libopus-rpms)
+* 9 [附件 - 构建mod\_opus](#appendix--building-mod_opus)
+* 10 [术语表](#-freeswitch--freeswitch-and-the-opus-audio-codec-)
+* 11 [参考文献](#-freeswitch--freeswitch-and-the-opus-audio-codec-)  
+   * 11.1 [Dragos在ClueCon 2017上的演讲](#dragos-presentation-at-cluecon-2017)
+* 12 [推荐阅读](#recommended-reads)
 
-Click to expand Table of Contents
+## 介绍
 
-* 1 [Introduction](#-freeswitch--freeswitch-and-the-opus-audio-codec-)
-* 2 [Using Opus in FreeSWITCH](#using-opus-in-freeswitch)  
-   * 2.1 [Examples](#-freeswitch--freeswitch-and-the-opus-audio-codec-)
-* 3 [User Manual](#-freeswitch--freeswitch-and-the-opus-audio-codec-)  
-   * 3.1 [Configuration Parameters](#configuration-parameters)
-* 4 [Examples of configuration](#examples-of-configuration)  
-   * 4.1 [WebRTC configuration](#webrtc-configuration)  
-   * 4.2 [Transcoding only configuration](#webrtc-configuration)
-* 5 [SDP Offer/Answer for Opus streams](#-freeswitch--freeswitch-and-the-opus-audio-codec-)  
-   * 5.1 [Mandatory parameters](#mandatory-parameters)  
-   * 5.2 [Optional parameters](#optional-parameters)  
-      * 5.2.1 [Decoder parameters](#decoder-parameters)  
-         * 5.2.2 [Encoder parameters](#decoder-parameters)  
-   * 5.3 [SDP offers examples](#sdp-offers-examples)  
-      * 5.3.1 [Generic offer](#-freeswitch--freeswitch-and-the-opus-audio-codec-)  
-   * 5.4 [Narrowband offer](#narrowband-offer)
-* 6 [Development](#-freeswitch--freeswitch-and-the-opus-audio-codec-)  
-   * 6.1 [FEC on the decoder](#fec-on-the-decoder)  
-   * 6.2 [FEC on the encoder](#fec-on-the-encoder)  
-   * 6.3 [Codec Control (Congestion control)](#codec-control-congestion-control)
-* 7 [Debugging](#-freeswitch--freeswitch-and-the-opus-audio-codec-)  
-   * 7.1 [Introduction](#-freeswitch--freeswitch-and-the-opus-audio-codec-)  
-   * 7.2 [How to work with the "opus\_debug" CLI command](#-freeswitch--freeswitch-and-the-opus-audio-codec-)  
-      * 7.2.1 [Example](#-freeswitch--freeswitch-and-the-opus-audio-codec-)  
-         * 7.2.2 [Example with PLC](#-freeswitch--freeswitch-and-the-opus-audio-codec-)  
-         * 7.2.3 [Example with FEC](#-freeswitch--freeswitch-and-the-opus-audio-codec-)  
-   * 7.3 [Statistics of Decoder](#statistics-of-decoder)  
-   * 7.4 [Statistics of Encoder](#statistics-of-decoder)  
-   * 7.5 [Debugging with Wireshark](#debugging-with-wireshark)
-* 8 [APPENDIX – libopus](#appendix--libopus)  
-   * 8.1 [Installing libopus](#installing-libopus)  
-   * 8.2 [Building libopus](#building-libopus)  
-      * 8.2.1 [Prepare source from tarball](#prepare-source-from-tarball)  
-         * 8.2.2 [Prepare source from git](#prepare-source-from-git)  
-         * 8.2.3 [Build](#-freeswitch--freeswitch-and-the-opus-audio-codec-)  
-   * 8.3 [Packaging libopus](#packaging-libopus)  
-      * 8.3.1 [Building libopus RPMs](#building-libopus-rpms)
-* 9 [APPENDIX – Building mod\_opus](#appendix--building-mod_opus)
-* 10 [Glossary](#-freeswitch--freeswitch-and-the-opus-audio-codec-)
-* 11 [References](#-freeswitch--freeswitch-and-the-opus-audio-codec-)  
-   * 11.1 [Dragos presentation at ClueCon 2017](#dragos-presentation-at-cluecon-2017)
-* 12 [Recommended reads](#recommended-reads)
+FreeSWITCH是一个支持SIP和WebRTC等通信技术的开源电话平台。Opus是一种具有很高的丢包容忍性的音频编解码器，得益于其正向纠错（Forward Error Correction，FEC）技术。
 
-## Introduction
+通过其_mod_opus_模块，FreeSWITCH支持Opus的编码和解码。
 
-FreeSWITCH is an open source telephony platform supporting communication technologies such as SIP and WebRTC. Opus is an audio codec with high resilience to packet loss, thanks to its Forward Error Correction (FEC) techniques.
+Opus是WebRTC所必需的编码器，从而保证了在不同实现之间的互操作性。它的适应性使得它适用于在高性能笔记本电脑或智能手机上运行的应用程序，无论是独立运行还是集成到Web浏览器中。
 
-Opus encoding and decoding are supported in FreeSWITCH through its _mod\_opus_ module.
+FreeSWITCH对Opus的支持与使用的终端设备无关，因此可以用于通用的SIP终端设备和基于verto的（WebRTC）客户端。
 
-Opus is a required coded for WebRTC, thus guaranteeing interoperability across different implementations. Its adaptability makes it suitable for applications running on high-range laptops or smartphones, either standalone or integrated into web browsers.
+除了作为高质量和低延迟音频编解码器之外，Opus在VOIP方面的主要特点是FEC技术和协商音频流的非对称性的能力。
 
-FreeSWITCH support for Opus is independent from the endpoint in use, so it's available for both generic SIP endpoints and verto-based (WebRTC) clients.
+_mod_opus_模块支持两种Opus的变种：一个是48 KHz的，可以用于WebRTC并且在默认配置中存在；另一个是将采样率固定为8000 Hz的，可以用于与广泛使用的8000 Hz编解码器进行转码，并且尽可能降低CPU消耗。
 
-Besides being a high quality and low latency audio codec, the main features of Opus for VOIP are FEC and the ability to negotiate asymmetry of audio streams.
+更新：添加opus@16000hz（FreeSWITCH版本1.6.16）
 
-The _mod\_opus_ module supports two variants of Opus: one at 48 KHz which can be used for WebRTC and it's present in the default configuration, and one which enforces the sampling rate at 8000 Hz and can be used for transcoding with widely used 8000 Hz codecs with as little CPU consumption as possible.
+## 在FreeSWITCH中使用Opus
 
-Update: opus@16000h added (FS version 1.6.16)
+Opus可以像其他编解码器一样在FreeSWITCH中加载。
 
-## Using Opus in FreeSWITCH
+编解码器字符串可以是以下之一：
 
-Opus can be loaded just like the other codecs in FreeSWITCH.
-
-The codec string can be one of these :
-
-* opus@48000h@10i - Opus 48khz using 10 ms ptime (mono and stereo)
-* opus@48000h@20i - Opus 48khz using 20 ms ptime (mono and stereo)
-* opus@48000h@40i - Opus 48khz using 40 ms ptime
-* opus@16000h@10i - Opus 16khz using 10 ms ptime (mono and stereo) - from version 1.6.16
-* opus@16000h@20i - Opus 16khz using 20 ms ptime (mono and stereo) - from version 1.6.16
-* opus@16000h@40i - Opus 16khz using 40 ms ptime - from version 1.6.16
-* opus@8000h@10i - Opus 8khz using 10 ms ptime (mono and stereo)
-* opus@8000h@20i - Opus 8khz using 20 ms ptime (mono and stereo)
-* opus@8000h@40i - Opus 8khz using 40 ms ptime
-* opus@8000h@60i - Opus 8khz using 60 ms ptime
-* opus@8000h@80i - Opus 8khz using 80 ms ptime
-* opus@8000h@100i - Opus 8khz using 100 ms ptime
-* opus@8000h@120i - Opus 8khz using 120 ms ptime
-
-The format of the codec string is:
-
-```xml
-CODEC_NAME@SAMPLE_RATEh@PTIMEi@CHANNELSc
 ```
+* opus@48000h@10i - 使用 Opus 48kHz 和 10 ms ptime（单声道和立体声）
+* opus@48000h@20 - 使用 Opus 48kHz 和 20 ms ptime（单声道和立体声）
+* opus@48000h@40i - 使用 Opus 48kHz 和 40 ms ptime
+* opus@16000h@10i - 使用 Opus 16kHz 和 10 ms ptime（单声道和立体声）- 从版本 1.6.16 开始
+* opus@16000h@20i - 使用 Opus 16kHz 和 20 ms ptime（单声道和立体声）- 从版本 1.6.16 开始
+* opus@16000h@40i - 使用 Opus 16kHz 和 40 ms ptime - 从版本 1.6.16 开始
+* opus@8000h@10i - 使用 Opus 8kHz 和 10 ms ptime（单声道和立体声）
+* opus@8000h@20i - 使用 Opus 8kHz 和 20 ms ptime（单声道和立体声）
+* opus@8000h@40i - 使用 Opus 8kHz 和 40 ms ptime
+* opus@8000h@60i - 使用 Opus 8kHz 和 60 ms ptime
+* opus@8000h@80i - 使用 Opus 8kHz 和 80 ms ptime
+* opus@8000h@100i - 使用 Opus 8kHz 和 100 ms ptime
+* opus@8000h@120i - 使用 Opus 8kHz 和 120 ms ptime
 
-Note the "h" , "i" and "c" tokens, "h" for sample rate , "i" for ptime, "c" for number of channels.
+其中 CODEC_NAME@SAMPLE_RATEh@PTIMEi@CHANNELSc 是编解码器字符串的格式。
 
-### Examples
+请注意 "h"、"i" 和 "c" 标记，"h" 用于采样率，"i" 用于 ptime，"c" 用于通道数。
+
+### 示例
 
 ```xml
 <action application="set" data="codec_string=OPUS"/>
 ```
 
-This is default in FreeSWITCH and it means _OPUS@48000h@20i@1c_. Its use is recommended.
+这是 FreeSWITCH 的默认设置，表示 _OPUS@48000h@20i@1c_。推荐使用此设置。
 
 ```xml
 <action application="set" data="codec_string=OPUS@8000h@20i"/>
 ```
 
-Use this if you transcode to/from PCMA or PCMU or any other 8 KHz codec.
+如果您转码到/从 PCMA 或 PCMU 或任何其他 8kHz 编解码器，请使用此设置。
 
 ```xml
 <action application="set" data="codec_string=OPUS@8000h@20i,OPUS@8000h@40i, OPUS@8000h@60i,OPUS@8000h@80i"/>
 ```
 
-You can use this if your VOIP software wants one of those ptimes.
+如果您的 VOIP 软件需要其中一种 ptime，请使用此设置。
 
 ```xml
 <action application="set" data="codec_string=OPUS@8000h"/>
 ```
 
-This implies 20 ms ptime.
+这意味着使用 20 ms 的 ptime。
 
-## User Manual
+## 用户手册
 
-Opus is configured through the config file _PATH\_TO\_CONFIG/autoload\_configs/opus.conf.xml_.
+Opus 的配置文件位于 _PATH\_TO\_CONFIG/autoload\_configs/opus.conf.xml_。
+```
 
-There are FMTP params (they will be sent inside SDP to the remote peer), encoder only params, and decoder only params. Some of the decoder params are also FMTP params and FMTP encoder params are also FMTP params. The FMTP params are per RFC 7587.
+有FMTP参数（它们将被发送到远端对等方的SDP中）、仅编码器参数和仅解码器参数。其中一些解码器参数也是FMTP参数，而FMTP编码器参数也是FMTP参数。这些FMTP参数遵循RFC 7587。
 
-The encoder params are:
+编码器参数包括:
 
-* maxaveragebitrate (FMTP)
-* sprop-maxcapturerate (FMTP)
-* use-vbr (FMTP)
-* use-dtx (FMTP)
+* maxaveragebitrate（FMTP）
+* sprop-maxcapturerate（FMTP）
+* use-vbr（FMTP）
+* use-dtx（FMTP）
 * complexity
 * keep-fec-enabled
 * packet-loss-percent
 
-The decoder params are:
+解码器参数包括:
 
-* maxplaybackrate (FMTP)
+* maxplaybackrate（FMTP）
 * use-jb-lookahead
 
-We are referencing the local encoder and the local decoder. Some of these params when sent to a peer (through SDP offer/answer ) change their roles and a local encoder param will become a remote decoder param. The FMTP params are also marking characteristics of the local encoder and are shaping its functionality.
+我们在参考本地编码器和本地解码器。当这些参数发送给对等方（通过SDP offer/answer），它们的角色会发生变化，本地编码器参数将变为远程解码器参数。FMTP参数也标记了本地编码器的特性，并塑造其功能。
 
-### Configuration Parameters
+### 配置参数
 
-We are showing the configuration parameters with the hardcoded values from mod\_opus.c. If one of these params is not set in in the config file (opus.conf.xml), then it will have a default value as shown below. These values are not the ones from the default config file .
+我们展示了来自mod\_opus.c的硬编码值的配置参数。如果这些参数在配置文件(opus.conf.xml)中没有设置，则它们将具有以下默认值。这些值不是默认配置文件中的值。
 
-"use-vbr" setting - set OPUS in VBR (Variable Bitrate) mode - consume less network bandwidth . VBR is OPUS's native mode. This is a boolean value , it can be 0 or 1 . The hardcoded default is 0.
+"use-vbr"参数 - 将OPUS设置为可变比特率（VBR）模式 - 占用更少的网络带宽。VBR是OPUS的原生模式。它是一个布尔值，可以是0或1。硬编码的默认值为0。
 
 ```xml
 <param name="use-vbr" value="0"/>
 ```
 
-"use-dtx" setting - do not use DTX because not necessarily the remote client/user app supports it. This is a boolean value, it can be 0 or 1\. The hardcoded default is 1.
+"use-dtx"参数 - 不使用DTX，因为不一定远程客户端/用户应用程序支持它。它是一个布尔值，可以是0或1。硬编码的默认值为1。
 
 ```xml
 <param name="use-dtx" value="0"/>
 ```
 
-"complexity" setting - this is a codec specific setting. The assumption is that the user has a powerful machine to do transcoding and the complexity (roughly degree of compression) can be 10 which is the highest.
+"complexity"参数 - 这是一个编解码器特定的设置。假设用户有一台强大的机器来进行转码，复杂度（大致是压缩程度）可以设置为最高的10。
 
 ```xml
 <param name="complexity" value="10"/>
 ```
 
-"maxaveragebitrate" setting (in bps) – this is the bitrate of the encoder , it can have any value between 6000 and 510000 bps. This is an average value and at times during encoding the real bitrate can vary around this value depending on the encoded information . See VBR.
+"maxaveragebitrate"设置（以bps为单位） - 这是编码器的比特率，可以在6000到510000 bps之间选择任何值。这是一个平均值，而在编码过程中，实际比特率可能会围绕该值变动，取决于编码信息。请参见VBR。
 
-Note that if the remote sends us a maxaveragebitrate of X and we have in our config file a value of Y, then we configure our encoder with the smallest of these values: min (X,Y).
+请注意，如果远程发送给我们的最大平均比特率为X，而我们在配置文件中的值为Y，则我们将使用这些值中最小的那个进行编码器的配置：min（X，Y）。
 
-For OPUS@8000h this bitrate should be chosen so that FEC is present in the payload whenever the Opus codec decides it can add it. There is a threshold bitrate for FEC activation in OPUS: 12400 bps. Lower than this bitrate , there will be no FEC.
+对于OPUS@8000h，应选择比特率，以便每当Opus编解码器决定可以添加FEC时，有效负载中有FEC。 OPUS有激活FEC的阈值比特率：12400 bps。低于这个比特率时，将不会有FEC。
 
 ```xml
 <param name="maxaveragebitrate" value="30000"/>
 ```
 
-for OPUS@48000h, or
+对于OPUS@48000h，或者
 
 ```xml
 <param name="maxaveragebitrate" value="14000"/>
 ```
 
-for OPUS@8000h.
+对于OPUS@8000h。
 
-"maxplaybackrate" setting – this is the sample rate of the encoder in Hz.
+"maxplaybackrate"设置 - 这是编码器的采样率（以Hz为单位）。
 
-This will tell the remote party that it's pointless to send us higher rates, because FS will downsample anyway. Valid values are: 8000, 12000, 16000, 24000, 48000\. If we use Opus@8000h it's better to tell the remote party to use 8000 Hz sample rate to spare us some CPU. Besides configuring the local encoder this value is also sent to the remote party as FMTP param.
+这将告诉远程对方发送更高的速率是没有意义的，因为FS无论如何都会进行降采样。有效值为：8000、12000、16000、24000、48000。如果我们使用Opus@8000h，最好告诉远程对方使用8000 Hz采样率以减轻一些CPU负担。除了配置本地编码器，该值也会作为FMTP参数发送给远程对方。
 
-| Abbreviation        | Audio bandwidth | Sample rate |
-| ------------------- | --------------- | ----------- |
-| NB (NARROWBAND)     | 4000 hz         | 8000 hz     |
-| MB (MEDIUMBAND)     | 6000 hz         | 12000 hz    |
-| WB (WIDEBAND)       | 8000 hz         | 16000 hz    |
-| SWB (SUPERWIDEBAND) | 12000 hz        | 24000 hz    |
-| FB (FULLBAND)       | 20000 hz        | 48000 hz    |
+| 缩写     | 音频带宽   | 采样率     |
+| -------- | ---------- | ---------- |
+| 窄带     | 4000 Hz    | 8000 Hz    |
+| 中等带宽 | 6000 Hz    | 12000 Hz   |
+| 宽带     | 8000 Hz    | 16000 Hz   |
+| 超宽带   | 12000 Hz   | 24000 Hz   |
+| 全频带   | 20000 Hz   | 48000 Hz   |
 
-FreeSWITCH (in mod\_opus) supports only NARROWBAND and FULLBAND at initialization time because these are most widely used for VOIP. But if "maxplaybackrate" and "sprop\_maxcapturerate" are adjusted (FMTP and/or config ) and the "asymmetric-sample-rates" config param is enabled, then the user can change the sample rate and consequently the frame size of the encoder .
+FreeSWITCH（在mod_opus中）仅在初始化时支持窄带（NARROWBAND）和全带（FULLBAND），因为这些是最广泛用于VOIP的。但是，如果调整了“maxplaybackrate”和“sprop_maxcapturerate”（通过FMTP和/或配置文件），并且启用了“asymmetric-sample-rates”配置参数，则用户可以更改采样率，从而改变编码器的帧大小。
 
-The OPUS@48000h decoder can play voice payloads encoded at any of the Opus sample rates.
+OPUS@48000h解码器可以播放以任何Opus采样率编码的语音负载。
 
-The OPUS@8000h decoder will down sample by default to 8000 Hz but it will still decode any sample rate.
+OPUS@8000h解码器默认会向下采样至8000 Hz，但仍然可以解码任何采样率。
 
 ```xml
 <param name="maxplaybackrate" value="48000"/>
 ```
 
-for OPUS@48000h or
+适用于OPUS@48000h 或
 
 ```xml
 <param name="maxplaybackrate" value="8000"/>
 ```
 
-for OPUS@8000h.
+适用于OPUS@8000h。
 
-"sprop-maxcapturerate": this is the maximum input sampling rate to tell to the remote receiver. It can have values: 8000, 12000, 16000, 24000, 48000 in Hz .
+"sprop-maxcapturerate"：这是告知远程接收方的最大输入采样率。它可以具有以下值：8000、12000、16000、24000、48000（单位：Hz）。
 
-We are not setting it if we use OPUS@48000h simply because the sender is assumed to have no limitations by default so it will just default to 48000 Hz.
+如果使用OPUS@48000h，则不会设置它，因为默认情况下假定发送方没有任何限制，因此其默认采样率为48000 Hz。
 
-For OPUS@8000h this is being set in FMTP and so we're telling the remote we don't plan any downsampling.
+对于OPUS@8000h，它在FMTP中进行了设置，因此我们告诉远程接收方我们不计划进行任何降采样。
 
 ```xml
 <param name="sprop-maxcapturerate" value="0"/>
 ```
 
-for OPUS@48000h or
+适用于OPUS@48000h 或
 
 ```xml
 <param name="sprop-maxcapturerate" value="8000"/>
 ```
 
-for OPUS@8000h.
+适用于OPUS@8000h。
 
-"packet-loss-percent" setting – this is the initial packet loss that we pass to the encoder.
+"packet-loss-percent"设置- 这是我们传递给编码器的初始丢包率。
 
-This value in conjunction with the maxaveragebitrate value will make the codec decide if it will use FEC or not.
+该值与最大平均比特率值共同决定编解码器是否使用前向纠错（FEC）。
 
 ```xml
 <param name="packet-loss-percent" value="20"/>
 ```
 
-"keep-fec-enabled" setting – this will enforce the encoder to use FEC regardless of the maxaveragebitrate supplied to it. In fact it will recalculate a new bitrate based on the packet loss percentage taken from RTCP arriving to us from the user app if the packet loss is higher than 10%.
+**"keep-fec-enabled"** 设置 - 这将强制编码器在无论maxaveragebitrate的值如何时都使用FEC。实际上，它将根据从用户应用程序发送给我们的RTCP中的包丢失百分比重新计算新的比特率，如果包丢失超过10%。
 
-You might expect that this bitrate would be lower than the maxaveragebitrate, but in reality the actual bitrate will vary with packet loss during the call - but only to keep FEC enabled. This will override the maxaveragebitrate value. But if there's no more packet loss during the call then the bitrate will go to the supplied maxaveragebitrate (the one we set from remote fmtp or the local config file). This is n-1 FEC.
+你可能期望这个比特率比maxaveragebitrate要低，但实际上，在通话期间，实际比特率会根据数据包丢失而变化 - 只是为了保持FEC启用。这将覆盖maxaveragebitrate的值。但是，如果通话期间没有更多的包丢失，那么比特率将回到指定的maxaveragebitrate（我们从远程fmtp或本地配置文件中设置的那个值）。这是 n-1 FEC。
 
-This feature works in today's networks, although one can ask how come the call improves if we actually increase the bitrate under packet loss conditions. Here's an explanation. For example a congested WiFi router or core router will drop a 60 bytes packet (40 bytes IP/UDP/RTP header + 20 bytes voice payload ) as easy as an 70 bytes packet , so if you increase the bitrate with 10 bytes per packet (let's say that this is the price to pay of having FEC enabled ) will not matter that much for that congested router, it will continue to forward some packets and drop some packets in the same manner. It's a packet-loss pattern (many small gaps).
+这个功能在今天的网络中可以使用，尽管有人可能会问，如果在数据包丢失条件下实际上增加比特率，那么通话是如何改善的。这里有一个解释。例如，一个拥塞的WiFi路由器或核心路由器会像丢弃70字节的包一样容易地丢弃60字节的包（40字节的IP/UDP/RTP头+ 20字节的语音负载），所以如果你每个包增加10字节的比特率（假设这是启用FEC所需要付出的代价），对于这个拥塞的路由器来说并不那么重要，它将继续转发一些包并以相同的方式丢弃一些包。这是一个数据包丢失的模式（许多小的间隙）。
 
-The usage of FEC will improve the audio quality because there will be redundant information in the packets eventually arriving at the decoder after the congestion adventure. This is just an example, don't take these values above exactly as they are (60, 70 , 10). Only 40 bytes for header overhead is a correct value and it's the only fixed value in calculating network bitrate. "maxaveragebitrate" is an average , and the actual network bandwidth used might be a little bit higher or a little bit smaller, depending on the content being encoded. The voice payload size varies (because Opus is VBR) and so does the FEC payload inside the voice payload.
+使用前向纠错（FEC）将改善音频质量，因为在拥塞情况下，传递到解码器的数据包中将会有冗余信息。这只是一个例子，不要将上述数值（60、70、10）视为准确值。头部开销只有40字节是正确的计算网络比特率的固定值。"maxaveragebitrate"是一个平均值，实际使用的网络带宽可能会略高或略低，这取决于编码的内容。语音有效负载的大小会变化（因为Opus是VBR），FEC有效负载也会随之变化。
 
 ```xml
 <param name="keep-fec-enabled" value="1"/>
 ```
 
-"use-jb-lookahead" setting – this enables FEC decoding in the decoder.
+"use-jb-lookahead"设置 - 这将启用解码器中的FEC解码。
 
-The jitter buffer must be enabled for FEC decoding to work. This setting has impact on decoding received FEC - it will improve the audio quality greatly under packet loss conditions. We decode incoming FEC by looking in the jitter buffer, checking if we have the next packet (only if the current packet is missing due to packet loss) and then checking if it has FEC info in it. If it has FEC, then first we decode the FEC and then we decode the main payload.
+必须启用抖动缓冲区才能使用FEC解码。此设置对接收到的FEC解码有影响 - 在丢包情况下，它将显著提高音频质量。我们通过查看抖动缓冲区来解码接收到的FEC，检查是否有下一个数据包（只有在当前数据包由于丢包而丢失时），然后检查其中是否有FEC信息。如果有FEC信息，我们首先解码FEC，然后解码主要负载。
 
 ```xml
 <param name="use-jb-lookahead" value="1"/>
 ```
 
-Add these in the dialplan to enable the jitter buffer:
+在拨号计划中添加以下内容以启用抖动缓冲区：
 
 ```xml
 <action application="set" data="jitterbuffer_msec=2p:25p:"/>
@@ -274,55 +269,55 @@ Add these in the dialplan to enable the jitter buffer:
 <action application="set" data="suppress_cng=true"/>
 ```
 
-"advertise-useinbandfec" setting - This is used to toggle "useinbandfec" parameter in fmtp.
+"advertise-useinbandfec"设置 - 用于切换fmtp中的"useinbandfec"参数。
 
-We tell the remote party it's okay to send us voice payloads with FEC. If we don't have a jitter buffer activated we will just ignore the voice payloads with FEC, and play only the main part of the voice payload.
+我们告诉远程方通过FEC发送语音有效载荷是可以的。如果我们未激活抖动缓冲区，我们将忽略带有FEC的语音有效载荷，只播放语音有效载荷的主要部分。
 
 ```xml
 <param name="advertise-useinbandfec" value="1"/>
 ```
 
-"asymmetric-sample-rates", when set to 1, will tell FreeSWITCH to evaluate the remote party's sprop-maxcapturerate and maxplaybackrate when deciding how to initialize the opus codec.
+当将"asymmetric-sample-rates"设置为1时，将告知FreeSWITCH在初始化opus编解码器时如何评估远程方的sprop-maxcapturerate和maxplaybackrate。
 
-If we imagine an entity with local parameters:
+设想有一个具有本地参数的实体：
 
 _maxplaybackrate=Da; sprop-maxcapturerate=Ea; maxaveragebitrate=Fa_
 
-and remote parameters:
+和远程参数：
 
 _maxplaybackrate=Db; sprop-maxcapturerate=Eb; maxaveragebitrate=Fb_
 
-then this entity can set the decoder at a sample rate of min(Da, Eb) and the encoder at a sample rate of min(Ea, Db) and bitrate at Fb.
+那么这个实体可以将解码器的采样率设置为min(Da, Eb)，编码器的采样率设置为min(Ea, Db)，比特率设置为Fb。
 
-Similarly and intuitively, the other entity involved can set the decoder at a sample rate of min(Db, Ea) and the encoder at a sample rate of min(Eb, Da) and bitrate Fa.
+同样地，另一个相关的实体可以将解码器的采样率设置为min(Db, Ea)，编码器的采样率设置为min(Eb, Da)，比特率设置为Fa。
 
 ```xml
 <param name="asymmetric-sample-rates" value="1"/>
 ```
 
-"bitrate-negotiation", when set to 1, will tell FreeSWITCH to evaluate the remote party's maxaveragebitrate when deciding how to initialize the opus encoder. This is based on FMTP exchange.
+当将"bitrate-negotiation"设置为1时，将告知FreeSWITCH在初始化opus编码器时如何评估远程方的maxaveragebitrate。这是基于FMTP交换的。
 
 ```xml
 <param name="bitrate-negotiation" value="1"/>
 ```
 
-This is available from FreeSWITCH v1.6.12.
+这从FreeSWITCH v1.6.12起可用。
 
-"adjust-bitrate " setting – this will enable a feedback loop using remote RTCP with the encoder.
+"adjust-bitrate"设置-这将启用一个使用远程RTCP的反馈循环来调整编码器的比特率。
 
-The encoder will adjust its bitrate based on what the other side reports (packet loss and RTT). It is a form of congestion control and it's based on estimators and detectors recently added in FreeSWITCH. It should work seamlessly with the other settings that can change the bitrate.
+编码器将根据对方报告的情况（数据包丢失和RTT）来调整其比特率。这是一种拥塞控制方式，基于最近添加到FreeSWITCH中的估计器和探测器。它应与可以改变比特率的其他设置无缝配合使用。
 
 ```xml
 <param name="adjust-bitrate" value="0"/>
 ```
 
-This is available starting from FreeSWITCH v1.6.11.
+这从FreeSWITCH v1.6.11版本开始可用。
 
-## Examples of configuration
+## 配置示例
 
-### WebRTC configuration
+### WebRTC配置
 
-For opus@48000h:
+对于opus@48000h：
 
 ```xml
 <configuration name="opus.conf">
@@ -342,9 +337,9 @@ For opus@48000h:
 ```
 
 ###   
-Transcoding only configuration
+仅转码配置
 
-For opus@8000h:
+对于opus@8000h：
 
 ```xml
 <configuration name="opus.conf">
@@ -363,60 +358,60 @@ For opus@8000h:
 ```
 
 ##   
-SDP Offer/Answer for Opus streams
+Opus流的SDP报文（Offer/Answer）
 
-This part refers generically to the SDP negotiation involved when dealing with Opus, but it's relevant to understand how FreeSWITCH works.
+这部分泛指与Opus处理有关的SDP协商，但对了解FreeSWITCH的工作方式非常重要。
 
-Both in standard SIP architectures and other WebRTC implementations, where the signaling system may be different than SIP, the offer/answer model is based on SDP (\[RFC 4566\]).
+在标准SIP架构和其他WebRTC实现中，其中信令系统可能与SIP不同，Offer/Answer模型基于SDP（[RFC 4566]）。
 
-When negotiating an Opus session it's important to distinguish between the encoder and decoder properties. The caller ("offerer") will indicate its willingness to use Opus (potentially with a list of other supported codecs, with a specific priority) with some optional parameters related to the encoding or decoding phase, to optimize resource utilization. The callee ("answerer") will respond, potentially using some optional parameters to refine the overall session configuration.
+在进行Opus会话的协商时，区分编码器和解码器属性非常重要。发起方（"offerer"）将通过一些与编码或解码阶段相关的可选参数来表明其愿意使用Opus（可能附带其他支持的编解码器列表和特定优先级），以优化资源利用率。应答方（"answerer"）将做出响应，可能使用一些可选参数来调整整个会话配置。
 
-### Mandatory parameters
+### 必需参数
 
-Media type: must be "_audio_"
+媒体类型：必须为"_audio_"
 
-Media subtype: defined as rtpmap, must be "_opus/48000/2_". 48000 refers to the sample rate. 2 refers to the number of channels. The media subtype doesn't change if the sample rate being negotiated is not 48000 or if there's no intention to use 2 channels. In other words that media subtype is always that string.
+媒体子类型：以rtpmap定义，必须为"_opus/48000/2_"。其中，48000表示采样率，2表示通道数。如果正在协商的采样率不是48000或不打算使用2个通道，则媒体子类型不会改变。换句话说，媒体子类型始终是该字符串。
 
-### Optional parameters
+### 可选参数
 
-#### Decoder parameters
+#### 解码器参数
 
-_ptime_: media type parameter indicating the desired frame size (in msec) that the decoder is willing to receive. This refers to the initial negotiation only, as it may change dynamically during a call. When not indicated, it defaults to 20 msec. When present, ptime is indicated in an "a=" attribute.
+_ptime_：媒体类型参数，指示解码器愿意接收的期望帧大小（以毫秒为单位）。这仅针对初始协商，在通话过程中，它可能动态变化。如果未指定，它默认为20毫秒。如果存在，则在"a="属性中指示ptime。
 
-_maxptime_: media type parameter indicating the maximum frame size (in msec) that the decoder is willing to receive. When not indicated, it defaults to 120 msec. When present, maxptime is indicated in an "a=" attribute.
+_maxptime_：媒体类型参数，指示解码器愿意接收的最大帧大小（以毫秒为单位）。如果未指定，它默认为120毫秒。如果存在，则在"a="属性中指示maxptime。
 
-_maxaveragebitrate_: media type parameter indicating the maximum average bit rate (in bps) that the decoder is willing to receive. Only values inside the Opus bitrate spectrum (6000 to 510000 bps) are allowed. When not indicated, the maximum (510000) is assumed. With this parameter the decoder indicates that optimal performance will be met if the received bitrate, on average, doesn't go beyond this value. The decoder though is assumed to be able to handle any legal bitrate. This is useful to ensure the receiving bandwidth is not saturated, e.g. in case of mobile apps with bad network conditions.
+`_maxaveragebitrate_`：媒体类型参数，表示解码器愿意接收的最大平均比特率（以 bps 为单位）。只允许 Opus 比特率范围内的值（6000 到 510000 bps）。如果未指定，默认为最大值（510000）。通过此参数，解码器指示如果接收的比特率平均值不超过此值，将获得最佳性能。但是，解码器假定能够处理任何合法比特率。这对于确保接收带宽不会饱和非常有用，例如在网络条件恶劣的移动应用程序的情况下。
 
-_maxplaybackrate_: media type parameter indicating the maximum playback sample rate (in samples/sec) the decoder is capable of handling. Encoding at sample rates higher than this parameter should not be done, as it's expected to impact negatively the bandwidth usage. For example, when an entity indicates maxplaybackrate at 8000, the encoder can save resources and network bandwidth by instantiating at 8000 Hz instead of 48000 Hz.
+`_maxplaybackrate_`：媒体类型参数，表示解码器能够处理的最大播放采样率（每秒样本数）。不应在高于此参数的采样率下进行编码，因为预期会对带宽使用产生负面影响。例如，当实体将 `maxplaybackrate` 指定为 8000 时，编码器可以通过以 8000 Hz 实例化而不是 48000 Hz 来节省资源和网络带宽。
 
-_stereo_: media parameter indicating the ability of the decoder to support stereo. It can be 0 or 1\. When 0 (which is also the default value) is specified, then the encoder should not produce stereo audio, as it would waste processing and bandwidth resources.
+`_stereo_`：媒体参数，指示解码器是否支持立体声。它可以是 0 或 1。如果指定为 0（默认值），则编码器不应生成立体声音频，因为这会浪费处理和带宽资源。
 
-_cbr_: media parameter indicating the preference from the decoder to receive a constant (CBR) or variable (VBR) bitrate. It can be 0 or 1, and it defaults to 0 (variable bitrate).
+`_cbr_`：媒体参数，指示解码器希望接收恒定比特率（CBR）还是可变比特率（VBR）。它可以是 0 或 1，并且默认为 0（可变比特率）。
 
-_useinbandfec_: media parameter indicating that the decoder is able to process in-band FEC packets. It can be 0 (impossible to handle FEC, default behaviour) or 1 (able to process FEC). When 0 is provided, the encoder should disable the production of FEC packets as it would impact negatively (it will use more network bandwidth without any gain on audio quality).
+`_useinbandfec_`：媒体参数，表示解码器能够处理带内前向纠错（FEC）数据包。可以是0（无法处理FEC，使用默认行为）或1（能够处理FEC）。当提供0时，编码器应该禁用生成FEC数据包，因为这会对音频质量没有任何提升的情况下占用更多的网络带宽。
 
-_usedtx_: media parameter indicating that the decoder prefers discontinuous transmission (DTX), i.e. the encoder should enable DTX and stop sending packets when source audio is absent. It can be 0 or 1, and defaults to 0 (continuous transmission).
+`_usedtx_`：媒体参数，表示解码器首选不连续传输（DTX），即当源音频不存在时，编码器应该启用DTX并停止发送数据包。可以是0或1，默认值为0（连续传输）。
 
-#### Encoder parameters
+#### 编码器参数
 
-_sprop-maxcapturerate_: media parameter indicating that the encoder won't capture at a sample rate higher than that value. This may hint the remote decoder to save computation resources, however the remote decoder is expected to handle correctly any legal sample rate.
+`_sprop-maxcapturerate_`：媒体参数，表示编码器捕获音频的采样率不会超过这个值。这可能提示远程解码器节省计算资源，但远程解码器应能正确处理任何合法的采样率。
 
-_sprop-stereo_: media parameter indicating that the encoder won't produce stereo audio. This may hint the remote decoder to intialize at a lower complexity, as it doesn't need the full Opus capabilities, and hence save resources.
+`_sprop-stereo_`：媒体参数，表示编码器不会生成立体声音频。这可能提示远程解码器以较低的复杂性初始化，因为它不需要完整的Opus功能，从而节省资源。
 
-### SDP offers examples
+### SDP提供的示例
 
-#### Generic offer
+#### 通用提议
 
 ```xml
 m=audio 54312 RTP/AVP 101
 a=rtpmap:101 opus/48000/2
 ```
 
-where 54312 is the candidate RTP port, 101 is the dynamic number assigned to opus, and opus is offered without any specific constraint. All the default values mentioned in the session about SDP negotiation apply.
+其中54312是候选RTP端口，101是opus分配的动态编号，而opus不带任何具体的约束。SDP协商会话中提到的所有默认值都适用。
 
-### Narrowband offer
+### 窄带提议
 
-Offer with 8 KHz sample rate, bitrate limitation on the decoder (max average bitrate requested 20 Kbps) and indications on the desired ptime (40 msec preferred and max):
+提供8 KHz采样率的音频，对解码器的比特率进行限制（最大平均比特率请求为20 Kbps），并指定所需的ptime（首选40毫秒，最大值）。
 
 ```xml
 m=audio 54312 RTP/AVP 101
@@ -426,76 +421,74 @@ a=ptime:40
 a=maxptime:40
 ```
 
-With such an offer incoming to FreeSWITCH, if negotiate-bitrate is set to 1 then FreeSWITCH will consider the offered value of maxaveragebitrate and use it to set the initial encoder bitrate if that value is smaller than the one configured in maxaveragebitrate configuration parameter in opus.conf.xml. All this will be anyway conditional to the packet-loss-percent value set in opus.conf.xml, since the call is of the narrowband type. So the initial bitrate for the encoder may be lower than the requested 14000 bps in this example.
+如果这样的请求发送到FreeSWITCH，如果 negotiate-bitrate 被设置为 1，那么FreeSWITCH将考虑到 maxaveragebitrate 的提供值，并使用它来设置初始编码器比特率（如果该值小于 opus.conf.xml 配置参数中配置的 maxaveragebitrate）。由于呼叫是狭带类型的，所有这些将与 opus.conf.xml 中设置的 packet-loss-percent 值有条件。因此，在这个例子中，初始编码器比特率可能低于请求的 14000 bps。
 
-## Development
 
-### FEC on the decoder
+## 开发
 
-The function _switch\_opus\_decode()_ is called for each Opus frame to be decoded.
+### 解码器上的 FEC
 
-If the frame is missing, then the flag SFF\_PLC is set by the Jitter Buffer, and the decoder either does FEC (if the next frame is present and it has FEC in it), or PLC.
+每个要解码的Opus帧都会调用_switch_opus_decode()函数。
 
-Function _switch\_opus\_has\_fec()_ has to return correctly in order for FEC decoding to work.
+如果帧丢失，则由抖动缓冲区设置SFF_PLC标志，并且解码器会使用FEC（如果下一帧存在并且其中包含FEC）或PLC。
 
-This function uses API function _opus\_packet\_parse()_ to break the frame in multiple Opus frames, if it's the case (eg: for ptimes higer than 60 ms, repacketization must be used, and we'll have frames with multiple Opus frames).
+函数_switch_opus_has_fec()必须返回正确才能使FEC解码工作。
 
-Inside an Opus frame there can be multiple SILK frames. Each of these frames can contain FEC information. This function looks at each SILK frame to see if there's FEC information in it, and it returns TRUE if it finds any. This is indispensable for the way the Opus (n-1) FEC works together with the FS jitter buffer because we'll know if we need to grab from the jitter buffer the same packet twice: once for playing FEC from it, and once to play the current voice payload itself.
+该函数使用API函数_opus_packet_parse()将帧分解为多个Opus帧（如果有的话）。在Opus帧中，可以有多个SILK帧。每个SILK帧可以包含FEC信息。该函数查看每个SILK帧，看是否有FEC信息，并且如果找到则返回TRUE。这对于Opus（n-1）FEC与FS抖动缓冲器的协同工作方式至关重要，因为我们将知道我们是否需要从抖动缓冲器中获取相同的包两次：一次用于播放FEC，一次用于播放当前的语音负载本身。
 
-### FEC on the encoder
+### 编码器上的前向纠错（FEC）
 
-If packet loss is less or equal to 10%, we don't enforce FEC, but we still pass the packet loss percentage value to the encoder, so it would make some smart decisions on how to encode the voice further.
+如果丢包率小于或等于10％，我们不强制执行前向纠错，但我们仍然将丢包率的百分比值传递给编码器，以便它能够在对语音进行进一步编码时做出一些智能决策。
 
-If packet loss is over 10%, we enforce FEC by increasing the bitrate slightly using code from the Opus encoder itself. Inside the Opus encoder, the decision to encode FEC is taken based on packet loss percentage and bitrate. If the bitrate is too low (under 12400 bps for Narrowband – which is a builtin threshold in Opus), there will be no encoded FEC. There are 25 threshold bitrates.
+如果丢包率超过10％，我们将通过使用Opus编码器本身的代码略微增加比特率来强制执行前向纠错。在Opus编码器内部，根据丢包率和比特率来决定是否编码前向纠错。如果比特率过低（窄带情况下低于12400 bps - 这是Opus中的默认阈值），则将不会进行编码前向纠错。有25个阈值比特率。
 
-Function _switch\_opus\_keep\_fec\_enabled()_ gets the current bitrate and the current packet loss via Opus API. Then it calculates the closest bitrate to the current one for which there's FEC at the given packet loss, and after that it sets this new bitrate back on the encoder.
+函数**_switch\_opus\_keep\_fec\_enabled()_**通过Opus API获取当前比特率和当前丢包率。然后，它计算最接近当前比特率的比特率，以使在给定丢包率下存在前向纠错，并将该新比特率设置回编码器。
 
-There is also a function called _switch\_opus\_get\_fec\_bitrate()_, which contains a map, and it returns a value from the map, given a certain packet loss. The values from the map are pre-calculated because this function is only used at the beginning of the call, when the encoder is not instantiated yet and there is no information on how much packet loss the call will have so it's better to start it with FEC enabled. The map applies for NB only, but the function can be used with any valid rate for FEC (NB, MB, WB).
+还有一个名为**_switch\_opus\_get\_fec\_bitrate()_**的函数，它包含一个映射，并根据特定的丢包率从映射中返回一个值。映射中的值是预先计算的，因为此函数仅在呼叫开始时使用，当编码器尚未实例化且没有关于呼叫将有多少丢包的信息时，最好启用前向纠错。该映射仅适用于窄带，但该函数可以与任何有效的前向纠错率（窄带、中带、宽带）一起使用。
 
-Physical explanation, on why this feature works: in case of network congestion, the network queues in remote devices start dropping entire packets, they would never drop just some bits or bytes from a packet. So we never lose bits or bytes, we lose entire packets. As long as we keep our packets small enough then a 20-30 bytes difference would not matter, since the remote packet queues will discard some of them anyway. But the packets that are not discarded will have some FEC information for the discarded ones, so part of the voice signal can be reconstructed by the decoder.
+物理解释，为什么该功能有效：在网络拥塞的情况下，远程设备的网络队列开始丢弃整个数据包，而不是丢弃其中的一些位或字节。因此，我们不会丢失位或字节，而是丢失整个数据包。只要我们保持数据包足够小，那么大小相差20-30字节并不重要，因为远程数据包队列无论如何都会丢弃其中的一些数据包。但是未被丢弃的数据包会包含一些对于被丢弃的数据包的前向纠错（FEC）信息，因此解码器可以通过这些信息重建部分语音信号。
 
-### Codec Control (Congestion control)
+### 编解码器控制（拥塞控制）
 
-There are two kinds of callbacks into _mod\_opus_, from switch\_rtp.c :
+从`switch_rtp.c`中，存在着两种类型的回调函数：
 
-1\. For passing packet loss to the codec
+1. 用于向编解码器传递丢包信息
 
-e.g.:
+例如：
 
 ```xml
 switch_core_media_codec_control(rtp_session->session, SWITCH_MEDIA_TYPE_AUDIO, SWITCH_IO_WRITE, SCC_AUDIO_PACKET_LOSS, SCCT_INT, (void *)&rtp_session->rtcp_frame.reports[i].loss_avg, SCCT_NONE, NULL, NULL, NULL);
 ```
 
-This will actually call _switch\_opus\_control()_, with param SCC\_AUDIO\_PACKET\_LOSS, so that it will adjust the packet loss percentage on the Opus encoder.
+这将实际调用`switch_opus_control()`函数，参数为SCC_AUDIO_PACKET_LOSS，以便可以调整Opus编码器的丢包率。
 
-This is where _switch\_opus\_keep\_fec\_enabled()_ is called (if enabled in the config file) and it will adjust bitrate to keep FEC enabled. Passing the actual packet loss to the Opus encoder, without adjusting the bitrate might make the encoder not to send FEC at all.
+这也是调用`switch_opus_keep_fec_enabled()`函数（如果在配置文件中启用了）的地方，它会根据需要调整比特率以保持FEC启用。如果将实际的丢包率传递给Opus编码器而不调整比特率，可能会导致编码器根本不发送FEC。
 
-2\. For passing commands to increase/decrease bitrate (the "increase" and "decrease" commands sent to the codec module) . We can also go to "default" or to "minimum" bitrate, depending on the network conditions.
+2. 用于发送命令增加/减少比特率（发送到编解码器模块的“增加”和“减少”命令）。根据网络状况，我们也可以将比特率设置为“默认”或“最小”。
 
-e.g.:
+例如：
 
 ```xml
-switch_core_media_codec_control(rtp_session->session, SWITCH_MEDIA_TYPE_AUDIO, SWITCH_IO_WRITE, SCC_AUDIO_ADJUST_BITRATE, SCCT_STRING, "decrease", SCCT_NONE, NULL, NULL, NULL);
+switch_core_media_codec_control（rtp_session->session，SWITCH_MEDIA_TYPE_AUDIO，SWITCH_IO_WRITE，SCC_AUDIO_ADJUST_BITRATE，SCCT_STRING，"decrease"，SCCT_NONE，NULL，NULL，NULL）;
 ```
 
-This will call switch\_opus\_control(), with param SCC\_AUDIO\_ADJUST\_BITRATE.
+这将调用switch_opus_control()，参数为SCC_AUDIO_ADJUST_BITRATE。
 
-## Debugging
+## 调试
 
-### Introduction
+### 简介
 
-It is possible to log very detailed information on opus frames being decoded and encoded.
+可以记录有关解码和编码opus帧的非常详细的信息。
 
-Through _fsctl_, you can enable a debug mode with: "opus\_debug on" (and disable it with "opus\_debug off").
+通过_fsctl_，可以启用调试模式："opus_debug on"（通过"opus_debug off"禁用）。
 
-For each frame FreesWITCH will log the size of data, whether FEC is present or not and whether there was PLC.
+对于每个帧，FreesWITCH都将记录数据大小，是否存在FEC以及是否有PLC。
 
-_There will be one log line per frame, so with 20 msec packetization this means 50 lines of logs per second per direction. Do not enable it on a Production server or it may fill the log files very quickly._
+_每个帧将有一行日志，因此对于20毫秒的封装，这意味着每秒每个方向有50行日志。不要在生产服务器上启用它，否则它可能会很快填满日志文件。_
 
-###   
-How to work with the "opus\_debug" CLI command
+### 如何使用 "opus_debug" CLI 命令
 
-#### Example
+#### 例子
 
 ```xml
 2015-11-10 16:11:48.507949 [DEBUG] mod_opus.c:453 encode: opus_frames [1] samples [160] audio bandwidth [NARROWBAND] bytes [35] FEC[no] channels[1]
@@ -504,9 +497,9 @@ How to work with the "opus\_debug" CLI command
 2015-11-10 16:11:48.547947 [DEBUG] mod_opus.c:453 decode: opus_frames [1] samples [160] audio bandwidth [NARROWBAND] bytes [40] FEC[yes] channels[1]
 ```
 
-You can see above 4 frames, 2 of them were just encoded ("encode:") , and 2 of them will be decoded immediately ("decode:"). All 4 frames are Narrowband and they all have an actual 160 samples frame size, corresponding to 20 ms ptime. Since the opus codec is VBR they differ in size, they are around 30-40 bytes. Two of them have FEC, and they are all mono (1 channel).
+你可以在上面看到4个帧，其中2个刚刚被编码（"encode:"），另外2个将立即被解码（"decode:"）。所有4个帧都是窄带的，实际大小为160个样本，对应于20毫秒的ptime。由于opus编解码器是可变比特率（VBR），它们的大小不同，大约在30到40字节之间。其中两个有前向纠错（FEC），它们都是单声道（1个通道）的。
 
-#### Example with PLC
+#### 带PLC的示例
 
 ```xml
 2015-11-13 07:19:19.525757 [DEBUG] mod_opus.c:453 decode: opus_frames [1] samples [320] audio bandwidth [NARROWBAND] bytes [80] FEC[yes] channels[1]
@@ -517,27 +510,25 @@ You can see above 4 frames, 2 of them were just encoded ("encode:") , and 2 of t
 2015-11-13 07:19:19.645791 [DEBUG] mod_opus.c:764 Missing SEQ 399 Checking JB
 ```
 
-You can see above one frame of 320 samples (corresponding to ptime 40) being decoded, then the next frames are missing, and PLC was done instead (there was no N+1 packet in the Jitter Buffer either).
-
-#### Example with FEC
+你可以在上面看到一个包含320个样本（对应于ptime 40）的帧被解码，然后接下来的帧丢失了，而且PLC被执行了（抖动缓冲区中也没有N+1包）。
 
 ```xml
-2015-11-13 07:19:23.005774 [DEBUG] mod_opus.c:453 decode: opus_frames [1] samples [320] audio bandwidth [NARROWBAND] bytes [87] FEC[yes] channels[1]
-2015-11-13 07:19:23.085842 [DEBUG] mod_opus.c:764 Missing SEQ 482 Checking JB
-2015-11-13 07:19:23.085842 [DEBUG] mod_opus.c:769 Lookahead frame found: 1364160:483
-2015-11-13 07:19:23.085842 [DEBUG] mod_opus.c:781 FEC info available in packet with SEQ: 483 LEN: 91
-2015-11-13 07:19:23.085842 [DEBUG] mod_opus.c:798 MISSING FRAME: Look-ahead FEC
-2015-11-13 07:19:23.085842 [DEBUG] mod_opus.c:453 FEC correction: opus_frames [1] samples [320] audio bandwidth [NARROWBAND] bytes [91] FEC[yes] channels[1]
+2015-11-13 07:19:23.005774 [DEBUG] mod_opus.c:453 解码: opus_frames [1] 采样数 [320] 音频带宽 [窄带] 字节 [87] FEC[开启] 通道[1]
+2015-11-13 07:19:23.085842 [DEBUG] mod_opus.c:764 缺少序列号 482 检查JB
+2015-11-13 07:19:23.085842 [DEBUG] mod_opus.c:769 发现向前看帧：1364160:483
+2015-11-13 07:19:23.085842 [DEBUG] mod_opus.c:781 packet中的FEC信息可用，SEQ: 483 LEN: 91
+2015-11-13 07:19:23.085842 [DEBUG] mod_opus.c:798 缺少帧：向前看的FEC
+2015-11-13 07:19:23.085842 [DEBUG] mod_opus.c:453 FEC校正: opus_frames [1] 采样数 [320] 音频带宽 [窄带] 字节 [91] FEC[开启] 通道[1]
 ```
 
-You can see above 2 frames, the first one is a normal frame to be decoded, the second one, where it says "FEC correction", is a frame that we just retrieved from the jitter buffer, because the RTP packet with SEQ 482 was missing due to packet loss.
+你可以看到上面有两个帧，第一个是要解码的正常帧，第二个，标记为“FEC校正”的帧，则是我们从抖动缓冲区中恢复出来的，因为由于数据包丢失，导致了RTP序列号为482的数据包丢失。
 
-An important aspect of codec negotiation is the FMTP we send or receive in the offer/answer.
+编解码器协商的一个重要方面是在offer / answer中发送或接收的FMTP。
 
-How SDP in the 200 OK should look in order to reflect the settings in our codec\_string and our opus.conf.xml file:
+如何在200 OK的SDP中设置，以反映我们的codec_string和opus.conf.xml文件中的设置：
 
 ```xml
-2015-11-12 16:53:02.487930 [DEBUG] mod_sofia.c:2312 Ring SDP:
+2015-11-12 16:53:02.487930 [DEBUG] mod_sofia.c:2312 会话说明：
 v=0
 o=FreeSWITCH 1447318678 1447318679 IN IP4 10.0.0.145
 s=FreeSWITCH
@@ -553,68 +544,68 @@ a=sendrecv
 a=rtcp:28505 IN IP4 10.0.0.145
 ```
 
-Note the _rtpmap_ line with the Opus RTP profile opus/48000/2, then the FMTP values, and then the telephone-event clock rate which should be 48000 for Opus, even if inside our opus frames we have a signal sampled at different rate.
+注意\_rtpmap\_ 行中的Opus RTP配置文件 opus/48000/2，然后是FMTP值，然后是电话事件时钟率，对于Opus来说应该是48000，即使我们的opus帧内部采样率不同。
 
-### Statistics of Decoder
+### 解码器统计数据
 
-This is logged at the end of a call, and statistics about the total number of frames decoded, PLC performed and FEC frames decoded are reported:
+这是在通话结束时记录的，报告了关于解码的总帧数、PLC操作和解码的FEC帧数的统计信息：
 
 ```xml
-0bd9616f-9867-4a75-8f15-5b703bbb4dda 2015-11-12 17:58:43.534824 [DEBUG] mod_opus.c:661 Opus decoder stats: Frames[7038] PLC[2247] FEC[29]
+0bd9616f-9867-4a75-8f15-5b703bbb4dda 2015-11-12 17:58:43.534824 [DEBUG] mod_opus.c:661 Opus解码器统计：Frames[7038] PLC[2247] FEC[29]
 ```
 
 ###   
-Statistics of Encoder
+编码器统计信息
 
-This is logged at the end of a call, with statistics about the number of frames that were encoded, and in particular the average bitrate of the encoded data.
+这是在通话结束时记录的，报告了编码的帧数以及编码数据的平均比特率等统计信息。
 
 ```xml
-2016-10-21 07:26:54.318880 [DEBUG] mod_opus.c:709 Opus encoder stats: Frames[1219] Bytes encoded[35490] Encoded length ms[24380] Average encoded bitrate bps[11830] FEC frames (only for debug mode) [755]
+2016-10-21 07:26:54.318880 [DEBUG] mod_opus.c:709 Opus编码器统计：Frames[1219] 编码字节数[35490] 编码长度毫秒[24380] 平均编码比特率bps[11830] FEC帧（仅用于调试模式）[755]
 ```
 
-The number of encoded frames with FEC is also logged, but note that this is only taken into account when _opus\_debug_ is on. The reason behind this is to avoid unnecessary debug/log logic for each encoded frame (i.e. from the typical 50 times/sec for 20 msec ptime, to potentially higher frequencies for smaller ptimes).
+编码带有FEC的帧数也会被记录，但要注意，只有在_opus\_debug_打开的情况下才会考虑此功能。这样做的原因是为了避免为每个编码帧进行不必要的调试/日志逻辑（例如，对于20毫秒ptime的典型情况，典型的帧率是每秒50次，对于更小的ptime，帧率可能更高）。
 
-### Debugging with Wireshark
+### 使用Wireshark进行调试
 
-It's possible to see the details of an opus session with tools like Wireshark, after the packets have been captured with any of the available tools like tcpdump and the like.
+在使用类似Wireshark这样的工具时，可以在经过类似tcpdump等可用工具捕捉到的数据包后查看Opus会话的详细信息。
 
-The following Wireshark screenshot shows a few opus packets from a capture:
+下面的Wireshark截图显示了一些捕捉到的Opus数据包：
 
 ![](/attachments/12517398/12812302.png)
 
-You can see that Wireshark is interpreting those frames as Opus: this can be inferred by the SIP signaling preceding the session. To be noted that Opus doesn't have a dedicated IANA number, so the codec number is dynamic (e.g. could be 96, or 101, or something else).
+可以看出，Wireshark将这些帧解释为Opus：这可以通过会话前的SIP信令得出。值得注意的是，Opus没有专用的IANA编号，所以编解码器编号是动态的（例如可以是96，或101，或其他）。
 
-The important part of this capture relates to the timing: every frame has an increment of 960 "time ticks", i.e. they refer to 20 msec at 48000 samples/sec. This is confirmed by the RTP sequence numbers, which are correctly incrementing without packets lost or out of order.
+这个捕获的重要部分与时序有关：每一帧增加了960个“时间刻度”，即它们对应于48000次/秒的20毫秒。这一点通过RTP序列号得到了确认，序列号正确地递增，没有数据包丢失或乱序。
 
-The length of the frames in this example show that it's surely not a narrowband session, where the length is expected to be about 30-40 Bytes, but refer to a larger bandwidth and a bitrate of about 45 Kbps.
+在这个例子中帧的长度表明这肯定不是一个窄带会话，窄带会话的长度预计在30-40字节左右，而是指的更大的带宽和大约45Kbps的比特率。
 
-Wireshark can also analyze the RTP stream and show some metrics related to them, as in the following screenshot:
+Wireshark还可以分析RTP流并显示与之相关的一些指标，如下面的截图所示：
 
 ![](/attachments/12517398/12812301.png)
 
-## APPENDIX – libopus
+## 附录 – libopus
 
-### Installing libopus
+### 安装libopus
 
-Debian distributions:
+Debian发行版：
 
 ```xml
 apt-get install libopus
 ```
 
-CentOS distributions:
+CentOS发行版：
 
 ```xml
 yum install libopus
 ```
 
-### Building libopus
+### 构建libopus
 
-When libopus is not already available for your distribution, you can build it from source.
+当你的发行版上没有libopus可用时，你可以从源代码构建它。
 
-libopus is built in a standard way; you can either use the available tarball or checkout from git.
+libopus的构建方式很标准；你可以使用已有的tarball或者从git上克隆。
 
-#### Prepare source from tarball
+#### 从tarball准备源代码
 
 ```xml
 wget http://downloads.xiph.org/releases/opus/opus-1.1.3.tar.gz
@@ -622,7 +613,7 @@ tar xvf opus-1.1.3.tar.gz
 cd opus-1.1.3
 ```
 
-#### Prepare source from git
+#### 从git准备源代码
 
 ```xml
 git clone https://git.xiph.org/opus.git
@@ -631,7 +622,7 @@ git checkout v1.1.3
 ./autogen.sh
 ```
 
-#### Build
+#### 构建
 
 ```xml
 ./configure
@@ -640,9 +631,9 @@ make check
 make install
 ```
 
-### Packaging libopus
+### 打包libopus
 
-#### Building libopus RPMs
+#### 构建libopus RPMs
 
 ```xml
 yum install -y rpmdevtools libogg-devel gcc make wget
@@ -651,20 +642,20 @@ cd ~/rpmbuild/SOURCES
 wget http://downloads.xiph.org/releases/opus/opus-1.1.3.tar.gz
 ```
 
-Now copy an opus.spec file like the one in <https://freeswitch.org/confluence/display/FREESWITCH/Build+opus+1.1.1+RPMs+for+CentOS+7> into \~/rpmbuild/SPECS/opus.spec (check versions carefully).
+现在将一个像<https://freeswitch.org/confluence/display/FREESWITCH/Build+opus+1.1.1+RPMs+for+CentOS+7>中的opus.spec文件复制到\~/rpmbuild/SPECS/opus.spec（仔细检查版本）。
 
 ```xml
 cd ~/rpmbuild/SPECS
 rpmbuild -v -bb opus.spec
 ```
 
-The packages will be in \~/rpmbuild/RPMS/x86\_64/, and this procedure generates both libopus and libopus-devel packages.
+包将会位于~/rpmbuild/RPMS/x86\_64/，此过程生成了libopus和libopus-devel两个包。
 
-## APPENDIX – Building mod_opus
+## 附录 – 构建mod_opus
 
-First install libopus-dev (or libopus-devel).
+首先安装libopus-dev（或者libopus-devel）。
 
-Ensure codecs/mod\_opus is not commented in modules.cfg, e.g.:
+确保modules.cfg文件中codecs/mod\_opus没有被注释掉，例如：
 
 ```xml
 …
@@ -674,53 +665,53 @@ codecs/mod_opus
 …
 ```
 
-then build FreeSWITCH as usual.
+然后像往常一样构建FreeSWITCH。
 
-## Glossary
+## 术语表
 
-_Audio Codec (audio enCOder/DECoder)_: Software that compresses and decompresses a digital audio signal. Codecs are generally understood to be various mathematical models used to digitally encode (and compress) audio information. Most sound codecs process audio signals that are already digitalized in time and amplitude. Many of these models take into account the human brain’s ability to form an impression from incomplete information. The purpose of the various encoding algorithms is to strike a balance between efficiency and quality.
+_音频编解码器（音频编码器/解码器）_：用于压缩和解压数字音频信号的软件。编解码器通常是指用于数字编码（和压缩）音频信息的各种数学模型。大多数声音编解码器处理的音频信号已经以时间和幅度的形式数字化。其中许多模型考虑到人脑从不完全信息中形成印象的能力。各种编码算法的目的是在效率和质量之间取得平衡。
 
-_Audio Bandwidth:_ The range of audio frequencies which directly influence the fidelity of a sound.
+_音频带宽_：直接影响声音保真度的音频频率范围。
 
-The higher the audio bandwidth, the better the sound fidelity. The highest practical frequency which the human ear can normally hear is 20 kHz.
+音频带宽越高，声音保真度就越好。人耳通常能听到的最高实际频率为20 kHz。
 
-_Bitrate_: The rate at which bits are transferred from one location to another. In other words, it measures how much data is transmitted in a given amount of time. Bitrate is commonly measured in bits per second (bps), kilobits per second (Kbps).
+_比特率_：比特从一个位置传输到另一个位置的速率。换句话说，它测量在一定时间内传输的数据量。比特率通常用比特每秒（bps）或千比特每秒（Kbps）来表示。
 
-When encoding a speech signal, the bitrate is defined as the number of bits per unit of time required to encode the speech. It is measured in bits per second (bps), or generally kilobits per second. It is important to make the distinction between kilobits per second (kbps) and kilobytes per second (kBps).
+在对语音信号进行编码时，比特率被定义为编码语音所需的每单位时间的比特数。它以比特每秒（bps）或一般地以千比特每秒来测量。重要的是要区分千比特每秒（kbps）和千字节每秒（kBps）。
 
-_FEC (Forward Error Correction)_: a method to address packet loss by including some information from previously transmitted packets in subsequent packets. By performing mathematical operations in a particular FEC scheme, it is possible to reconstruct a lost packet from information bits in neighboring packets.
+**FEC (前向纠错)**：一种通过在后续数据包中包含先前传输数据包的部分信息来解决数据包丢失的方法。通过在特定FEC方案中执行数学运算，可以从相邻数据包中的信息位重建丢失的数据包。
 
-_Frame Size_:The amount of data to be encoded or decoded at a given time by the encoding or decoding functions. It is measured in samples or time. e.g. 160 samples or 20 milliseconds.
+**帧大小**：编码或解码功能在给定时间内要处理的数据量。通常以采样值或时间来衡量，例如160个样本或20毫秒。
 
-_Jitter_: The measure of the variability over time of the latency across a network.
+**抖动**：度量网络上延迟随时间变化的不稳定性。
 
-Real time communications (for example VoIP) usually have quality problems due to this effect. In general, it is a problem in slow-speed links or with congestion. It is hoped that the increase of QoS (quality of the service) mechanisms like priority buffers, bandwidth reservation or high-speed connections can reduce jitter problem. The best solution is to use jitter buffers.
+实时通信（例如VoIP）通常会因此而出现质量问题。一般而言，这是在低速链路或拥塞情况下出现的问题。希望通过增加QoS（服务质量）机制，如优先级缓冲区、带宽预留或高速连接，来减少抖动问题。最佳解决方案是使用抖动缓冲区。
 
-_Jitter Buffer_: The jitter buffer, which is located at the receiving end of the voice connection, intentionally delays the arriving packets so that the end user experiences a clear connection with very little sound distortion. There are two kinds of jitter buffers, static and dynamic.
+**抖动缓冲区**：抖动缓冲区位于语音连接的接收端，有意延迟到达的数据包，以使最终用户获得清晰的连接和极少的声音失真。有两种类型的抖动缓冲区，静态抖动缓冲区和动态抖动缓冲区。
 
-_L16_: L16 denotes uncompressed audio data samples, using 16-bit signed representation with 65535 equally divided steps between minimum and maximum signal level, ranging from -32768 to 32767.
+**L16**：L16表示未压缩的音频数据样本，使用16位有符号表示，在最小和最大信号水平之间平均划分了65535个等距步骤，范围从-32768到32767。
 
-_Narrowband (Audio Bandwidth)_: in telephony, narrowband is usually considered to cover frequencies 300–3400 Hz. This spectrum allows for speech to traverse and nothing else.
+**窄带（音频带宽）**：在电话领域，窄带通常被认为覆盖了300-3400 Hz的频率范围。这个频谱可用于传输语音，而不包括其他内容。
 
-This is the quality of voice achievable in landline PSTN phones (I.e. regular telephony) and in most of the cellular networks. The voice signal is sampled at 8,000 Hz.
+这是在固定电话PSTN电话（即常规电话）和大多数蜂窝网络中可以实现的音质。语音信号以8,000 Hz的采样率进行采样。
 
-_Network bitrate_: Codec Bitrate + network header overhead per packet (IP+UDP+RTP = 40 bytes) . Note that the bitrate values are only for one direction of the call.
+### 网络比特率：编码比特率+每个数据包的网络头开销（IP+UDP+RTP = 40字节）。请注意，比特率的值仅适用于呼叫的一个方向。
 
-_PCM (Pulse code modulation)_: Modulation in which the peak-to peak amplitude range of the signal to be transmitted is divided into a number of standard values, each having its own code; each sample of the signal is then transmitted as the code for the nearest standard amplitude.
+PCM（脉冲编码调制）：调制方法，将待传输信号的峰值-峰值幅度范围划分为多个标准值，每个标准值都有自己的编码；然后将信号的每个样本传输为最接近标准幅度的编码。
 
-_ptime (packetization time)_: The time between packets sent. It has usually a fixed length per RTP session. Same value as Frame Size , only that the term "ptime" is used in a RTP scenario. Frame Size has to do with encoding or decoding itself. You can decode or encode audio without sending it (e.g. you will not be putting it into network packets).
+ptime（数据包化时间）：发送数据包之间的时间间隔。通常在RTP会话中具有固定长度。和帧大小是相同的值，只是"ptime"术语用于RTP场景。帧大小与编码或解码本身有关。可以将音频进行解码或编码而无需发送它（例如，您不会将其放入网络数据包中）。
 
-To improve network bandwidth utilization the obvious way to go is to send more frames in one RTP packet. However, as we do this, we also increase latency. If we decide to send, 100 milliseconds of audio in one packet, this means that we have added a latency of the same 100 milliseconds. Simply put, the first sample of the first frame arrives together with the last sample of the last frame in the packet, so the total delay is equal to the length of audio carried in the packet.
+为了提高网络带宽利用率，显而易见的方法是在一个RTP数据包中发送更多的帧。但是，随着这样做，我们也增加了延迟。如果我们决定在一个数据包中发送100毫秒的音频，这意味着我们增加了相同的100毫秒的延迟。简单地说，第一个帧的第一个样本与数据包中最后一个帧的最后一个样本同时到达，因此总延迟等于数据包中承载的音频长度。
 
-_Sample rate_: The number of samples of audio carried per second, measured in Hz or kHz (one kHz being 1000 Hz).
+采样率：每秒传输的音频样本数，以Hz或kHz（其中1 kHz等于 1000 Hz）测量。
 
-_Sampling_: In signal processing, sampling is the reduction of a continuous signal to a discrete signal.
+采样：在信号处理中，采样是将连续信号转换为离散信号。
 
-A sample is a value or set of values at a point in time and/or space.
+样本是时间和/或空间中某一点上的一个值或一组值。
 
-_VBR_: Variable Bit-Rate allows a codec to change its bitrate dynamically to adapt to the "difficulty'' of the audio being encoded. VBR can achieve lower bitrate for the same quality, or a better quality for a certain bitrate. Despite its advantages, VBR has two main drawbacks: first, by only specifying quality, there's no guarantee about the final average bitrate. Second, for some real-time applications like voice over IP (VoIP), what counts is the maximum bit-rate, which must be low enough for the communication channel.
+**VBR**: 可变比特率允许编解码器根据所编码的音频的"难度"动态地改变比特率。VBR 可以在相同的质量下实现更低的比特率，或者在一定的比特率下获得更好的质量。尽管有优点，VBR 也有两个主要缺点：首先，只指定质量无法保证最终的平均比特率；其次，对于一些实时应用程序（如 VoIP 语音通信），重点要考虑的是最大比特率，该比特率必须低到足够适应通信信道。
 
-## References
+## 参考资料
 
 <https://en.wikipedia.org/wiki/Opus%5F%28audio%5Fformat%29>
 
@@ -736,22 +727,20 @@ _VBR_: Variable Bit-Rate allows a codec to change its bitrate dynamically to ada
 
 <https://opus-codec.org>
 
-### Dragos presentation at ClueCon 2017
+### Dragos 在 ClueCon 2017 的演讲
 
 [![]/images/fw-opus-codec.jpg](/download/attachments/freeswitch%5Fopus%5Fv3.pdf?version=1&modificationDate=1502443408771&api=v2)
 
-## Recommended reads
+## 推荐阅读
 
-"FreeSWITCH Cookbook", <https://www.packtpub.com/networking-and-servers/freeswitch-cookbook>
+《FreeSWITCH Cookbook》, <https://www.packtpub.com/networking-and-servers/freeswitch-cookbook>
 
-"Mastering FreeSWITCH", <https://www.packtpub.com/networking-and-servers/mastering-freeswitch>
+《Mastering FreeSWITCH》, <https://www.packtpub.com/networking-and-servers/mastering-freeswitch>
 
-### Attachments:
+### 附件：
 
 ![](/images/icons/bullet_blue.gif) [Freeswitch\_and\_the\_Opus\_Audio\_Codec\_1.0.pdf](/attachments/12517398/12517399.pdf) (application/pdf)  
 ![](/images/icons/bullet_blue.gif) [opus\_wireshark\_stream.png](/attachments/12517398/12812301.png) (image/png)  
 ![](/images/icons/bullet_blue.gif) [opus\_packets\_wireshark\_edited.png](/attachments/12517398/12812302.png) (image/png)  
 ![](/images/icons/bullet_blue.gif) [freeswitch\_opus\_v3.ppt](/attachments/12517398/15696118.ppt) (application/vnd.ms-powerpoint)  
-![](/images/icons/bullet_blue.gif) [freeswitch\_opus\_v3.pdf](/attachments/12517398/15696123.pdf) (application/pdf)  
-
-
+![](/images/icons/bullet_blue.gif) [freeswitch\_opus\_v3.pdf](/attachments/12517398/15696123.pdf) (application/pdf)

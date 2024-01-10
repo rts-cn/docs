@@ -1,83 +1,82 @@
+# mod_xml_cdr
 
-# mod_xml_cdr 
+## 关于
 
- 
+将CDR记录以XML格式输出到本地文件或通过HTTP POST方式发送到Web服务器。
 
-## About
+单击此处展开目录
 
-Outputs CDR records in XML format to local file or to a webserver via HTTP POST.
-
-Click here to expand Table of Contents
-
-* 1 [Example](#fs-xml-cdrpl)
-* 2 [Features](#features)  
-   * 2.1 [Output capabilities](#output-capabilities)  
-   * 2.2 [Reliability capabilities](#reliability-capabilities)
-* 3 [Getting it working](#getting-it-working)  
+* 1 [示例](#fs-xml-cdrpl)
+* 2 [特点](#features)  
+   * 2.1 [输出能力](#output-capabilities)  
+   * 2.2 [可靠性能力](#reliability-capabilities)
+* 3 [使其工作](#getting-it-working)  
    * 3.1 [modules.conf](#modulesconf)  
-   * 3.2 [Install dependencies](#install-dependencies)  
-   * 3.3 [Sample Configuration](#sample-configuration)  
-      * 3.3.1 [Verifying](#verifying)  
-   * 3.4 [Configuration Options](#configuration-options)  
-   * 3.5 [Handling POST request](#handling-post-request)  
-      * 3.5.1 [Examples](#fs-xml-cdrpl)  
-   * 3.6 [Resubmitting failed CDR submissions](#resubmitting-failed-cdr-submissions)  
-      * 3.6.1 [Script (for cronjob or manual run)](#script-for-cronjob-or-manual-run)  
-   * 3.7 [Reference Information](#reference-information)  
-      * 3.7.1 [Channel Variables](#channel-variables)  
-   * 3.8 [Troubleshooting](#troubleshooting)  
-      * 3.8.1 [Error loading module](#error-loading-module)  
-         * 3.8.2 [Does not write to non-default logDir](#does-not-write-to-non-default-logdir)  
-         * 3.8.3 [I'm getting a Memory Error when module loads](#im-getting-a-memory-error-when-module-loads)  
-   * 3.9 [Example CGI Script](#example-cgi-script)  
-      * 3.9.1 [Code Listing \[Perl\]](#code-listing-perl)  
-   * 3.10 [FAQ](#fs-xml-cdrpl)  
-      * 3.10.1 [Q: Does mod\_cdr need to be compiled/enabled?](#q-does-mod_cdr-need-to-be-compiledenabled)
+   * 3.2 [安装依赖项](#install-dependencies)  
+   * 3.3 [示例配置](#sample-configuration)  
+      * 3.3.1 [验证](#verifying)  
+   * 3.4 [配置选项](#configuration-options)  
+   * 3.5 [处理POST请求](#handling-post-request)  
+      * 3.5.1 [示例](#fs-xml-cdrpl)  
+   * 3.6 [重新提交失败的CDR提交](#resubmitting-failed-cdr-submissions)  
+      * 3.6.1 [脚本（用于cronjob或手动运行）](#script-for-cronjob-or-manual-run)  
+   * 3.7 [参考信息](#reference-information)  
+      * 3.7.1 [通道变量](#channel-variables)  
+   * 3.8 [故障排除](#troubleshooting)  
+      * 3.8.1 [加载模块时出错](#error-loading-module)  
+         * 3.8.2 [不写入非默认的logDir](#does-not-write-to-non-default-logdir)  
+         * 3.8.3 [当模块加载时出现内存错误](#im-getting-a-memory-error-when-module-loads)  
+   * 3.9 [示例CGI脚本](#example-cgi-script)  
+      * 3.9.1 [代码清单 \[Perl\]](#code-listing-perl)  
+   * 3.10 [常见问题](#fs-xml-cdrpl)  
+      * 3.10.1 [问：是否需要编译/启用mod_cdr?](#q-does-mod_cdr-need-to-be-compiledenabled)
 
-## Example
+## 示例
 
-Here is an Example XML CDR: 
+以下是一个示例XML CDR： 
 
-Example XML CDR
+示例XML CDR
 
-&lt;?xml version="1.0"?>
-&lt;cdr>
-  &lt;variables>
-    &lt;sip_received_ip>192.168.50.21&lt;/sip_received_ip>
-    &lt;sip_received_port>39368&lt;/sip_received_port>
-    &lt;sip_authorized>true&lt;/sip_authorized>
-    &lt;sip_mailbox>1160&lt;/sip_mailbox>
-    &lt;sip_auth_username>1160&lt;/sip_auth_username>
+```xml
+<?xml version="1.0"?>
+<cdr>
+  <variables>
+    <sip_received_ip>192.168.50.21</sip_received_ip>
+    <sip_received_port>39368</sip_received_port>
+    <sip_authorized>true</sip_authorized>
+    <sip_mailbox>1160</sip_mailbox>
+    <sip_auth_username>1160</sip_auth_username>
 
-    &lt;sip_auth_realm>192.168.50.229&lt;/sip_auth_realm>
-    &lt;mailbox>1160&lt;/mailbox>
-    &lt;record_stereo>true&lt;/record_stereo>
-    &lt;accountcode>1160&lt;/accountcode>
-    &lt;user_context>default&lt;/user_context>
-    &lt;effective_caller_id_name>Michael%20S%20Collins&lt;/effective_caller_id_name>
+    <sip_auth_realm>192.168.50.229</sip_auth_realm>
+    <mailbox>1160</mailbox>
+    <record_stereo>true</record_stereo>
+    <accountcode>1160</accountcode>
+    <user_context>default</user_context>
+    <effective_caller_id_name>Michael%20S%20Collins</effective_caller_id_name>
 
-    &lt;effective_caller_id_number>5597993757&lt;/effective_caller_id_number>
-    &lt;sip_from_user>1160&lt;/sip_from_user>
-    &lt;sip_from_uri>1160%40192.168.50.229&lt;/sip_from_uri>
-    &lt;sip_from_host>192.168.50.229&lt;/sip_from_host>
-    &lt;sip_from_user_stripped>1160&lt;/sip_from_user_stripped>
-    &lt;sip_from_tag>a360bd54&lt;/sip_from_tag>
+    <effective_caller_id_number>5597993757</effective_caller_id_number>
+    <sip_from_user>1160</sip_from_user>
+    <sip_from_uri>1160%40192.168.50.229</sip_from_uri>
+    <sip_from_host>192.168.50.229</sip_from_host>
+    <sip_from_user_stripped>1160</sip_from_user_stripped>
+    <sip_from_tag>a360bd54</sip_from_tag>
 
-    &lt;sofia_profile_name>internal&lt;/sofia_profile_name>
-    &lt;sofia_profile_domain_name>192.168.50.229&lt;/sofia_profile_domain_name>
-    &lt;sip_req_user>92137991400&lt;/sip_req_user>
-    &lt;sip_req_uri>92137991400%40192.168.50.229&lt;/sip_req_uri>
-    &lt;sip_req_host>192.168.50.229&lt;/sip_req_host>
-    &lt;sip_to_user>92137991400&lt;/sip_to_user>
+    <sofia_profile_name>internal</sofia_profile_name>
+    <sofia_profile_domain_name>192.168.50.229</sofia_profile_domain_name>
+    <sip_req_user>92137991400</sip_req_user>
+    <sip_req_uri>92137991400%40192.168.50.229</sip_req_uri>
+    <sip_req_host>192.168.50.229</sip_req_host>
+    <sip_to_user>92137991400</sip_to_user>
 
-    &lt;sip_to_uri>92137991400%40192.168.50.229&lt;/sip_to_uri>
-    &lt;sip_to_host>192.168.50.229&lt;/sip_to_host>
-    &lt;sip_contact_user>1160&lt;/sip_contact_user>
-    &lt;sip_contact_port>39368&lt;/sip_contact_port>
-    &lt;sip_contact_uri>1160%40192.168.50.21%3A39368&lt;/sip_contact_uri>
-    &lt;sip_contact_host>192.168.50.21&lt;/sip_contact_host>
+    <sip_to_uri>92137991400%40192.168.50.229</sip_to_uri>
+    <sip_to_host>192.168.50.229</sip_to_host>
+    <sip_contact_user>1160</sip_contact_user>
+    <sip_contact_port>39368</sip_contact_port>
+    <sip_contact_uri>1160%40192.168.50.21%3A39368</sip_contact_uri>
+    <sip_contact_host>192.168.50.21</sip_contact_host>
+```
 
-    &lt;channel_name>sofia/internal/1160%40192.168.50.229&lt;/channel_name>
+&lt;channel_name>sofia/internal/1160%40192.168.50.229&lt;/channel_name>
     &lt;sip_call_id>NzUyYzU2ZmU0NjQ0NmNkMGExYTNiZjIzMjIwMWNiODc.&lt;/sip_call_id>
     &lt;sip_via_host>192.168.50.21&lt;/sip_via_host>
     &lt;sip_via_port>39368&lt;/sip_via_port>
@@ -98,42 +97,86 @@ Example XML CDR
     &lt;default_area_code>559&lt;/default_area_code>
     &lt;user_name>default&lt;/user_name>
 
-    &lt;domain_name>192.168.50.229&lt;/domain_name>
-    &lt;local_media_ip>192.168.50.229&lt;/local_media_ip>
-    &lt;local_media_port>9140&lt;/local_media_port>
-    &lt;current_application>bridge&lt;/current_application>
-    &lt;originate_disposition>SUCCESS&lt;/originate_disposition>
-    &lt;bridge_channel>OpenZAP/1%3A23/2137991400&lt;/bridge_channel>
+**&lt;domain_name>192.168.50.229&lt;/domain_name>**
+&lt;domain_name>192.168.50.229&lt;/domain_name>
 
-    &lt;bridge_uuid>e012ce96-7f9c-4194-87fe-5ba86a3930ca&lt;/bridge_uuid>
-    &lt;signal_bond>e012ce96-7f9c-4194-87fe-5ba86a3930ca&lt;/signal_bond>
-    &lt;sip_nat_detected>true&lt;/sip_nat_detected>
-    &lt;endpoint_disposition>ANSWER&lt;/endpoint_disposition>
-    &lt;sip_user_agent>X-Lite%20release%201100l%20stamp%2047546&lt;/sip_user_agent>
-    &lt;sip_term_status>200&lt;/sip_term_status>
+**&lt;local_media_ip>192.168.50.229&lt;/local_media_ip>**
+&lt;local_media_ip>192.168.50.229&lt;/local_media_ip>
 
-    &lt;sip_term_cause>16&lt;/sip_term_cause>
-    &lt;hangup_cause>NORMAL_CLEARING&lt;/hangup_cause>
-    &lt;start_stamp>2008-07-31%2011%3A35%3A38&lt;/start_stamp>
-    &lt;profile_start_stamp>2008-07-31%2011%3A35%3A38&lt;/profile_start_stamp>
-    &lt;answer_stamp>2008-07-31%2011%3A35%3A41&lt;/answer_stamp>
-    &lt;progress_stamp>2008-07-31%2011%3A35%3A38&lt;/progress_stamp>
+**&lt;local_media_port>9140&lt;/local_media_port>**
+&lt;local_media_port>9140&lt;/local_media_port>
 
-    &lt;progress_media_stamp>2008-07-31%2011%3A35%3A38&lt;/progress_media_stamp>
-    &lt;end_stamp>2008-07-31%2011%3A36%3A17&lt;/end_stamp>
-    &lt;start_epoch>1217529338&lt;/start_epoch>
-    &lt;start_uepoch>1217529338212616&lt;/start_uepoch>
-    &lt;profile_start_epoch>1217529338&lt;/profile_start_epoch>
-    &lt;profile_start_uepoch>1217529338212616&lt;/profile_start_uepoch>
+**&lt;current_application>bridge&lt;/current_application>**
+&lt;current_application>bridge&lt;/current_application>
 
-    &lt;answer_epoch>1217529338&lt;/answer_epoch>
+**&lt;originate_disposition>SUCCESS&lt;/originate_disposition>**
+&lt;originate_disposition>SUCCESS&lt;/originate_disposition>
+
+**&lt;bridge_channel>OpenZAP/1%3A23/2137991400&lt;/bridge_channel>**
+&lt;bridge_channel>OpenZAP/1%3A23/2137991400&lt;/bridge_channel>
+
+**&lt;bridge_uuid>e012ce96-7f9c-4194-87fe-5ba86a3930ca&lt;/bridge_uuid>**
+&lt;bridge_uuid>e012ce96-7f9c-4194-87fe-5ba86a3930ca&lt;/bridge_uuid>
+
+**&lt;signal_bond>e012ce96-7f9c-4194-87fe-5ba86a3930ca&lt;/signal_bond>**
+&lt;signal_bond>e012ce96-7f9c-4194-87fe-5ba86a3930ca&lt;/signal_bond>
+
+**&lt;sip_nat_detected>true&lt;/sip_nat_detected>**
+&lt;sip_nat_detected>true&lt;/sip_nat_detected>
+
+**&lt;endpoint_disposition>ANSWER&lt;/endpoint_disposition>**
+&lt;endpoint_disposition>ANSWER&lt;/endpoint_disposition>
+
+**&lt;sip_user_agent>X-Lite%20release%201100l%20stamp%2047546&lt;/sip_user_agent>**
+&lt;sip_user_agent>X-Lite%20release%201100l%20stamp%2047546&lt;/sip_user_agent>
+
+**&lt;sip_term_status>200&lt;/sip_term_status>**
+&lt;sip_term_status>200&lt;/sip_term_status>
+
+**&lt;sip_term_cause>16&lt;/sip_term_cause>**
+&lt;sip_term_cause>16&lt;/sip_term_cause>
+
+**&lt;hangup_cause>NORMAL_CLEARING&lt;/hangup_cause>**
+&lt;hangup_cause>NORMAL_CLEARING&lt;/hangup_cause>
+
+**&lt;start_stamp>2008-07-31%2011%3A35%3A38&lt;/start_stamp>**
+&lt;start_stamp>2008-07-31%2011%3A35%3A38&lt;/start_stamp>
+
+**&lt;profile_start_stamp>2008-07-31%2011%3A35%3A38&lt;/profile_start_stamp>**
+&lt;profile_start_stamp>2008-07-31%2011%3A35%3A38&lt;/profile_start_stamp>
+
+**&lt;answer_stamp>2008-07-31%2011%3A35%3A41&lt;/answer_stamp>**
+&lt;answer_stamp>2008-07-31%2011%3A35%3A41&lt;/answer_stamp>
+
+**&lt;progress_stamp>2008-07-31%2011%3A35%3A38&lt;/progress_stamp>**
+&lt;progress_stamp>2008-07-31%2011%3A35%3A38&lt;/progress_stamp>
+
+**&lt;progress_media_stamp>2008-07-31%2011%3A35%3A38&lt;/progress_media_stamp>**
+&lt;progress_media_stamp>2008-07-31%2011%3A35%3A38&lt;/progress_media_stamp>
+
+**&lt;end_stamp>2008-07-31%2011%3A36%3A17&lt;/end_stamp>**
+&lt;end_stamp>2008-07-31%2011%3A36%3A17&lt;/end_stamp>
+
+**&lt;start_epoch>1217529338&lt;/start_epoch>**
+&lt;start_epoch>1217529338&lt;/start_epoch>
+
+**&lt;start_uepoch>1217529338212616&lt;/start_uepoch>**
+&lt;start_uepoch>1217529338212616&lt;/start_uepoch>
+
+**&lt;profile_start_epoch>1217529338&lt;/profile_start_epoch>**
+&lt;profile_start_epoch>1217529338&lt;/profile_start_epoch>
+
+**&lt;profile_start_uepoch>1217529338212616&lt;/profile_start_uepoch>**
+&lt;profile_start_uepoch>1217529338212616&lt;/profile_start_uepoch>
+
+&lt;answer_epoch>1217529338&lt;/answer_epoch>
     &lt;answer_uepoch>1217529338452698&lt;/answer_uepoch>
     &lt;end_epoch>1217529377&lt;/end_epoch>
     &lt;end_uepoch>1217529377795951&lt;/end_uepoch>
     &lt;last_app>bridge&lt;/last_app>
     &lt;last_arg>openzap/1/A/2137991400&lt;/last_arg>
 
-    &lt;caller_id>%22Mikey%22%20%3C1160%3E&lt;/caller_id>
+    &lt;caller_id>"Mikey" &lt;1160>&lt;/caller_id>
     &lt;duration>39&lt;/duration>
     &lt;billsec>36&lt;/billsec>
     &lt;progresssec>0&lt;/progresssec>
@@ -154,131 +197,159 @@ Example XML CDR
     &lt;read_codec>PCMU&lt;/read_codec>
     &lt;read_rate>8000&lt;/read_rate>
 
-  &lt;/variables>
-  &lt;app_log>
+```
+&lt;/variables>
+&lt;app_log>
+  &lt;application app_name="set" app_data="open=true">&lt;/application>
+  &lt;application app_name="set" app_data="use_profile=nat">&lt;/application>
+  &lt;application app_name="set_user" app_data="default@192.168.50.229">&lt;/application>
+  &lt;application app_name="db" app_data="insert/spymap/1160/6f32e2f8-38d1-43a7-b6ea-215bbfe6a314">&lt;/application>
+  &lt;application app_name="db" app_data="insert/last_dial/1160/92137991400">&lt;/application>
+  &lt;application app_name="db" app_data="insert/last_dial/global/6f32e2f8-38d1-43a7-b6ea-215bbfe6a314">&lt;/application>
+  &lt;application app_name="record_session" app_data="/mnt/powervault/Databases/XMLCDR/6f32e2f8-38d1-43a7-b6ea-215bbfe6a314__1.wav">&lt;/application>
+
+  &lt;application app_name="bridge" app_data="openzap/1/A/2137991400">&lt;/application>
+&lt;/app_log>
+&lt;callflow dialplan="XML" profile_index="1">
+  &lt;extension name="tod_example" number="92137991400">
     &lt;application app_name="set" app_data="open=true">&lt;/application>
-    &lt;application app_name="set" app_data="use_profile=nat">&lt;/application>
-    &lt;application app_name="set_user" app_data="default@192.168.50.229">&lt;/application>
-    &lt;application app_name="db" app_data="insert/spymap/1160/6f32e2f8-38d1-43a7-b6ea-215bbfe6a314">&lt;/application>
-    &lt;application app_name="db" app_data="insert/last_dial/1160/92137991400">&lt;/application>
-    &lt;application app_name="db" app_data="insert/last_dial/global/6f32e2f8-38d1-43a7-b6ea-215bbfe6a314">&lt;/application>
-    &lt;application app_name="record_session" app_data="/mnt/powervault/Databases/XMLCDR/6f32e2f8-38d1-43a7-b6ea-215bbfe6a314__1.wav">&lt;/application>
+    &lt;application app_name="set" app_data="use_profile=${cond(${acl(${network_addr} rfc1918)} == true ? nat : default)}">&lt;/application>
+    &lt;application app_name="set_user" app_data="default@${domain}">&lt;/application>
+    &lt;application app_name="db" app_data="insert/spymap/${caller_id_number}/${uuid}">&lt;/application>
+    &lt;application app_name="db" app_data="insert/last_dial/${caller_id_number}/${destination_number}">&lt;/application>
+```
 
-    &lt;application app_name="bridge" app_data="openzap/1/A/2137991400">&lt;/application>
-  &lt;/app_log>
-  &lt;callflow dialplan="XML" profile_index="1">
-    &lt;extension name="tod_example" number="92137991400">
-      &lt;application app_name="set" app_data="open=true">&lt;/application>
-      &lt;application app_name="set" app_data="use_profile=${cond(${acl(${network_addr} rfc1918)} == true ? nat : default)}">&lt;/application>
-      &lt;application app_name="set_user" app_data="default@${domain}">&lt;/application>
-      &lt;application app_name="db" app_data="insert/spymap/${caller_id_number}/${uuid}">&lt;/application>
-      &lt;application app_name="db" app_data="insert/last_dial/${caller_id_number}/${destination_number}">&lt;/application>
+```
+&lt;/variables>
+&lt;app_log>
+  &lt;application app_name="set" app_data="open=true">&lt;/application>
+  &lt;application app_name="set" app_data="use_profile=nat">&lt;/application>
+  &lt;application app_name="set_user" app_data="default@192.168.50.229">&lt;/application>
+  &lt;application app_name="db" app_data="insert/spymap/1160/6f32e2f8-38d1-43a7-b6ea-215bbfe6a314">&lt;/application>
+  &lt;application app_name="db" app_data="insert/last_dial/1160/92137991400">&lt;/application>
+  &lt;application app_name="db" app_data="insert/last_dial/global/6f32e2f8-38d1-43a7-b6ea-215bbfe6a314">&lt;/application>
+  &lt;application app_name="record_session" app_data="/mnt/powervault/Databases/XMLCDR/6f32e2f8-38d1-43a7-b6ea-215bbfe6a314__1.wav">&lt;/application>
 
-      &lt;application app_name="db" app_data="insert/last_dial/global/${uuid}">&lt;/application>
-      &lt;application app_name="record_session" app_data="/mnt/powervault/Databases/XMLCDR/${uuid}__1.wav">&lt;/application>
-      &lt;application app_name="bridge" app_data="openzap/1/A/2137991400">&lt;/application>
-    &lt;/extension>
-    &lt;caller_profile>
-      &lt;username>1160&lt;/username>
-      &lt;dialplan>XML&lt;/dialplan>
-      &lt;caller_id_name>Mikey&lt;/caller_id_name>
+  &lt;application app_name="bridge" app_data="openzap/1/A/2137991400">&lt;/application>
+&lt;/app_log>
+&lt;callflow dialplan="XML" profile_index="1">
+  &lt;extension name="tod_example" number="92137991400">
+    &lt;application app_name="set" app_data="open=true">&lt;/application>
+    &lt;application app_name="set" app_data="use_profile=${cond(${acl(${network_addr} rfc1918)} == true ? nat : default)}">&lt;/application>
+    &lt;application app_name="set_user" app_data="default@${domain}">&lt;/application>
+    &lt;application app_name="db" app_data="insert/spymap/${caller_id_number}/${uuid}">&lt;/application>
+    &lt;application app_name="db" app_data="insert/last_dial/${caller_id_number}/${destination_number}">&lt;/application>
+```
 
-      &lt;ani>&lt;/ani>
-      &lt;aniii>&lt;/aniii>
-      &lt;caller_id_number>1160&lt;/caller_id_number>
-      &lt;network_addr>192.168.50.21&lt;/network_addr>
-      &lt;rdnis>&lt;/rdnis>
-      &lt;destination_number>92137991400&lt;/destination_number>
-      &lt;uuid>6f32e2f8-38d1-43a7-b6ea-215bbfe6a314&lt;/uuid>
+```xml
+    <extension>
+      <application app_name="db" app_data="insert/last_dial/global/${uuid}"></application>
+      <application app_name="record_session" app_data="/mnt/powervault/Databases/XMLCDR/${uuid}__1.wav"></application>
+      <application app_name="bridge" app_data="openzap/1/A/2137991400"></application>
+    </extension>
+    <caller_profile>
+      <username>1160</username>
+      <dialplan>XML</dialplan>
+      <caller_id_name>Mikey</caller_id_name>
 
-      &lt;source>mod_sofia&lt;/source>
-      &lt;context>default&lt;/context>
-      &lt;chan_name>sofia/internal/1160@192.168.50.229&lt;/chan_name>
-      &lt;originatee>
-        &lt;originatee_caller_profile>
-          &lt;username>1160&lt;/username>
-          &lt;dialplan>XML&lt;/dialplan>
+      <ani></ani>
+      <aniii></aniii>
+      <caller_id_number>1160</caller_id_number>
+      <network_addr>192.168.50.21</network_addr>
+      <rdnis></rdnis>
+      <destination_number>92137991400</destination_number>
+      <uuid>6f32e2f8-38d1-43a7-b6ea-215bbfe6a314</uuid>
 
-          &lt;caller_id_name>Michael S Collins&lt;/caller_id_name>
-          &lt;ani>&lt;/ani>
-          &lt;aniii>&lt;/aniii>
-          &lt;caller_id_number>5597993757&lt;/caller_id_number>
-          &lt;network_addr>192.168.50.21&lt;/network_addr>
-          &lt;rdnis>&lt;/rdnis>
-          &lt;destination_number>1/A/2137991400&lt;/destination_number>
+      <source>mod_sofia</source>
+      <context>default</context>
+      <chan_name>sofia/internal/1160@192.168.50.229</chan_name>
+      <originatee>
+        <originatee_caller_profile>
+          <username>1160</username>
+          <dialplan>XML</dialplan>
 
-          &lt;uuid>e012ce96-7f9c-4194-87fe-5ba86a3930ca&lt;/uuid>
-          &lt;source>mod_sofia&lt;/source>
-          &lt;context>default&lt;/context>
-          &lt;chan_name>OpenZAP/1:23/2137991400&lt;/chan_name>
-        &lt;/originatee_caller_profile>
-      &lt;/originatee>
-    &lt;/caller_profile>
+          <caller_id_name>Michael S Collins</caller_id_name>
+          <ani></ani>
+          <aniii></aniii>
+          <caller_id_number>5597993757</caller_id_number>
+          <network_addr>192.168.50.21</network_addr>
+          <rdnis></rdnis>
+          <destination_number>1/A/2137991400</destination_number>
 
-    &lt;times>
-      &lt;created_time>1217529338212616&lt;/created_time>
-      &lt;profile_created_time>1217529338212616&lt;/profile_created_time>
-      &lt;progress_time>1217529338450571&lt;/progress_time>
-      &lt;progress_media_time>1217529338452698&lt;/progress_media_time>
-      &lt;answered_time>1217529341528422&lt;/answered_time>
+          <uuid>e012ce96-7f9c-4194-87fe-5ba86a3930ca</uuid>
+          <source>mod_sofia</source>
+          <context>default</context>
+          <chan_name>OpenZAP/1:23/2137991400</chan_name>
+        </originatee_caller_profile>
+      </originatee>
+    </caller_profile>
+```
 
-      &lt;hangup_time>1217529377795951&lt;/hangup_time>
-      &lt;transfer_time>0&lt;/transfer_time>
-    &lt;/times>
-  &lt;/callflow>
-&lt;/cdr>
+```xml
+<times>
+  <created_time>1217529338212616</created_time>
+  <profile_created_time>1217529338212616</profile_created_time>
+  <progress_time>1217529338450571</progress_time>
+  <progress_media_time>1217529338452698</progress_media_time>
+  <answered_time>1217529341528422</answered_time>
+  <hangup_time>1217529377795951</hangup_time>
+  <transfer_time>0</transfer_time>
+</times>
+</callflow>
+</cdr>
 
-## Features
+## 特点
 
-### Output capabilities
+### 输出功能
 
-* Always log to the disk
-* Always log to HTTP/HTTPS
-* Always log to both
+* 总是将日志记录到磁盘
+* 总是将日志记录到HTTP/HTTPS
+* 总是同时将日志记录到两者
 
-### Reliability capabilities
+### 可靠性功能
 
-On failure it will log the HTTP POST data to disk where you specify, and it has configurable timeouts and retries for the HTTP post.
+在失败时，它将将HTTP POST数据记录到您指定的磁盘，并具有可配置的超时和重试。
 
-## Getting it working
+## 让它工作起来
 
 ### modules.conf
 
-To compile the module, uncomment mod\_xml\_cdr in modules.conf
+要编译这个模块，在modules.conf中取消注释mod_xml_cdr。
 
-### Install dependencies
+### 安装依赖项
 
-If you try to build and get an error
+如果您尝试构建并出现错误
 
-[![Error](https://wiki.freeswitch.org/images/thumb/4/49/Error.png/64px-Error.png)](https://wiki.freeswitch.org/wiki/File:Error.png "Error")
-
----
-
-**mod\_xml\_cdr.c:34:23: error: curl/curl.h: No such file or directory**
+[![错误](https://wiki.freeswitch.org/images/thumb/4/49/Error.png/64px-Error.png)](https://wiki.freeswitch.org/wiki/File:Error.png "错误")
 
 ---
 
-you will need to install curl and the development headers.
+**mod_xml_cdr.c:34:23: 错误: curl/curl.h: 没有那个文件或目录**
+
+---
+
+您需要安装curl和开发头文件。
 
 ##### Debian
 
-[![Type This](https://wiki.freeswitch.org/images/thumb/a/a9/Keyboard.png/64px-Keyboard.png)](https://wiki.freeswitch.org/wiki/File:Keyboard.png "Type This")
+[![输入以下命令](https://wiki.freeswitch.org/images/thumb/a/a9/Keyboard.png/64px-Keyboard.png)](https://wiki.freeswitch.org/wiki/File:Keyboard.png "输入以下命令")
 
 apt-get install libcurl3-dev libcurl3
 
-[![Type This](https://wiki.freeswitch.org/images/thumb/a/a9/Keyboard.png/64px-Keyboard.png)](https://wiki.freeswitch.org/wiki/File:Keyboard.png "Type This")
+[![输入以下命令](https://wiki.freeswitch.org/images/thumb/a/a9/Keyboard.png/64px-Keyboard.png)](https://wiki.freeswitch.org/wiki/File:Keyboard.png "输入以下命令")
 
 make install
 
-Load the module in conf/autoload\_configs/modules.conf.xml.
+在conf/autoload_configs/modules.conf.xml中加载该模块。
 
-&lt;load module="mod_xml_cdr"/>
+<load module="mod_xml_cdr"/>
 
-Type "load mod\_xml\_cdr" at the CLI to load the module.
+在CLI中输入“load mod_xml_cdr”加载该模块。
 
-### Sample Configuration
+### 示例配置
+```
 
-Edit or Create a file in the conf/autoload\_configs directory called **xml\_cdr.conf.xml** with the following contents:
+在 conf/autoload_configs 目录下编辑或创建一个名为 **xml_cdr.conf.xml** 的文件，内容如下：
 
 [![Edit This](https://wiki.freeswitch.org/images/thumb/d/d2/Edit.png/64px-Edit.png)](https://wiki.freeswitch.org/wiki/File:Edit.png "Edit This")
 
@@ -297,201 +368,207 @@ Edit or Create a file in the conf/autoload\_configs directory called **xml\_cdr.
 
 ---
 
-* the directories you specify for log-dir or err-log-dir must exist.
-* you will have to create your own HTTP CGI handler in place of cdr.php. See contrib/trixter/xml-cdr to view the code of the example cdr.php.
-* double check freeswitch.xml and make sure xml\_cdr.conf.xml is included. If not, it means you need to get a newer version of freeswitch for this feature to work.
+* 你指定的 log-dir 或 err-log-dir 目录必须存在。
+* 你需要创建自己的 HTTP CGI 处理程序来替换 cdr.php。查看 contrib/trixter/xml-cdr 目录下的示例 cdr.php 代码。
+* 请仔细检查 freeswitch.xml 文件，确保已包含 xml_cdr.conf.xml。如果没有，说明你需要获取一个更新的 freeswitch 版本才能使用此功能。
 
 ---
 
-Default Configuration that comes with GIT as of 2011-03-11:
+默认的 GIT 配置（截至 2011-03-11）如下：
 
 &lt;configuration name="xml_cdr.conf" description="XML CDR CURL logger">
   &lt;settings>
-    &lt;!-- the url to post to if blank web posting is disabled  -->
+    &lt;!-- 如果为空，将禁用 web 提交，这是要提交到的 url  -->
     &lt;!-- &lt;param name="url" value="http://localhost/cdr_curl/post.php"/> -->
 
-    &lt;!-- optional: credentials to send to web server -->
+    &lt;!-- 可选：发送到 Web 服务器的凭据 -->
     &lt;!--    &lt;param name="cred" value="user:pass"/> -->
 
-    &lt;!-- the total number of retries (not counting the first 'try') to post to webserver incase of failure -->
-    &lt;!-- &lt;param name="retries" value="2"/> -->
+```xml
+<!-- 在失败情况下，尝试将数据提交到Web服务器的总重试次数（不包括第一次） -->
+<!-- <param name="retries" value="2"/> -->
 
-    &lt;!-- delay between retries in seconds, default is 5 seconds -->
-    &lt;!-- &lt;param name="delay" value="1"/> -->
+<!-- 重试之间的延迟时间（以秒为单位），默认为5秒 -->
+<!-- <param name="delay" value="1"/> -->
 
-    &lt;!-- Log via http and on disk, default is false -->
-    &lt;!-- &lt;param name="log-http-and-disk" value="true"/> -->
+<!-- 是否通过HTTP和磁盘记录日志，默认为false -->
+<!-- <param name="log-http-and-disk" value="true"/> -->
 
-    &lt;!-- optional: if not present we do not log every record to disk -->
-    &lt;!-- either an absolute path, a relative path assuming ${prefix}/logs or a blank value will default to ${prefix}/logs/xml_cdr -->
-    &lt;param name="log-dir" value=""/>
+<!-- 可选：如果不存在，我们不记录每个记录到磁盘 -->
+<!-- 可以是绝对路径、相对路径（假设为${prefix}/logs）或空值，默认为${prefix}/logs/xml_cdr -->
+<param name="log-dir" value=""/>
 
-    &lt;!-- optional: if not present we do log the b leg -->
-    &lt;!-- true or false if we should create a cdr for the b leg of a call-->
-    &lt;param name="log-b-leg" value="false"/>
-    
-    &lt;!-- optional: if not present, all filenames are the uuid of the call -->
-    &lt;!-- true or false if a leg files are prefixed "a_" -->
-    &lt;param name="prefix-a-leg" value="true"/>
+<!-- 可选：如果不存在，我们会记录B路的呼叫日志 -->
+<!-- 是否为呼叫的B路创建CDR，true或false -->
+<param name="log-b-leg" value="false"/>
 
-    &lt;!-- encode the post data may be 'true' for url encoding, 'false' for no encoding or 'base64' for base64 encoding -->
-    &lt;param name="encode" value="true"/>
+<!-- 可选：如果不存在，所有文件名都是呼叫的UUID -->
+<!-- 是否为A路的日志文件添加前缀"a_"，true或false -->
+<param name="prefix-a-leg" value="true"/>
 
-    &lt;!-- optional: set to true to disable Expect: 100-continue lighttpd requires this setting --> 
-    &lt;!--&lt;param name="disable-100-continue" value="true"/>--> 
-    
-    &lt;!-- optional: full path to the error log dir for failed web posts if not specified its the same as log-dir -->
-    &lt;!-- either an absolute path, a relative path assuming ${prefix}/logs or a blank or omitted value will default to ${prefix}/logs/xml_cdr -->
-    &lt;!-- &lt;param name="err-log-dir" value="/tmp"/> -->
+<!-- 编码提交的数据，可以是'true'表示URL编码，'false'表示不编码，'base64'表示Base64编码 -->
+<param name="encode" value="true"/>
 
-    &lt;!-- which auhtentification scheme to use. Supported values are: basic, digest, NTLM, GSS-NEGOTIATE or "any" for automatic detection -->
-    &lt;!--&lt;param name="auth-scheme" value="basic"/>--> 
+<!-- 可选：设置为true以禁用Expect: 100-continue，lighttpd需要这个设置 -->
+<!-- <param name="disable-100-continue" value="true"/> -->
 
-    &lt;!-- optional: this will enable the CA root certificate check by libcurl to
-         verify that the certificate was issued by a major Certificate Authority.
-         note: default value is disabled. only enable if you want this! -->
-    &lt;!--&lt;param name="enable-cacert-check" value="true"/>-->
-    &lt;!-- optional: verify that the server is actually the one listed in the cert -->
-    &lt;!-- &lt;param name="enable-ssl-verifyhost" value="true"/> -->
+<!-- 可选：失败的Web提交的错误日志目录的完整路径，如果未指定，与log-dir相同 -->
+<!-- 可以是绝对路径、相对路径（假设为${prefix}/logs）或空值，默认为${prefix}/logs/xml_cdr -->
+<!-- <param name="err-log-dir" value="/tmp"/> -->
+```
 
-    &lt;!-- optional: these options can be used to specify custom SSL certificates
-         to use for HTTPS communications. Either use both options or neither.
-         Specify your public key with 'ssl-cert-path' and the private key with
-         'ssl-key-path'. If your private key has a password, specify it with
-         'ssl-key-password'. -->
-    &lt;!-- &lt;param name="ssl-cert-path" value="$${base_dir}/conf/certs/public_key.pem"/> -->
-    &lt;!-- &lt;param name="ssl-key-path" value="$${base_dir}/conf/certs/private_key.pem"/> -->
-    &lt;!-- &lt;param name="ssl-key-password" value="MyPrivateKeyPassword"/> -->
+```xml
+<!-- 选择要使用的认证方案。支持的值有：basic，digest，NTLM，GSS-NEGOTIATE 或 "any" 以自动检测 -->
+<!--&lt;param name="auth-scheme" value="basic"/>-->
 
-    &lt;!-- optional: use a custom CA certificate in PEM format to verify the peer
-         with. This is useful if you are acting as your own certificate authority.
-         note: only makes sense if used in combination with "enable-cacert-check." -->
-    &lt;!-- &lt;param name="ssl-cacert-file" value="$${base_dir}/conf/certs/cacert.pem"/> -->
+<!-- 可选：启用 libcurl 进行 CA 根证书检查，以验证证书是否由主要的证书颁发机构颁发。
+     注意：默认值为禁用。只有想要启用时才启用！ -->
+<!--&lt;param name="enable-cacert-check" value="true"/>-->
+<!-- 可选：验证服务器是否确实是证书中所列的服务器 -->
+<!-- &lt;param name="enable-ssl-verifyhost" value="true"/> -->
 
-    &lt;!-- optional: specify the SSL version to force HTTPS to use. Valid options are
-         "SSLv3" and "TLSv1". Otherwise libcurl will auto-negotiate the version. -->
-    &lt;!-- &lt;param name="ssl-version" value="TLSv1"/> -->
+<!-- 可选：可以使用这些选项指定用于 HTTPS 通信的自定义 SSL 证书。
+     要么同时使用这两个选项，要么都不使用。
+     使用 'ssl-cert-path' 指定公钥，使用 'ssl-key-path' 指定私钥。
+     如果私钥有密码，请使用 'ssl-key-password' 指定密码。 -->
+<!-- &lt;param name="ssl-cert-path" value="$${base_dir}/conf/certs/public_key.pem"/> -->
+<!-- &lt;param name="ssl-key-path" value="$${base_dir}/conf/certs/private_key.pem"/> -->
+<!-- &lt;param name="ssl-key-password" value="MyPrivateKeyPassword"/> -->
 
-    &lt;!-- optional: enables cookies and stores them in the specified file. -->
-    &lt;!-- &lt;param name="cookie-file" value="/tmp/cookie-mod_xml_curl.txt"/> -->
-  &lt;/settings>
+<!-- 可选：使用自定义 PEM 格式的 CA 证书来验证对等方。
+     如果您自己担任证书颁发机构，则这很有用。
+     注意：只有与 "enable-cacert-check" 结合使用才有意义。 -->
+<!-- &lt;param name="ssl-cacert-file" value="$${base_dir}/conf/certs/cacert.pem"/> -->
+```
+
+```html
+&lt;!-- 可选项：指定要使用的 SSL 版本强制使用 HTTPS。有效选项为 "SSLv3" 和 "TLSv1"。如果不指定，libcurl 将自动协商版本。 -->
+&lt;!-- &lt;param name="ssl-version" value="TLSv1"/> -->
+
+&lt;!-- 可选项：启用 cookie 并将其存储在指定的文件中。 -->
+&lt;!-- &lt;param name="cookie-file" value="/tmp/cookie-mod_xml_curl.txt"/> -->
+&lt;/settings>
 &lt;/configuration>
 
-#### Verifying
+#### 验证
 
-Place a call, hangup, and you should have a new XML file in /usr/local/freeswitch/log. Also check your webserver logs.
+进行一次呼叫，挂断后，您应该在 /usr/local/freeswitch/log 目录下看到一个新的 XML 文件。还要检查您的网页服务器日志。
 
-### Configuration Options
+### 配置选项
+```
 
-| **Name**              | **Description**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | **Example**                        |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
-| log-b-leg             | Whether to log B legs (by default only A legs are logged)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | true                               |
-| url                   | Webserver URL (you can specify this element more than once, and it will try each URL in order of succession until retries is reached. note retries is not per URL specified). Note URL is optional, mod\_xml\_cdr can write only to disk.                                                                                                                                                                                                                                                                                                                        | <http://myhost/cdr.php>            |
-| cred                  | credentials to use to post to webserver (if webserver requires it)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | user:pass                          |
-| auth-scheme           | which authentication scheme to use. Supported values are: basic, digest, NTLM, GSS-NEGOTIATE or "any" for automatic detection                                                                                                                                                                                                                                                                                                                                                                                                                                    | basic                              |
-| encode                | whether to encode the information in the POST that is sent to the webserver. By default, (if this param is not provided or is invalid) the content-type of the post isapplication/x-www-form-plaintext and no URL-encoding is done on the POST'ed data. If set to 'True', it will set the content type to application/x-www-form-urlencoded and URL-encode the information. This is what most webservers expect. If set to base64, the content type will be application/x-www-form-base64-encoded. Finally, if set to textxml the content type will be text/xml. | base64                             |
-| retries               | number of retries before giving up http post and writing to disk                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | 2                                  |
-| timeout               | HTTP request timeout                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | 20                                 |
-| delay                 | delay in seconds before retrying                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | 120                                |
-| enable-cacert-check   | Whether to check server's SSL certificate against CA certificates (recommended for HTTPS)                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | true                               |
-| enable-ssl-verifyhost | Whether to check server's SSL certificate matches the hostname of the URL (recommended for HTTPS)                                                                                                                                                                                                                                                                                                                                                                                                                                                                | true                               |
-| ssl-cacert-file       | Path to CA certificate(s) file. _**Note**_ this appears to be required as the module doesn't automatically search for system CAs.                                                                                                                                                                                                                                                                                                                                                                                                                                | /etc/ssl/certs/ca-certificates.crt |
-| ssl-cert-path         | Path to client certificate                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | /etc/ssl/certs/fs\_client.crt      |
-| ssl-key-path          | Path to client private key                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | /etc/ssl/private/fs\_client.key    |
-| ssl-key-password      | Password for client private key                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | mysecret                           |
-| ssl-version           | Which version of SSL/TLS to use. Support values are "SSLv3" or "TLSv1"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | TLSv1                              |
-| disable-100-continue  | Disable 100 Continue in HTTP Expect header, for servers which dislike this option.                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | true                               |
-| log-http-and-disk     | Default behaviour is to write either HTTP or Disk on HTTP failure. Setting this to true will write to both HTTP and Disk regardless (handy for realtime + reconciliation later if required)                                                                                                                                                                                                                                                                                                                                                                      | true                               |
-| log-dir               | directory to log to -- **you must create this directory**. If left blank, will use the default directory. If omitted, disables logging to a file and will only POST to webserver. If a name is given instead of a path, a subdirectory under the default will be used. This directory must already exists.                                                                                                                                                                                                                                                       | /tmp/log                           |
-| err-log-dir           | directory to log errors to -- **you must create this directory**. If left blank, will use the default directory. If omitted, disables logging to a file and will only POST to webserver. If a name is given instead of a path, a subdirectory under the default will be used. This directory must already exists.                                                                                                                                                                                                                                                | /tmp/errlog                        |
-| prefix-a-leg          | Prefix A leg filesnames with a\_, which differentiates A and B leg CDRs on disk.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | true                               |
-| rotate                | Whether to rotate the directory CDRs are written to. If enabled logs to a yyyy-mm-dd-hh-mm-ss subdirectory of log-dir created when the module loads, and rotates to new directory on SIGHUP. Having a large number of files in a directory can become a performance bottleneck, this limits when trying to open/create paths in/under that directory, so this can improve performance when logging to disk.                                                                                                                                                      | true                               |
+| **名称**                | **描述**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | **示例**                                |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| log-b-leg               | 是否记录 B legs（默认只记录 A legs）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | true                                   |
+| url                     | Web 服务器 URL（可以多次指定该参数，程序将按照顺序尝试每个 URL，直到达到重试次数。注意重试次数不针对每个 URL 指定）。注意 URL 是可选的，mod_xml_cdr 只能将数据写入磁盘。                                                                                                                                                                                                                                                                                                                                                    | <http://myhost/cdr.php>                |
+| cred                    | 发送到 Web 服务器的凭证（如果 Web 服务器需要）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | user:pass                              |
+| auth-scheme             | 要使用的身份验证方案。支持的值有：basic，digest，NTLM，GSS-NEGOTIATE 或 "any"（自动检测）                                                                                                                                                                                                                                                                                                                                                                                                                                        | basic                                  |
+| encode                  | 是否对发送到 Web 服务器的 POST 数据进行编码。默认情况下（如果未提供此参数或参数无效），POST 请求的内容类型为 application/x-www-form-plaintext，并且不对 POST 数据进行 URL 编码。如果设置为 'True'，将设置内容类型为 application/x-www-form-urlencoded，并对信息进行 URL 编码。这是大多数 Web 服务器所期望的。如果设置为 base64，内容类型将为 application/x-www-form-base64-encoded。最后，如果设置为 textxml，内容类型将为 text/xml。                                                                                            | base64                                 |
+| retries                 | 在放弃 HTTP POST 并写入磁盘之前的重试次数                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | 2                                      |
+| timeout                 | HTTP 请求超时时间                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | 20                                     |
+| delay                   | 重试之前的延迟时间（以秒为单位）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | 120                                    |
+| enable-cacert-check     | 是否检查服务器的 SSL 证书与 CA 证书的匹配性（推荐用于 HTTPS）                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | true                                   |
+| enable-ssl-verifyhost   | 是否检查服务器的 SSL 证书与 URL 的主机名是否匹配（推荐用于 HTTPS）                                                                                                                                                                                                                                                                                                                                                                                                                                                            | true                                   |
+| ssl-cacert-file         | CA 证书文件的路径。注意：由于模块不会自动搜索系统 CA，所以此参数似乎是必需的。                                                                                                                                                                                                                                                                                                                                                                                                                                                     | /etc/ssl/certs/ca-certificates.crt     |
+| ssl-cert-path           | 客户端证书的路径                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | /etc/ssl/certs/fs_client.crt          |
+| ssl-key-path            | 客户端私钥的路径                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | /etc/ssl/private/fs_client.key         |
+| ssl-key-password        | 客户端私钥的密码                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | mysecret                               |
+| ssl-version             | 要使用的 SSL/TLS 版本。支持的值为 "SSLv3" 或 "TLSv1"                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | TLSv1                                  |
+| disable-100-continue    | 禁用 HTTP Expect 头中的 100 Continue，对于不喜欢这个选项的服务器。                                                                                                                                                                                                                                                                                                                                                                                                                                                              | true                                   |
+| log-http-and-disk       | 默认行为是在 HTTP 失败时将数据写入 HTTP 或磁盘。将此参数设置为 true，无论如何都会将数据写入 HTTP 和磁盘（如果需要实时监控 + 后期对帐，这非常有用）                                                                                                                                                                                                                                                                                                                                                                      | true                                   |
+| log-dir                 | 日志目录 - **您必须先创建此目录**。如果留空，则使用默认目录。如果省略，将禁用日志记录到文件并且只会 POST 到 Web 服务器。如果给定一个名称而不是路径，则将使用默认目录下的子目录。这个目录必须已经存在。                                                                                                                                                                                                                                                                                                                                                   | /tmp/log                               |
+| err-log-dir             | 错误日志目录 - **您必须先创建此目录**。如果留空，则使用默认目录。如果省略，将禁用日志记录到文件并且只会 POST 到 Web 服务器。如果给定一个名称而不是路径，则将使用默认目录下的子目录。这个目录必须已经存在。                                                                                                                                                                                                                                                                                                                                            | /tmp/errlog                            |
+| prefix-a-leg            | 在 A leg 文件名前加上 a_，以区分 A leg 和 B leg 的 CDRs                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | true                                   |
+| rotate                  | 是否轮转写入 CDR 的目录。如果启用，将日志写入在程序加载时创建的 log-dir 的 yyyy-mm-dd-hh-mm-ss 子目录中，并在 SIGHUP 时切换到新目录。一个目录中的大量文件可能会成为性能瓶颈，这会限制在打开/创建该目录中/下的路径时的尝试次数，因此可以提高磁盘日志记录的性能。                                                                                                                                                                                                                                                                                                               | true                                   |
 
-### Handling POST request
+### 处理POST请求
 
-The POST request can be made to any web server via HTTP or HTTPS. The script handling the request can be in any language you choose.
+通过HTTP或HTTPS，可以向任何Web服务器发送POST请求。用来处理请求的脚本可以使用您选择的任何语言。
 
-The POST request consists of a single variable named **cdr**, which contains the CDR as a XML document (the same data that would be written to disk).
+POST请求由一个名为**cdr**的单个变量组成，其中包含CDR作为XML文档（与写入磁盘的相同数据）。
 
-If "prefix-a-leg" is set to true, then the URL that is posted to will be contain in the GET string: "?uuid=a\_$uuid" for the a leg.
+如果将"prefix-a-leg"设置为true，则所提交的URL将包含在GET字符串中："?uuid=a\_$uuid" 用于a leg。
 
-If the page returns a HTTP status code of 200 OK, then the request is treated as successful. Any other status code will be treated as failure, which will cause mod\_xml\_cdr to either retry the request, try the next server or write to disk. No output is required; only the status code is used to check whether the request succeeded.
+如果页面返回的HTTP状态码为200 OK，则请求被视为成功。任何其他状态码都将被视为失败，这将导致mod\_xml\_cdr进行重试请求、尝试下一个服务器或写入磁盘。不需要输出；只使用状态码来检查请求是否成功。
 
-The contents of the cdr variable can be parsed with the XML parser available within your language of choice. It will appear similar to:
+您可以使用可用于您选择的语言内部的XML解析器解析cdr变量的内容。它的外观类似于：
 
- &lt;?xml version="1.0"?>
- &lt;cdr>
-   &lt;channel_data>
-     &lt;state>CS_REPORTING&lt;/state>
-     &lt;direction>inbound&lt;/direction>
-     &lt;state_number>11&lt;/state_number>
-     &lt;flags>0=1;36=1;38=1;51=1&lt;/flags>
-     &lt;caps>1=1;2=1;3=1&lt;/caps>
-   &lt;/channel_data>
-   &lt;variables>
-    &lt;uuid>2e831835-d336-4735-b3e5-90e5d7dc8187&lt;/uuid>
-    &lt;sip_network_ip>192.168.0.2&lt;/sip_network_ip>
-    &lt;sip_network_port>56866&lt;/sip_network_port>
-    &lt;sip_received_ip>192.168.0.2&lt;/sip_received_ip>
-    &lt;sip_received_port>56866&lt;/sip_received_port>
-    &lt;sip_via_protocol>udp&lt;/sip_via_protocol>
-    &lt;sip_from_user>1000&lt;/sip_from_user>
-    &lt;sip_from_uri>1000%40192.168.0.2&lt;/sip_from_uri>
-    &lt;sip_from_host>192.168.0.2&lt;/sip_from_host>
-    &lt;sip_from_user_stripped>1000&lt;/sip_from_user_stripped>
-    &lt;sip_from_tag>BD37552C-4B5&lt;/sip_from_tag>
+```xml
+<?xml version="1.0"?>
+<cdr>
+  <channel_data>
+    <state>CS_REPORTING</state>
+    <direction>呼入</direction>
+    <state_number>11</state_number>
+    <flags>0=1;36=1;38=1;51=1</flags>
+    <caps>1=1;2=1;3=1</caps>
+  </channel_data>
+  <variables>
+    <uuid>2e831835-d336-4735-b3e5-90e5d7dc8187</uuid>
+    <sip_network_ip>192.168.0.2</sip_network_ip>
+    <sip_network_port>56866</sip_network_port>
+    <sip_received_ip>192.168.0.2</sip_received_ip>
+    <sip_received_port>56866</sip_received_port>
+    <sip_via_protocol>udp</sip_via_protocol>
+    <sip_from_user>1000</sip_from_user>
+    <sip_from_uri>1000%40192.168.0.2</sip_from_uri>
+    <sip_from_host>192.168.0.2</sip_from_host>
+    <sip_from_user_stripped>1000</sip_from_user_stripped>
+    <sip_from_tag>BD37552C-4B5</sip_from_tag>
     ...
-   &lt;/variables>
-   &lt;app_log>
-    &lt;application app_name="set" app_data="continue_on_fail=true">&lt;/application>
-    &lt;application app_name="bridge" app_data="sofia/external/gateway/gw001/1000">&lt;/application>
-    &lt;application app_name="bridge" app_data="sofia/external/gateway/gw002/1000">&lt;/application>
-   &lt;/app_log>
-   &lt;callflow dialplan="XML" profile_index="1">
-    &lt;extension name="1000" number="1000">
-     &lt;application app_name="set" app_data="continue_on_fail=true">&lt;/application>
-     &lt;application app_name="bridge" app_data="sofia/external/gateway/gw001/1000">&lt;/application>
-     &lt;application app_name="bridge" app_data="sofia/external/gateway/gw002/1000">&lt;/application>
-     &lt;application app_name="bridge" app_data="sofia/external/gateway/gw003/1000">&lt;/application>
-     &lt;application app_name="bridge" app_data="sofia/external/gateway/gw004/1000">&lt;/application>
-     &lt;application app_name="bridge" app_data="sofia/external/gateway/gw005/1000">&lt;/application>
-    &lt;/extension>
-   &lt;/callflow>
-   &lt;caller_profile>
-     &lt;username>1000&lt;/username>
-     &lt;dialplan>XML&lt;/dialplan>
-     &lt;caller_id_name>1000&lt;/caller_id_name>
-     &lt;ani>1000&lt;/ani>
-     &lt;aniii>&lt;/aniii>
-     &lt;caller_id_number>1000&lt;/caller_id_number>
-     &lt;network_addr>192.168.0.2&lt;/network_addr>
-     &lt;rdnis>1000&lt;/rdnis>
-     &lt;destination_number>1000&lt;/destination_number>
-     &lt;uuid>2e831835-d336-4735-b3e5-90e5d7dc8187&lt;/uuid>
-     &lt;source>mod_sofia&lt;/source>
-     &lt;context>default&lt;/context>
-     &lt;chan_name>sofia/default/1000@192.168.0.2&lt;/chan_name>
-   &lt;/caller_profile>
-   &lt;times>
-     &lt;created_time>1274439432438053&lt;/created_time>
-     &lt;profile_created_time>1274439432448060&lt;/profile_created_time>
-     &lt;progress_time>0&lt;/progress_time>
-     &lt;progress_media_time>0&lt;/progress_media_time>
-     &lt;answered_time>0&lt;/answered_time>
-     &lt;hangup_time>1274439438418776&lt;/hangup_time>
-     &lt;resurrect_time>0&lt;/resurrect_time>
-     &lt;transfer_time>0&lt;/transfer_time>
-   &lt;/times>
- &lt;/cdr>
+  </variables>
+  <app_log>
+    <application app_name="set" app_data="continue_on_fail=true"></application>
+    <application app_name="bridge" app_data="sofia/external/gateway/gw001/1000"></application>
+    <application app_name="bridge" app_data="sofia/external/gateway/gw002/1000"></application>
+  </app_log>
+  <callflow dialplan="XML" profile_index="1">
+    <extension name="1000" number="1000">
+      <application app_name="set" app_data="continue_on_fail=true"></application>
+      <application app_name="bridge" app_data="sofia/external/gateway/gw001/1000"></application>
+      <application app_name="bridge" app_data="sofia/external/gateway/gw002/1000"></application>
+      <application app_name="bridge" app_data="sofia/external/gateway/gw003/1000"></application>
+      <application app_name="bridge" app_data="sofia/external/gateway/gw004/1000"></application>
+      <application app_name="bridge" app_data="sofia/external/gateway/gw005/1000"></application>
+    </extension>
+  </callflow>
+  <caller_profile>
+    <username>1000</username>
+    <dialplan>XML</dialplan>
+    <caller_id_name>1000</caller_id_name>
+    <ani>1000</ani>
+    <aniii></aniii>
+    <caller_id_number>1000</caller_id_number>
+    <network_addr>192.168.0.2</network_addr>
+    <rdnis>1000</rdnis>
+    <destination_number>1000</destination_number>
+    <uuid>2e831835-d336-4735-b3e5-90e5d7dc8187</uuid>
+    <source>mod_sofia</source>
+    <context>default</context>
+    <chan_name>sofia/default/1000@192.168.0.2</chan_name>
+  </caller_profile>
+  <times>
+    <created_time>1274439432438053</created_time>
+    <profile_created_time>1274439432448060</profile_created_time>
+    <progress_time>0</progress_time>
+    <progress_media_time>0</progress_media_time>
+    <answered_time>0</answered_time>
+    <hangup_time>1274439438418776</hangup_time>
+    <resurrect_time>0</resurrect_time>
+    <transfer_time>0</transfer_time>
+  </times>
+</cdr>
+```
+```
 
-Apparently, all values are URL encoded. This is not part of XML like the FreeSWITCH wiki previously asserted. It's just that by URL encoding the value, you remove the usage of characters that'd break the XML value (&,&lt;,>), and no further escaping is needed. Thus, when reading the value of any element, you need to URI decode. A proper XML parser will not do this for you: you will get an encoded value back. In the above example, an XML parser would return "1000%40192.168.0.2" for the variable sip\_from\_uri. If someone knows the reason for using URL encoding here instead of just using XML (which would save quite a few bytes, especially with a failed bleg XML CDR encoded into a variable), please add to the wiki.
+显然，所有的值都是URL编码的。这与之前FreeSWITCH wiki所声称的XML不是一部分。只是通过URL编码值，您可以删除会破坏XML值(&,&lt;,>)的字符的使用，并且不需要进一步的转义。因此，在读取任何元素的值时，您需要进行URI解码。一个正确的XML解析器不会为您完成这个操作：您将得到一个编码后的值。在上面的示例中，XML解析器将返回变量sip_from_uri的值"1000%40192.168.0.2"。如果有人知道为什么在这里使用URL编码而不是使用XML（这将节省很多字节，特别是将失败的bleg XML CDR编码为变量），请添加到wiki中。
 
-#### Examples
+#### 示例
 
-See scripts/contrib/trixter/xml-cdr for examples to take a webpost (which mod\_xml\_cdr does now) and turn it into an associative array so your script can process it.
+请参阅  scripts/contrib/trixter/xml-cdr 以获取将 webpost（现在使用 mod_xml_cdr）转换为关联数组的示例，以便您的脚本可以处理它。
 
   
-Process xml\_cdr Post with .Net MVC3
+在.Net MVC3中处理xml_cdr的Post请求
 
         [HttpPost]
         public void CDR(string uuid)
@@ -499,45 +576,46 @@ Process xml\_cdr Post with .Net MVC3
             var auth = ASCIIEncoding.ASCII.GetString(
                        Convert.FromBase64String(Request.Headers["AUTHORIZATION"]));
 
-            // TODO: Using auth check against your DB or whatever if user:pass is authorized.
-
-            // Get the xml from the input stream.
+            // TODO: 使用auth检查用户：密码是否经过授权。
+            
+            // 从输入流获取xml。
             StreamReader r = new StreamReader(Request.InputStream);
             string xml = r.ReadToEnd();
-            // Strips some unwanted chars.
+            // 去掉一些不必要的字符。
             xml.Substring(4, xml.Length - 4);
 
-            // Parse the string. Used XElement below but you could use XmlDocument also.
+            // 解析字符串。以下示例使用了XElement，但您也可以使用XmlDocument。
             XElement elm = XElement.Parse(xml);
 
-            // Now using xpath or LINQ grab the element values you need.
-            // For ex: YOUR_ELEMENT could = variables/hangup_cause.
-            string selectedElm = Uri.UnescapeDataString(elm.XPathSelectElement("//" + "YOUR_ELEMENT").Vmialue); 
+```python
+            // 现在使用 xpath 或 LINQ 抓取所需的元素值。
+            // 例如: YOUR_ELEMENT 可能等于 variables/hangup_cause。
+            string selectedElm = Uri.UnescapeDataString(elm.XPathSelectElement("//" + "YOUR_ELEMENT").Value); 
         }
 
-### Resubmitting failed CDR submissions
+### 重新提交失败的 CDR 提交
 
-Within ./conf/autoload\_configs/xml\_cdr.conf.xml you can activate the "err-log-dir" option to log in a directory the xml cdrs if the http cdr server is down.
+在 ./conf/autoload\_configs/xml\_cdr.conf.xml 中，您可以激活 "err-log-dir" 选项，如果 http cdr 服务器出现问题，将日志记录在目录中。
 
-When the error that prevented the CDR being submitted is corrected you will want to resend the CDR to the server.
+当修复了导致 CDR 提交失败的错误后，您将希望重新发送 CDR 到服务器。
 
-The curl command to do that is :
+用于执行此操作的 curl 命令如下:
 
  curl --request POST --fail --data-urlencode cdr@$CDR http://$CDR_SERVER_URI/ >/dev/null \
 
-#### Script (for cronjob or manual run)
+#### 脚本（用于 cronjob 或手动运行）
 
-This script is suitable for running from the commandline or from a cronjob. It reads all the required server details from the mod\_xml\_cdr configuration file.
+此脚本适用于从命令行或 cronjob 运行。它从 mod\_xml\_cdr 配置文件中读取所有必要的服务器详细信息。
 
-You will need libxml2-utils and curl installed.
+您需要安装 libxml2-utils 和 curl。
 
 #!/bin/sh
 
-# Configuration file location
-# You may want to tweak this, depending on your local installation environment.
+# 配置文件位置
+# 根据您的本地安装环境进行调整。
 CONFIG_FILE=/etc/freeswitch/autoload_configs/xml_cdr.conf.xml
 
-# Read config
+# 读取配置
 
 get_param()
 {
@@ -549,139 +627,139 @@ CDRDIR=$(get_param err-log-dir)
 URL=$(get_param url)
 AUTH_SCHEME=$(get_param auth-scheme)
 CRED=$(get_param cred)
+```
 
-# Resubmit any CDRs in error directory. Remove files on successful HTTP request.
-# Note error CDRs are stored already urlencoded
+＃重新提交错误目录中的所有CDR。成功的HTTP请求将删除文件。
+＃注意错误的CDR已经存储为URLEncoded的形式。
 for CDR in $(find $CDRDIR -name "*.cdr.xml"); do
-    echo "Resubmitting $(basename $CDR .cdr.xml)..."
+    echo "正在重新提交 $(basename $CDR .cdr.xml)..."
     echo -n 'cdr='$(cat $CDR) | \
         curl -sS -X POST -f --$AUTH_SCHEME -u $CRED -d @- $URL >/dev/null \
-            && echo "OK, removing CDR file" \
+            && echo "好的，删除CDR文件" \
             && rm -f $CDR
 done
 
-# The following is suitable for uploading CDRs that were logged to disk
-# (these are not urlencoded yet so must be handled differently)
-#for CDR in $(find $CDRDIR -name "*.cdr.xml"); do
-#        echo "Resubmitting $(basename $CDR .cdr.xml)..."
+＃以下适用于上传记录到磁盘的CDR（这些尚未进行URLEncoded处理，所以必须进行不同的处理）
+＃for CDR in $(find $CDRDIR -name "*.cdr.xml"); do
+#        echo "正在重新提交 $(basename $CDR .cdr.xml)..."
 #        curl -sS --request POST --fail --$AUTH_SCHEME --user $CRED --data-urlencode cdr@$CDR $URL >/dev/null \
-#                && echo "OK, removing CDR file" \
+#                && echo "好的，删除CDR文件" \
 #                && rm -f $CDR
 #done
 
-**Note** this script assumes you are using basic/digest password authentication. If you are using no authentication or client certificates then this script will require modifications.
+**注意**此脚本假定您正在使用基本/摘要密码身份验证。如果您不使用身份验证或客户端证书，则需要修改此脚本。
 
-### Reference Information
+### 参考信息
 
-The [Example XML CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR") was generated by calling the FreeSWITCH conference via the PSTN. A SIP phone registered with FS dialed 9+2137991400 and went through this dialplan extension:
+通过PSTN呼叫FreeSWITCH会议生成了[示例XML CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "示例XML CDR")。注册到FS的SIP电话拨打了9+2137991400，并通过该拨号计划扩展进行了处理：
 
-  &lt;!-- Dial 9, go out Qwest PRI on span 1 -->
+  &lt;!-- 拨打9，通过第1个端口的Qwest PRI 线路外呼 -->
   &lt;extension name="Dial 9">
     &lt;condition field="destination_number" expression="^9(\d{10})$">
       &lt;action application="bridge" data="freetdm/1/A/$1"/>
     &lt;/condition>
   &lt;/extension>
 
-#### Channel Variables
+#### 通道变量
 
-The XML CDR contains a number of channel variables as well as call flow information.  
-Call times are in date/time stamp format or in either epoch seconds or epoch microseconds (usec).  
-Date/time stamp variables are URI encoded so be sure to "URI decode" them prior to inserting them into a database.  
-Example: "2008-07-31%2011%3A35%3A38" is URI encoded. Decoded it is "2008-07-31 11:35:38".  
-The epoch began at 1970-01-01 00:00:00, therefore the epoch values are the number of seconds (or microseconds) since the epoch began.  
-Using the epoch microseconds values allows for extremely accurate measurements.  
-  
-##### Call Date/Time Variables
+XML CDR包含一些通道变量以及呼叫流程信息。  
+呼叫时间以日期/时间戳格式表示，或以纪元秒或纪元微秒（usec）表示。  
+日期/时间戳变量经过URI编码，因此在将其插入数据库之前，请确保进行“URI解码”。  
+例如："2008-07-31%2011%3A35%3A38"是URI编码的。解码后为"2008-07-31 11:35:38"。  
+纪元始于1970-01-01 00:00:00，因此纪元值是自纪元开始以来的秒数（或微秒数）。  
+使用纪元微秒值可以进行非常精确的测量。  
+
+##### 呼叫日期/时间变量
 
 ###### answer_stamp
 
-Date/time that the far end of the call was actually answered.  
-In the [example CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR") this value is "2008-07-31%2011%3A35%3A41" (2008-07-31 11:35:41).
+实际应答呼叫的日期/时间。  
+在 [示例CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR) 中，此值为 "2008-07-31%2011%3A35%3A41"（2008-07-31 11:35:41）。
 
 ###### end_stamp
 
-Date/time that the call was terminated.  
-In the [example CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR") this value is "2008-07-31%2011%3A36%3A17" (2008-07-31 11:36:17).
+呼叫终止的日期/时间。  
+在 [示例CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR) 中，此值为 "2008-07-31%2011%3A36%3A17"（2008-07-31 11:36:17）。
 
 ###### profile_start_stamp
 
 ###### progress_stamp
 
-Date/time that progress information from the far end is first received.
+收到远端进度信息的日期/时间。
 
 ###### progress_media_stamp
 
-Date/time that "early media" or progress media was first received. "Early media" includes ring-back tone (RBT).  
-In the [example CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR") this value is "2008-07-31%2011%3A35%3A38" (2008-07-31 11:35:38).
+第一次接收到“早期媒体”或进度媒体的日期/时间。 "早期媒体"包括回铃音（RBT）。  
+在 [示例CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR) 中，此值为 "2008-07-31%2011%3A35%3A38"（2008-07-31 11:35:38）。
 
 ###### start_stamp
 
-Date/time that the call was initiated.  
-In the [example CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR") this value is "2008-07-31%2011%3A35%3A38" (2008-07-31 11:35:38).
+呼叫发起的日期/时间。  
+在 [示例CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR) 中，此值为 "2008-07-31%2011%3A35%3A38"（2008-07-31 11:35:38）。
 
-##### Call Epoch Variables
+##### 呼叫纪元变量
 
 ###### answer_epoch
 
-Call answer time in epoch seconds.  
-In the [example CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR") this value is 1217529338.
+以 epoch 秒为单位的应答时间。
+在[示例CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR")中，该值为 1217529338。
 
 ###### answer_uepoch
 
-Call answer time in epoch microseconds.  
-In the [example CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR") this value is 1217529338452698.
+以 epoch 微秒为单位的应答时间。
+在[示例CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR")中，该值为 1217529338452698。
 
 ###### end_epoch
 
-Call end time in epoch seconds.  
-In the [example CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR") this value is 1217529377.
+以 epoch 秒为单位的通话结束时间。
+在[示例CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR")中，该值为 1217529377。
 
 ###### end_uepoch
 
-Call end time in epoch microseconds.  
-In the [example CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR") this value is 1217529377795951.
+以 epoch 微秒为单位的通话结束时间。
+在[示例CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR")中，该值为 1217529377795951。
 
 ###### profile_start_epoch
 
-Profile start time in epoch seconds.  
-In the [example CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR") this value is 1217529338.
+以 epoch 秒为单位的配置文件开始时间。
+在[示例CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR")中，该值为 1217529338。
 
 ###### profile_start_uepoch
 
-Profile start time in epoch microseconds.  
-In the [example CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR") this value is 1217529338212616.
+以 epoch 微秒为单位的配置文件开始时间。
+在[示例CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR")中，该值为 1217529338212616。
 
 ###### start_epoch
 
-Call start time in epoch seconds.  
-In the [example CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR") this value is 1217529338.
+以 epoch 秒为单位的呼叫开始时间。
+在[示例CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR")中，该值为 1217529338。
 
 ###### start_uepoch
 
-Call start time in epoch microseconds.  
-In the [example CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR") this value is 1217529338212616.
+以 epoch 微秒为单位的呼叫开始时间。
+在[示例CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR")中，该值为 1217529338212616。
 
-##### Call Duration Variables
+##### 通话时长变量
 
 ###### billsec
 
-Billable call duration in seconds. Billable time does not include call time spent in "early media" prior to the far end answering the call.  
-In the [example CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR") this value is 36.
+以秒为单位的可计费通话时长。可计费时间不包括通话开始前 "早期媒体" 中花费的通话时间。
+在[示例CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR")中，该值为 36。
 
 ###### billmsec
 
-Billable call duration in milliseconds. Billable time does not include call time spent in "early media" prior to the far end answering the call.  
-In the [example CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR") this value is 36267.
+计费通话持续时间，以毫秒计。计费时间不包括在远端接听呼叫之前在“早期媒体”中花费的呼叫时间。
+在[示例CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR")中，该值为36267。
 
 ###### billusec
 
-Billable call duration in microseconds. Billable time does not include call time spent in "early media" prior to the far end answering the call.  
-In the [example CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR") this value is 36267529.
+计费通话持续时间，以微秒计。计费时间不包括在远端接听呼叫之前在“早期媒体”中花费的呼叫时间。
+在[示例CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR")中，该值为36267529。
 
 ###### duration
 
-Total call duration in seconds.  
-In the [example CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR") this value is 39.
+呼叫的总持续时间，以秒计。  
+在[示例CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR")中，该值为39。
 
 ###### flow_billsec
 
@@ -691,178 +769,178 @@ In the [example CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Examp
 
 ###### mduration
 
-Total call duration in milliseconds.  
-In the [example CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR") this value is 39583.
+呼叫的总持续时间，以毫秒计。  
+在[示例CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR")中，该值为39583。
 
 ###### progresssec
 
-The amount of time in seconds between the sip invite and the sip 180 message  
-In the [example CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR") this value is 0\. (Less than 1 second.)
+SIP邀请和SIP 180消息之间的时间，以秒计算。  
+在[示例CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR")中，该值为0（小于1秒）。
 
 ###### progressmsec
 
-The amount of time in milliseconds between the sip invite and the sip 180 message  
-In the [example CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR") this value is 238.
+SIP邀请和SIP 180消息之间的时间，以毫秒计算。  
+在[示例CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR")中，该值为238。
 
 ###### progressusec
 
-The amount of time in microseconds between the sip invite and the sip 180 message  
-In the [example CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR") this value is 237955.
+SIP邀请和SIP 180消息之间的时间，以微秒计算。  
+在[示例CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR")中，该值为237955。
 
 ###### progress_mediasec
 
-The amount of time in seconds between the sip invite and the sip 183 message  
-In the [example CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR") this value is 0\. (Less than 1 second.)
+在SIP邀请和SIP 183消息之间的时间间隔，以秒为单位  
+在[示例CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR")中，该值为0（小于1秒）。
 
 ###### progress_mediamsec
 
-The amount of time in milliseconds between the sip invite and the sip 183 message  
-In the [example CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR") this value is 238.
+在SIP邀请和SIP 183消息之间的时间间隔，以毫秒为单位  
+在[示例CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR")中，该值为238。
 
 ###### progress_mediausec
 
-The amount of time in microseconds between the sip invite and the sip 183 message  
-In the [example CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR") this value is 237955.
+在SIP邀请和SIP 183消息之间的时间间隔，以微秒为单位  
+在[示例CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR")中，该值为237955。
 
 ###### uduration
 
-Total call duration in microseconds.  
-In the [example CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR") this value is 39583335.
+通话的总持续时间，以微秒为单位。  
+在[示例CDR](https://wiki.freeswitch.org/wiki/Example%5FXML%5FCDR "Example XML CDR")中，该值为39583335。
 
-### Troubleshooting
+### 故障排除
 
-#### Error loading module
+#### 加载模块时出现错误
 
 2007-06-27 17:59:12 [ERR] switch_loadable_module.c:714 switch_loadable_module_load_file() Error 
 Loading module /usr/local/freeswitch/mod/mod_xml_cdr.so
 **/usr/local/freeswitch/mod/mod_xml_cdr.so: undefined symbol: curl_easy_getinfo**
 
-Fix: This indicates you dont have curl linked in right. Check the mod\_xml\_cdr/Makefile and make sure it has WANTS\_CURL=yes
+解决方法：这表示您的curl链接不正确。请检查mod\_xml\_cdr/Makefile，确保它具有WANTS\_CURL=yes。
 
-#### Does not write to non-default logDir
+#### 不写入非默认的logDir目录
 
-If you set logDir to /tmp/foo, you must mkdir /tmp/foo/xml\_cdr or it will revert to the default directory.
+如果您将logDir设置为/tmp/foo，则必须创建/tmp/foo/xml\_cdr目录，否则它会恢复到默认目录。
 
-#### I'm getting a Memory Error when module loads
+#### 模块加载时出现内存错误
 
 2007-06-27 19:41:06 [DEBUG] mod_xml_cdr.c:192 do_config() processing logDir config
 2007-06-27 19:41:06 [DEBUG] mod_xml_cdr.c:197 do_config() val is NON zero length, setting globals.logDir: /tmp/log
 2007-06-27 19:41:06 [CRIT] mod_xml_cdr.c:219 do_config() Memory Error!
 
-Fix: try setting a custom errLogDir in config and this error should go away. It is a bug, and it's not actually a memory error that indicates any memory related problems.
+修复：尝试在配置中设置自定义的 errLogDir，这个错误就会消失。这是一个bug，并不是实际上表示内存相关问题的内存错误。
 
-### Example CGI Script
+### 示例 CGI 脚本
 
-The following is a simple CGI script written in Perl that demonstrates what you can do with the POSTed XML CDR data that comes from mod\_xml\_cdr. Here are the requirements:
+以下是一个用 Perl 编写的简单的 CGI 脚本，演示了如何处理来自 mod\_xml\_cdr 的 POST 的 XML CDR 数据。以下是要求：
 
-* Web server (tested w/ Apache)
-* Script in a directory w/ execute permissions (tested with /cgi-bin on my Apache install)
-* Write access to a directory (tested with /tmp/ on my system)
-* XML::Simple from CPAN (run cpan from CLI, then "install XML::Simple")
-* CGI::Simple from CPAN (run cpan from CLI, then "install CGI::Simple")
+* Web 服务器（已在 Apache 下测试通过）
+* 脚本所在目录有执行权限（已在我的 Apache 安装中的 /cgi-bin 目录下测试通过）
+* 对一个目录有写访问权限（已在我的系统的 /tmp 目录下测试通过）
+* 来自 CPAN 的 XML::Simple（在命令行中运行 "cpan"，然后执行 "install XML::Simple"）
+* 来自 CPAN 的 CGI::Simple（在命令行中运行 "cpan"，然后执行 "install CGI::Simple"）
 
-I used this config option in my xml\_cdr.conf.xml:
+我在我的 xml\_cdr.conf.xml 中使用了以下配置选项：
 
 &lt;param name="url" value="<http://localhost/cgi-bin/fs-xml-cdr.pl>"/>
 
-When the XML CDR gets POSTed to the Web server the script gets launched. I think you'll find the comments are rather generous and give you lots of help. The ultimate result is that you have /tmp/fs-xml-cdr.log getting written with all sorts of interesting pieces of information, plus you have an example of turning the raw XML into a data structure as well as examples of creating a CSV record and a SQL INSERT statement.
+当 XML CDR 被 POST 到 Web 服务器时，脚本就会被启动。我认为你会发现注释非常详细，给了你很多帮助。最终的结果是你有一个/tmp/fs-xml-cdr.log 文件，其中写有各种有趣的信息片段，此外还有一个将原始 XML 转换为数据结构的示例，以及创建 CSV 记录和 SQL INSERT 语句的示例。
 
-#### Code Listing \[Perl\]
+#### 代码清单 \[Perl\]
 
 #
 # fs-xml-cdr.pl
 #
-# Example of a daemon that will sit and collect XML CDR info and spit out certain stuff for you to tinker with
-#  Can also be used to bootstrap into a direct-to-db process
+# 这是一个守护进程的示例，用于接收 XML CDR 信息并为你提供一些可以处理的内容
+# 也可以用来启动直接写入数据库的过程
 
 use strict;
 use warnings;
 
-use XML::Simple; # Get from CPAN
-use CGI::Simple; # Get from CPAN
+use XML::Simple; # 从 CPAN 获取
+use CGI::Simple; # 从 CPAN 获取
 use Data::Dumper;
 
-# dump into a place for further review
+# 将数据写入一个位置供进一步查看
 open(FILEOUT,">>",'/tmp/fs-xml-cdr.log');
 
-# $cgi object has handy methods
+# $cgi 对象有一些有用的方法
 my $cgi = new CGI::Simple;
 
-# get the actual cdr stuff from the CGI call
+# 从 CGI 调用中获取实际的 cdr 数据
 my $cdr = $cgi->param('cdr');
 
-# Dump raw XML to file
-print FILEOUT "Raw XML CDR:\n\n";
+```perl
+# 将原始XML数据转储到文件
+print FILEOUT "原始XML通话详单：\n\n";
 print FILEOUT $cdr . "\n";
 
-# put cdr info into a simple object
+# 将通话详单信息放入一个简单对象中
 my $xml_cdr;
 eval { $xml_cdr = XMLin($cdr, ForceArray => 1); };
 
 if ( $@ ) {
-  print FILEOUT "Error parsing XML: $@\n";
+  print FILEOUT "解析XML时发生错误：$@\n";
 }
-# Access cdr info
-print FILEOUT "My leg UUID is: " . $xml_cdr->{variables}->[0]->{uuid}->[0] . "\n";
-print FILEOUT "Other leg UUID is: " . $xml_cdr->{variables}->[0]->{bridge_uuid}->[0] . "\n\n";
 
-# Check out the whole data structure
-print FILEOUT "\$xml_cdr looks like this:\n\n";
+# 访问通话详单信息
+print FILEOUT "我的 leg UUID 是：" . $xml_cdr->{variables}->[0]->{uuid}->[0] . "\n";
+print FILEOUT "另一个 leg UUID 是：" . $xml_cdr->{variables}->[0]->{bridge_uuid}->[0] . "\n\n";
+
+# 查看整个数据结构
+print FILEOUT "\$xml_cdr 的结构如下所示：\n\n";
 print FILEOUT Dumper($xml_cdr) . "\n";
 
-# URL decode
+# URL 解码
 $cdr = $cgi->url_decode($cdr);
 
-# Dump URL decoded XML
-print FILEOUT "Decoded XML CDR:\n\n";
+# 转储URL解码后的XML数据
+print FILEOUT "解码后的XML通话详单：\n\n";
 print FILEOUT $cdr . "\n";
 
-# Dump specific fields into a CSV file or into a database or whatever you want
-# Add the fields to this array in the order in which you want them to appear in your db or CSV
-# Add/remove field names as you see fit
+# 将特定字段转储到CSV文件或数据库或其他你想要的地方
+# 按照希望在数据库或CSV中出现的顺序添加字段到这个数组
+# 根据需要添加/删除字段名
 my @fields = (
-                          'uuid',
-                          'bridge_uuid',
-                          'direction',
-                          'billsec',
-                          'start_epoch',
-                          'end_epoch',
-
+  'uuid',
+  'bridge_uuid',
+  'direction',
+  'billsec',
+  'start_epoch',
+  'end_epoch',
 );
 
-my @data;  # field data here
-my $csv;   # formatted csv record
-my $sql;   # sql insert statement (assumes table field names match those in @fields)
+my @data;  # 存放字段数据
+my $csv;   # 格式化的CSV记录
+my $sql;   # SQL插入语句（假设表字段名与 @fields 中的字段名相匹配）
 
-# Build a @data array
+# 构建一个 @data 数组
 foreach (0..$#fields) {
   my $field = $fields[$_];
-  # If you need to do some special formatting for any field then do it here
-  # Otherwise just drop it into the array
-  push @data,$xml_cdr->{variables}->[0]->{$field}->[0];
+  # 如果需要对任何字段进行特殊格式化，则在此处处理
+  # 否则将其直接放入数组
+  push @data, $xml_cdr->{variables}->[0]->{$field}->[0];
 }
 
-# Build a simple CSV record
-$csv = join ",",@data;
-print FILEOUT "CSV record looks like this: \n";
+# 构建一个简单的CSV记录
+$csv = join ",", @data;
+print FILEOUT "CSV记录如下：\n";
 print FILEOUT $csv . "\n\n";
+```
 
-# Build a simple SQL insert statement
+# 构建一个简单的 SQL 插入语句
 $sql  = 'INSERT INTO cdr(';
 $sql .= join ",",@fields;
 $sql .= ") VALUES ('";
 $sql .= join "','",@data;
 $sql .= "')";
-print FILEOUT "SQL INSERT command looks like this: \n";
+print FILEOUT "SQL 插入命令如下：\n";
 print FILEOUT $sql . "\n\n";
 
 print FILEOUT "= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =\n\n";
 close(FILEOUT);
 
-### FAQ
+### 常见问题解答
 
-#### Q: Does mod_cdr need to be compiled/enabled?
+#### Q: mod_cdr 需要编译/启用吗？
 
-No, this module is independent -- you may have both without conflict, they will not communicate with each other.
-
-
+不需要，这个模块是独立的，你可以同时拥有两者而不会发生冲突，它们不会相互通信。

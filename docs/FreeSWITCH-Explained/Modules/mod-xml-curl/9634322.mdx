@@ -1,91 +1,89 @@
+# mod_xml_curl C++ 示例
 
-# mod_xml_curl C++ example 
+## 关于
 
- 
+这只是一个使用C++而不是脚本语言完成的mod\_xml\_curl示例。原则上它与[Ruby目录示例](./mod_xml_curl-Ruby-directory-example_1049003.mdx#about)非常相似。
 
-## About
+点击此处展开目录
 
-This is just another example of mod\_xml\_curl in action, done in C++ rather than a scripted language. In principle it is quite similar to the [Ruby directory example](./mod_xml_curl-Ruby-directory-example_1049003.mdx#about).
+* 1 [基础知识](#the-basics)
+* 2 [要求](#the-requirements)
+* 3 [源代码](#the-source)
+* 4 [构建说明](#build-instructions)
+* 5 [用法](#-freeswitch--mod_xml_curl-c-example-)
+* 6 [数据库架构](#database-schema)
+* 7 [FreeSWITCH 配置](#freeswitch-configuration)
+* 8 [模板](#templates)
+* 9 [具体细节](#the-dirty-details)
+* 10 [注意](#warning)
 
-Click here to expand Table of Contents
+### 基础知识
 
-* 1 [The Basics](#the-basics)
-* 2 [The Requirements](#the-requirements)
-* 3 [The Source](#the-source)
-* 4 [Build Instructions](#build-instructions)
-* 5 [Usage](#-freeswitch--mod_xml_curl-c-example-)
-* 6 [Database Schema](#database-schema)
-* 7 [FreeSWITCH Configuration](#freeswitch-configuration)
-* 8 [Templates](#templates)
-* 9 [The Dirty Details](#the-dirty-details)
-* 10 [Warning](#warning)
+该程序无需任何命令行选项，默认情况下以守护进程方式运行。它简单地监听指定的IP和端口上的HTTP请求（通常来自mod\_xml\_curl），并以XML格式（或HTML、文本等格式）回复当前用户目录（从数据库检索得到），这是通过两个模板文件布局的。
 
-### The Basics
+所有配置都可以使用一个配置文件进行。目前，该配置文件仅用于指定数据库参数、监听主机/端口以及要放弃权限的用户。
 
-The program executes without any command-line options and, by default, daemonizes. It simply listens on a specified IP and Port for HTTP requests (typically from mod\_xml\_curl) and responds with the current user directory (as retrieved from a database) in XML format (or HTML, text, etc. format) as laid out in two template files.
+### 要求
 
-All configuration may be done using a configuration file which, currently, is only used for specifying database parameters, listening host/port, and which user to surrender permissions to.
+需要一个Unix系统、Qt 4.6+以及C++编译器工具链。
 
-### The Requirements
-
-A Unix system, Qt 4.6+, and a C++ compiler toolchain.
-
-### The Source
+### 源代码
 
 <http://osgrid.foxmoxie.net/share/rrcbsdirectory-0.1.tar.bz2> (4.5KB)
 
-### Build Instructions
+### 构建说明
 
-Run "qmake" in the directory, then "make".
+在目录中运行"qmake"，然后运行"make"。
 
-### Usage
+### 用法
 
-Run the resulting "rrcbsdirectory" binary. Find it in your process manager and kill it and then edit **\~/.config/RiverRoadCable/DirectoryDaemon.conf**.
+运行生成的"rrcbsdirectory"二进制文件。在进程管理器中找到它并杀掉它，然后编辑**\~/.config/RiverRoadCable/DirectoryDaemon.conf**。
 
 ```xml
 kill `ps aux | grep rrcbsdirectory | grep -v grep | awk '{print $2;}'`
 ```
 
-Here's what each key means:
+以下是每个键的含义：
 
 ```xml
 [General]
-dbtype=QMYSQL                 (Or any 'valid' Qt database driver, although the queries are untested and inflexible.  Some code hacking may be required for some types.)
-dbhost=localhost              (Database hostname)
-dbbase=sip_users              (Database name)
-dbuser=myuser                 (Database user, or delete the line for QSQLITE or similar)
-dbpass=mysecret               (Database password, or delete the line if no password is required)
-tmpl_doc=/etc/fs_document.xml (Path to the 'document body' template)
-tmpl_ent=/etc/fs_entry.xml    (Path to the template used for each directory entry)
-uid=0                         (After startup, drop root permissions and become this userid.)
-gid=0                         (Same as 'uid', but for group id.)
-chuser=false                  (If false, we don't do the uid/gid change at all.)
-net_host=127.0.0.1            (What IP to listen on.)
-net_port=2000                 (And which port to listen on.)
+dbtype=QMYSQL           (或者任何“有效”的Qt数据库驱动程序，尽管查询未经测试且不灵活。
+                        对于某些类型，可能需要进行一些代码修改。)
+dbhost=localhost        (数据库主机名)
+dbbase=sip_users        (数据库名称)
+dbuser=myuser           (数据库用户, 或者删除该行以支持QSQLITE或类似数据库)
+dbpass=mysecret         (数据库密码, 或者如果不需要密码，删除该行)
+tmpl_doc=/etc/fs_document.xml (文档正文模板的路径)
+tmpl_ent=/etc/fs_entry.xml    (每个目录项使用的模板路径)
+uid=0                   (启动后，放弃root权限，并成为该用户id)
+gid=0                   (与'uid'相同，但是为组ID)
+chuser=false            (如设为false，则不进行用户ID/组ID更改)
+net_host=127.0.0.1      (监听的IP地址)
+net_port=2000           (监听的端口号)
 ```
 
-### Database Schema
+### 数据库结构
 
-The table _sip\_extensions_ must be created with the following layout:
+必须使用以下布局创建表_sip\_extensions_：
 
 ```xml
 +-----------------+-------------+------+-----+---------+----------------+
-| Field           | Type        | Null | Key | Default | Extra          |
+| 字段名           | 数据类型        | 允许空 | 键 | 默认值 | 特殊属性          |
 +-----------------+-------------+------+-----+---------+----------------+
-| id              | int(11)     | NO   | PRI | NULL    | auto_increment | 
-| ext             | varchar(32) | NO   |     | NULL    |                | 
-| subid           | int(11)     | YES  |     | NULL    |                | 
-| callgroup       | varchar(32) | YES  |     | NULL    |                | 
-| context         | varchar(32) | YES  |     | NULL    |                | 
-| callerid_text   | varchar(32) | YES  |     | NULL    |                | 
-| callerid_number | varchar(32) | YES  |     | NULL    |                | 
-| password        | varchar(64) | NO   |     | NULL    |                | 
-| vmailpass       | varchar(16) | YES  |     | NULL    |                | 
-| active          | tinyint(4)  | NO   |     | 0       |                | 
+| id              | int(11)     | 否    | 主键 | NULL    | 自动增长 | 
+| ext             | varchar(32) | 否    |     | NULL    |                | 
+| subid           | int(11)     | 是   |     | NULL    |                | 
+| callgroup       | varchar(32) | 是   |     | NULL    |                | 
+| context         | varchar(32) | 是   |     | NULL    |                | 
+| callerid_text   | varchar(32) | 是   |     | NULL    |                | 
+| callerid_number | varchar(32) | 是   |     | NULL    |                | 
+| password        | varchar(64) | 否    |     | NULL    |                | 
+| vmailpass       | varchar(16) | 是   |     | NULL    |                | 
+| active          | tinyint(4)  | 否    |     | 0       |                | 
 +-----------------+-------------+------+-----+---------+----------------+
 ```
 
-... and the column names have to match, order doesn't matter. The MySQL table creation code is:
+... 并且列名必须匹配，顺序无关紧要。MySQL表创建代码如下：
 
 ```xml
 CREATE TABLE `sip_extensions` (
@@ -103,12 +101,12 @@ CREATE TABLE `sip_extensions` (
 )
 ```
 
-### FreeSWITCH Configuration
+### FreeSWITCH 配置
 
-In my implementation, I actually had to remove the existing user directory loading jazz because it was causing me grief (and wasn't used anyway).
+在我的实现中，实际上我不得不删除现有的加载 jazz 用户目录，因为它给我带来了困扰（而且也没有被使用）。
 
 ```xml
-<configuration name="xml_curl.conf" description="cURL XML Gateway">
+<configuration name="xml_curl.conf" description="cURL XML网关">
   <bindings>
     <binding name="sql_directory">
       <param name="gateway-url" value="http://127.0.0.1:2000/?action=directory" bindings="directory"/> -->
@@ -118,27 +116,25 @@ In my implementation, I actually had to remove the existing user directory loadi
 </configuration>
 ```
 
-See [conf/autoload\_configs/xml\_curl.conf.xml](https://wiki.freeswitch.org/wiki/Xml%5Fcurl.conf.xml "Xml curl.conf.xml") for details, but basically this is the simplest setup.
+请参阅[conf/autoload_configs/xml_curl.conf.xml](https://wiki.freeswitch.org/wiki/Xml%5Fcurl.conf.xml "Xml curl.conf.xml")获取详细信息，但基本上这是最简单的设置。
 
-### Templates
+### 模板
 
-_document.xml_ is the main template, entries will be plopped in place of the #ENTRIES# keyword located in it. The 'domain' is also specified here.
+_document.xml_是主要模板，条目将被放在其中的#ENTRIES#关键字处。域名也在此处指定。
 
-_entry.xml_ contains a boilerplate of an individual directory entry. Options may be hardcoded into this, but may cause more work for your switch, as it would have superfluous XML to read. If you find yourself putting static options in this template, consider setting them on your dialplan for this context/callgroup instead.
+_entry.xml_包含一个单个目录条目的样板。选项可以硬编码到其中，但可能会导致交换机进行更多的工作，因为它需要读取多余的XML。如果你发现在此模板中放入静态选项，请考虑在此上下文/呼叫组的拨号计划中设置它们。
 
-### The Dirty Details
+### 细节
 
-The code is split into 4 parts:
+代码分为4个部分：
 
-1. startup/initialization
-2. database
-3. directory logic
-4. http-request handler
+1. 启动/初始化
+2. 数据库
+3. 目录逻辑
+4. HTTP请求处理程序
 
-I tried to make the code easy to understand, but still compact and efficient for production use. I know how common it is for an overworked developer to recycle example code into their own production deployments, and if it makes you feel any better, this particular application is used in production.
+我尽量让代码易于理解，但对于生产使用来说仍然紧凑高效。我知道过度工作的开发人员是多么普遍地将示例代码用于自己的生产部署。如果这可以让你感觉更好的话，这个特定的应用程序是在生产中使用的。
 
-### Warning
+### 警告
 
-It's important to note that this version has no encryption or authentication whatsoever and could quite easily feed your directory (along with passwords) to any web client hitting the right port. For casual playing around, just set _net\_host_ to **localhost**.
-
-
+重要的是要注意，这个版本没有任何加密或身份验证，并且很容易将您的目录（包括密码）传输给任何命中正确端口的Web客户端。对于随意玩耍，只需将_net_host_设置为**localhost**。

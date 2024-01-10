@@ -1,128 +1,123 @@
+# Wireshark 如何使用
 
-# Wireshark How To 
+## 关于
 
- 
+一些使用Wireshark查找SIP信令和RTP媒体流问题的提示。请注意，如果RTP流经过加密，则这些处理RTP流的技术不适用。
 
-## About
+原网站已不再可用。
 
-Some tips to use Wireshark to find problems in SIP signaling and RTP media streams. Beware that these techniques dealing with RTP streams do not apply if those streams are encrypted.
+Archive.org版本：<http://web.archive.org/web/20101204200659/http://www.panoramisk.com/151/analyzing-voip-with-wireshark/en/>
 
-The original site is no longer available.
+点击这里展开目录
 
-Archive.org version: <http://web.archive.org/web/20101204200659/http://www.panoramisk.com/151/analyzing-voip-with-wireshark/en/>
+* 1 [使用Wireshark分析VoIP](#analyzing-voip-with-wireshark)
+* 2 [介绍](#introduction)
+* 3 [如何捕获帧](#how-to-capture-frames)
+* 4 [使用tcpdump进行捕获](#capture-with-tcpdump)  
+   * 4.1 [本地捕获](#local-capture)  
+   * 4.2 [远程捕获](#remote-capture)
+* 5 [分析](#analyze)  
+   * 5.1 [过滤](#filtering)  
+   * 5.2 [SIP分析](#sip-analysis)  
+   * 5.3 [RTP分析](#rtp-analysis)  
+   * 5.4 [解析tcpdump字段](#parsing-tcpdump-fields)
+* 6 [总结](#conclusion)
 
-  
-Click here to expand Table of Contents
+## 使用Wireshark分析VoIP
 
-* 1 [Analyzing VoIP with Wireshark](#analyzing-voip-with-wireshark)
-* 2 [Introduction](#introduction)
-* 3 [How to capture frames](#how-to-capture-frames)
-* 4 [Capture with tcpdump](#capture-with-tcpdump)  
-   * 4.1 [Local Capture](#local-capture)  
-   * 4.2 [Remote Capture](#remote-capture)
-* 5 [Analyze](#analyze)  
-   * 5.1 [Filtering](#filtering)  
-   * 5.2 [SIP analysis](#sip-analysis)  
-   * 5.3 [RTP analysis](#rtp-analysis)  
-   * 5.4 [Parsing tcpdump Fields](#parsing-tcpdump-fields)
-* 6 [Conclusion](#conclusion)
+在IP电话领域工作时，了解如何使用网络分析工具非常重要，以便了解流量在网络中的传播情况。本文介绍了一些与语音传输协议相关的Wireshark功能。
 
-  
-## Analyzing VoIP with Wireshark
+## 介绍
 
-When working in the IP telephony world it is crucial to know how to use a network analyzer, in order to understand how the traffic is propagating over the network. This article presents some interesting Wireshark features related to Voice over IP protocols.
+Wireshark（前身为Ethereal）是处理使用网络的应用程序时必备的工具。它简单高效，可以运行在Microsoft Windows或Linux上。而且它是免费的。尽管在一些商业产品上可能会找到功能非常强大的特性，但Wireshark有一些面向VoIP领域（以及其他领域）的良好插件。本文重点介绍了SIP和RTP协议，这是目前大部分使用的VoIP实现。
 
-## Introduction
+## 如何捕获帧
 
-Wireshark (formerly Ethereal) is THE tool to have in your toolbox whenever working with applications that use the network. It is simple, efficient, and runs either on Microsoft Windows or Linux. Moreover it is free of charge. Even if you will find on some commercial products very powerful features, Wireshark has some good plug-ins targeting the VoIP space (as well as many others). This article focuses on SIP and RTP protocols which represent most of today's Voice over IP implementations.
+在分析网络中的网络帧之前，需要先捕获它们。分析可以实时进行，当Wireshark运行在探测器本身上时，也可以将网络帧捕获并存储在文件中，之后再进行分析。更重要的是确定探测器的位置，以便收集包含语音相关协议的适当网络帧。由于SIP协议的本质是分布式的，收集语音流量是一个挑战，但是存在解决方案。
 
-## How to capture frames
+为了收集语音帧，我们可以直接使用Wireshark或者使用大多数Unix系统上可用的应用程序tcpdump，在命令行直接运行。
 
-Prior to analyzing the network frames traversing the network, it is required to capture them. Analysis could be done either in real time when Wireshark is running on the probe itself, or it is also possible to capture the frames, store these in a file, and perform the analysis afterwards. More important is where to locate the probe in order to gather the appropriate frames containing voice related protocols. Since the SIP protocol is really distributed by nature, gathering voice traffic is a challenge, but there are solutions.
+使用选择的工具，有两种方法建议：
 
-In order to collect voice frames we can either use Wireshark directly or use the application tcpdump, available on most Unixes and working directly from the command line.
+* **使用交换机上的镜像端口：** 这个解决方案需要使用具有端口镜像功能的网络交换机。这个功能通常在高级企业产品上可用，但一些低端设备不支持。这个功能有时被称为端口镜像或SPAN端口，但工作原理是相同的：我们配置交换机将特定端口传输的所有帧都复制到另一个专用端口，连接到该端口的是分析仪。如果语音流量与数据流量分离在特定的VLAN上，有时可以将通过该VLAN传输的所有流量复制到复制端口。我们将复制的端口是SIP代理所连接的端口，但如果我们更清楚地知道要查找的内容，也可以复制IP电话的端口。
 
-With the chosen tool, two approaches are proposed:
+* **直接使用代理服务器：** 这个第二个解决方案是关于在托管代理的Unix服务器上捕获流量。当然，这需要直接从该服务器运行tcpdump命令，而这并不总是可能的。在Asterisk的情况下，我们主要使用Linux作为主机系统，Linux在大多数发行版中都支持tcpdump，如果尚未安装，我们将直接从软件包中安装它。
 
-* **using a mirror port on a switch:** this solution requires the use of network switches with a port mirroring feature. This feature is generally available on advanced enterprise products, some low end devices don't support it. The feature is sometime called port mirroring or SPAN port but the way it works is the same: we configure the switch to copy all frames transferred by a specific port to another dedicated port to which the analyzer is connected. If the voice traffic is separated from the data traffic onto a specific VLAN, it is sometimes possible to copy all traffic going through the VLAN towards the copy port. The port we will copy is where the SIP proxy is connected, but we can also copy an IP phone port if we know more precisely what to look for.
-* **using directly the proxy server:** this second solution is about capturing traffic on the unix server hosting the proxy. For sure this requires running the tcpdump command directly from this server, which is not always possible. In the case of Asterisk, we are mainly using Linux as a hosting system and Linux does support tcpdump in most distribution, we will install it directly from the package if not yet present.
+## 使用tcpdump进行捕获
 
-## Capture with tcpdump
+在使用Asterisk时，我们可以利用以下两个主要要点：
 
-When using Asterisk, we can take advantage of two main points:
+* 操作系统主要是Linux，因此我们可以使用tcpdump。
+* Asterisk充当"back-to-back UA（背靠背用户代理）"，也就是说，它通常位于任何会话（电话呼叫）的中间，即使这并不遵循SIP的分布模型，我们将利用它。
 
-* the operating system is mainly Linux, so we can use tcpdump
-* Asterisk is acting as a “back-to-back UA", that is to say it stays by default in the middle of any session (phone call), even if this is not following the SIP distributed model, we will take advantage of it.
+直接从Asterisk服务器进行捕获时，我们将获得完整的语音会话，包括信令（SIP部分）和语音传输（RTP部分）。
 
-When capturing directly from the Asterisk server, we will have the full voice session, including signalling (SIP part) and the voice transport (RTP part).
+tcpdump是一个字符模式命令，不需要任何图形界面来运行，非常轻便。我们可以在不给语音网关造成太大压力和影响质量的情况下使用它。与Unix一样，该命令需要参数，tcpdump提供了许多选项。以下是我们这种情况下有用的选项列表：
 
-tcpdump is a character-mode command, it doesn’t require any graphical interface to run and is very light, we could use it without putting too much stress on our voice gateway and altering the quality. As always with Unix, the command requires parameters and tcpdump proposes a lot of options. Here is a list of the useful ones in our case:
+* \-p：不以混杂模式启动，只捕获到或从Asterisk节点发出的帧，
+* \-n：不进行名称解析，否则我们会有很多不必要的DNS查询，在此阶段没有用处，如果需要，我们可以随后进行名称解析，
+* \-s 0：获取完整的帧，而不仅仅是前几个字节。当仅在协议级别工作时，仅获取每个帧的开头就足够了，在我们的情况下，我们需要获取SIP和RTP帧的内容。0表示获取整个帧，
+* \-w 输出文件：所有捕获到的帧将存储在该文件中。这样，我们随后就可以从文件中分析这些帧。如果将文件名指定为“-”，则输出将被发送到标准输出。
 
-* \-p : doesn’t start in promiscuous mode, only frames from or to the Asterisk node will be captured,
-* \-n : no name resolution, otherwise we will have a lot of DNS queries which is not useful at this stage, we could do name resolution afterwards if needed,
-* \-s 0 : we get the full frame, not only the first bytes. When working only at the protocol level it is enough to get only the start of each frames, in our case we are requiring the content of the SIP and RTP frames. 0 means getting the whole frame,
-* \-w output file : all the captured frames will be stored in the file. That way we will be able, afterwards, to analyze the frames from the file. If using ‘-’ as the name of the file, the output is sent to the standard output.
+此外，我们可以指定一个过滤器给tcpdump，以降低捕获到的帧的数量。例如，我们只获取UDP帧并过滤IP地址，以便只关注特定的主机。
 
-In addition, we could specify to tcpdump a filter which will lower the number of frames we get in the capture. We can for example get only UDP frames and filter IP addresses in order to focus only on a specific host.
+### 本地捕获
 
-### Local Capture
+为了直接在Asterisk主机上执行捕获操作，我们应该与其连接。可以通过控制台直接连接或者通过远程终端实现。像许多管理员一样，我更喜欢使用ssh，因为它简单而安全。
 
-In order to perform the capture directly on the Asterisk host we should be connected to it. This can be achieve either directly on the console or through a remote terminal. I prefer ssh like many admins since it is simple and secure.
-
-With the following command:
+使用以下命令：
 
   tcpdump -w trace.cap -p -n -s 0 "udp"
 
-### Remote Capture
+### 远程捕获
 
-Since you could manage many Asterisk servers, it could be easier to start a capture from your desktop by using the remote command facility provided by ssh. The ssh command on the desktop is required, already installed on macOS and on Linux, you can install the Cygwin version on Microsoft Windows, you will have exactly the same command.
+由于您可以管理多个Asterisk服务器，因此可以通过使用ssh提供的远程命令功能，从您的台式机开始捕获会更容易。台式机上需要安装ssh命令，macOS和Linux上已经安装了，您可以在Microsoft Windows上安装Cygwin版本，它将具有完全相同的命令。
 
-The proposed command is:
+建议的命令是：
 
   ssh root@asterisk 'tcpdump -w - -p -n -s 0 udp' > capture-asterisk.cap
 
-The capture will occur on the server named asterisk using the tcpdump command, the frames will not be stored on the server itself but redirected to the desktop machine through the ssh tunnel2\. The file will be named capture-asterisk.cap and stored in the current directory of your local workstation. Using such a method, you can start a capture on multiple Asterisk servers without having to connect a console session to them and transfer the capture file afterwards; furthermore, there is no storage issue on the remote machines.
+捕获将在名为asterisk的服务器上使用tcpdump命令进行，帧将不会存储在服务器本身上，而是通过ssh隧道2重定向到台式机。文件将被命名为capture-asterisk.cap，并存储在您本地工作站的当前目录中。使用这种方法，您可以在多个Asterisk服务器上开始捕获，而无需连接到它们的控制台会话并在此之后传输捕获文件；此外，远程机器上没有存储问题。
 
-## Analyze
+## 分析
 
-One we have a trace file we can now use the Wireshark tool to dive into it.
+一旦我们有了跟踪文件，我们可以使用Wireshark工具进行深入分析。
 
-Wireshark is using a rich GUI and presents all the frames in the capture. On the upper window part you have the frame list, below that is the content of the selected frame either in decoded or raw format. Ethernet and IP protocols are decoded, what interests us today are SIP, IAX2, and RTP protocols since dedicated to voice over IP.
+Wireshark使用丰富的图形界面，并显示捕获的所有帧。在上窗口部分，您有帧列表，在下方是所选帧的内容，可以是解码或原始格式。Ethernet和IP协议已解码，我们今天关注的是SIP、IAX2和RTP协议，它们专门用于语音传输。
 
-From the file explorer, we can open the file trace and analyze it. By default frames are ordered by arrival time, you can change this sort criteria if required.
+我们可以从文件浏览器中打开跟踪文件并进行分析。默认情况下，帧按照到达时间排序，如果需要，您可以更改此排序条件。
 
-### Filtering
+### 过滤
 
-Depending on the filter used during capture, we can have noisy frames in it. The filtering feature of Wireshark allows to focus only on specific frames. It is activated through the ‘Filter’ dialog on the upper part of the window. The filter language is specific but easy to learn, for example if only SIP frames are needed you enter the ‘sip’ filter, if you are interested in IAX, the filter is ‘iax2’.
+根据在捕获过程中使用的过滤器，我们可能会在其中有噪声帧。 Wireshark的过滤功能允许只关注特定的帧。它通过窗口上部的“Filter”对话框来激活。过滤语言是特定的但易于学习，例如，如果只需要SIP帧，则输入“sip”过滤器，如果对IAX感兴趣，则使用“iax2”过滤器。
 
-When the filter field background is green the syntax is ok, when orange it is not correct.
+当过滤字段的背景为绿色时，语法是正确的，当为橙色时，表示语法不正确。
 
-  
-If you need more complex filtering rules, you can directly select the field from the decode window. Each protocol field can be selected and added to the current filter through a right click and the “Apply as filter" / … and "Selected" menu.
+如果您需要更复杂的过滤规则，可以直接从解码窗口中选择字段。每个协议字段都可以通过右键单击并选择“应用为过滤器”/…和“选中”菜单添加到当前过滤器中。
 
-### SIP analysis
+### SIP分析
 
-When looking at all the frames we have in a capture, it could be difficult to find quickly what we are looking for. Hopefully, Wireshark is bundled with some SIP tools, these are accessible through the “Statistics / VoIP calls" menu.
+在查看捕获到的所有帧时，很可能很难迅速找到我们想要的内容。幸运的是，Wireshark附带了一些SIP工具，可以通过“统计/ VoIP呼叫”菜单进行访问。
 
-In the window you will see all the Voice over IP calls present in the capture file. If the capture is performed directly with Wireshark, this list will evolve in real time.
+在窗口中，您将看到捕获文件中的所有VoIP呼叫。如果使用Wireshark直接进行捕获，则此列表将实时更新。
 
-From the list, it is possible to show a specific conversation graphically. This view is really helpful to follow the conversation since all frames can be selected and inspected in the main window. It is also possible to analyze the content of the voice conversation since it's transported in the RTP files.
+从列表中，可以以图形方式显示特定的对话。这个视图对于跟踪对话非常有帮助，因为可以在主窗口中选择和检查所有帧。还可以分析语音对话的内容，因为它是在RTP文件中传输的。
 
-The “Player" feature decodes the RTP frames associated with the selected conversation. The graph is showing the shape of the voice flow for both ways. This tool is interesting when focusing on voice quality, if a user is complaining when talking with a specific phone, it is possible to listen to the conversation afterwards.
+“播放器”功能解码与所选对话关联的RTP帧。图表显示了双向语音流的形状。这个工具在关注语音质量时很有趣，如果用户在与特定电话通话时抱怨，可以之后听取对话。
 
-### RTP analysis
+### RTP分析
 
-The RTP4 protocol is not dedicated to voice over IP traffic. But this protocol is used aside H.323 and SIP signalling, Wireshark proposes a specific module to analyze the RTP flows. The feature is available through the “Statistics / RTP / Stream Analysis" menu.
+RTP4协议并不专门用于语音IP流量。但是在H.323和SIP信令旁边使用此协议，Wireshark提供了一个特定模块来分析RTP流。可以通过“统计信息/RTP/流分析”菜单找到该功能。
 
-The analysis window proposes information about the terminals engaged in the conversation, the codec used, and some statistics about the flow. You can focus for example on jitter and packet loss in order to understand why the voice quality wasn’t good enough. From this module, it is also possible to extract the content of the RTP frames and rebuild a voice sound file. This one will be saved in WAV format and you can listen to it with any sound player available.
+分析窗口提供了有关参与对话的终端、使用的编解码器以及有关流的一些统计信息。您可以关注抖动和丢包等问题，以了解为什么语音质量不够好。从此模块，还可以提取RTP帧的内容并重新构建语音声音文件。该文件将以WAV格式保存，您可以使用任何可用的音频播放器进行听取。
 
-### Parsing tcpdump Fields
+### 解析tcpdump字段
 
-Courtesy of David Witham on the FreeSWITCH Slack channel:
+由FreeSWITCH Slack频道上的David Witham提供：
 
-If you are wanting to print certain fields in the output of tcpdump or sngrep, awk is a useful tool. If I have the example output in a file like this:
+如果您想要在tcpdump或sngrep的输出中打印特定字段，awk是一个有用的工具。如果我有一个示例输出的文件，内容如下：
 
-**Example output of tcpdump**
+**tcpdump的示例输出**
 
 ```bash
 $ cat tcpdump.txt
@@ -131,9 +126,9 @@ $ cat tcpdump.txt
 10:40:08.825797 IP 172.27.228.145.5060 > 172.27.107.222.61681: SIP: SIP/2.0 200 OK
 ```
 
-Then use your grep filtering to select the desired lines and then pipe that through awk to print the fields you want. e.g the source IP and SIP message:
+然后使用grep过滤选择所需行，然后通过awk打印所需字段。例如，源IP和SIP消息：
 
-**awk field selection**
+**awk字段选择**
 
 ```bash
 $ cat tcpdump.txt | egrep "200 OK|403" | awk '{print $3 " " $8}'
@@ -142,9 +137,9 @@ $ cat tcpdump.txt | egrep "200 OK|403" | awk '{print $3 " " $8}'
 172.27.228.145.5060 200
 ```
 
-If you want to remove the port number from the IP address, split the field into an array "a" using "." (period) as the delimiter, then print the first 4 elements separated by a literal "." (period)
+如果你想从IP地址中删除端口号，可以使用"."（点）作为分隔符将字段拆分成一个数组"a"，然后打印前4个元素，用一个字面的"."（点）分开。
 
-**awk array to remove port number**
+**使用awk数组删除端口号**
 
 ```bash
 $ cat tcpdump.txt | egrep "200 OK|403" | awk '{split($3,a,"."); print a[1]"."a[2]"."a[3]"."a[4] " " $8}'
@@ -153,11 +148,8 @@ $ cat tcpdump.txt | egrep "200 OK|403" | awk '{split($3,a,"."); print a[1]"."a[2
 172.27.228.145 200
 ```
 
-Note: I've used single quotes for the awk script so that I can use double quotes inside it. Or you can put a more complex awk script in a file and use the -f option. Hope this helps.
+注意：我在awk脚本中使用了单引号，这样我就可以在其中使用双引号。或者您可以将更复杂的awk脚本放入一个文件中，并使用-f选项。希望这有所帮助。
 
-## Conclusion
+## 结论
 
-IP telephony, like any application heavily using the network, should be analyzed whenever a problem occurs. In order to be reactive, my advice is to train yourself when everything is working fine and you have spare time to train. This will allow you to know the tools but also when looking at nothing special it is very common to find issue on the network. Finally, don’t be afraid of the protocols, even if they are complex. Their proper understanding will be a great advantage when facing a real issue on your system.
-
-  
-
+IP电话，像任何严重依赖网络的应用程序一样，在发生问题时应进行分析。为了做出反应，我的建议是在一切正常，你有空闲时间进行培训。这将使您熟悉工具，同时即使在没有发现特别问题的情况下，在网络上发现问题也是非常常见的。最后，不要害怕协议，即使它们很复杂。正确理解它们将在您处理系统上的实际问题时带来很大优势。

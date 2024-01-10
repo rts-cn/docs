@@ -1,28 +1,25 @@
+# 会议JavaScript拨号器
 
-# Conference Javascript Dialer 
+## 关于
 
- 
+JavaScript：拨打与会者，提示拨打一个数字以进入会议。
 
-## About
+单击此处展开目录
 
-JavaScript: Dial a conferee, prompt to dial a digit to enter conference. 
+* 1 [介绍](#-freeswitch--conference-javascript-dialer-)
+* 2 [脚本](#-freeswitch--conference-javascript-dialer-)
+* 3 [拨号计划](#-freeswitch--conference-javascript-dialer-)
+* 4 [参考](#-freeswitch--conference-javascript-dialer-)
 
-Click here to expand Table of Contents
+## 介绍
 
-* 1 [Introduction](#-freeswitch--conference-javascript-dialer-)
-* 2 [Script](#-freeswitch--conference-javascript-dialer-)
-* 3 [Dialplan](#-freeswitch--conference-javascript-dialer-)
-* 4 [See Also](#-freeswitch--conference-javascript-dialer-)
+此脚本可作为拨号计划中的一个扩展，允许内部呼叫者输入一个电话号码。然后，将对配置的网关呼叫该电话号码，并邀请其按下"1"键接受会议。一旦被叫方接受邀请，呼叫方和被叫方将被转入到配置的会议中。
 
-## Introduction 
+## 脚本
 
-This script, when set as an extension in the dial plan, will allow an internal caller to enter a phone number. That phone number will then be called on the configured gateway and invited to accept the conference by pressing '1'. Once the callee accepts, both caller and callee will be transferred into the configured conference.
+将以下脚本放入您的FreeSWITCH安装目录中的"scripts"文件夹，并根据您的配置选项进行调整。下面的配置期望拨号计划中有一个"conference"扩展，以及一个名为"vitelity-outbound"的网关。要使用此脚本，您需要安装一个可工作的[TTS](https://freeswitch.org/confluence/label/FREESWITCH/tts)模块。
 
-##  Script 
-
-Place the following script in your FreeSWITCH installation in the "scripts" folder and adjust the configuration options to suit your configuration. The configuration below expects a "conference" extension in the dialplan and a gateway called "vitelity-outbound". To use this script as-is, you will need a working [TTS](https://freeswitch.org/confluence/label/FREESWITCH/tts) module installed.
-
-**JavaScript Dialer** Expand source 
+**JavaScript拨号器** 展开源代码
 
 ```js
 /*
@@ -30,73 +27,71 @@ Place the following script in your FreeSWITCH installation in the "scripts" fold
  *
  * Conference Dialer
  *
- * Allow an internal caller to invite an outside caller into a conference.
+ * 允许内部呼叫者邀请外部呼叫者加入会议。
  *
- * This script, when set as an extension in the dial plan, will allow an
- * internal caller to enter a phone number.  That phone number will then be
- * called on the configured gateway and invited to accept the conference
- * by pressing 1.  Once the callee accepts, both caller and callee will be
- * transferred into the configured conference.
+ * 此脚本可作为拨号计划中的一个扩展，允许内部呼叫者输入一个电话号码。然后，将对配置的网关呼叫该电话号码，并邀请其按下1接受会议。一旦被叫方接受邀请，呼叫方和被叫方将被转入到配置的会议中。
  *
  * 2009 Patrick W. Barnes < http://patrickwbarnes.com/ >
  *
- * Last Update: 2009-10-13
+ * 最后更新日期：2009年10月13日
  *
  */
 
-// == CONFIGURATION OPTIONS ==
+```javascript
+// == 配置选项 ==
 
-var transfer_command = "conference XML default"; // Where to transfer the parties
-var gateway = "vitelity-outbound"; // The gateway to use for the call
+var transfer_command = "conference XML default"; // 转接方的位置
+var gateway = "vitelity-outbound"; // 用于呼叫的网关
 
-var timeoutcall = 30; // Length of time to ring target number, seconds
-var timeoutphonenumber = 15000; // Length of time to wait for phone number input, ms
-var timeoutaccept = 3000; // Length of time to wait for callee to accept, ms
+var timeoutcall = 30; // 目标号码响铃的时长，单位为秒
+var timeoutphonenumber = 15000; // 等待电话号码输入的时长，单位为毫秒
+var timeoutaccept = 3000; // 等待被叫方接听的时长，单位为毫秒
 
-var ttsengine = "flite"; // TTS engine
-var ttsvoice = "slt"; // TTS voice
-var ttstimer = "soft"; // TTS timer type
+var ttsengine = "flite"; // TTS 引擎
+var ttsvoice = "slt"; // TTS 声音
+var ttstimer = "soft"; // TTS 计时器类型
 
-var originate_options = "ignore_early_media=true"; // session.originate flags
+var originate_options = "ignore_early_media=true"; // session.originate 标志
 
-// == CONFIGURATION OPTIONS END ==
+// == 配置选项结束 ==
 
-var digitmaxlength = 0; // Maximum length of input
-var speakdigits = 1; // Whether or not to echo digits as dialed
-var targetnumber = ""; // Target phone number
+var digitmaxlength = 0; // 输入的最大长度
+var speakdigits = 1; // 是否回显拨号的数字
+var targetnumber = ""; // 目标电话号码
 
-// Speak (TTS) to the specified session
-function ttsSpeak (session, phrase) {
+// 向指定的会话中朗读（TTS）
+function ttsSpeak(session, phrase) {
   session.speak(ttsengine, ttsvoice, phrase, ttstimer);
 }
 
-// Accept input digits
-//  This callback function is called for each digit dialed
-function dtmfRead (session, type, obj, arg) {
+// 接收输入的数字
+// 每个拨号按键都会调用此回调函数
+function dtmfRead(session, type, obj, arg) {
   try {
     if (type == "dtmf") {
-      // # or * indicates that input is complete
+      // # 或 * 表示输入结束
       if (obj.digit == "#" || obj.digit == "*") {
-        return(false);
+        return false;
       }
-      // Add the dialed digit to the digit string
+      // 将拨号按键添加到数字字符串中
       dtmf.digits += obj.digit;
       if (speakdigits == 1) {
-        // Echo the dialed digits to the user
-        session.streamFile("digits/"+obj.digit+".wav");
+        // 回显拨号按键给用户听
+        session.streamFile("digits/" + obj.digit + ".wav");
       }
-      // If the maximum length is met, stop taking input
+      // 如果达到最大长度，则停止接受输入
       if (dtmf.digits.length >= digitmaxlength) {
-        return(false);
+        return false;
       }
     }
   } catch (e) {
-    console_log("err", e+"\n");
+    console_log("err", e + "\n");
   }
-  return(true);
+  return true;
 }
+```
 
-// Get a phone number
+// 获取电话号码
 function getPhone () {
   digitmaxlength = 11;
   dtmf.digits = "";
@@ -104,97 +99,97 @@ function getPhone () {
   return(dtmf.digits);
 }
 
-// Execution begins here
+// 执行从这里开始
 
-var dtmf = new Object(); // Used to store dialed digits
+var dtmf = new Object(); // 用于存储拨打的数字
 dtmf.digits = "";
 
-// session.ready() indicates when the call can be answered here
+// session.ready() 表示可以接听电话
 if (session.ready()) {
-  success = 0; // Will be 1 when the call succeeds
-  session.answer(); // Pick up the call
+  success = 0; // 当通话成功时为1
+  session.answer(); // 接听电话
 
-  ttsSpeak(session, "Conference Dialer"); // Greeting
+  ttsSpeak(session, "会议拨号器"); // 问候
 
-  // Get number to dial
-  maxtries = 3; // User gets 3 attempts
-  tries = 0; // No attempts made so far
-  ttsSpeak(session, "Please enter the phone number to call, then press pound.");
-  // Repeat until we have a valid number or maxtries is exceeded
+  // 获取要拨打的号码
+  maxtries = 3; // 用户有3次尝试机会
+  tries = 0; // 目前尚未尝试过
+  ttsSpeak(session, "请输入要拨打的电话号码，然后按井号键。");
+  // 重复直到有一个有效的号码或超过尝试次数
   while (targetnumber.length != 7 && targetnumber.length != 10 && targetnumber.length != 11 && tries < maxtries) {
     targetnumber = getPhone();
     tries++;
     if (targetnumber.length != 7 && targetnumber.length != 10 && targetnumber.length != 11) {
-      ttsSpeak(session, "Invalid number.  Please enter the phone number to call, then press pound.");
+      ttsSpeak(session, "无效的号码。 请输入要拨打的电话号码，然后按井号键。");
       continue;
     }
     break;
   }
   if (targetnumber.length != 7 && targetnumber.length != 10 && targetnumber.length != 11) {
-    // No valid number after maxtries
-    ttsSpeak(session, "Goodbye");
+    // 在尝试次数达到最大后仍没有有效号码
+    ttsSpeak(session, "再见");
     session.hangup("CALL_REJECTED");
   }
+}
 
-  ttsSpeak(session, "Initiating call.  Please stand by.");
-  console_log("info", "Conference Dialer: " + targetnumber + "\n");
-  if (targetnumber.length == 7) {
-    // Add 1+areacode
-    areacode = session.getVariable("default_areacode");
-    targetnumber = "1"+areacode+targetnumber;
-  }
-  if (targetnumber.length == 10) {
-    // Add 1
-    targetnumber = "1"+targetnumber;
-  }
-  // Inherit caller ID info
-  cid_name = session.getVariable("outbound_caller_name");
-  cid_number = session.getVariable("outbound_caller_id");
-  originate_options = originate_options + ",origination_caller_id_name="+cid_name;
-  originate_options = originate_options + ",origination_caller_id_number="+cid_number;
-  originate_options = originate_options + ",originate_timeout="+timeoutcall;
-  // This is where we start the call
-  outSession = new Session("{"+originate_options+"}sofia/gateway/"+gateway+"/"+targetnumber);
-  // Once the call is answered, get the callee to accept the call by pressing 1
-  while (outSession.ready()) {
-    // Keep the callee connected even when the caller hangs up and this script has ended
-    outSession.setAutoHangup(false);
-    digitmaxlength = 1;
-    speakdigits = 0;
-    dtmf.digits = "";
-    maxtries = 3;
-    tries = 0;
-    ttsSpeak(outSession, "You have been called to join a conference.  Press 1 to accept.");
-    while (tries < maxtries) {
-      tries++;
-      outSession.collectInput( dtmfRead, dtmf, timeoutaccept );
-      if (dtmf.digits != "1") {
-        ttsSpeak(outSession, "You have been called to join a conference.  Press 1 to accept.");
-      }
-    }
-    if (dtmf.digits == "1") {
-      // "transfer" is non-blocking, so we use it instead of "conference"
-      session.execute("transfer", transfer_command);
-      outSession.execute("transfer", transfer_command);
-      success = 1;
-    } else {
-      // Call not accepted
-      ttsSpeak(outSession, "Goodbye");
-      outSession.hangup("NORMAL_CLEARING");
+```javascript
+ttsSpeak(session, "通话初始化中，请稍候。");
+console_log("info", "会议拨号器：" + targetnumber + "\n");
+if (targetnumber.length == 7) {
+  // 添加1+区号
+  areacode = session.getVariable("default_areacode");
+  targetnumber = "1" + areacode + targetnumber;
+}
+if (targetnumber.length == 10) {
+  // 添加1
+  targetnumber = "1" + targetnumber;
+}
+// 继承来电者的身份信息
+cid_name = session.getVariable("outbound_caller_name");
+cid_number = session.getVariable("outbound_caller_id");
+originate_options = originate_options + ",origination_caller_id_name=" + cid_name;
+originate_options = originate_options + ",origination_caller_id_number=" + cid_number;
+originate_options = originate_options + ",originate_timeout=" + timeoutcall;
+// 这里是启动通话的地方
+outSession = new Session("{" + originate_options + "}sofia/gateway/" + gateway + "/" + targetnumber);
+// 当通话被接听后，通过按1键让被呼叫方接受通话
+while (outSession.ready()) {
+  // 即使呼叫方挂断并且此脚本已结束，也要保持被呼叫方连接
+  outSession.setAutoHangup(false);
+  digitmaxlength = 1;
+  speakdigits = 0;
+  dtmf.digits = "";
+  maxtries = 3;
+  tries = 0;
+  ttsSpeak(outSession, "您被邀请加入会议，按1接听。");
+  while (tries < maxtries) {
+    tries++;
+    outSession.collectInput(dtmfRead, dtmf, timeoutaccept);
+    if (dtmf.digits != "1") {
+      ttsSpeak(outSession, "您被邀请加入会议，按1接听。");
     }
   }
-  if (success == 0) {
-    ttsSpeak(session, "Call failed");
+  if (dtmf.digits == "1") {
+    // “transfer” 是非阻塞的，所以我们使用它代替 “conference”
+    session.execute("transfer", transfer_command);
+    outSession.execute("transfer", transfer_command);
+    success = 1;
+  } else {
+    // 通话未接受
+    ttsSpeak(outSession, "再见");
+    outSession.hangup("NORMAL_CLEARING");
   }
-
+}
+if (success == 0) {
+  ttsSpeak(session, "呼叫失败");
 }
 ```
 
-##  Dialplan 
+## 拨号计划
 
-With the above script in place, an extension must be added to the dialplan to execute it. Add something similar to the following to 'conf/dialplan/default.xml', replacing "502" with the desired extension number.
+使用上述脚本后，必须向拨号计划添加一个分机来执行它。在`conf/dialplan/default.xml`中添加类似以下内容的内容，将"502"替换为所需的分机号码。
 
-**Dialplan Example**
+**拨号计划示例**
 
 ```xml
 <extension name="conference_dialer">
@@ -205,8 +200,6 @@ With the above script in place, an extension must be added to the dialplan to ex
 
 ```
 
-## See Also
+## 参见
 
 [mod\_conference](../Modules/mod_conference_3965534.mdx#list)
-
-

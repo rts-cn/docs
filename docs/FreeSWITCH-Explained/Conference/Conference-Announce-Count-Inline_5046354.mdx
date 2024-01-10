@@ -1,16 +1,12 @@
+# 会议公告计数行内
 
-# Conference Announce Count Inline 
+## 关于
 
- 
+这个例子是一个非常快速和简单的拨号计划和会议配置，让您听到有多少个呼叫者在会议中。
 
-## About
+## 配置
 
-  
-This example is a very quick and dirty dialplan and conference config that lets you hear how many callers are in conference.  
-
-## Configuration
-
-First, add this group to your caller-controls in $${conf\_dir}/autoload\_configs/conference.conf.xml:
+首先，在$${conf\_dir}/autoload\_configs/conference.conf.xml中的caller-controls中添加这个组：
 
 **conference.conf.xml**
 
@@ -30,16 +26,16 @@ First, add this group to your caller-controls in $${conf\_dir}/autoload\_configs
     </group>
 ```
 
-Be sure to have your conference profile use the "plain" caller-controls listed above. (Feel free to customize the controls as you see fit or use the bind\_digit\_action method found in the [Conference Add Call Example](./Conference-Add-Call-Example_5046337.mdx#about).)
+确保您的会议配置文件使用上述列出的"plain" caller-controls。（可以根据需要自定义控制器，或者使用[会议添加呼叫示例](./Conference-Add-Call-Example_5046337.mdx#about)中的bind\_digit\_action方法。）
 
-Next, add this dialplan to $${conf\_dir}/dialplan/default/01\_Announce\_Conf\_Count.xml:
+接下来，将以下拨号计划添加到$${conf\_dir}/dialplan/default/01\_Announce\_Conf\_Count.xml：
 
 **01\_Announce\_Conf\_Count.xml**
 
 ```xml
 <include>
-  <!-- Sample dialplan for announcing the call count -->
-  <extension name="Announce Conf Count (Inline)">
+  <!-- 用于宣布通话数量的示例拨号计划 -->
+  <extension name="宣布会议数量（内置）">
     <condition field="destination_number" expression="^ANNOUNCE_CONF_COUNT_PRIVATE$">
       <action application="set" data="conf_count=${conference ${conference_name} list count}"/>
       <action application="log" data="INFO ${conf_count}"/>
@@ -49,9 +45,6 @@ Next, add this dialplan to $${conf\_dir}/dialplan/default/01\_Announce\_Conf\_Co
 </include>   
 ```
 
-Call the conference and press **#**. The system will "say" how many callers are in the conference.
+呼叫会议，并按下 **#**。系统将会告诉您会议中有多少名呼叫者。
 
-Note: You may also execute this announce extension prior to sending the caller into the conference in order to give him a count prior to joining.Make it clear that the number announced excludes the new caller because he hasn't yet joined the conference.
-
-  
-
+注意：您还可以在将呼叫者加入会议之前执行此宣布扩展，以便在加入之前为他提供数量计数。请明确指出，宣布的数字不包括新的呼叫者，因为他尚未加入会议。

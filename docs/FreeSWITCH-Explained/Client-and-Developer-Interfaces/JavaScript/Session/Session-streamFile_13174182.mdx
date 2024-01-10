@@ -1,54 +1,51 @@
+# 会话streamFile
 
-# Session streamFile 
+## 关于
 
- 
+将文件播放到当前通道，并可选择在DTMF事件上调用函数。会阻塞直到函数返回“false”或文件播放完毕。
 
-## About
+点击此处展开目录
 
-Plays a file to the current channel and optionally calls a function on DTMF events. Blocks until the function returns "false" or the file is finished playing.
+- 1 [描述](#description)
+- 2 [用法](#usage)
+- 3 [示例](#examples)
 
-Click here to expand Table of Contents
+## 描述
 
-* 1 [Description](#description)
-* 2 [Usage](#usage)
-* 3 [Examples](#examples)
+将给定的文件流（播放）到当前通道，并可选择在输入事件上调用函数。函数回调的返回值可用于控制文件播放的位置、速度和音量。
 
-## Description
+如果输出与通道的现有设置不匹配，则输出将进行重新采样，因此与输出通道格式相同的文件将大大减少CPU开销。
 
-Streams (plays) the given file to the current channel and optionally calls a function on input events. Return values of the function callback can be used to control file playback position, speed and volume.
-
-The output will be resampled if it doesn't match the channel's existing settings so files that are in the same format as the output channel will significantly reduce CPU overhead.
-
-## Usage
+## 用法
 
 ```xml
-session.streamFile(file, <[[Javascript DTMF Callback Function|callback function]]>, <callback_args>, <starting_sample_count>);
+session.streamFile(file, <[[Javascript DTMF回调函数|callback函数]]>, <callback_args>, <starting_sample_count>);
 ```
 
-* file - Path to the file to play (ie /tmp/file.wav)
-* callback - Which function to fire when a dtmf digit is pressed. (optional)
-* callback\_args - arguments to pass to the callback function if called (optional)
-* starting\_sample\_count - sample count offset to start playing. (optional)
+- file - 要播放的文件路径（例如 /tmp/file.wav）
+- callback - 在按下DTMF数字时触发的函数（可选）
+- callback_args - 如果调用了回调函数，则传递给回调函数的参数（可选）
+- starting_sample_count - 开始播放的采样计数偏移（可选）
 
-Callback return values and meanings:
+回调函数返回值和含义：
 
-* seek - +1000 or -1000 will seek 1000 milliseconds forward or backwards in the source file, seek 0 will start the file over, seek 1000 will start 1000 milliseconds into the file.
-* volume - +1,-1 or 0 for normal volume. (valid ranges are +1,+2,+3,+4, 0 or -1,-2,-3,-4)
-* speed - +1,-1 or 0 for normal speed. (valid ranges are +1,+2, 0 or -1,-2)
-* pause - toggles pause and play modes on the file.
-* false - stops playback on the file.
+- seek - +1000或-1000会在源文件中向前或向后定位1000毫秒，seek 0会重新开始播放文件，seek 1000会从文件的1000毫秒处开始播放。
+- volume - 正常音量为+1、-1或0（有效范围为+1、+2、+3、+4、0或-1、-2、-3、-4）
+- speed - 正常速度为+1、-1或0（有效范围为+1、+2、0或-1、-2）
+- pause - 在文件上切换暂停和播放模式
+- false - 停止文件的播放
 
-8Khz, Mono, 16bit is most efficient for wav files. 16Khz, Mono, 16bit wav files can be used for wideband capable devices.
+对于wav文件，8Khz、单声道、16位是效率最高的。16Khz、单声道、16位的wav文件可用于支持宽带的设备。
 
-You can have resampled versions of the files at every rate with wav files by making a dir 8000 and 16000\. If you try to play /tmp/foo.wav and there is a such thing as /tmp/8000/foo.wav it would favor that on an 8k call
+你可以通过创建8000和16000文件夹，用wav文件以每个速率进行重新采样。如果尝试播放/tmp/foo.wav并且存在/tmp/8000/foo.wav这样的文件，它会优先播放8k通话。
 
-MP3 files can also be played as long as [mod\_shout](../../../Modules/mod_shout_3965531.mdx#21-play) is installed.
+只要安装了[mod_shout](../../../Modules/mod_shout_3965531.mdx#21-play)，也可以播放MP3文件。
 
-You can also return arbitrary values and act on them as you wish.
+你还可以返回任意值并根据需要进行操作。
 
-## Examples
+## 示例
 
-In its most simple form, streamFile can be used to play a file. In this example, we answer the call and play "sounds/message.wav". If the user hasn't hung up by the time the file is finished playing, we hang up the call.
+在最简单的情况下，可以使用`streamFile`来播放文件。在这个示例中，我们接听呼叫并播放"sounds/message.wav"。如果用户在文件播放结束前没有挂断，我们将挂断呼叫。
 
 ```xml
 if ( session.ready( ) ) {
@@ -61,14 +58,14 @@ if ( session.ready( ) ) {
 }
 ```
 
-In this example we play "sounds/message.wav" over and over until the caller presses the "#" key. Note: because we return true on all but the "#" key, the playing of "sounds/message.wav" will not be interrupted with each key press unless it is a "#".
+在这个示例中，我们反复播放"sounds/message.wav"直到用户按下"#"键。注意：因为我们对除"#"键以外的所有键都返回true，所以除非按下"#"键，否则"sounds/message.wav"的播放不会被中断。
 
 ```xml
 var exit = false;
 
 function onInput( session, type, data, arg ) {
   if ( type == "dtmf" ) {
-    console_log( "info", "Got digit " + data.digit + "\n" );
+    console_log( "info", "收到按键 " + data.digit + "\n" );
     if ( data.digit == "#" ) {
       exit = true;
       return( false );
@@ -94,67 +91,67 @@ if ( session.ready( ) ) {
 }
 ```
 
-In this (similar) example, "sounds/message.wav" is played over and over. Pressing "1" will skip back 500 samples, pressing "2" will pause and unpause the recording while pressing "3" will skip forward 500 samples. Additionally, pressing "0" will start the recording over at the beginning.
+在这个（类似）示例中，一遍又一遍地播放"sounds/message.wav"。按下"1"将跳回500个样本，按下"2"将暂停和取消暂停录音，而按下"3"将向前跳过500个样本。此外，按下"0"将从头重新开始录音。
 
-Note: The sample rate is in "source file" units. Keep that in mind when resampling is active. For simplicity and lower CPU usage, always use files with the same sample rate as the outgoing channel.
+注意：采样率以"源文件"为单位。在重新取样活动时，请牢记这一点。为了简化和降低CPU使用率，请始终使用与外发通道相同采样率的文件。
 
 ```xml
 var exit = false;
 
-function onInput( session, type, data, arg ) {
-  if ( type == "dtmf" ) {
-    console_log( "info", "Got digit " + data.digit + "\n" );
-    if ( data.digit == "*" ) {
+function onInput(session, type, data, arg) {
+  if (type == "dtmf") {
+    console_log("info", "Got digit " + data.digit + "\n");
+    if (data.digit == "*") {
       exit = true;
-      return( false );
+      return (false);
 
     }
-    else if ( data.digit == "0" ) {
-      return( "seek:0" );
+    else if (data.digit == "0") {
+      return ("seek:0");
 
     }
-    else if ( data.digit == "1" ) {
-      return( "seek:-500" );
+    else if (data.digit == "1") {
+      return ("seek:-500");
 
     }
-    else if ( data.digit == "2" ) {
-      return( "pause" );
+    else if (data.digit == "2") {
+      return ("pause");
 
     }
-    else if ( data.digit == "3" ) {
-      return( "seek:+500" );
+    else if (data.digit == "3") {
+      return ("seek:+500");
 
     }
-    return( true );
+    return (true);
 
   }
 
 }
 
-if ( session.ready( ) ) {
-  session.answer( );
-  while ( session.ready( ) && ! exit ) {
-    session.streamFile( "sounds/message.wav", onInput );
+if (session.ready()) {
+  session.answer();
+  while (session.ready() && !exit) {
+    session.streamFile("sounds/message.wav", onInput);
 
   }
-  if ( session.ready( ) ) {
-    session.hangup( );
+  if (session.ready()) {
+    session.hangup();
 
   }
 
 }
 ```
 
-To play a prompt that gets interrupted at the first keypress yet still waits around for either a terminator key or a timer to expire, you might include session.collectInput( ) as in this example:
+要播放一个在第一个按键之后中断，但仍然等待终止键或计时器到期的提示音，你可以像这个示例一样包含session.collectInput( )：
 
 ```xml
 var allDigits = "";
 var exit = false;
 
-function onDtmf( session, type, digits, arg ) {
+function onDtmf(session, type, digits, arg) {
   // the arg is used as the return value. "true" continues 
   // the wait while false interrupts it
-  if ( digits.digit == "#" ) {
+  if (digits.digit == "#") {
     exit = true;
     return allDigits;
 
@@ -166,7 +163,9 @@ function onDtmf( session, type, digits, arg ) {
   }
 
 }
+```
 
+```javascript
 if ( session.ready( ) ) {
   session.answer( );
   session.streamFile( "sounds/prompt.wav", onDtmf, false );
@@ -180,6 +179,6 @@ if ( session.ready( ) ) {
 }
 ```
 
-Example: [dtmfcallback.js](../Javascript-Examples/Javascript-Example---DTMF-Callback_7144571.mdx#0-about)
+定义如上例所示的JavaScript函数后，您可以在Asterisk中使用`session.ready()`方法检查当前会话是否准备就绪。如果会话准备就绪，您可以使用`session.answer()`方法应答电话，并使用`session.streamFile( "sounds/prompt.wav", onDtmf, false )`播放音频文件。然后，您可以使用`session.collectInput( onDtmf, true, 8000 )`收集用户的按键输入，并在8秒后超时。最后，您可以使用`session.hangup()`方法结束会话并挂断电话。
 
-
+有关更多详细信息，请参阅[dtmfcallback.js](../Javascript-Examples/Javascript-Example---DTMF-Callback_7144571.mdx#0-about)。

@@ -1,34 +1,31 @@
+# mod_esf
 
-# mod_esf 
+## 关于
 
- 
+mod_esf 实现了额外的 SIP 功能，例如组播寻呼支持。
 
-## About
+一些电话和许多 IP 公共地址寻呼设备可以接受 IGMP 组播 RTP 流。使用 IP 组播的好处是一个 RTP 流可以传播到多个设备，从而节省带宽。但是路由器和有时以太网交换机必须进行组播设置。
 
-mod\_esf implements **e**xtra **S**IP **f**unctionality such as multicast paging support.
+单击此处展开目录
 
-Some phones and many IP public address paging devices can accept IGMP multicast RTP streams. The benefit of using IP multicast is that one RTP stream can propagate to many devices, thus saving bandwidth. But routers and sometimes Ethernet switches must be provisioned to handle multicast.
-
-Click here to expand Table of Contents
-
-**Error rendering macro 'toc'**
+**错误渲染宏 'toc'**
 
 null
 
-###   
+### 
 
-## Usage
+## 用法
 
-&lt;action application="esf_page_group" data="&lt;multicast group address> &lt;multicast port> &lt;Linksys control port> &lt;TTL>"/>
+&lt;action application="esf_page_group" data="&lt;多播组地址> &lt;多播端口> &lt;Linksys 控制端口> &lt;TTL>"/>
 
-The default values used when no arguments are given to the esf\_page\_group application are:
+当没有给 esf_page_group 应用程序提供参数时，将使用默认值:
 
-multicast ip address: 224.168.168.168
-multicast port: 34567
-multicast control port: 6061
-time to live: 1
+多播 IP 地址: 224.168.168.168
+多播端口: 34567
+多播控制端口: 6061
+生存时间 (TTL): 1
 
-This example appears in the default dialplan included with FreeSWITCH.
+此示例出现在 FreeSWITCH 默认拨号计划中。
 
    &lt;extension name="rtp_multicast_page">
      &lt;condition field="destination_number" expression="^pagegroup$|^7243">
@@ -37,62 +34,62 @@ This example appears in the default dialplan included with FreeSWITCH.
      &lt;/condition>
    &lt;/extension>
 
-You can change the IP multicast group address and port with arguments to the esf\_page\_group. The first argument is for the multicast ip address, 2nd is the port to use, and the 3rd, if used, is the control packet port for Linksys devices, the 4th is the time-to-live.
+您可以通过给 esf_page_group 提供参数来更改 IP 组播组地址和端口。第一个参数是用于多播 IP 地址，第二个参数是要使用的端口，第三个参数（如有）是 Linksys 设备的控制数据包端口，第四个参数是生存时间 (TTL)。
 
-For example to change the multicast ip to 224.65.66.67 and port to 34564 use:
+例如，要将多播 IP 更改为 224.65.66.67，端口更改为 34564，请使用以下命令:
 
 &lt;action application="esf_page_group" data="224.65.66.67 34564"/>
 
-[![Informational Tip](https://wiki.freeswitch.org/images/thumb/b/b3/Info.png/64px-Info.png)](https://wiki.freeswitch.org/wiki/File:Info.png "Informational Tip")
+[![Informational Tip](https://wiki.freeswitch.org/images/thumb/b/b3/Info.png/64px-Info.png)](https://wiki.freeswitch.org/wiki/File:Info.png "信息提示")
 
 ---
 
-If you get really bad feedback because another phone is too close to the one you're doing the paging from, try setting the jitterbuffer\_msec variable to 500 or 1000 before the channel is answered. Or set up different paging zones to avoid this problem.
+如果由于另一台手机离你正在进行 paging 的手机太近而收到了非常糟糕的反馈，请在通道接通之前将 jitterbuffer_msec 变量设置为 500 或 1000。或者设置不同的 paging 区域以避免这个问题。
 
-The module sends Polycom PTT/Group Paging Audio Packets to the multicast group 224.0.1.116 and UDP port 5001.
+该模块将 Polycom PTT/Group Paging Audio Packets 发送到多播组 224.0.1.116 和 UDP 端口 5001。
 
-## Variables
+## 变量
 
-| Name                         | Value                | Description                                                                                                                                        |
-| ---------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| esf\_multicast\_ip           | IP address           | If the application argument list is empty, this variable sets the multicast group address                                                          |
-| esf\_multicast\_bind\_ip     | IP address           | By default, the multicast socket is bound to the IP address specified by local\_ip\_v4 variable.esf\_multicast\_bind\_ip can overwrite this value. |
-| esf\_multicast\_write\_codec | PCMU or G722         | Sets the codec for multicast RTP. Default is PCMU.                                                                                                 |
-| esf\_multicast\_channel      | Integer, 0 &lt; x &lt; 255 | Channel number for Polycom PTT messages. Default: 0x1a                                                                                             |
-| esf\_multicast\_alert\_sound | Audio source         | Playback sound at the start of multicast transmission                                                                                              |
+| Name                         | Value                | Description                                                                                                                                               |
+| ---------------------------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| esf\_multicast\_ip           | IP 地址             | 如果应用程序参数列表为空，则该变量设置组播组地址                                                                                                 |
+| esf\_multicast\_bind\_ip     | IP 地址             | 默认情况下，组播套接字绑定到由local\_ip\_v4变量指定的IP地址，esf\_multicast\_bind\_ip可以覆盖这个值。                                |
+| esf\_multicast\_write\_codec | PCMU 或 G722        | 设置组播RTP的编解码器。默认为PCMU。                                                                                                                        |
+| esf\_multicast\_channel      | 整数，0 &lt; x &lt; 255 | Polycom PTT消息的通道号。默认值：0x1a.                                                                                                                |
+| esf\_multicast\_alert\_sound | 音频源               | 在组播传输开始时播放的声音。                                                                                                                          |
 
-## Network Setup
+## 网络设置
 
 ### Linux
 
-If running Linux with multiple network interfaces, you need to have a multicast route added to the network interface that your phones are on. For instance, if eth0.5 is a vlan interface (vlan5) that FreeSWITCH is bound to and it has an IP address of 192.168.5.2, then the correct route to add would be the following:
+如果在Linux上运行，并且有多个网络接口，您需要在您的手机所在的网络接口上添加一个组播路由。例如，如果eth0.5是一个 VLAN 接口（vlan5），FreeSWITCH 绑定到这个接口上，它的 IP 地址是192.168.5.2，那么需要添加以下正确的路由：
 
+```
 ip route add 224.0.0.0/4 dev eth0.5 src 192.168.5.2
+```
 
-You must have the iproute2 package installed to have the 'ip' command available. The src option is very important. Without it the packets will come out eth0 and not on the desired vlan.
+你需要安装iproute2软件包才能使用'ip'命令。src选项非常重要。如果没有它，数据包将从eth0出去，而不是所需的VLAN。
 
 ### FreeBSD
 
-When running FreeBSD, and if your FreeBSD box is only using one Ethernet interface you will notice that things will work out of the box with the dialplan entry above. This is because FreeBSD supports multicast host operations by default and there would be no need to configure a route since the default multicast route is via the interface with the default route.
+在运行FreeBSD时，如果你的FreeBSD框只使用一个以太网接口，你会注意到上述拨号计划条目将自动工作。这是因为FreeBSD默认支持组播主机操作，并且无需配置路由，因为默认组播路由通过带有默认路由的接口。
 
-In the case in which you have more than one interface, you will still notice that multicast packets will go out through the interface with the default route, and if you need to force traffic to go out through a different interface then you need to setup a route.
+如果你有多个接口，你仍然会注意到组播数据包将通过默认路由的接口发送出去，如果你需要强制流量通过不同的接口发送出去，则需要设置一条路由。
 
-A simple static route will suffice:
+一个简单的静态路由就够了：
 
 freebsd_box#route add -host 224.168.168.168 192.168.1.X
 
-So please don't be confused with multicast routing which is not enabled by default on a GENERIC kernel since the case being described does not need to forward this traffic from one interface to another.
+因此，请不要将此与启用的多播路由混淆，因为GENERIC内核默认情况下不需要将此流量从一个接口转发到另一个接口。
 
 ### TTL
 
-The TTL value of 1 will prevent multicast packets from passing over to the next router in your network. Best practice is to use the lowest TTL value that will reach all desired endpoints without propagating farther.
+TTL值为1将阻止多播数据包传递到网络中的下一个路由器。最佳实践是使用最低的TTL值，以达到所有需要的端点，而不会传播更远。
 
-### Codec
+### 编解码器
 
-The packets sent are \*always\* converted to G.711 mu-Law / PCMU (8khz) because some phones (Snom for example) won't accept other codecs via multicast.
+发送的数据包始终会转换为G.711 mu-Law / PCMU（8khz），因为一些电话（例如Snom）不接受通过组播传输的其他编解码器。
 
-## See Also
+## 参考资料
 
-* [Dialplan Recipes](../Dialplan/Dialplan-Recipes_9634252.mdx#about)
-
-
+* [拨号计划配方](../Dialplan/Dialplan-Recipes_9634252.mdx#about)

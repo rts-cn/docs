@@ -1,13 +1,10 @@
+## 调试事件套接字消息
 
-# Debugging Event Socket Message 
+在开发ESL应用程序时，您可能希望查看FreeSWITCH和您的应用程序之间的来回消息。确实有很多方法可以做到这一点，下面只是其中一种方法：
 
- 
+这个想法是让一个“中间人”来告诉我们他看到了什么。感谢UNIX的艺术，使这变得如此简单：
 
-You may want to see what's going back and forth between FreeSWITCH and your application when you are developing an ESL application. Sure there are many ways to do this, here is just one:
-
-The idea is to put a Man in the Middle, and he tells us whatever he saw. Thanks for the UNIX art to make this so simple:
-
-You need the help of two temporary files, be sure to select two unique names:
+您需要两个临时文件的帮助，请确保选择两个唯一的名称：
 
 ```xml
 echo > /tmp/a
@@ -16,71 +13,72 @@ tail -f /tmp/b &
 tail -f /tmp/a | nc localhost 8021 | tee /tmp/b | nc -l -k 8022 | tee /tmp/a 
 ```
 
-If FreeSWITCH listens on 8021, open a terminal and type the above commands, then make your ESL application connect to localhost 8022 you should be able to see all the messages going back and forth.
+如果FreeSWITCH监听在8021端口上，请在终端中输入上述命令，然后让您的ESL应用程序连接到localhost 8022，您应该能够看到所有的消息来回传递。
 
-The Middle Man is actually a B2B socket (just like FreeSWITCH is a B2BUA). The A-leg connect to FreeSWITCH and the B-leg create a socket waiting your ESL app to connect. To understand the last line you need to know the basics of UNIX (STDIN/STDOUT/STDERR) and nc (netcat).
+这个“中间人”实际上是一个B2B套接字（就像FreeSWITCH是一个B2BUA一样）。A-leg连接到FreeSWITCH，B-leg创建一个等待您的ESL应用程序连接的套接字。要理解最后一行，您需要了解UNIX的基础知识（STDIN/STDOUT/STDERR）和nc（netcat）。
 
-You will need manually to kill the "tail -f /tmp/b" process after debug. To avoid this, you might like the following way:
+在调试之后，您需要手动终止“tail -f /tmp/b”进程。为了避免这种情况，您可能会喜欢以下方法：
 
-Think about the UNIX "tee" is to copy STDIN to STDOUT and other files if any. We wouldn't need to 3rd line if it can also copy the STDIN to STDERR. OK, here is a simple tee2:
+想想UNIX的“tee”是将STDIN复制到STDOUT和其他任何文件。如果它也能将STDIN复制到STDERR，我们将不需要第3行。好的，这里有一个简单的tee2：
 
-**tee2.c - read from standard input and write to standard output, standard error and a file** Expand source 
+**tee2.c - 从标准输入读取并将其写入标准输出、标准错误和一个文件** 扩展源码
 
 ```cpp
-/* tee2 - read from standard input and write to standard output, 
-   standard error and a file.
-   Useful when you redirect the stdout but still want to keep an eye on
-   the output.
-   Want to write to more than one file? Just don't forget the UNIX art
+/* tee2 - 从标准输入读取并写入标准输出、标准错误和一个文件。
+   当你重定向标准输出但仍然想注意输出内容时非常有用。
+   想要写入多个文件？只需不要忘记 UNIX 的艺术：
    # echo blah | tee2 /tmp/1 | tee /tmp/{2,3,4,5,6}
-/* Author: Seven Du  */
- 
+/* 作者：Seven Du */
+
 #include <stdio.h>
 #include <stdlib.h>
- 
-int main (int argc, char **argv)
+
+int main(int argc, char **argv)
 {
     char c;
     char *file_name;
     FILE *file;
-    if (argc < 2) {
-        fprintf(stderr, "Usage: tee2 <file_name>\n");
+    if (argc < 2)
+    {
+        fprintf(stderr, "使用说明：tee2 <文件名>\n");
         exit(1);
-    }           
-        
+    }
+
     file_name = argv[1];
-    
-    if(! (file = fopen(file_name, "w")) ){
-        fprintf(stderr, "Error write file %s !\n", file_name);
+
+    if (!(file = fopen(file_name, "w")))
+    {
+        fprintf(stderr, "写入文件 %s 时出错！\n", file_name);
         exit(2);
-    }           
-    
-    while((c = getchar()) != EOF) {
+    }
+
+    while ((c = getchar()) != EOF)
+    {
         putc(c, file);
         putc(c, stdout);
         putc(c, stderr);
-        
-        if(c == '\n') {
+
+        if (c == '\n')
+        {
             fflush(file);
             fflush(stdout);
             fflush(stderr);
         }
-        
     }
-    
+
     fclose(file);
     exit(0);
 }
 ```
 
-And just compile it:
+只需要编译它：
 
 ```xml
 gcc -o tee2 tee2.c
 sudo cp tee2 /usr/bin
 ```
 
-And then do this:
+然后执行以下操作：
 
 ```xml
 echo > /tmp/a
@@ -88,30 +86,33 @@ echo > /tmp/b
 tail -f /tmp/a | nc localhost 8021 | tee2 /tmp/b | nc -l -k 8022 | tee /tmp/a
 ```
 
-Also it maybe also easy to make a perl or ruby version of tee2 :). Any better way to do this? Feel free to edit this page.
+也可以很容易地创建一个 Perl 或 Ruby 版本的 tee2 :). 有更好的方法吗？随意编辑此页面。
 
-## Using Netcat as MiddleMan
+## 使用 Netcat 作为中间人
 
-Here a bash script to see what being send on port 8021 and being received:
+以下是一个 Bash 脚本，用于查看在端口 8021 上发送和接收的内容：
 
 **netcat-middleman.sh**
 
 ```bash
 #!/bin/bash
+
 while true
 do
     BACKUP_EXT=$(date +%y%m%d%h%m%s)
+
     if [[ -f outgoing.log ]]; then
         cp outgoing.log outgoing.log.$BACKUP_EXT
     fi
+
     if [[ -f incoming.log ]]; then
         cp incoming.log incoming.log.$BACKUP_EXT
     fi
+
     rm pipe
     mkfifo pipe
-    echo "Capture Incoming and outgoing traffic:"
+
+    echo "捕获进出流量："
     nc -l -p 8022 < pipe | tee outgoing.log | nc localhost 8021 | tee pipe incoming.log
 done
 ```
-
-

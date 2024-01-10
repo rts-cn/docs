@@ -1,42 +1,39 @@
+# 安装 LuaSQL
 
-# Installing LuaSQL 
+## 关于
 
- 
+LuaSQL是Lua与数据库管理系统之间的简单接口 - <http://keplerproject.org/luasql/>
 
-## About
+_还可以通过[freeswitch.Dbh](https://wiki.freeswitch.org/wiki/Lua%5Ffreeswitch%5Fdbh "Lua freeswitch dbh")使用FS ODBC支持，无需安装LuaSQL_
 
-LuaSQL is a simple interface from Lua to a DBMS - <http://keplerproject.org/luasql/> 
+自FreeSWITCH 1.4起，您需要使用Lua5.2 (<http://www.lua.org/manual/5.2/>).
 
-_It is also possible to use the FS ODBC support through [freeswitch.Dbh](https://wiki.freeswitch.org/wiki/Lua%5Ffreeswitch%5Fdbh "Lua freeswitch dbh"), without installing LuaSQL_
+对于那些希望出于向后兼容原因继续使用Lua5.1的人，存在一个位于**legacy**目录下的mod\_lua \`freeswitch/src/mod/legacy/languages/mod\_lua/\`
 
-Since FreeSWITCH 1.4, you need to use Lua5.2 (<http://www.lua.org/manual/5.2/>).
+点击此处展开目录
 
-For those willing to keep using Lua5.1 for backwards compatibility reasons, there is a mod\_lua available in **legacy** directory \`freeswitch/src/mod/legacy/languages/mod\_lua/\`
-
-Click here to expand ToC
-
-* [Dependencies](#dependencies)
-* [Install LuaSQL](#install-luasql)  
-   * [MySQL Server](#install-luasql)  
+* [依赖项](#dependencies)
+* [安装LuaSQL](#install-luasql)
+   * [MySQL 服务器](#install-luasql)
    * [ODBC](#install-luasql)
-* [Script examples](#script-examples)  
-   * [LuaSQL Mysql example](#luasql-mysql-example)  
-   * [LuaSQL ODBC example](#luasql-odbc-example)
-* [See also](#install-luasql)
+* [脚本示例](#script-examples)
+   * [LuaSQL Mysql 示例](#luasql-mysql-example)
+   * [LuaSQL ODBC 示例](#luasql-odbc-example)
+* [详见](#install-luasql)
 
-## Dependencies
+## 依赖项
 
-You will need to install Lua5.2, for instance on Debian7, you can run the following:
+您需要安装Lua5.2，例如在Debian7上，您可以运行以下命令:
 
 ```xml
-#Install Dependencies
+# 安装依赖项
 apt-get install -y lua5.2 liblua5.2-dev
 apt-get install -y libpq-dev
 ```
 
-## Install LuaSQL
+## 安装LuaSQL
 
-Download LuaSQL 2.3.0:
+下载LuaSQL 2.3.0：
 
 ```xml
 wget https://github.com/keplerproject/luasql/archive/v2.3.0.zip
@@ -44,83 +41,52 @@ unzip v2.3.0.zip
 cd luasql-2.3.0/
 ```
 
-You will need to change the '**config**' file to reflect your system and the DBMS to interface with.
+您需要修改“config”文件以反映您的系统和要接口的DBMS。
 
-The config file is divided into three broad sections:
+配置文件分三个主要部分：
 
-1. DB Name
-2. Paths to different libraries
-3. Paths to DB related libraries
+1. 数据库名称
+2. 不同库的路径
+3. 与数据库相关库的路径
 
-First check the #2 if it matches your flavor of OS.
+首先检查＃2，看看它是否与您的操作系统版本匹配。
 
-Then, you have to select only \*one\* driver to compile at a time. Suppose you want to compile MySQL, then you have to uncomment only the MySQL line from #1 and #3\. All other lines in both these sections should be commented.
+然后，您必须一次只选择\*一个\*驱动程序进行编译。假设您想编译MySQL，则必须仅取消注释＃1和＃3中的MySQL行。在这两个部分中，所有其他行都应该被注释掉。
 
-### MySQL Server
-
-```xml
-sed -i 's/#T= mysql/T= odbc/g' config
-sed -i 's/T=sqlite3/#T=sqlite3/g' config
-```
-
-On RHEL / CentOS, the path for MySQL libs and include is not the same as the default config file that comes with LuaSQL.
-
-Please make the Driver parameters changes as follows:
+### MySQL 服务器
 
 ```xml
-DRIVER_LIBS= -L/usr/lib/mysql -lmysqlclient -lz
-DRIVER_INCS= -I/usr/include/mysql
+[MySQL Driver]
+Driver = /usr/lib/odbc/libmyodbc.so
+Setup = /usr/lib/odbc/libodbcmyS.so
+CPTimeout =
+CPReuse =
+FileUsage =
 ```
 
-On x64\_86 architecture, you need to change a few more things in 'config' file
-
-Set proper values for LUA\_LIBDIR, LUA\_DIR , LUA\_INC , DRIVER\_LIBS, DRIVER\_INCS
-
-To allow compile properly, you will also need -fPIC:
+File: odbc.ini
 
 ```xml
-sed -i 's/WARN= /WARN= -fPIC /g' config 
+[MySQL-test]
+Description     = MySQL ODBC Test Database
+Driver          = MySQL Driver
+Server          = localhost
+Port            = 3306
+Socket          = /var/lib/mysql/mysql.sock
+Database        = test
 ```
 
-Then compile and install:
-
-```xml
-make
-make install
-```
-
-### ODBC
-
-If earlier you wanted to use **Microsoft SQL** Server earlier you would have changed the following:
-
-```xml
-sed -i 's/#T= mysql/T= odbc/g' config
-sed -i 's/T=sqlite3/#T=sqlite3/g' config
-```
-
-Then make the Driver parameters changes as follows:
-
-```xml
-DRIVER_LIBS= -L/usr/lib64 -lodbc
-DRIVER_INCS= -DUNIXODBC -I/usr/include
-```
-
-Compile and install!
-
-## Script examples
-
-### LuaSQL Mysql example
-
-Next you can do something like:
+After making these changes, you can use the following code as an example:
 
 ```xml
 #!/usr/local/bin/lua
-require "luasql.mysql"
+require "luasql.odbc"
 
-env = assert (luasql.mysql())
-con = assert (env:connect("database","username","password","localhost"))
-cur = assert (con:execute"SELECT * FROM table")
-row = cur:fetch ({}, "a")
+env = assert(luasql.odbc())
+con = assert(env:connect("MySQL-test", "username", "password"))
+
+cur = assert(con:execute("SELECT * FROM table"))
+row = cur:fetch({}, "a")
 
 session:setVariable("varname", tostring(row.column));
 
@@ -129,33 +95,29 @@ con:close()
 env:close()
 ```
 
-### LuaSQL ODBC example
-
-For ODBC, you need to edit the **odbc.ini** and **odbcinst.ini** (both in /etc on RHEL). A typical MySQL configuration looks like:
-
-File: odbcinst.ini
+Remember to replace "username" and "password" with your actual MySQL credentials.
 
 ```xml
-# Driver from the MyODBC package
-# Setup from the unixODBC package
+＃MyODBC 包中的驱动程序
+＃unixODBC 包中的设置
 [MySQL]
-Description     = ODBC for MySQL
-Driver          = /usr/lib/libmyodbc.so
-Setup           = /usr/lib/libodbcmyS.so
-FileUsage       = 1
+描述    = MySQL 的ODBC
+驱动程序  = /usr/lib/libmyodbc.so
+设置     = /usr/lib/libodbcmyS.so
+文件使用  = 1
 
-Note that the *.so files should be in the folder.
-File: odbc.ini
+请注意，*.so 文件应位于文件夹中。
+文件：odbc.ini
 [mydsn]
-Driver     = MySQL
-SERVER     = localhost
-PORT       = 3306
-DATABASE   = mydatabase
-OPTION     = 67108864
-SOCKET     = /var/lib/mysql/mysql.sock
+驱动程序  = MySQL
+服务器  = localhost
+端口       = 3306
+数据库  = mydatabase
+选项       = 67108864
+套接字   = /var/lib/mysql/mysql.sock
 ```
 
-**NOTE:** I found you also need to set some environment variables for scripts to run properly
+**注意：** 我发现您还需要为脚本设置一些环境变量以使其正常运行
 
 ```xml
 echo export LUA_PATH=/usr/local/freeswitch/scripts/?.lua >> /etc/bashrc
@@ -163,10 +125,8 @@ echo export LUA_CPATH=/usr/local/freeswitch/scripts/?.so >> /etc/bashrc
 echo export PATH=$PATH:/usr/local/freeswitch/bin >> ~/.bashrc
 ```
 
-**NOTE:** you need to symlink the shared object (i.e., mysql.so) to /usr/local/lib/lua/5.1/luasql/mysql.so
+**注意：** 您需要将共享对象（例如mysql.so）链接到/usr/local/lib/lua/5.1/luasql/mysql.so
 
-## See also
+## 参见
 
-* Script to install LuaSQL with Postgresql on Debian7 - <https://gist.github.com/areski/6ab7ee00d7025a1eaa97>
-
-
+* 在Debian7上安装LuaSQL与Postgresql的脚本 - <https://gist.github.com/areski/6ab7ee00d7025a1eaa97>

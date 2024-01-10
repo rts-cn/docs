@@ -1,74 +1,69 @@
-
 # Category:TTS 
 
- 
+## 关于
 
-## About
+文本到语音信息
 
-Text-To-Speech Information
+Freeswitch目前支持多种TTS选项。
 
-Freeswitch currently supports several TTS options.
+* [mod\_unimrcp](../Modules/mod_unimrcp_6586728.mdx#tts) \- 使用MRCP协议的TTS
+* [mod\_cepstral](../Modules/mod_cepstral_3965164.mdx#faq) \- 商业高品质\[[Cepstral](http://www.cepstral.com/)\]声音和文本到语音引擎。
+* [mod\_flite](../Modules/mod_flite_3965160.mdx#about) \- FOSS选项，Flite / Festival Lite。
+* 完整的TTS模块列表可在[模块列表页面](../Modules/index.mdx#about)上找到。
 
-* [mod\_unimrcp](../Modules/mod_unimrcp_6586728.mdx#tts) \- TTS using MRCP protocol
-* [mod\_cepstral](../Modules/mod_cepstral_3965164.mdx#faq) \- Commercial high-quality \[[Cepstral](http://www.cepstral.com/)\] voices & Text to Speech engine.
-* [mod\_flite](../Modules/mod_flite_3965160.mdx#about) \- An FOSS option, Flite / Festival Lite.
-* The complete list of TTS modules is available [on the modules list page](../Modules/index.mdx#about).
+点击此处展开目录
 
-Click here to expand Table of Contents
-
-* 1 [Javascript Implementation](#javascript-implementation)
-* 2 [Via mod\_shout using online TTS](#about)  
-   * 2.1 [Bing Translate](#bing-translate)  
-   * 2.2 [Google Translate](#bing-translate)
-* 3 [Pages in category "TTS"](#pages-in-category-tts)  
+* 1 [Javascript实现](#javascript-implementation)
+* 2 [通过mod\_shout使用在线TTS](#about)  
+   * 2.1 [Bing翻译](#bing-translate)  
+   * 2.2 [Google翻译](#bing-translate)
+* 3 [分类TTS的页面](#pages-in-category-tts)  
    * 3.1 [M](#pages-in-category-tts)  
-   * 3.2 [M cont.](#pages-in-category-tts)  
+   * 3.2 [M续页](#pages-in-category-tts)  
    * 3.3 [T](#pages-in-category-tts)
 
-### Javascript Implementation
+### Javascript实现
 
 [Javascript\_Session\_Speak](../Client-and-Developer-Interfaces/JavaScript/JavaScript-API-Reference/index.mdx#sessionspeak)
 
-### Via [mod_shout](../Modules/mod_shout_3965531.mdx#21-play) using online TTS
+### 通过[mod_shout](../Modules/mod_shout_3965531.mdx#21-play)使用在线TTS
 
-Using mod\_shout allows you to stream audio from an URL, this allows you to utilize high quality online TTS services by writing out custom GET requests. Obviously since an Internet transfer occurs on each TTS transaction this approach might not me desired on a production environment.
+使用mod\_shout可以从URL流式传输音频，这样您就可以通过编写自定义的GET请求来利用高质量的在线TTS服务。显然，由于每个TTS事务都涉及Internet传输，因此这种方法在生产环境中可能不被期望。
 
-#### Bing Translate
+#### Bing翻译
 
-Register for an API Key (appid): <http://www.bing.com/developers/appids.aspx> and replace the 'YOUR-KEY-HERE' in the GET url below. For more information see <http://msdn.microsoft.com/en-us/library/ff512420.aspx>.
-
-http://api.microsofttranslator.com/V2/Http.svc/Speak?language=en&format=audio/mp3&options=MaxQuality&appid=YOUR-KEY-HERE&text=Text+to+say
+注册获取API密钥（appid）: <http://www.bing.com/developers/appids.aspx> 并将以下GET url中的'YOUR-KEY-HERE'替换为您的密钥。有关更多信息，请参阅<http://msdn.microsoft.com/en-us/library/ff512420.aspx>。
 
 #####   
-IVR Example
+IVR 示例
 
 ```xml
 <include>
-  	<!-- demo IVR, Main Menu -->
-  	<!-- Other "flite" voices slt (female voice - best), rms (male voice), awb (male voice), kal (male voice) -->
+  	<!--演示 IVR，主菜单-->
+  	<!-- 其他 "flite" 声音 slt（女声 - 最好的），rms（男声），awb（男声），kal（男声）-->
 	<menu name="ivr_danols_after_hours" 
   		tts-engine="flite" tts-voice="slt" 
   		max-failures="3" max-timeouts="3"
   		confirm-macro="" confirm-key="" confirm-attempts="3"
     	timeout="10000" inter-digit-timeout="2000"
     	digit-len="1"
-    	<!-- say using online TTS -->
+    	<!-- 使用在线 TTS 进行说话 -->
     	greet-long="shout://api.microsofttranslator.com/V2/Http.svc/Speak?language=en&format=audio/mp3&options=MaxQuality&appid=YOUR-KEY-HERE&text=Thank+you+for+calling+Danols."
-    	<!-- or say using built in flite -->
+    	<!-- 或使用内置的 flite 说话 -->
     	greet-short="say:Thank+you+for+calling+Danols."
     	invalid-sound="say:Invalid selection"
     	exit-sound="say:Goodby and thank you for calling Danols.">
 	
-	<!-- The following are the definitions for the digits the user dials -->
+	<!-- 以下是用户拨打的数字的定义 -->
 	<entry action="menu-exec-app" digits="1" param="transfer 1000 XML default"/>
 	</menu>
 </include>
 ```
 
 ####   
-Google Translate
+谷歌翻译
 
-You probably need to agree with Google API TOS, located at..? Please note google will fail to convert if the input text is to long so test url in browser first; Bing appears to be more lenient in this regard.
+您可能需要同意谷歌API的《服务条款》，位于..？请注意，如果输入文本太长，谷歌将无法转换，因此先在浏览器中测试URL；在这方面，Bing似乎更宽容。
 
 ```xml
 <extension name="Free_Google_Text_To_Speech">
@@ -79,12 +74,9 @@ You probably need to agree with Google API TOS, located at..? Please note google
 </extension>
 ```
   
+### "TTS" 类别下的页面
 
-### Pages in category "TTS"
+本类别包含以下 7 个页面，共计 7 个。
 
-The following 7 pages are in this category, out of 7 total.
-
-| M[mod\_dptools: answer](../Modules/mod_dptools_1970333.mdx#-c)[mod\_dptools: speak](../Modules/mod_dptools_1970333.mdx#-c)[Mod cepstral](../Modules/mod_cepstral_3965164.mdx#faq) | M cont.[Mod flite](../Modules/mod_flite_3965160.mdx#about)[Mod tts commandline](../Modules/mod_tts_commandline_13172802.mdx#about)[Mod unimrcp](../Modules/mod_unimrcp_6586728.mdx#tts) | T[TTS](../Configuration/TTS_9634273.mdx#about) |
+| M[mod\_dptools：answer](../Modules/mod_dptools_1970333.mdx#-c)[mod\_dptools：speak](../Modules/mod_dptools_1970333.mdx#-c)[Mod cepstral](../Modules/mod_cepstral_3965164.mdx#faq) | M cont.[Mod flite](../Modules/mod_flite_3965160.mdx#about)[Mod tts commandline](../Modules/mod_tts_commandline_13172802.mdx#about)[Mod unimrcp](../Modules/mod_unimrcp_6586728.mdx#tts) | T[TTS](../Configuration/TTS_9634273.mdx#about) |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
-
-

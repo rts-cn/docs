@@ -1,28 +1,25 @@
+# mod_voicemail_callpage
 
-# mod_voicemail_callpage 
+## 关于
 
- 
+该模块用于在邮箱中留下新语音消息时自动发起呼叫。默认情况下，模块将在 X 秒后（由 page-first-wait 设置）发起第一通呼叫，并且每隔 X 秒（由 page-wait 设置）发起一通新的呼叫，只要邮箱中有新消息或者达到限制次数（由 page-attempts 设置）。如果将 "page-end-on-answer" 设置为 true 并且呼叫被接通，那么对于该新的语音消息将不会再发起任何呼叫。
 
-## About
+点击此处展开目录
 
-This module is used to perform an originate automatically when a new voice message is left in a mailbox. By default the module will originate the first call after X seconds (set by page-first-wait) and a new call every X seconds (set by page-wait) as long as there is a new message in the mailbox or until the limit (set by page-attempts) is met. If "page-end-on-answer" is set to true and the call is answered it will not perform any more originates for that new voice message.
+* 1 [配置](#模块配置)
+   * 1.1 [模块配置](#模块配置)
+   * 1.2 [FreeSWITCH 目录配置](#FreeSWITCH-目录配置)
+* 2 [API 使用](#-FreeSWITCH--mod_voicemail_callpage-)
+   * 2.1 [示例使用](#示例使用)
 
-Click here to expand Table of Contents
+## 配置
 
-* 1 [Configuration](#module-configuration)  
-   * 1.1 [Module configuration](#module-configuration)  
-   * 1.2 [FreeSWITCH directory configuration](#freeswitch-directory-configuration)
-* 2 [API usage](#-freeswitch--mod_voicemail_callpage-)  
-   * 2.1 [Example usage](#example-usage)
+### 模块配置
 
-## Configuration
-
-### Module configuration
-
-Sample configuration, voicemail\_callpage.conf:
+示例配置，voicemail\_callpage.conf：
 
 ```xml
-<section name="configuration" description="FreeSWITCH Configuration">
+<section name="configuration" description="FreeSWITCH配置">
    <configuration name="voicemail_callpage.conf" description="voicemail_callpage">
       <settings>
          <param name="odbc-dsn" value="db:user:pass"/>
@@ -32,16 +29,16 @@ Sample configuration, voicemail\_callpage.conf:
             <param name="page-dial-string" value="loopback/18885550800"/>
             <param name="page-timeout" value="10"/>
             <param name="page-wait" value="5"/>
-            <!-- default is 1 -->
+            <!-- 默认为1 -->
             <param name="page-attempts" value="1"/>
             <param name="page-transfer" value="5 XML default"/>
             <param name="page-parse-variables" value="user_context,accountcode,default_areacode,max_calls,toll_allow,lcr_profile,mailbox,domain_name"/>
             <param name="page-first-wait" value="5"/>
-            <!-- default is true -->
+            <!-- 默认为true -->
             <param name="page-enabled" value="true"/>
-            <!-- default is false -->
+            <!-- 默认为false -->
             <param name="page-end-on-answer" value="false"/>
-            <!-- default is 0000000000 -->
+            <!-- 默认为0000000000 -->
             <param name="page-caller-name" value="Voicemail Call Page"/>
          </profile>
       </profiles>
@@ -49,14 +46,14 @@ Sample configuration, voicemail\_callpage.conf:
 </section>
 ```
 
-### FreeSWITCH directory configuration
+### FreeSWITCH目录配置
 
-If you want to use settings from a voicemail\_callpage profile make sure you have the "vm-page-profile" parameter set to the profile name like &lt;param name="vm-page-profile" value="default"/> Please note, all of the module settings will be overridden by the FS directory parameters. Just prepend the voicemail\_callpage param name with "vm-"
+如果您想使用voicemail_callpage配置文件中的设置，请确保将"vm-page-profile"参数设置为配置文件的名称，例如&lt;param name="vm-page-profile" value="default"/>。请注意，所有模块设置将被FS目录参数覆盖。只需在voicemail_callpage参数名称前添加"vm-"即可。
 
-Directory configuration example
+目录配置示例
 
 ```xml
-<section name="directory" description="FreeSWITCH Directory">
+<section name="directory" description="FreeSWITCH 目录">
    <domain name="domain01.local">
       <params>
          <param name="allow-empty-password" value="false"/>
@@ -106,18 +103,16 @@ Directory configuration example
 </section>
 ```
 
-## API usage
+## 使用API
 
 ```xml
 freeswitch@default> vm_callpage load|unload|reload [profile name]
 ```
 
-### Example usage
+### 示例用法
 
 ```xml
 freeswitch@default> vm_callpage load default  
 freeswitch@default> vm_callpage unload default  
 freeswitch@default> vm_callpage reload default  
 ```
-
-

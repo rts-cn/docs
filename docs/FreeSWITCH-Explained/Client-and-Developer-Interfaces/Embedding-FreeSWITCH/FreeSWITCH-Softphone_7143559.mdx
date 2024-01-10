@@ -1,41 +1,38 @@
+# FreeSWITCH软电话
 
-# FreeSWITCH Softphone 
+## 关于
 
- 
+使用PortAudio作为在FreeSWITCH™和外部世界之间交换音频的方法的配置思路。
 
-## About
+这个旧维基页面上的大部分工作是在2010年3月之前完成的。自那时以来，一些配置和变量名称已经发生了变化。
 
-Configuration ideas using PortAudio as a means to exchange audio between FreeSWITCH™ and the outside world.
+点击这里展开目录
 
-Most of the work on this page on the old wiki was prior to March of 2010\. Some configurations and variable names have changed since then.
+* 1 [配置](#配置-)  
+   * 1.1 [发起呼叫](#-发起呼叫-)  
+   * 1.2 [接收呼叫](#-接收呼叫-)  
+   * 1.3 [保持音乐](#-保持音乐-)
+* 2 [FreeSWITCH作为专用软电话](#freeswitch作为专用软电话-)  
+   * 2.1 [目录](#目录)  
+   * 2.2 [拨号计划](#拨号计划)  
+   * 2.3 [SIP配置文件](#sip配置文件)  
+   * 2.4 [另请参阅](#另请参阅)
 
-Click here to expand Table of Contents
+## 配置
 
-* 1 [Configuration](#configuration-)  
-   * 1.1 [Originating Calls](#-originating-calls-)  
-   * 1.2 [Receiving Calls](#-receiving-calls-)  
-   * 1.3 [Music on Hold](#-music-on-hold-)
-* 2 [FreeSWITCH as a Dedicated Soft Phone](#freeswitch-as-a-dedicated-soft-phone-)  
-   * 2.1 [Directory](#directory)  
-   * 2.2 [Dialplan](#dialplan)  
-   * 2.3 [SIP Profiles](#sip-profiles)  
-   * 2.4 [See Also](#see-also)
+请查看 [mod\_portaudio](https://wiki.freeswitch.org/wiki/Mod%5Fportaudio "Mod portaudio") 获取初始设置信息。
 
-## Configuration 
+### 发起呼叫
 
-See [mod\_portaudio](https://wiki.freeswitch.org/wiki/Mod%5Fportaudio "Mod portaudio") for initial setup information.
+此示例API将从portaudio拨打FreeSWITCH会议桥接。与使用 "pa call "相比，此方法的一个优点是不需要拨号计划。
 
-###  Originating Calls 
+"originate {effective_caller_id_name=FreeSWITCH,effective_caller_id_number=9193869900}portaudio/auto_answer &bridge({originate_timeout=60}sofia/external/888@conference.freeswitch.org)"
 
-This example API will dial the FreeSWITCH conference bridge from portaudio. One advantage of this method vs. using "pa call" is that a dialplan is not necessary.
+### 接收呼叫
 
-originate {effective_caller_id_name=FreeSWITCH,effective_caller_id_number=9193869900}portaudio/auto_answer &bridge({originate_timeout=60}sofia/external/888@conference.freeswitch.org)
+创建以下拨号计划条目
 
-###  Receiving Calls 
-
-Create the following dialplan entry
-
-**Port Audio Dialplan Example**
+**Port音频拨号计划示例**
 
 ```xml
   <extension name="test">
@@ -45,15 +42,15 @@ Create the following dialplan entry
   </extension>
 ```
 
-And then call extension 3 with a softphone.
+然后使用软电话呼叫分机3。
 
-On the console you will see **BRRRINNGGG** and then type
+在控制台上，你会看到**BRRRINNGGG**，然后输入
 
 pa answer
 
-###  Music on Hold 
+### 保持音乐
 
-Some config will need to be done to specify a default MOH file.
+需要进行一些配置才能指定默认的MOH文件。
 
 **portaudio.conf.xml**
 
@@ -74,17 +71,17 @@ Some config will need to be done to specify a default MOH file.
 ...
 ```
 
-## FreeSWITCH as a Dedicated Soft Phone 
+## FreeSWITCH作为专用软电话
 
-The following example configuration assumes an extension of 1000, area code of 208, and that `freeswitch.local` domain is pointed to the internal IP of FreeSWITCH.
+以下示例配置假设分机号为1000，区号为208，并且`freeswitch.local`域指向FreeSWITCH的内部IP。
 
-### Directory
+### 目录
 
 /conf/directory/default/freeswitch.local
 
-Setup the gateway.
+设置网关。
 
-**Directory Gateway Configuration Example**
+**目录网关配置示例**
 
 ```xml
    <include>
@@ -109,13 +106,13 @@ Setup the gateway.
    </include>
 ```
 
-### Dialplan
+### 拨号计划
 
 /conf/dialplan/default.xml
 
-The example below assumes that the gateway is `freeswitch.local` which is the local phone system. In the example below make sure to change 1208 to your area code.
+以下示例假设网关为`freeswitch.local`，即本地电话系统。在下面的示例中，请务必将1208更改为您的区号。
 
-**Dialplan Example** Expand source 
+**拨号计划示例** 展开源代码
 
 ```xml
  <?xml version="1.0" encoding="utf-8"?>
@@ -160,17 +157,18 @@ The example below assumes that the gateway is `freeswitch.local` which is the lo
  </include>
 ```
 
-/conf/directory/default
+```markdown
+#/conf/directory/default
 
-Remove all local extensions .xml files or rename them with .noload
+删除所有本地扩展的 .xml 文件，或将其重命名为 .noload。
 
-### SIP Profiles
+### SIP配置
 
-/conf/sip\_profiles/outbound.xml
+#/conf/sip\_profiles/outbound.xml
 
-If FreeSWITCH is behind the same NAT then comment out ext-rtp-ip, and ext-sip-ip. "
+如果FreeSWITCH位于相同的NAT后面，则将ext-rtp-ip和ext-sip-ip注释掉。
 
-**Outbound SIP Profile**
+**出站SIP配置**
 
 ```xml
  <include>
@@ -199,10 +197,9 @@ If FreeSWITCH is behind the same NAT then comment out ext-rtp-ip, and ext-sip-ip
  </include>
 ```
 
-### See Also
+### 参考资料
 
 * [Mod\_portaudio](https://wiki.freeswitch.org/wiki/Mod%5Fportaudio "Mod portaudio")
-* [Examples](https://wiki.freeswitch.org/wiki/Examples "Examples")
-* Sample [softphone config](http://svn.freeswitch.org/svn/configs/softphone/)
-
-
+* [示例](https://wiki.freeswitch.org/wiki/Examples "Examples")
+* 示例[软电话配置](http://svn.freeswitch.org/svn/configs/softphone/)
+```

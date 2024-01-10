@@ -1,52 +1,49 @@
+# 语音信箱
 
-# Voicemail 
+## 关于
 
- 
+关于文本。
 
-## About
+点击此处展开目录
 
-About text.
+* 1 [语音信箱](#voicemail)
+   * 1.1.1 [IVR引擎概述](#ivr-engine-overview)
+   * 1.1.2 [IVR XML配置文件](#ivr-xml-configuration-file)
+   * 1.2 [示例，将呼叫发送到语音信箱](#example-send-a-call-coming-into-a-did-to-voicemail)
+   * 1.3 [另一个呼叫计划将未接来电发送到语音信箱](#another-dialplan-to-send-unanswered-calls-to-voicemail)
+   * 1.4 [菜谱](#voicemail)
+   * 1.5 [如何禁用语音信箱的远程登录/访问？](#retrieve-calls-in-voicemail)
 
-Click here to expand Table of Contents
+## 语音信箱
 
-* 1 [Voicemail](#voicemail)  
-      * 1.1.1 [IVR engine overview](#ivr-engine-overview)  
-      * 1.1.2 [IVR XML configuration file](#ivr-xml-configuration-file)  
-   * 1.2 [Example, send a call, coming into a DID, to voicemail](#example-send-a-call-coming-into-a-did-to-voicemail)  
-   * 1.3 [Another Dialplan to send unanswered calls to voicemail](#another-dialplan-to-send-unanswered-calls-to-voicemail)  
-   * 1.4 [Recipes](#voicemail)  
-   * 1.5 [How can I disable remote login/access to voicemail?](#retrieve-calls-in-voicemail)
+"语音信箱"实际上是FreeSWITCH中的几个组件，随着时间的推移而有所变化。因此，演示的方式非常零散，各种片段到处都有。这是我试图用简单易懂的语言整理好的笔记、实用示例和其他信息的地方，形成关于语音信箱的"总部"。我将会谈论"最佳实践"，希望其他人也能被激发起来，用这种"超凡凡人"的方法解释如何快速简单地开始工作。
 
-## Voicemail
+在1.0.6之前有一种方法，在之后又有一种方法。这个文件开始于2011年12月23日，在1.0.6之后。这里有一篇[**很棒的文章**](http://www.packtpub.com/article/freeswitch-utilizing-the-built-in-ivr-engine)，作者是Anthony Minesalle，介绍了语音信箱、IVR系统等。
 
-"Voicemail" is actually several things within FreeSWITCH, having morphed over time. Because of this, presentation is scatter-brained- bits and pieces here and there. Here is my in-plain-English attempt to gather together good notes, practical examples and info, etc., into a 'grand central' of info on voicemail. As I learn them I'll talk about 'best practices' and I hope others will be inspired to help in this 'mere mortal' approach to explaining HOW to get things going most quickly and simply.
+#### IVR引擎概述
 
-It appears there was a way before 1.0.6 and a way after. This file is started 23 Dec 2011, after 1.0.6 . Here's a [**great article**](http://www.packtpub.com/article/freeswitch-utilizing-the-built-in-ivr-engine) by Anthony Minesalle about voicemail, the IVR system, etc.
+与FreeSWITCH中许多作为模块构建的应用不同，IVR被视为FreeSWITCH的核心功能。无论何时播放提示音并收集按键，都会使用它。即使您没有在Dialplan中直接使用IVR应用，您也会在其他各种应用中看到使用IVR相关功能。例如，语音信箱应用程序在播放消息时会大量使用IVR功能，同时等待按键以控制删除、保存和管理语音信箱等操作。
 
->> #### IVR engine overview
->> 
->> Unlike many applications within FreeSWITCH which are built as modules, IVR is considered the core functionality of FreeSWITCH. It is used anytime a prompt is played and digits are collected. Even if you are not using the IVR application itself from your Dialplan, you will see IVR-related functions being utilized from various other applications. As an example, the voicemail application makes heavy use of IVR functionality when playing messages, while awaiting digits to control deleting, saving, and otherwise managing voicemails.
->> 
->> In this section, we will only be reviewing the IVR functionality that is exposed from within the ivr Dialplan application. This functionality is typically used to build an auto-attendant menu, although other functions are possible as well.
->> 
->> #### IVR XML configuration file
->> 
->> FreeSWITCH ships with a sample IVR menu are typically invoked by dialing 5000 from the sample Dialplan. When you dial 5000, you will hear a greeting welcoming you to FreeSWITCH, and presenting your menu options. The menu options consist of calling the FreeSWITCH conference, calling the echo extension, hearing music on hold, going to a sub menu, or listening to screaming monkeys. We will start off reviewing the XML that powers this example.
+在本节中，我们只会介绍ivr Dialplan应用程序中公开的IVR功能。通常使用这些功能来构建自动电话接待菜单，但也可以实现其他功能。
 
-* [mod\_voicemail](../mod_voicemail_6587070.mdx#--) \- lots of great info here, channel vars, faq
-* [mod\_voicemail\_ivr](../mod_voicemail_ivr_6587067.mdx#--) \- something new: "The VoiceMail IVR application is a new prototype voicemail IVR engine that allows great flexibility for future improvement. The goal was to make its configuration flexible and yet not be restricted in terms of features we can implement in the different interfaces."
+#### IVR XML配置文件
 
-Check conf/autoload\_configs/modules.conf.xml to ensure mod\_voicemail is being loaded.
+FreeSWITCH内置有一个示例IVR菜单，通常通过从示例Dialplan拨打5000来调用它。当您拨打5000时，会听到欢迎您来到FreeSWITCH的问候，并提供菜单选项。菜单选项包括拨打FreeSWITCH会议、拨打回声分机、播放等候音乐、进入子菜单或听听尖叫的猴子。我们将开始审查驱动此示例的XML。
 
-Most settings are in conf/autoload\_configs/voicemail.conf.xml
+* [mod\_voicemail](../mod_voicemail_6587070.mdx#--) \- 这里有很多很棒的信息，通道变量，常见问题解答
+* [mod\_voicemail\_ivr](../mod_voicemail_ivr_6587067.mdx#--) \- 一些新东西：“语音邮件IVR应用程序是一个全新的原型语音邮件IVR引擎，为未来改进提供了很大的灵活性。我们的目标是使其配置灵活，并且在不同界面中能够实现各种功能。”
 
-Default storage location for voicemail recording files is $BASE/storage/voicemail/domain/ext/&lt;file.wav>
+请检查conf/autoload_configs/modules.conf.xml以确保mod_voicemail已加载。
 
-### Example, send a call, coming into a DID, to voicemail
+大部分设置在conf/autoload_configs/voicemail.conf.xml中。
 
-Here's one way. Incoming call (to 301-555-1212) rings desk phone (configured as extension 1021 in a multi-tenant situation, under context named "multitenant\_domain") 4 times (per call\_timeout=20, as in 20 seconds), then per "hangup\_after\_bridge" sends to voicemail. Note the commented-out options. Also note that, as of 2011-12-23, application="voicemail" presently means the same as application="mod\_voicemail", so for more info see [mod\_voicemail](../mod_voicemail_6587070.mdx#--)
+Voicemail录音文件的默认存储位置是$BASE/storage/voicemail/domain/ext/&lt;file.wav>
 
-In conf/dialplan/public/3015551212.xml
+### 示例：将呼叫发送到语音信箱
+
+以下是一种方法。来电（至301-555-1212）在工作台电话上响铃（在多租户情况下配置为扩展号码1021，上下文名为"multitenant_domain"），响铃4次（根据call_timeout=20，即20秒），然后根据"hangup_after_bridge"将呼叫发送到语音信箱。请注意已注释掉的选项。同时请注意，自2011-12-23起，application="voicemail"目前与application="mod_voicemail"具有相同的含义，因此要获取更多信息，请参见[mod_voicemail](../mod_voicemail_6587070.mdx#--)。
+
+在conf/dialplan/public/3015551212.xml中
 
 ```xml
 <include>
@@ -72,19 +69,20 @@ In conf/dialplan/public/3015551212.xml
     <action application="set" data="hangup_after_bridge=true" />
     <action application="set" data="call_timeout=20"/>
 
-    <action application="bridge" data="sofia/multitenant_domain/1021%${domain_name}" />
-    <action application="voicemail" data="default multitenant_domain 1021" />
+```xml
+<action application="bridge" data="sofia/multitenant_domain/1021%${domain_name}" />
+<action application="voicemail" data="default multitenant_domain 1021" />
 
 </condition>
 </extension>
 </include>
 ```
 
-Note that the "bridge" above makes it so the dialplan for 1021 does not run (because 1021 was not dialed, 3015551212 was). If you want the dialplan to run for 1021, use "transfer" instead of "bridge".
+注意，上述的 "bridge" 使得拨号方案不会应用到1021（因为没有拨打1021，而是拨打了3015551212）。如果你希望拨号方案应用到1021，使用 "transfer" 替代 "bridge"。
 
-### Another Dialplan to send unanswered calls to voicemail
+### 另一个拨号方案转接未接电话到语音信箱
 
-In conf/dialplan/public/3015551212.xml
+在 conf/dialplan/public/3015551212.xml 中
 
 ```xml
 <extension name="public_did">
@@ -99,30 +97,31 @@ In conf/dialplan/public/3015551212.xml
 </extension>
 ```
 
-In this plan, when someone calls 3015551212 (my DID, from VoIP provider) we set timeout to 20 seconds, so if it's not answered before then, it goes to voicemail.
+在这个方案中，当有人拨打 3015551212（我的DID，来自VoIP供应商）时，我们将超时时间设置为20秒，所以如果在20秒内没有被接听，将转接到语音信箱。
 
-continue\_on\_fail means if the bridge fails for whatever reason, one being no one answered it, continue processing the rest of the plan so the call goes to voicemail.
+"continue\_on\_fail" 表示如果连接失败了，不管原因是什么，其中一个原因可能是没有人接听，继续处理计划的其余部分，这样通话将被转接到语音信箱。
 
-hangup\_after\_bridge means if someone answered the phone within the 20 seconds, then stop processing the rest of the plan when the call terminates, ie, don't send it to voicemail.
+"hangup\_after\_bridge" 表示如果在20秒内有人接听电话，当通话结束时停止处理计划的其余部分，即不转接到语音信箱。
 
-I'm sending the call to two phones in parallel, 1000 and 1001\. If neither of them pickup the call, FreeSWITCH answers the call, and launches the voicemail application, sending the call to voicemail box 1000
+我将呼叫同时转接到两部电话，1000和1001。如果没有人接听电话，FreeSWITCH会自动接听呼叫，并启动语音信箱应用程序，将呼叫转接到语音信箱1000。
 
-&lt;param name="vm-email-all-messages" value="true" /> in conf/directory/default/1000.xml because I haven't setup email yet. Plus if you do enable that option, the messages aren't saved on FreeSWITCH, they get emailed and deleted.
+```html
+<param name="vm-email-all-messages" value="true" />在conf/directory/default/1000.xml中启用，因为我还没有设置电子邮件。另外，如果您启用了该选项，消息不会保存在FreeSWITCH上，而是通过电子邮件发送并删除。
 
-Call \*98 then dial 1000 to access voicemail and set up a greeting.
+拨打\*98，然后拨打1000以访问语音邮箱并设置问候语。
 
-  
-Feedback: "The method you did with bridge is an option but there are easier ways. If you do a transfer instead of the bridge it automatically will go to voicemail if the call is not answered or registered. A transfer runs through the dialplan and would be picked up by Local\_Extension and it would have all the settings to send the call to voicemail as expected. Another easy approach would be to send the call to a hunt group and make the timeout option go to voicemail."
+反馈：“您使用桥接进行的方法是一种选择，但有更简单的方法。如果您执行的是转接而不是桥接，如果未接听或没有注册，它将自动转到语音邮箱。转接会通过拨号计划，并由本地分机拾取，它会具有将呼叫发送到预期的语音邮箱的所有设置。另一种简单的方法是将呼叫发送到一个寻呼组，并将超时选项设置为转到语音邮箱。”
 
-Note: to invoke any changes you make while testing, in the fs\_cli tool, or inside the FreeSWITCH console, type `reloadxml`.
+注意：要在测试时调用您所做的任何更改，请在fs_cli工具或FreeSWITCH控制台中输入“reloadxml”命令。
 
-### Recipes
+### 配方
 
-##### Retrieve Calls in voicemail
+##### 检索语音邮箱中的呼叫
 
-(snagged from the \[[ML](http://lists.freeswitch.org/pipermail/freeswitch-users/2012-March/081336.html)\])
+（从\[[ML](http://lists.freeswitch.org/pipermail/freeswitch-users/2012-March/081336.html)\]中摘取）
 
-Just before the call diverts to VM it inserts a hash. The user can then dial # to retrieve(intercept) the call from the VM system. The VM loopback hangsup at the time the call is intercepted. Note that in this instance, any extension can retrieve the call by dialling # (this is the main number which rings on all phones).
+在呼叫转接到语音邮箱之前，会插入一个哈希标志。然后，用户可以拨打#来从语音邮箱系统中检索（拦截）呼叫。在呼叫被拦截时，语音邮箱回路会挂断。请注意，在这种情况下，任何分机都可以通过拨打#（这是所有电话铃响的主要号码）来检索呼叫。
+```
 
 ```xml
 <extension name="inbound_calls">
@@ -151,15 +150,13 @@ Just before the call diverts to VM it inserts a hash. The user can then dial # t
 ```
 
 ###   
-How can I disable remote login/access to voicemail?
+如何禁用远程登录/访问语音信箱？
 
-Note, from mod\_voicemail page:
+请注意，从mod_voicemail页面：
 
-Set the following two params in autoload\_configs/voicemail.conf.xml:
+在autoload_configs/voicemail.conf.xml文件中设置以下两个参数：
 
 ```xml
 <param name="vmain-key" value="a"/> 
 <param name="login-keys" value="a"/>
 ```
-
-

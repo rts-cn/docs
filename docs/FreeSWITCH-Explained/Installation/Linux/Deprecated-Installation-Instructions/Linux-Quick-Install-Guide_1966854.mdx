@@ -1,88 +1,82 @@
+# Linux 快速安装指南
 
-# Linux Quick Install Guide 
 
- 
+限制访问
 
-RESTRICTED
+**此页面已进行存档以供Confluence编辑者参考，以便进行与新的Confluence模式匹配的修订。**
 
-**This page is archived for reference by confluence editors while it is revised to match the new Confluence schema.** 
-
-**This page must remain generic with no references to specific distributions. Please place notes for specific distributions in the proper locations!**
+**此页面必须保持通用性，不得涉及特定发行版。请将特定发行版的说明放置在适当的位置！**
 
 xxx
 
-* 1 [Introduction](#introduction)
-* 2 [Who This is For](#who-this-is-for)
-* 3 [Prerequisites](#prerequisites)  
-   * 3.1 [Mandatory](#mandatory)
-* 4 [Download](#download)  
-   * 4.1 [Selecting a Version](#selecting-a-version)  
-   * 4.2 [Download Using Git Clone](#download-using-git-clone)
-* 5 [Generate Installation and Configuration Files](#generate-installation-and-configuration-files)  
-   * 5.1 [Create Configuration Files](#create-configuration-files)  
-   * 5.2 [Edit modules.conf](#edit-modulesconf)
-* 6 [Compile the Source](#compile-the-source)
-* 7 [Install FreeSWITCH™](#install-freeswitch)
-* 8 [Start FreeSWITCH™](#install-freeswitch)  
-   * 8.1 [Test a SIP Phone](#test-a-sip-phone)  
-   * 8.2 [Troubleshooting](#troubleshooting)
+* 1 [引言](#introduction)
+* 2 [适用对象](#who-this-is-for)
+* 3 [先决条件](#prerequisites)  
+   * 3.1 [必需条件](#mandatory)
+* 4 [下载](#download)  
+   * 4.1 [选择版本](#selecting-a-version)  
+   * 4.2 [使用Git Clone下载](#download-using-git-clone)
+* 5 [生成安装和配置文件](#generate-installation-and-configuration-files)  
+   * 5.1 [创建配置文件](#create-configuration-files)  
+   * 5.2 [编辑modules.conf](#edit-modulesconf)
+* 6 [编译源码](#compile-the-source)
+* 7 [安装FreeSWITCH™](#install-freeswitch)
+* 8 [启动FreeSWITCH™](#install-freeswitch)  
+   * 8.1 [测试SIP电话](#test-a-sip-phone)  
+   * 8.2 [故障排除](#troubleshooting)
 
-## Introduction
+## 引言
 
-This is a generic quick install guide for Linux and Unix.
+这是一个适用于Linux和Unix的通用快速安装指南。
 
 ---
 
-## Who This is For
+## 适用对象
 
-Experienced Linux/Unix users familiar with FreeSWITCH™ installation or want a quick overview without reading the [Installation](../../index.mdx#about) Page.
+此指南适用于有经验的Linux / Unix用户，他们熟悉FreeSWITCH™的安装，或者希望快速了解而不阅读[安装](../../index.mdx#about)页面的用户。
 
-  
 ---
 
-## Prerequisites
+## 先决条件
 
-### Mandatory
+### 必需条件
 
-These mandatory prerequisites provide for compiling the standard FreeSWITCH™ installation and test the supplied configuration and sample IVR. They are sufficient for many production systems.
+这些必需条件用于编译标准的FreeSWITCH™安装，并测试提供的配置和示例IVR。对于许多生产系统来说，它们是足够的。
 
-* [**GIT**](http://en.wikipedia.org/wiki/Git%5F%28software%29) or [**WGET**](http://en.wikipedia.org/wiki/Wget)
-* [**AUTOCONF**](http://en.wikipedia.org/wiki/Autoconf)
-* [**AUTOMAKE**](http://en.wikipedia.org/wiki/Automake)
-* [**GCC-C++**](http://en.wikipedia.org/wiki/C%2B%2B)
-* [**LIBJPEG-DEVEL**](http://en.wikipedia.org/wiki/Libjpeg) Used by mod\_spandsp for basic codecs
-* [**LIBTOOL**](http://en.wikipedia.org/wiki/Libtool)
-* [**MAKE**](http://en.wikipedia.org/wiki/Make%5F%28software%29)
-* [**NCURSES-DEVEL**](http://en.wikipedia.org/wiki/Ncurses)
+* [**CURL**](http://en.wikipedia.org/wiki/Curl%5F%28software%29) Used for fetching file or data from various protocols
+* [**OPUS-DEVEL**](http://en.wikipedia.org/wiki/Opus%5F%28audio%5Fcodec%29) Used for the Opus codec
+* [**SPEEX-DEVEL**](http://en.wikipedia.org/wiki/Speex) Used for the Speex codec
+* [**LAME-DEVEL**](http://en.wikipedia.org/wiki/LAME) Used for the LAME MP3 codec
+* [**G7221-DEVEL**](http://en.wikipedia.org/wiki/G.722%5F%28audio%5Fcodec%29) Used for the G.722.1 codec
+* [**LIBSRTP-DEVEL**](http://en.wikipedia.org/wiki/SRTP) Used for Secure Real-time Transport Protocol (SRTP)
+* [**SNMP**](http://en.wikipedia.org/wiki/Simple%5FNetwork%5FManagement%5FProtocol) Used for Simple Network Management Protocol (SNMP)
+* [**PYTHON**](http://en.wikipedia.org/wiki/Python%5F%28programming%5Flanguage%29) Used for scripting capabilities and Python ESL module
+* [**LIBYAML-DEVEL**](http://en.wikipedia.org/wiki/YAML) Used for YAML support in mod\_event\_socket
 
-Optional
-
-There are [optional modules](http://wiki.freeswitch.org/wiki/Modules) that can be built and if so may require one or more of the following;
-
-* [**curl-devel**](http://en.wikipedia.org/wiki/Curl%5F%28programming%5Flanguage%29) for [mod\_xml\_curl](https://wiki.freeswitch.org/wiki/Mod%5Fxml%5Fcurl "Mod xml curl")
+* [**curl-devel**](http://en.wikipedia.org/wiki/Curl%5F%28programming%5Flanguage%29) 用于[mod\_xml\_curl](https://wiki.freeswitch.org/wiki/Mod%5Fxml%5Fcurl "Mod xml curl")
 * [**expat-devel**](http://en.wikipedia.org/wiki/Expat%5F%28XML%29)
-* [**libtiff**](http://en.wikipedia.org/wiki/Libtiff) for fax support
-* [**libx11-devel**](http://en.wikipedia.org/wiki/X%5FWindow%5FSystemf) for [Mod\_skypopen](https://wiki.freeswitch.org/wiki/Mod%5Fskypopen "Mod skypopen")
-* [**ODBC or UNIX-ODBC and ODBC-devel**](http://en.wikipedia.org/wiki/Odbc) see the [ODBC page](http://wiki.freeswitch.org/wiki/Mod%5Fspidermonkey%5Fodbc) for information
-* [**OpenSSL**](http://en.wikipedia.org/wiki/Openssl) (libssl-dev / openssl-devel) for [SIP SSL & TLS](https://wiki.freeswitch.org/wiki/SIP%5FTLS "SIP TLS") and [Dingaling](https://wiki.freeswitch.org/wiki/Dingaling "Dingaling")
-* [**python-devel**](http://www.python.org/) for the [python interface](https://wiki.freeswitch.org/wiki/Mod%5Fpython "Mod python")
+* [**libtiff**](http://en.wikipedia.org/wiki/Libtiff) 用于传真支持
+* [**libx11-devel**](http://en.wikipedia.org/wiki/X%5FWindow%5FSystemf) 用于[Mod\_skypopen](https://wiki.freeswitch.org/wiki/Mod%5Fskypopen "Mod skypopen")
+* [**ODBC or UNIX-ODBC and ODBC-devel**](http://en.wikipedia.org/wiki/Odbc) 请参阅[ODBC页面](http://wiki.freeswitch.org/wiki/Mod%5Fspidermonkey%5Fodbc)获取更多信息
+* [**OpenSSL**](http://en.wikipedia.org/wiki/Openssl) (libssl-dev / openssl-devel) 用于[SIP SSL & TLS](https://wiki.freeswitch.org/wiki/SIP%5FTLS "SIP TLS")和[Dingaling](https://wiki.freeswitch.org/wiki/Dingaling "Dingaling")
+* [**python-devel**](http://www.python.org/) 用于[python interface](https://wiki.freeswitch.org/wiki/Mod%5Fpython "Mod python")
 * [**ZLIB and ZLIB-devel**](http://en.wikipedia.org/wiki/Zlib)
-* [**libzrtp**](http://en.wikipedia.org/wiki/ZRTP) ZRTP encryption support, see the FreeSWITCH™  **ZRTP IS NOW DEPREICATED and will be removed out of the docs**
+* [**libzrtp**](http://en.wikipedia.org/wiki/ZRTP) 用于ZRTP加密支持，请注意，FreeSWITCH™ **ZRTP现已废弃，将从文档中删除**
   
   
 ---
 
-## Download
+## 下载
 
-### Selecting a Version
+### 选择一个版本
 
-There are two versions of FreeSWITCH™ to choose from: the _**stable**_ version recommended for production systems, and _**master**_containing the latest fixes and features used duringdevelopment. The stable version is recommended unless you have experience with FreeSWITCH™. Additional Information is located at [Source Options](https://confluence.freeswitch.org/display/FREESWITCH/Installation#Installation-SourceOptions).
+FreeSWITCH™有两个版本可供选择：_**stable**_版本适用于生产系统，并且**推荐使用**，_**master**_版本包含最新的修复程序和开发中使用的功能。除非您具有FreeSWITCH™经验，否则推荐使用stable版本。更多信息请参阅[Source Options](https://confluence.freeswitch.org/display/FREESWITCH/Installation#Installation-SourceOptions)。
 
-This documentation is tested with the master version to keep it as recent as possible and to provide feedback to the developers. If there are problems the developers may request that you install the master version for diagnosis.
+这份文件是经过主版本测试的，以尽可能保持最新，并向开发人员提供反馈。如果出现问题，开发人员可能会要求您安装主版本进行诊断。
 
-### Download Using Git Clone
+### 使用 Git Clone 下载
 
-Download FreeSWITCH™ by switching to the src directory and invoking one of the "git clone" commands below. The git command will create the **freeswitch** directory in src (/usr/local/src/freeswitch) and download the FreeSWITCH™ source files.
+通过切换到`src`目录并执行下面的"git clone"命令之一来下载FreeSWITCH™。`git`命令会在`src`目录（`/usr/local/src/freeswitch`）下创建`freeswitch`目录，并下载FreeSWITCH™源文件。
 
 ```xml
 cd /usr/local/src
@@ -91,24 +85,24 @@ git clone https://github.com/signalwire/freeswitch.git
 
 ---
 
-## Generate Installation and Configuration Files
+## 生成安装和配置文件
 
-### Create Configuration Files
+### 创建配置文件
 
 ```xml
-cd freeswitch    # <- the new freeswitch directory created by the git clone process
+cd freeswitch    # <- git clone 过程中创建的新的freeswitch目录
 ./bootstrap.sh
 ./configure
 ```
 
-### Edit modules.conf
+### 编辑`modules.conf`
 
-This is optional but consider [editing modules.conf](../../index.mdx#installation-methods).
+这是可选的，但是请考虑[编辑`modules.conf`](../../index.mdx#installation-methods)。
 
   
 ---
 
-## Compile the Source
+## 编译源代码
 
 ```xml
 make
@@ -117,7 +111,7 @@ make
   
 ---
 
-## Install FreeSWITCH™
+## 安装FreeSWITCH™
 
 ```xml
 make all install cd-sounds-install cd-moh-install
@@ -125,26 +119,24 @@ make all install cd-sounds-install cd-moh-install
 
 ---
 
-## Start FreeSWITCH™
+## 启动FreeSWITCH™
 
-Make sure no other instance of FreeSWITCH™ or Asterisk is running on the same computer. Run command:
+确保同一台计算机上没有其他FreeSWITCH™或Asterisk的实例正在运行。运行命令：
 
 ```xml
 /usr/local/freeswitch/bin/freeswitch
 ```
 
-### Test a SIP Phone
+### 测试SIP电话
 
-Configure a SIP phone or softphone with the IP address of the FreeSWITCH™ computer and user "1000" and password "1234". The default FreeSWITCH™ configuration provides pre-defined definitions for extensions 1000-1019, all passwords are 1234.
+使用FreeSWITCH™计算机的IP地址，将SIP电话或软电话配置为用户名"1000"和密码"1234"。默认的FreeSWITCH™配置为扩展号1000-1019提供了预定义的定义，所有密码都为"1234"。
 
-* Dial 9664 to hear music.
-* Dial 5000 to test the sample IVR
-* Configure a second SIP phone as user 1001, dial 1001 from 1000, and 1000 from 1001 to test between phones
-* Check out more in Configuring FreeSWITCH at [Some stuff to try out!](https://confluence.freeswitch.org/display/FREESWITCH/Configuring+FreeSWITCH#ConfiguringFreeSWITCH-Somestufftotryout!)
+* 拨打9664听音乐。
+* 拨打5000测试示例IVR。
+* 配置第二个SIP电话作为用户1001，从1000拨打1001，从1001拨打1000，测试电话之间的通信。
+* 在[Some stuff to try out!](https://confluence.freeswitch.org/display/FREESWITCH/Configuring+FreeSWITCH#ConfiguringFreeSWITCH-Somestufftotryout!)中查看更多有关配置FreeSWITCH的信息！
 
-### Troubleshooting
+### 故障排除
 
-* If there is no communication between the phones and FreeSWITCH™ or between phones disable the firewall on your Linux server. If testing is successful activate the firewall and open only the specific ports needed. For more information about firewalls and ports to open, see the [Firewall](../../../Networking/Firewall_1048908.mdx#about) page.
-* If you suspect networking issues look into networking tools such as Wireshark or TCPDump.
-
-
+* 如果电话与FreeSWITCH™之间或电话之间没有通信，请在Linux服务器上禁用防火墙进行测试。如果测试成功，请激活防火墙并仅打开必要的指定端口。有关防火墙和需要打开的端口的更多信息，请参阅[Firewall](../../../Networking/Firewall_1048908.mdx#about)页面。
+* 如果怀疑有网络问题，请使用诸如Wireshark或TCPDump等网络工具进行检查。

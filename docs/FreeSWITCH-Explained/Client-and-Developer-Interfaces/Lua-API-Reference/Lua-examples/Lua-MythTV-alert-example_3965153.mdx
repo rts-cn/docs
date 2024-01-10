@@ -1,11 +1,8 @@
+# Lua MythTV警示示例
 
-# Lua MythTV alert example 
+## 关于
 
- 
-
-## About
-
-Example to send alert to MythTV
+向MythTV发送警示的示例
 
 ```xml
 require("socket")
@@ -16,7 +13,7 @@ hosts['snowman.nice.net.nz'] = 6948
 cid_text = [[<mythnotify version="1">
   <container name="notify_cid_info">
     <textarea name="notify_cid_num">
-      <value> "NAME" (NUM) is calling</value>
+      <value> "NAME" (NUM)在呼叫</value>
     </textarea>
   </container>
 </mythnotify>]]
@@ -26,7 +23,7 @@ if not number then
     number = session:getVariable("caller_id_number")
 end
 if not name then
-    name = 'Unknown'
+    name = '未知'
 end
 freeswitch.consoleLog("info", "name" .. name .. "\n")
 freeswitch.consoleLog("info", "number".. number .. "\n")
@@ -39,25 +36,26 @@ for host, port in pairs(hosts) do
 end
 ```
 
-## Alternative version that broadcasts to all hosts
+## 替代版本，向所有主机进行广播
 
-I needed something a little different as my frontends use dhcp, and are not always on. Thus, sometimes their dhcp lease has expired, which means they don't have a hostname (I use dnsmasq, btw). This causes the script above to error out with a "host not found" error. I just changed it to broadcast to all hosts on my lan.
+由于我的前端使用的是dhcp，而且并不总是开机的。因此，有时候它们的dhcp租约已过期，这意味着它们没有主机名（顺便说一下，我使用的是dnsmasq）。这会导致上面的脚本出现“找不到主机”错误。我将其更改为向局域网上所有主机进行广播。
 
 ```xml
 require("socket")
 
 broadcast_ip = '255.255.255.255'
--- this assumes all frontends are using the standard port
+-- 假设所有前端都使用标准端口
 port = 6948
 
 cid_text = [[<mythnotify version="1">
   <container name="notify_cid_info">
     <textarea name="notify_cid_num">
-      <value> "NAME" (NUM) is calling</value>
+      <value> "NAME" (NUM)在呼叫</value>
     </textarea>
   </container>
 </mythnotify>]]
 
+```lua
 name = session:getVariable("effective_caller_id_name")
 number = session:getVariable("effective_caller_id_number")
 if not number then
@@ -79,4 +77,35 @@ assert(udp:setoption("broadcast", true))
 assert(udp:sendto(cid_text, broadcast_ip, port))
 ```
 
+```lua
+-- 将session:getVariable("effective_caller_id_name")的值赋给变量name
+name = session:getVariable("effective_caller_id_name")
+-- 将session:getVariable("effective_caller_id_number")的值赋给变量number
+number = session:getVariable("effective_caller_id_number")
+-- 如果number为空，则将session:getVariable("caller_id_number")的值赋给number
+if not number then
+        number = session:getVariable("caller_id_number")
+end
+-- 如果name为空，则将默认值'Unknown'赋给name
+if not name then
+        name = 'Unknown'
+end
+-- 按照指定的格式将number分割并拼接
+fnumber = number:sub(1,3).."-"..number:sub(4,6).."-"..number:sub(7,10)
 
+-- 打印name和number的值
+freeswitch.consoleLog("info", "name: " .. name .. "\n")
+freeswitch.consoleLog("info", "number: ".. number .. "\n")
+
+-- 将cid_text中的'NAME'替换为name的值
+cid_text = string.gsub(cid_text, 'NAME', name)
+-- 将cid_text中的'NUM'替换为fnumber的值
+cid_text = string.gsub(cid_text, 'NUM', fnumber)
+
+-- 创建UDP套接字
+udp = assert(socket.udp())
+-- 设置广播选项为true
+assert(udp:setoption("broadcast", true))
+-- 发送cid_text到指定的广播IP和端口
+assert(udp:sendto(cid_text, broadcast_ip, port))
+```
