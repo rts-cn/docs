@@ -90,7 +90,7 @@ FreeSWITCH是否在防火墙后面：是 否
 
 大多数Broadvox GO！SIP中继的客户喜欢确认DNS条目是否正常工作，或者喜欢查找实际的IP地址。在Windows环境中，您可以在命令提示符下使用nslookup命令执行SRV查询，如图6所示。
 
-![](/attachment/2883699/3178501.png)
+![](/attachments/2883699/3178501.png)
 
 正如您所看到的，SRV记录由服务类型定义（\_sip）、传输定义（\_udp）和域名（[nyc01-01.fs.broadvox.net](http://nyc01-01.fs.broadvox.net)）组成。在执行查询之前，FreeSWITCH会自动在域名前添加服务和传输定义作为前缀。该查询返回每个条目的优先级、权重、端口和主机名。该查询还返回每个主机名的“A记录”条目，该条目提供每个主机的IP地址。
 
@@ -307,7 +307,7 @@ vim nyc01-01.fs.broadvox.net.xml
   </gateway>
 </include>
 <!-- 结束 lax01-01.fs.broadvox.net.xml -->
-```
+
 
 <!-- 这是 nyc01-01.fs.broadvox.net.xml -->
 <include>
@@ -325,6 +325,7 @@ vim nyc01-01.fs.broadvox.net.xml
   </gateway>
 </include>
 <!-- nyc01-01.fs.broadvox.net.xml 的结束 -->
+```
 
 如果你在[NAT](https://wiki.freeswitch.org/wiki/NAT "NAT")后面，或者拥有动态公网IP地址，你可能希望启用注册。注册并非必需，即使在[NAT](https://wiki.freeswitch.org/wiki/NAT "NAT")或动态公网IP地址的情况下，但是建议这么做。你可以利用动态DNS记录来支持动态公网IP地址。你可以通过在防火墙/NAT路由器上使用静态NAT或DMZ配置来支持[NAT](https://wiki.freeswitch.org/wiki/NAT "NAT")配置。另外，如果你更喜欢在[NAT](https://wiki.freeswitch.org/wiki/NAT "NAT")配置中使用STUN，可以使用Broadvox提供的[stun.fs.broadvox.net](http://stun.fs.broadvox.net)。Broadvox通常不建议使用STUN。如果Broadvox检测到你在[NAT](https://wiki.freeswitch.org/wiki/NAT "NAT")后面，Broadvox交换机将自动进行[NAT](https://wiki.freeswitch.org/wiki/NAT "NAT")穿越。FreeSWITCH还具有内置的[NAT](https://wiki.freeswitch.org/wiki/NAT "NAT")检测代码，通过[UPnP或NAT-PMP](https://wiki.freeswitch.org/wiki/Auto%5FNAT "Auto NAT")功能可以在你的[NAT](https://wiki.freeswitch.org/wiki/NAT "NAT")路由器中实现。
 
@@ -338,7 +339,7 @@ vim broadvox-in.xml 
 XML 文件的内容可能如下所示：
 
 ```xml
-<include>
+include>
   <context name="broadvox-in"> 
     <extension name="unloop">
       <condition field="${unroll_loops}" expression="^true$"/>
@@ -357,31 +358,8 @@ XML 文件的内容可能如下所示：
         <action application="info"/>
       </condition>
     </extension>
-```
 
-```xml
-<extension name="public_extensions">
-      <condition field="destination_number" expression="^5552345678$">
-        <action application="answer"/>
-        <action application="play_and_get_digits" data="10 11 3 7000 # $${sound_prefix}/ivr/8000/ivr-enter_ext_pound.wav $${sound_prefix}/ivr/8000/ivr-that_was_an_invalid_entry.wav digits \d+"/>
-        <action application="playback" data="$${sound_prefix}/ivr/8000/ivr-thank_you.wav"/>
-        <action application="playback" data="$${sound_prefix}/ivr/8000/ivr-hold_connect_call.wav"/>
-        <action application="set" data="continue_on_fail=true"/>
-        <action application="set" data=" hangup_after_bridge=true"/>
-        <action application="set" data="bypass_media=false"/>
-        <action application="set" data="proxy_media=true"/>
-        <action application="bridge" data="sofia/internal.domain.com/${digits}"/>
-        <action application="playback" data="$${sound_prefix}/ivr/8000/ivr-im_sorry.wav"/>
-        <action application="playback" data="$${sound_prefix}/ivr/8000/ivr-please_try_again.wav"/>
-        <action application="respond" data="503"/>
-      </condition>
-    </extension>
-  </context>
-</include>
-```
-
-```xml
-<extension name="public_extensions">
+    <extension name="public_extensions">
       <condition field="destination_number" expression="^5552345678$">
         <action application="answer"/>
         <action application="play_and_get_digits" data="10 11 3 7000 # $${sound_prefix}/ivr/8000/ivr-enter_ext_pound.wav $${sound_prefix}/ivr/8000/ivr-that_was_an_invalid_entry.wav digits \d+"/>
@@ -411,16 +389,7 @@ XML 文件的内容可能如下所示：
 <action application="set" data="originate_timeout=2"/>
 <action application="set" data="originate_retries=1"/>
 <action application="set" data="progress_timeout=15"/>
-<action applicat="bridge" data="sofia/gateway/dfw01-01/${destination_number}|sofia/gateway/nyc01-01/${destination_number}|sofia/gateway/lax01-01/${destination_number}"/>
-```
-
-```xml
-<action application="set" data="hangup_after_bridge=true"/>
-<action application="set" data="continue_on_fail=true"/>
-<action application="set" data="originate_timeout=2"/>
-<action application="set" data="originate_retries=1"/>
-<action application="set" data="progress_timeout=15"/>
-<action applicat="bridge" data="sofia/gateway/dfw01-01/${destination_number}|sofia/gateway/nyc01-01/${destination_number}|sofia/gateway/lax01-01/${destination_number}"/>
+<action applicat="bridge" data="sofia/gateway/dfw01-01/${destination_number}|sofia/gateway/nyc01-01/${destination_number}|sofia/gateway/lax01-01/${destination_number}"/> 
 ```
 
 此[dialstring](https://wiki.freeswitch.org/wiki/Dialplan%5FXML#SIP-Specific%5FDialstrings "Dialplan XML") 将首先尝试拨打达拉斯的号码[gateway](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Gateway "Sofia Configuration Files")。如果由于任何原因失败，接下来将尝试纽约的[gateway](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Gateway "Sofia Configuration Files")。如果这也失败了，那么将尝试洛杉矶的[gateway](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Gateway "Sofia Configuration Files")。在[dialstring](https://wiki.freeswitch.org/wiki/Dialplan%5FXML#SIP-Specific%5FDialstrings "Dialplan XML")之前的操作指示FreeSWITCH在每个[gateway](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Gateway "Sofia Configuration Files")上尝试2秒，并在每个[gateway](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Gateway "Sofia Configuration Files")上最多重试一次，然后转到下一个。此外，如果在[gateway](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Gateway "Sofia Configuration Files")尝试呼叫时没有收到任何响铃信号，它将在15秒内超时。尽管[gateway](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Gateway "Sofia Configuration Files")故障应该非常罕见，但这将使任何[gateway](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Gateway "Sofia Configuration Files")故障对您完全透明。当然，您可以按您喜欢的顺序对[gateways](https://wiki.freeswitch.org/wiki/Sofia%5FConfiguration%5FFiles#Gateway "Sofia Configuration Files")进行排序。
