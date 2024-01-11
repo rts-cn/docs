@@ -42,65 +42,69 @@ chmod +x fs_logger.pl
 
 **fs\_logger用法**
 
-用法: fs_logger.pl 选项
-   -A, --auto                     自动模式，等效于 -pb -do -st internal -l 7 -ia
-   -h, --help                     使用信息
-   -H, --host=hostname            连接的主机
-   -P, --port=port                连接的端口 (1 - 65535)
-   -u, --user=user@domain         用户@域名
-   -p, --password=password        密码
-   -x, --execute=command          连接时执行的命令
-   -X, --quit-execute=command     退出时执行的命令
-   -l, --loglevel=command         日志级别
-   -d, --debug=level              fs_cli 调试级别 (0 - 7)
-   -t, --timeout                  API 命令超时时间（以毫秒为单位）
-   -q, --quiet                    禁用日志记录
-   -r, --retry                    连接失败时重试连接
-   -R, --reconnect                断开连接后重新连接
-   -f, --file=<file>              输出文件
-   -pb --paste-bin[=<name>]       发布到 FS Pastebin（可选命名发布）
-   -st --sip-trace[=<profile>]    Sip 跟踪（可选跟踪配置文件）
-   -sd --sip-debug=<level>        设置 SIP 调试级别
-   -oa --obfuscate-auto           自动混淆敏感信息
-   -of --obfuscate-file=<file>    包含需要混淆的字符串的文件
-   -do --display-output           在 stdout 上显示输出
-   -ia --input-accept             将输入传递给 freeswitch 控制台
-   -D, --fslogger-debug           FSLogger 调试模式
-   -jrf --just-read-file=<file>	  从 fs_cli 中读取文件而不是收集日志
-   -pbt --pastebin-time=<time>    Pastebin 的时长(d 天 m 月 默认永久)
+```xml
+Usage: fs_logger.pl options
+   -A, --auto                     Auto mode, equiv of -pb -do -st internal -l 7 -ia
+   -h, --help                     Usage Information
+   -H, --host=hostname            Host to connect
+   -P, --port=port                Port to connect (1 - 65535)
+   -u, --user=user@domain         user@domain
+   -p, --password=password        Password
+   -x, --execute=command          Execute Command on connect
+   -X, --quit-execute=command     Execute Command when quitting
+   -l, --loglevel=command         Log Level
+   -d, --debug=level              fs_cli Debug Level (0 - 7)
+   -t, --timeout                  Timeout for API commands (in miliseconds)
+   -q, --quiet                    Disable logging
+   -r, --retry                    Retry connection on failure
+   -R, --reconnect                Reconnect if disconnected
+   -f, --file=<file>              Output file
+   -pb --paste-bin[=<name>]       Post to FS Pastebin (optional post as name)
+   -st --sip-trace[=<profile>]    Sip trace (optional profile to trace on)
+   -sd --sip-debug=<level>        Set SIP debug level
+   -oa --obfuscate-auto           Auto obfuscate sensitive information
+   -of --obfuscate-file=<file>    File containing strings to obfuscate
+   -do --display-output           Display output on stdout
+   -ia --input-accept             Pass input to the freeswitch console
+   -D, --fslogger-debug           FSLogger debug mode
+   -jrf --just-read-file=<file>	  Read file instead of collecting log from fs_cli
+   -pbt --pastebin-time=<time>    Pastebin for day(d) month(m) forever(default)
 
-      可多次使用 -st，-X，-x 选项
-      fs_logger.pl 将在 fs_cli 结束或按下控制+c 键后运行。
+      The -st, -X, -x options can be used multiple times
+      fs_logger.pl will run until fs_cli ends or control+c
+```
+
+### Auto
 
 自动模式（或-A）会打开一些不同的选项，这些选项通常是开发人员在调试时寻找的默认设置。如果命令行上已经指定了这些选项，则不会被覆盖。要查看它打开的确切选项，请参阅-h，简而言之，它将启用内部配置文件上的SIP跟踪，提高一些调试级别，并将结果发送到pastebin。
 
-### 混淆（-oa -of）
+### Obfuscation（-oa -of）
 
 自动混淆模式（-oa）会尝试随机化日志文件中找到的任何地址、密码、哈希或域名。它试图以一种离散的方式进行，以免干扰调试（主要是IP地址/密码/哈希/域名）。当随机化IP地址时，它们的常见子网相对于彼此保持不变。这意味着192.168.50.10可能会变成123.123.123.8，但确保192.168.50.30将具有相同的基础（123.123.123.）类，以便可以识别网络。
 
 文件混淆（-of）允许您手动指定要始终混淆的敏感数据，并可选择指定用于混淆的内容（例如，将日志中的公司名称替换为通用名称）。文件应每行一个条目。如果该行以'^'开头，则将模式视为正则表达式，您可以选择捕获组以仅替换这些组，或不使用组并替换整个匹配。如果行包含一个等号（不是以'\\'开始的），那么等号右侧的内容将用作替换。请注意，最长的项将首先被替换。这意味着如果您告诉它替换XYZ，但文本中包含[XYZ.com](http://XYZ.com)，除非您指定[XYZ.com](http://XYZ.com)，否则它将不会被替换。
 
-### 交互选项（-ia -do）
+### Interactive Options（-ia -do）
 
 The `-ia`和`-do`选项使得[fs\_logger.pl](http://fs%5Flogger.pl)的行为更像是直接与fs\_cli进行交互。`-do`选项显示正在生成的数据日志（尽管尚未模糊化）。输入接受模式`-ia`将您在fs\_logger.pl中输入的行传递给fs\_cli。有了这两个选项，几乎就像您直接与fs\_cli进行交互一样。但是有一些小差异：制表符自动完成功能不起作用，功能键（F1-F12）不起作用，上下箭头只在Windows中有效（因为实际执行操作的是控制台），并且没有行的着色。
 
-### Pastebin / 输出文件（-pb -f -pbt)
+### Pastebin / Output File（-pb -f -pbt)
 
 必须指定这些选项之一。-f只会将捕获的输出保存到指定的文件名中。-pb将捕获的输出发布到pastebin上，您可以选择传递一个用户名（-pb user）以进行pastebin的发布。-pbt允许您指定pastebin保留的时间，默认是永久的，您可以传递-pbt d表示保留一天，或者-pbt m表示保留一个月。
 
-### fs_logger.pl调试模式（-D)
+### fs_logger.pl Debug Mode（-D)
 
 如果由于某种原因fs\_logger.pl不能正常工作，-D可能会帮助打印出一些额外的信息，以帮助跟踪问题。
 
-### 仅读取文件（-jof)
+### Just Read File（-jof)
 
 该标志允许你只是读取一个文件，并使用其内容，好像这就是fs\_cli输出的内容一样。当使用这个标志时，fs\_logger.pl与FreeSWITCH服务器根本不连接，而是直接跳转到完成函数。该函数可以选择性地对文件进行混淆、pastebin或将文件写入磁盘。如果你想调整你的-of文件，但又不想重新捕获数据，这将非常有用。它也可以用来将文件上传到pastebin。你可以选择对文件进行混淆（使用上面的选项），但这不是必须的。./fs\_logger.pl -pb -jof test.c将使用正确的语法高亮将test.c上传到pastebin，没有其他更改。./fs\_logger.pl -of of\_file.txt -pb -jof profile.xml将根据of\_file.txt中指定的项目，对profile.xml进行混淆。
 
-### 命令执行 (-x -X)
+### Command Execution (-x -X)
 
 \-x用于连接时要执行的命令，-X用于断开连接时要执行的命令。你可以多次使用它们，一旦fs\_logger.pl连接到服务器，它们将依次执行。
 
-### Sip追踪 (-st)
+### Sip Tracing (-st)
 
 Sip追踪会导致所有的sip流量在一个或多个sofia配置文件中打印出来。你可以使用-st而无需任何选项，以启用所有配置文件上的追踪功能，或者可以使用特定配置文件（-st internal）来仅在该配置文件上启用追踪。你可以多次使用它，仅在几个选择的配置文件上启用它。
 
@@ -115,21 +119,26 @@ Sip追踪会导致所有的sip流量在一个或多个sofia配置文件中打印
 ## 使用 fs_logger.pl 帮助他人调试
 
 使用\[fs_logger.pl\]可以帮助用户进行远程调试，这是一款很强大的脚本工具。首先请他们将 fs_logger.pl 放在他们的 bin 文件夹中，简单的命令 "wget <http://fluky.org/fs%5Flogger.pl> && chmod +x fs\_logger.pl" 就能让他们开始使用。这个工具可以让你给用户提供简单的命令来捕获大部分日志，帮助解决问题。比如，如果用户无法完成呼叫，你可以告诉他们运行以下命令：
-```
+
+```xml
 ./fs_logger.pl -A
 ```
+
 然后进行呼叫操作，在 fs_logger.pl 的实例上按 Control-C 结束运行。
 
 这会将在这段时间内以更高的日志级别和开启 SIP 跟踪的方式发送 FreeSWITCH™ 日志到 pastebin。你甚至可以告诉他们同时发送一些文件，比如：
-```
+
+```xml
 ./fs_logger.pl -pb -jof /usr/local/freeswitch/conf/sip_rofiles/internal.xml
 ./fs_logger.pl -pb -jof /usr/local/freeswitch/conf/dialplan/default.xml
 ```
 
 fs_logger.pl 还允许使用更复杂的命令，你可以只针对特定的配置文件开启 SIP 跟踪，甚至在连接后执行特定的命令给 freeswitch。举个例子，如果传真功能无法正常工作，你可以让他们运行以下命令：
-```
+
+```xml
 ./fs_logger.pl -A  -x "sofia loglevel tport 9"  -x "originate {fax_enable_t38=true,fax_enable_t38_request=true}sofia/gateway/default/11231231234 &txfax('test.tif')"  -X "sofia loglevel tport 0"
 ```
+
 上述命令将在正常日志的基础上开启 sofia 额外的高级日志记录，并发送传真，当他们退出脚本后，将重置 sofia 日志级别。
 
 如果用户担心信息泄露，可以使用 -oa 标志来掩盖网络和密码。

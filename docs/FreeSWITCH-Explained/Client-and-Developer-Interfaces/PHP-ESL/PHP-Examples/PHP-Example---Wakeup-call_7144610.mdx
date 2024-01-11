@@ -23,323 +23,260 @@
 <title></title>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <meta name="keywords" content="">
-<meta name="description" content="FreeSWITCH闹钟功能">
+<meta name="description" content="FreeSWITCH Wakeup Call">
 
 </head>
 <body>
 
-<font size="5">闹钟功能</font>      
+<font size="5">Wakeup Call</font>      
 <?php 
 
-// 这个脚本由Richard Smrt (www.RichardSmrt.com)上传提供给FreeSwitch
-// 要编辑此文件，只需更改主机（在本例中为sip.richardsmrt.com）以匹配您的FreeSwitch服务器IP地址或域名。
-// 此处使用默认密码和端口
-// php脚本底部的命令是您输入API命令的位置
-// 请参阅www.guayal.com以获取使此脚本工作的原始代码。
-```
+// This script uploaded by Richard Smrt (www.RichardSmrt.com) for FreeSwitch
+// To edit this file, just change the host (in this example sip.richardsmrt.com) to match your freeswitch server IP or domain.
+// The default password and port are used here
+// The cmd at the bottom of the php script is where you enter the API command
+// See www.guayal.com for the original code enabled me to get this script working.
 
-```php
-$password = "ClueCon";
-$port = "8021";
-$host = "sip.richardsmrt.com";
-
-function event_socket_create($host, $port, $password) {
-    $fp = fsockopen($host, $port, $errno, $errdesc) 
-      or die("连接 $host 失败");
-    socket_set_blocking($fp,false);
+ $password = "ClueCon";
+ $port = "8021";
+ $host = "sip.richardsmrt.com";
+ 
+ function event_socket_create($host, $port, $password) {
+     $fp = fsockopen($host, $port, $errno, $errdesc) 
+       or die("Connection to $host failed");
+     socket_set_blocking($fp,false);
+     
+     if ($fp) {
+         while (!feof($fp)) {
+            $buffer = fgets($fp, 1024);
+            usleep(100); //allow time for reponse
+            if (trim($buffer) == "Content-Type: auth/request") {
+               fputs($fp, "auth $password\n\n");
+               break;
+            }
+         }
+         return $fp;
+     }
+     else {
+         return false;
+     }           
+ }
+ 
+ function event_socket_request($fp, $cmd) {
     
-    if ($fp) {
-        while (!feof($fp)) {
-           $buffer = fgets($fp, 1024);
-           usleep(100); // 允许等待回应
-           if (trim($buffer) == "Content-Type: auth/request") {
-              fputs($fp, "auth $password\n\n");
-              break;
-           }
-        }
-        return $fp;
-    }
-    else {
-        return false;
-    }           
-}
-
-function event_socket_request($fp, $cmd) {
-
-    if ($fp) {    
-        fputs($fp, $cmd."\n\n");    
-        usleep(100); // 允许等待回应
-        
-        $response = "";
-        $i = 0;
-        $contentlength = 0;
-        while (!feof($fp)) {
-           $buffer = fgets($fp, 4096);
-           if ($contentlength > 0) {
-              $response .= $buffer;
-           }
-           
-           if ($contentlength == 0) { // 如果 contentlength 已设置，则不再处理
-               if (strlen(trim($buffer)) > 0) { // 仅在缓冲区有内容时运行
-                   $temparray = split(":", trim($buffer));
-                   if ($temparray[0] == "Content-Length") {
-                      $contentlength = trim($temparray[1]);
-                   }
-               }
-           }
-           
-           usleep(100); // 允许等待回应
-           
-           // 脚本超时时的可选项 // 不要让 while 循环无限执行
-           if ($i > 10000) { break; } 
-           
-           if ($contentlength > 0) { // 是否设置了 contentlength
-               // 如果已读取所有内容，则停止读取
-               if (strlen($response) >= $contentlength) {  
-                  break;
-               }
-           }
-           $i++;
-        }
-        
-        return $response;
-    }
-    else {
-      echo "没有句柄";
-    }
-}
-// 这是第一个调度 API 命令，用于为用户安排一个“起源”来与唤醒呼叫分机进行连线。
-// 用户将在下面的表单框中输入信息。详见下方。
-if (isset($_POST['timestamp1']) && isset($_POST['phone1']) && isset($_POST['phone2']))  
+     if ($fp) {    
+         fputs($fp, $cmd."\n\n");    
+         usleep(100); //allow time for reponse
+         
+         $response = "";
+         $i = 0;
+         $contentlength = 0;
+         while (!feof($fp)) {
+            $buffer = fgets($fp, 4096);
+            if ($contentlength > 0) {
+               $response .= $buffer;
+            }
+            
+            if ($contentlength == 0) { //if contentlenght is already don't process again
+                if (strlen(trim($buffer)) > 0) { //run only if buffer has content
+                    $temparray = split(":", trim($buffer));
+                    if ($temparray[0] == "Content-Length") {
+                       $contentlength = trim($temparray[1]);
+                    }
+                }
+            }
+            
+            usleep(100); //allow time for reponse
+            
+            //optional because of script timeout //don't let while loop become endless
+            if ($i > 10000) { break; } 
+            
+            if ($contentlength > 0) { //is contentlength set
+                //stop reading if all content has been read.
+                if (strlen($response) >= $contentlength) {  
+                   break;
+                }
+            }
+            $i++;
+         }
+         
+         return $response;
+     }
+     else {
+       echo "no handle";
+     }
+ }
+// This is the first schedule API command that schedules an "originate" to bridges a user with the wakeup call extension. 
+// Users will input the information in to the Form Boxes below. See below.
+ if (isset($_POST['timestamp1']) && isset($_POST['phone1']) && isset($_POST['phone2']))  
 {  
-       $timestamp1 = $_POST['timestamp1'];  
-       $phone1 = $_POST['phone1'];  
-       $phone2 = $_POST['phone2'];   
-       
-$fp = event_socket_create($host, $port, $password);
-$cmd = "api sched_api " . $timestamp1 . " none originate {absolute_codec_string=PCMU,origination_caller_id_name=WakeUP,origination_caller_id_number=WakeUP}user/" . $phone1 . " " . $phone2; ；
-$response = event_socket_request($fp, $cmd);
-echo $response; 
-fclose($fp);  
+        $timestamp1 = $_POST['timestamp1'];  
+        $phone1 = $_POST['phone1'];  
+        $phone2 = $_POST['phone2'];   
+        
+ $fp = event_socket_create($host, $port, $password);
+ $cmd = "api sched_api " . $timestamp1 . " none originate {absolute_codec_string=PCMU,origination_caller_id_name=WakeUP,origination_caller_id_number=WakeUP}user/" . $phone1 . " " . $phone2;  ;
+ $response = event_socket_request($fp, $cmd);
+ echo $response; 
+ fclose($fp);  
 } 
-```
-在上面的 PHP 代码中，我们定义了一些函数和变量，以便进行与 SIP 服务器的连接和通信。如果用户在指定的表单框中输入了日期时间戳、电话号码等信息，则会触发一个调度 API 命令，将用户与唤醒呼叫分机进行连线。这个命令会通过与 SIP 服务器建立的连接发送，并返回相应的响应。
 
-// 这是第二个调度API命令，用于将一个网关分机（比如手机号码）与闹钟分机连接起来。
-// 用户将在下面的表单框中输入信息。请参考下面的内容。
-if (isset($_POST['phone5']) && isset($_POST['phone6']))  
+// This is the second schedule API command that schedules an "originate" to bridges a gateway extension (such as a cell phone number) with the wakeup call extension. 
+// Users will input the information in to the Form Boxes below. See below.
+ if (isset($_POST['phone5']) && isset($_POST['phone6']))  
 {  
-    $timestamp1 = $_POST['timestamp1'];  
-    $phone1 = $_POST['phone5'];  
-    $phone2 = $_POST['phone6'];  
-    
-    $fp = event_socket_create($host, $port, $password);
-    // "ignore_early_media=true" 将在 phone1 接听后连接到 phone2。
-    $cmd = "api sched_api " . $timestamp1 . " none originate {ignore_early_media=true,absolute_codec_string=PCMU,origination_caller_id_name=sip.richardsmrt.com,origination_caller_id_number=15059089989}sofia/gateway/vitelity-outbound/" . $phone1 . " " . $phone2;  ;
-    $response = event_socket_request($fp, $cmd);
-    echo $response; 
-    fclose($fp);  
+        $timestamp1 = $_POST['timestamp1'];  
+        $phone1 = $_POST['phone5'];  
+        $phone2 = $_POST['phone6'];  
+        
+ $fp = event_socket_create($host, $port, $password);
+ // the "ignore_early_media=true" will connect to "$phone2" AFTER phone1 has answered.
+ $cmd = "api sched_api " . $timestamp1 . " none originate {ignore_early_media=true,absolute_codec_string=PCMU,origination_caller_id_name=sip.richardsmrt.com,origination_caller_id_number=15059089989}sofia/gateway/vitelity-outbound/" . $phone1 . " " . $phone2;  ;
+ $response = event_socket_request($fp, $cmd);
+ echo $response; 
+ fclose($fp);  
 } 
 ?>
 <br>
-在这里，您可以自动设置闹钟电话。
+Here you can automatically set a wake up call.
 <table width="681" border="1">
-    <tr>
-    <!-- 这是第一个用户输入框，用于将一个网关分机（比如手机号码）与闹钟分机连接起来。 -->
-    <!-- 注意 "phone1" 和 "phone2" 与上面的 php "$phone = $_POST" 函数匹配。 -->
-    <!-- 为了使其正常工作，action="" 必须与包含此表单的 .php 文件的名称相匹配。例如，在本例中文件名为 "wake_up_call_set.php" -->
-    <td width = "333" valign = "top">
-    <form name = "schedule" action = "wake_up_call_set.php" method = "POST">  
-        Call Extension:                   
-        <input type = "text" name = "phone1" value = "1000"/>
-        <br/>  
-        Bridge with Extension:        
-        <input type = "text" name = "phone2" value = "6980"/>
-        <br/>   
-        Enter Wakeup Timestamp: <input type = "text" name = "timestamp1" value = "" />
-        <br/>  
-        <input type = "submit" value = "Set Now!" >
-        <br>
-    </form>
+  <tr>
+<!-- This is the first user input box that bridges a gateway extension (such as a cell phone number) with the wakeup call extension. -->
+<!-- Notice how "phone1" and "phone2" match the php "$phone = $_POST" function above. -->
+<!-- Just to get this workinkg, the action="" must match the name of the .php file containing this form. In this example the file name is "wake_up_call_set.php" -->
+<td width="333" valign="top"><form name="schedule" action="wake_up_call_set.php" method="POST">  
+Call Extension:                   
+<input type="text" name="phone1" value="1000" /><br/>  
+Bridge with Extension:        
+<input type="text" name="phone2" value="6980" /><br/>   
+Enter Wakeup Timestamp: <input type="text" name="timestamp1" value="" />
+<br/>  
+<input type="submit" value="Set Now!" >
+<br>
+</form>
+
 
 </td>
-<!-- 这是第一个用户输入框，用于连接用户和唤醒电话分机-->
-<!-- 注意“phone1”和“phone2”与上面的PHP“$phone = $_POST”函数匹配-->
-<td width="332" valign="top">
-<form name="schedule" action="wake_up_call_set.php" method="POST">  
-呼叫电话号码：           
+<!-- This is the first user input box that bridges a user with the wakeup call extension. -->
+<!-- Notice how "phone1" and "phone2" match the php "$phone = $_POST" function above. -->
+<td width="332" valign="top"><form name="schedule" action="wake_up_call_set.php" method="POST">  
+Call Phone Number:           
 <input type="text" name="phone5" value="15051112222" /><br/>  
-与分机建立桥接：        
+Bridge with Extension:        
 <input type="text" name="phone6" value="6980" /><br/>   
-输入唤醒时间戳： <input type="text" name="timestamp1" value="" />
+Enter Wakeup Timestamp: <input type="text" name="timestamp1" value="" />
 <br/>  
-<input type="submit" value="立即设置" >
+<input type="submit" value="Set Now!" >
 </form>
+
+
 </td>
-</tr>
-<tr>
-<td valign="top">
-<font size="2">使用说明： 输入Unix时间戳（在下面计算），或者“+<时间>”表示执行命令前等待的秒数。示例：+10（等待10秒）</font>.
-</td>
-<td valign="top">
-<font size="2">API代码示例：sched_api +12 none originate user/1001 6980</font><br>
-<font size="2">在这里列出计划任务：<a href="http://sip.richardsmrt.com:8010/webapi/show?tasks">显示任务</a></font>
-</p>
-</td>
-</tr>
+  </tr>
+  <tr>
+    <td valign="top"><font size="2">Usage:  Enter the unix timestamp (calculated below), or "+<time>" indicates the number of seconds to wait before executing the command. Example: +10 (wait 10 seconds)</font>.</td>
+    <td valign="top"><font size="2">API code example: sched_api +12 none originate user/1001 6980</font><br>
+      <font size="2">List the scheduled tasks here: <a href="http://sip.richardsmrt.com:8010/webapi/show?tasks">Show Tasks</a></font>
+      </p></td>
+  </tr>
 </table>
 <p> </p>
-<p><font size="5">计算时间戳</font><br>
+<p><font size="5">Calculating the timestamp</font><br>
 </p>
-<!--调度API命令使用Unix时间戳，所以您可以在此将时间转换为Unix时间戳。请参阅下面的PHP函数-->
-<!--这里我输入了一些示例值，以便更快地输入时间-->
+<!-- The schedule API command uses a unix timestamp, so here you can convert the time to a unix time stamp. See the php function below -->
+<!-- Here I entered some example values to make entering the time faster. -->
 <form name="form1" method="post" action="wake_up_call_set.php">
         <p> <font face="Courier New, Courier, mono"> 
-日期：
-<input name="y" type="text" id="y" size="4" maxlength="4" value="2010"> (y) /
+Date:
+<input name="y" type="text" id="y" size="4" maxlength="4" value="2010"> (y) / 
 
-```html
-<select name="m" id="m">
-  <option value="1">1</option>
-  <option value="2">2</option>
-  <option value="3">3</option>
-  <option value="4">4</option>
-  <option value="5">5</option>
-  <option value="6">6</option>
-  <option value="7">7</option>
-  <option value="8" selected>8</option>
-  <option value="9">9</option>
-  <option value="10">10</option>
-  <option value="11">11</option>
-  <option value="12">12</option>
-</select>
-(m) /
-```
+    <select name="m" id="m">
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+      <option value="5">5</option>
+      <option value="6">6</option>
+      <option value="7">7</option>
+      <option value="8" selected>8</option>
+      <option value="9">9</option>
+      <option value="10">10</option>
+      <option value="11">11</option>
+      <option value="12">12</option>
+    </select>
+(m) / 
 
-```simplified-chinese
-<select name="m" id="m">
-  <option value="1">1</option>
-  <option value="2">2</option>
-  <option value="3">3</option>
-  <option value="4">4</option>
-  <option value="5">5</option>
-  <option value="6">6</option>
-  <option value="7">7</option>
-  <option value="8" selected>8</option>
-  <option value="9">9</option>
-  <option value="10">10</option>
-  <option value="11">11</option>
-  <option value="12">12</option>
-</select>
-(m) /
-```
-
-```html
-<select name="d" id="d">
-   <option value="1" selected>1</option>
-   <option value="2">2</option>
-   ...
-   <option value="30">30</option>
-   <option value="31">31</option>
-</select>
+    <select name="d" id="d">
+      <option value="1" selected>1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+      <option value="5">5</option>
+      <option value="6">6</option>
+      <option value="7">7</option>
+      <option value="8">8</option>
+      <option value="9">9</option>
+      <option value="10">10</option>
+      <option value="11">11</option>
+      <option value="12">12</option>
+      <option value="13">13</option>
+      <option value="14">14</option>
+      <option value="15">15</option>
+      <option value="16">16</option>
+      <option value="17">17</option>
+      <option value="18">18</option>
+      <option value="19">19</option>
+      <option value="20">20</option>
+      <option value="21">21</option>
+      <option value="22">22</option>
+      <option value="23">23</option>
+      <option value="24">24</option>
+      <option value="25">25</option>
+      <option value="26">26</option>
+      <option value="27">27</option>
+      <option value="28">28</option>
+      <option value="29">29</option>
+      <option value="30">30</option>
+      <option value="31">31</option>
+    </select>
 (d) @ 
 <input name="hours" type="text" id="hours" size="2" maxlength="2" value="11">
 :<input name="min" type="text" id="min" size="2" maxlength="2" value="30">
 :<input name="sec" type="text" id="sec" value="0" size="2" maxlength="2">
 (24h:min:sec) </font></p>
 <input type="submit" name="Submit" value="      Convert      ">
-</font> </p>
+          </font> </p>
 </form> 
 <table width="681" border="1">
-   <tr>
-      <td width="333" valign="top"><strong> Unix Timestamp Output:</strong><br>
-         <?php
-         if (isset($_POST['m']) && isset($_POST['d']) && isset($_POST['y']) && isset($_POST['hours']) && isset($_POST['min']) && isset($_POST['sec']))  
-         {  
-            $m = $_POST['m'];  
-            $d = $_POST['d'];   
-            $y = $_POST['y'];  
-            $hours = $_POST['hours'];  
-            $min = $_POST['min'];
-            $sec = $_POST['sec'];
-         }  
-         // mktime ( $hour, $minute, $second, $month, $day, $year, $is_dst );
-         # $is_dst : 1 = daylight savings time (DST), 0 = no DST ,  -1 (default) = auto    
-         echo mktime($hours,$min,$sec,$m,$d,$y); 
-         ?>
-      </td>
-      <td width="332" valign="top">
-         <p>
-            <strong>Current time: </strong><br>
-            <?php
-            // Here you will print the current date and time. This will let you know what the php time is.
-            echo date("m/d/y : H:i:s", time())
-            ?>
-            <br>
-            <strong>Current unix Timestamp:</strong> <br>
-            <?php
-            // Here you will print the current unix timestamp.
-            echo time();
-            ?>
-         </p>
-      </td>
-   </tr>
-</table>
-<p></p>
-</body>
-</html>
-```
-
-```html
-<select name="d" id="d">
-   <option value="1" selected>1</option>
-   <option value="2">2</option>
-   ...
-   <option value="30">30</option>
-   <option value="31">31</option>
-</select>
-(d) @ 
-<input name="hours" type="text" id="hours" size="2" maxlength="2" value="11">
-:<input name="min" type="text" id="min" size="2" maxlength="2" value="30">
-:<input name="sec" type="text" id="sec" value="0" size="2" maxlength="2">
-(24h:min:sec) </font></p>
-<input type="submit" name="Submit" value="      Convert      ">
-</font> </p>
-</form> 
-<table width="681" border="1">
-   <tr>
-      <td width="333" valign="top"><strong> Unix Timestamp Output:</strong><br>
-         <?php
-         if (isset($_POST['m']) && isset($_POST['d']) && isset($_POST['y']) && isset($_POST['hours']) && isset($_POST['min']) && isset($_POST['sec']))  
-         {  
-            $m = $_POST['m'];  
-            $d = $_POST['d'];   
-            $y = $_POST['y'];  
-            $hours = $_POST['hours'];  
-            $min = $_POST['min'];
-            $sec = $_POST['sec'];
-         }  
-         // mktime ( $hour, $minute, $second, $month, $day, $year, $is_dst );
-         # $is_dst : 1 = daylight savings time (DST), 0 = no DST ,  -1 (default) = auto    
-         echo mktime($hours,$min,$sec,$m,$d,$y); 
-         ?>
-      </td>
-      <td width="332" valign="top">
-         <p>
-            <strong>Current time: </strong><br>
-            <?php
-            // Here you will print the current date and time. This will let you know what the php time is.
-            echo date("m/d/y : H:i:s", time())
-            ?>
-            <br>
-            <strong>Current unix Timestamp:</strong> <br>
-            <?php
-            // Here you will print the current unix timestamp.
-            echo time();
-            ?>
-         </p>
-      </td>
-   </tr>
+  <tr>
+    <td width="333" valign="top"><strong> Unix Timestamp Output:</strong><br>
+      <?php
+if (isset($_POST['m']) && isset($_POST['d']) && isset($_POST['y']) && isset($_POST['hours']) && isset($_POST['min']) && isset($_POST['sec']))  
+{  
+        $m = $_POST['m'];  
+        $d = $_POST['d'];   
+        $y = $_POST['y'];  
+        $hours = $_POST['hours'];  
+        $min = $_POST['min'];
+        $sec = $_POST['sec'];
+}  
+// mktime ( $hour, $minute, $second, $month, $day, $year, $is_dst );
+# $is_dst : 1 = daylight savings time (DST), 0 = no DST ,  -1 (default) = auto    
+echo mktime($hours,$min,$sec,$m,$d,$y); 
+?></td>
+    <td width="332" valign="top"><p><strong>Current time: </strong>
+        <br>
+        <?php
+// Here you will print the current date and time. This will let you know what the php time is.
+echo date("m/d/y : H:i:s", time())
+?>
+        <br>
+        <strong>Current unix Timestamp:</strong> <br>
+        <?php
+// Here you will print the current unix timestamp.
+echo time();
+?>
+    </p>    </td>
+  </tr>
 </table>
 <p></p>
 </body>
@@ -352,18 +289,18 @@ if (isset($_POST['phone5']) && isset($_POST['phone6']))
 
 ```xml
 <menu name="Wakeup_IVR_1"
-greet-long="say:您好，这是您的唤醒电话。
-要延迟10分钟，请按1键。
-要延迟20分钟，请按2键。
-要延迟30分钟，请按3键。
-要延迟60分钟，请按6键。
-要重复此菜单，请按9键。"
+greet-long="say:Hello, this is your wake up call.
+To snooze for 10 minutes, 'press 1'. 
+To snooze for 20 minutes, 'press 2'.
+To snooze for 30 minutes, 'press 3'.
+To snooze for 60 minutes, 'press 6'.
+To repeat this menu, press 9."
 greet-short="say:
-要延迟10分钟，请按1键。
-要延迟20分钟，请按2键。
-要延迟30分钟，请按3键。
-要延迟60分钟，请按6键。
-要重复此菜单，请按9键。"
+To snooze for 10 minutes, 'press 1'. 
+To snooze for 20 minutes, 'press 2'.
+To snooze for 30 minutes, 'press 3'.
+To snooze for 60 minutes, 'press 6'.
+To repeat this menu, press 9."
 invalid-sound="ivr/ivr-that_was_an_invalid_entry.wav"
 timeout="4000"
 inter-digit-timeout="1000"
@@ -380,17 +317,18 @@ tts-voice="callie">
 </menu>
 ```
 
+
 注意：您会注意到有“延迟”命令。延迟命令是可选的，并将使用拨号计划。请参阅下面的最后一节以启用这些“延迟”场景。
 
 接下来，您必须为唤醒电话创建一个拨号计划。在上述示例中，我使用分机号码“6980”来呼叫唤醒IVR。
 
 ```xml
-<extension name="唤醒_IVR_1">
+<extension name="Wakeup_IVR_1">
 <condition field="destination_number" expression="^6980$">
-<action application="set" data="transfer_ringback=$${hold_music}" />
-<action application="answer" />
-<action application="sleep" data="1000" />
-<action application="ivr" data="唤醒_IVR_1" />
+<action application="set" data="transfer_ringback=$${hold_music}"/>
+<action application="answer"/>
+<action application="sleep" data="1000"/>
+<action application="ivr" data="Wakeup_IVR_1"/>
 </condition>
 </extension>
 ```
@@ -400,33 +338,33 @@ tts-voice="callie">
 1.) 在你的拨号计划中添加以下内容：
 
 ```xml
-<extension name="唤醒电话推迟_10">
-<condition field="destination_number" expression="^推迟_10$">
-<action application="javascript" data="api_唤醒电话推迟_10.js" />
+<extension name="wake_up_call_snooze_10">
+<condition field="destination_number" expression="^snooze_10$">
+<action application="javascript" data="api_wake_up_call_snooze_10.js"/>
 </condition>
 </extension>
-<extension name="唤醒电话推迟_20">
-<condition field="destination_number" expression="^推迟_20$">
-<action application="javascript" data="api_唤醒电话推迟_20.js" />
+<extension name="wake_up_call_snooze_20">
+<condition field="destination_number" expression="^snooze_20$">
+<action application="javascript" data="api_wake_up_call_snooze_20.js"/>
 </condition>
 </extension>
-<extension name="唤醒电话推迟_30">
-<condition field="destination_number" expression="^推迟_30$">
-<action application="answer" />
-<action application="javascript" data="api_唤醒电话推迟_30.js" />
+<extension name="wake_up_call_snooze_30">
+<condition field="destination_number" expression="^snooze_30$">
+<action application="answer"/>
+<action application="javascript" data="api_wake_up_call_snooze_30.js"/>
 </condition>
 </extension>
-<extension name="唤醒电话推迟_60">
-<condition field="destination_number" expression="^推迟_60$">
-<action application="answer" />
-<action application="javascript" data="api_唤醒电话推迟_60.js" />
+<extension name="wake_up_call_snooze_60">
+<condition field="destination_number" expression="^snooze_60$">
+<action application="answer"/>
+<action application="javascript" data="api_wake_up_call_snooze_60.js"/>
 </condition>
 </extension>
 ```
 
 2.) 你需要手动创建上述拨号计划中提到的javascript文件。
 
-例如，要创建一个10分钟的推迟响铃：在FS "scripts"目录下创建文件"api_唤醒电话推迟_10.js"，并将.js文件中包含以下apiExecute命令。
+例如，要创建一个10分钟的推迟响铃：在FS "scripts"目录下创建文件"api\_wake\_up\_call\_snooze\_10.js"，并将.js文件中包含以下apiExecute命令。
 
 ```xml
 apiExecute("sched_api", "+600 none originate user/1000,user/1001 6980");
