@@ -17,11 +17,14 @@
 ## 1\. lcr.sh 是每天由 cron 调用的动作脚本，它将所有 Perl 脚本组合在一起
 
 * cron entry  
+
 ```xml  
 45 01    * * *   freeswitch    ( cd /opt/freeswitch/scripts/lcr && ./lcr.sh )  
 50 01	* * *   freeswitch (cat /tmp/data.sql | /usr/bin/sqlite3 /opt/freeswitch/conf/databases/fslcr.db)  
 ```
+
 * lcr.sh  
+
 ```xml  
 #!/bin/bash  
  pushd /opt/freeswitch/scripts/lcr  
@@ -105,6 +108,8 @@ close FILE;
 ```
 
 # pennytel 按澳元计价，所以需要转换成美元
+
+```xml
 $usdrate=0;
 $audrate=0;
 open (FILE, "rates.txt");
@@ -231,7 +236,6 @@ close FILE;
 
 $tousd = $eurrate / $usdrate;
 #print "EUR -> USD $tousd\n";
-```
 
 打开 (FILE, $ARGV[0]);
 my @values;
@@ -281,6 +285,7 @@ while (<FILE>) {
 		# 英国 - 移动,44,7#,0.27
 		# 英国 - 其他,44,8#  9#,0.32
 		# 英国 - 个人,44,70#,0.50
+```
 
 ```xml
 #!/usr/bin/perl
@@ -313,6 +318,8 @@ close (FILE);
 ```
 
 # 使用货币报告的最后一个值
+
+```xml
 foreach $num (0 .. $#header)
 {
     $rate = "$header[$num] $values[$num]\n";
@@ -322,8 +329,6 @@ foreach $num (0 .. $#header)
     }
 }
 exit;
-
-
 ```
 
 ## 6. 将csv文件转换为可导入数据库的SQL格式([turncsvintosql.pl](http://turncsvintosql.pl))

@@ -72,7 +72,6 @@ make config-rayo
   <!-- 如果为true（默认为false），则将通道变量添加到rayo客户端的offer中 -->
   <param name="add-variables-to-offer" value="false"/>
 </settings>
-
 ```
 
 ### 录音设置
@@ -112,6 +111,7 @@ make config-rayo
 
 唯一的限制是，没有检测器可以检测与先前定义的检测器相同的事件/子类。
 
+```xml
 <cpa>
     <!-- 将DTMF事件映射到CPA -->
     <detector name="core_dtmf_event">
@@ -138,38 +138,41 @@ make config-rayo
         </event>
     </detector>
 </cpa>
+```
 
-&lt;!-- 将 mod_spandsp 呼叫进度音调探测器映射到 Rayo CPA 信号事件。持续触发 DETECTED_TONE 事件，直到停止。 -->
-    &lt;detector name="mod_spandsp_tone">
-      &lt;start application="start_tone_detect" data="1"/>
-      &lt;stop application="stop_tone_detect" data=""/>
-      &lt;!-- 将音调事件映射到 Rayo CPA 信号类型 -->
-      &lt;event class="CUSTOM" subclass="DETECTED_TONE" type-header="Detected-Tone">
-        &lt;signal-type header-value="SIT" value="sit"/>
-        &lt;signal-type header-value="BUSY_TONE" value="busy"/>
-        &lt;signal-type header-value="REORDER_TONE" value="congestion"/>
-        &lt;signal-type header-value="RING_TONE" value="ring"/>
-      &lt;/event>
-    &lt;/detector>
+```xml
+<!-- 将 mod_spandsp 呼叫进度音调探测器映射到 Rayo CPA 信号事件。持续触发 DETECTED_TONE 事件，直到停止。 -->
+    <detector name="mod_spandsp_tone">
+      <start application="start_tone_detect" data="1"/>
+      <stop application="stop_tone_detect" data=""/>
+      <!-- 将音调事件映射到 Rayo CPA 信号类型 -->
+      <event class="CUSTOM" subclass="DETECTED_TONE" type-header="Detected-Tone">
+        <signal-type header-value="SIT" value="sit"/>
+        <signal-type header-value="BUSY_TONE" value="busy"/>
+        <signal-type header-value="REORDER_TONE" value="congestion"/>
+        <signal-type header-value="RING_TONE" value="ring"/>
+      </event>
+    </detector>
 
-    &lt;!-- 将 mod_avmd 探测器映射到 Rayo CPA 响铃事件。只触发一次 avmd::beep 事件。 -->
-    &lt;detector name="mod_avmd">
-      &lt;start application="avmd" data=""/>
-      &lt;stop application="avmd" data="stop"/>
-      &lt;event class="CUSTOM" subclass="avmd::beep">
-        &lt;signal-type value="beep"/>
-      &lt;/event>
-    &lt;/detector>
+    <!-- 将 mod_avmd 探测器映射到 Rayo CPA 响铃事件。只触发一次 avmd::beep 事件。 -->
+    <detector name="mod_avmd">
+      <start application="avmd" data=""/>
+      <stop application="avmd" data="stop"/>
+      <event class="CUSTOM" subclass="avmd::beep">
+        <signal-type value="beep"/>
+      </event>
+    </detector>
 
-    &lt;!-- 使用 mod_vmd 的备用 beep 探测器。持续触发 vmd::beep 事件，直到停止。 -->
-    &lt;!--detector name="mod_vmd">
-      &lt;start application="vmd" data=""/>
-      &lt;stop application="vmd" data="stop"/>
-      &lt;event class="CUSTOM" subclass="vmd::beep">
-        &lt;signal-type value="beep"/>
-      &lt;/event>
-    &lt;/detector-->
-  &lt;cpa>
+    <!-- 使用 mod_vmd 的备用 beep 探测器。持续触发 vmd::beep 事件，直到停止。 -->
+    <!--detector name="mod_vmd">
+      <start application="vmd" data=""/>
+      <stop application="vmd" data="stop"/>
+      <event class="CUSTOM" subclass="vmd::beep">
+        <signal-type value="beep"/>
+      </event>
+    </detector-->
+  <cpa>
+```
 
 #### XMPP 设置
 
@@ -178,53 +181,59 @@ mod_rayo 是一个 XMPP 服务器。mod_rayo 目前只支持服务于一个 XMPP
 不安全的 XMPP 客户端连接示例（仅在私有网络中使用！！！）
 
 ```xml
-  &lt;!--为rayo.example.com设置服务器。接受来自usera@rayo.example.com的客户端连接到10.50.0.10。-->
-  &lt;domain name="rayo.example.com" shared-secret="ClueCon">
-    &lt;listen type="c2s" port="5222" address="10.50.0.10" acl=""/>
-    &lt;!--授权用户-->
-    &lt;users>
-       &lt;user name="usera" password="1"/>
-    &lt;/users>
-  &lt;/domain>
+  <!--为rayo.example.com设置服务器。接受来自usera@rayo.example.com的客户端连接到10.50.0.10。-->
+  <domain name="rayo.example.com" shared-secret="ClueCon">
+    <listen type="c2s" port="5222" address="10.50.0.10" acl=""/>
+    <!--授权用户-->
+    <users>
+       <user name="usera" password="1"/>
+    </users>
+  </domain>
+```
 
 安全的XMPP客户端连接示例。当连接到mod_rayo时，此示例要求使用TLS。您需要生成证书和私钥，并将它们存储在certs目录中。
 
-  &lt;!--为rayo.example.com设置服务器。接受来自usera@rayo.example.com的安全客户端连接到10.50.0.10。-->
-  &lt;domain name="rayo.example.com" shared-secret="ClueCon" cert="$${base_dir}/certs/rayo.example.com.crt" 
+```xml
+  <!--为rayo.example.com设置服务器。接受来自usera@rayo.example.com的安全客户端连接到10.50.0.10。-->
+  <domain name="rayo.example.com" shared-secret="ClueCon" cert="$${base_dir}/certs/rayo.example.com.crt" 
        key="$${base_dir}/certs/rayo.example.com.key">
-    &lt;listen type="c2s" port="5222" address="10.50.0.10" acl=""/>
-    &lt;!--授权用户-->
-    &lt;users>
-      &lt;user name="usera" password="1"/>
-    &lt;/users>
-  &lt;/domain>
+    <listen type="c2s" port="5222" address="10.50.0.10" acl=""/>
+    <!--授权用户-->
+    <users>
+      <user name="usera" password="1"/>
+    </users>
+  </domain>
+```
 
 acl参数也可用于增加额外的安全层级。启用后，仅接受来自已批准网络的XMPP客户端。在conf/autoload_configs/acl.conf.xml中创建一个名为"rayo-clients"的acl，并设置acl参数：
 
-   &lt;listen type="c2s" port="5222" address="10.50.0.10" acl="rayo-clients"/>
+```xml
+  <listen type="c2s" port="5222" address="10.50.0.10" acl="rayo-clients"/>
+```
 
 #### 拨号网关
 
 拨号网关通过将URI前缀映射到FreeSWITCH拨号字符串前缀来定义呼叫终端路由。这使得Rayo可以将通过电话号码寻址的呼叫路由到FreeTDM端点的PSTN，而将通过SIP URI寻址的呼叫路由到mod_sofia网关。
 
 "default"是一个保留的拨号前缀，当所有其他匹配失败时匹配。
+
+```xml
+<dial-gateways>
+    <!-- 默认网关 - 如果找不到拨号前缀匹配，则将呼叫发送到出站网关 -->
+    <dial-gateway uriprefix="default" dialprefix="sofia/gateway/outbound/" strip="0"/>
+
+    <!-- 将SIP URI发送给mod_sofia -->
+    <dial-gateway uriprefix="sip:" dialprefix="sofia/external/" strip="0"/>
+
+    <!-- 在删除tel:之后，将tel:+ 16171234567发送给mod_sofia -->
+    <dial-gateway uriprefix="tel:" dialprefix="sofia/gateway/outbound/" strip="4"/>
+
+    <!-- 一些允许Rayo客户端指定FreeSWITCH拨号字符串的示例 -->
+    <!-- 将用户和sofia原样传递 -->
+    <dial-gateway uriprefix="user" dialprefix="" strip=""/>
+    <dial-gateway uriprefix="sofia" dialprefix="" strip=""/>
+</dial-gateways>
 ```
-
-&lt;dial-gateways>
-    &lt;!-- 默认网关 - 如果找不到拨号前缀匹配，则将呼叫发送到出站网关 -->
-    &lt;dial-gateway uriprefix="default" dialprefix="sofia/gateway/outbound/" strip="0"/>
-
-    &lt;!-- 将SIP URI发送给mod_sofia -->
-    &lt;dial-gateway uriprefix="sip:" dialprefix="sofia/external/" strip="0"/>
-
-    &lt;!-- 在删除tel:之后，将tel:+ 16171234567发送给mod_sofia -->
-    &lt;dial-gateway uriprefix="tel:" dialprefix="sofia/gateway/outbound/" strip="4"/>
-
-    &lt;!-- 一些允许Rayo客户端指定FreeSWITCH拨号字符串的示例 -->
-    &lt;!-- 将用户和sofia原样传递 -->
-    &lt;dial-gateway uriprefix="user" dialprefix="" strip=""/>
-    &lt;dial-gateway uriprefix="sofia" dialprefix="" strip=""/>
-&lt;/dial-gateways>
 
 #### 别名
 
@@ -245,27 +254,30 @@ acl参数也可用于增加额外的安全层级。启用后，仅接受来自�
 * record（记录组件）
 
 ```xml
-  &lt;别名>
-    &lt;!-- 接听 Rayo 客户端的来电 -->
-    &lt;别名名称="接听" 目标="呼叫">&lt;![CDATA[&lt;answer xmlns="urn:xmpp:rayo:1"/>]]>&lt;/别名>
-    &lt;!-- 停止一个活动组件 -->
-    &lt;别名名称="停止" 目标="组件">&lt;![CDATA[&lt;stop xmlns="urn:xmpp:rayo:ext:1"/>]]>&lt;/别名>
-    &lt;!-- 暂停输出 -->
-    &lt;别名名称="暂停" 目标="输出">&lt;![CDATA[&lt;pause xmlns="urn:xmpp:rayo:output:1"/>]]>&lt;/别名>
-    &lt;!-- 恢复录音 -->
-    &lt;别名名称="恢复录音" 目标="录音">&lt;![CDATA[&lt;resume xmlns="urn:xmpp:rayo:record:1"/>]]>&lt;/别名>
-  &lt;/别名>
+  <别名>
+    <!-- 接听 Rayo 客户端的来电 -->
+    <别名名称="接听" 目标="呼叫"><![CDATA[<answer xmlns="urn:xmpp:rayo:1"/>]]></别名>
+    <!-- 停止一个活动组件 -->
+    <别名名称="停止" 目标="组件"><![CDATA[<stop xmlns="urn:xmpp:rayo:ext:1"/>]]></别名>
+    <!-- 暂停输出 -->
+    <别名名称="暂停" 目标="输出"><![CDATA[<pause xmlns="urn:xmpp:rayo:output:1"/>]]></别名>
+    <!-- 恢复录音 -->
+    <别名名称="恢复录音" 目标="录音"><![CDATA[<resume xmlns="urn:xmpp:rayo:record:1"/>]]></别名>
+  </别名>
+```
 
 ### rayo 应用程序
 
 向 Rayo 客户端提供来电。这类似于 [Outbound Event Socket](../Client-and-Developer-Interfaces/Event-Socket-Library/Event-Socket-Outbound_3375460.mdx#faq) "socket" 应用程序。如果在呼叫被提供时，没有 Rayo 客户端连接到 FreeSWITCH，那么呼叫将被拒绝。
 
-  &lt;扩展名称="rayo">
-     &lt;条件>
-       &lt;!-- 向 Rayo 客户端提供呼叫 -->
-       &lt;操作应用程序="rayo"/>
-     &lt;/条件>
-  &lt;/扩展>
+```xml
+  <扩展名称="rayo">
+     <条件>
+       <!-- 向 Rayo 客户端提供呼叫 -->
+       <操作应用程序="rayo"/>
+     </条件>
+  </扩展>
+```
 
 ### rayo API
 
@@ -291,18 +303,19 @@ Rayo 管理控制台
 
 IQ 请求会自动填充正确的发送方和接收方 JID（Jabber ID）。
 
-  rayo cmd 10.50.0.10 &lt;iq type="get">&lt;ping xmlns="urn:xmpp:ping"/>&lt;/iq>
+```xml
+  rayo cmd 10.50.0.10 <iq type="get"><ping xmlns="urn:xmpp:ping"/></iq>
 ```
 
 ####  rayo 状态 &lt;jid> online|offline 
 
-将管理控制台的&lt;presence>发送到mod\_rayo服务器。
+将管理控制台的`<presence>`发送到mod\_rayo服务器。
 
 默认情况下，管理控制台处于离线状态，并且不会接受呼叫。如果您想通过控制台测试呼叫，必须向mod\_rayo服务器发送在线状态。
 
   rayo presence 10.50.0.10 online
 
-现在呼叫将被发送到控制台客户端。"rayo answer &lt;jid>"将接管呼叫。
+现在呼叫将被发送到控制台客户端。`rayo answer <jid>`将接管呼叫。
 
 ####  rayo 消息 &lt;jid> &lt;文本消息> 
 
