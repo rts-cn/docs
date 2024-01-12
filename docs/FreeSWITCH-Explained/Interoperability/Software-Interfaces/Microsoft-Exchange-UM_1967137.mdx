@@ -107,7 +107,7 @@ To enable the UM capabilities for a specific user (_Ext1000_), use the following
 Enable-UMMailbox -Identity:'CLUECON\EXT1000' -Pin '1234' -PinExpired $false -UMMailboxPolicy:'4DigitDialPlan Default Policy' -Extensions '1000'
 ```
 
-Optional: To enable fax detection on the Exchange server, modify the `EnableInbandFaxDetection` setting to True in the `\\Program Files\\Microsoft\\Exchange\\bin\\globcfg.xml` file of the Exchange 2007 computer with the Unified Messaging server role installed.
+Optional: To enable fax detection on the Exchange server, modify the `EnableInbandFaxDetection` setting to True in the `\Program Files\Microsoft\Exchange\bin\globcfg.xml` file of the Exchange 2007 computer with the Unified Messaging server role installed.
 
 ### FreeSwitch设置
 
@@ -129,29 +129,7 @@ Optional: To enable fax detection on the Exchange server, modify the `EnableInba
 设置本地分机号拨号计划（即/conf/dialplan/default.xml）：
 
 ```xml
-<extension name="local_extension">
-    <condition field="destination_number" expression="^\d+$">
-      <action application="transfer" data="user/${destination_number}@exch.cluecon.com"/>
-    </condition>
-</extension>
-```
-
-要在Exchange服务器上启用统一消息服务器角色，请运行以下命令：
-
-```powershell
-Set-UMServer -Identity:'exch.cluecon.com' -DialPlans 4DigitDialPlan
-```
-
-要为特定用户（_Ext1000_）启用UM功能，请使用以下命令：
-
-```powershell
-Enable-UMMailbox -Identity:'CLUECON\EXT1000' -Pin '1234' -PinExpired $false -UMMailboxPolicy:'4DigitDialPlan Default Policy' -Extensions '1000'
-```
-
-可选：要在Exchange服务器上启用传真检测，请在具有统一消息服务器角色的Exchange 2007计算机的`\\Program Files\\Microsoft\\Exchange\\bin\\globcfg.xml`文件中将`EnableInbandFaxDetection`设置为True。
-
-```xml
-  <extension name="本地分机">
+  <extension name="Local_Extension">
     <condition field="destination_number" expression="^(10[01][0-9])$">
       <action application="set" data="dialed_ext=$1"/>
       <action application="export" data="dialed_ext=$1"/>
@@ -229,7 +207,7 @@ Enable-UMMailbox -Identity:'CLUECON\EXT1000' -Pin '1234' -PinExpired $false -UMM
 
 注意：Exchange 2007 UM无法可靠地解决此问题，真正的解决方法是将Exchange 2007 UM升级到Exchange 2010 UM，我相信微软已经在DTMF方面做得很好了。
 
-**不同的URI类型** - 如果您坚持使用非分机URI类型（如SIP或E.164），请注意Diversion格式需要不同（<[sip:1000@192.168.0.100](http://sip:1000@192.168.0.100)\>，+1000），但是Exchange将无法将FROM字段与Diversion匹配，因此无法在较短的身份验证场景中进行身份验证。
+**不同的URI类型** - 如果您坚持使用非分机URI类型（如SIP或E.164），请注意Diversion格式需要不同（`<[sip:1000@192.168.0.100](http://sip:1000@192.168.0.100)\>，+1000`），但是Exchange将无法将FROM字段与Diversion匹配，因此无法在较短的身份验证场景中进行身份验证。
 
 ## 参考资料
 
