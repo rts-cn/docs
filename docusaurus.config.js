@@ -62,6 +62,12 @@ const config = {
           },
           {
             type: "doc",
+            docId: "rts/howto/index",
+            position: "left",
+            label: "HowTo",
+          },
+          {
+            type: "doc",
             docId: "FreeSWITCH-Explained/index",
             position: "left",
             label: "FreeSWITCH文档",
