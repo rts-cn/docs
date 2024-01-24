@@ -60,10 +60,88 @@ local0.*                                                /var/log/opensips.log
 重启 rsyslog
 
 ```xml
-# Paste the contents here
+/etc/init.d/rsyslog restart
 ```
 
-Save and exit the file.
+安装依赖项
+
+```xml
+yum install gcc-c++ bison lynx subversion flex curl-devel libxslt libxml2-devel
+libxml2 pcre-devel mysql-devel wget make
+```
+
+下载并编译OpenSIPS 1.7.1
+
+
+#####下载源代码
+
+```xml
+cd /usr/src
+wget http://opensips.org/pub/opensips/1.7.1/src/opensips-1.7.1_src.tar.gz
+tar zxvf opensips-1.7.1_src.tar.gz
+cd opensips-1.7.1-tls
+```
+
+在MySQL支持下编译
+
+```xml
+make all include_modules="db_mysql"
+```
+
+安装OpenSIPS
+
+```xml
+make include_modules="db_mysql" prefix="/usr/local" install
+```
+
+配置OpenSIPS
+
+创建MySQL数据库
+
+编辑opensipsctlrc文件
+
+
+```xml
+vi /usr/local/etc/opensips/opensipsctlrc
+```
+
+取消下列行的注释:
+
+```xml
+DBENGINE=MYSQL
+DBHOST=localhost
+DBNAME=opensips
+DBRWUSER=opensips
+DBRWPW="opensipsrw"
+```
+
+运行opensipsdbctl 出现提示时，
+您需要输入MySQL root密码 
+opensipsdbctl为root用户创建MySQL密码:
+
+创建启动脚本
+
+```xml
+cp /usr/src/opensips-1.7.1-tls/packaging/rpm/opensips.init /etc/init.d/opensips
+sed -i "s/\/usr\/sbin\/opensips/\/usr\/local\/sbin\/opensips/g" /etc/init.d/opensips
+sed -i "s/\/etc\/opensips/\/usr\/local\/etc\/opensips/g" /etc/init.d/opensips
+sed -i "s/\/etc\/default\/opensips/\/usr\/local\/etc\/opensips/g" /etc/init.d/opensips
+sed -i "s/RUN_OPENSIPS=no/RUN_OPENSIPS=yes/g" /etc/init.d/opensips
+chmod +x /etc/init.d/opensips
+chkconfig opensips on
+```
+
+编辑opensips.cfg
+
+创建新的opensips.cfg
+
+```xml
+mv /usr/local/etc/opensips/opensips.cfg /usr/local/etc/opensips/opensips.cfg.noload
+vi /usr/local/etc/opensips/opensips.cfg 
+```
+
+复制并粘贴
+
 
 确保将`ext.ip.addr`替换为您的OpenSIPS服务器的公共IP地址。
 
@@ -130,7 +208,7 @@ tcp_connect_timeout=3
 tcp_connection_lifetime=120
 tcp_max_connections=2048
 # tcp_poll_method=select
-```
+
 
 ######################################################################
 ## DNS
