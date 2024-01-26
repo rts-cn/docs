@@ -180,7 +180,7 @@ A -------- GSM/PCMA/G729 --------> FS（允许G729/PCMA/PCMU）-------- PCMA/G72
 
 ### 混合媒体/编解码器的差异（转码）
 
-如果您希望FreeSWITCH能够匹配不同编解码器的两个通话路进（进行转码），则需要设置几个变量以使其成为可能。首先，您必须设置 **_media\_mix\_inbound\_outbound\_codecs=true_**，可以全局设置（例如在vars.xml中），也可以在桥接时在B路进上显式设置（即 _&lt;action application="bridge" data="{media\_mix\_inbound\_outbound\_codecs=true}sofia/gateway/....">_ ）。
+如果您希望FreeSWITCH能够匹配不同编解码器的两个通话路进（进行转码），则需要设置几个变量以使其成为可能。首先，您必须设置 **_media\_mix\_inbound\_outbound\_codecs=true_**，可以全局设置（例如在vars.xml中），也可以在桥接时在B路进上显式设置（即 `_&lt;action application="bridge" data="{media\_mix\_inbound\_outbound\_codecs=true}sofia/gateway/....">_ `）。
 
 由于webrtc的支持和涉及SIP over UDP时SDP不断增长，这个新的变量在1.6版本及以后的版本中是必需的。SDP现在已经达到了一个难以将WebRTC -> SIP进行转换并保持原始SDP的程度，原因是SDP的大小愈发庞大。在使用SIP over UDP时，当发生分组拆分时，由于UDP不会自动重新装配碎片，会破坏SIP数据包。这会在sip数据包超过MTU时发生，唯一的解决办法是使用小包。这意味着使用紧凑头、消除额外头或者不使用那么大的SDP，以消减SDP的大小。对于FS来说，如果没有将media\_mix\_inbound\_outbound\_codecs设置为true，那么只有A路进上向FS提供的编解码器会传递到B路进上，这会减小SDP的大小，并且会大大减少转码的数量。
 
