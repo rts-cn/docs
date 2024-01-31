@@ -148,7 +148,7 @@ const config = {
       algolia: {
         appId: "AECIVU28TJ",
         apiKey: "63249d0aa843ad176773e0ce805b262f",
-        indexName: "rts-docs",
+        indexName: "rtsdocs",
         externalUrlRegex: `.*`,
         /**
          * We need to set this to false, otherwise the query is done with
