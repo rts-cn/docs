@@ -102,10 +102,10 @@ const config = {
                 label: "关于",
                 to: "/about/rts/",
               },
-              // {
-              //   label: "Tutorial",
-              //   to: "/docs/intro",
-              // },
+              {
+                label: "API文档",
+                to: "/docs/code/",
+              },
             ],
           },
           {
