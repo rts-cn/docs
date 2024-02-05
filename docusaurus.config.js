@@ -104,7 +104,7 @@ const config = {
               },
               {
                 label: "API文档",
-                to: "/docs/code/",
+                to: "//rts.cn/docs/code/",
               },
             ],
           },
