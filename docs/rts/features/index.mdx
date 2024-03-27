@@ -1,0 +1,95 @@
+# RTS 新特性
+
+与原来的 FreeSWITCH 相比，RTS 有很多独特的新特性。当然，随时时间发展，这里描述的特性也可能会合并回 FreeSWITCH 里去。
+
+## 默认编译模块调整
+
+调整了部分默认编译的模块。参见[Commit](https://github.com/rts-cn/rts/pull/23/commits/3d794927992d7baac49ad0735d0411b92d1c8f05) 。
+
+## 默认配置文件中禁用Stun功能
+
+很多场景下无法连接默认的Stun服务器，因此，在默认的配置文件中禁用。解决了很多问题。
+
+[Commit](https://github.com/rts-cn/rts/pull/23/commits/51a0d4cdd3abee902559794981edd7dd606955bb)
+
+## 增加`rts`和`rtss`符号链接
+
+为与FreeSWITCH兼容，暂时未修改路径及可执行程序名称。RTS以符号链接形式呈现：
+
+- `rts -> fs_cli`
+- `rtss -> freeswitch`
+
+## 会议模块增加`vid-watching-member`子命令
+
+单独看某一个与会成员。如：
+
+```sh
+conference 3000 vid-watching-member 1 2
+```
+
+[Commit](https://github.com/rts-cn/rts/pull/23/commits/3ceb4b4fb1a46904cf4f6ae47a931d89d7d97790)
+
+## 增加两个RTP相关的函数
+
+- `switch_core_session_get_rtp_pt`
+- `switch_core_session_get_rtp_session`
+
+[Commit](https://github.com/rts-cn/rts/pull/23/commits/721fc0e784911f54e88a0c838fac543b2b5b3f74)
+
+## 支持WebRTC Media Bundle
+
+为`mod_srs`装备。
+
+- [Support Media Bundle](https://github.com/rts-cn/rts/pull/23/commits/c9760b726f4f0d4f119167fb3bf56d2b73dbcca2)
+- [video_use_audio_ice](https://github.com/rts-cn/rts/pull/23/commits/8f74e84a21a568e8d94319b8f8bd8df91eaed4b2)
+- [Media Bundle Send](https://github.com/rts-cn/rts/pull/23/commits/93113ec0eee7381b4d8f9e8d616594ddc3370b25)
+
+## 增加 `mod_srs` 模块
+
+[Commit](https://github.com/rts-cn/rts/pull/23/commits/fa33a5b46f9c1d15800d58a80ad7ad649eb7514d)
+
+## 增加 HTTP 相关函数
+
+增加了：
+
+- `xswitch_http_get`
+- `xswitch_http_post`
+- `xswitch_http_request`
+
+从 [XSwitch](https://xswitch.cn) 移植过来。
+
+[Commit](https://github.com/rts-cn/rts/pull/23/commits/e1421709a1537ac03938e7fe2c32dd5fac11bd87)
+
+## 默认禁用自动NAT
+
+FreeSWITCH默认会自动开启NAT检测，启动慢。可以在启动时使用`-nonat`关闭。RTS默认关闭该功能，加了个参数`-nat`可以打开。
+
+[Commit](https://github.com/rts-cn/rts/pull/23/commits/6403e8150e13c92d960c0edef0b5e6d3627291d7)
+
+## 解决一个Windows编译问题
+
+解决`time_expires`在Windows上编译问题。
+
+[PR28](https://github.com/rts-cn/rts/pull/28)
+
+## 支持修改录音文件的默认权限
+
+可以使用`RECORD_DIR_PERMS`修改默认录音文件的权限。如：
+
+```xml
+<action application="set" data="RECORD_DIR_PERMS=0644"/>
+```
+
+[PR29](https://github.com/rts-cn/rts/pull/29)
+
+## `mod_httapi`支持长文件名及URL
+
+[PR30](https://github.com/rts-cn/rts/pull/30)
+
+## `mod_logfile`优化多行日志写入性能
+
+[PR31](https://github.com/rts-cn/rts/pull/34)
+
+## 增加`switch_split_cheap`函数
+
+与`switch_split`类似，但更“廉价”。不会破坏现有内存。仅适用不需要进行变量替换的场景。
